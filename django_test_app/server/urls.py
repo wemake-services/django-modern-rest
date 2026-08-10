@@ -32,88 +32,18 @@ from server.apps.negotiations import urls as negotiations_urls
 from server.apps.token_auth import urls as token_auth_urls
 from server.apps.token_custom_user import urls as token_custom_user_urls
 
-router = Router(
-    prefix='api/',
-    urls=[
-        path(
-            model_simple_urls.router.prefix,
-            include(
-                (model_simple_urls.router.urls, 'model_simple'),
-                namespace='model_simple',
-            ),
-        ),
-        path(
-            model_fk_urls.router.prefix,
-            include(
-                (model_fk_urls.router.urls, 'model_fk'),
-                namespace='model_fk',
-            ),
-        ),
-        path(
-            middleware_urls.router.prefix,
-            include(
-                (middleware_urls.router.urls, 'middlewares'),
-                namespace='middlewares',
-            ),
-        ),
-        path(
-            controllers_urls.router.prefix,
-            include(
-                (controllers_urls.router.urls, 'controllers'),
-                namespace='controllers',
-            ),
-        ),
-        path(
-            negotiations_urls.router.prefix,
-            include(
-                (negotiations_urls.router.urls, 'negotiations'),
-                namespace='negotiations',
-            ),
-        ),
-        path(
-            jwt_auth_urls.router.prefix,
-            include(
-                (jwt_auth_urls.router.urls, 'jwt_auth'),
-                namespace='jwt_auth',
-            ),
-        ),
-        path(
-            django_session_auth_urls.router.prefix,
-            include(
-                (django_session_auth_urls.router.urls, 'django_session_auth'),
-                namespace='django_session_auth',
-            ),
-        ),
-        path(
-            token_auth_urls.router.prefix,
-            include(
-                (token_auth_urls.router.urls, 'token_auth'),
-                namespace='token_auth',
-            ),
-        ),
-        path(
-            token_custom_user_urls.router.prefix,
-            include(
-                (token_custom_user_urls.router.urls, 'token_custom_user'),
-                namespace='token_custom_user',
-            ),
-        ),
-        path(
-            etag_urls.router.prefix,
-            include(
-                (etag_urls.router.urls, 'etag'),
-                namespace='etag',
-            ),
-        ),
-        path(
-            external_views_urls.router.prefix,
-            include(
-                (external_views_urls.router.urls, 'external_views'),
-                namespace='external_views',
-            ),
-        ),
-    ],
-)
+router = Router(prefix='api/', urls=[])
+router.include(model_simple_urls.router, namespace='model_simple')
+router.include(model_fk_urls.router, namespace='model_fk')
+router.include(middleware_urls.router, namespace='middlewares')
+router.include(controllers_urls.router, namespace='controllers')
+router.include(negotiations_urls.router, namespace='negotiations')
+router.include(jwt_auth_urls.router, namespace='jwt_auth')
+router.include(django_session_auth_urls.router, namespace='django_session_auth')
+router.include(token_auth_urls.router, namespace='token_auth')
+router.include(token_custom_user_urls.router, namespace='token_custom_user')
+router.include(etag_urls.router, namespace='etag')
+router.include(external_views_urls.router, namespace='external_views')
 
 openapi_config = OpenAPIConfig(
     title='Framework Demo API',

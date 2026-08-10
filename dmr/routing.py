@@ -4,6 +4,7 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast, final, overload
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
+from django.urls import include
 from django.urls import path as _django_path
 from django.urls.resolvers import RoutePattern, URLPattern, URLResolver
 from django.utils.encoding import force_str
@@ -176,6 +177,20 @@ class Router:
             paths_items[path] = path_item
 
         return context.config_merger(paths_items, context.get_components())
+
+    def include(
+        self,
+        router: 'Router',
+        app_name: str | None = None,
+        *,
+        namespace: str | None = None,
+    ) -> None:
+        """Include a router's URLs under a given app name and namespace."""
+        if app_name is None and namespace:
+            app_name = namespace
+
+        arg = router.urls if app_name is None else (router.urls, app_name)
+        self.urls.append(path(router.prefix, include(arg, namespace=namespace)))
 
     def _maybe_process_external(
         self,
