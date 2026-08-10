@@ -3227,7 +3227,9 @@
             "code"
           ]
         },
-        "OptionalTimestamp": {},
+        "OptionalTimestamp": {
+          "$ref": "#/components/schemas/Timestamp"
+        },
         "Timestamp": {
           "type": "number",
           "description": "An epoch based timestamp (trivial to parse using: `new Date(value)*1000`)\n",

@@ -38,7 +38,7 @@ class SchemaGenerator:
         used_for_response: bool = False,
         skip_registration: bool = False,
         register_referenced_components: bool = False,
-    ) -> Schema | Reference: ...
+    ) -> Reference | Schema: ...
 
     def __call__(
         self,
@@ -48,7 +48,7 @@ class SchemaGenerator:
         used_for_response: bool = False,
         skip_registration: bool = False,
         register_referenced_components: bool = False,
-    ) -> Schema | Reference:
+    ) -> Reference | Schema:
         """
         Get schema for an annotation.
 
@@ -111,7 +111,7 @@ class SchemaGenerator:
         *,
         used_for_response: bool = False,
         skip_registration: bool = False,
-    ) -> Schema | Reference | None:
+    ) -> Reference | Schema | None:
         origin = get_origin(annotation) or annotation
         type_args = get_args(annotation)
 
@@ -138,7 +138,7 @@ class SchemaGenerator:
         *,
         skip_registration: bool = False,
         register_referenced_components: bool = False,
-    ) -> Schema | Reference:
+    ) -> Reference | Schema:
         if not skip_registration:
             for component_name, component in components.items():
                 self._context.registries.schema.register(
@@ -183,7 +183,7 @@ class SchemaGenerator:
         *,
         skip_registration: bool,
         register_referenced_components: bool,
-    ) -> Schema | Reference:
+    ) -> Reference | Schema:
         if skip_registration and register_referenced_components:
             for component_name, component in components.items():
                 self._context.registries.schema.register(

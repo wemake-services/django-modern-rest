@@ -1,27 +1,28 @@
 import pytest
 from django.urls import path
+from faker import Faker
+from inline_snapshot import snapshot
 from syrupy.assertion import SnapshotAssertion
 from typing_extensions import override
 
-try:
-    from openapi_spec_validator.validation.exceptions import (
-        OpenAPIValidationError,
-    )
-except ImportError:  # pragma: no cover
-    pytest.skip(
-        reason='openapi_spec_validator is not installed',
-        allow_module_level=True,
-    )
-
 from dmr import Controller, modify
 from dmr.endpoint import Endpoint
-from dmr.openapi import build_schema
-from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
+from dmr.openapi import OpenAPIConfig, build_schema
+from dmr.openapi.objects import (
+    Components,
+    Reference,
+    SecurityRequirement,
+    SecurityScheme,
+)
 from dmr.openapi.objects.schema import Schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 from dmr.security import SyncAuth
 from dmr.serializer import BaseSerializer
+
+OpenAPIValidationError = pytest.importorskip(
+    'openapi_spec_validator.validation.exceptions',
+).OpenAPIValidationError
 
 
 class _WrongAuth(SyncAuth):
@@ -55,19 +56,39 @@ class _UserController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def test_schema_supports_json_schema_keywords() -> None:
+def test_schema_supports_json_schema_keywords(  # noqa: WPS210
+    faker: Faker,
+) -> None:
     """Ensure that Schema exposes the missing JSON Schema keywords."""
-    schema = Schema(
-        ref='#/components/schemas/User',
-        anchor='user',
-        comment='comment',
-        schema_uri='https://json-schema.org/draft/2020-12/schema',
-    )
+    ref = f'#/components/schemas/{faker.name()}'
+    anchor = faker.name()
+    comment = faker.sentence()
+    schema_uri = faker.url()
 
-    assert schema.ref == '#/components/schemas/User'
-    assert schema.anchor == 'user'
-    assert schema.comment == 'comment'
-    assert schema.schema_uri == 'https://json-schema.org/draft/2020-12/schema'
+    schema = Schema(
+        ref=ref,
+        anchor=anchor,
+        comment=comment,
+        schema_uri=schema_uri,
+    )
+    router = Router('/', [])
+    config = OpenAPIConfig(
+        title='Title',
+        version='0.0.1',
+        components=Components(schemas={'Test': schema}),
+    )
+    openapi = build_schema(router, config=config).convert(skip_validation=True)
+
+    assert openapi['components'] == snapshot({
+        'schemas': {
+            'Test': {
+                '$ref': ref,
+                '$anchor': anchor,
+                '$comment': comment,
+                '$schema': schema_uri,
+            },
+        },
+    })
 
 
 def test_schema_validation(snapshot: SnapshotAssertion) -> None:

@@ -30,6 +30,6 @@ class Parameter(ParameterMetadata):
 
     name: str
     param_in: Annotated[str, Field(alias='in')]
-    schema: 'Schema | Reference | None' = None
+    schema: 'Reference | Schema | None' = None
     content: dict[str, 'MediaType'] | None = None
     required: bool = False

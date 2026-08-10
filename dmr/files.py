@@ -48,7 +48,7 @@ class FileBody:
     @classmethod
     def media_type(
         cls,
-        schema: Schema | Reference,
+        schema: Reference | Schema,
         model: Any,
         model_meta: tuple[Any, ...],
         parser: Parser,
@@ -84,7 +84,7 @@ class FileBody:
     @classmethod
     def get_schema(
         cls,
-        schema: Schema | Reference,
+        schema: Reference | Schema,
         context: 'OpenAPIContext',
     ) -> Schema:
         """Returns the openapi schema that this object represents."""

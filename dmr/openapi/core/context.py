@@ -100,7 +100,7 @@ class OpenAPIContext:
     def register_schema(
         self,
         annotation: Any,
-        schema: Schema | Reference | SchemaCallback,
+        schema: Reference | Schema | SchemaCallback,
         *,
         override: bool = False,
     ) -> None:

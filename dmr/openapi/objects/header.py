@@ -19,7 +19,7 @@ class Header:
     a location of header (for example, style).
     """
 
-    schema: 'Schema | Reference | None' = None
+    schema: 'Reference | Schema | None' = None
     description: str | None = None
     required: bool | None = None
     deprecated: bool | None = None
