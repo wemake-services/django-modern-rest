@@ -42,7 +42,7 @@ def disabled_auth(
             f'Endpoint {metadata.operation_id} has no auth to override',
         )
 
-    # Asign required props:
+    # Assign required props:
     _set_request_attrs(controller_cls, request=request, user=user, auth=auth)
 
     # Clear the auth, restore it later:
