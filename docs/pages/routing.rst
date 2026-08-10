@@ -39,6 +39,7 @@ To do so, use :meth:`~dmr.routing.Router.include` method:
   :start-at: router = Router
   :end-at: # ^ you can
   :linenos:
+  :no-imports-spoiler:
 
 Basically, including another router is the same as writing:
 
