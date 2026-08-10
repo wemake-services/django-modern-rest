@@ -2,29 +2,36 @@ import pytest
 from django.urls import URLResolver
 
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import Router, path
 
 
-class _UserController(Controller[PydanticSerializer]):
+class _UserController(Controller[PydanticFastSerializer]):
     def get(self) -> str:
         raise NotImplementedError
 
 
-user_router = Router(
+_user_router = Router(
     prefix='users/',
     urls=[path('user/', _UserController.as_view())],
 )
 
 
+class _OtherController(Controller[PydanticFastSerializer]):
+    def get(self) -> str:
+        raise NotImplementedError
+
+
 def test_router_include() -> None:
     """Ensure that router.include() works as expected."""
-    router = Router(prefix='api/v1/', urls=[])
-    router.include(user_router)
+    router = Router(
+        prefix='api/v1/',
+        urls=[path('other/', _OtherController.as_view())],
+    )
+    router.include(_user_router)
 
-    assert len(router.urls) == 1
-    assert isinstance(router.urls[0], URLResolver)
-    assert user_router.urls == router.urls[0].urlconf_module
+    assert len(router.urls) == 2
+    assert len(_user_router.urls) == 1
 
 
 @pytest.mark.parametrize(
@@ -43,8 +50,8 @@ def test_router_include_with_args(
     expected_namespace: str | None,
 ) -> None:
     """Ensure that router.include() works as expected with arguments."""
-    router = Router(prefix='api/v1/', urls=[])
-    router.include(user_router, app_name, namespace=namespace)
+    router = Router(prefix='api/v1/')
+    router.include(_user_router, namespace=namespace, app_name=app_name)
 
     assert len(router.urls) == 1
     assert isinstance(router.urls[0], URLResolver)

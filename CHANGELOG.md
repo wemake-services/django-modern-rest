@@ -56,6 +56,7 @@ of requirements for an API to count as public.
 - Added an ability to load external OpenAPI schemas
   into our typed dataclasses, #1222
 - Added `external_path()` function, so we can load external views, #1239
+- Added `Router.include()` method to include one router into another one, #1244
 - Added an option to skip some controllers / endpoints
   from the OpenAPI spec, #1238
 - Added `dmr.test.disabled_auth` test helper

@@ -120,6 +120,7 @@ class Router:
     .. versionchanged:: 0.13.0
         Now you can pass :class:`URLExternal` objects in *urls*.
         Also accept any :class:`collections.abc.Sequence` as *tags*.
+        *urls* parameter is now optional.
 
     """
 
@@ -128,7 +129,7 @@ class Router:
     def __init__(
         self,
         prefix: str,
-        urls: Iterable[_AnyPattern | URLExternal],
+        urls: Iterable[_AnyPattern | URLExternal] = (),
         *,
         tags: Sequence[str] | None = None,
         deprecated: bool = False,
@@ -181,12 +182,16 @@ class Router:
     def include(
         self,
         router: 'Router',
-        app_name: str | None = None,
         *,
         namespace: str | None = None,
+        app_name: str | None = None,
     ) -> None:
-        """Include a router's URLs under a given app name and namespace."""
-        if app_name is None and namespace:
+        """
+        Include a router's URLs under a given app name and namespace.
+
+        .. versionadded:: 0.13.0
+        """
+        if app_name is None and namespace is not None:
             app_name = namespace
 
         arg = router.urls if app_name is None else (router.urls, app_name)

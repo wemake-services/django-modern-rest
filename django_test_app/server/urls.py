@@ -32,7 +32,7 @@ from server.apps.negotiations import urls as negotiations_urls
 from server.apps.token_auth import urls as token_auth_urls
 from server.apps.token_custom_user import urls as token_custom_user_urls
 
-router = Router(prefix='api/', urls=[])
+router = Router(prefix='api/')
 router.include(model_simple_urls.router, namespace='model_simple')
 router.include(model_fk_urls.router, namespace='model_fk')
 router.include(middleware_urls.router, namespace='middlewares')
@@ -44,6 +44,7 @@ router.include(token_auth_urls.router, namespace='token_auth')
 router.include(token_custom_user_urls.router, namespace='token_custom_user')
 router.include(etag_urls.router, namespace='etag')
 router.include(external_views_urls.router, namespace='external_views')
+# ^ you can include as many routers as you wish!
 
 openapi_config = OpenAPIConfig(
     title='Framework Demo API',
