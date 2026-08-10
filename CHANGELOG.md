@@ -18,9 +18,15 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
-## 0.13.0 WIP
+## 0.13.0 (2026-08-10)
+
+This release was focused on better routing and better OpenAPI support.
+See https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Breaking changes
+
+Since this release, we would only publish migration prompts
+on the releases page: https://github.com/wemake-services/django-modern-rest/releases
 
 - `Schema.then` is renamed to be `Schema.schema_then`
   to be consistent with other similar names, #1221
@@ -68,6 +74,10 @@ of requirements for an API to count as public.
   ignored when defined with custom user's data, #1229
 - Fixed missing `$ref`, `$anchor`, `$comment`, and `$schema` fields in `Schema`, #1232
 - Fixed `OpenAPIFormat.IRI` value, #1228
+
+### Misc
+
+- Improved testing docs, #1216
 
 
 ## 0.12.1 (2026-07-31)
