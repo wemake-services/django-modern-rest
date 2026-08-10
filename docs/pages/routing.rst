@@ -22,6 +22,44 @@ about its future URL. Why so?
   and :data:`dmr.components.Path`.
 
 
+Including routers from other apps
+---------------------------------
+
+.. versionadded:: 0.13.0
+
+It is common in Django to use multiple apps with their own URLs and views.
+They might define their own :class:`~dmr.routing.Router` instances,
+which can be included into the main router.
+
+To do so, use :meth:`~dmr.routing.Router.include` method:
+
+.. literalinclude:: ../../django_test_app/server/urls.py
+  :caption: urls.py
+  :language: python
+  :start-at: router = Router
+  :end-at: # ^ you can
+  :linenos:
+
+Basically, including another router is the same as writing:
+
+.. code-block:: python
+
+  router = Router(
+      prefix='api/',
+      urls=[
+          path(
+              other.router.prefix,
+              include(
+                  (other_router.router.urls, 'app_name'),
+                  namespace='namespace',
+              ),
+          ),
+      ],
+  )
+
+Use it to reduce the boilerplate code.
+
+
 Handling 404 errors
 -------------------
 

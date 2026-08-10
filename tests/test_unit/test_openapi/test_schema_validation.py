@@ -71,7 +71,7 @@ def test_schema_supports_json_schema_keywords(  # noqa: WPS210
         comment=comment,
         schema_uri=schema_uri,
     )
-    router = Router('/', [])
+    router = Router('/')
     config = OpenAPIConfig(
         title='Title',
         version='0.0.1',
