@@ -220,15 +220,6 @@ Throttling
 
 .. autofunction:: dmr.test.assert_async_throttling
 
-Types of our ``pytest`` fixtures, use them to annotate the fixtures
-in your own tests:
-
-.. autoclass:: dmr.test.types.AssertThrottlingFixture
-  :members:
-
-.. autoclass:: dmr.test.types.AssertAsyncThrottlingFixture
-  :members:
-
 
 Plugins
 -------

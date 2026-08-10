@@ -418,7 +418,7 @@ Examples:
 
   .. tab:: :iconify:`devicon:python` unittest
 
-    Default Python's testing framework.
+    Default Python's testing framework:
 
     .. literalinclude:: /examples/testing/throttling_unittest.py
       :caption: tests/test_throttling.py
@@ -427,8 +427,7 @@ Examples:
 
   .. tab:: :iconify:`devicon:pytest` pytest
 
-    Our bundled plugin ships the same helpers as ``dmr_*`` fixtures, and
-    ``dmr.test.types`` exports their types, so the fixtures can be annotated:
+    And more preferable ``pytest``:
 
     .. literalinclude:: /examples/testing/throttling_pytest.py
       :caption: test_reports.py
