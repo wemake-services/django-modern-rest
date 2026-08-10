@@ -63,7 +63,7 @@ class ParameterGenerator:
         self,
         metadata: ParameterMetadata | None,
         property_name: str,
-        property_schema: Schema | Reference,
+        property_schema: Reference | Schema,
         schema: Schema,
         context: 'OpenAPIContext',
     ) -> dict[str, Any]:

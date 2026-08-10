@@ -89,6 +89,10 @@ class Schema:
         None
     )
     dynamic_ref: Annotated['str | None', Field(alias='$dynamicRef')] = None
+    ref: Annotated[str | None, Field(alias='$ref')] = None
+    anchor: Annotated[str | None, Field(alias='$anchor')] = None
+    comment: Annotated[str | None, Field(alias='$comment')] = None
+    schema_uri: Annotated[str | None, Field(alias='$schema')] = None
     defs: Annotated[
         dict[str, 'Reference | Schema'] | None,
         Field(alias='$defs'),

@@ -17,7 +17,7 @@ class SchemaCallback(Protocol):
         *,
         used_for_response: bool,
         skip_registration: bool,
-    ) -> Schema | Reference | None:
+    ) -> Reference | Schema | None:
         """
         Resolve the annotation into schema or into a reference.
 
@@ -57,7 +57,7 @@ class SchemaRegistry:
     def __init__(self) -> None:
         """Initialize empty schema and type registers."""
         self._schemas: dict[str, tuple[Schema, int | None]] = {}
-        self.overrides: dict[Any, Schema | Reference | SchemaCallback] = {}
+        self.overrides: dict[Any, Reference | Schema | SchemaCallback] = {}
 
     @property
     def schemas(self) -> dict[str, Schema]:
