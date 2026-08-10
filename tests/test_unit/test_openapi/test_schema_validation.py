@@ -16,6 +16,7 @@ except ImportError:  # pragma: no cover
 from dmr import Controller, modify
 from dmr.endpoint import Endpoint
 from dmr.openapi import build_schema
+from dmr.openapi.objects.schema import Schema
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
@@ -52,6 +53,21 @@ class _UserController(Controller[PydanticSerializer]):
     @modify(auth=[_WrongAuth()])
     def post(self) -> str:
         raise NotImplementedError
+
+
+def test_schema_supports_json_schema_keywords() -> None:
+    """Ensure that Schema exposes the missing JSON Schema keywords."""
+    schema = Schema(
+        ref='#/components/schemas/User',
+        anchor='user',
+        comment='comment',
+        schema_uri='https://json-schema.org/draft/2020-12/schema',
+    )
+
+    assert schema.ref == '#/components/schemas/User'
+    assert schema.anchor == 'user'
+    assert schema.comment == 'comment'
+    assert schema.schema_uri == 'https://json-schema.org/draft/2020-12/schema'
 
 
 def test_schema_validation(snapshot: SnapshotAssertion) -> None:

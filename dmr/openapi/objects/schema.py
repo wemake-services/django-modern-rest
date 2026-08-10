@@ -27,6 +27,10 @@ class Schema:
     the OpenAPI document.
     """
 
+    ref: Annotated[str | None, Field(alias='$ref')] = None
+    anchor: Annotated[str | None, Field(alias='$anchor')] = None
+    comment: Annotated[str | None, Field(alias='$comment')] = None
+    schema_uri: Annotated[str | None, Field(alias='$schema')] = None
     all_of: list['Reference | Schema'] | None = None
     any_of: list['Reference | Schema'] | None = None
     one_of: list['Reference | Schema'] | None = None

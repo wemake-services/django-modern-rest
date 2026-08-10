@@ -57,6 +57,7 @@ of requirements for an API to count as public.
 
 - Fixed a bug that `OpenAPIConfig.components` were silently
   ignored when defined with custom user's data, #1229
+- Fixed missing `$ref`, `$anchor`, `$comment`, and `$schema` fields in `Schema`, #1232
 - Fixed `OpenAPIFormat.IRI` value, #1228
 
 
