@@ -16,8 +16,8 @@ except ImportError:  # pragma: no cover
 from dmr import Controller, modify
 from dmr.endpoint import Endpoint
 from dmr.openapi import build_schema
-from dmr.openapi.objects.schema import Schema
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
+from dmr.openapi.objects.schema import Schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 from dmr.security import SyncAuth
