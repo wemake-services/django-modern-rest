@@ -1,3 +1,5 @@
+from typing import Final
+
 from django.contrib.auth.models import User
 
 from dmr import Controller
@@ -5,10 +7,12 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest
 from dmr.security.token import HeaderTokenSyncAuth
 
+token_auth: Final = HeaderTokenSyncAuth()
+
 
 class APIController(Controller[PydanticSerializer]):
     request: AuthenticatedHttpRequest[User]
-    auth = (HeaderTokenSyncAuth(),)
+    auth = (token_auth,)
 
     def get(self) -> str:
         assert self.request.user.is_authenticated

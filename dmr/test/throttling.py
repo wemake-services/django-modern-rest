@@ -107,13 +107,13 @@ async def assert_async_throttling(  # noqa: WPS210
 
 @contextlib.contextmanager
 def reduced_throttling(
-    controller_cls: 'type[Controller[BaseSerializer]]',
+    controller_cls: type['Controller[BaseSerializer]'],
     *,
     method: HTTPMethod | str,
     max_requests: int = 2,
     rate: Rate = Rate.hour,
     when: ThrottlingWhen = _DefaultAnyWhen,
-) -> Generator[SyncThrottle | AsyncThrottle, None, None]:
+) -> Generator[SyncThrottle | AsyncThrottle]:
     """
     Temporarily lower an endpoint's first throttle so a test can reach it.
 

@@ -52,6 +52,8 @@ of requirements for an API to count as public.
 - Added `external_path()` function, so we can load external views, #1239
 - Added an option to skip some controllers / endpoints
   from the OpenAPI spec, #1238
+- Added `dmr.test.disabled_auth` test helper
+  to disable auth to speed up tests, #1216
 
 ### Bugfixes
 

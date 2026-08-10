@@ -93,7 +93,9 @@ example:
       docs/examples/testing/dmr_helpers.py \
       docs/examples/testing/pytest_plugin.py \
       docs/examples/testing/throttling_unittest.py \
-      docs/examples/testing/throttling_pytest.py
+      docs/examples/testing/throttling_pytest.py \
+      docs/examples/testing/test_view_with_auth.py \
+      docs/examples/testing/test_view_disabled_auth.py
 
 # Start Django + DRM example app
 [group('testing')]

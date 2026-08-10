@@ -1,3 +1,4 @@
+from dmr.test.auth import disabled_auth as disabled_auth
 from dmr.test.client import DMRAsyncClient as DMRAsyncClient
 from dmr.test.client import DMRAsyncRequestFactory as DMRAsyncRequestFactory
 from dmr.test.client import DMRClient as DMRClient

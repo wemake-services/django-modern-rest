@@ -204,6 +204,11 @@ Testing
 .. autoclass:: dmr.test.DMRAsyncClient
   :members:
 
+Auth
+~~~~
+
+.. autofunction:: dmr.test.disabled_auth
+
 Throttling
 ~~~~~~~~~~
 
