@@ -6,8 +6,7 @@ from django.core.cache import cache
 
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.test import DMRRequestFactory
-from dmr.test.types import AssertThrottlingFixture
+from dmr.test import DMRRequestFactory, assert_throttling
 from dmr.throttling import Rate, SyncThrottle
 
 _URL: Final = '/reports/'
@@ -28,13 +27,10 @@ def _clean_throttling_cache() -> Iterator[None]:
     cache.clear()
 
 
-def test_endpoint_is_throttled(
-    dmr_rf: DMRRequestFactory,
-    dmr_assert_throttling: AssertThrottlingFixture,
-) -> None:
+def test_endpoint_is_throttled(dmr_rf: DMRRequestFactory) -> None:
     # Lower the throttle, drive a couple of real requests, assert the 429 —
     # no 1000 requests needed. Returns the rejected response:
-    dmr_assert_throttling(
+    assert_throttling(
         ReportsController,
         lambda: dmr_rf.get(_URL),
     )

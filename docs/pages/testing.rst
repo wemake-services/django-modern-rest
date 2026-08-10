@@ -399,13 +399,6 @@ so it must be tested. To help users with it, we provide several utilities:
 - For sync controllers: :func:`dmr.test.assert_throttling`
 - For async controllers: :func:`dmr.test.assert_async_throttling`
 
-Which are also available as ``pytest`` fixtures:
-
-- :func:`~dmr_pytest.dmr_assert_throttling` typed
-  as :class:`dmr.test.types.AssertThrottlingFixture`
-- :func:`~dmr_pytest.dmr_assert_async_throttling` typed
-  as :class:`dmr.test.types.AssertAsyncThrottlingFixture`
-
 Testing that an endpoint is throttled usually means driving it to its limit
 first. Sending the configured ``max_requests`` in a loop is slow for large
 rates such as ``1000/hour``. What do we do instead?
@@ -468,12 +461,6 @@ Request factories:
 .. autofunction:: dmr_pytest.dmr_rf
 
 .. autofunction:: dmr_pytest.dmr_async_rf
-
-Throttling:
-
-.. autofunction:: dmr_pytest.dmr_assert_throttling
-
-.. autofunction:: dmr_pytest.dmr_assert_async_throttling
 
 Settings:
 

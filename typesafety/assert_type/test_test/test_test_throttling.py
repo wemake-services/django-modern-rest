@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from contextlib import AbstractContextManager
 from http import HTTPMethod, HTTPStatus
 from typing import assert_type
 
@@ -7,10 +6,10 @@ from django.http import HttpRequest, HttpResponse
 
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.test.types import (
-    AssertAsyncThrottlingFixture,
-    AssertThrottlingFixture,
-    ReducedThrottlingFixture,
+from dmr.test import (
+    assert_async_throttling,
+    assert_throttling,
+    reduced_throttling,
 )
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 
@@ -20,37 +19,35 @@ class MyController(Controller[PydanticSerializer]):
         return 'ok'
 
 
-def reduced_throttling_fixture(fixture: ReducedThrottlingFixture) -> None:
-    manager = fixture(
+def test_reduced_throttling() -> None:
+    manager = reduced_throttling(
         MyController,
         method='query',
         max_requests=1,
         rate=Rate.minute,
         when='before_auth',
     )
-    assert_type(manager, AbstractContextManager[SyncThrottle | AsyncThrottle])
     with manager as throttle:
         assert_type(throttle, SyncThrottle | AsyncThrottle)
 
-    fixture(
+    reduced_throttling(
         MyController,
         method='GET',
         when='wrong',  # type: ignore[arg-type]
     )
-    fixture(
+    reduced_throttling(
         MyController,
         method=HTTPMethod.GET,
         unknown=1,  # type: ignore[call-arg]
     )
-    fixture()  # type: ignore[call-arg]
+    reduced_throttling()  # type: ignore[call-arg]
 
 
-def assert_throttling_fixture(
-    fixture: AssertThrottlingFixture,
+def test_assert_throttling(
     request_factory: Callable[[], HttpRequest],
 ) -> None:
     assert_type(
-        fixture(
+        assert_throttling(
             MyController,
             request_factory,
             max_requests=3,
@@ -60,19 +57,18 @@ def assert_throttling_fixture(
         tuple[HttpResponse, SyncThrottle],
     )
 
-    fixture(
+    assert_throttling(
         MyController,
         request_factory,
         when='wrong_when',  # type: ignore[arg-type]
     )
 
 
-async def assert_async_throttling_fixture(
-    fixture: AssertAsyncThrottlingFixture,
+async def test_assert_async_throttling(
     request_factory: Callable[[], HttpRequest],
 ) -> None:
     assert_type(
-        await fixture(
+        await assert_async_throttling(
             MyController,
             request_factory,
             max_requests=3,
@@ -83,7 +79,7 @@ async def assert_async_throttling_fixture(
         tuple[HttpResponse, AsyncThrottle],
     )
 
-    await fixture(
+    await assert_async_throttling(
         MyController,
         request_factory,
         when='never',  # type: ignore[arg-type]

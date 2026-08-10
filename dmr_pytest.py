@@ -24,10 +24,6 @@ if TYPE_CHECKING:
         DMRClient,
         DMRRequestFactory,
     )
-    from dmr.test.types import (
-        AssertAsyncThrottlingFixture,
-        AssertThrottlingFixture,
-    )
 
 
 # Building requests:
@@ -69,25 +65,6 @@ def dmr_async_rf() -> 'DMRAsyncRequestFactory':
     from dmr.test import DMRAsyncRequestFactory
 
     return DMRAsyncRequestFactory()
-
-
-# Throttling:
-
-
-@pytest.fixture
-def dmr_assert_throttling() -> 'AssertThrottlingFixture':
-    """Provides :func:`dmr.test.assert_throttling`."""
-    from dmr.test import assert_throttling
-
-    return assert_throttling
-
-
-@pytest.fixture
-def dmr_assert_async_throttling() -> 'AssertAsyncThrottlingFixture':
-    """Provides :func:`dmr.test.assert_async_throttling`."""
-    from dmr.test import assert_async_throttling
-
-    return assert_async_throttling
 
 
 # Settings:
