@@ -18,6 +18,13 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
+## WIP
+
+### Bugfixes
+
+- `OpenAPIConfig.openapi_version` now support any `str` argument
+
+
 ## 0.13.0 (2026-08-10)
 
 This release was focused on better routing and better OpenAPI support.

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal, TypeAlias, cast
+from typing import TypeAlias, cast
 
 from dmr.openapi.objects import (  # noqa: WPS235
     Components,
@@ -12,8 +12,6 @@ from dmr.openapi.objects import (  # noqa: WPS235
     Server,
     Tag,
 )
-
-_SupportedOpenAPIVersions: TypeAlias = Literal['3.0.0', '3.1.0', '3.2.0']
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -51,7 +49,7 @@ class OpenAPIConfig:
 
     title: str
     version: str
-    openapi_version: _SupportedOpenAPIVersions = '3.1.0'
+    openapi_version: str = '3.1.0'
 
     summary: str | None = None
     description: str | None = None
