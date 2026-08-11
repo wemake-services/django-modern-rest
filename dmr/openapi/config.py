@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TypeAlias, cast
+from typing import cast
 
 from dmr.openapi.objects import (  # noqa: WPS235
     Components,
