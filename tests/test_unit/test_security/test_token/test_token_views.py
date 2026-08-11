@@ -1,15 +1,16 @@
 import datetime as dt
+import json
+from http import HTTPStatus
 from typing import Final, final
-from unittest.mock import AsyncMock, Mock
 
 import pytest
 from django.contrib.auth.models import User
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
 from dmr.plugins.pydantic import PydanticFastSerializer
-from dmr.security.token import views as token_views
+from dmr.security.token import HeaderTokenAsyncAuth, HeaderTokenSyncAuth
 from dmr.security.token.app.models import Token
 from dmr.security.token.views import (
     ObtainTokenAsyncController,
@@ -17,16 +18,23 @@ from dmr.security.token.views import (
     ObtainTokenResponse,
     ObtainTokenSyncController,
 )
+from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
-_PASSWORD: Final = 'secret'  # noqa: S105
+_USERNAME: Final = 'admin'
+_PASSWORD: Final = 'password'  # noqa: S105
 _WRONG_PASSWORD: Final = 'wrong'  # noqa: S105
-_TOKEN_SECRET: Final = 'test-secret'  # noqa: S105
-_TOKEN_SALT: Final = 'test-salt'  # noqa: S105
-_TOKEN_ALGORITHM: Final = 'sha512'  # noqa: S105
+_SYNC_TOKEN_SECRET: Final = 'sync-secret'  # noqa: S105
+_SYNC_TOKEN_SALT: Final = 'sync-salt'  # noqa: S105
+_SYNC_TOKEN_ALGORITHM: Final = 'sha512'  # noqa: S105
 _SYNC_TOKEN_SIZE: Final = 24
 _SYNC_TOKEN_LENGTH: Final = 32
+_ASYNC_TOKEN_SECRET: Final = 'async-secret'  # noqa: S105
+_ASYNC_TOKEN_SALT: Final = 'async-salt'  # noqa: S105
+_ASYNC_TOKEN_ALGORITHM: Final = 'sha512'  # noqa: S105
 _ASYNC_TOKEN_SIZE: Final = 20
 _ASYNC_TOKEN_LENGTH: Final = 27
+_WRONG_TOKEN_SECRET: Final = 'wrong-secret'  # noqa: S105
+_WRONG_TOKEN_SALT: Final = 'wrong-salt'  # noqa: S105
 
 
 @final
@@ -39,9 +47,9 @@ class _SyncObtainTokenController(
 ):
     token_cls = Token
     token_size = _SYNC_TOKEN_SIZE
-    token_secret = _TOKEN_SECRET
-    token_salt = _TOKEN_SALT
-    token_algorithm = _TOKEN_ALGORITHM
+    token_secret = _SYNC_TOKEN_SECRET
+    token_salt = _SYNC_TOKEN_SALT
+    token_algorithm = _SYNC_TOKEN_ALGORITHM
     token_expiration = dt.timedelta(minutes=5)
 
     @override
@@ -56,6 +64,43 @@ class _SyncObtainTokenController(
         return {'token': 'sync-response'}
 
 
+@pytest.mark.django_db
+def test_sync_obtain_token_login_success(
+    dmr_rf: DMRRequestFactory,
+    admin_user: User,
+) -> None:
+    """Ensures sync login accepts valid credentials."""
+    request = dmr_rf.post(
+        '/whatever/',
+        data={'username': _USERNAME, 'password': _PASSWORD},
+    )
+
+    response = _SyncObtainTokenController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == {'token': 'sync-response'}
+    assert request.user == admin_user
+
+
+@pytest.mark.django_db
+def test_sync_obtain_token_login_failure(
+    dmr_rf: DMRRequestFactory,
+    admin_user: User,
+) -> None:
+    """Ensures sync login rejects invalid credentials."""
+    request = dmr_rf.post(
+        '/whatever/',
+        data={'username': _USERNAME, 'password': _WRONG_PASSWORD},
+    )
+
+    response = _SyncObtainTokenController.as_view()(request)
+
+    assert admin_user.is_active
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
 @final
 class _AsyncObtainTokenController(
     ObtainTokenAsyncController[
@@ -65,6 +110,11 @@ class _AsyncObtainTokenController(
     ],
 ):
     token_cls = Token
+    token_size = _ASYNC_TOKEN_SIZE
+    token_secret = _ASYNC_TOKEN_SECRET
+    token_salt = _ASYNC_TOKEN_SALT
+    token_algorithm = _ASYNC_TOKEN_ALGORITHM
+    token_expiration = dt.timedelta(minutes=10)
 
     @override
     async def convert_auth_payload(
@@ -78,87 +128,48 @@ class _AsyncObtainTokenController(
         return {'token': 'async-response'}
 
 
-def _setup_controller(
-    controller: _SyncObtainTokenController | _AsyncObtainTokenController,
-) -> HttpRequest:
-    request = HttpRequest()
-    controller.setup(request)
-    return request
-
-
-@pytest.mark.django_db
-def test_sync_obtain_token_login_success(
-    monkeypatch: pytest.MonkeyPatch,
-    admin_user: User,
-) -> None:
-    """Ensures sync login forwards credentials and authenticates the request."""
-    controller = _SyncObtainTokenController()
-    request = _setup_controller(controller)
-    authenticate = Mock(return_value=admin_user)
-    monkeypatch.setattr(token_views, 'authenticate', authenticate)
-    payload = ObtainTokenPayload(username='admin', password=_PASSWORD)
-
-    response = controller.post(payload)
-
-    assert response == {'token': 'sync-response'}
-    authenticate.assert_called_once_with(request, **payload)
-    assert request.user is admin_user
-
-
-@pytest.mark.django_db
-def test_sync_obtain_token_login_failure(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Ensures sync login rejects invalid credentials."""
-    controller = _SyncObtainTokenController()
-    _setup_controller(controller)
-    monkeypatch.setattr(token_views, 'authenticate', Mock(return_value=None))
-
-    with pytest.raises(NotAuthenticatedError):
-        controller.login(
-            ObtainTokenPayload(username='admin', password=_WRONG_PASSWORD),
-        )
-
-
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
 async def test_async_obtain_token_login_success(
-    monkeypatch: pytest.MonkeyPatch,
+    dmr_async_rf: DMRAsyncRequestFactory,
     admin_user: User,
 ) -> None:
-    """Ensures async login forwards credentials and authenticates request."""
-    controller = _AsyncObtainTokenController()
-    request = _setup_controller(controller)
-    authenticate = AsyncMock(return_value=admin_user)
-    monkeypatch.setattr(token_views, 'aauthenticate', authenticate)
-    payload = ObtainTokenPayload(username='admin', password=_PASSWORD)
+    """Ensures async login accepts valid credentials."""
+    request = dmr_async_rf.post(
+        '/whatever/',
+        data={'username': _USERNAME, 'password': _PASSWORD},
+    )
 
-    response = await controller.post(payload)
+    response = await dmr_async_rf.wrap(
+        _AsyncObtainTokenController.as_view()(request),
+    )
 
-    assert response == {'token': 'async-response'}
-    authenticate.assert_awaited_once_with(request, **payload)
-    assert request.user is admin_user
-    assert await request.auser() is admin_user
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert json.loads(response.content) == {'token': 'async-response'}
+    assert request.user == admin_user
+    assert await request.auser() == admin_user
 
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
 async def test_async_obtain_token_login_failure(
-    monkeypatch: pytest.MonkeyPatch,
+    dmr_async_rf: DMRAsyncRequestFactory,
+    admin_user: User,
 ) -> None:
     """Ensures async login rejects invalid credentials."""
-    controller = _AsyncObtainTokenController()
-    _setup_controller(controller)
-    monkeypatch.setattr(
-        token_views,
-        'aauthenticate',
-        AsyncMock(return_value=None),
+    request = dmr_async_rf.post(
+        '/whatever/',
+        data={'username': _USERNAME, 'password': _WRONG_PASSWORD},
     )
 
-    with pytest.raises(NotAuthenticatedError):
-        await controller.login(
-            ObtainTokenPayload(username='admin', password=_WRONG_PASSWORD),
-        )
+    response = await dmr_async_rf.wrap(
+        _AsyncObtainTokenController.as_view()(request),
+    )
+
+    assert admin_user.is_active
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.django_db
@@ -175,6 +186,7 @@ def test_sync_issue_token_class_settings(admin_user: User) -> None:
         token_algorithm=_SyncObtainTokenController.token_algorithm,
     )
     assert token is not None
+    assert Token.find_raw(raw_token) is None
     assert len(raw_token) == _SYNC_TOKEN_LENGTH
     assert token.user == admin_user
     assert len(token.name) == _SYNC_TOKEN_LENGTH
@@ -184,27 +196,83 @@ def test_sync_issue_token_class_settings(admin_user: User) -> None:
     )
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('token_secret', 'token_salt', 'token_algorithm'),
+    [
+        (_WRONG_TOKEN_SECRET, _SYNC_TOKEN_SALT, _SYNC_TOKEN_ALGORITHM),
+        (_SYNC_TOKEN_SECRET, _WRONG_TOKEN_SALT, _SYNC_TOKEN_ALGORITHM),
+        (_SYNC_TOKEN_SECRET, _SYNC_TOKEN_SALT, 'sha256'),
+    ],
+)
+def test_sync_token_rejects_single_mismatch(
+    admin_user: User,
+    *,
+    token_secret: str,
+    token_salt: str,
+    token_algorithm: str,
+) -> None:
+    """Ensures each mismatched sync hash setting prevents auth."""
+    raw_token = _SyncObtainTokenController().issue_token(user=admin_user)
+    auth = HeaderTokenSyncAuth(
+        token_secret=token_secret,
+        token_salt=token_salt,
+        token_algorithm=token_algorithm,
+    )
+
+    with pytest.raises(NotAuthenticatedError):
+        auth.authenticate(HttpRequest(), raw_token)
+
+
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
-async def test_async_issue_token_uses_call_settings(admin_user: User) -> None:
-    """Ensures async token issue forwards call-level customizations."""
+async def test_async_issue_token_class_settings(admin_user: User) -> None:
+    """Ensures async token issue forwards controller-level customizations."""
     raw_token = await _AsyncObtainTokenController().issue_token(
         user=admin_user,
         name='async-token',
         expires_at=None,
-        token_size=_ASYNC_TOKEN_SIZE,
-        token_secret=_TOKEN_SECRET,
-        token_salt=_TOKEN_SALT,
-        token_algorithm=_TOKEN_ALGORITHM,
     )
 
     token = await Token.afind_raw(
         raw_token,
-        token_secret=_TOKEN_SECRET,
-        token_salt=_TOKEN_SALT,
-        token_algorithm=_TOKEN_ALGORITHM,
+        token_secret=_AsyncObtainTokenController.token_secret,
+        token_salt=_AsyncObtainTokenController.token_salt,
+        token_algorithm=_AsyncObtainTokenController.token_algorithm,
     )
     assert token is not None
+    assert await Token.afind_raw(raw_token) is None
     assert len(raw_token) == _ASYNC_TOKEN_LENGTH
     assert token.name == 'async-token'
     assert token.expires_at is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize(
+    ('token_secret', 'token_salt', 'token_algorithm'),
+    [
+        (_WRONG_TOKEN_SECRET, _ASYNC_TOKEN_SALT, _ASYNC_TOKEN_ALGORITHM),
+        (_ASYNC_TOKEN_SECRET, _WRONG_TOKEN_SALT, _ASYNC_TOKEN_ALGORITHM),
+        (_ASYNC_TOKEN_SECRET, _ASYNC_TOKEN_SALT, 'sha256'),
+    ],
+)
+async def test_async_token_rejects_single_mismatch(
+    admin_user: User,
+    *,
+    token_secret: str,
+    token_salt: str,
+    token_algorithm: str,
+) -> None:
+    """Ensures each mismatched async hash setting prevents auth."""
+    raw_token = await _AsyncObtainTokenController().issue_token(
+        user=admin_user,
+    )
+    auth = HeaderTokenAsyncAuth(
+        token_secret=token_secret,
+        token_salt=token_salt,
+        token_algorithm=token_algorithm,
+    )
+
+    with pytest.raises(NotAuthenticatedError):
+        await auth.authenticate(HttpRequest(), raw_token)

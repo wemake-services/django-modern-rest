@@ -78,7 +78,6 @@ on the releases page: https://github.com/wemake-services/django-modern-rest/rele
 ### Misc
 
 - Improved testing docs, #1216
-- Added unit coverage for token obtain controller customizations, #1191
 
 
 ## 0.12.1 (2026-07-31)
