@@ -34,7 +34,6 @@
 - [x] Supports content negotiation, has default implementations for `json`, `msgpack`, SSE, Json Lines, and more
 - [x] Strict schema validation of both requests and responses, including errors
 - [x] Supports OpenAPI 3.0 / 3.1 / 3.2 semantic schema generation out of the box
-- [x] Supports `django>=5.0`, including the latest `django==6.1`
 - [x] Supports all your existing `django` primitives and packages, no custom runtimes
 - [x] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), [tracecov](https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html#api-coverage-with-tracecov), bundled `pytest` plugin, and default Django's testing primitives
 - [x] 100% test coverage with 2000+ of carefully designed unit, integration, and property-based tests
