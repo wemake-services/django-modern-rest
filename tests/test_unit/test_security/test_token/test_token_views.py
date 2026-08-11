@@ -6,6 +6,7 @@ from typing import Final, final
 import pytest
 from django.contrib.auth.models import User
 from django.http import HttpRequest, HttpResponse
+from faker import Faker
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
@@ -20,9 +21,6 @@ from dmr.security.token.views import (
 )
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
-_USERNAME: Final = 'admin'
-_PASSWORD: Final = 'password'  # noqa: S105
-_WRONG_PASSWORD: Final = 'wrong'  # noqa: S105
 _SYNC_TOKEN_SECRET: Final = 'sync-secret'  # noqa: S105
 _SYNC_TOKEN_SALT: Final = 'sync-salt'  # noqa: S105
 _SYNC_TOKEN_ALGORITHM: Final = 'sha512'  # noqa: S105
@@ -35,6 +33,22 @@ _ASYNC_TOKEN_SIZE: Final = 20
 _ASYNC_TOKEN_LENGTH: Final = 27
 _WRONG_TOKEN_SECRET: Final = 'wrong-secret'  # noqa: S105
 _WRONG_TOKEN_SALT: Final = 'wrong-salt'  # noqa: S105
+
+
+@pytest.fixture
+def user_password(faker: Faker) -> str:
+    """Create a password for the test user."""
+    return faker.password()
+
+
+@pytest.fixture
+def user(faker: Faker, user_password: str) -> User:
+    """Create a user with explicit authentication details."""
+    return User.objects.create_user(
+        username=faker.unique.user_name(),
+        email=faker.unique.email(),
+        password=user_password,
+    )
 
 
 @final
@@ -67,12 +81,13 @@ class _SyncObtainTokenController(
 @pytest.mark.django_db
 def test_sync_obtain_token_login_success(
     dmr_rf: DMRRequestFactory,
-    admin_user: User,
+    user: User,
+    user_password: str,
 ) -> None:
     """Ensures sync login accepts valid credentials."""
     request = dmr_rf.post(
         '/whatever/',
-        data={'username': _USERNAME, 'password': _PASSWORD},
+        data={'username': user.username, 'password': user_password},
     )
 
     response = _SyncObtainTokenController.as_view()(request)
@@ -80,23 +95,27 @@ def test_sync_obtain_token_login_success(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
     assert json.loads(response.content) == {'token': 'sync-response'}
-    assert request.user == admin_user
+    assert request.user == user
 
 
 @pytest.mark.django_db
 def test_sync_obtain_token_login_failure(
     dmr_rf: DMRRequestFactory,
-    admin_user: User,
+    user: User,
+    user_password: str,
 ) -> None:
     """Ensures sync login rejects invalid credentials."""
     request = dmr_rf.post(
         '/whatever/',
-        data={'username': _USERNAME, 'password': _WRONG_PASSWORD},
+        data={
+            'username': user.username,
+            'password': f'invalid-{user_password}',
+        },
     )
 
     response = _SyncObtainTokenController.as_view()(request)
 
-    assert admin_user.is_active
+    assert user.is_active
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
@@ -132,12 +151,13 @@ class _AsyncObtainTokenController(
 @pytest.mark.django_db(transaction=True)
 async def test_async_obtain_token_login_success(
     dmr_async_rf: DMRAsyncRequestFactory,
-    admin_user: User,
+    user: User,
+    user_password: str,
 ) -> None:
     """Ensures async login accepts valid credentials."""
     request = dmr_async_rf.post(
         '/whatever/',
-        data={'username': _USERNAME, 'password': _PASSWORD},
+        data={'username': user.username, 'password': user_password},
     )
 
     response = await dmr_async_rf.wrap(
@@ -147,27 +167,31 @@ async def test_async_obtain_token_login_success(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
     assert json.loads(response.content) == {'token': 'async-response'}
-    assert request.user == admin_user
-    assert await request.auser() == admin_user
+    assert request.user == user
+    assert await request.auser() == user
 
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
 async def test_async_obtain_token_login_failure(
     dmr_async_rf: DMRAsyncRequestFactory,
-    admin_user: User,
+    user: User,
+    user_password: str,
 ) -> None:
     """Ensures async login rejects invalid credentials."""
     request = dmr_async_rf.post(
         '/whatever/',
-        data={'username': _USERNAME, 'password': _WRONG_PASSWORD},
+        data={
+            'username': user.username,
+            'password': f'invalid-{user_password}',
+        },
     )
 
     response = await dmr_async_rf.wrap(
         _AsyncObtainTokenController.as_view()(request),
     )
 
-    assert admin_user.is_active
+    assert user.is_active
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
