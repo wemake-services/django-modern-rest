@@ -100,7 +100,7 @@ def test_skip_validation(
         config=OpenAPIConfig(
             title='A',
             version='B',
-            openapi_version='wrong',  # type: ignore[arg-type]
+            license='wrong',  # type: ignore[arg-type]
         ),
     )
     request = dmr_rf.get('/whatever/')
