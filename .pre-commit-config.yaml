@@ -58,8 +58,6 @@ repos:
     hooks:
     - id: codespell
       args: ["--write-changes"]
-      additional_dependencies:
-        - tomli
 
   - repo: https://github.com/instrumentl/pre-commit-just
     rev: 0340ee8d7f8341d6b9b03e086ab937f7fa38134c  # frozen: v0.2
