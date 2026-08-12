@@ -30,7 +30,7 @@
 - [x] [Blazingly fast](https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html)
 - [x] Supports async Django without any `sync_to_async` / `async_to_sync` calls inside, tested to work with free-threading builds
 - [x] Supports `pydantic2`, `msgspec`, `attrs`, `dataclasses`, `TypedDict` as model schemas, but not bound to any of these libraries
-- [x] Fully typed and checked with `mypy`, `pyright`, and `pyrefly` in strict modes
+- [x] Fully typed and checked with `mypy`, `pyright`, `pyrefly`, and `ty` in strict modes
 - [x] Supports content negotiation, has default implementations for `json`, `msgpack`, SSE, Json Lines, and more
 - [x] Strict schema validation of both requests and responses, including errors
 - [x] Supports OpenAPI 3.0 / 3.1 / 3.2 semantic schema generation out of the box

@@ -47,8 +47,14 @@ on the releases page: https://github.com/wemake-services/django-modern-rest/rele
 - Renamed `dmr.controller.Controller.get_path_item` to
   `get_schema`, so all methods will be consistent, #1238
 - Removed `dmr_assert_throttling` and `dmr_assert_async_throttling`
-  fixtures from `pytest`, because there was ever no need to make them fixtures,
-  use regular functions instead, #1245
+  fixtures from `pytest`, because there was ever no need to make them fixtures, #1243
+
+## 0.13.1 (unreleased)
+
+### Features
+
+- Add support for `ty` type checker (#1257)
+
 - Removed `dmr.test.types` module, because it was only needed
   for `dmr_pytest` throttling fixtures, #1245
 - Moved `dmr.test.types.ThrottlingWhen` to `dmr.test.throttling`, #1245
