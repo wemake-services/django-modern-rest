@@ -56,10 +56,8 @@ repos:
   - repo: https://github.com/codespell-project/codespell
     rev: 57b21406f092110c18776e39b0bda50d37c945c8  # frozen: v2.4.3
     hooks:
-    - id: codespell
-      args: ["--write-changes"]
-      additional_dependencies:
-        - tomli
+      - id: codespell
+        args: ["--write-changes"]
 
   - repo: https://github.com/instrumentl/pre-commit-just
     rev: 0340ee8d7f8341d6b9b03e086ab937f7fa38134c  # frozen: v0.2
