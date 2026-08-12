@@ -2,16 +2,14 @@ set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 set dotenv-load := false
 
 # Do not update the env, when running
+
 export UV_NO_SYNC := '1'
 
 # List all available recipes
 _default:
     @just --list --unsorted --list-submodules
 
-# Benchmarks module
 mod bench 'benchmarks/justfile'
-
-# Docs module
 mod _docs 'docs/justfile'
 
 # Install dependencies
@@ -36,8 +34,7 @@ lint:
 
 # Run all checks
 [group('dev')]
-test: lint type-check example benchmarks-type-check package \
-  (smoke 'jwt' 'msgspec' 'pydantic') translations unit
+test: lint type-check example benchmarks-type-check package (smoke 'jwt' 'msgspec' 'pydantic') translations unit
 
 # Run all type checkers
 [group('type-check')]
@@ -45,6 +42,7 @@ type-check:
     uv run python -m mypy .
     uv run python -m pyright
     uv run python -m pyrefly check --remove-unused-ignores
+    uv run python -m ty check
 
 # Run unit tests
 [group('testing')]
@@ -139,11 +137,11 @@ docs +targets='clean html': (_docs::build targets)
 # Add new translation strings
 [group('i18n')]
 makemessages:
-  #!/usr/bin/env bash
-  for target in $(find dmr/locale -mindepth 1 -maxdepth 1 -type d); do
-    uv run django-admin makemessages -l "$(basename "$target")" \
-      --add-location never
-  done
+    #!/usr/bin/env bash
+    for target in $(find dmr/locale -mindepth 1 -maxdepth 1 -type d); do
+      uv run django-admin makemessages -l "$(basename "$target")" \
+        --add-location never
+    done
 
 # Run translation QA
 [group('i18n')]

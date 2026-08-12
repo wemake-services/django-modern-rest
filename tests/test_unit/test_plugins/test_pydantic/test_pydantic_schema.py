@@ -156,7 +156,7 @@ def test_generic_objects(
     ('source_type', 'expected_schema'),
     [
         (
-            Optional[None],  # noqa: UP045
+            None,
             Schema(type=OpenAPIType.NULL),
         ),
         (
