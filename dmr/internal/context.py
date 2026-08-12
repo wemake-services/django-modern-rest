@@ -37,6 +37,8 @@ class SerializerContext:
             not allow implicit type conversions.
             Defaults to ``None``, which means that we decide
             on a per-field basis if it is set, if not then on a per-model basis.
+        component_builder_cls: Type that will be used
+            to build parsing components.
 
     """
 

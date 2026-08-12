@@ -178,18 +178,32 @@ If you need granular control, you can change anything.
 - :attr:`~dmr.controller.Controller.allowed_http_methods`
   to support custom HTTP methods like ``QUERY``
   or your custom DSLs on top of HTTP
-- :attr:`~dmr.controller.Controller.endpoint_cls`
-  to customize how endpoints are created
 - :attr:`~dmr.controller.Controller.csrf_exempt`
   to customize whether or not this controller is exempted from the CSRF
 - :attr:`~dmr.controller.Controller.controller_validator_cls`
   to customize how controller is validated in import time
+- :attr:`~dmr.controller.Controller.annotations_context`
+  to customize how controller resolves its annotations
+- :attr:`~dmr.controller.Controller.endpoint_cls`
+  to customize how endpoints are created
 
 You can also customize :class:`~dmr.endpoint.Endpoint`
 to change how API methods are executed:
 
 - :attr:`~dmr.endpoint.Endpoint.serializer_context_cls`
   to customize how model for serialization of incoming data is created
+- :attr:`~dmr.endpoint.Endpoint.request_negotiator_cls`
+  and
+  :attr:`~dmr.endpoint.Endpoint.response_negotiator_cls`
+  to how :doc:`content negotiation <negotiation>` works for this endpoint
+- :attr:`~dmr.endpoint.Endpoint.response_validator_cls`
+  to customize how :ref:`response_validation` works
+
+Basically, everything is customizable.
+We define all classes as attributes of the class that uses them,
+so you can redefine anything that you want to redefine.
+
+Customizability is a **design goal**.
 
 Check out our :doc:`Public API <../deep-dive/public-api>`
 for the most advanced features.

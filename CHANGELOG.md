@@ -17,11 +17,12 @@ What is a public API for us (all criteria must be met)?
 Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
+
 ## WIP
 
 ### Misc
 
-- Remove `tomli` from `additional_dependencies` in pre-commit
+- Improve reusable controllers docs, #1259
 
 
 ## 0.13.0 (2026-08-10)
