@@ -195,7 +195,7 @@ to change how API methods are executed:
 - :attr:`~dmr.endpoint.Endpoint.request_negotiator_cls`
   and
   :attr:`~dmr.endpoint.Endpoint.response_negotiator_cls`
-  to how :doc:`content negotiation <negotiation>` works for this endpoint
+  to how :doc:`content negotiation <../negotiation>` works for this endpoint
 - :attr:`~dmr.endpoint.Endpoint.response_validator_cls`
   to customize how :ref:`response_validation` works
 

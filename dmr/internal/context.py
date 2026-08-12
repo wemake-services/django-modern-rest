@@ -37,13 +37,13 @@ class SerializerContext:
             not allow implicit type conversions.
             Defaults to ``None``, which means that we decide
             on a per-field basis if it is set, if not then on a per-model basis.
-        component_builder_cls: Type that will be used
-            to build parsing components.
 
     """
 
     # Public API:
     strict_validation: ClassVar[bool | None] = None
+
+    #: Type that will be used  to build parsing components.
     component_builder_cls: ClassVar[type[ComponentParserBuilder]] = (
         ComponentParserBuilder
     )
