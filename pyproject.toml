@@ -86,7 +86,7 @@ Funding = "https://github.com/sponsors/wemake-services"
 [dependency-groups]
 dev = [
   "dennis>=1.2,<2",
-  "django-stubs[compatible-mypy]>=6,<6.1",
+  "django-stubs[compatible-mypy]>=6.1,<7",
   "import-linter>=2.5,<3",
   "phonenumbers>=9,<10",
   "pyrefly>=1,<2",

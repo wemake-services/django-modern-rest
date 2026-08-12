@@ -111,3 +111,39 @@ and return type validation.
   the same way for concrete controllers.
 
   We infer the passed values during import time and use real types.
+
+
+Where is it actually helpful in practice?
+-----------------------------------------
+
+We use this feature a lot in the pre-defined views
+we provide with the framework.
+
+For example, we use this in :doc:`auth/jwt` obtain views:
+
+1. :class:`~dmr.security.jwt.views.ObtainTokensSyncController`
+   for sync controllers
+2. :class:`~dmr.security.jwt.views.ObtainTokensAsyncController`
+   for async controllers
+
+Usage example:
+
+.. literalinclude:: /examples/auth/jwt/jwt_obtain_tokens.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+Why is it useful?
+
+1. We can work with any serializer
+2. We can change our request payload to be whatever we need,
+   it would be correctly rendered in the final OpenAPI schema
+3. We can change the response schema,
+   which would also be correctly rendered in the OpenAPI
+
+This feature allows us to have type-safe
+and OpenAPI-first approach to code reusability,
+great DX, and Python-native abstractions.
+
+Users / plugin developers can do the same
+to provide universal customizable controllers.

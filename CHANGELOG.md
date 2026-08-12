@@ -22,7 +22,11 @@ of requirements for an API to count as public.
 
 ### Bugfixes
 
-- `OpenAPIConfig.openapi_version` now support any `str` argument
+- `OpenAPIConfig.openapi_version` now support any `str` argument, #1252
+
+### Misc
+
+- Improve reusable controllers docs, #1259
 
 
 ## 0.13.0 (2026-08-10)
