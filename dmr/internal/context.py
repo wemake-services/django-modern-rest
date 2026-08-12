@@ -42,6 +42,8 @@ class SerializerContext:
 
     # Public API:
     strict_validation: ClassVar[bool | None] = None
+
+    #: Type that will be used  to build parsing components.
     component_builder_cls: ClassVar[type[ComponentParserBuilder]] = (
         ComponentParserBuilder
     )
