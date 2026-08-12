@@ -157,6 +157,11 @@ Next steps:
 - [awesome-django-modern-rest](https://github.com/kondratevdev/awesome-django-modern-rest) - a curated list of resources related to `django-modern-rest`!
 
 
+## Contributors
+
+[![Contributors](https://contrib.rocks/image?repo=wemake-services/django-modern-rest)](https://github.com/wemake-services/django-modern-rest/graphs/contributors)
+
+
 ## License
 
 [MIT](https://github.com/wemake-services/django-modern-rest/blob/master/LICENSE)
