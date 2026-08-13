@@ -23,6 +23,8 @@ from sphinx.application import Sphinx
 # We need `dmr` to be importable from here:
 _ROOT = Path('..').resolve(strict=True)
 sys.path.insert(0, str(_ROOT))
+# We need `tools` to be importable from here:
+sys.path.insert(1, str(Path().resolve(strict=True)))
 
 # -- Project information -----------------------------------------------------
 
