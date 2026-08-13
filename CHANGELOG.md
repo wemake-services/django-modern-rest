@@ -20,6 +20,10 @@ of requirements for an API to count as public.
 
 ## WIP
 
+### Features
+
+- Added default value to `prefix` parameter in `Router.__init__`
+
 ### Bugfixes
 
 - `OpenAPIConfig.openapi_version` now support any `str` argument, #1252

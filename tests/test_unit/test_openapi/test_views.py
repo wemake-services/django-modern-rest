@@ -23,7 +23,7 @@ from dmr.test import DMRRequestFactory
 
 def test_json_view(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that ``OpenAPIJsonView`` returns correct JSON response."""
-    schema = build_schema(Router(''))
+    schema = build_schema(Router())
     request = dmr_rf.get('/whatever/')
 
     response = OpenAPIJsonView.as_view(schema)(request)
@@ -41,7 +41,7 @@ def test_json_view(dmr_rf: DMRRequestFactory) -> None:
 
 def test_yaml_view(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that ``OpenAPIYamlView`` returns correct YAML response."""
-    schema = build_schema(Router(''))
+    schema = build_schema(Router())
     request = dmr_rf.get('/whatever/')
 
     response = OpenAPIYamlView.as_view(schema)(request)
@@ -67,7 +67,7 @@ def test_html_view(
     view_class: type[OpenAPIView],
 ) -> None:
     """Ensure that views return proper ``HTML`` response."""
-    schema = build_schema(Router(''))
+    schema = build_schema(Router())
     request = dmr_rf.get('/whatever/')
 
     response = view_class.as_view(schema)(request)
@@ -96,7 +96,7 @@ def test_skip_validation(
 ) -> None:
     """Ensure that views can skip validation."""
     schema = build_schema(
-        Router(''),
+        Router(),
         config=OpenAPIConfig(
             title='A',
             version='B',
