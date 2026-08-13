@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Callable, Iterator, Mapping
 from typing import (  # noqa: WPS235
     TYPE_CHECKING,
@@ -50,6 +51,63 @@ else:
 
 #: Default singleton for empty values.
 EMPTY: Final = Sentinel('EMPTY')
+
+
+def safe_typevar(
+    typevar_name: str,
+    *,
+    stacklevel: int = 1,
+    globalns: dict[str, Any] | None = None,
+) -> Any:
+    """
+    Typing utility to allow passing :class:`typing.TypeVar` safely.
+
+    By default ``mypy`` and other type-checkers would raise a typing error
+    on a code like this:
+
+    .. code-block:: python
+
+      >>> from typing import TypeVar
+      >>> from http import HTTPStatus
+      >>> from dmr import validate, ResponseSpec
+
+      >>> _ModelT = TypeVar('_ModelT')
+
+      >>> validate(
+      ...     ResponseSpec(
+      ...         # In traditional Python typing spec, it is not allowed
+      ...         # to use type var in this context:
+      ...         _ModelT,  # type: ignore[misc]
+      ...         status_code=HTTPStatus.OK,
+      ...     ),
+      ... )
+      <function ...>
+
+    But, this function can help with this problem with no type errors:
+
+    .. code-block:: python
+
+      >>> validate(
+      ...     ResponseSpec(
+      ...         safe_typevar('_ModelT'),
+      ...         status_code=HTTPStatus.OK,
+      ...     ),
+      ... )
+      <function ...>
+
+    Parameters:
+        typevar_name: TypeVar name to find in the globals.
+        stacklevel: Levels of function frames to get globals from.
+        globalns: Explicit ``globals`` namespace.
+            Has a higher priority than *stacklevel*.
+
+    Raises:
+        KeyError: If *typevar_name* is not found in *globalns*.
+
+    .. versionadded:: 0.14.0
+    """
+    ns = globalns or sys._getframe(stacklevel).f_globals  # pyright: ignore[reportPrivateUsage]  # noqa: SLF001
+    return ns[typevar_name]
 
 
 def infer_type_args(

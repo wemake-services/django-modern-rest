@@ -84,19 +84,19 @@ We would need to implement this method in all of our concrete controllers.
 
 .. tabs::
 
-    .. tab:: msgspec
+  .. tab:: msgspec
 
-      .. literalinclude:: /examples/reusable_code/parsing_msgspec.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/reusable_code/parsing_msgspec.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
-    .. tab:: pydantic
+  .. tab:: pydantic
 
-      .. literalinclude:: /examples/reusable_code/parsing_pydantic.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/reusable_code/parsing_pydantic.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
 Note that ``msgspec`` and ``pydantic`` controllers in this
 case have completely different request and response bodies
@@ -111,6 +111,55 @@ and return type validation.
   the same way for concrete controllers.
 
   We infer the passed values during import time and use real types.
+
+Real endpoints support
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 0.14.0
+
+The same would work with endpoints defined
+with :func:`~dmr.endpoint.validate` function.
+
+The logic is the same, but syntax is a bit different.
+
+.. tip::
+
+  By default ``mypy`` and other type-checkers won't allow to write
+  ``ResponseSpec(_TypeT, status_code=OK)``, because type vars can't be used
+  in such places according
+  to the `typing spec <https://typing.python.org/en/latest/#specification>`_.
+
+  So, we provide :func:`dmr.types.safe_typevar` helper
+  to get rid of the type-checking errors.
+
+Here's how we can do the same example, but with ``@validate``.
+The reusable part:
+
+.. literalinclude:: /examples/reusable_code/validate_reusable.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+And then - implementations:
+
+.. tabs::
+
+  .. tab:: msgspec
+
+    .. literalinclude:: /examples/reusable_code/validate_msgspec.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: pydantic
+
+    .. literalinclude:: /examples/reusable_code/validate_pydantic.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+This way offers you more control over the response headers, cookies, etc.
+Choose the one that fits best of the job.
 
 
 Where is it actually helpful in practice?
