@@ -41,6 +41,7 @@ To do so, use :meth:`~dmr.routing.Router.include` method:
   :linenos:
   :no-imports-spoiler:
 
+Automatically uses our own faster :func:`~dmr.routing.path` function.
 Basically, including another router is the same as writing:
 
 .. code-block:: python
