@@ -186,12 +186,6 @@ def external_path(
     """
     Add an external path onto the DMR routing system.
 
-    .. important::
-
-        This function only works when including
-        a URL into our own :class:`Router` objects,
-        not into the Django own ``urlpatterns``.
-
     Automatically uses our own faster :func:`path` function.
 
     Parameters:
@@ -201,6 +195,14 @@ def external_path(
             Or ``None`` to hide this endpoint.
         kwargs: Init kwargs for the view.
         name: Name to resolve this URL.
+
+    .. important::
+
+        This function only works when including
+        a URL into our own :class:`Router` objects,
+        not into the Django own ``urlpatterns``.
+
+        Django check ``urls.E004`` covers this statically.
 
     See :ref:`external-views` for more info.
 
