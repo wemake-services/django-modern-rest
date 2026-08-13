@@ -22,7 +22,7 @@ of requirements for an API to count as public.
 
 ### Features
 
-- Added default value to `prefix` parameter in `Router.__init__`
+- Added default value to `prefix` parameter in `Router.__init__`, #1267
 
 ### Bugfixes
 
