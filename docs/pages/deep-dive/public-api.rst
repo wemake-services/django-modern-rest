@@ -178,6 +178,8 @@ Utilities
 .. autoclass:: dmr.types.TypeVarInference
   :members:
 
+.. autofunction:: dmr.types.safe_typevar
+
 
 Decorators
 ----------

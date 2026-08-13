@@ -77,17 +77,17 @@
 
 Works for:
 - CPython 3.11+ or PyPy 3.11+
-- Django 5.0+
+- Django 5.0, 5.1, 5.2, 6.0, 6.1
 
 ```bash
 pip install django-modern-rest
 ```
 
 There are several included extras:
-- `'django-modern-rest[msgspec]'` provides `msgspec` support
+- `'django-modern-rest[msgspec]'` provides [`msgspec`](https://github.com/msgspec/msgspec) support
   and the fastest json parsing, recommended to be **always** included
-- `'django-modern-rest[pydantic]'` provides `pydantic` support
-- `'django-modern-rest[attrs]'` provides `attrs` support
+- `'django-modern-rest[pydantic]'` provides [`pydantic`](https://github.com/pydantic/pydantic) support
+- `'django-modern-rest[attrs]'` provides [`attrs`](https://github.com/python-attrs/attrs) support
 - `'django-modern-rest[jwt]'` provides [`pyjwt`](https://github.com/jpadilla/pyjwt) auth support
 - `'django-modern-rest[openapi]'` provides `OpenAPI` [schema validation](https://github.com/python-openapi/openapi-spec-validator),
   `yaml` OpenAPI view,

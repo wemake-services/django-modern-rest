@@ -22,6 +22,7 @@ of requirements for an API to count as public.
 
 ### Features
 
+- Added support of reusable controllers with `@validate`, #1259
 - Added default value to `prefix` parameter in `Router.__init__`, #1267
 
 ### Bugfixes
