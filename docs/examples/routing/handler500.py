@@ -1,5 +1,4 @@
 import pydantic
-from django.urls import include
 
 from dmr import Body, Controller
 from dmr.plugins.pydantic import PydanticSerializer
@@ -25,7 +24,7 @@ router = Router(
 )
 
 urlpatterns = [
-    path(router.prefix, include((router.urls, 'your_app'), namespace='api')),
+    router.to_urlpatterns(namespace='api'),
 ]
 
 handler500 = build_500_handler(router.prefix, serializer=PydanticSerializer)

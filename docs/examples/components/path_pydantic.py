@@ -1,7 +1,6 @@
 from typing import Annotated
 
 import pydantic
-from django.urls import include
 from typing_extensions import TypedDict
 
 from dmr import Controller, Path
@@ -36,7 +35,7 @@ schema = build_schema(router)
 
 urlpatterns = [
     # Register our router in the final url patterns:
-    path(router.prefix, include((router.urls, 'test_app'), namespace='api')),
+    router.to_urlpatterns(namespace='api'),
     # Add swagger:
     path('docs/openapi.json/', OpenAPIJsonView.as_view(schema), name='openapi'),
 ]

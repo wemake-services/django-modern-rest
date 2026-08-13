@@ -364,7 +364,7 @@ router = Router(
 )
 
 urlpatterns = [
-    path(router.prefix, include((router.urls, 'app'), namespace='api')),
+    router.to_urlpatterns(namespace='api'),
 ]
 # No custom 404 handler — API gets HTML error pages
 ```
@@ -386,7 +386,7 @@ router = Router(
 )
 
 urlpatterns = [
-    path(router.prefix, include((router.urls, 'app'), namespace='api')),
+    router.to_urlpatterns(namespace='api'),
 ]
 
 handler404 = build_404_handler(router.prefix, serializer=MsgspecSerializer)
@@ -416,7 +416,7 @@ router = Router(
 )
 
 urlpatterns = [
-    path(router.prefix, include((router.urls, 'app'), namespace='api')),
+    router.to_urlpatterns(namespace='api'),
 ]
 # No custom 500 handler — API gets HTML error pages
 ```
@@ -438,7 +438,7 @@ router = Router(
 )
 
 urlpatterns = [
-    path(router.prefix, include((router.urls, 'app'), namespace='api')),
+    router.to_urlpatterns(namespace='api'),
 ]
 
 handler500 = build_500_handler(router.prefix, serializer=MsgspecSerializer)

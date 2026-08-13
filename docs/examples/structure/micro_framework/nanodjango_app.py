@@ -47,7 +47,7 @@ schema = build_schema(router)
 
 # `app.path()` is called as a function here, not as a decorator,
 # because we mount whole url confs instead of single views:
-app.path(router.prefix, include((router.urls, 'your_app'), namespace='api'))
+app.path(router.to_urlpatterns(namespace='api'))
 app.path(
     'docs/',
     include(
