@@ -103,6 +103,7 @@ class Router:
 
     Attributes:
         prefix: URL prefix for all routes (e.g., 'api/v1/').
+            Defaults to empty string ``''``.
         urls: Sequence of URL patterns and resolvers.
         tags: Optional sequence of tags to group operations in OpenAPI.
             These are merged with endpoint-level tags.
@@ -128,7 +129,7 @@ class Router:
 
     def __init__(
         self,
-        prefix: str,
+        prefix: str = '',
         urls: Iterable[_AnyPattern | URLExternal] = (),
         *,
         tags: Sequence[str] | None = None,
