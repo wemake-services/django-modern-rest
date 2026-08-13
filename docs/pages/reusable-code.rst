@@ -158,7 +158,7 @@ And then - implementations:
       :linenos:
       :language: python
 
-This way offers you more controll over the response headers, cookies, etc.
+This way offers you more control over the response headers, cookies, etc.
 Choose the one that fits best of the job.
 
 
