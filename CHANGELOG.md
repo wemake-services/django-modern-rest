@@ -20,6 +20,11 @@ of requirements for an API to count as public.
 
 ## WIP
 
+### Breaking changes
+
+- Refactored public `routing.ExternalURL` into protected `_ExternalURL`,
+  use `external_path()` function instead, #1262
+
 ### Features
 
 - Added support of reusable controllers with `@validate`, #1259

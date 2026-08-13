@@ -1,7 +1,6 @@
-import dataclasses
 from collections.abc import Callable, Coroutine, Iterable, Sequence
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast, final, overload
+from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast, overload
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import include
@@ -13,6 +12,7 @@ from typing_extensions import override
 
 from dmr.errors import ErrorType, format_error
 from dmr.exceptions import InternalServerError, NotAcceptableError
+from dmr.internal.routing import URLExternal as _URLExternal
 from dmr.openapi.collector import controller_mapping_collector
 from dmr.openapi.objects import PathItem, Paths
 from dmr.openapi.openapi import OpenAPI
@@ -41,62 +41,6 @@ _DjangoView: TypeAlias = Callable[
 _SerializerT = TypeVar('_SerializerT', bound='BaseSerializer')
 
 
-@final
-@dataclasses.dataclass(slots=True, frozen=True)
-class URLExternal:
-    """
-    Represents an external URL that was added to the routing of DMR.
-
-    Prefer :func:`external_path` over using this class directly.
-    See :ref:`external-views` for more info.
-
-    .. versionadded:: 0.13.0
-    """
-
-    url: URLPattern
-    openapi: PathItem | None = dataclasses.field(kw_only=True)
-
-    def get_url_with_metadata(self) -> URLPattern:
-        """Get the url pattern with attached OpenAPI metadata."""
-        self.url.callback.__dmr_external_openapi__ = self.openapi  # type: ignore[attr-defined]
-        return self.url
-
-
-def external_path(
-    route: '_StrOrPromise',
-    view: _DjangoView,
-    *,
-    openapi: PathItem | None,
-    kwargs: dict[str, Any] | None = None,
-    name: str | None = None,
-) -> URLExternal:
-    """
-    Add an external path onto the DMR routing system.
-
-    Parameters:
-        route: String route for the view.
-        view: Function or class view, supports both sync and async callables.
-        openapi: OpenAPI metadata to show in the spec.
-            Or ``None`` to hide this endpoint.
-        kwargs: Init kwargs for the view.
-        name: Name to resolve this URL.
-
-    Prefer this function over using :class:`URLExternal` directly.
-    See :ref:`external-views` for more info.
-
-    .. versionadded:: 0.13.0
-    """
-    return URLExternal(
-        _django_path(  # pyrefly: ignore[no-matching-overload]
-            route,
-            view,  # type: ignore[arg-type]
-            kwargs=kwargs,
-            name=name,
-        ),
-        openapi=openapi,
-    )
-
-
 class Router:
     """
     Collection of HTTP routes for REST framework.
@@ -119,7 +63,7 @@ class Router:
         Added *tags* and *deprecated* parameters.
 
     .. versionchanged:: 0.13.0
-        Now you can pass :class:`URLExternal` objects in *urls*.
+        Now you can pass :func:`external_path` objects in *urls*.
         Also accept any :class:`collections.abc.Sequence` as *tags*.
         *urls* parameter is now optional.
 
@@ -130,7 +74,7 @@ class Router:
     def __init__(
         self,
         prefix: str = '',
-        urls: Iterable[_AnyPattern | URLExternal] = (),
+        urls: Iterable[_AnyPattern | _URLExternal] = (),
         *,
         tags: Sequence[str] | None = None,
         deprecated: bool = False,
@@ -200,15 +144,57 @@ class Router:
 
     def _maybe_process_external(
         self,
-        urls: Iterable[_AnyPattern | URLExternal],
+        urls: Iterable[_AnyPattern | _URLExternal],
     ) -> list[_AnyPattern]:
         django_like_urls: list[_AnyPattern] = []
         for url in urls:
-            if isinstance(url, URLExternal):
+            if isinstance(url, _URLExternal):
                 django_like_urls.append(url.get_url_with_metadata())
             else:
                 django_like_urls.append(url)
         return django_like_urls
+
+
+def external_path(
+    route: '_StrOrPromise',
+    view: _DjangoView,
+    *,
+    openapi: PathItem | None,
+    kwargs: dict[str, Any] | None = None,
+    name: str | None = None,
+) -> '_URLExternal':
+    """
+    Add an external path onto the DMR routing system.
+
+    .. important::
+
+        This function only works when including
+        a URL into our own :class:`Router` objects,
+        not into the Django own ``urlpatterns``.
+
+    Automatically uses our own faster :func:`path` function.
+
+    Parameters:
+        route: String route for the view.
+        view: Function or class view, supports both sync and async callables.
+        openapi: OpenAPI metadata to show in the spec.
+            Or ``None`` to hide this endpoint.
+        kwargs: Init kwargs for the view.
+        name: Name to resolve this URL.
+
+    See :ref:`external-views` for more info.
+
+    .. versionadded:: 0.13.0
+    """
+    return _URLExternal(
+        _django_path(  # pyrefly: ignore[no-matching-overload]
+            route,
+            view,  # type: ignore[arg-type]
+            kwargs=kwargs,
+            name=name,
+        ),
+        openapi=openapi,
+    )
 
 
 # We mimic django's name here:
