@@ -151,7 +151,7 @@ router = Router([...], prefix='api/')
 schema = build_schema(router)
 
 urlpatterns = [
-    path(router.prefix, include((router.urls, 'server'), namespace='api')),
+    router.to_urlpatterns(namespace='api'),
     path('docs/openapi.json/', OpenAPIJsonView.as_view(schema), name='openapi'),
     path('docs/redoc/', RedocView.as_view(schema), name='redoc'),
     path('docs/scalar/', ScalarView.as_view(schema), name='scalar'),

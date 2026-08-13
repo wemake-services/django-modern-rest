@@ -5,7 +5,6 @@ import uuid
 import pydantic
 from django.conf import settings
 from django.core.management import execute_from_command_line
-from django.urls import include
 
 from dmr import Body, Controller
 from dmr.openapi import build_schema
@@ -60,7 +59,7 @@ router = Router(
 schema = build_schema(router)
 
 urlpatterns = [
-    path(router.prefix, include((router.urls, 'your_app'), namespace='api')),
+    router.to_urlpatterns(namespace='api'),
     path('docs/openapi.json/', OpenAPIJsonView.as_view(schema), name='openapi'),
     path('docs/swagger/', SwaggerView.as_view(schema), name='swagger'),
 ]

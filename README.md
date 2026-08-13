@@ -143,7 +143,7 @@ And then route this controller in your `urls.py`:
 ...     ],
 ... )
 >>> urlpatterns = [
-...     path(router.prefix, include((router.urls, 'my_app'), namespace='api')),
+...     router.to_urlpatterns(namespace='api'),
 ... ]
 
 ```

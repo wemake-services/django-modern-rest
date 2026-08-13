@@ -1,7 +1,5 @@
 import json
 
-from django.urls import include
-
 from dmr.openapi import OpenAPIConfig, build_schema, load_schema
 from dmr.openapi.objects import (
     Components,
@@ -67,7 +65,7 @@ openapi_config = OpenAPIConfig(
 schema = build_schema(router, config=openapi_config)
 
 urlpatterns = [
-    path(router.prefix, include((router.urls, 'server'), namespace='api')),
+    router.to_urlpatterns(namespace='api'),
     path(
         'docs/openapi.json/',
         OpenAPIJsonView.as_view(schema),

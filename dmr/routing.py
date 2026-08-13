@@ -136,11 +136,31 @@ class Router:
 
         .. versionadded:: 0.13.0
         """
+        self.urls.append(
+            router.to_urlpatterns(namespace=namespace, app_name=app_name),
+        )
+
+    def to_urlpatterns(
+        self,
+        *,
+        namespace: str | None = None,
+        app_name: str | None = None,
+    ) -> URLResolver:
+        """
+        Convert router instance into ``urlpatterns`` include API.
+
+        Can be used to include one router into another.
+        Or to include a router into the final ``urlpatterns`` list.
+
+        Automatically uses our own faster :func:`path` function.
+
+        .. versionadded:: 0.14.0
+        """
         if app_name is None and namespace is not None:
             app_name = namespace
 
-        arg = router.urls if app_name is None else (router.urls, app_name)
-        self.urls.append(path(router.prefix, include(arg, namespace=namespace)))
+        path_spec = self.urls if app_name is None else (self.urls, app_name)
+        return path(self.prefix, include(path_spec, namespace=namespace))
 
     def _maybe_process_external(
         self,
@@ -187,12 +207,7 @@ def external_path(
     .. versionadded:: 0.13.0
     """
     return _URLExternal(
-        _django_path(  # pyrefly: ignore[no-matching-overload]
-            route,
-            view,  # type: ignore[arg-type]
-            kwargs=kwargs,
-            name=name,
-        ),
+        path(route, view, kwargs=kwargs, name=name),
         openapi=openapi,
     )
 

@@ -23,7 +23,7 @@ class _OtherController(Controller[PydanticFastSerializer]):
 
 
 def test_router_include() -> None:
-    """Ensure that router.include() works as expected."""
+    """Ensure that `router.include()` works as expected."""
     router = Router(
         prefix='api/v1/',
         urls=[path('other/', _OtherController.as_view())],
@@ -49,7 +49,7 @@ def test_router_include_with_args(
     expected_app_name: str | None,
     expected_namespace: str | None,
 ) -> None:
-    """Ensure that router.include() works as expected with arguments."""
+    """Ensure that `router.include()` works as expected with arguments."""
     router = Router(prefix='api/v1/')
     router.include(_user_router, namespace=namespace, app_name=app_name)
 
@@ -57,3 +57,33 @@ def test_router_include_with_args(
     assert isinstance(router.urls[0], URLResolver)
     assert router.urls[0].namespace == expected_namespace
     assert router.urls[0].app_name == expected_app_name
+
+
+def test_router_to_urlpatterns() -> None:
+    """Ensure that `router.to_urlpatterns()` works as expected."""
+    router = Router(
+        prefix='api/v1/',
+        urls=[path('other/', _OtherController.as_view())],
+    )
+
+    patterns = router.to_urlpatterns()
+
+    assert isinstance(patterns, URLResolver)
+    assert patterns.default_kwargs == {}
+    assert patterns.namespace is None
+    assert patterns.app_name is None
+
+
+def test_router_to_urlpatterns_all_args() -> None:
+    """Ensure that `router.to_urlpatterns()` works as expected."""
+    router = Router(
+        prefix='api/v1/',
+        urls=[path('other/', _OtherController.as_view())],
+    )
+
+    patterns = router.to_urlpatterns(namespace='/x', app_name='y')
+
+    assert isinstance(patterns, URLResolver)
+    assert patterns.default_kwargs == {}
+    assert patterns.namespace == '/x'
+    assert patterns.app_name == 'y'

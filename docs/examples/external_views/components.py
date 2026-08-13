@@ -1,7 +1,6 @@
 import random
 
 from django.http import HttpRequest, JsonResponse
-from django.urls import include
 from django.views.decorators.http import require_GET
 
 from dmr.openapi import OpenAPIConfig, build_schema, load_schema
@@ -49,7 +48,7 @@ schema = build_schema(router, config=config)
 
 urlpatterns = [
     # Register our router in the final url patterns:
-    path(router.prefix, include((router.urls, 'test_app'), namespace='api')),
+    router.to_urlpatterns(namespace='api'),
     # Add swagger:
     path('docs/openapi.json/', OpenAPIJsonView.as_view(schema), name='openapi'),
 ]
