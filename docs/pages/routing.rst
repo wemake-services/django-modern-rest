@@ -72,7 +72,7 @@ Basically, including another router is the same as writing:
   )
 
 Use it to reduce the boilerplate code.
-You can also use :meth:`~dmr.routing.Router.as_urlpatterns` if you prefer.
+You can also use :meth:`~dmr.routing.Router.to_urlpatterns` if you prefer.
 It is semantically identical.
 
 

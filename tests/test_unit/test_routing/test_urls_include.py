@@ -59,8 +59,8 @@ def test_router_include_with_args(
     assert router.urls[0].app_name == expected_app_name
 
 
-def test_router_as_urlpatterns() -> None:
-    """Ensure that `router.as_urlpatterns()` works as expected."""
+def test_router_to_urlpatterns() -> None:
+    """Ensure that `router.to_urlpatterns()` works as expected."""
     router = Router(
         prefix='api/v1/',
         urls=[path('other/', _OtherController.as_view())],
@@ -74,8 +74,8 @@ def test_router_as_urlpatterns() -> None:
     assert patterns.app_name is None
 
 
-def test_router_as_urlpatterns_all_args() -> None:
-    """Ensure that `router.as_urlpatterns()` works as expected."""
+def test_router_to_urlpatterns_all_args() -> None:
+    """Ensure that `router.to_urlpatterns()` works as expected."""
     router = Router(
         prefix='api/v1/',
         urls=[path('other/', _OtherController.as_view())],
