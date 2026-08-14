@@ -5,7 +5,7 @@ requires = [ "hatch-fancy-pypi-readme", "hatchling" ]
 
 [project]
 name = "django-modern-rest"
-version = "0.13.0"
+version = "0.14.0"
 description = "Modern REST framework for Django with types and async support"
 keywords = [
   "API",
@@ -86,13 +86,13 @@ Funding = "https://github.com/sponsors/wemake-services"
 [dependency-groups]
 dev = [
   "dennis>=1.2,<2",
-  "django-stubs[compatible-mypy]>=6.1,<7",
+  "django-stubs[compatible-mypy]>=6.1,<6.2",
   "import-linter>=2.5,<3",
   "phonenumbers>=9,<10",
   "pyrefly>=1,<2",
   # TODO: update after `mypy` and `pyrefly` will support `EMPTY` as a type:
   "pyright>=1.1,<1.1.410",
-  "ruff>=0.15,<0.17",
+  "ruff>=0.16,<0.17",
   "schemathesis>=4.14,<5",
   "slotscheck>=0.19,<0.21",
   "types-django-filter>=25.2,<27",
