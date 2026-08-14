@@ -17,5 +17,5 @@ SSEvent(id=1)
 SSEvent(retry=1)
 
 # Wrong:
-SSEvent([], serialize=False)  # type: ignore[call-overload]
-SSEvent()  # type: ignore[call-overload]
+SSEvent([], serialize=False)  # type: ignore[call-overload]  # ty: ignore[no-matching-overload]
+SSEvent()  # type: ignore[call-overload]  # ty: ignore[no-matching-overload]

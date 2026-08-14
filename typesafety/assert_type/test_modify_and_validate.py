@@ -102,20 +102,20 @@ class WrongModifyController(Controller[PydanticSerializer]):
 
 
 class WrongValidateController(Controller[PydanticSerializer]):
-    @validate(  # type: ignore[type-var]
+    @validate(  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
     )
     def get(self) -> int:
         return 1
 
-    @validate(  # type: ignore[type-var]
+    @validate(  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
         ResponseSpec(return_type=list[int], status_code=HTTPStatus.OK),
     )
     async def post(self) -> str:
         return 'a'
 
     # Not enough params:
-    @validate(ResponseSpec(return_type=list[int]))  # type: ignore[call-arg]
+    @validate(ResponseSpec(return_type=list[int]))  # type: ignore[call-arg]  # ty: ignore[missing-argument]
     async def put(self) -> JsonResponse:
         return JsonResponse([])
 
@@ -123,13 +123,13 @@ class WrongValidateController(Controller[PydanticSerializer]):
         ResponseSpec(
             return_type=list[int],
             status_code=HTTPStatus.OK,
-            headers={'X-Custom': NewHeader(value=1)},  # type: ignore[dict-item, arg-type]
+            headers={'X-Custom': NewHeader(value=1)},  # type: ignore[dict-item, arg-type]  # ty: ignore[invalid-argument-type]
         ),
     )
     def patch(self) -> JsonResponse:
         return JsonResponse([])
 
-    @validate()  # type: ignore[call-overload, untyped-decorator]
+    @validate()  # type: ignore[call-overload, untyped-decorator]  # ty: ignore[no-matching-overload]
     async def delete(self) -> HttpResponse:
         return JsonResponse([])
 
@@ -137,13 +137,13 @@ class WrongValidateController(Controller[PydanticSerializer]):
 class WrongAuthMixedController(Controller[PydanticSerializer]):
     auth = (DjangoSessionSyncAuth(), DjangoSessionAsyncAuth())  # type: ignore[assignment]
 
-    @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[arg-type]
+    @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     def get(self) -> str:
         return 'mixed'
 
     @validate(  # type: ignore[arg-type, no-matching-overload, unused-ignore]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
-        auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()],  # type: ignore[arg-type]
+        auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()],  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     )
     async def meta(self) -> HttpResponse:
         return HttpResponse()
@@ -152,13 +152,13 @@ class WrongAuthMixedController(Controller[PydanticSerializer]):
 class WrongThrottlingMixedController(Controller[PydanticSerializer]):
     throttling = (SyncThrottle(1, 2), AsyncThrottle(1, 2))  # type: ignore[assignment]
 
-    @modify(throttling=[SyncThrottle(1, 2), AsyncThrottle(1, 2)])  # type: ignore[arg-type]
+    @modify(throttling=[SyncThrottle(1, 2), AsyncThrottle(1, 2)])  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     def get(self) -> str:
         return 'mixed'
 
     @validate(  # type: ignore[arg-type, no-matching-overload, unused-ignore]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
-        throttling=[SyncThrottle(1, 2), AsyncThrottle(1, 2)],  # type: ignore[arg-type]
+        throttling=[SyncThrottle(1, 2), AsyncThrottle(1, 2)],  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     )
     async def meta(self) -> HttpResponse:
         return HttpResponse()

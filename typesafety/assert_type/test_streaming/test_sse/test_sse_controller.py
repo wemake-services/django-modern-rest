@@ -21,8 +21,8 @@ class InvalidController(SSEController[PydanticSerializer]):
     )
     async def get(self) -> StreamingResponse:
         # Missing `self.to_stream()`
-        return _valid_events()  # type: ignore[return-value]
+        return _valid_events()  # type: ignore[return-value]  # ty: ignore[invalid-return-type]
 
     async def post(self) -> AsyncIterator[Any]:
         # Extra `self.to_stream()`
-        return self.to_stream(_valid_events())  # type: ignore[return-value]
+        return self.to_stream(_valid_events())  # type: ignore[return-value]  # ty: ignore[invalid-return-type]

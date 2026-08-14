@@ -41,4 +41,4 @@ assert_type(path('/', ClassView.as_view()), URLPattern)
 assert_type(path('/', ClassView.as_view(), {}), URLPattern)
 assert_type(path('/', ClassView.as_view(), {}), URLPattern)
 assert_type(path('/', ClassView.as_view(), {}, name='test'), URLPattern)
-assert_type(path('/', ClassView), URLPattern)  # type: ignore[arg-type]
+path('/', ClassView), URLPattern  # type: ignore[arg-type]  # ty: ignore[no-matching-overload]

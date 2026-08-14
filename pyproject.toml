@@ -90,6 +90,8 @@ dev = [
   "import-linter>=2.5,<3",
   "phonenumbers>=9,<10",
   "pyrefly>=1,<2",
+  # TODO: relax the pin after a stable `ty` release:
+  "ty==0.0.70",
   # TODO: update after `mypy` and `pyrefly` will support `EMPTY` as a type:
   "pyright>=1.1,<1.1.410",
   "ruff>=0.16,<0.17",
@@ -448,6 +450,19 @@ plugins = [
 # it is only used in the micro-framework docs example:
 module = [ "nanodjango.*" ]
 ignore_missing_imports = true
+
+
+[tool.ty]
+# More details at https://docs.astral.sh/ty/coming-from-mypy-or-pyright/#stricter-checking-with-ty
+
+[tool.ty.analysis]
+strict-literal-narrowing = true
+strict-generic-narrowing = true
+# `ty` has its own error codes for `# type: ignore`
+respect-type-ignore-comments = false
+
+[tool.ty.src]
+include = [ "typesafety/" ]
 
 
 [tool.pyrefly]
