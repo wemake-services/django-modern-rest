@@ -23,6 +23,8 @@ from sphinx.application import Sphinx
 # We need `dmr` to be importable from here:
 _ROOT = Path('..').resolve(strict=True)
 sys.path.insert(0, str(_ROOT))
+# We need `tools` to be importable from here:
+sys.path.insert(1, str(Path().resolve(strict=True)))
 
 # -- Project information -----------------------------------------------------
 
@@ -143,6 +145,8 @@ nitpick_ignore = [
     (_PY_CLASS, 'dmr.decorators._ReturnT'),
     (_PY_CLASS, 'dmr.decorators._ViewT'),
     (_PY_CLASS, 'dmr.decorators._TypeT'),
+    (_PY_CLASS, 'dmr.internal.routing.URLExternal'),
+    (_PY_CLASS, '_URLExternal'),
     (_PY_CLASS, 'dmr.internal.negotiation.ConditionalType'),
     (_PY_CLASS, 'dmr.security.jwt.views._ObtainTokensT'),
     (_PY_CLASS, 'dmr.security.jwt.views._RefreshTokensT'),

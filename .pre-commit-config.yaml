@@ -30,12 +30,12 @@ repos:
         args: ["--severity=style"]
 
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "b82a24a520c5d496cb7b23b4e9b63537c280f51b"  # frozen: v2.27.0
+    rev: "807836a33bb2d3f17df12e8a6d10e4e24cd80564"  # frozen: v2.27.1
     hooks:
       - id: pyproject-fmt
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 7c55798a78262d14b2074abf623d8a992ebb70d4  # frozen: v0.16.2
+    rev: 65dbdb59d2f2d9c3bdc343c566821ad3319ddaa3  # frozen: v0.16.3
     hooks:
       - id: ruff-check
         args: ["--exit-non-zero-on-fix"]

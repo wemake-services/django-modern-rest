@@ -16,6 +16,18 @@ about its future URL. Why so?
   :language: python
   :linenos:
 
+Notice our helper method :meth:`~dmr.routing.Router.to_urlpatterns`,
+it can be used directly, or if some users prefer,
+it can be replaced with raw ``path()`` call:
+
+.. code-block:: python
+
+  urlpatterns = [
+      path(router.prefix, include((router.urls, 'my_app'), namespace='api')),
+  ]
+
+Which is semantically identical.
+
 .. note::
 
   If you want to parse path parameters, see :doc:`components/path`
@@ -41,6 +53,7 @@ To do so, use :meth:`~dmr.routing.Router.include` method:
   :linenos:
   :no-imports-spoiler:
 
+Automatically uses our own faster :func:`~dmr.routing.path` function.
 Basically, including another router is the same as writing:
 
 .. code-block:: python
@@ -59,6 +72,8 @@ Basically, including another router is the same as writing:
   )
 
 Use it to reduce the boilerplate code.
+You can also use :meth:`~dmr.routing.Router.to_urlpatterns` if you prefer.
+It is semantically identical.
 
 
 Handling 404 errors

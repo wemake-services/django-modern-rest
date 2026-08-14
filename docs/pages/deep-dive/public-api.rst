@@ -105,9 +105,6 @@ Routing
 
 .. autofunction:: dmr.routing.path
 
-.. autoclass:: dmr.routing.URLExternal
-  :members:
-
 .. autofunction:: dmr.routing.external_path
 
 
@@ -177,6 +174,8 @@ Utilities
 
 .. autoclass:: dmr.types.TypeVarInference
   :members:
+
+.. autofunction:: dmr.types.safe_typevar
 
 
 Decorators

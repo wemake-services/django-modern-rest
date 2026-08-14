@@ -891,13 +891,17 @@ class EndpointMetadataValidator:
         *,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> list[ResponseSpec]:
-        all_responses = self._limit_stream_responses(
-            _build_responses(
+        all_responses = self._limit_stream_responses([
+            self._resolve_response_type(
+                response,
+                controller_cls=controller_cls,
+            )
+            for response in _build_responses(
                 payload=payload,
                 controller_cls=controller_cls,
                 modification=self.metadata.modification,
-            ),
-        )
+            )
+        ])
         existing_responses = {
             response.status_code: response for response in all_responses
         }
@@ -908,6 +912,25 @@ class EndpointMetadataValidator:
             ),
         )
         return all_responses
+
+    def _resolve_response_type(
+        self,
+        response: ResponseSpec,
+        *,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> ResponseSpec:
+        # This method resolves `_ModelT` type var in reusable controllers
+        # to its real value.
+        # In case it is not a type var, just return whatever it is.
+        if isinstance(response.return_type, TypeVar):
+            return dataclasses.replace(
+                response,
+                return_type=infer_annotation(
+                    response.return_type,
+                    controller_cls,
+                ),
+            )
+        return response
 
     def _limit_stream_responses(
         self,

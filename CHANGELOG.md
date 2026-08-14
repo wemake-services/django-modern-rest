@@ -18,7 +18,19 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
-## WIP
+## 0.14.0 (2026-08-14)
+
+### Breaking changes
+
+- Refactored public `routing.ExternalURL` into protected `_ExternalURL`,
+  use `external_path()` function instead, #1262
+
+### Features
+
+- Added support of reusable controllers with `@validate`, #1259
+- Added default value to `prefix` parameter in `Router.__init__`, #1267
+- Added `to_urlpatterns` function to include `Router`
+  instances into `urlpatterns` or other routers, #1262
 
 ### Bugfixes
 

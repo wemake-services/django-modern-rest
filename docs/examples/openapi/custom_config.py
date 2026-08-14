@@ -1,5 +1,3 @@
-from django.urls import include
-
 from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.openapi.objects import Server
 from dmr.openapi.views import (
@@ -31,7 +29,7 @@ config = OpenAPIConfig(
 schema = build_schema(router, config=config)
 
 urlpatterns = [
-    path(router.prefix, include((router.urls, 'your_app'), namespace='api')),
+    router.to_urlpatterns(namespace='api'),
     path('docs/openapi.json/', OpenAPIJsonView.as_view(schema), name='openapi'),
     path('docs/swagger/', SwaggerView.as_view(schema), name='swagger'),
     path('docs/scalar/', ScalarView.as_view(schema), name='scalar'),
