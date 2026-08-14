@@ -95,6 +95,8 @@ dev = [
   "ruff>=0.16,<0.17",
   "schemathesis>=4.14,<5",
   "slotscheck>=0.19,<0.21",
+  # TODO: relax the pin after a stable `ty` release:
+  "ty==0.0.70",
   "types-django-filter>=25.2,<27",
   "types-docker>=7.2,<8",
   "types-docutils>=0.22,<0.23",
@@ -473,6 +475,19 @@ exclude = [
   # It has a lot of ugly code:
   "dmr/internal/django.py",
 ]
+
+
+[tool.ty]
+
+# More details at https://docs.astral.sh/ty/coming-from-mypy-or-pyright/#stricter-checking-with-ty
+[tool.ty.analysis]
+strict-literal-narrowing = true
+strict-generic-narrowing = true
+# `ty` has its own error codes for `# type: ignore`
+respect-type-ignore-comments = false
+
+[tool.ty.src]
+include = [ "typesafety/" ]
 
 
 [tool.pytest.ini_options]

@@ -18,7 +18,10 @@ class _MySyncController(Controller[PydanticSerializer]):
         return None
 
 
-assert_type(_MySyncController.post, Callable[[_MySyncController, str], None])
+assert_type(  # ty: ignore[type-assertion-failure]
+    _MySyncController.post,
+    Callable[[_MySyncController, str], None],
+)
 
 
 @final
@@ -29,7 +32,7 @@ class _MyAsyncController(Controller[PydanticSerializer]):
         return None
 
 
-assert_type(
+assert_type(  # ty: ignore[type-assertion-failure]
     _MyAsyncController.put,  # pyright: ignore[reportAssertTypeFailure]
     # mypy and pyright disagree on `Coroutine` vs `CoroutineType`
     Callable[[_MyAsyncController, str], Coroutine[Any, Any, None]],

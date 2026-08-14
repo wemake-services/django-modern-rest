@@ -27,6 +27,7 @@ of requirements for an API to count as public.
 
 ### Features
 
+- Added initial `ty` support, #1257
 - Added support of reusable controllers with `@validate`, #1259
 - Added default value to `prefix` parameter in `Router.__init__`, #1267
 - Added `to_urlpatterns` function to include `Router`

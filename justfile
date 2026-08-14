@@ -45,6 +45,7 @@ type-check:
     uv run python -m mypy .
     uv run python -m pyright
     uv run python -m pyrefly check --remove-unused-ignores
+    uv run python -m ty check --error=all
 
 # Run unit tests
 [group('testing')]

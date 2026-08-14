@@ -33,14 +33,14 @@ def test_reduced_throttling() -> None:
     reduced_throttling(
         MyController,
         method='GET',
-        when='wrong',  # type: ignore[arg-type]
+        when='wrong',  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     )
     reduced_throttling(
         MyController,
         method=HTTPMethod.GET,
-        unknown=1,  # type: ignore[call-arg]
+        unknown=1,  # type: ignore[call-arg]  # ty: ignore[unknown-argument]
     )
-    reduced_throttling()  # type: ignore[call-arg]
+    reduced_throttling()  # type: ignore[call-arg]  # ty: ignore[missing-argument]
 
 
 def test_assert_throttling(
@@ -60,7 +60,7 @@ def test_assert_throttling(
     assert_throttling(
         MyController,
         request_factory,
-        when='wrong_when',  # type: ignore[arg-type]
+        when='wrong_when',  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     )
 
 
@@ -82,5 +82,5 @@ async def test_assert_async_throttling(
     await assert_async_throttling(
         MyController,
         request_factory,
-        when='never',  # type: ignore[arg-type]
+        when='never',  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     )

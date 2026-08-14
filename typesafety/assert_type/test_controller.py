@@ -33,8 +33,8 @@ class MyController(Controller[PydanticSerializer]):
 
 class Handle405Correctly(Controller[PydanticSerializer]):
     def whatever(self, request: HttpRequest) -> None:
-        self.http_method_not_allowed(request)  # type: ignore[deprecated]
-        self.options(request)  # type: ignore[deprecated]
+        self.http_method_not_allowed(request)  # type: ignore[deprecated]  # ty: ignore[deprecated]
+        self.options(request)  # type: ignore[deprecated]  # ty: ignore[deprecated]
 
 
 class OptionsController(Controller[PydanticSerializer]):
