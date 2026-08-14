@@ -18,6 +18,15 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
+## Unreleased
+
+### Bugfixes
+
+- `UserCreateSchema.email` now validates the email format via
+  `pydantic.EmailStr`, so malformed addresses fail at the serializer
+  layer instead of reaching the database, #945
+
+
 ## 0.14.0 (2026-08-14)
 
 ### Breaking changes
