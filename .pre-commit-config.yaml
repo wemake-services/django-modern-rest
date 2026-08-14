@@ -23,11 +23,6 @@ repos:
       - id: zizmor
         args: ["--no-progress", "--fix"]
 
-  - repo: https://github.com/astral-sh/ty-pre-commit
-    rev: d8494b3a705ddc24569d31316df8fab801c04b77  # frozen: v0.0.70
-    hooks:
-      - id: ty
-
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: 745eface02aef23e168a8afb6b5737818efbea95  # frozen: v0.11.0.1
     hooks:

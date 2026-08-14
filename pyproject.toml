@@ -95,7 +95,6 @@ dev = [
   "ruff>=0.15,<0.17",
   "schemathesis>=4.14,<5",
   "slotscheck>=0.19,<0.21",
-  "ty>=0.0.70,<0.0.71",
   "types-django-filter>=25.2,<27",
   "types-docker>=7.2,<8",
   "types-docutils>=0.22,<0.23",
@@ -334,9 +333,6 @@ pydocstyle.convention = "google"
 flake8-gettext.extend-function-names = [ "_" ]
 # For `django_test_app` and `docs` only:
 isort.known-first-party = [ "server", "examples" ]
-# More details at https://docs.astral.sh/ty/coming-from-mypy-or-pyright/#stricter-checking-with-ty
-extend-select = [ "ANN", "PYI" ]
-preview = true
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "typing.TypedDict".msg = "Use typing_extensions.TypedDict instead."
@@ -477,28 +473,6 @@ exclude = [
   # It has a lot of ugly code:
   "dmr/internal/django.py",
 ]
-
-
-[tool.ty]
-
-[tool.ty.analysis]
-strict-literal-narrowing = true
-strict-generic-narrowing = true
-
-[tool.ty.rules]
-# More details at https://docs.astral.sh/ty/coming-from-mypy-or-pyright/#stricter-checking-with-ty
-blanket-ignore-comment = "error"
-missing-type-argument = "error"
-possibly-unresolved-reference = "warn"
-unsupported-dynamic-base = "warn"
-# NOTE: the following rules are known to have a significant number of false positives,
-# which is mostly unavoidable. Enable them at your own risk!
-division-by-zero = "warn"
-possibly-missing-attribute = "warn"
-possibly-missing-import = "warn"
-
-[tool.ty.src]
-include = [ "dmr/", "typesafety/" ]
 
 
 [tool.pytest.ini_options]

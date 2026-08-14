@@ -180,7 +180,7 @@ class ResponseValidator:  # noqa: WPS214
 
     def _validate_body(
         self,
-        structured: object,
+        structured: Any,
         schema: ResponseSpec,
         *,
         content_type: str,

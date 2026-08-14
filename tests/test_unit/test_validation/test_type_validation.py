@@ -182,9 +182,9 @@ def test_invalid_data(
 )
 def test_cast_data_no_strict(
     *,
-    typ: object,
-    raw_data: object,
-    validator_builder: Callable[[object], Callable[..., Any]],
+    typ: Any,
+    raw_data: Any,
+    validator_builder: Callable[[Any], Callable[..., Any]],
     serializer: type[BaseSerializer],
 ) -> None:
     """Ensure that correct data can be validated."""
