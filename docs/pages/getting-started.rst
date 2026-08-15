@@ -56,8 +56,7 @@ Extras for different features:
   since it is `the fastest <https://msgspec.dev/benchmarks>`_
   library out there for this task.
 
-  We also recommend to always install
-  `django-stubs <https://github.com/typeddjango/django-stubs>`_
+  We also recommend to always install `django-stubs`_
   for typing Django itself.
 
 .. note::
@@ -242,23 +241,23 @@ install the ``django-modern-rest`` and run it with:
 
 .. tabs::
 
-    .. tab:: :iconify:`material-icon-theme:uv` uv
+  .. tab:: :iconify:`material-icon-theme:uv` uv
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-            uv run python example.py runserver
+      uv run python example.py runserver
 
-    .. tab:: :iconify:`devicon:poetry` poetry
+  .. tab:: :iconify:`devicon:poetry` poetry
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-            poetry run python example.py runserver
+      poetry run python example.py runserver
 
-    .. tab:: :iconify:`devicon:pypi` pip
+  .. tab:: :iconify:`devicon:pypi` pip
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-            python example.py runserver
+      python example.py runserver
 
 Your API is now live:
 
@@ -287,22 +286,39 @@ It is strict, security-first, battle-proven, highload-tested boilerplate
 for real apps of the modern age.
 
 
+Type checking
+-------------
+
+``django-modern-rest`` officially supports all major Python type-checkers
+in strict modes (listed in the order of recommendation):
+
+- `mypy <https://github.com/python/mypy>`_ which has the best support
+  due to `django-stubs`_ plugin
+- `pyrefly <https://github.com/facebook/pyrefly>`_
+- `pyright <https://github.com/microsoft/pyright>`_
+- `ty <https://github.com/astral-sh/ty>`_
+
+Installing `django-stubs`_ is required for all of them.
+
 Next up
 -------
 
 .. grid:: 1 1 2 2
-    :class-row: surface
-    :padding: 0
-    :gutter: 2
+  :class-row: surface
+  :padding: 0
+  :gutter: 2
 
-    .. grid-item-card:: :octicon:`rocket` Core Concepts
-      :link: core-concepts
-      :link-type: doc
+  .. grid-item-card:: :octicon:`rocket` Core Concepts
+    :link: core-concepts
+    :link-type: doc
 
-      Learn the fundamentals.
+    Learn the fundamentals.
 
-    .. grid-item-card:: :octicon:`gear` Configuration
-      :link: configuration
-      :link-type: doc
+  .. grid-item-card:: :octicon:`gear` Configuration
+    :link: configuration
+    :link-type: doc
 
-      Learn how to configure ``django-modern-rest``.
+    Learn how to configure ``django-modern-rest``.
+
+
+.. _django-stubs: https://github.com/typeddjango/django-stubs

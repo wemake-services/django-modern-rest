@@ -39,8 +39,7 @@ Testing styles support
 We support both:
 
 - :class:`django.test.TestCase` styled tests
-- And `pytest-django <https://pytest-django.readthedocs.io/en/latest>`_
-  styled tests
+- And `pytest-django`_ styled tests
 
 For ``pytest`` we also have a bundled plugin with several different fixtures:
 
@@ -465,9 +464,8 @@ Settings:
 
 .. autofunction:: dmr_pytest.dmr_clean_settings
 
-This fixture shadows the default one from
-`pytest-django`_:
+This fixture shadows the default one from `pytest-django`_:
 
 .. autofunction:: dmr_pytest.settings
 
-.. pytest-django: https://github.com/pytest-dev/pytest-django
+.. _pytest-django: https://github.com/pytest-dev/pytest-django
