@@ -1,6 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import Annotated, Any, ClassVar, Literal, final
+from typing import Annotated, Any, ClassVar, Literal, TypeAlias, final
 
 import pydantic
 import pytest
@@ -15,7 +15,7 @@ from typing_extensions import override
 
 from dmr import Body, Controller, FileMetadata, modify
 from dmr.exceptions import EndpointMetadataError
-from dmr.negotiation import conditional_type
+from dmr.negotiation import ContentType, conditional_type
 from dmr.parsers import (
     DeserializeFunc,
     MultiPartParser,
@@ -604,11 +604,11 @@ class _OctetUploadedFiles(pydantic.BaseModel):
     file: _OctetFileModel
 
 
-_ConditionalUploadedFiles = Annotated[
+_ConditionalUploadedFiles: TypeAlias = Annotated[
     _UploadedFiles | _OctetUploadedFiles,
     conditional_type({
         MULTIPART_CONTENT: _UploadedFiles,
-        'application/octet-stream': _OctetUploadedFiles,
+        ContentType.octet_stream: _OctetUploadedFiles,
     }),
 ]
 
@@ -633,16 +633,12 @@ def test_conditional_file_metadata_multipart(
     """Ensures conditional file metadata works with multipart/form-data."""
     receipt = faker.name().encode('utf8')
     rules = faker.name().encode('utf8')
-    request = dmr_rf.generic(
-        'POST',
+    request = dmr_rf.post(
         '/whatever/',
-        dmr_rf._encode_data(
-            {
-                'receipt': SimpleUploadedFile('receipt.txt', receipt),
-                'rules': SimpleUploadedFile('rules.txt', rules),
-            },
-            MULTIPART_CONTENT,
-        ),
+        {
+            'receipt': SimpleUploadedFile('receipt.txt', receipt),
+            'rules': SimpleUploadedFile('rules.txt', rules),
+        },
         content_type=MULTIPART_CONTENT,
     )
 
@@ -665,7 +661,7 @@ def test_conditional_file_metadata_octet_stream(
     request = dmr_rf.post(
         '/whatever/',
         content,
-        content_type='application/octet-stream',
+        content_type=ContentType.octet_stream,
     )
 
     response = _ConditionalFileController.as_view()(request)
@@ -689,8 +685,10 @@ def test_conditional_file_metadata_octet_stream_with_content_disposition(
     request = dmr_rf.post(
         '/whatever/',
         content,
-        content_type='application/octet-stream',
-        HTTP_CONTENT_DISPOSITION='attachment; name="file"; filename="custom.bin"',
+        content_type=ContentType.octet_stream,
+        HTTP_CONTENT_DISPOSITION=(
+            'attachment; name="file"; filename="custom.bin"'
+        ),
     )
 
     response = _ConditionalFileController.as_view()(request)
