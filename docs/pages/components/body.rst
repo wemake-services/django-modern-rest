@@ -21,57 +21,57 @@ Here's how you can parse ``Body`` with a model:
 
 .. tabs::
 
-    .. tab:: msgspec
+  .. tab:: msgspec
 
-      We support :class:`msgspec.Struct`
-      via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
+    We support :class:`msgspec.Struct`
+    via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
 
-      .. literalinclude:: /examples/components/body_msgspec.py
-        :caption: views.py
-        :language: python
-        :linenos:
+    .. literalinclude:: /examples/components/body_msgspec.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-    .. tab:: pydantic
+  .. tab:: pydantic
 
-      We support :class:`pydantic.BaseModel`
-      via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+    We support :class:`pydantic.BaseModel`
+    via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
 
-      .. literalinclude:: /examples/components/body_pydantic.py
-        :caption: views.py
-        :language: python
-        :linenos:
+    .. literalinclude:: /examples/components/body_pydantic.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-    .. tab:: attrs
+  .. tab:: attrs
 
-      We support :func:`attrs.define`
-      via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
+    We support :func:`attrs.define`
+    via :class:`~dmr.plugins.msgspec.MsgspecSerializer`.
 
-      .. literalinclude:: /examples/components/body_attrs.py
-        :caption: views.py
-        :language: python
-        :linenos:
+    .. literalinclude:: /examples/components/body_attrs.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-    .. tab:: dataclasses
+  .. tab:: dataclasses
 
-      We support :func:`dataclasses.dataclass` via both
-      :class:`~dmr.plugins.msgspec.MsgspecSerializer`
-      and :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+    We support :func:`dataclasses.dataclass` via both
+    :class:`~dmr.plugins.msgspec.MsgspecSerializer`
+    and :class:`~dmr.plugins.pydantic.PydanticSerializer`.
 
-      .. literalinclude:: /examples/components/body_dataclasses.py
-        :caption: views.py
-        :language: python
-        :linenos:
+    .. literalinclude:: /examples/components/body_dataclasses.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-    .. tab:: TypedDict
+  .. tab:: TypedDict
 
-      We support :class:`typing.TypedDict` via both
-      :class:`~dmr.plugins.msgspec.MsgspecSerializer`
-      and :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+    We support :class:`typing.TypedDict` via both
+    :class:`~dmr.plugins.msgspec.MsgspecSerializer`
+    and :class:`~dmr.plugins.pydantic.PydanticSerializer`.
 
-      .. literalinclude:: /examples/components/body_typed_dict.py
-        :caption: views.py
-        :language: python
-        :linenos:
+    .. literalinclude:: /examples/components/body_typed_dict.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
 What happens in this example?
 
@@ -204,6 +204,15 @@ We can cast ``'null'`` back to ``None`` if ``__dmr_cast_null__`` is specified.
 
 You can combine this feature with
 both ``__dmr_split_commas__`` and ``__dmr_force_list__`` as well.
+
+
+Conditional models
+------------------
+
+``django-modern-rest`` support using different request models
+for different request content types.
+
+See :ref:`conditional-types` to learn more.
 
 
 API Reference

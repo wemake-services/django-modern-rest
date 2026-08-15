@@ -357,6 +357,8 @@ class BodyComponent(ComponentParser):
     you can specify ``__dmr_split_commas__`` attribute:
     it must contain a :class:`frozenset` of field aliases
     that will be split by ``','`` char.
+
+    See :ref:`conditional-types` to learn more about conditional bodies.
     """
 
     __slots__ = ()
@@ -777,7 +779,8 @@ class FileMetadataComponent(ComponentParser):
         ...     parsers = (MultiPartParser(),)
         ...
         ...     def post(
-        ...         self, parsed_file_metadata: FileMetadata[ContractPayload]
+        ...         self,
+        ...         parsed_file_metadata: FileMetadata[ContractPayload],
         ...     ) -> str:
         ...         return 'Valid files!'
 
