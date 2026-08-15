@@ -852,8 +852,10 @@ class FileMetadataComponent(ComponentParser):
             model=field_model,
         )
 
+        conditional_types = self.conditional_types(field_model, ())
+        target_model = conditional_types.get(parser.content_type, field_model)
         force_list: frozenset[str] = getattr(
-            field_model,
+            target_model,
             '__dmr_force_list__',
             frozenset(),
         )
@@ -898,8 +900,6 @@ class FileMetadataComponent(ComponentParser):
         with :func:`dmr.negotiation.conditional_type`
         we treat the body as conditional. Otherwise, returns an empty dict.
         """
-        # TODO: test conditional file models and add `application/ocet-stream`
-        # parser support to test it.
         return get_conditional_types(model, model_meta) or {}
 
     @override
