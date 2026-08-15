@@ -296,7 +296,9 @@ class OctetStreamParser(
         """Populate ``request.FILES`` from raw request body."""
         from email.message import EmailMessage  # noqa: PLC0415
 
-        from django.core.files.uploadedfile import SimpleUploadedFile  # noqa: PLC0415
+        from django.core.files.uploadedfile import (
+            SimpleUploadedFile,
+        )
 
         field_name = 'file'
         file_name = 'file'

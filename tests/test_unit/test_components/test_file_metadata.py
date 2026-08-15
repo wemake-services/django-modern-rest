@@ -673,7 +673,10 @@ def test_conditional_file_metadata_octet_stream(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert json.loads(response.content) == {
-        'file': {'content_type': 'application/octet-stream', 'size': len(content)},
+        'file': {
+            'content_type': 'application/octet-stream',
+            'size': len(content),
+        },
     }
 
 
@@ -695,7 +698,10 @@ def test_conditional_file_metadata_octet_stream_with_content_disposition(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert json.loads(response.content) == {
-        'file': {'content_type': 'application/octet-stream', 'size': len(content)},
+        'file': {
+            'content_type': 'application/octet-stream',
+            'size': len(content),
+        },
     }
 
 
