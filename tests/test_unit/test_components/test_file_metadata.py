@@ -601,7 +601,7 @@ class _OctetFileModel(pydantic.BaseModel):
 
 @final
 class _OctetUploadedFiles(pydantic.BaseModel):
-    file: _OctetFileModel
+    file: _OctetFileModel  # noqa: WPS110
 
 
 _ConditionalUploadedFiles: TypeAlias = Annotated[
@@ -657,10 +657,10 @@ def test_conditional_file_metadata_octet_stream(
     faker: Faker,
 ) -> None:
     """Ensures conditional file metadata works with application/octet-stream."""
-    content = faker.name().encode('utf8')
+    file_content = faker.name().encode('utf8')  # noqa: WPS110
     request = dmr_rf.post(
         '/whatever/',
-        content,
+        file_content,
         content_type=ContentType.octet_stream,
     )
 
@@ -671,20 +671,20 @@ def test_conditional_file_metadata_octet_stream(
     assert json.loads(response.content) == {
         'file': {
             'content_type': 'application/octet-stream',
-            'size': len(content),
+            'size': len(file_content),
         },
     }
 
 
-def test_conditional_file_metadata_octet_stream_with_content_disposition(
+def test_conditional_file_metadata_with_disposition(  # noqa: WPS118
     dmr_rf: DMRRequestFactory,
     faker: Faker,
 ) -> None:
     """Ensures OctetStreamParser parses Content-Disposition header."""
-    content = faker.name().encode('utf8')
+    file_content = faker.name().encode('utf8')  # noqa: WPS110
     request = dmr_rf.post(
         '/whatever/',
-        content,
+        file_content,
         content_type=ContentType.octet_stream,
         HTTP_CONTENT_DISPOSITION=(
             'attachment; name="file"; filename="custom.bin"'
@@ -698,7 +698,7 @@ def test_conditional_file_metadata_octet_stream_with_content_disposition(
     assert json.loads(response.content) == {
         'file': {
             'content_type': 'application/octet-stream',
-            'size': len(content),
+            'size': len(file_content),
         },
     }
 

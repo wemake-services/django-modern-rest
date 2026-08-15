@@ -1,3 +1,5 @@
+"""Parsers for different content types."""
+
 import abc
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
@@ -285,7 +287,7 @@ class OctetStreamParser(
     content_type = 'application/octet-stream'
 
     @override
-    def parse(
+    def parse(  # noqa: WPS210
         self,
         to_deserialize: Raw,
         deserializer_hook: DeserializeFunc | None = None,
@@ -302,10 +304,10 @@ class OctetStreamParser(
 
         field_name = 'file'
         file_name = 'file'
-        if cd := request.headers.get('Content-Disposition'):
+        if cd := request.headers.get('Content-Disposition'):  # noqa: WPS332
             msg = EmailMessage()
             msg['content-disposition'] = cd
-            params = msg['content-disposition'].params
+            params = msg['content-disposition'].params  # noqa: WPS110
             field_name = params.get('name') or 'file'
             file_name = params.get('filename') or field_name
 
