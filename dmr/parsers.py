@@ -302,14 +302,15 @@ class OctetStreamParser(
             SimpleUploadedFile,
         )
 
-        field_name = 'file'
+        field_name = 'uploaded_file'
         file_name = 'file'
-        if cd := request.headers.get('Content-Disposition'):  # noqa: WPS332
+        content_disposition = request.headers.get('Content-Disposition')
+        if content_disposition:
             msg = EmailMessage()
-            msg['content-disposition'] = cd
-            params = msg['content-disposition'].params  # noqa: WPS110
-            field_name = params.get('name') or 'file'
-            file_name = params.get('filename') or field_name
+            msg['content-disposition'] = content_disposition
+            disposition_params = msg['content-disposition'].params
+            field_name = disposition_params.get('name') or field_name
+            file_name = disposition_params.get('filename') or field_name
 
         uploaded = SimpleUploadedFile(
             file_name,

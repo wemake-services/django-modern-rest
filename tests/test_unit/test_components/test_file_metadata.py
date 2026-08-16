@@ -601,7 +601,7 @@ class _OctetFileModel(pydantic.BaseModel):
 
 @final
 class _OctetUploadedFiles(pydantic.BaseModel):
-    file: _OctetFileModel  # noqa: WPS110
+    uploaded_file: _OctetFileModel
 
 
 _ConditionalUploadedFiles: TypeAlias = Annotated[
@@ -657,10 +657,10 @@ def test_conditional_file_metadata_octet_stream(
     faker: Faker,
 ) -> None:
     """Ensures conditional file metadata works with application/octet-stream."""
-    file_content = faker.name().encode('utf8')  # noqa: WPS110
+    raw_data = faker.name().encode('utf8')
     request = dmr_rf.post(
         '/whatever/',
-        file_content,
+        raw_data,
         content_type=ContentType.octet_stream,
     )
 
@@ -669,25 +669,25 @@ def test_conditional_file_metadata_octet_stream(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert json.loads(response.content) == {
-        'file': {
+        'uploaded_file': {
             'content_type': 'application/octet-stream',
-            'size': len(file_content),
+            'size': len(raw_data),
         },
     }
 
 
-def test_conditional_file_metadata_with_disposition(  # noqa: WPS118
+def test_octet_stream_content_disposition(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
 ) -> None:
     """Ensures OctetStreamParser parses Content-Disposition header."""
-    file_content = faker.name().encode('utf8')  # noqa: WPS110
+    raw_data = faker.name().encode('utf8')
     request = dmr_rf.post(
         '/whatever/',
-        file_content,
+        raw_data,
         content_type=ContentType.octet_stream,
         HTTP_CONTENT_DISPOSITION=(
-            'attachment; name="file"; filename="custom.bin"'
+            'attachment; name="uploaded_file"; filename="custom.bin"'
         ),
     )
 
@@ -696,9 +696,9 @@ def test_conditional_file_metadata_with_disposition(  # noqa: WPS118
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert json.loads(response.content) == {
-        'file': {
+        'uploaded_file': {
             'content_type': 'application/octet-stream',
-            'size': len(file_content),
+            'size': len(raw_data),
         },
     }
 
@@ -713,8 +713,8 @@ def test_octet_stream_parser_multiple_files(
         b'file2',
         content_type='application/octet-stream',
     )
-    request.FILES['file'] = SimpleUploadedFile('file1.bin', b'file1')
+    request.FILES['uploaded_file'] = SimpleUploadedFile('file1.bin', b'file1')
 
     parser.parse(b'file2', request=request, model=None)
 
-    assert len(request.FILES.getlist('file')) == 2
+    assert len(request.FILES.getlist('uploaded_file')) == 2
