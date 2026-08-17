@@ -64,11 +64,6 @@ email = "mail@kondratev.dev"
 name = "Alexey Potapov"
 email = "me@black-as-ink.ru"
 
-[project.entry-points.pytest11]
-# We need this structure because otherwise `pytest` ruins the coverage report.
-# This happens because we have imports in `dmr/__init__.py`
-dmr = "dmr_pytest"
-
 [project.optional-dependencies]
 pydantic = [ "pydantic[email,timezone]>=2.12", "pydantic-extra-types" ]
 msgspec = [ "msgspec>=0.21.1" ]
@@ -81,6 +76,11 @@ Documentation = "https://django-modern-rest.readthedocs.io/en/latest/"
 Changelog = "https://github.com/wemake-services/django-modern-rest/releases"
 GitHub = "https://github.com/wemake-services/django-modern-rest"
 Funding = "https://github.com/sponsors/wemake-services"
+
+[project.entry-points.pytest11]
+# We need this structure because otherwise `pytest` ruins the coverage report.
+# This happens because we have imports in `dmr/__init__.py`
+dmr = "dmr_pytest"
 
 
 [dependency-groups]
@@ -173,13 +173,9 @@ unit-test = [
 ]
 
 
-[tool.hatch.build.targets.sdist]
-include = [
-  "dmr/",
-  "dmr_pytest.py",
-  "LICENSE",
-  "licenses/*.txt",
-]
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+fragments = [ { path = "README.md" } ]
 
 [tool.hatch.build.targets.wheel]
 only-include = [ "dmr", "dmr_pytest.py" ]
@@ -193,9 +189,13 @@ require-runtime-dependencies = true
 mypy-args = [ "--ignore-missing-imports" ]
 options = { debug_level = "0", opt_level = "3" }
 
-[tool.hatch.metadata.hooks.fancy-pypi-readme]
-content-type = "text/markdown"
-fragments = [ { path = "README.md" } ]
+[tool.hatch.build.targets.sdist]
+include = [
+  "dmr/",
+  "dmr_pytest.py",
+  "LICENSE",
+  "licenses/*.txt",
+]
 
 
 [tool.uv]
@@ -336,9 +336,6 @@ flake8-gettext.extend-function-names = [ "_" ]
 # For `django_test_app` and `docs` only:
 isort.known-first-party = [ "server", "examples" ]
 
-[tool.ruff.lint.flake8-tidy-imports.banned-api]
-"typing.TypedDict".msg = "Use typing_extensions.TypedDict instead."
-
 [tool.ruff.lint.per-file-ignores]
 # Allow imports inside fixtures:
 "dmr_pytest.py" = [ "PLC0415" ]
@@ -362,6 +359,9 @@ isort.known-first-party = [ "server", "examples" ]
 # Allow benchmarks to not have docs and do scripting:
 "benchmarks/**/*.py" = [ "D", "S" ]
 "typesafety/**/*.py" = [ "D" ]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"typing.TypedDict".msg = "Use typing_extensions.TypedDict instead."
 
 
 [tool.codespell]
@@ -479,15 +479,15 @@ exclude = [
 
 [tool.ty]
 
+[tool.ty.src]
+include = [ "typesafety/" ]
+
 # More details at https://docs.astral.sh/ty/coming-from-mypy-or-pyright/#stricter-checking-with-ty
 [tool.ty.analysis]
 strict-literal-narrowing = true
 strict-generic-narrowing = true
 # `ty` has its own error codes for `# type: ignore`
 respect-type-ignore-comments = false
-
-[tool.ty.src]
-include = [ "typesafety/" ]
 
 
 [tool.pytest.ini_options]
