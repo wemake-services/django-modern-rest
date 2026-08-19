@@ -17,19 +17,68 @@ Requiring auth
 
   Read more: https://docs.djangoproject.com/en/stable/topics/auth/default/
 
-We provide two classes to require JWT auth in your API:
+We provide several classes to require JWT auth in your API,
+depending on where the token is transferred:
 
-- :class:`~dmr.security.jwt.auth.JWTSyncAuth` for sync views
-- :class:`~dmr.security.jwt.auth.JWTAsyncAuth` for async views
+.. tabs::
 
-Example, how to use the auth class and how to get ``self.request.user``:
+  .. tab:: Token in headers
 
-.. literalinclude:: /examples/auth/jwt/using_jwt.py
-  :caption: views.py
-  :linenos:
-  :language: python
+    When in doubt, use this as the default way to receive tokens.
+
+    Use :class:`~dmr.security.jwt.auth.JWTSyncAuth` for sync views
+    and :class:`~dmr.security.jwt.auth.JWTAsyncAuth` for async views.
+
+    You can customize:
+
+    - Security scheme name, default: ``jwt``
+    - Header name, default: ``Authorization``
+    - Header value prefix, default: ``Bearer``
+    - :meth:`Advanced jwt parameters <dmr.security.jwt.token.JWToken.decode>`
+
+    Example, how to use the auth class and how to get ``self.request.user``:
+
+    .. literalinclude:: /examples/auth/jwt/using_jwt.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: Token in cookies
+
+    Use :class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth` for sync views
+    and :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth` for async views.
+
+    Unlike the ``Authorization`` header, the cookie stores
+    the encoded token as-is, without any ``Bearer `` prefix.
+
+    .. note::
+
+      We enforce CSRF for this auth as well.
+      See also: https://docs.djangoproject.com/en/stable/ref/csrf
+
+      CSRF is only checked when the cookie is actually present,
+      so that requests without it can still fall through
+      to the next auth in the chain.
+
+    You can customize:
+
+    - Security scheme name, default: ``jwt``
+    - Cookie name, default: ``access_token``
+    - :meth:`Advanced jwt parameters <dmr.security.jwt.token.JWToken.decode>`
+
+    .. literalinclude:: /examples/auth/jwt/using_jwt_cookie.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
 Custom user models are automatically supported.
+
+.. tip::
+
+  Auth classes are tried in order, so you can accept both transports
+  at once with ``auth = (CookieJWTSyncAuth(), JWTSyncAuth())``.
+  The cookie auth returns ``None`` when its cookie is missing,
+  which lets the header auth run next.
 
 Customizing auth
 ~~~~~~~~~~~~~~~~
@@ -176,6 +225,46 @@ On any validation failure it returns ``401 Unauthorized``.
   :language: python
 
 
+Issuing tokens as cookies
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth` reads tokens,
+but something has to write them first.
+
+Cookie values are only known at runtime,
+so use a "real endpoint" for this: describe the cookies with
+:class:`~dmr.cookies.CookieSpec` in :func:`~dmr.endpoint.validate`
+and set them with :class:`~dmr.cookies.NewCookie`
+in :meth:`~dmr.controller.Controller.to_response`.
+
+.. literalinclude:: /examples/auth/jwt/jwt_cookie_tokens.py
+  :caption: views.py
+  :linenos:
+  :emphasize-lines: 30-47, 57-74
+  :language: python
+
+Note how the tokens never appear in the response body:
+they are only readable by the browser's cookie jar,
+never by scripts running on the page.
+
+.. danger::
+
+  Always set ``httponly=True`` and ``secure=True`` on these cookies.
+  Without ``httponly`` any XSS on your pages can read the token,
+  and without ``secure`` it can leak over plain HTTP.
+
+  Prefer ``samesite='strict'`` (or at least ``'lax'``)
+  and scope the refresh token to the refresh endpoint's ``path``,
+  so it is never sent to the rest of your API.
+
+To log the user out, set the same cookies to an empty value
+with ``max_age=0``, which tells the browser to drop them right away.
+Blocklisting the access token on logout is a good idea too,
+see :ref:`the section below <blocklisting-tokens>`.
+
+
+.. _blocklisting-tokens:
+
 Blocklisting tokens
 -------------------
 
@@ -219,6 +308,14 @@ API Reference
   :inherited-members:
 
 .. autoclass:: dmr.security.jwt.auth.JWTAsyncAuth
+  :members:
+  :inherited-members:
+
+.. autoclass:: dmr.security.jwt.cookie.CookieJWTSyncAuth
+  :members:
+  :inherited-members:
+
+.. autoclass:: dmr.security.jwt.cookie.CookieJWTAsyncAuth
   :members:
   :inherited-members:
 
