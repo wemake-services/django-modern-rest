@@ -49,7 +49,7 @@ depending on where the token is transferred:
     and :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth` for async views.
 
     Unlike the ``Authorization`` header, the cookie stores
-    the encoded token as-is, without any ``Bearer `` prefix.
+    the encoded token as-is, without any ``Bearer`` prefix.
 
     .. note::
 

@@ -78,7 +78,7 @@ class _BaseCookieJWTAuth(ResponseSpecProvider):
         Cookies store the encoded token as-is.
 
         Unlike the ``Authorization`` header, a cookie value has no
-        ``Bearer `` prefix to strip.
+        ``Bearer`` prefix to strip.
         """
         return header or None
 
