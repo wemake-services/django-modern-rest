@@ -16,7 +16,6 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.jwt import JWToken
 from dmr.security.jwt.views import ObtainTokensPayload
 
-
 _SAMESITE: Final = 'strict'
 _ACCESS_TTL: Final = dt.timedelta(minutes=10)
 _REFRESH_TTL: Final = dt.timedelta(days=10)
