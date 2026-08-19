@@ -365,3 +365,126 @@ It’s your type-safe layer around Django’s liquid core.
   :caption: views.py
   :language: python
   :linenos:
+
+
+django-modern-schemas
+---------------------
+
+If you want to automate the schema definition part and derive your
+serializer schemas from the models you already have, you can use
+`django-modern-schemas <https://github.com/open-byte/django-modern-schemas>`_.
+
+- Generates :class:`pydantic.BaseModel` subclasses
+  from your :class:`~django.db.models.Model` definitions,
+  reusing field types, constraints, defaults, choices and relationships,
+  so things like ``max_length`` are declared once.
+- Keeps the API contract explicit: ``fields``, ``exclude`` and ``optional``
+  define what a schema exposes, so read, create and ``PATCH`` schemas
+  are built from the same model without repeating it.
+- Maps model methods and dotted ORM paths into schema fields with
+  ``MethodSource`` and ``Source``, including reverse relations,
+  nested schemas and aggregates.
+- ``ModelSchema`` is generic in its model, so ``.create()``, ``.update()``
+  and ``.save()`` are typed as returning that exact model.
+- Needs nothing in ``INSTALLED_APPS``: schemas are regular Python classes.
+
+Schemas are declared from the model, plus any extra fields they need:
+
+.. code-block:: python
+  :caption: schemas.py
+
+  from typing import Annotated
+
+  from django.contrib.auth.models import User
+  from django_modern_schemas import MethodSource, ModelSchema
+
+
+  class UserSchema(ModelSchema[User]):
+      full_name: Annotated[str, MethodSource('get_full_name')]
+
+      class Config:
+          model = User
+          fields = ('id', 'username', 'email')
+
+
+  class UserCreateSchema(ModelSchema[User]):
+      class Config:
+          model = User
+          fields = ('username', 'email', 'first_name', 'last_name')
+
+From the controller's point of view they are just ``pydantic`` schemas:
+:class:`~django.db.models.query.QuerySet`
+and :class:`~django.db.models.Model` instances are valid inputs,
+and ``.save()`` writes a parsed body back to the database.
+The very same schema types a collection and a single object:
+
+.. code-block:: python
+  :caption: views.py
+
+  from typing import Final, final
+
+  import pydantic
+  from django.contrib.auth.models import User
+  from django.shortcuts import get_object_or_404
+  from typing_extensions import TypedDict
+
+  from dmr import Body, Controller, Path
+  from dmr.plugins.pydantic import PydanticSerializer
+  from .schemas import UserCreateSchema, UserSchema
+
+  _UserList: Final = pydantic.TypeAdapter(list[UserSchema])
+
+
+  class _UserPath(TypedDict):
+      user_id: int
+
+
+  @final
+  class UsersController(Controller[PydanticSerializer]):
+      def get(self) -> list[UserSchema]:
+          """List existing users."""
+          return _UserList.validate_python(User.objects.all())
+
+      def post(self, parsed_body: Body[UserCreateSchema]) -> UserSchema:
+          """Create new user."""
+          return UserSchema.model_validate(parsed_body.save())
+
+
+  @final
+  class UserDetailController(Controller[PydanticSerializer]):
+      def get(self, parsed_path: Path[_UserPath]) -> UserSchema:
+          """Fetch a single user."""
+          return UserSchema.model_validate(
+              get_object_or_404(User, pk=parsed_path['user_id']),
+          )
+
+Which gives you the fields declared in the schema,
+computed ones included:
+
+.. code-block:: bash
+
+  curl -s http://localhost:8000/api/users/1/
+
+.. code-block:: json
+
+  {
+    "id": 1,
+    "username": "ada",
+    "email": "ada@example.com",
+    "full_name": "Ada Lovelace"
+  }
+
+.. note::
+
+  Schemas generated this way follow your database tables by default.
+  Keep ``fields`` and ``exclude`` explicit
+  to decide what your API really exposes,
+  as described in the sections above.
+
+.. seealso::
+
+  A complete application built with ``django-modern-rest`` and
+  ``django-modern-schemas``, with nested schemas, reverse relations
+  and partial updates, can be found here:
+
+  https://github.com/open-byte/dmr-with-django-modern-schemas
