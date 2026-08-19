@@ -760,6 +760,19 @@ wheels = [
 ]
 
 [[package]]
+name = "django-allauth"
+version = "65.19.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "asgiref" },
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cf/93/776a61df6ce71f82e98afa1938c6e540ec239a8f80b2747c3c33cb9581cc/django_allauth-65.19.1.tar.gz", hash = "sha256:999d01d5c422a82734cf5804df9f5a0d1d4ddd6acbb2f807db976ed7d49f9cb3", size = 2286662, upload-time = "2026-08-13T10:02:17.956Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/77/f6/3c5f838f2e66903b422ae45f8f44b9e5da6457a4d4da125d426b339d86c8/django_allauth-65.19.1-py3-none-any.whl", hash = "sha256:5c507b53c45d2b7cbfcac7643d0123d5f0a7df7d43a882edcdbedb5f6b396421", size = 2074420, upload-time = "2026-08-13T10:02:26.339Z" },
+]
+
+[[package]]
 name = "django-csp"
 version = "4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -809,6 +822,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+allauth = [
+    { name = "django-allauth" },
+]
 attrs = [
     { name = "attrs" },
     { name = "msgspec" },
@@ -933,6 +949,7 @@ unit-test = [
 requires-dist = [
     { name = "attrs", marker = "extra == 'attrs'", specifier = ">=26" },
     { name = "django", specifier = ">=5,<6.2" },
+    { name = "django-allauth", marker = "extra == 'allauth'", specifier = ">=65.4,<66" },
     { name = "msgspec", marker = "extra == 'attrs'", specifier = ">=0.21.1" },
     { name = "msgspec", marker = "extra == 'msgspec'", specifier = ">=0.21.1" },
     { name = "openapi-spec-validator", marker = "extra == 'openapi'", specifier = ">=0.8" },
@@ -943,7 +960,7 @@ requires-dist = [
     { name = "pyyaml", marker = "extra == 'openapi'" },
     { name = "typing-extensions", specifier = ">=4.12" },
 ]
-provides-extras = ["pydantic", "msgspec", "attrs", "jwt", "openapi"]
+provides-extras = ["pydantic", "msgspec", "attrs", "jwt", "allauth", "openapi"]
 
 [package.metadata.requires-dev]
 build = [

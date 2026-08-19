@@ -135,6 +135,8 @@ nitpick_ignore = [
     (_PY_CLASS, '_MethodSyncHandler'),
     (_PY_CLASS, '_MethodAsyncHandler'),
     (_PY_CLASS, 'BlocklistedJWToken'),
+    # Django does not document its session backend base class:
+    (_PY_CLASS, 'SessionBase'),
     (_PY_CLASS, '_BaseThrottle'),
     (_PY_CLASS, 'dmr.throttling.base._BackendT'),
     (_PY_CLASS, 'redis.Redis'),

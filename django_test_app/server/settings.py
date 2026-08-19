@@ -65,6 +65,9 @@ INSTALLED_APPS = [
     'dmr.security.token.app',
     # Third party:
     'csp',
+    'allauth',
+    'allauth.account',
+    'allauth.headless',
 ]
 
 MIDDLEWARE = [
@@ -79,6 +82,8 @@ MIDDLEWARE = [
     'django.middleware.locale.LocaleMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Third party:
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'server.urls'

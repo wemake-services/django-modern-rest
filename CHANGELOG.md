@@ -18,6 +18,15 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
+## WIP
+
+### Features
+
+- Added `XSessionTokenSyncAuth` and `XSessionTokenAsyncAuth`
+  to authenticate `django-allauth` headless session tokens,
+  available via the new `django-modern-rest[allauth]` extra, #1193
+
+
 ## 0.14.0 (2026-08-14)
 
 ### Breaking changes
