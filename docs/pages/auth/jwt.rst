@@ -356,7 +356,7 @@ API Reference
 
 .. note::
 
-  ``JWTSyncAuth`` and ``JWTAsyncAuth`` are kept as aliases of
+  Since version 0.15.0 ``JWTSyncAuth`` and ``JWTAsyncAuth`` are kept as aliases of
   :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth` and
   :class:`~dmr.security.jwt.auth.HeaderJWTAsyncAuth`.
   Existing code keeps working unchanged.
