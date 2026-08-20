@@ -70,8 +70,12 @@ client they serve, and session tokens only exist for the ``app`` one:
 .. literalinclude:: /examples/auth/allauth/allauth_external_views.py
   :caption: urls.py
   :linenos:
-  :emphasize-lines: 64-75
+  :emphasize-lines: 19-32
   :language: python
+
+Your own endpoints then sit behind
+:class:`~dmr.security.allauth.auth.XSessionTokenSyncAuth`,
+as shown :ref:`below <allauth-requiring-auth>`.
 
 .. warning::
 
@@ -82,6 +86,8 @@ client they serve, and session tokens only exist for the ``app`` one:
   methods, and returns ``500`` for a JSON body that is not an object.
   Pass ``openapi=None`` to route such a view without publishing it.
 
+
+.. _allauth-requiring-auth:
 
 Requiring auth
 --------------

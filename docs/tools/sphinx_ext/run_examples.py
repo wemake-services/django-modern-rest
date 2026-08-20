@@ -264,6 +264,11 @@ class _BaseBuilder:  # noqa: WPS214
                 'server.apps.model_simple',
                 'server.apps.model_fk',
                 'server.apps.token_auth',
+                # Needed by the `allauth` auth examples, its headless
+                # views import `allauth.account` models on import:
+                'allauth',
+                'allauth.account',
+                'allauth.headless',
             ],
             MIDDLEWARE=[
                 'django.middleware.security.SecurityMiddleware',
@@ -274,6 +279,7 @@ class _BaseBuilder:  # noqa: WPS214
                 'django.middleware.locale.LocaleMiddleware',
                 'django.contrib.messages.middleware.MessageMiddleware',
                 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+                'allauth.account.middleware.AccountMiddleware',
             ],
             USE_TZ=True,
             USE_I18N=True,
