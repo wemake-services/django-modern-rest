@@ -18,7 +18,14 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
-## WIP
+## 0.15.0 WIP
+
+### Features
+
+- Added `CookieJWTSyncAuth` and `CookieJWTAsyncAuth`
+  to read JWT tokens from cookies instead of headers, #1193
+- Added `HeaderJWTSyncAuth` and `HeaderJWTAsyncAuth`,
+  `JWTSyncAuth` and `JWTAsyncAuth` are kept as their aliases, #1193
 
 ### Features
 

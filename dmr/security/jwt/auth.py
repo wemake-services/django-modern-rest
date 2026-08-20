@@ -3,8 +3,9 @@
 # https://github.com/litestar-org/litestar/blob/main/litestar/security/jwt/auth.py
 # https://github.com/litestar-org/litestar/blob/main/LICENSE
 
+from abc import abstractmethod
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Final, Literal, Self, overload
+from typing import TYPE_CHECKING, Final, Literal, Self, TypeAlias, overload
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import HttpRequest
@@ -38,12 +39,19 @@ USER_LOOKUP_ERRORS: Final = (
 
 
 class _BaseJWTAuth:  # noqa: WPS214, WPS230
+    """
+    Transport-agnostic part of jwt auth.
+
+    Knows how to decode and validate a token,
+    but not where the token comes from.
+    Subclasses define the transport by implementing
+    :meth:`get_token_from_request` and :meth:`split_encoded_token`.
+    """
+
     __slots__ = (
         'accepted_audiences',
         'accepted_issuers',
         'algorithm',
-        'auth_header',
-        'auth_scheme',
         'enforce_minimum_key_length',
         'leeway',
         'require_claims',
@@ -65,8 +73,6 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         user_id_field: str = 'pk',
         algorithm: str = 'HS256',
         security_scheme_name: str = 'jwt',
-        auth_header: str = 'Authorization',
-        auth_scheme: str = 'Bearer',
         secret: str | None = None,
         token_cls: type[JWToken] = JWToken,
         leeway: int = 0,  # seconds
@@ -102,8 +108,6 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         self.user_id_field = user_id_field
         self.algorithm = algorithm
         self.security_scheme_name = security_scheme_name
-        self.auth_header = auth_header
-        self.auth_scheme = auth_scheme
         self.secret: str = secret or settings.SECRET_KEY
         self.token_cls = token_cls
         self.leeway = leeway
@@ -119,34 +123,12 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         self.enforce_minimum_key_length = enforce_minimum_key_length
 
     @property
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
-        """Provides a security schema definition."""
-        if self._uses_standard_http_bearer_auth():
-            return {
-                self.security_scheme_name: SecurityScheme(
-                    type='http',
-                    scheme=self.auth_scheme,
-                    bearer_format='JWT',
-                    description='JWT token auth',
-                ),
-            }
-
-        return {
-            self.security_scheme_name: SecurityScheme(
-                type='apiKey',
-                name=self.auth_header,
-                security_scheme_in='header',
-                description=self._get_custom_security_scheme_description(),
-            ),
-        }
-
-    @property
     def security_requirement(self) -> SecurityRequirement:
         """Provides a security schema usage requirement."""
         return {self.security_scheme_name: []}
 
     def prepare_token(self, request: HttpRequest) -> JWToken | None:
-        """Fetches JWToken instance from the auth header."""
+        """Fetches JWToken instance from the request."""
         # We return `None` here, because it might be some other auth.
         # We don't want to falsely trigger any errors just yet.
         token = self.get_token_from_request(request)
@@ -159,21 +141,15 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         # We can raise `NotAuthenticatedError` below this point.
         return self.decode_token(encoded_token)
 
+    @abstractmethod
     def get_token_from_request(self, request: HttpRequest) -> str | None:
-        """
-        Gets the jwt token from the request.
+        """Gets the raw jwt token from the request. Must be overridden."""
+        raise NotImplementedError
 
-        By default, it is in headers.
-        Customize this method to get the token from cookies or body.
-        """
-        return request.headers.get(self.auth_header)
-
+    @abstractmethod
     def split_encoded_token(self, header: str) -> str | None:
-        """Splits string like 'Bearer token' and returns 'token' part."""
-        parts = header.split(' ')
-        if len(parts) != 2 or parts[0] != self.auth_scheme:
-            return None
-        return parts[1]
+        """Extracts the encoded token from a raw value. Must be overridden."""
+        raise NotImplementedError
 
     def decode_token(self, encoded_token: str) -> JWToken:
         """Decodes token object from the encoded string."""
@@ -207,6 +183,51 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         """
         return token.sub
 
+
+class _HeaderJWTAuth:
+    """Reads jwt tokens from a request header."""
+
+    # Slots are declared on the concrete classes below,
+    # otherwise we get a layout conflict when mixing them in.
+    __slots__ = ()
+
+    auth_header: str
+    auth_scheme: str
+    security_scheme_name: str
+
+    @property
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+        """Provides a security schema definition."""
+        if self._uses_standard_http_bearer_auth():
+            return {
+                self.security_scheme_name: SecurityScheme(
+                    type='http',
+                    scheme=self.auth_scheme,
+                    bearer_format='JWT',
+                    description='JWT token auth',
+                ),
+            }
+
+        return {
+            self.security_scheme_name: SecurityScheme(
+                type='apiKey',
+                name=self.auth_header,
+                security_scheme_in='header',
+                description=self._get_custom_security_scheme_description(),
+            ),
+        }
+
+    def get_token_from_request(self, request: HttpRequest) -> str | None:
+        """Gets the jwt token from the request header."""
+        return request.headers.get(self.auth_header)
+
+    def split_encoded_token(self, header: str) -> str | None:
+        """Splits string like 'Bearer token' and returns 'token' part."""
+        parts = header.split(' ')
+        if len(parts) != 2 or parts[0] != self.auth_scheme:
+            return None
+        return parts[1]
+
     def _uses_standard_http_bearer_auth(self) -> bool:
         """Whether the auth contract matches OpenAPI HTTP bearer auth."""
         return (
@@ -223,8 +244,14 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         )
 
 
-class JWTSyncAuth(_BaseJWTAuth, SyncAuth):
-    """Sync jwt auth."""
+class BaseJWTSyncAuth(_BaseJWTAuth, SyncAuth):
+    """
+    Shared sync authentication pipeline for jwt auth.
+
+    Subclass this to add a jwt transport we don't ship out of the box.
+
+    .. versionadded:: 0.15.0
+    """
 
     __slots__ = ()
 
@@ -280,8 +307,14 @@ class JWTSyncAuth(_BaseJWTAuth, SyncAuth):
         set_request_attrs(request, user, token=token)
 
 
-class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
-    """Async jwt auth."""
+class BaseJWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
+    """
+    Shared async authentication pipeline for jwt auth.
+
+    Subclass this to add a jwt transport we don't ship out of the box.
+
+    .. versionadded:: 0.15.0
+    """
 
     __slots__ = ()
 
@@ -339,6 +372,145 @@ class JWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
     ) -> None:
         """Set current user as authed for this request."""
         set_request_attrs(request, user, token=token)
+
+
+class HeaderJWTSyncAuth(_HeaderJWTAuth, BaseJWTSyncAuth):
+    """
+    Sync jwt auth reading the token from a header.
+
+    Defaults to ``Authorization: Bearer <token>``.
+
+    .. versionadded:: 0.15.0
+
+        Previously known as ``JWTSyncAuth``, which is still
+        available as an alias.
+
+    """
+
+    __slots__ = ('auth_header', 'auth_scheme')
+
+    def __init__(  # noqa: WPS211
+        self,
+        *,
+        auth_header: str = 'Authorization',
+        auth_scheme: str = 'Bearer',
+        user_id_field: str = 'pk',
+        algorithm: str = 'HS256',
+        security_scheme_name: str = 'jwt',
+        secret: str | None = None,
+        token_cls: type[JWToken] = JWToken,
+        leeway: int = 0,  # seconds
+        accepted_audiences: str | Sequence[str] | None = None,
+        accepted_issuers: str | Sequence[str] | None = None,
+        require_claims: Sequence[str] | None = None,
+        verify_expiry: bool = True,
+        verify_issued_at: bool = True,
+        verify_jwt_id: bool = True,
+        verify_not_before: bool = True,
+        verify_subject: bool = True,
+        strict_audience: bool = False,
+        enforce_minimum_key_length: bool = True,
+    ) -> None:
+        """
+        Apply possible customizations.
+
+        On top of the regular jwt settings, *auth_header* selects
+        the header to read, and *auth_scheme* is the prefix
+        that the header value must start with.
+        """
+        super().__init__(
+            user_id_field=user_id_field,
+            algorithm=algorithm,
+            security_scheme_name=security_scheme_name,
+            secret=secret,
+            token_cls=token_cls,
+            leeway=leeway,
+            accepted_audiences=accepted_audiences,
+            accepted_issuers=accepted_issuers,
+            require_claims=require_claims,
+            verify_expiry=verify_expiry,
+            verify_issued_at=verify_issued_at,
+            verify_jwt_id=verify_jwt_id,
+            verify_not_before=verify_not_before,
+            verify_subject=verify_subject,
+            strict_audience=strict_audience,
+            enforce_minimum_key_length=enforce_minimum_key_length,
+        )
+        self.auth_header = auth_header
+        self.auth_scheme = auth_scheme
+
+
+class HeaderJWTAsyncAuth(_HeaderJWTAuth, BaseJWTAsyncAuth):
+    """
+    Async jwt auth reading the token from a header.
+
+    Defaults to ``Authorization: Bearer <token>``.
+
+    .. versionadded:: 0.15.0
+
+        Previously known as ``JWTAsyncAuth``, which is still
+        available as an alias.
+
+    """
+
+    __slots__ = ('auth_header', 'auth_scheme')
+
+    def __init__(  # noqa: WPS211
+        self,
+        *,
+        auth_header: str = 'Authorization',
+        auth_scheme: str = 'Bearer',
+        user_id_field: str = 'pk',
+        algorithm: str = 'HS256',
+        security_scheme_name: str = 'jwt',
+        secret: str | None = None,
+        token_cls: type[JWToken] = JWToken,
+        leeway: int = 0,  # seconds
+        accepted_audiences: str | Sequence[str] | None = None,
+        accepted_issuers: str | Sequence[str] | None = None,
+        require_claims: Sequence[str] | None = None,
+        verify_expiry: bool = True,
+        verify_issued_at: bool = True,
+        verify_jwt_id: bool = True,
+        verify_not_before: bool = True,
+        verify_subject: bool = True,
+        strict_audience: bool = False,
+        enforce_minimum_key_length: bool = True,
+    ) -> None:
+        """
+        Apply possible customizations.
+
+        On top of the regular jwt settings, *auth_header* selects
+        the header to read, and *auth_scheme* is the prefix
+        that the header value must start with.
+        """
+        super().__init__(
+            user_id_field=user_id_field,
+            algorithm=algorithm,
+            security_scheme_name=security_scheme_name,
+            secret=secret,
+            token_cls=token_cls,
+            leeway=leeway,
+            accepted_audiences=accepted_audiences,
+            accepted_issuers=accepted_issuers,
+            require_claims=require_claims,
+            verify_expiry=verify_expiry,
+            verify_issued_at=verify_issued_at,
+            verify_jwt_id=verify_jwt_id,
+            verify_not_before=verify_not_before,
+            verify_subject=verify_subject,
+            strict_audience=strict_audience,
+            enforce_minimum_key_length=enforce_minimum_key_length,
+        )
+        self.auth_header = auth_header
+        self.auth_scheme = auth_scheme
+
+
+#: Backwards compatible alias of :class:`HeaderJWTSyncAuth`.
+JWTSyncAuth: TypeAlias = HeaderJWTSyncAuth
+
+#: Backwards compatible alias of :class:`HeaderJWTAsyncAuth`.
+JWTAsyncAuth: TypeAlias = HeaderJWTAsyncAuth
 
 
 @overload
