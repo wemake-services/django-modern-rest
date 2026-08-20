@@ -10,3 +10,7 @@ class User(models.Model):
     is_active = models.BooleanField(db_index=True, default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+class CursorPaginatedTestModel(models.Model):
+    order_field = models.IntegerField(null=True)
