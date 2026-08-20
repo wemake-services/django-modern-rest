@@ -4,7 +4,7 @@ from inline_snapshot import snapshot
 from dmr.openapi.objects import SecurityScheme
 from dmr.security.allauth import XSessionTokenAsyncAuth, XSessionTokenSyncAuth
 
-_AuthType = type[XSessionTokenSyncAuth] | type[XSessionTokenAsyncAuth]
+_AuthType: TypeAlias = type[XSessionTokenSyncAuth] | type[XSessionTokenAsyncAuth]
 
 
 @pytest.mark.parametrize(
