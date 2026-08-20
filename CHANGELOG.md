@@ -18,6 +18,15 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
+## WIP
+
+### Bugfixes
+
+- JWT auth, refresh, and verify now return `401` instead of `500`
+  when the token subject cannot be a value of the user lookup field,
+  for example a non-numeric `sub` with the default integer `pk`
+
+
 ## 0.14.0 (2026-08-14)
 
 ### Breaking changes
