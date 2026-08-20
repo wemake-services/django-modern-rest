@@ -270,7 +270,9 @@ On any validation failure it returns ``401 Unauthorized``.
 Issuing tokens as cookies
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth` reads tokens,
+:class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth`
+and :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth`
+read tokens,
 but something has to write them first.
 
 .. todo::
