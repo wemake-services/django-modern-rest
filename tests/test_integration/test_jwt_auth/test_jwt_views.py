@@ -662,3 +662,59 @@ def test_verify_inactive_user(
     assert response.json() == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_refresh_sync'),
+        reverse('api:jwt_auth:jwt_refresh_async'),
+    ],
+)
+def test_refresh_non_numeric_subject(
+    dmr_client: DMRClient,
+    *,
+    url: str,
+) -> None:
+    """Ensures a subject that cannot be a `pk` raises 401, not 500."""
+    token = JWToken(
+        sub='definitely-not-a-pk',
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+        extras={'type': 'refresh'},
+    ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
+
+    response = dmr_client.post(url, data={'refresh_token': token})
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:jwt_auth:jwt_verify_sync'),
+        reverse('api:jwt_auth:jwt_verify_async'),
+    ],
+)
+def test_verify_non_numeric_subject(
+    dmr_client: DMRClient,
+    *,
+    url: str,
+) -> None:
+    """Ensures a subject that cannot be a `pk` raises 401, not 500."""
+    token = JWToken(
+        sub='definitely-not-a-pk',
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+        extras={'type': 'access'},
+    ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
+
+    response = dmr_client.post(url, data={'access_token': token})
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.json() == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })

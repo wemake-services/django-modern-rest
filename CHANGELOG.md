@@ -25,6 +25,11 @@ of requirements for an API to count as public.
 - Added `XSessionTokenSyncAuth` and `XSessionTokenAsyncAuth`
   to authenticate `django-allauth` headless session tokens,
   available via the new `django-modern-rest[allauth]` extra, #1193
+### Bugfixes
+
+- JWT auth, refresh, and verify now return `401` instead of `500`
+  when the token subject cannot be a value of the user lookup field,
+  for example a non-numeric `sub` with the default integer `pk`
 
 
 ## 0.14.0 (2026-08-14)
