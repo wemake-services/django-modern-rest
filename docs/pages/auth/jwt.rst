@@ -338,14 +338,6 @@ API Reference
 .. autoclass:: dmr.security.jwt.token.JWToken
   :members:
 
-.. autoclass:: dmr.security.jwt.auth.BaseJWTSyncAuth
-  :members:
-  :inherited-members:
-
-.. autoclass:: dmr.security.jwt.auth.BaseJWTAsyncAuth
-  :members:
-  :inherited-members:
-
 .. autoclass:: dmr.security.jwt.auth.HeaderJWTSyncAuth
   :members:
   :inherited-members:
