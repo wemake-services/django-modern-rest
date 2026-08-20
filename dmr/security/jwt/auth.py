@@ -5,9 +5,9 @@
 
 from abc import abstractmethod
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Literal, Self, TypeAlias, overload
+from typing import TYPE_CHECKING, Final, Literal, Self, TypeAlias, overload
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import HttpRequest
 from typing_extensions import override
 
@@ -22,6 +22,20 @@ if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
+
+# Errors that mean "this token subject cannot identify a user".
+#
+# A signed token can carry anything at all in its claims, while
+# the user lookup field is typed. Django raises `ValueError` when
+# an integer column gets a non-numeric value, and `ValidationError`
+# from fields like `UUIDField` that validate on conversion.
+# All of them mean the same thing for us: no such user.
+USER_LOOKUP_ERRORS: Final = (
+    ObjectDoesNotExist,
+    ValidationError,
+    TypeError,
+    ValueError,
+)
 
 
 class _BaseJWTAuth:  # noqa: WPS214, WPS230
@@ -275,7 +289,7 @@ class BaseJWTSyncAuth(_BaseJWTAuth, SyncAuth):
             return get_user_model().objects.get(**{
                 self.user_id_field: self.claim_from_token(token),
             })
-        except ObjectDoesNotExist:
+        except USER_LOOKUP_ERRORS:
             raise NotAuthenticatedError from None
 
     def check_auth(self, user: 'AbstractBaseUser', token: JWToken) -> None:
@@ -338,7 +352,7 @@ class BaseJWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
             return await get_user_model().objects.aget(**{
                 self.user_id_field: self.claim_from_token(token),
             })
-        except ObjectDoesNotExist:
+        except USER_LOOKUP_ERRORS:
             raise NotAuthenticatedError from None
 
     async def check_auth(
