@@ -77,7 +77,7 @@ class _BaseXSessionTokenAuth:
         return request.headers.get(self.header_name)
 
 
-def _authenticate(token: str) -> 'tuple[AbstractBaseUser, SessionBase]':
+def _authenticate(token: str) -> tuple['AbstractBaseUser', 'SessionBase']:
     # Imported lazily, so this module stays importable
     # without calling `django.setup()` first.
     # `django-allauth` ships no type information, hence the ignores:
