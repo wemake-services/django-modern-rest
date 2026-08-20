@@ -69,6 +69,7 @@ pydantic = [ "pydantic[email,timezone]>=2.12", "pydantic-extra-types" ]
 msgspec = [ "msgspec>=0.21.1" ]
 attrs = [ "attrs>=26", "msgspec>=0.21.1" ]
 jwt = [ "pyjwt[crypto]>=2.11" ]
+allauth = [ "django-allauth>=65.4" ]
 openapi = [ "openapi-spec-validator>=0.8", "polyfactory>=3.2", "pyyaml" ]
 
 [project.urls]
@@ -449,6 +450,11 @@ plugins = [
 # `nanodjango` does not ship a `py.typed` marker,
 # it is only used in the micro-framework docs example:
 module = [ "nanodjango.*" ]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# `django-allauth` does not ship a `py.typed` marker:
+module = [ "allauth.*" ]
 ignore_missing_imports = true
 
 

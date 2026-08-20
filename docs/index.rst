@@ -219,6 +219,7 @@ Here are our amazing people who made this project possible.
   pages/auth/django-session.rst
   pages/auth/jwt.rst
   pages/auth/token.rst
+  pages/auth/allauth.rst
 
 
 .. toctree::

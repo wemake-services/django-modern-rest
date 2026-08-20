@@ -27,6 +27,12 @@ of requirements for an API to count as public.
 - Added `HeaderJWTSyncAuth` and `HeaderJWTAsyncAuth`,
   `JWTSyncAuth` and `JWTAsyncAuth` are kept as their aliases, #1193
 
+### Features
+
+- Added `XSessionTokenSyncAuth` and `XSessionTokenAsyncAuth`
+  to authenticate `django-allauth` headless session tokens,
+  available via the new `django-modern-rest[allauth]` extra, #1193
+
 ### Bugfixes
 
 - JWT auth, refresh, and verify now return `401` instead of `500`
