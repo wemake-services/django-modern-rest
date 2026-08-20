@@ -1,6 +1,9 @@
+from typing import final
+
 from django.db import models
 
 
+@final
 class User(models.Model):
     # This is sent to us from another service:
     email = models.EmailField(unique=True)

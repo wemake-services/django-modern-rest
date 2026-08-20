@@ -54,19 +54,19 @@ to be validated / rendered in the schema:
 
 .. tabs::
 
-    .. tab:: msgspec
+  .. tab:: msgspec
 
-      .. literalinclude:: /examples/components/files_msgspec.py
-        :caption: views.py
-        :language: python
-        :linenos:
+    .. literalinclude:: /examples/components/files_msgspec.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-    .. tab:: pydantic
+  .. tab:: pydantic
 
-      .. literalinclude:: /examples/components/files_pydantic.py
-        :caption: views.py
-        :language: python
-        :linenos:
+    .. literalinclude:: /examples/components/files_pydantic.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
 What happens in this example?
 

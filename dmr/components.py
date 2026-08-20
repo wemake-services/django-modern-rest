@@ -810,6 +810,11 @@ class FileMetadataComponent(ComponentParser):
     This will parse a ``multipart/form-data`` request with potentially multiple
     receipts and a single contract files.
 
+    See :ref:`conditional-file-types` to learn more about conditional bodies.
+
+    .. versionchanged:: 0.15.0
+        Added support for conditional types.
+
     .. seealso::
 
         https://docs.djangoproject.com/en/stable/topics/http/file-uploads/
@@ -847,6 +852,7 @@ class FileMetadataComponent(ComponentParser):
         #    when it is possible.
         controller.serializer.deserialize(
             b'',  # it does not matter what to send here.
+            # Actual `parser` will parse data and populate `request.FILES`:
             parser=parser,
             request=controller.request,
             model=field_model,
@@ -893,12 +899,12 @@ class FileMetadataComponent(ComponentParser):
         model_meta: tuple[Any, ...],
     ) -> Mapping[str, Any]:
         """
-        Provide conditional parsing types based on content type.
+        Provide conditional parsing types based on a content type.
 
-        Body model can be conditional based on a content_type.
+        FileMetadata model can be conditional based on the content_type.
         If :data:`typing.Annotated` is passed together
         with :func:`dmr.negotiation.conditional_type`
-        we treat the body as conditional. Otherwise, returns an empty dict.
+        we treat the model as conditional. Otherwise, returns an empty dict.
         """
         return get_conditional_types(model, model_meta) or {}
 

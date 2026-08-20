@@ -18,6 +18,13 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 
+## 0.15.0 WIP
+
+### Features
+
+- Added `FileMetadata` conditional types, #1278
+
+
 ## 0.14.0 (2026-08-14)
 
 ### Breaking changes

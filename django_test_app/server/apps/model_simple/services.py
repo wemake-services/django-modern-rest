@@ -1,3 +1,5 @@
+from typing import final
+
 from django.db import IntegrityError
 from django.db.models import QuerySet
 
@@ -5,6 +7,7 @@ from server.apps.model_simple.models import User
 from server.apps.model_simple.serializers import SimpleUserCreateSchema
 
 
+@final
 class UniqueConstraintError(Exception):
     """Fields ``email`` and ``customer_service_uid`` must be unique."""
 
