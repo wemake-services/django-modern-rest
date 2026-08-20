@@ -124,7 +124,13 @@ def test_schemathesis(
 
     from tracecov.schemathesis import helpers  # noqa: PLC0415
 
-    response = case.call_and_validate()
+    # `werkzeug` leaves `REMOTE_ADDR` out of the WSGI environ entirely,
+    # while every real server sets it. Code that looks up the client IP
+    # then behaves differently under test than in production: for example
+    # `django-allauth` rate limiting answers `403` when it cannot find one.
+    response = case.call_and_validate(
+        environ_base={'REMOTE_ADDR': '127.0.0.1'},
+    )
     # Record interaction for `tracecov` report:
     tracecov_map.record_schemathesis_interactions(
         case.method,
