@@ -18,7 +18,46 @@ Requiring auth
   Read more: https://docs.djangoproject.com/en/stable/topics/auth/default/
 
 We provide several classes to require JWT auth in your API,
-depending on where the token is transferred:
+depending on where the token is transferred.
+
+Which one do you need?
+
+.. list-table::
+  :header-rows: 1
+  :widths: 22 39 39
+
+  * -
+    - Token in headers
+    - Token in cookies
+  * - Classes
+    - :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth`,
+      :class:`~dmr.security.jwt.auth.HeaderJWTAsyncAuth`
+    - :class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth`,
+      :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth`
+  * - Best for
+    - Mobile apps, server-to-server calls, and SPAs
+      that keep the token in memory
+    - Browser apps where JavaScript must never
+      touch the token at all
+  * - Sent by the browser automatically
+    - No, the client attaches the header itself
+    - Yes, on every matching request
+  * - Readable by JavaScript
+    - Yes, the client stores the token itself
+    - No, when the cookie is issued with ``httponly=True``
+  * - If your page gets XSS-ed
+    - The token can be read and stolen
+    - The cookie cannot be read, though requests
+      can still be made on the user's behalf
+  * - CSRF
+    - Not applicable
+    - Enforced by us, needs ``CsrfViewMiddleware``
+  * - Cross-origin setup
+    - Just send the header
+    - Needs ``SameSite``, ``Secure``, and CORS care
+
+When in doubt, use headers. Reach for cookies when the requirement
+is specifically "the frontend must not be able to read the token".
 
 .. tabs::
 
@@ -26,8 +65,11 @@ depending on where the token is transferred:
 
     When in doubt, use this as the default way to receive tokens.
 
-    Use :class:`~dmr.security.jwt.auth.JWTSyncAuth` for sync views
-    and :class:`~dmr.security.jwt.auth.JWTAsyncAuth` for async views.
+    Use :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth` for sync views
+    and :class:`~dmr.security.jwt.auth.HeaderJWTAsyncAuth` for async views.
+
+    They are also available under their older names,
+    ``JWTSyncAuth`` and ``JWTAsyncAuth``.
 
     You can customize:
 
@@ -148,7 +190,7 @@ Here's an example with a lot more customizations:
 
 This example also provides issuer and audience in the token,
 so it can be used together with ``accepted_issuers`` and ``accepted_audiences``
-configurations of :attr:`dmr.security.jwt.auth.JWTSyncAuth`
+configurations of :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth`
 to additionally validate ``aud`` and ``iss`` JWT token claims.
 
 We want to be sure that this class is at the same time:
@@ -231,21 +273,14 @@ Issuing tokens as cookies
 :class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth` reads tokens,
 but something has to write them first.
 
-Cookie values are only known at runtime,
-so use a "real endpoint" for this: describe the cookies with
-:class:`~dmr.cookies.CookieSpec` in :func:`~dmr.endpoint.validate`
-and set them with :class:`~dmr.cookies.NewCookie`
-in :meth:`~dmr.controller.Controller.to_response`.
+.. todo::
 
-.. literalinclude:: /examples/auth/jwt/jwt_cookie_tokens.py
-  :caption: views.py
-  :linenos:
-  :emphasize-lines: 30-47, 57-74
-  :language: python
-
-Note how the tokens never appear in the response body:
-they are only readable by the browser's cookie jar,
-never by scripts running on the page.
+  Provide a reusable controller that issues jwt tokens as cookies,
+  the same way :class:`~dmr.security.jwt.views.ObtainTokensSyncController`
+  issues them in the response body.
+  Until then we deliberately ship no example here,
+  because getting the cookie flags right is the whole point
+  and an example is too easy to copy incorrectly.
 
 .. danger::
 
@@ -303,13 +338,28 @@ API Reference
 .. autoclass:: dmr.security.jwt.token.JWToken
   :members:
 
-.. autoclass:: dmr.security.jwt.auth.JWTSyncAuth
+.. autoclass:: dmr.security.jwt.auth.BaseJWTSyncAuth
   :members:
   :inherited-members:
 
-.. autoclass:: dmr.security.jwt.auth.JWTAsyncAuth
+.. autoclass:: dmr.security.jwt.auth.BaseJWTAsyncAuth
   :members:
   :inherited-members:
+
+.. autoclass:: dmr.security.jwt.auth.HeaderJWTSyncAuth
+  :members:
+  :inherited-members:
+
+.. autoclass:: dmr.security.jwt.auth.HeaderJWTAsyncAuth
+  :members:
+  :inherited-members:
+
+.. note::
+
+  ``JWTSyncAuth`` and ``JWTAsyncAuth`` are kept as aliases of
+  :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth` and
+  :class:`~dmr.security.jwt.auth.HeaderJWTAsyncAuth`.
+  Existing code keeps working unchanged.
 
 .. autoclass:: dmr.security.jwt.cookie.CookieJWTSyncAuth
   :members:

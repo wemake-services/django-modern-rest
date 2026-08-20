@@ -9,7 +9,7 @@ from dmr.exceptions import NotAuthenticatedError
 from dmr.internal.csrf import ensure_csrf
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityScheme
-from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth
+from dmr.security.jwt.auth import BaseJWTAsyncAuth, BaseJWTSyncAuth
 from dmr.security.jwt.token import JWToken
 
 if TYPE_CHECKING:
@@ -25,10 +25,14 @@ DEFAULT_REFRESH_COOKIE: Final = 'refresh_token'
 
 
 class _BaseCookieJWTAuth(ResponseSpecProvider):
+    """Reads jwt tokens from a request cookie."""
+
+    # Slots are declared on the concrete classes below,
+    # otherwise we get a layout conflict when mixing them in.
     __slots__ = ()
 
-    security_scheme_name: str
     cookie_name: str
+    security_scheme_name: str
 
     @property
     def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
@@ -50,6 +54,11 @@ class _BaseCookieJWTAuth(ResponseSpecProvider):
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Declare extra responses for cookie auth + CSRF checks."""
+        # TODO: the 401 spec below duplicates the default one from
+        # `dmr.security.base._BaseAuth.provide_response_specs`.
+        # The same duplication exists in `dmr.security.token.auth.cookie`
+        # and `dmr.security.django_session.auth`. Refactor all of them
+        # to reuse the default spec and only add their own responses.
         return [
             *self._add_new_response(
                 ResponseSpec(
@@ -90,7 +99,7 @@ class _BaseCookieJWTAuth(ResponseSpecProvider):
             ensure_csrf(controller)
 
 
-class CookieJWTSyncAuth(_BaseCookieJWTAuth, JWTSyncAuth):
+class CookieJWTSyncAuth(_BaseCookieJWTAuth, BaseJWTSyncAuth):
     """
     Sync jwt auth reading the token from a cookie.
 
@@ -138,9 +147,9 @@ class CookieJWTSyncAuth(_BaseCookieJWTAuth, JWTSyncAuth):
         """
         Apply possible customizations.
 
-        Same as :class:`~dmr.security.jwt.auth.JWTSyncAuth`,
-        but *cookie_name* replaces ``auth_header`` and ``auth_scheme``,
-        because cookies store the encoded token without any prefix.
+        On top of the regular jwt settings, *cookie_name* selects
+        the cookie to read. There is no scheme prefix to configure,
+        because cookies store the encoded token as-is.
         """
         super().__init__(
             user_id_field=user_id_field,
@@ -173,7 +182,7 @@ class CookieJWTSyncAuth(_BaseCookieJWTAuth, JWTSyncAuth):
         return super().__call__(endpoint, controller)
 
 
-class CookieJWTAsyncAuth(_BaseCookieJWTAuth, JWTAsyncAuth):
+class CookieJWTAsyncAuth(_BaseCookieJWTAuth, BaseJWTAsyncAuth):
     """
     Async jwt auth reading the token from a cookie.
 
@@ -221,9 +230,9 @@ class CookieJWTAsyncAuth(_BaseCookieJWTAuth, JWTAsyncAuth):
         """
         Apply possible customizations.
 
-        Same as :class:`~dmr.security.jwt.auth.JWTAsyncAuth`,
-        but *cookie_name* replaces ``auth_header`` and ``auth_scheme``,
-        because cookies store the encoded token without any prefix.
+        On top of the regular jwt settings, *cookie_name* selects
+        the cookie to read. There is no scheme prefix to configure,
+        because cookies store the encoded token as-is.
         """
         super().__init__(
             user_id_field=user_id_field,
