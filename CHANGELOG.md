@@ -24,8 +24,6 @@ of requirements for an API to count as public.
 
 - Added `CookieJWTSyncAuth` and `CookieJWTAsyncAuth`
   to read JWT tokens from cookies instead of headers, #1193
-- Added `BaseJWTSyncAuth` and `BaseJWTAsyncAuth`, transport-agnostic
-  base classes to build custom JWT transports on, #1193
 - Added `HeaderJWTSyncAuth` and `HeaderJWTAsyncAuth`,
   `JWTSyncAuth` and `JWTAsyncAuth` are kept as their aliases, #1193
 
