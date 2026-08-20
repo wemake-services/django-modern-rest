@@ -89,6 +89,7 @@ There are several included extras:
 - `'django-modern-rest[pydantic]'` provides [`pydantic`](https://github.com/pydantic/pydantic) support
 - `'django-modern-rest[attrs]'` provides [`attrs`](https://github.com/python-attrs/attrs) support
 - `'django-modern-rest[jwt]'` provides [`pyjwt`](https://github.com/jpadilla/pyjwt) auth support
+- `'django-modern-rest[allauth]'` provides [`django-allauth`](https://codeberg.org/allauth/django-allauth) headless auth support
 - `'django-modern-rest[openapi]'` provides `OpenAPI` [schema validation](https://github.com/python-openapi/openapi-spec-validator),
   `yaml` OpenAPI view,
   and generates better OpenAPI examples with [`polyfactory`](https://github.com/litestar-org/polyfactory)

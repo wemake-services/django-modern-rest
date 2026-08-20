@@ -17,6 +17,7 @@ from dmr.openapi.views import (
 from dmr.openapi.views.yaml import OpenAPIYamlView
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router, build_404_handler, build_500_handler, path
+from server.apps.allauth_auth import urls as allauth_auth_urls
 from server.apps.controllers import urls as controllers_urls
 from server.apps.django_session_auth import urls as django_session_auth_urls
 from server.apps.etag import urls as etag_urls
@@ -42,6 +43,7 @@ router.include(token_auth_urls.router, namespace='token_auth')
 router.include(token_custom_user_urls.router, namespace='token_custom_user')
 router.include(etag_urls.router, namespace='etag')
 router.include(external_views_urls.router, namespace='external_views')
+router.include(allauth_auth_urls.router, namespace='allauth_auth')
 # ^ you can include as many routers as you wish!
 
 openapi_config = OpenAPIConfig(

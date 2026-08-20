@@ -53,9 +53,34 @@ you want for mobile apps and other non-browser API consumers.
       D-->>C: 200, authed as request.user
 
 The login half is served by ``django-allauth`` itself.
-You can document those endpoints in your own OpenAPI schema
-with :ref:`external views <external-views>`, since ``django-allauth``
-generates a schema of its own.
+
+
+Routing the headless views
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``django-allauth`` ships the login and session endpoints as ordinary
+Django views, so you can mount them into your own :class:`~dmr.routing.Router`
+with :func:`~dmr.routing.external_path` and describe them in your own
+OpenAPI schema. See :ref:`external views <external-views>` for the details.
+
+``LoginView`` hands out the session token, ``SessionView`` inspects it
+on ``GET`` and logs out on ``DELETE``. Both need to know which headless
+client they serve, and session tokens only exist for the ``app`` one:
+
+.. literalinclude:: /examples/auth/allauth/allauth_external_views.py
+  :caption: urls.py
+  :linenos:
+  :emphasize-lines: 64-75
+  :language: python
+
+.. warning::
+
+  Describing a third-party view in your schema makes it part of your
+  API contract, including for schema-driven tests.
+  ``django-allauth``'s views do not always fit a strict contract:
+  the login view answers ``400`` instead of ``405`` for unsupported
+  methods, and returns ``500`` for a JSON body that is not an object.
+  Pass ``openapi=None`` to route such a view without publishing it.
 
 
 Requiring auth

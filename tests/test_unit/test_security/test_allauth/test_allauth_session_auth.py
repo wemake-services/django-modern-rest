@@ -4,7 +4,6 @@ from http import HTTPStatus
 from importlib import import_module
 
 import pytest
-from asgiref.sync import sync_to_async
 from django.conf import LazySettings
 from django.contrib.auth import SESSION_KEY
 from django.contrib.auth.models import User
@@ -39,6 +38,21 @@ def make_session_token(
         return token
 
     return factory
+
+
+@pytest.fixture
+def session_token(
+    make_session_token: Callable[[User], str],
+    admin_user: User,
+) -> str:
+    """
+    Session token for the admin user.
+
+    Async tests must use this instead of calling the factory themselves:
+    fixtures are resolved outside the coroutine, so the sync session
+    store access here does not raise ``SynchronousOnlyOperation``.
+    """
+    return make_session_token(admin_user)
 
 
 class _SyncController(Controller[PydanticFastSerializer]):
@@ -84,15 +98,12 @@ def test_sync_session_token_auth(
 @pytest.mark.django_db(transaction=True)
 async def test_async_session_token_auth(
     dmr_async_rf: DMRAsyncRequestFactory,
-    admin_user: User,
-    make_session_token: Callable[[User], str],
+    session_token: str,
 ) -> None:
     """Ensures XSessionTokenAsyncAuth authenticates a valid token."""
-    # Session creation touches the DB, we are in an async context here:
-    token = await sync_to_async(make_session_token)(admin_user)
     request = dmr_async_rf.get(
         '/whatever/',
-        headers={'X-Session-Token': token},
+        headers={'X-Session-Token': session_token},
     )
 
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
