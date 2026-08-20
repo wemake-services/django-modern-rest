@@ -452,7 +452,6 @@ plugins = [
 module = [ "nanodjango.*" ]
 ignore_missing_imports = true
 
-
 [[tool.mypy.overrides]]
 # `django-allauth` does not ship a `py.typed` marker:
 module = [ "allauth.*" ]
