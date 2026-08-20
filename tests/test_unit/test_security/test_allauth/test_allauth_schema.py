@@ -1,3 +1,5 @@
+from typing import TypeAlias
+
 import pytest
 from inline_snapshot import snapshot
 
