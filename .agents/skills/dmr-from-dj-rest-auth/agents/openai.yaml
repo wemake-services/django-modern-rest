@@ -1,0 +1,4 @@
+interface:
+  display_name: "DMR from dj-rest-auth"
+  short_description: "Migrate dj-rest-auth APIs to DMR"
+  default_prompt: "Use $dmr-from-dj-rest-auth to migrate an existing dj-rest-auth installation to django-modern-rest, moving account flows onto django-allauth headless and rebuilding the transport layer with dmr controllers and auth classes."
