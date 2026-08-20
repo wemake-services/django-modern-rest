@@ -239,7 +239,7 @@ def set_request_attrs(
     request: HttpRequest,
     user: 'AbstractBaseUser',
     *,
-    session: 'SessionBase | None' = None,
+    session: 'SessionBase',
 ) -> None:
     """Set all required properties to the authed request."""
     request.user = user
@@ -251,6 +251,4 @@ def set_request_attrs(
         return user
 
     request.auser = auser
-
-    if session is not None:
-        request.__dmr_allauth_session__ = session  # type: ignore[attr-defined]
+    request.__dmr_allauth_session__ = session  # type: ignore[attr-defined]

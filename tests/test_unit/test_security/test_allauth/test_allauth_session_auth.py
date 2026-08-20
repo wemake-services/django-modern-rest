@@ -200,29 +200,32 @@ def test_sync_session_token_custom_header(
 def test_session_token_auth_falls_through(
     dmr_rf: DMRRequestFactory,
     admin_user: User,
+    make_session_token: Callable[[User], str],
 ) -> None:
     """Ensures a missing token does not block the next auth in the chain."""
-
-    class _FallbackAuth(XSessionTokenSyncAuth):
-        """Always succeeds, to prove the chain moved on."""
 
     class _ChainedController(Controller[PydanticFastSerializer]):
         auth = (
             XSessionTokenSyncAuth(),
-            _FallbackAuth(header_name='X-Other-Token'),
+            XSessionTokenSyncAuth(header_name='X-Other-Token'),
         )
 
         def get(self) -> str:
             return 'authed'
 
-    request = dmr_rf.get('/whatever/', headers={'X-Other-Token': 'nope'})
+    # Only the second auth's header is present:
+    request = dmr_rf.get(
+        '/whatever/',
+        headers={'X-Other-Token': make_session_token(admin_user)},
+    )
 
     response = _ChainedController.as_view()(request)
 
-    # The first auth returned `None` (no header), so the second one ran
-    # and failed on its own terms, rather than the request 401-ing early.
+    # The first auth returned `None` instead of failing the request,
+    # which let the second one run and authenticate:
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert json.loads(response.content) == 'authed'
 
 
 @pytest.mark.django_db
