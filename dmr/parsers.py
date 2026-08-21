@@ -1,3 +1,5 @@
+"""Parsers for different content types."""
+
 import abc
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
@@ -267,6 +269,58 @@ class MultiPartParser(
         except (MultiPartParserError, TooManyFilesSent) as exc:
             raise RequestSerializationError(str(exc)) from None
         # It is already parsed by Django itself, no need to return anything.
+
+
+class OctetStreamParser(
+    SupportsFileParsing,
+    Parser,
+):
+    """
+    Parses application/octet-stream raw file uploads.
+
+    Populates ``request.FILES`` with a ``SimpleUploadedFile`` created
+    from the raw request body.
+    """
+
+    __slots__ = ()
+
+    content_type = 'application/octet-stream'
+
+    @override
+    def parse(  # noqa: WPS210
+        self,
+        to_deserialize: Raw,
+        deserializer_hook: DeserializeFunc | None = None,
+        *,
+        request: HttpRequest,
+        model: Any,
+    ) -> None:
+        """Populate ``request.FILES`` from raw request body."""
+        from email.message import EmailMessage  # noqa: PLC0415
+
+        from django.core.files.uploadedfile import (  # noqa: PLC0415
+            SimpleUploadedFile,
+        )
+
+        field_name = 'uploaded_file'
+        file_name = 'file'
+        content_disposition = request.headers.get('Content-Disposition')
+        if content_disposition:
+            msg = EmailMessage()
+            msg['content-disposition'] = content_disposition
+            disposition_params = msg['content-disposition'].params
+            field_name = disposition_params.get('name') or field_name
+            file_name = disposition_params.get('filename') or field_name
+
+        uploaded = SimpleUploadedFile(
+            file_name,
+            request.body,
+            content_type=self.content_type,
+        )
+        if field_name in request.FILES:
+            request.FILES.appendlist(field_name, uploaded)
+        else:
+            request.FILES[field_name] = uploaded
 
 
 class FormUrlEncodedParser(

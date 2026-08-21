@@ -1,6 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import Any, ClassVar, Literal, final
+from typing import Annotated, Any, ClassVar, Literal, TypeAlias, final
 
 import pydantic
 import pytest
@@ -15,9 +15,11 @@ from typing_extensions import override
 
 from dmr import Body, Controller, FileMetadata, modify
 from dmr.exceptions import EndpointMetadataError
+from dmr.negotiation import ContentType, conditional_type
 from dmr.parsers import (
     DeserializeFunc,
     MultiPartParser,
+    OctetStreamParser,
     Parser,
     Raw,
     SupportsFileParsing,
@@ -589,3 +591,130 @@ def test_send_files_with_json_body(
         'receipt': {'content_type': 'text/plain', 'size': len(receipt)},
         'rules': {'content_type': 'text/plain', 'size': len(rules)},
     }
+
+
+@final
+class _OctetFileModel(pydantic.BaseModel):
+    content_type: Literal['application/octet-stream']
+    size: int
+
+
+@final
+class _OctetUploadedFiles(pydantic.BaseModel):
+    uploaded_file: _OctetFileModel
+
+
+_ConditionalUploadedFiles: TypeAlias = Annotated[
+    _UploadedFiles | _OctetUploadedFiles,
+    conditional_type({
+        MULTIPART_CONTENT: _UploadedFiles,
+        ContentType.octet_stream: _OctetUploadedFiles,
+    }),
+]
+
+
+@final
+class _ConditionalFileController(
+    Controller[PydanticSerializer],
+):
+    parsers = (MultiPartParser(), OctetStreamParser())
+
+    def post(
+        self,
+        parsed_file_metadata: FileMetadata[_ConditionalUploadedFiles],
+    ) -> _UploadedFiles | _OctetUploadedFiles:
+        return parsed_file_metadata
+
+
+def test_conditional_file_metadata_multipart(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+) -> None:
+    """Ensures conditional file metadata works with multipart/form-data."""
+    receipt = faker.name().encode('utf8')
+    rules = faker.name().encode('utf8')
+    request = dmr_rf.post(
+        '/whatever/',
+        {
+            'receipt': SimpleUploadedFile('receipt.txt', receipt),
+            'rules': SimpleUploadedFile('rules.txt', rules),
+        },
+        content_type=MULTIPART_CONTENT,
+    )
+
+    response = _ConditionalFileController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert json.loads(response.content) == {
+        'receipt': {'content_type': 'text/plain', 'size': len(receipt)},
+        'rules': {'content_type': 'text/plain', 'size': len(rules)},
+    }
+
+
+def test_conditional_file_metadata_octet_stream(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+) -> None:
+    """Ensures conditional file metadata works with application/octet-stream."""
+    raw_data = faker.name().encode('utf8')
+    request = dmr_rf.post(
+        '/whatever/',
+        raw_data,
+        content_type=ContentType.octet_stream,
+    )
+
+    response = _ConditionalFileController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert json.loads(response.content) == {
+        'uploaded_file': {
+            'content_type': 'application/octet-stream',
+            'size': len(raw_data),
+        },
+    }
+
+
+def test_octet_stream_content_disposition(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+) -> None:
+    """Ensures OctetStreamParser parses Content-Disposition header."""
+    raw_data = faker.name().encode('utf8')
+    request = dmr_rf.post(
+        '/whatever/',
+        raw_data,
+        content_type=ContentType.octet_stream,
+        HTTP_CONTENT_DISPOSITION=(
+            'attachment; name="uploaded_file"; filename="custom.bin"'
+        ),
+    )
+
+    response = _ConditionalFileController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert json.loads(response.content) == {
+        'uploaded_file': {
+            'content_type': 'application/octet-stream',
+            'size': len(raw_data),
+        },
+    }
+
+
+def test_octet_stream_parser_multiple_files(
+    rf: RequestFactory,
+) -> None:
+    """Ensures OctetStreamParser appends multiple files when key exists."""
+    parser = OctetStreamParser()
+    request = rf.post(
+        '/whatever/',
+        b'file2',
+        content_type='application/octet-stream',
+    )
+    request.FILES['uploaded_file'] = SimpleUploadedFile('file1.bin', b'file1')
+
+    parser.parse(b'file2', request=request, model=None)
+
+    assert len(request.FILES.getlist('uploaded_file')) == 2
