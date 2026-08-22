@@ -840,7 +840,6 @@ dev = [
     { name = "dirty-equals" },
     { name = "django" },
     { name = "django-csp" },
-    { name = "django-modern-schemas" },
     { name = "django-stubs", extra = ["compatible-mypy"] },
     { name = "faker" },
     { name = "import-linter" },
@@ -878,7 +877,6 @@ dev = [
     { name = "xmltodict-rs" },
 ]
 dev-and-docs = [
-    { name = "django-modern-schemas" },
     { name = "nanodjango" },
     { name = "punq" },
 ]
@@ -959,7 +957,6 @@ dev = [
     { name = "dirty-equals", specifier = ">=0.11,<0.12" },
     { name = "django", specifier = "~=5.2.0" },
     { name = "django-csp", specifier = ">=4,<5" },
-    { name = "django-modern-schemas", specifier = ">=0.1,<0.2" },
     { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=6.1,<6.2" },
     { name = "faker", specifier = ">=40.36,<41" },
     { name = "import-linter", specifier = ">=2.5,<3" },
@@ -997,14 +994,13 @@ dev = [
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
 ]
 dev-and-docs = [
-    { name = "django-modern-schemas", specifier = ">=0.1,<0.2" },
     { name = "nanodjango", specifier = ">=0.16,<0.17" },
     { name = "punq", specifier = ">=0.8,<1" },
 ]
 docs = [
     { name = "django-filter", specifier = ">=25.2,<27" },
     { name = "django-mantle", specifier = ">=26.6,<27" },
-    { name = "django-modern-schemas", specifier = ">=0.1,<0.2" },
+    { name = "django-modern-schemas", specifier = ">=0.1.0,<0.2.0" },
     { name = "docutils", specifier = ">=0.22,<0.23" },
     { name = "myst-parser", specifier = ">=5,<6" },
     { name = "nanodjango", specifier = ">=0.16,<0.17" },
