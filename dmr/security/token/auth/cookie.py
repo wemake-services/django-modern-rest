@@ -70,7 +70,11 @@ class _BaseCookieTokenAuth(ResponseSpecProvider):
         return request.COOKIES.get(self.cookie_name)
 
     def _ensure_csrf(self, controller: 'Controller[BaseSerializer]') -> None:
-        ensure_csrf(controller)
+        # We must check that token is actually present,
+        # so otherwise, we can skip this auth and try the next one,
+        # without triggering the CSRF error, see #1289
+        if self.get_raw_token(controller.request):
+            ensure_csrf(controller)
 
 
 class CookieTokenSyncAuth(_BaseCookieTokenAuth, BaseTokenSyncAuth):
