@@ -74,28 +74,6 @@ both ``self.request.user`` and the current token:
       :linenos:
       :language: python
 
-  .. tab:: Token in query string
-
-    Use :class:`~dmr.security.token.QueryTokenSyncAuth` and
-    :class:`~dmr.security.token.QueryTokenAsyncAuth`
-    for query-param based auth.
-
-    .. warning::
-
-      Sending tokens via query string is not really safe,
-      because they will show up in access logs.
-
-    You can customize:
-
-    - Security scheme name, default: ``token``
-    - Query parameter name, default: ``token``
-    - :meth:`Advanced token parameters <dmr.security.token.token.TokenLikeSync.issue>`
-
-    .. literalinclude:: /examples/auth/token/using_token_query.py
-      :caption: views.py
-      :linenos:
-      :language: python
-
 Customizing auth
 ~~~~~~~~~~~~~~~~
 
@@ -398,14 +376,6 @@ API Reference
   :inherited-members:
 
 .. autoclass:: dmr.security.token.HeaderTokenAsyncAuth
-  :members:
-  :inherited-members:
-
-.. autoclass:: dmr.security.token.QueryTokenSyncAuth
-  :members:
-  :inherited-members:
-
-.. autoclass:: dmr.security.token.QueryTokenAsyncAuth
   :members:
   :inherited-members:
 
