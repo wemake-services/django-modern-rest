@@ -46,6 +46,7 @@ of requirements for an API to count as public.
 - Fixed `DjangoSessionSyncAuth`, `DjangoSessionAsyncAuth`,
   `CookieTokenSyncAuth`, and `CookieTokenAsyncAuth` to check CSRF only
   when this auth class is actually used and not skipped, #1289
+- Allow using lazy translations in many places, like `ResponseSpec.description`
 
 
 ## 0.14.0 (2026-08-14)

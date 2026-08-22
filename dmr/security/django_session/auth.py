@@ -5,11 +5,10 @@ from typing import TYPE_CHECKING, Self
 from django.conf import settings
 from typing_extensions import override
 
-from dmr.exceptions import NotAuthenticatedError
 from dmr.internal.csrf import ensure_csrf
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
-from dmr.security.base import AsyncAuth, SyncAuth
+from dmr.security.base import AsyncAuth, SyncAuth, unauth_response_spec
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
@@ -68,11 +67,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):
         """Provides responses that can happen when user is not authed."""
         return [
             *self._add_new_response(
-                ResponseSpec(
-                    controller_cls.error_model,
-                    status_code=NotAuthenticatedError.status_code,
-                    description='Raised when auth was not successful',
-                ),
+                unauth_response_spec(controller_cls),
                 existing_responses,
             ),
             *self._add_new_response(

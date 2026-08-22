@@ -30,6 +30,10 @@ from dmr.types import EMPTY, AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
 if TYPE_CHECKING:
+    from django.utils.functional import (
+        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
+    )
+
     from dmr.routing import Router
 
 _METHOD_NOT_ALLOWED_MSG: Final = _(
@@ -167,8 +171,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     annotations_context: ClassVar[AnnotationsContext] = AnnotationsContext()
 
     # OpenAPI:
-    summary: ClassVar[str | None] = None
-    description: ClassVar[str | None] = None
+    summary: ClassVar['_StrOrPromise | None'] = None
+    description: ClassVar['_StrOrPromise | None'] = None
     servers: ClassVar[Sequence[Server] | None] = None
     ignore_from_spec: ClassVar[bool] = False
 
@@ -543,8 +547,10 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
         return PathItem(
             **operations,
-            summary=cls.summary,
-            description=cls.description,
+            summary=None if cls.summary is None else str(cls.summary),
+            description=(
+                None if cls.description is None else str(cls.description)
+            ),
             servers=None if cls.servers is None else list(cls.servers),
         )
 

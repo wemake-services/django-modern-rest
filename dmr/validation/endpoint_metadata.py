@@ -758,15 +758,23 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
         All empty strings are converted to ``None``.
         """
-        if self.payload is not None:
-            if (
-                self.payload.summary is not None
-                or self.payload.description is not None
-            ):
-                return self.payload.summary, self.payload.description
-
-            if self.func.__doc__ is None:
-                return self.payload.summary, self.payload.description
+        if self.payload is not None and (
+            self.payload.summary is not None
+            or self.payload.description is not None
+            or self.func.__doc__ is None
+        ):
+            return (
+                (
+                    None
+                    if self.payload.summary is None
+                    else str(self.payload.summary)
+                ),
+                (
+                    None
+                    if self.payload.description is None
+                    else str(self.payload.description)
+                ),
+            )
 
         summary: str | None
         description: str | None

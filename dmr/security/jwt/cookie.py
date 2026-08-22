@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Final, Self
 from django.http import HttpRequest
 from typing_extensions import override
 
-from dmr.exceptions import NotAuthenticatedError
 from dmr.internal.csrf import ensure_csrf
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityScheme
+from dmr.security.base import unauth_response_spec
 from dmr.security.jwt.auth import BaseJWTAsyncAuth, BaseJWTSyncAuth
 from dmr.security.jwt.token import JWToken
 
@@ -54,18 +54,9 @@ class _BaseCookieJWTAuth(ResponseSpecProvider):
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Declare extra responses for cookie auth + CSRF checks."""
-        # TODO: the 401 spec below duplicates the default one from
-        # `dmr.security.base._BaseAuth.provide_response_specs`.
-        # The same duplication exists in `dmr.security.token.auth.cookie`
-        # and `dmr.security.django_session.auth`. Refactor all of them
-        # to reuse the default spec and only add their own responses.
         return [
             *self._add_new_response(
-                ResponseSpec(
-                    controller_cls.error_model,
-                    status_code=NotAuthenticatedError.status_code,
-                    description='Raised when auth was not successful',
-                ),
+                unauth_response_spec(controller_cls),
                 existing_responses,
             ),
             *self._add_new_response(
