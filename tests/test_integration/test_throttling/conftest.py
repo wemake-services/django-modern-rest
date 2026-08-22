@@ -66,5 +66,7 @@ def pytest_collection_modifyitems(
         # Otherwise, there can be parallel
         # cache access / cache clear operations:
         test_item.add_marker(pytest.mark.xdist_group('throttling'))
-        # Otherwise, there can be flaky timeout results:
-        test_item.add_marker(pytest.mark.timeout(10))
+        # Otherwise, there can be flaky timeout results.
+        # `func_only` is needed, because starting a redis container
+        # (and possibly pulling its image) can take longer than the timeout:
+        test_item.add_marker(pytest.mark.timeout(10, func_only=True))
