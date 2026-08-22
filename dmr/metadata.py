@@ -16,6 +16,10 @@ from typing import (  # noqa: WPS235
 )
 
 if TYPE_CHECKING:
+    from django.utils.functional import (
+        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
+    )
+
     from dmr.components import ComponentParser
     from dmr.controller import Controller
     from dmr.cookies import CookieSpec, NewCookie
@@ -90,7 +94,7 @@ class ResponseSpec:
     )
 
     # Metadata:
-    description: str | None = dataclasses.field(
+    description: '_StrOrPromise | None' = dataclasses.field(
         kw_only=True,
         default=None,
     )
@@ -217,7 +221,7 @@ class ResponseModification:
     streaming: bool
 
     # Metadata:
-    description: str | None
+    description: '_StrOrPromise | None'
     links: dict[str, 'Link | Reference'] | None
 
     def to_spec(self) -> ResponseSpec:
@@ -458,8 +462,8 @@ class EndpointMetadata:
     validate_events: bool
 
     # OpenAPI documentation fields:
-    summary: str | None
-    description: str | None
+    summary: '_StrOrPromise | None'
+    description: '_StrOrPromise | None'
     tags: list[str] | None
     operation_id: str | None
     deprecated: bool

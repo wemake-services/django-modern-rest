@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, Final, Self
 from django.http import HttpRequest
 from typing_extensions import override
 
-from dmr.exceptions import NotAuthenticatedError
 from dmr.internal.csrf import ensure_csrf
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityScheme
+from dmr.security.base import unauth_response_spec
 from dmr.security.token.auth.base import BaseTokenAsyncAuth, BaseTokenSyncAuth
 from dmr.security.token.token import DEFAULT_TOKEN_ALGORITHM, DEFAULT_TOKEN_SALT
 
@@ -48,11 +48,7 @@ class _BaseCookieTokenAuth(ResponseSpecProvider):
         """Declare extra responses for cookie auth + CSRF checks."""
         return [
             *self._add_new_response(
-                ResponseSpec(
-                    controller_cls.error_model,
-                    status_code=NotAuthenticatedError.status_code,
-                    description='Raised when auth was not successful',
-                ),
+                unauth_response_spec(controller_cls),
                 existing_responses,
             ),
             *self._add_new_response(

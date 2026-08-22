@@ -17,6 +17,17 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 
+def unauth_response_spec(
+    controller_cls: type['Controller[BaseSerializer]'],
+) -> ResponseSpec:
+    """Defines the default unauthed response spec."""
+    return ResponseSpec(
+        controller_cls.error_model,
+        status_code=NotAuthenticatedError.status_code,
+        description='Raised when auth was not successful',
+    )
+
+
 class _BaseAuth(ResponseSpecProvider):
     """
     Base class for all auth instances.
@@ -53,11 +64,7 @@ class _BaseAuth(ResponseSpecProvider):
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when user is not authed."""
         return self._add_new_response(
-            ResponseSpec(
-                controller_cls.error_model,
-                status_code=NotAuthenticatedError.status_code,
-                description='Raised when auth was not successful',
-            ),
+            unauth_response_spec(controller_cls),
             existing_responses,
         )
 
