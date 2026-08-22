@@ -12,6 +12,8 @@ from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.security.base import AsyncAuth, SyncAuth
 
 if TYPE_CHECKING:
+    from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
+
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
@@ -86,6 +88,12 @@ class _DjangoSessionAuth(ResponseSpecProvider):
     def _uses_csrf_cookie(self) -> bool:
         return not settings.CSRF_USE_SESSIONS
 
+    def _is_user_present(
+        self,
+        user: 'AbstractBaseUser | AnonymousUser | None',
+    ) -> bool:
+        return user is not None and user.is_authenticated and user.is_active
+
     def _ensure_csrf(self, controller: 'Controller[BaseSerializer]') -> None:
         ensure_csrf(controller)
 
@@ -122,10 +130,11 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
 
         For example: checking that user is staff / superuser.
         """
-        self._ensure_csrf(controller)
         user = getattr(controller.request, 'user', None)
-        if not user or not user.is_authenticated or not user.is_active:
+        if not self._is_user_present(user):
             return None
+        # It is important that we first can skip auth with no `user`, see #1289
+        self._ensure_csrf(controller)
         return self
 
 
@@ -161,11 +170,12 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
 
         For example: checking that user is staff / superuser.
         """
-        self._ensure_csrf(controller)
         auser = getattr(controller.request, 'auser', None)
         if auser is None:
             return None
         user = await auser()
-        if not user.is_authenticated or not user.is_active:
+        if not self._is_user_present(user):
             return None
+        # It is important that we first can skip auth with no `user`, see #1289
+        self._ensure_csrf(controller)
         return self
