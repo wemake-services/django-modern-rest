@@ -20,6 +20,11 @@ of requirements for an API to count as public.
 
 ## 0.15.0 WIP
 
+### Breaking changes
+
+- Removed `QueryTokenSyncAuth` and `QueryTokenAsyncAuth` auth classes,
+  because they were insecure, you can use [older existing versions](https://github.com/wemake-services/django-modern-rest/blob/14884b432ee075ec3d78ff388944ebc5f0b5d432/dmr/security/token/auth/header.py), #1288
+
 ### Features
 
 - Added `CookieJWTSyncAuth` and `CookieJWTAsyncAuth`
