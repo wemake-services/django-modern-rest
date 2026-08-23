@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Annotated, Any, Final
+from typing import TYPE_CHECKING, Annotated, Any, Final, TypeAlias
 
 from dmr.internal.dataclass_aliases import Field
 
@@ -8,6 +8,13 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.parameter import Parameter
     from dmr.openapi.objects.reference import Reference
     from dmr.openapi.objects.server import Server
+
+_SplittedOperations: TypeAlias = tuple[
+    # We can't use `Operation` here, because we use it for `**` operation,
+    # which requires `Any` :(
+    dict[str, Any],
+    dict[str, 'Operation'] | None,
+]
 
 _STANDARD_HTTP_METHODS: Final = frozenset((
     'get',
@@ -51,14 +58,14 @@ class PathItem:
     @classmethod
     def split_operations(
         cls,
-        operations: dict[str, Any],
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        operations: dict[str, 'Operation'],
+    ) -> _SplittedOperations:
         """Split operations into standard HTTP methods and custom ones."""
-        standard: dict[str, Any] = {}
-        additional: dict[str, Any] = {}
+        standard: dict[str, Operation] = {}
+        additional: dict[str, Operation] = {}
         for method_name, operation in operations.items():
             if method_name in _STANDARD_HTTP_METHODS:
                 standard[method_name] = operation
             else:
                 additional[method_name.upper()] = operation
-        return standard, additional
+        return standard, additional or None

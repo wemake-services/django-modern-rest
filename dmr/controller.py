@@ -19,7 +19,7 @@ from dmr.internal.io import identity
 from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.core.context import OpenAPIContext
-from dmr.openapi.objects import PathItem, Server
+from dmr.openapi.objects import Operation, PathItem, Server
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import build_response
@@ -526,7 +526,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
               path items from OpenAPI schema
 
         """
-        operations: dict[str, Any] = {}
+        operations: dict[str, Operation] = {}
         for method, endpoint in cls.api_endpoints.items():
             if endpoint.metadata.ignore_from_spec:
                 continue
@@ -547,7 +547,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
         return PathItem(
             **standard_ops,
-            additional_operations=additional_ops or None,
+            additional_operations=additional_ops,
             summary=None if cls.summary is None else str(cls.summary),
             description=(
                 None if cls.description is None else str(cls.description)

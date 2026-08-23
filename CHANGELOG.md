@@ -34,6 +34,7 @@ of requirements for an API to count as public.
 - Added `XSessionTokenSyncAuth` and `XSessionTokenAsyncAuth`
   to authenticate `django-allauth` headless session tokens,
   available via the new `django-modern-rest[allauth]` extra, #1193
+- Added `query` method support for `PathItem` OpenAPI 3.2.0 spec, #1300
 
 ### Bugfixes
 
@@ -47,9 +48,8 @@ of requirements for an API to count as public.
   like `Controller.summary`, `ResponseSpec.description`,
   `HeaderSpec.description`, #1298
 - Fixed `Router.include` dropping `tags` and `deprecated` metadata, #1299
-- Fixed ``PathItem`` to support ``additionalOperations`` field for custom
-  HTTP methods (like ``PURGE``, ``LINK``) and added ``query`` field
-  for OpenAPI 3.2 compatibility, #1300
+- Fixed `PathItem` to support `additionalOperations` field for custom
+  HTTP methods (like `PURGE`, `LINK`), #1300
 
 
 ## 0.14.0 (2026-08-14)

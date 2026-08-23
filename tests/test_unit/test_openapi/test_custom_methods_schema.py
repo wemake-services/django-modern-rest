@@ -1,6 +1,6 @@
 import json
 from http import HTTPStatus
-from typing import Final, cast
+from typing import Final
 
 from django.http import HttpResponse
 from django.urls import path
@@ -32,6 +32,25 @@ class _MetaController(MetaMixin, Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
+def test_standard_methods_in_path_item(snapshot: SnapshotAssertion) -> None:
+    """Ensure standard methods are placed as PathItem fields."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [
+                        path('standard/', _StandardController.as_view()),
+                        path('meta/', _MetaController.as_view()),
+                    ],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
 class _PurgeController(Controller[PydanticSerializer]):
     allowed_http_methods = frozenset((
         *Controller.allowed_http_methods,
@@ -42,42 +61,7 @@ class _PurgeController(Controller[PydanticSerializer]):
         ResponseSpec(None, status_code=HTTPStatus.OK),
     )
     def purge(self) -> HttpResponse:
-        return cast(
-            HttpResponse,
-            self.to_response(None, status_code=HTTPStatus.OK),
-        )
-
-
-def test_standard_methods_in_path_item(snapshot: SnapshotAssertion) -> None:
-    """Ensure standard methods are placed as PathItem fields."""
-    assert (
-        json.dumps(
-            build_schema(
-                Router(
-                    'api/v1/',
-                    [path('items/', _StandardController.as_view())],
-                ),
-            ).convert(),
-            indent=2,
-        )
-        == snapshot
-    )
-
-
-def test_meta_renders_as_options(snapshot: SnapshotAssertion) -> None:
-    """Ensure meta method renders as options in the schema."""
-    assert (
-        json.dumps(
-            build_schema(
-                Router(
-                    'api/v1/',
-                    [path('items/', _MetaController.as_view())],
-                ),
-            ).convert(),
-            indent=2,
-        )
-        == snapshot
-    )
+        raise NotImplementedError
 
 
 def test_custom_method_in_additional_operations(
