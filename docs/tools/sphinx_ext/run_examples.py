@@ -264,6 +264,11 @@ class _BaseBuilder:  # noqa: WPS214
                 'server.apps.model_simple',
                 'server.apps.model_fk',
                 'server.apps.token_auth',
+                # Needed by the `allauth` auth examples, its headless
+                # views import `allauth.account` models on import:
+                'allauth',
+                'allauth.account',
+                'allauth.headless',
             ],
             MIDDLEWARE=[
                 'django.middleware.security.SecurityMiddleware',
@@ -274,6 +279,7 @@ class _BaseBuilder:  # noqa: WPS214
                 'django.middleware.locale.LocaleMiddleware',
                 'django.contrib.messages.middleware.MessageMiddleware',
                 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+                'allauth.account.middleware.AccountMiddleware',
             ],
             USE_TZ=True,
             USE_I18N=True,
@@ -667,10 +673,14 @@ def _exec_examples(app_file: Path, run_configs: list[_AppRunArgs]) -> str:  # no
             if example_result:
                 example_results.append(example_result)
 
-    from django.core.cache import caches  # noqa: PLC0415
+    # Examples that only declare `# openapi:` have no run configs at all,
+    # so nothing above configured the settings for us.
+    # Touching `caches` before that raises `ImproperlyConfigured`.
+    if settings.configured:
+        from django.core.cache import caches  # noqa: PLC0415
 
-    for cache in caches.all():
-        cache.clear()
+        for cache in caches.all():
+            cache.clear()
 
     return '\n\n'.join(example_results)
 
@@ -683,6 +693,11 @@ def _exec_openapi_examples(
 
     for openapi_args in openapi_configs:
         url_path = cast(str, openapi_args['openapi_url'])
+        # Settings must already be configured before `override_settings`
+        # wraps them. Otherwise it wraps an unconfigured lazy object,
+        # and `_configure_settings()` inside `_run_app` sees
+        # `settings.configured` as `True` and silently does nothing.
+        _OpenAPIBuilder(app_file, openapi_args)._configure_settings()  # noqa: SLF001
         with (
             override_settings(
                 DMR_SETTINGS={

@@ -8,7 +8,6 @@ from typing import Any, ClassVar, Generic, Literal, TypeAlias, TypeVar
 from django.conf import settings
 from django.contrib.auth import aauthenticate, authenticate
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
 from django.views.decorators.debug import sensitive_post_parameters
 from typing_extensions import TypedDict
@@ -17,7 +16,7 @@ from dmr import Body, Controller, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
 from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
-from dmr.security.jwt.auth import set_request_attrs
+from dmr.security.jwt.auth import USER_LOOKUP_ERRORS, set_request_attrs
 from dmr.security.jwt.token import JWToken
 from dmr.serializer import BaseSerializer
 
@@ -328,7 +327,7 @@ class RefreshTokenSyncController(
             user = get_user_model().objects.get(**{
                 self.jwt_user_id_field: token.sub,
             })
-        except ObjectDoesNotExist:
+        except USER_LOOKUP_ERRORS:
             raise NotAuthenticatedError from None
         self.check_auth(user)
         self.set_request_attrs(self.request, user)
@@ -412,7 +411,7 @@ class RefreshTokenAsyncController(
             user = await get_user_model().objects.aget(**{
                 self.jwt_user_id_field: token.sub,
             })
-        except ObjectDoesNotExist:
+        except USER_LOOKUP_ERRORS:
             raise NotAuthenticatedError from None
         await self.check_auth(user)
         await self.set_request_attrs(self.request, user)
@@ -520,7 +519,7 @@ class VerifyTokenSyncController(
             return get_user_model().objects.get(**{
                 self.jwt_user_id_field: token.sub,
             })
-        except ObjectDoesNotExist:
+        except USER_LOOKUP_ERRORS:
             raise NotAuthenticatedError from None
 
     def check_auth(self, user: Any) -> None:
@@ -590,7 +589,7 @@ class VerifyTokenAsyncController(
             return await get_user_model().objects.aget(**{
                 self.jwt_user_id_field: token.sub,
             })
-        except ObjectDoesNotExist:
+        except USER_LOOKUP_ERRORS:
             raise NotAuthenticatedError from None
 
     async def check_auth(self, user: Any) -> None:

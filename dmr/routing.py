@@ -12,8 +12,12 @@ from typing_extensions import override
 
 from dmr.errors import ErrorType, format_error
 from dmr.exceptions import InternalServerError, NotAcceptableError
+from dmr.internal.routing import RouterMetadata
 from dmr.internal.routing import URLExternal as _URLExternal
-from dmr.openapi.collector import controller_mapping_collector
+from dmr.openapi.collector import (
+    collect_normalized_paths,
+    controller_mapping_collector,
+)
 from dmr.openapi.objects import PathItem, Paths
 from dmr.openapi.openapi import OpenAPI
 
@@ -69,7 +73,7 @@ class Router:
 
     """
 
-    __slots__ = ('deprecated', 'prefix', 'tags', 'urls')
+    __slots__ = ('_path_metadata', 'deprecated', 'prefix', 'tags', 'urls')
 
     def __init__(
         self,
@@ -84,6 +88,15 @@ class Router:
         self.urls = self._maybe_process_external(urls)
         self.tags = list(tags or [])
         self.deprecated = deprecated
+        # Construct metadata for this new router:
+        self._path_metadata: dict[str, RouterMetadata] = {
+            new_path: RouterMetadata.from_router(self)
+            for _, new_path in collect_normalized_paths(
+                self.urls,
+                original_prefix='',
+                new_prefix=self.prefix,
+            )
+        }
 
     def get_schema(self, context: 'OpenAPIContext') -> OpenAPI:  # noqa: WPS231
         """
@@ -136,6 +149,18 @@ class Router:
 
         .. versionadded:: 0.13.0
         """
+        self._path_metadata.update({
+            new_path: RouterMetadata.from_included(
+                self,
+                router.metadata_for(original_path),
+            )
+            for original_path, new_path in collect_normalized_paths(
+                router.urls,
+                original_prefix=router.prefix,
+                new_prefix=self.prefix,
+            )
+        })
+
         self.urls.append(
             router.to_urlpatterns(namespace=namespace, app_name=app_name),
         )
@@ -161,6 +186,17 @@ class Router:
 
         path_spec = self.urls if app_name is None else (self.urls, app_name)
         return path(self.prefix, include(path_spec, namespace=namespace))
+
+    def metadata_for(self, pattern: str) -> 'RouterMetadata':
+        """
+        Returns applied nested metadata from all router layers.
+
+        Raises:
+            KeyError: if pattern is not found.
+
+        .. versionadded:: 0.15.0
+        """
+        return self._path_metadata[pattern]
 
     def _maybe_process_external(
         self,

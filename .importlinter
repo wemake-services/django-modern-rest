@@ -57,6 +57,7 @@ forbidden_modules =
   pydantic
   msgspec
   jwt
+  allauth
   openapi_spec_validator
   polyfactory
   yaml
@@ -80,6 +81,9 @@ ignore_imports =
   # jwt auth:
   dmr.security.jwt -> jwt
   dmr.security.jwt.* -> jwt
+  # allauth headless auth:
+  dmr.security.allauth -> allauth
+  dmr.security.allauth.* -> allauth
   # OpenAPI validation:
   dmr.openapi.openapi -> openapi_spec_validator
   # Examples generation:

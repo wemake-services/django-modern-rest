@@ -99,7 +99,7 @@ Auth
 JsonL endpoints fully support any style of auth that you might need.
 
 Here's an example with
-:class:`~dmr.security.jwt.auth.JWTAsyncAuth` class:
+:class:`~dmr.security.jwt.auth.HeaderJWTAsyncAuth` class:
 
 .. literalinclude:: /examples/streaming/jsonl/auth.py
    :language: python

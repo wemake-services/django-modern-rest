@@ -55,6 +55,10 @@ from dmr.validation import (
 )
 
 if TYPE_CHECKING:
+    from django.utils.functional import (
+        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
+    )
+
     from dmr.controller import Controller
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.routing import Router
@@ -301,22 +305,30 @@ class Endpoint:  # noqa: WPS214
             self.metadata,
             serializer,
         )
-        security = context.generators.security_scheme(
-            self.metadata.auth,
-            serializer,
-        )
 
+        router_metadata = router.metadata_for(path)
         tags = [
-            *router.tags,
+            *router_metadata.tags,
             *(self.metadata.tags or []),
         ]
 
         return Operation(
             tags=tags or None,
-            summary=self.metadata.summary,
-            description=self.metadata.description,
-            deprecated=self.metadata.deprecated or router.deprecated,
-            security=security,
+            summary=(
+                None
+                if self.metadata.summary is None
+                else str(self.metadata.summary)
+            ),
+            description=(
+                None
+                if self.metadata.description is None
+                else str(self.metadata.description)
+            ),
+            deprecated=self.metadata.deprecated or router_metadata.deprecated,
+            security=context.generators.security_scheme(
+                self.metadata.auth,
+                serializer,
+            ),
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
             callbacks=self.metadata.callbacks,
@@ -611,8 +623,8 @@ def validate(  # noqa: WPS234
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-    summary: str | None = None,
-    description: str | None = None,
+    summary: '_StrOrPromise | None' = None,
+    description: '_StrOrPromise | None' = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
@@ -643,8 +655,8 @@ def validate(
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-    summary: str | None = None,
-    description: str | None = None,
+    summary: '_StrOrPromise | None' = None,
+    description: '_StrOrPromise | None' = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
@@ -675,8 +687,8 @@ def validate(
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-    summary: str | None = None,
-    description: str | None = None,
+    summary: '_StrOrPromise | None' = None,
+    description: '_StrOrPromise | None' = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
@@ -706,8 +718,8 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-    summary: str | None = None,
-    description: str | None = None,
+    summary: '_StrOrPromise | None' = None,
+    description: '_StrOrPromise | None' = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
@@ -871,8 +883,8 @@ def modify(
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-    summary: str | None = None,
-    description: str | None = None,
+    summary: '_StrOrPromise | None' = None,
+    description: '_StrOrPromise | None' = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
@@ -903,8 +915,8 @@ def modify(
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-    summary: str | None = None,
-    description: str | None = None,
+    summary: '_StrOrPromise | None' = None,
+    description: '_StrOrPromise | None' = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
@@ -936,8 +948,8 @@ def modify(
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-    summary: str | None = None,
-    description: str | None = None,
+    summary: '_StrOrPromise | None' = None,
+    description: '_StrOrPromise | None' = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,
@@ -968,8 +980,8 @@ def modify(  # noqa: WPS211
     auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
     throttling: _ThrottlingDef = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-    summary: str | None = None,
-    description: str | None = None,
+    summary: '_StrOrPromise | None' = None,
+    description: '_StrOrPromise | None' = None,
     tags: list[str] | None = None,
     operation_id: str | None = None,
     deprecated: bool = False,

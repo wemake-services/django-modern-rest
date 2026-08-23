@@ -7,7 +7,12 @@ from typing_extensions import override
 
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security.jwt import JWTAsyncAuth, JWTSyncAuth
+from dmr.security.jwt import (
+    CookieJWTAsyncAuth,
+    CookieJWTSyncAuth,
+    JWTAsyncAuth,
+    JWTSyncAuth,
+)
 from dmr.security.jwt.views import (  # noqa: WPS235
     ObtainTokensAsyncController,
     ObtainTokensPayload,
@@ -218,6 +223,28 @@ class ControllerWithJWTAsyncAuth(Controller[PydanticSerializer]):
     auth = (JWTAsyncAuth(),)
 
     async def post(self) -> _UserOutput:
+        return _UserOutput.model_validate(
+            self.request.user,
+            from_attributes=True,
+        )
+
+
+@final
+class ControllerWithCookieJWTSyncAuth(Controller[PydanticSerializer]):
+    auth = (CookieJWTSyncAuth(),)
+
+    def get(self) -> _UserOutput:
+        return _UserOutput.model_validate(
+            self.request.user,
+            from_attributes=True,
+        )
+
+
+@final
+class ControllerWithCookieJWTAsyncAuth(Controller[PydanticSerializer]):
+    auth = (CookieJWTAsyncAuth(),)
+
+    async def get(self) -> _UserOutput:
         return _UserOutput.model_validate(
             self.request.user,
             from_attributes=True,

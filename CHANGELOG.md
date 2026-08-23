@@ -20,9 +20,37 @@ of requirements for an API to count as public.
 
 ## 0.15.0 WIP
 
+### Breaking changes
+
+- Removed `QueryTokenSyncAuth` and `QueryTokenAsyncAuth` auth classes,
+  because they were insecure, you can use [older existing versions](https://github.com/wemake-services/django-modern-rest/blob/14884b432ee075ec3d78ff388944ebc5f0b5d432/dmr/security/token/auth/header.py), #1288
+
 ### Features
 
+- Added `CookieJWTSyncAuth` and `CookieJWTAsyncAuth`
+  to read JWT tokens from cookies instead of headers, #1193
+- Added `HeaderJWTSyncAuth` and `HeaderJWTAsyncAuth`,
+  `JWTSyncAuth` and `JWTAsyncAuth` are kept as their aliases, #1193
+- Added `XSessionTokenSyncAuth` and `XSessionTokenAsyncAuth`
+  to authenticate `django-allauth` headless session tokens,
+  available via the new `django-modern-rest[allauth]` extra, #1193
+- Added `query` HTTP method support for `PathItem` OpenAPI 3.2.0 spec, #1300
 - Added `FileMetadata` conditional types, #1278
+
+### Bugfixes
+
+- JWT auth, refresh, and verify now return `401` instead of `500`
+  when the token subject cannot be a value of the user lookup field,
+  for example a non-numeric `sub` with the default integer `pk`, #1284
+- Fixed `DjangoSessionSyncAuth`, `DjangoSessionAsyncAuth`,
+  `CookieTokenSyncAuth`, and `CookieTokenAsyncAuth` to check CSRF only
+  when this auth class is actually used and not skipped, #1289
+- Allow using lazy translations in many places,
+  like `Controller.summary`, `ResponseSpec.description`,
+  `HeaderSpec.description`, #1298
+- Fixed `Router.include` dropping `tags` and `deprecated` metadata, #1299
+- Fixed `PathItem` to support `additionalOperations` field for custom
+  HTTP methods (like `PURGE`, `LINK`), #1300
 
 
 ## 0.14.0 (2026-08-14)

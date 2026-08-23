@@ -19,7 +19,7 @@ from dmr.internal.io import identity
 from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.core.context import OpenAPIContext
-from dmr.openapi.objects import PathItem, Server
+from dmr.openapi.objects import Operation, PathItem, Server
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import build_response
@@ -30,6 +30,10 @@ from dmr.types import EMPTY, AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
 if TYPE_CHECKING:
+    from django.utils.functional import (
+        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
+    )
+
     from dmr.routing import Router
 
 _METHOD_NOT_ALLOWED_MSG: Final = _(
@@ -167,8 +171,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     annotations_context: ClassVar[AnnotationsContext] = AnnotationsContext()
 
     # OpenAPI:
-    summary: ClassVar[str | None] = None
-    description: ClassVar[str | None] = None
+    summary: ClassVar['_StrOrPromise | None'] = None
+    description: ClassVar['_StrOrPromise | None'] = None
     servers: ClassVar[Sequence[Server] | None] = None
     ignore_from_spec: ClassVar[bool] = False
 
@@ -522,12 +526,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
               path items from OpenAPI schema
 
         """
-        operations: dict[str, Any] = {}
+        operations: dict[str, Operation] = {}
         for method, endpoint in cls.api_endpoints.items():
             if endpoint.metadata.ignore_from_spec:
                 continue
 
-            schema = endpoint.get_schema(
+            operations[method.lower()] = endpoint.get_schema(
                 path,
                 pattern,
                 cls.__qualname__,
@@ -535,16 +539,19 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 context,
                 router,
             )
-            operations.update({method.lower(): schema})
 
-        # If all operations are ignored, ignore the full controller:
         if not operations:
             return None
 
+        standard_ops, additional_ops = PathItem.split_operations(operations)
+
         return PathItem(
-            **operations,
-            summary=cls.summary,
-            description=cls.description,
+            **standard_ops,
+            additional_operations=additional_ops,
+            summary=None if cls.summary is None else str(cls.summary),
+            description=(
+                None if cls.description is None else str(cls.description)
+            ),
             servers=None if cls.servers is None else list(cls.servers),
         )
 

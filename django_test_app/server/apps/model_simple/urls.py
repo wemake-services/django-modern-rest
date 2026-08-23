@@ -15,4 +15,5 @@ router = Router(
             name='user_detailed',
         ),
     ],
+    tags=['model_simple'],
 )
