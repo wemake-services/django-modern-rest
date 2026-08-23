@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.reference import Reference
     from dmr.openapi.objects.server import Server
 
-_SplittedOperations: TypeAlias = tuple[
+_SplitOperations: TypeAlias = tuple[
     # We can't use `Operation` here, because we use it for `**` operation,
     # which requires `Any` :(
     dict[str, Any],
@@ -59,7 +59,7 @@ class PathItem:
     def split_operations(
         cls,
         operations: dict[str, 'Operation'],
-    ) -> _SplittedOperations:
+    ) -> _SplitOperations:
         """Split operations into standard HTTP methods and custom ones."""
         standard: dict[str, Operation] = {}
         additional: dict[str, Operation] = {}
