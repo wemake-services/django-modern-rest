@@ -30,7 +30,14 @@ from dmr.types import EMPTY, AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
 _STANDARD_HTTP_METHODS = frozenset({
-    'get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace',
+    'get',
+    'put',
+    'post',
+    'delete',
+    'options',
+    'head',
+    'patch',
+    'trace',
     'query',
 })
 
