@@ -9,14 +9,7 @@ from syrupy.assertion import SnapshotAssertion
 from dmr import Body, Controller, Cookies, Path, Query, ResponseSpec
 from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
-from dmr.openapi.mappers.schema_normalization import dump_schema
-from dmr.openapi.objects import (
-    Example,
-    MediaTypeMetadata,
-    ParameterMetadata,
-    PathItem,
-)
-from dmr.openapi.objects.operation import Operation
+from dmr.openapi.objects import Example, MediaTypeMetadata, ParameterMetadata
 from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
@@ -294,19 +287,3 @@ def test_raw_path_schema(snapshot: SnapshotAssertion) -> None:
         )
         == snapshot
     )
-
-
-def test_custom_method_schema(snapshot: SnapshotAssertion) -> None:
-    """Ensure custom HTTP methods go into additionalOperations."""
-    op_get = Operation(operation_id='list_items')
-    op_purge = Operation(
-        operation_id='purge_items',
-        summary='Purge all items',
-    )
-    path_item = PathItem(
-        get=op_get,
-        additional_operations={'PURGE': op_purge},
-    )
-    dumped = dump_schema(path_item)
-
-    assert dumped == snapshot

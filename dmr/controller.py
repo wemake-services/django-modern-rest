@@ -20,6 +20,7 @@ from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import PathItem, Server
+from dmr.openapi.objects.path_item import STANDARD_HTTP_METHODS
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import build_response
@@ -28,18 +29,6 @@ from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
 from dmr.types import EMPTY, AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
-
-_STANDARD_HTTP_METHODS = frozenset({
-    'get',
-    'put',
-    'post',
-    'delete',
-    'options',
-    'head',
-    'patch',
-    'trace',
-    'query',
-})
 
 if TYPE_CHECKING:
     from django.utils.functional import (
@@ -553,7 +542,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 router,
             )
             normalized = method.lower()
-            if normalized in _STANDARD_HTTP_METHODS:
+            if normalized in STANDARD_HTTP_METHODS:
                 standard_ops[normalized] = schema
             else:
                 additional_ops[normalized.upper()] = schema

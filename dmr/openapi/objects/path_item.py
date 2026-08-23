@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Annotated
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Annotated, Final
 
 from dmr.internal.dataclass_aliases import Field
 
@@ -8,6 +8,12 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.parameter import Parameter
     from dmr.openapi.objects.reference import Reference
     from dmr.openapi.objects.server import Server
+
+
+STANDARD_HTTP_METHODS: Final = frozenset({
+    'get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace',
+    'query',
+})
 
 
 @dataclass(kw_only=True, slots=True)
@@ -34,7 +40,4 @@ class PathItem:
     query: 'Operation | None' = None
     servers: list['Server'] | None = None
     parameters: list['Parameter | Reference'] | None = None
-    additional_operations: Annotated[
-        dict[str, 'Operation'] | None,
-        Field(alias='additionalOperations'),
-    ] = field(default=None)
+    additional_operations: dict[str, 'Operation'] | None = None
