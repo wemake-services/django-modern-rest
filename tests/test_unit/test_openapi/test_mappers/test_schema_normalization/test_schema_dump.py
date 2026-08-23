@@ -13,10 +13,12 @@ from dmr.openapi.objects import (
     Header,
     OpenAPIFormat,
     OpenAPIType,
+    PathItem,
     Reference,
     Schema,
     Tag,
 )
+from dmr.openapi.objects.operation import Operation
 
 
 @pytest.mark.parametrize(
@@ -261,10 +263,7 @@ def test_dump_schema_base_objects(
 
 
 def test_dump_path_item_with_additional_operations() -> None:
-    """Ensure ``PathItem`` dumps ``additional_operations`` with correct alias."""
-    from dmr.openapi.objects import PathItem
-    from dmr.openapi.objects.operation import Operation
-
+    """Ensure PathItem dumps additional_operations with correct alias."""
     op = Operation(
         operation_id='purge_items',
         summary='Purge items',
@@ -287,10 +286,7 @@ def test_dump_path_item_with_additional_operations() -> None:
 
 
 def test_dump_path_item_without_additional_operations() -> None:
-    """Ensure ``PathItem`` omits ``additional_operations`` when empty."""
-    from dmr.openapi.objects import PathItem
-    from dmr.openapi.objects.operation import Operation
-
+    """Ensure PathItem omits additional_operations when empty."""
     op = Operation(operation_id='get_items')
     path_item = PathItem(get=op)
     dumped = dump_schema(path_item)

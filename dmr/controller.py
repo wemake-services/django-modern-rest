@@ -20,18 +20,6 @@ from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import PathItem, Server
-
-_STANDARD_HTTP_METHODS = frozenset({
-    'get',
-    'put',
-    'post',
-    'delete',
-    'options',
-    'head',
-    'patch',
-    'trace',
-    'query',
-})
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import build_response
@@ -40,6 +28,11 @@ from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
 from dmr.types import EMPTY, AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
+
+_STANDARD_HTTP_METHODS = frozenset({
+    'get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace',
+    'query',
+})
 
 if TYPE_CHECKING:
     from django.utils.functional import (
