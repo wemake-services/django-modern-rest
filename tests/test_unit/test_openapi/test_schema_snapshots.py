@@ -287,3 +287,30 @@ def test_raw_path_schema(snapshot: SnapshotAssertion) -> None:
         )
         == snapshot
     )
+
+
+def test_custom_method_schema(snapshot: SnapshotAssertion) -> None:
+    """Ensure custom HTTP methods go into ``additionalOperations``.
+
+    This test verifies the schema output when a controller exposes
+    custom HTTP methods alongside standard ones.
+
+    .. note::
+
+        The framework currently doesn't support custom methods end-to-end,
+        but the OpenAPI schema generation layer (``PathItem`` + ``Controller.get_schema``)
+        should correctly route them into ``additionalOperations``.
+    """
+    from dmr.openapi.objects import PathItem
+    from dmr.openapi.objects.operation import Operation
+    from dmr.openapi.mappers.schema_normalization import dump_schema
+
+    op_get = Operation(operation_id='list_items')
+    op_purge = Operation(operation_id='purge_items', summary='Purge all items')
+    path_item = PathItem(
+        get=op_get,
+        additional_operations={'PURGE': op_purge},
+    )
+    dumped = dump_schema(path_item)
+
+    assert dumped == snapshot

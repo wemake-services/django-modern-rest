@@ -20,6 +20,11 @@ from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import PathItem, Server
+
+_STANDARD_HTTP_METHODS = frozenset({
+    'get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace',
+    'query',
+})
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import build_response
@@ -526,7 +531,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
               path items from OpenAPI schema
 
         """
-        operations: dict[str, Any] = {}
+        standard_ops: dict[str, Any] = {}
+        additional_ops: dict[str, Any] = {}
         for method, endpoint in cls.api_endpoints.items():
             if endpoint.metadata.ignore_from_spec:
                 continue
@@ -539,14 +545,19 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 context,
                 router,
             )
-            operations.update({method.lower(): schema})
+            normalized = method.lower()
+            if normalized in _STANDARD_HTTP_METHODS:
+                standard_ops[normalized] = schema
+            else:
+                additional_ops[normalized.upper()] = schema
 
         # If all operations are ignored, ignore the full controller:
-        if not operations:
+        if not standard_ops and not additional_ops:
             return None
 
         return PathItem(
-            **operations,
+            **standard_ops,
+            additional_operations=additional_ops or None,
             summary=None if cls.summary is None else str(cls.summary),
             description=(
                 None if cls.description is None else str(cls.description)

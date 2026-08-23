@@ -47,6 +47,9 @@ of requirements for an API to count as public.
   like `Controller.summary`, `ResponseSpec.description`,
   `HeaderSpec.description`, #1298
 - Fixed `Router.include` dropping `tags` and `deprecated` metadata, #1299
+- Fixed ``PathItem`` to support ``additionalOperations`` field for custom
+  HTTP methods (like ``PURGE``, ``LINK``) and added ``query`` field
+  for OpenAPI 3.2 compatibility, #1300
 
 
 ## 0.14.0 (2026-08-14)

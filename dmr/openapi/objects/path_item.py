@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated
 
 from dmr.internal.dataclass_aliases import Field
@@ -31,5 +31,10 @@ class PathItem:
     head: 'Operation | None' = None
     patch: 'Operation | None' = None
     trace: 'Operation | None' = None
+    query: 'Operation | None' = None
     servers: list['Server'] | None = None
     parameters: list['Parameter | Reference'] | None = None
+    additional_operations: Annotated[
+        dict[str, 'Operation'] | None,
+        Field(alias='additionalOperations'),
+    ] = field(default=None)

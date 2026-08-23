@@ -731,6 +731,21 @@
   }
   '''
 # ---
+# name: test_custom_method_schema
+  dict({
+    'additionalOperations': dict({
+      'PURGE': dict({
+        'deprecated': False,
+        'operationId': 'purge_items',
+        'summary': 'Purge all items',
+      }),
+    }),
+    'get': dict({
+      'deprecated': False,
+      'operationId': 'list_items',
+    }),
+  })
+# ---
 # name: test_raw_path_schema
   '''
   {
