@@ -25,4 +25,5 @@ router = Router(
             name='token_custom_sync_auth',
         ),
     ],
+    tags=['token_auth'],
 )

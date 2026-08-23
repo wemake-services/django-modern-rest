@@ -10,4 +10,5 @@ router = Router(
             name='user',
         ),
     ],
+    tags=['etag'],
 )

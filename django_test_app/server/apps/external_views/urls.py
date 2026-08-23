@@ -26,4 +26,5 @@ router = Router(
             openapi=load_schema(json.loads(EXTERNAL_CLASS_OPENAPI), PathItem),
         ),
     ],
+    tags=['external_views'],
 )

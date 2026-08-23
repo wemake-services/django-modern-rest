@@ -15,4 +15,5 @@ router = Router(
             name='api_token_async_auth',
         ),
     ],
+    tags=['token_custom_user'],
 )
