@@ -46,7 +46,7 @@ of requirements for an API to count as public.
 - Allow using lazy translations in many places,
   like `Controller.summary`, `ResponseSpec.description`,
   `HeaderSpec.description`, #1298
-- Fixed `Router.include` droping `tags` and `deprecated` metadata, #1299
+- Fixed `Router.include` dropping `tags` and `deprecated` metadata, #1299
 
 
 ## 0.14.0 (2026-08-14)
