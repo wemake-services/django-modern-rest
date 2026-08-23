@@ -1,4 +1,5 @@
 """Tests for custom HTTP methods in OpenAPI schema generation."""
+
 import json
 
 from django.urls import path

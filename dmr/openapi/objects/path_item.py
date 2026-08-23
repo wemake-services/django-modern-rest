@@ -11,7 +11,14 @@ if TYPE_CHECKING:
 
 
 STANDARD_HTTP_METHODS: Final = frozenset({
-    'get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace',
+    'get',
+    'put',
+    'post',
+    'delete',
+    'options',
+    'head',
+    'patch',
+    'trace',
     'query',
 })
 
