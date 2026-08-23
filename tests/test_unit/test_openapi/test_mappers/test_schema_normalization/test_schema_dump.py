@@ -278,7 +278,11 @@ def test_dump_path_item_with_additional_operations() -> None:
     assert 'get' in dumped
     assert 'additionalOperations' in dumped
     assert dumped['additionalOperations'] == {
-        'PURGE': {'operationId': 'purge_items', 'summary': 'Purge items', 'deprecated': False},
+        'PURGE': {
+            'operationId': 'purge_items',
+            'summary': 'Purge items',
+            'deprecated': False,
+        },
     }
 
 

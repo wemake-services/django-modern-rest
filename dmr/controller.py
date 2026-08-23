@@ -22,7 +22,14 @@ from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import PathItem, Server
 
 _STANDARD_HTTP_METHODS = frozenset({
-    'get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace',
+    'get',
+    'put',
+    'post',
+    'delete',
+    'options',
+    'head',
+    'patch',
+    'trace',
     'query',
 })
 from dmr.parsers import Parser

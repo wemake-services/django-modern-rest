@@ -301,9 +301,9 @@ def test_custom_method_schema(snapshot: SnapshotAssertion) -> None:
         but the OpenAPI schema generation layer (``PathItem`` + ``Controller.get_schema``)
         should correctly route them into ``additionalOperations``.
     """
+    from dmr.openapi.mappers.schema_normalization import dump_schema
     from dmr.openapi.objects import PathItem
     from dmr.openapi.objects.operation import Operation
-    from dmr.openapi.mappers.schema_normalization import dump_schema
 
     op_get = Operation(operation_id='list_items')
     op_purge = Operation(operation_id='purge_items', summary='Purge all items')
