@@ -19,7 +19,6 @@ _OPENAPI_CONFIG = OpenAPIConfig(
 
 
 class _StandardController(Controller[PydanticSerializer]):
-
     def get(self) -> list[dict[str, str]]:
         raise NotImplementedError
 
