@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Annotated, Final
+from typing import TYPE_CHECKING, Annotated, Any, Final
 
 from dmr.internal.dataclass_aliases import Field
 
@@ -9,8 +9,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.reference import Reference
     from dmr.openapi.objects.server import Server
 
-
-STANDARD_HTTP_METHODS: Final = frozenset((
+_STANDARD_HTTP_METHODS: Final = frozenset((
     'get',
     'put',
     'post',
@@ -48,3 +47,18 @@ class PathItem:
     servers: list['Server'] | None = None
     parameters: list['Parameter | Reference'] | None = None
     additional_operations: dict[str, 'Operation'] | None = None
+
+    @classmethod
+    def split_operations(
+        cls,
+        operations: dict[str, Any],
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Split operations into standard HTTP methods and custom ones."""
+        standard: dict[str, Any] = {}
+        additional: dict[str, Any] = {}
+        for method_name, operation in operations.items():
+            if method_name in _STANDARD_HTTP_METHODS:
+                standard[method_name] = operation
+            else:
+                additional[method_name.upper()] = operation
+        return standard, additional

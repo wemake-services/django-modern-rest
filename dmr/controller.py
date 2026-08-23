@@ -20,7 +20,6 @@ from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import PathItem, Server
-from dmr.openapi.objects.path_item import STANDARD_HTTP_METHODS  # noqa: WPS203
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import build_response
@@ -544,7 +543,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         if not operations:
             return None
 
-        standard_ops, additional_ops = cls._split_operations(operations)
+        standard_ops, additional_ops = PathItem.split_operations(operations)
 
         return PathItem(
             **standard_ops,
@@ -564,21 +563,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         return cls.is_async is True
 
     # Protected API:
-
-    @classmethod
-    def _split_operations(
-        cls,
-        operations: dict[str, Any],
-    ) -> tuple[dict[str, Any], dict[str, Any]]:
-        """Split operations into standard HTTP methods and custom ones."""
-        standard: dict[str, Any] = {}
-        additional: dict[str, Any] = {}
-        for method_name, operation in operations.items():
-            if method_name in STANDARD_HTTP_METHODS:
-                standard[method_name] = operation
-            else:
-                additional[method_name.upper()] = operation
-        return standard, additional
 
     @classmethod
     def _infer_serializer(cls) -> type[_SerializerT_co] | None:
