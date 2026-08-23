@@ -1,9 +1,12 @@
 import dataclasses
-from typing import final
+from typing import TYPE_CHECKING, Self, final
 
 from django.urls.resolvers import URLPattern
 
 from dmr.openapi.objects import PathItem
+
+if TYPE_CHECKING:
+    from dmr.routing import Router
 
 
 @final
@@ -28,3 +31,31 @@ class URLExternal:
         """Get the url pattern with attached OpenAPI metadata."""
         self.url.callback.__dmr_external_openapi__ = self.openapi  # type: ignore[attr-defined]
         return self.url
+
+
+@final
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
+class RouterMetadata:
+    """
+    Used to represent the metadata that we apply from router to all operations.
+
+    Must contain all the metadata fields from :class:`dmr.routing.Router`.
+
+    .. versionadded:: 0.15.0
+    """
+
+    tags: list[str]
+    deprecated: bool
+
+    @classmethod
+    def from_router(cls, router: 'Router') -> Self:
+        """Create metadata from router instance."""
+        return cls(tags=router.tags, deprecated=router.deprecated)
+
+    @classmethod
+    def from_included(cls, router: 'Router', included: Self) -> Self:
+        """Create metadata from included and including routers."""
+        return cls(
+            tags=router.tags + included.tags,
+            deprecated=router.deprecated or included.deprecated,
+        )

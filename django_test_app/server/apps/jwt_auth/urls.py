@@ -55,4 +55,5 @@ router = Router(
             name='jwt_cookie_async_auth',
         ),
     ],
+    tags=['jwt_auth'],
 )

@@ -305,13 +305,10 @@ class Endpoint:  # noqa: WPS214
             self.metadata,
             serializer,
         )
-        security = context.generators.security_scheme(
-            self.metadata.auth,
-            serializer,
-        )
 
+        router_metadata = router.metadata_for(path)
         tags = [
-            *router.tags,
+            *router_metadata.tags,
             *(self.metadata.tags or []),
         ]
 
@@ -327,8 +324,11 @@ class Endpoint:  # noqa: WPS214
                 if self.metadata.description is None
                 else str(self.metadata.description)
             ),
-            deprecated=self.metadata.deprecated or router.deprecated,
-            security=security,
+            deprecated=self.metadata.deprecated or router_metadata.deprecated,
+            security=context.generators.security_scheme(
+                self.metadata.auth,
+                serializer,
+            ),
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
             callbacks=self.metadata.callbacks,

@@ -31,9 +31,6 @@ of requirements for an API to count as public.
   to read JWT tokens from cookies instead of headers, #1193
 - Added `HeaderJWTSyncAuth` and `HeaderJWTAsyncAuth`,
   `JWTSyncAuth` and `JWTAsyncAuth` are kept as their aliases, #1193
-
-### Features
-
 - Added `XSessionTokenSyncAuth` and `XSessionTokenAsyncAuth`
   to authenticate `django-allauth` headless session tokens,
   available via the new `django-modern-rest[allauth]` extra, #1193
@@ -46,7 +43,10 @@ of requirements for an API to count as public.
 - Fixed `DjangoSessionSyncAuth`, `DjangoSessionAsyncAuth`,
   `CookieTokenSyncAuth`, and `CookieTokenAsyncAuth` to check CSRF only
   when this auth class is actually used and not skipped, #1289
-- Allow using lazy translations in many places, like `ResponseSpec.description`
+- Allow using lazy translations in many places,
+  like `Controller.summary`, `ResponseSpec.description`,
+  `HeaderSpec.description`, #1298
+- Fixed `Router.include` droping `tags` and `deprecated` metadata, #1299
 
 
 ## 0.14.0 (2026-08-14)
