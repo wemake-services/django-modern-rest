@@ -20,6 +20,7 @@ from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import PathItem, Server
+from dmr.openapi.objects.path_item import STANDARD_HTTP_METHODS  # noqa: WPS203
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import build_response
@@ -36,17 +37,6 @@ if TYPE_CHECKING:
 
     from dmr.routing import Router
 
-_STANDARD_HTTP_METHODS: Final = frozenset((
-    'get',
-    'put',
-    'post',
-    'delete',
-    'options',
-    'head',
-    'patch',
-    'trace',
-    'query',
-))
 _METHOD_NOT_ALLOWED_MSG: Final = _(
     'Method {method} is not allowed, allowed: {allowed}',
 )
@@ -520,7 +510,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         )
 
     @classmethod
-    def get_schema(  # noqa: WPS231
+    def get_schema(
         cls,
         path: str,
         pattern: URLPattern,
@@ -537,13 +527,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
               path items from OpenAPI schema
 
         """
-        standard_ops: dict[str, Any] = {}
-        additional_ops: dict[str, Any] = {}
+        operations: dict[str, Any] = {}
         for method, endpoint in cls.api_endpoints.items():
             if endpoint.metadata.ignore_from_spec:
                 continue
 
-            schema = endpoint.get_schema(
+            operations[method.lower()] = endpoint.get_schema(
                 path,
                 pattern,
                 cls.__qualname__,
@@ -551,13 +540,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 context,
                 router,
             )
-            if method.lower() in _STANDARD_HTTP_METHODS:
-                standard_ops[method.lower()] = schema
-            else:
-                additional_ops[method.upper()] = schema
 
-        if not (standard_ops or additional_ops):
+        if not operations:
             return None
+
+        standard_ops, additional_ops = cls._split_operations(operations)
 
         return PathItem(
             **standard_ops,
@@ -577,6 +564,21 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         return cls.is_async is True
 
     # Protected API:
+
+    @classmethod
+    def _split_operations(
+        cls,
+        operations: dict[str, Any],
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Split operations into standard HTTP methods and custom ones."""
+        standard: dict[str, Any] = {}
+        additional: dict[str, Any] = {}
+        for method_name, operation in operations.items():
+            if method_name in STANDARD_HTTP_METHODS:
+                standard[method_name] = operation
+            else:
+                additional[method_name.upper()] = operation
+        return standard, additional
 
     @classmethod
     def _infer_serializer(cls) -> type[_SerializerT_co] | None:

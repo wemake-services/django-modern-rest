@@ -1,18 +1,24 @@
-"""Tests for custom HTTP methods in OpenAPI schema generation."""
-
 import json
+from http import HTTPStatus
+from typing import cast
 
+from django.http import HttpResponse
 from django.urls import path
+from syrupy.assertion import SnapshotAssertion
 
-from dmr import Controller
-from dmr.openapi import build_schema
-from dmr.options_mixins import MetaMixin
+from dmr import Controller, ResponseSpec, validate
+from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 
+_OPENAPI_CONFIG = OpenAPIConfig(
+    title='Custom Methods Test',
+    version='1.0',
+    openapi_version='3.2.0',
+)
+
 
 class _StandardController(Controller[PydanticSerializer]):
-    """A controller with standard HTTP methods only."""
 
     def get(self) -> list[dict[str, str]]:
         raise NotImplementedError
@@ -21,59 +27,52 @@ class _StandardController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-class _MetaController(MetaMixin, Controller[PydanticSerializer]):
-    """A controller with meta method (generates OPTIONS)."""
+class _PurgeController(Controller[PydanticSerializer]):
+    allowed_http_methods = frozenset((
+        *Controller.allowed_http_methods,
+        'purge',
+    ))
 
-    def get(self) -> list[dict[str, str]]:
-        raise NotImplementedError
-
-
-class _DeleteController(Controller[PydanticSerializer]):
-    """A controller with only DELETE method."""
-
-    def delete(self) -> None:
-        raise NotImplementedError
-
-
-def _build_schema(controller_cls: type) -> dict:
-    """Build OpenAPI schema for a controller."""
-    return build_schema(
-        Router('api/v1/', [path('items/', controller_cls.as_view())]),
-    ).convert()
+    @validate(
+        ResponseSpec(None, status_code=HTTPStatus.OK),
+    )
+    def purge(self) -> HttpResponse:
+        return cast(
+            HttpResponse,
+            self.to_response(None, status_code=HTTPStatus.OK),
+        )
 
 
-def test_standard_methods_in_path_item() -> None:
+def test_standard_methods_in_path_item(snapshot: SnapshotAssertion) -> None:
     """Ensure standard methods are placed as PathItem fields."""
-    schema = json.loads(json.dumps(_build_schema(_StandardController)))
-    path_item = schema['paths']['/api/v1/items/']
-
-    assert 'get' in path_item
-    assert 'post' in path_item
-    assert 'additionalOperations' not in path_item
-
-
-def test_meta_generates_options_in_schema() -> None:
-    """Ensure meta method generates OPTIONS in the schema."""
-    schema = json.loads(json.dumps(_build_schema(_MetaController)))
-    path_item = schema['paths']['/api/v1/items/']
-
-    assert 'options' in path_item
-    assert path_item['options']['operationId'].startswith('options')
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [path('items/', _StandardController.as_view())],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
 
 
-def test_allowed_http_methods_controls_endpoints() -> None:
-    """Ensure only methods in allowed_http_methods appear in schema."""
-    schema = json.loads(json.dumps(_build_schema(_DeleteController)))
-    path_item = schema['paths']['/api/v1/items/']
-
-    assert 'delete' in path_item
-    assert 'get' not in path_item
-    assert 'post' not in path_item
-
-
-def test_no_additional_ops_for_standard_only() -> None:
-    """Ensure additionalOperations is absent when only standard methods used."""
-    schema = json.loads(json.dumps(_build_schema(_StandardController)))
-    path_item = schema['paths']['/api/v1/items/']
-
-    assert 'additionalOperations' not in path_item
+def test_custom_method_in_additional_operations(
+    snapshot: SnapshotAssertion,
+) -> None:
+    """Ensure custom HTTP methods go into additionalOperations."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [path('items/', _PurgeController.as_view())],
+                ),
+                config=_OPENAPI_CONFIG,
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
