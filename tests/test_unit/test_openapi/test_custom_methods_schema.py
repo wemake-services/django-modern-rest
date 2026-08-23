@@ -28,7 +28,6 @@ class _StandardController(Controller[PydanticSerializer]):
 
 
 class _MetaController(MetaMixin, Controller[PydanticSerializer]):
-
     def get(self) -> list[dict[str, str]]:
         raise NotImplementedError
 
