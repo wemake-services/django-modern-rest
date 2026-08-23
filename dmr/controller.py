@@ -20,7 +20,6 @@ from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import PathItem, Server
-from dmr.openapi.objects.path_item import STANDARD_HTTP_METHODS
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import build_response
@@ -37,6 +36,10 @@ if TYPE_CHECKING:
 
     from dmr.routing import Router
 
+_STANDARD_HTTP_METHODS: Final = frozenset((
+    'get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace',
+    'query',
+))
 _METHOD_NOT_ALLOWED_MSG: Final = _(
     'Method {method} is not allowed, allowed: {allowed}',
 )
@@ -510,7 +513,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         )
 
     @classmethod
-    def get_schema(
+    def get_schema(  # noqa: WPS231
         cls,
         path: str,
         pattern: URLPattern,
@@ -541,14 +544,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 context,
                 router,
             )
-            normalized = method.lower()
-            if normalized in STANDARD_HTTP_METHODS:
-                standard_ops[normalized] = schema
+            if method.lower() in _STANDARD_HTTP_METHODS:
+                standard_ops[method.lower()] = schema
             else:
-                additional_ops[normalized.upper()] = schema
+                additional_ops[method.upper()] = schema
 
-        # If all operations are ignored, ignore the full controller:
-        if not standard_ops and not additional_ops:
+        if not (standard_ops or additional_ops):
             return None
 
         return PathItem(

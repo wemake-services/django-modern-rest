@@ -45,35 +45,35 @@ def _build_schema(controller_cls: type) -> dict:
 def test_standard_methods_in_path_item() -> None:
     """Ensure standard methods are placed as PathItem fields."""
     schema = json.loads(json.dumps(_build_schema(_StandardController)))
-    items = schema['paths']['/api/v1/items/']
+    path_item = schema['paths']['/api/v1/items/']
 
-    assert 'get' in items
-    assert 'post' in items
-    assert 'additionalOperations' not in items
+    assert 'get' in path_item
+    assert 'post' in path_item
+    assert 'additionalOperations' not in path_item
 
 
 def test_meta_generates_options_in_schema() -> None:
     """Ensure meta method generates OPTIONS in the schema."""
     schema = json.loads(json.dumps(_build_schema(_MetaController)))
-    items = schema['paths']['/api/v1/items/']
+    path_item = schema['paths']['/api/v1/items/']
 
-    assert 'options' in items
-    assert items['options']['operationId'].startswith('options')
+    assert 'options' in path_item
+    assert path_item['options']['operationId'].startswith('options')
 
 
 def test_allowed_http_methods_controls_endpoints() -> None:
     """Ensure only methods in allowed_http_methods appear in schema."""
     schema = json.loads(json.dumps(_build_schema(_DeleteController)))
-    items = schema['paths']['/api/v1/items/']
+    path_item = schema['paths']['/api/v1/items/']
 
-    assert 'delete' in items
-    assert 'get' not in items
-    assert 'post' not in items
+    assert 'delete' in path_item
+    assert 'get' not in path_item
+    assert 'post' not in path_item
 
 
-def test_no_additional_operations_for_standard_only() -> None:
+def test_no_additional_ops_for_standard_only() -> None:
     """Ensure additionalOperations is absent when only standard methods used."""
     schema = json.loads(json.dumps(_build_schema(_StandardController)))
-    items = schema['paths']['/api/v1/items/']
+    path_item = schema['paths']['/api/v1/items/']
 
-    assert 'additionalOperations' not in items
+    assert 'additionalOperations' not in path_item

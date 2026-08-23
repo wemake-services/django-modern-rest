@@ -10,17 +10,10 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.server import Server
 
 
-STANDARD_HTTP_METHODS: Final = frozenset({
-    'get',
-    'put',
-    'post',
-    'delete',
-    'options',
-    'head',
-    'patch',
-    'trace',
+STANDARD_HTTP_METHODS: Final = frozenset((
+    'get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace',
     'query',
-})
+))
 
 
 @dataclass(kw_only=True, slots=True)
