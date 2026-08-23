@@ -37,7 +37,14 @@ if TYPE_CHECKING:
     from dmr.routing import Router
 
 _STANDARD_HTTP_METHODS: Final = frozenset((
-    'get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace',
+    'get',
+    'put',
+    'post',
+    'delete',
+    'options',
+    'head',
+    'patch',
+    'trace',
     'query',
 ))
 _METHOD_NOT_ALLOWED_MSG: Final = _(
