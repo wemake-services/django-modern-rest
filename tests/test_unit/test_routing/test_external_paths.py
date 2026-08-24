@@ -119,3 +119,22 @@ def test_external_paths_schema_duplicate() -> None:
 
     with pytest.raises(ValueError, match='_User'):
         build_schema(router, config=config)
+
+
+def test_external_path_ignored_with_router() -> None:
+    """Ensure that router visibility applies to external paths."""
+    router = Router(
+        prefix='api/',
+        urls=[
+            external_path(
+                'external/',
+                _external_func,
+                openapi=objects.PathItem(),
+            ),
+        ],
+        ignore_from_spec=True,
+    )
+
+    schema = build_schema(router)
+
+    assert schema.paths == {}

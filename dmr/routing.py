@@ -73,7 +73,14 @@ class Router:
 
     """
 
-    __slots__ = ('_path_metadata', 'deprecated', 'prefix', 'tags', 'urls')
+    __slots__ = (
+        '_path_metadata',
+        'deprecated',
+        'ignore_from_spec',
+        'prefix',
+        'tags',
+        'urls',
+    )
 
     def __init__(
         self,
@@ -82,12 +89,14 @@ class Router:
         *,
         tags: Sequence[str] | None = None,
         deprecated: bool = False,
+        ignore_from_spec: bool = False,
     ) -> None:
         """Initialize a router with routes and optional OpenAPI metadata."""
         self.prefix = prefix
         self.urls = self._maybe_process_external(urls)
         self.tags = list(tags or [])
         self.deprecated = deprecated
+        self.ignore_from_spec = ignore_from_spec
         # Construct metadata for this new router:
         self._path_metadata: dict[str, RouterMetadata] = {
             new_path: RouterMetadata.from_router(self)
@@ -113,6 +122,9 @@ class Router:
             self.urls,
             base_path=self.prefix,
         ):
+            if self.metadata_for(path).ignore_from_spec:
+                # Skip paths hidden by any router in the inclusion chain:
+                continue
             if pattern_or_meta is None:
                 # You can also add external views without adding any OpenAPI,
                 # this way, it would be hidden from the docs:
