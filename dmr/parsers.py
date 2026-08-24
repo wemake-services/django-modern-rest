@@ -41,6 +41,19 @@ class Parser(ResponseSpecProvider):
     Must be defined for all subclasses.
     """
 
+    def validate(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: EndpointMetadata,
+    ) -> None:
+        """
+        Validate parser configuration at import time.
+
+        Override this method to enforce parser-specific constraints.
+        Raise :class:`dmr.exceptions.EndpointMetadataError`
+        if the parser is used incorrectly.
+        """
+
     @abc.abstractmethod
     def parse(
         self,
