@@ -142,7 +142,7 @@ You can exclude individual endpoints, controllers, or entire routers
 from OpenAPI. Excluded routes continue to work normally (including schema
 validation), but are not visible in the generated specification.
 
-We support three levels of configuration:
+We support three levels of configuration with this feature:
 
 .. tabs::
 
@@ -169,10 +169,10 @@ We support three levels of configuration:
 
   .. tab:: per router
 
-    Pass ``ignore_from_spec=True`` to
-    :class:`~dmr.routing.Router` to exclude all routes from this router.
+    Pass ``ignore_from_spec`` parameter
+    to :class:`~dmr.routing.Router` to exclude all routes from this router.
 
-    When routers are nested, ``ignore_from_spec=True`` excludes the whole
+    When routers are nested, ``ignore_from_spec`` excludes the whole
     router subtree. Runtime URL routing is not affected.
 
     .. literalinclude:: /examples/openapi/ignore_router.py
