@@ -852,7 +852,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class EndpointMetadataValidator:
+class EndpointMetadataValidator:  # noqa: WPS214
     """
     Builds responses for the endpoint metadata.
 
