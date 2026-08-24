@@ -48,6 +48,8 @@ def test_custom_parser_validate_pass() -> None:
         def get(self) -> list[dict[str, str]]:
             raise NotImplementedError
 
+    # Controller is created successfully at import time.
+
 
 def test_custom_parser_validate_fail() -> None:
     """Parser.validate raises on invalid usage."""
