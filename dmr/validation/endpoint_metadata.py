@@ -893,6 +893,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         self._validate_request_http_spec()
         self._validate_components(controller_cls)
         self._validate_parsers(controller_cls)
+        self._validate_renderers(controller_cls)
 
     def _resolve_all_responses(
         self,
@@ -977,6 +978,13 @@ class EndpointMetadataValidator:  # noqa: WPS214
     ) -> None:
         for parser in self.metadata.parsers.values():
             parser.validate(controller_cls, self.metadata)
+
+    def _validate_renderers(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> None:
+        for renderer in self.metadata.renderers.values():
+            renderer.validate(controller_cls, self.metadata)
 
     def _validate_request_http_spec(self) -> None:
         """Validate HTTP spec rules for request."""

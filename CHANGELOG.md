@@ -37,6 +37,8 @@ of requirements for an API to count as public.
 - Added `query` method support for `PathItem` OpenAPI 3.2.0 spec, #1300
 - Added `Parser.validate` method for import-time validation of parser
   configuration, #1304
+- Added `Renderer.validate` method for import-time validation of renderer
+  configuration, #1306
 - Added `Router.ignore_from_spec` to exclude entire router subtrees
   from the generated OpenAPI specification, #1309
 
