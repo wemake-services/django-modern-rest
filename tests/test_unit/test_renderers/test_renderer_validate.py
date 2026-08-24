@@ -1,3 +1,6 @@
+from collections.abc import Callable
+from typing import Any
+
 import pytest
 from typing_extensions import override
 
@@ -16,7 +19,11 @@ class _StrictRenderer(Renderer):
     content_type = 'application/strict'
 
     @override
-    def render(self, to_serialize, serializer_hook) -> None:
+    def render(
+        self,
+        to_serialize: Any,
+        serializer_hook: Callable[[Any], Any],
+    ) -> bytes:
         raise NotImplementedError
 
     @property
