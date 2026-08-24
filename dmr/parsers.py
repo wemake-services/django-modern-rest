@@ -41,6 +41,13 @@ class Parser(ResponseSpecProvider):
     Must be defined for all subclasses.
     """
 
+    def validate(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: EndpointMetadata,
+    ) -> None:
+        """Validate parser configuration at import time."""
+
     @abc.abstractmethod
     def parse(
         self,

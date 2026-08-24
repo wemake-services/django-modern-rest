@@ -892,6 +892,7 @@ class EndpointMetadataValidator:
         # After that we can do some other validation:
         self._validate_request_http_spec()
         self._validate_components(controller_cls)
+        self._validate_parsers(controller_cls)
 
     def _resolve_all_responses(
         self,
@@ -969,6 +970,13 @@ class EndpointMetadataValidator:
     ) -> None:
         for component, _model, _metadata in self.metadata.component_parsers:
             component.validate(controller_cls, self.metadata)
+
+    def _validate_parsers(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> None:
+        for parser in self.metadata.parsers.values():
+            parser.validate(controller_cls, self.metadata)
 
     def _validate_request_http_spec(self) -> None:
         """Validate HTTP spec rules for request."""
