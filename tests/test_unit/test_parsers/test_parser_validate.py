@@ -6,6 +6,7 @@ from dmr.exceptions import EndpointMetadataError
 from dmr.metadata import EndpointMetadata
 from dmr.parsers import DeserializeFunc, Parser, Raw
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.serializer import BaseSerializer
 
 
 class _StrictParser(Parser):
@@ -27,7 +28,7 @@ class _StrictParser(Parser):
     @override
     def validate(
         self,
-        controller_cls: type[Controller],
+        controller_cls: type['Controller[BaseSerializer]'],
         metadata: EndpointMetadata,
     ) -> None:
         """Only allow this parser on GET endpoints."""
@@ -47,7 +48,7 @@ def test_custom_parser_validate_pass() -> None:
         def get(self) -> list[dict[str, str]]:
             raise NotImplementedError
 
-    assert _Controller is not None
+    pass
 
 
 def test_custom_parser_validate_fail() -> None:
