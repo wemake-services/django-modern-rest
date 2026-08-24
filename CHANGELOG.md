@@ -35,7 +35,7 @@ of requirements for an API to count as public.
   to authenticate `django-allauth` headless session tokens,
   available via the new `django-modern-rest[allauth]` extra, #1193
 - Added `query` method support for `PathItem` OpenAPI 3.2.0 spec, #1300
-- Added ``Parser.validate`` method for import-time validation of parser
+- Added `Parser.validate` method for import-time validation of parser
   configuration, #1304
 
 ### Bugfixes
