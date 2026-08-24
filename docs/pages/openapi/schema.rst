@@ -138,11 +138,11 @@ Or disable semantic responses completely:
 Excluding views from OpenAPI
 ----------------------------
 
-You can also disable some controllers or endpoints from OpenAPI.
-This would basically make them private, the will work the same way
-(including the schema validation), but just not be visible to users.
+You can exclude individual endpoints, controllers, or entire routers
+from OpenAPI. Excluded routes continue to work normally (including schema
+validation), but are not visible in the generated specification.
 
-We support two levels of configuration with this feature:
+We support three levels of configuration:
 
 .. tabs::
 
@@ -164,5 +164,18 @@ We support two levels of configuration with this feature:
 
     .. literalinclude:: /examples/openapi/ignore_controller.py
       :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: per router
+
+    Pass ``ignore_from_spec=True`` to
+    :class:`~dmr.routing.Router` to exclude all routes from this router.
+
+    When routers are nested, ``ignore_from_spec=True`` excludes the whole
+    router subtree. Runtime URL routing is not affected.
+
+    .. literalinclude:: /examples/openapi/ignore_router.py
+      :caption: urls.py
       :linenos:
       :language: python

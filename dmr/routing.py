@@ -57,6 +57,9 @@ class Router:
             These are merged with endpoint-level tags.
         deprecated: Optional flag to mark all operations as deprecated.
             Combines with endpoint-level deprecated flag using OR logic.
+        ignore_from_spec: If set to ``True``, all routes from this router
+            are excluded from the generated OpenAPI specification.
+            Runtime URL routing is not affected.
 
     .. note::
 
@@ -70,6 +73,9 @@ class Router:
         Now you can pass :func:`external_path` objects in *urls*.
         Also accept any :class:`collections.abc.Sequence` as *tags*.
         *urls* parameter is now optional.
+
+    .. versionchanged:: 0.15.0
+        Added *ignore_from_spec* parameter.
 
     """
 
