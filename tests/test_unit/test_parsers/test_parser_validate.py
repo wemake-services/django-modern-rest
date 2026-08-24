@@ -19,15 +19,15 @@ class _StrictParser(Parser):
         to_deserialize: Raw,
         deserializer_hook: DeserializeFunc | None = None,
         *,
-        request,
-        model,
+        request: object,
+        model: object,
     ) -> None:
         raise NotImplementedError
 
     @override
     def validate(
         self,
-        controller_cls: type['Controller[PydanticSerializer]'],
+        controller_cls: type[Controller],
         metadata: EndpointMetadata,
     ) -> None:
         """Only allow this parser on GET endpoints."""
