@@ -26,4 +26,4 @@ urlpatterns = [
     path('docs/openapi.json/', OpenAPIJsonView.as_view(schema)),
 ]
 
-# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001, E501
+# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001
