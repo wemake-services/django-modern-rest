@@ -46,11 +46,16 @@ class RouterMetadata:
 
     tags: list[str]
     deprecated: bool
+    ignore_from_spec: bool
 
     @classmethod
     def from_router(cls, router: 'Router') -> Self:
         """Create metadata from router instance."""
-        return cls(tags=router.tags, deprecated=router.deprecated)
+        return cls(
+            tags=router.tags,
+            deprecated=router.deprecated,
+            ignore_from_spec=router.ignore_from_spec,
+        )
 
     @classmethod
     def from_included(cls, router: 'Router', included: Self) -> Self:
@@ -58,4 +63,7 @@ class RouterMetadata:
         return cls(
             tags=router.tags + included.tags,
             deprecated=router.deprecated or included.deprecated,
+            ignore_from_spec=(
+                router.ignore_from_spec or included.ignore_from_spec
+            ),
         )

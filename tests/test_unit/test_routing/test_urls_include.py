@@ -124,3 +124,24 @@ def test_router_include_with_metadata(
         )
         == snapshot
     )
+
+
+def test_nested_router_ignore_from_spec() -> None:
+    """Ensure that `ignore_from_spec` propagates through nested routers."""
+    hidden_router = Router(
+        prefix='private/',
+        urls=[path('user/', _UserController.as_view())],
+        ignore_from_spec=True,
+    )
+    version_router = Router(
+        prefix='v1/',
+        urls=[path('other/', _OtherController.as_view())],
+    )
+    version_router.include(hidden_router)
+    router = Router(prefix='api/')
+    router.include(version_router)
+
+    schema = build_schema(router)
+
+    assert schema.paths is not None
+    assert set(schema.paths) == {'/api/v1/other/'}
