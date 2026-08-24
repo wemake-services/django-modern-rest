@@ -16,7 +16,7 @@ class _StrictRenderer(Renderer):
     content_type = 'application/strict'
 
     @override
-    def render(self, to_serialize, serializer_hook):
+    def render(self, to_serialize, serializer_hook) -> None:
         raise NotImplementedError
 
     @property
