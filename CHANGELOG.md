@@ -38,9 +38,16 @@ of requirements for an API to count as public.
 - Added `XSessionTokenSyncAuth` and `XSessionTokenAsyncAuth`
   to authenticate `django-allauth` headless session tokens,
   available via the new `django-modern-rest[allauth]` extra, #1193
-- Added `query` HTTP method support for `PathItem` OpenAPI 3.2.0 spec, #1300
+- Added `query` method support for `PathItem` OpenAPI 3.2.0 spec, #1300
+- Added `Parser.validate` method for import-time validation of parser
+  configuration, #1304
+- Added `Renderer.validate` method for import-time validation of renderer
+  configuration, #1306
+- Added `Router.ignore_from_spec` to exclude entire router subtrees
+  from the generated OpenAPI specification, #1309
 - Added `FileMetadata` conditional types, #1278
-- Added `SupportsFileParsing.schema_metadata` method, #1278
+- Added `SupportsFileParsing.schema_metadata` method to customize
+  file schema from the parser, #1278
 
 ### Bugfixes
 
@@ -56,6 +63,8 @@ of requirements for an API to count as public.
 - Fixed `Router.include` dropping `tags` and `deprecated` metadata, #1299
 - Fixed `PathItem` to support `additionalOperations` field for custom
   HTTP methods (like `PURGE`, `LINK`), #1300
+- Fixed a bug when non-file parsers were listed in the response schema
+  for file responses, #1278
 
 
 ## 0.14.0 (2026-08-14)

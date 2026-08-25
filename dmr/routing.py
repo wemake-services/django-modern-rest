@@ -57,6 +57,9 @@ class Router:
             These are merged with endpoint-level tags.
         deprecated: Optional flag to mark all operations as deprecated.
             Combines with endpoint-level deprecated flag using OR logic.
+        ignore_from_spec: If set to ``True``, all routes from this router
+            are excluded from the generated OpenAPI specification.
+            Runtime URL routing is not affected.
 
     .. note::
 
@@ -71,9 +74,19 @@ class Router:
         Also accept any :class:`collections.abc.Sequence` as *tags*.
         *urls* parameter is now optional.
 
+    .. versionchanged:: 0.15.0
+        Added *ignore_from_spec* parameter.
+
     """
 
-    __slots__ = ('_path_metadata', 'deprecated', 'prefix', 'tags', 'urls')
+    __slots__ = (
+        '_path_metadata',
+        'deprecated',
+        'ignore_from_spec',
+        'prefix',
+        'tags',
+        'urls',
+    )
 
     def __init__(
         self,
@@ -82,12 +95,14 @@ class Router:
         *,
         tags: Sequence[str] | None = None,
         deprecated: bool = False,
+        ignore_from_spec: bool = False,
     ) -> None:
         """Initialize a router with routes and optional OpenAPI metadata."""
         self.prefix = prefix
         self.urls = self._maybe_process_external(urls)
         self.tags = list(tags or [])
         self.deprecated = deprecated
+        self.ignore_from_spec = ignore_from_spec
         # Construct metadata for this new router:
         self._path_metadata: dict[str, RouterMetadata] = {
             new_path: RouterMetadata.from_router(self)
@@ -113,6 +128,9 @@ class Router:
             self.urls,
             base_path=self.prefix,
         ):
+            if self.metadata_for(path).ignore_from_spec:
+                # Skip paths hidden by any router in the inclusion chain:
+                continue
             if pattern_or_meta is None:
                 # You can also add external views without adding any OpenAPI,
                 # this way, it would be hidden from the docs:
