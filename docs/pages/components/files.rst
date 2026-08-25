@@ -145,6 +145,8 @@ However, this can be done with ``msgspec`` as well.
 Conditional file types
 ----------------------
 
+.. versionadded:: 0.15.0
+
 Files can also contain conditional schemas, for example different ones
 for ``application/octet-stream``, which takes a single file,
 and ``multipart/form-data``, which takes multiple files.
