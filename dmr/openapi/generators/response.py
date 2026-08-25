@@ -139,7 +139,9 @@ class ResponseGenerator:
         used_for_response: bool,
     ) -> dict[str, MediaType]:
         # Import cycle:
-        from dmr.negotiation import get_conditional_types  # noqa: PLC0415
+        from dmr.internal.negotiation import (  # noqa: PLC0415
+            get_conditional_types,
+        )
 
         return_types = (
             get_conditional_types(response_spec.return_type, ()) or {}

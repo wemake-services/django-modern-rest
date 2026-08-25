@@ -24,6 +24,10 @@ of requirements for an API to count as public.
 
 - Removed `QueryTokenSyncAuth` and `QueryTokenAsyncAuth` auth classes,
   because they were insecure, you can use [older existing versions](https://github.com/wemake-services/django-modern-rest/blob/14884b432ee075ec3d78ff388944ebc5f0b5d432/dmr/security/token/auth/header.py), #1288
+- Removed `FileResponseSpec.file_body`,
+  use `FileResponseSpec.return_type` instead, #1278
+- Removed `FileMetadataComponent.schema_metadata`,
+  now we use `SupportsFileParsing.schema_metadata` instead, #1278
 
 ### Features
 
@@ -41,6 +45,9 @@ of requirements for an API to count as public.
   configuration, #1306
 - Added `Router.ignore_from_spec` to exclude entire router subtrees
   from the generated OpenAPI specification, #1309
+- Added `FileMetadata` conditional types, #1278
+- Added `SupportsFileParsing.schema_metadata` method to customize
+  file schema from the parser, #1278
 
 ### Bugfixes
 
@@ -56,6 +63,8 @@ of requirements for an API to count as public.
 - Fixed `Router.include` dropping `tags` and `deprecated` metadata, #1299
 - Fixed `PathItem` to support `additionalOperations` field for custom
   HTTP methods (like `PURGE`, `LINK`), #1300
+- Fixed a bug when non-file parsers were listed in the response schema
+  for file responses, #1278
 
 
 ## 0.14.0 (2026-08-14)
