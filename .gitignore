@@ -263,3 +263,7 @@ wheelhouse/
 
 # CodSpeed:
 .codspeed/
+
+# AI slop:
+.claude/
+.codex/

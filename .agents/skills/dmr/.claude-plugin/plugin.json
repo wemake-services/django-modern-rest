@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "dmr",
+  "version": "1.0.0",
+  "description": "Write the best DMR code possible with all the recommended best practices, avoiding common mistakes",
+  "author": {
+    "name": "wemake-services",
+    "url": "https://github.com/wemake-services"
+  },
+  "homepage": "https://github.com/wemake-services/django-modern-rest",
+  "repository": "https://github.com/wemake-services/django-modern-rest",
+  "license": "MIT",
+  "keywords": ["django", "rest", "api", "django-modern-rest"],
+  "skills": ["./"],
+  "agents": []
+}
