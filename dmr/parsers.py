@@ -1,4 +1,5 @@
 import abc
+import importlib
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, TypeAlias, final
@@ -310,9 +311,10 @@ class MultiPartParser(
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
     ) -> type['FileBodyLike']:
-        from dmr.files import FileBody  # noqa: PLC0415
-
-        return FileBody
+        # We have to do this dynamic import here, because otherwise
+        # our internal tooling (importlinter) goes crazy.
+        # It is not really cool to do, but there's no other way that I can see.
+        return importlib.import_module('dmr.files').FileBody  # type: ignore[no-any-return]
 
 
 class FormUrlEncodedParser(
