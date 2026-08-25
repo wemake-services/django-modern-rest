@@ -66,6 +66,10 @@ of requirements for an API to count as public.
 - Fixed a bug when non-file parsers were listed in the response schema
   for file responses, #1278
 
+### Misc
+
+- Fixes AI docs and plugin install instructions
+
 
 ## 0.14.0 (2026-08-14)
 

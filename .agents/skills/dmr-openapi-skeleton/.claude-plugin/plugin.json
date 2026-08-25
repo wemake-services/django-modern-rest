@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "dmr-openapi-skeleton",
+  "version": "1.0.0",
+  "description": "Scaffold OpenAPI-compliant Django REST APIs with dmr",
+  "author": {
+    "name": "wemake-services",
+    "url": "https://github.com/wemake-services"
+  },
+  "homepage": "https://github.com/wemake-services/django-modern-rest",
+  "repository": "https://github.com/wemake-services/django-modern-rest",
+  "license": "MIT",
+  "keywords": ["django", "rest", "api", "openapi", "scaffolding"],
+  "skills": ["./"],
+  "agents": []
+}
