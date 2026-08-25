@@ -317,40 +317,28 @@
             "content": {
               "multipart/form-data": {
                 "schema": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/components/schemas/_SeveralFiles"
-                    },
-                    {
-                      "$ref": "#/components/schemas/_OctetFileModel"
-                    }
-                  ],
-                  "properties": {}
-                }
-              },
-              "application/octet-stream": {
-                "schema": {
                   "properties": {
-                    "content_type": {
+                    "first_file": {
                       "type": "string",
                       "format": "binary"
                     },
-                    "size": {
-                      "type": "string",
-                      "format": "binary"
-                    },
-                    "name": {
+                    "second_file": {
                       "type": "string",
                       "format": "binary"
                     }
                   },
                   "type": "object",
                   "required": [
-                    "content_type",
-                    "size",
-                    "name"
+                    "first_file",
+                    "second_file"
                   ],
-                  "title": "_OctetFileModel"
+                  "title": "_SeveralSimpleFiles"
+                }
+              },
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             },
@@ -362,14 +350,7 @@
               "content": {
                 "application/json": {
                   "schema": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/components/schemas/_SeveralFiles"
-                      },
-                      {
-                        "$ref": "#/components/schemas/_OctetFileModel"
-                      }
-                    ]
+                    "type": "string"
                   }
                 }
               }
@@ -460,6 +441,18 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         },
+        "OctetFileModel__OctetFileMeta_": {
+          "properties": {
+            "uploaded_file": {
+              "$ref": "#/components/schemas/_OctetFileMeta"
+            }
+          },
+          "type": "object",
+          "required": [
+            "uploaded_file"
+          ],
+          "title": "OctetFileModel__OctetFileMeta_"
+        },
         "_FileModel": {
           "properties": {
             "content_type": {
@@ -482,7 +475,7 @@
           ],
           "title": "_FileModel"
         },
-        "_OctetFileModel": {
+        "_OctetFileMeta": {
           "properties": {
             "content_type": {
               "type": "string",
@@ -504,9 +497,9 @@
             "size",
             "name"
           ],
-          "title": "_OctetFileModel"
+          "title": "_OctetFileMeta"
         },
-        "_SeveralFiles": {
+        "_SeveralSimpleFiles": {
           "properties": {
             "first_file": {
               "$ref": "#/components/schemas/_FileModel"
@@ -520,7 +513,7 @@
             "first_file",
             "second_file"
           ],
-          "title": "_SeveralFiles"
+          "title": "_SeveralSimpleFiles"
         }
       },
       "securitySchemes": {}

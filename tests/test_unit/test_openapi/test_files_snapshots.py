@@ -3,7 +3,6 @@ from typing import Annotated, ClassVar, Literal, TypeAlias
 
 import pydantic
 from django.http import FileResponse
-from django.test.client import MULTIPART_CONTENT
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
@@ -16,7 +15,7 @@ from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
 from dmr.routing import Router
-from tests.infra.octet import OctetStreamParser
+from tests.infra.octet import OctetFileModel, OctetStreamParser
 
 
 class _FileModel(pydantic.BaseModel):
@@ -193,22 +192,22 @@ def test_file_with_metadata_schema(snapshot: SnapshotAssertion) -> None:
     )
 
 
-class _SeveralFiles(pydantic.BaseModel):
+class _SeveralSimpleFiles(pydantic.BaseModel):
     first_file: _FileModel
     second_file: _FileModel
 
 
-class _OctetFileModel(pydantic.BaseModel):
+class _OctetFileMeta(pydantic.BaseModel):
     content_type: Literal['application/octet-stream']
     size: int
     name: str
 
 
 _ConditionalUploadedFiles: TypeAlias = Annotated[
-    _SeveralFiles | _OctetFileModel,
+    _SeveralSimpleFiles | OctetFileModel[_OctetFileMeta],
     conditional_type({
-        MULTIPART_CONTENT: _SeveralFiles,
-        ContentType.octet_stream: _OctetFileModel,
+        ContentType.multipart_form_data: _SeveralSimpleFiles,
+        ContentType.octet_stream: OctetFileModel[_OctetFileMeta],
     }),
 ]
 
@@ -219,7 +218,7 @@ class _ConditionalFileController(Controller[PydanticSerializer]):
     def post(
         self,
         parsed_file_metadata: FileMetadata[_ConditionalUploadedFiles],
-    ) -> _SeveralFiles | _OctetFileModel:
+    ) -> str:
         raise NotImplementedError
 
 

@@ -1,6 +1,13 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import Annotated, Any, ClassVar, Literal, TypeAlias, final
+from typing import (
+    Annotated,
+    Any,
+    ClassVar,
+    Literal,
+    TypeAlias,
+    final,
+)
 
 import pydantic
 import pytest
@@ -15,7 +22,10 @@ from typing_extensions import override
 
 from dmr import Body, Controller, FileMetadata, modify
 from dmr.exceptions import EndpointMetadataError
+from dmr.files import FileBodyLike
+from dmr.metadata import EndpointMetadata
 from dmr.negotiation import ContentType, conditional_type
+from dmr.openapi import OpenAPIContext
 from dmr.parsers import (
     DeserializeFunc,
     MultiPartParser,
@@ -24,8 +34,9 @@ from dmr.parsers import (
     SupportsFileParsing,
 )
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.serializer import BaseSerializer
 from dmr.test import DMRRequestFactory
-from tests.infra.octet import OctetStreamParser
+from tests.infra.octet import OctetFileModel, OctetStreamParser
 
 
 @final
@@ -452,6 +463,17 @@ class _FakeParser(SupportsFileParsing, Parser):
     ) -> None:
         raise NotImplementedError
 
+    @override
+    def schema_metadata(
+        self,
+        model: Any,
+        model_meta: tuple[Any, ...],
+        metadata: EndpointMetadata,
+        serializer: type['BaseSerializer'],
+        context: 'OpenAPIContext',
+    ) -> type['FileBodyLike']:
+        raise NotImplementedError
+
 
 @final
 class _ControllerWithWrongParsers(Controller[PydanticSerializer]):
@@ -584,22 +606,17 @@ def test_send_files_with_json_body(
 
 
 @final
-class _OctetFileModel(pydantic.BaseModel):
+class _OctetFileMeta(pydantic.BaseModel):
     content_type: Literal['application/octet-stream']
     size: int
     name: str
 
 
-@final
-class _OctetUploadedFiles(pydantic.BaseModel):
-    uploaded_file: _OctetFileModel
-
-
 _ConditionalUploadedFiles: TypeAlias = Annotated[
-    _UploadedFiles | _OctetUploadedFiles,
+    _UploadedFiles | OctetFileModel[_OctetFileMeta],
     conditional_type({
-        MULTIPART_CONTENT: _UploadedFiles,
-        ContentType.octet_stream: _OctetUploadedFiles,
+        ContentType.multipart_form_data: _UploadedFiles,
+        ContentType.octet_stream: OctetFileModel[_OctetFileMeta],
     }),
 ]
 
@@ -611,7 +628,7 @@ class _ConditionalFileController(Controller[PydanticSerializer]):
     def post(
         self,
         parsed_file_metadata: FileMetadata[_ConditionalUploadedFiles],
-    ) -> _UploadedFiles | _OctetUploadedFiles:
+    ) -> _UploadedFiles | OctetFileModel[_OctetFileMeta]:
         return parsed_file_metadata
 
 
@@ -640,22 +657,6 @@ def test_conditional_file_metadata_multipart(
         'rules': {'content_type': 'text/plain', 'size': len(rules)},
     }
 
-    # Now, the same, but with wrong content type for this model:
-
-    request = dmr_rf.post(
-        '/whatever/',
-        {
-            'receipt': SimpleUploadedFile('receipt.txt', receipt),
-            'rules': SimpleUploadedFile('rules.txt', rules),
-        },
-        content_type=str(ContentType.octet_stream),
-    )
-
-    response = _ConditionalFileController.as_view()(request)
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
-
 
 def test_conditional_file_metadata_octet_stream(
     dmr_rf: DMRRequestFactory,
@@ -680,10 +681,20 @@ def test_conditional_file_metadata_octet_stream(
             'name': 'file',
         },
     }
-    assert False
+
+    # Now the same, but with wrong content-type:
+    request = dmr_rf.post(
+        '/whatever/',
+        raw_data,
+        content_type=str(ContentType.multipart_form_data),
+    )
+
+    response = _ConditionalFileController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
 
 
-from wav
 def test_octet_stream_content_disposition(
     dmr_rf: DMRRequestFactory,
     faker: Faker,

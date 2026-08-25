@@ -15,6 +15,8 @@ from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
+    from dmr.files import FileBodyLike
+    from dmr.openapi import OpenAPIContext
     from dmr.serializer import BaseSerializer
 
 #: Types that are possible to load json from.
@@ -177,6 +179,23 @@ class SupportsFileParsing:
         model: Any,
     ) -> None:
         """Populate ``request.FILES`` if possible."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def schema_metadata(
+        self,
+        model: Any,
+        model_meta: tuple[Any, ...],
+        metadata: EndpointMetadata,
+        serializer: type['BaseSerializer'],
+        context: 'OpenAPIContext',
+    ) -> type['FileBodyLike']:
+        """
+        Provide schema for the file request spec.
+
+        .. versionadded:: 0.15.0
+        """
+        raise NotImplementedError
 
 
 class SupportsDjangoDefaultParsing:
@@ -212,6 +231,7 @@ class SupportsDjangoDefaultParsing:
         model: Any,
     ) -> None:
         """Populate ``request.POST`` and ``request.FILES`` if possible."""
+        raise NotImplementedError
 
 
 class MultiPartParser(
@@ -268,13 +288,26 @@ class MultiPartParser(
             raise RequestSerializationError(str(exc)) from None
         # It is already parsed by Django itself, no need to return anything.
 
+    @override
+    def schema_metadata(
+        self,
+        model: Any,
+        model_meta: tuple[Any, ...],
+        metadata: EndpointMetadata,
+        serializer: type['BaseSerializer'],
+        context: 'OpenAPIContext',
+    ) -> type['FileBodyLike']:
+        from dmr.files import FileBody  # noqa: PLC0415
+
+        return FileBody
+
 
 class FormUrlEncodedParser(
     SupportsDjangoDefaultParsing,
     Parser,
 ):
     """
-    Parses www urlencoded forms.
+    Parses ``x-www-form-urlencoded`` forms into schemas.
 
     In reality this is a quite tricky parser.
     Since, Django already parses ``application/x-www-form-urlencoded``
@@ -296,7 +329,13 @@ class FormUrlEncodedParser(
         request: HttpRequest,
         model: Any,
     ) -> None:
-        """Returns parsed form data."""
+        """
+        Returns parsed form data.
+
+        Also parses :data:`dmr.settings.Settings.django_treat_as_post`
+        as regular ``POST`` data. Unlike regular Django,
+        which only parses ``POST`` methods.
+        """
         # Circular import:
         from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 

@@ -20,7 +20,6 @@ from dmr.exceptions import (
     RequestSerializationError,
     UnsolvableAnnotationsError,
 )
-from dmr.files import FileBody
 from dmr.internal.django import (
     convert_multi_value_dict,
     extract_files_metadata,
@@ -814,6 +813,7 @@ class FileMetadataComponent(ComponentParser):
 
     .. versionchanged:: 0.15.0
         Added support for conditional types.
+        Removed ``self.schema_metadata`` attribute.
 
     .. seealso::
 
@@ -821,12 +821,8 @@ class FileMetadataComponent(ComponentParser):
 
     """
 
-    __slots__ = ('schema_metadata',)
+    __slots__ = ()
     context_name: ClassVar[str] = 'parsed_file_metadata'
-
-    def __init__(self, schema_metadata: type[FileBody] = FileBody) -> None:
-        """Provide model type for a schema generation."""
-        self.schema_metadata = schema_metadata
 
     @override
     def provide_context_data(
@@ -934,7 +930,13 @@ class FileMetadataComponent(ComponentParser):
         }
         return RequestBody(
             content={
-                parser.content_type: self.schema_metadata.media_type(
+                parser.content_type: parser.schema_metadata(
+                    model,
+                    model_meta,
+                    metadata,
+                    serializer,
+                    context,
+                ).media_type(
                     conditional_schemas.get(parser.content_type, schema),
                     model,
                     model_meta,
@@ -942,6 +944,7 @@ class FileMetadataComponent(ComponentParser):
                     context,
                 )
                 for parser in metadata.parsers.values()
+                if isinstance(parser, SupportsFileParsing)
             },
             required=True,
             description=context.registries.schema.maybe_resolve_reference(

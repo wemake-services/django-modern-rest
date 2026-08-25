@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from dmr.compiled import accepted_type
 from dmr.exceptions import NotAcceptableError, ResponseSchemaError
 from dmr.internal.media_compat import media_quality, media_specificity
+from dmr.metadata import get_annotated_metadata
 
 if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata
@@ -38,6 +39,26 @@ class ConditionalType:
     """
 
     computed: Mapping[str, Any] = dataclasses.field(hash=False)
+
+
+def get_conditional_types(
+    model: Any,
+    model_meta: tuple[Any, ...],
+) -> Mapping[str, Any] | None:
+    """
+    Returns possible conditional types.
+
+    Conditional types are defined with :data:`typing.Annotated`
+    and :func:`dmr.negotiation.conditional_type` helper.
+    """
+    metadata = get_annotated_metadata(
+        model,
+        ConditionalType,
+        model_meta=model_meta,
+    )
+    if metadata:
+        return metadata.computed
+    return None
 
 
 def negotiatiate_response_validation(

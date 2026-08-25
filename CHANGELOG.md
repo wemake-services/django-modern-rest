@@ -24,6 +24,10 @@ of requirements for an API to count as public.
 
 - Removed `QueryTokenSyncAuth` and `QueryTokenAsyncAuth` auth classes,
   because they were insecure, you can use [older existing versions](https://github.com/wemake-services/django-modern-rest/blob/14884b432ee075ec3d78ff388944ebc5f0b5d432/dmr/security/token/auth/header.py), #1288
+- Removed `FileResponseSpec.file_body`,
+  use `FileResponseSpec.return_type` instead, #1278
+- Removed `FileMetadataComponent.schema_metadata`,
+  now we use `SupportsFileParsing.schema_metadata` instead, #1278
 
 ### Features
 
@@ -36,6 +40,7 @@ of requirements for an API to count as public.
   available via the new `django-modern-rest[allauth]` extra, #1193
 - Added `query` HTTP method support for `PathItem` OpenAPI 3.2.0 spec, #1300
 - Added `FileMetadata` conditional types, #1278
+- Added `SupportsFileParsing.schema_metadata` method, #1278
 
 ### Bugfixes
 
