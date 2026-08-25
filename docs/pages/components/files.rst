@@ -140,6 +140,23 @@ a field as ``pydantic.Json``.
 However, this can be done with ``msgspec`` as well.
 
 
+.. _conditional-file-types:
+
+Conditional file types
+----------------------
+
+Files can also contain conditional schemas, for example different ones
+for ``application/octet-stream``, which takes a single file,
+and ``multipart/form-data``, which takes multiple files.
+
+See :ref:`conditional-types` to learn more.
+
+.. warning::
+
+  This is not something we recommend doing, because uploading files
+  with Django is slow and can cause performance / network issues.
+
+
 API Reference
 -------------
 

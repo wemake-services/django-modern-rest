@@ -11,7 +11,7 @@ from dmr.files import FileResponseSpec
 from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
 from dmr.openapi.objects import Encoding, MediaTypeMetadata
-from dmr.parsers import MultiPartParser, JsonParser
+from dmr.parsers import JsonParser, MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
 from dmr.routing import Router

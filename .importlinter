@@ -40,8 +40,6 @@ ignore_imports =
   dmr.settings -> dmr.internal.cache
   # Settings can initialize default OpenAPI config:
   dmr.settings -> dmr.openapi.config
-  # Response generation:
-  dmr.openapi.generators.response -> dmr.negotiation
   # Schema loading can call pydantic plugin:
   dmr.openapi.mappers.schema_normalization -> dmr.plugins.pydantic
 
