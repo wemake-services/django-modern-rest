@@ -68,7 +68,7 @@ of requirements for an API to count as public.
 
 ### Misc
 
-- Fixes AI docs and plugin install instructions
+- Fixes AI docs and plugin install instructions, #1311
 
 
 ## 0.14.0 (2026-08-14)
