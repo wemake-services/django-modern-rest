@@ -2,6 +2,7 @@ import dataclasses
 from typing import (
     Any,
     ClassVar,
+    Final,
     Generic,
     TypeVar,
     final,
@@ -19,6 +20,8 @@ from dmr.openapi import OpenAPIContext
 from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Reference, Schema
 from dmr.parsers import DeserializeFunc, Parser, Raw, SupportsFileParsing
 from dmr.serializer import BaseSerializer
+
+OCTET_STREAM: Final = 'application/octet-stream'
 
 
 @final

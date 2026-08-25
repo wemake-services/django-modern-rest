@@ -36,7 +36,7 @@ from dmr.parsers import (
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
 from dmr.test import DMRRequestFactory
-from tests.infra.octet import OctetFileModel, OctetStreamParser
+from tests.infra.octet import OCTET_STREAM, OctetFileModel, OctetStreamParser
 
 
 @final
@@ -616,7 +616,7 @@ _ConditionalUploadedFiles: TypeAlias = Annotated[
     _UploadedFiles | OctetFileModel[_OctetFileMeta],
     conditional_type({
         ContentType.multipart_form_data: _UploadedFiles,
-        ContentType.octet_stream: OctetFileModel[_OctetFileMeta],
+        OCTET_STREAM: OctetFileModel[_OctetFileMeta],
     }),
 ]
 
@@ -667,7 +667,7 @@ def test_conditional_file_metadata_octet_stream(
     request = dmr_rf.post(
         '/whatever/',
         raw_data,
-        headers={'Content-Type': str(ContentType.octet_stream)},
+        headers={'Content-Type': OCTET_STREAM},
     )
 
     response = _ConditionalFileController.as_view()(request)
@@ -705,7 +705,7 @@ def test_octet_stream_content_disposition(
         '/whatever/',
         raw_data,
         headers={
-            'Content-Type': str(ContentType.octet_stream),
+            'Content-Type': OCTET_STREAM,
             'Content-Disposition': (
                 'attachment; name="uploaded_file"; filename="custom.bin"'
             ),

@@ -334,7 +334,6 @@ class ContentType(enum.StrEnum):
         jsonl: ``'application/jsonl'`` format for JSON Lines streaming.
         json_problem_details: ``'application/problem+json'`` format
             for RFC 9457.
-        octet_stream: ``'application/octet-stream'`` format.
 
     """
 
@@ -346,7 +345,6 @@ class ContentType(enum.StrEnum):
     event_stream = 'text/event-stream'
     jsonl = 'application/jsonl'
     json_problem_details = 'application/problem+json'
-    octet_stream = 'application/octet-stream'
 
 
 def conditional_type(

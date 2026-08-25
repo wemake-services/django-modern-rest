@@ -15,7 +15,7 @@ from dmr.parsers import JsonParser, MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
 from dmr.routing import Router
-from tests.infra.octet import OctetFileModel, OctetStreamParser
+from tests.infra.octet import OCTET_STREAM, OctetFileModel, OctetStreamParser
 
 
 class _FileModel(pydantic.BaseModel):
@@ -207,7 +207,7 @@ _ConditionalUploadedFiles: TypeAlias = Annotated[
     _SeveralSimpleFiles | OctetFileModel[_OctetFileMeta],
     conditional_type({
         ContentType.multipart_form_data: _SeveralSimpleFiles,
-        ContentType.octet_stream: OctetFileModel[_OctetFileMeta],
+        OCTET_STREAM: OctetFileModel[_OctetFileMeta],
     }),
 ]
 
