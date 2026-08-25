@@ -11,7 +11,7 @@ from dmr.files import FileResponseSpec
 from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
 from dmr.openapi.objects import Encoding, MediaTypeMetadata
-from dmr.parsers import MultiPartParser
+from dmr.parsers import MultiPartParser, JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
 from dmr.routing import Router
@@ -233,6 +233,41 @@ def test_conditional_files_schema(snapshot: SnapshotAssertion) -> None:
                         path(
                             'conditional-files/',
                             _ConditionalFileController.as_view(),
+                        ),
+                    ],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+class _SeveralParsersController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(), JsonParser())
+
+    def post(
+        self,
+        # `JsonParser` can't parse files, so it must not be present:
+        parsed_file_metadata: FileMetadata[_SeveralSimpleFiles],
+    ) -> str:
+        raise NotImplementedError
+
+    def put(self, parsed_body: Body[dict[str, str]]) -> str:
+        raise NotImplementedError
+
+
+def test_several_parsers_schema(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema is correct for controller using several parsers."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    '',
+                    [
+                        path(
+                            'several-parsers/',
+                            _SeveralParsersController.as_view(),
                         ),
                     ],
                 ),
