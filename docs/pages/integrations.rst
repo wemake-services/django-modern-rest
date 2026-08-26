@@ -12,8 +12,18 @@ Big list of ``django-modern-rest`` awesome things: https://github.com/kondratevd
   If you are interested in something:
   `open an issue <https://github.com/wemake-services/django-modern-rest/issues>`_.
 
-Also check out our :doc:`external-views`
-to learn how to integrate any existing views into ``django-modern-rest``.
+
+``django-modern-rest`` must be compatible with the most packages
+from the ``django`` ecosystem. To do so, we support:
+
+- All the regular ``View`` based APIs like mixins,
+  since :class:`~dmr.controller.Controller` is a subclass of ``View``
+- :doc:`Middlewares <middleware>` to wrap any existing middleware
+- Decorators, thanks to :func:`~dmr.decorators.endpoint_decorator`
+  and :func:`~dmr.decorators.dispatch_decorator`
+- :doc:`external-views` to integrate any existing views
+  into ``django-modern-rest``, including regular ``django``,
+  ``django-rest-framework``, and ``django-ninja``
 
 
 CSRF
@@ -218,3 +228,17 @@ HTMX
 
 Works with `django-htmx <https://github.com/adamchainz/django-htmx>`_
 out of the box.
+
+
+dj-rest-auth
+------------
+
+.. versionadded:: 0.15.0
+
+We support `dj-rest-auth` in two models:
+1. By using it directly and integrating into :func:`~dmr.routing.external_path`
+   as DRF views
+2. By using ``django-allauth`` with headless mode
+   and :func:`~dmr.routing.external_path`
+
+We also have a skill for the migration: :doc:`ai/dmr-from-dj-rest-auth`.
