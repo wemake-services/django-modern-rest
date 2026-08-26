@@ -103,6 +103,8 @@ We support several custom agent skills:
   :doc:`migrating from Django Ninja <ai/dmr-from-ninja>`
 - ``$dmr-from-drf`` to help with
   :doc:`migrating from Django REST Framework <ai/dmr-from-drf>`
+- ``$dmr-from-dj-rest-auth`` to help with
+  :doc:`migrating from dj-rest-auth <ai/dmr-from-dj-rest-auth>`
 
 
 Showcase
