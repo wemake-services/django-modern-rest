@@ -235,7 +235,7 @@ dj-rest-auth
 
 .. versionadded:: 0.15.0
 
-We support `dj-rest-auth` in two models:
+We support ``dj-rest-auth`` in two models:
 1. By using it directly and integrating into :func:`~dmr.routing.external_path`
    as DRF views
 2. By using ``django-allauth`` with headless mode
