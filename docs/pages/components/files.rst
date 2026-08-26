@@ -54,19 +54,19 @@ to be validated / rendered in the schema:
 
 .. tabs::
 
-    .. tab:: msgspec
+  .. tab:: msgspec
 
-      .. literalinclude:: /examples/components/files_msgspec.py
-        :caption: views.py
-        :language: python
-        :linenos:
+    .. literalinclude:: /examples/components/files_msgspec.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-    .. tab:: pydantic
+  .. tab:: pydantic
 
-      .. literalinclude:: /examples/components/files_pydantic.py
-        :caption: views.py
-        :language: python
-        :linenos:
+    .. literalinclude:: /examples/components/files_pydantic.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
 What happens in this example?
 
@@ -138,6 +138,25 @@ The easiest way to do this would be to declare
 a field as ``pydantic.Json``.
 
 However, this can be done with ``msgspec`` as well.
+
+
+.. _conditional-file-types:
+
+Conditional file types
+----------------------
+
+.. versionadded:: 0.15.0
+
+Files can also contain conditional schemas, for example different ones
+for ``application/octet-stream``, which takes a single file,
+and ``multipart/form-data``, which takes multiple files.
+
+See :ref:`conditional-types` to learn more.
+
+.. warning::
+
+  This is not something we recommend doing, because uploading files
+  with Django is slow and can cause performance / network issues.
 
 
 API Reference

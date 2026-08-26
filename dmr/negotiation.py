@@ -12,9 +12,12 @@ from dmr.exceptions import (
 )
 from dmr.internal.media_compat import media_match
 from dmr.internal.negotiation import ConditionalType as _ConditionalType
+from dmr.internal.negotiation import (
+    get_conditional_types as get_conditional_types,
+)
 from dmr.internal.negotiation import media_by_precedence
 from dmr.internal.negotiation import negotiate_renderer as _negotiate_renderer
-from dmr.metadata import EndpointMetadata, get_annotated_metadata
+from dmr.metadata import EndpointMetadata
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 
@@ -363,29 +366,7 @@ def conditional_type(
     return _ConditionalType(mapping)
 
 
-def get_conditional_types(
-    model: Any,
-    model_meta: tuple[Any, ...],
-) -> Mapping[str, Any] | None:
-    """
-    Returns possible conditional types.
-
-    Conditional types are defined with :data:`typing.Annotated`
-    and :func:`dmr.negotiation.conditional_type` helper.
-    """
-    metadata = get_annotated_metadata(
-        model,
-        _ConditionalType,
-        model_meta=model_meta,
-    )
-    if metadata:
-        return metadata.computed
-    return None
-
-
 def accepts(request: HttpRequest, content_type: str) -> bool:
     """Determine whether this *request* accepts a given *content_type*."""
     renderer = request_renderer(request)
-    # TODO: refactor after
-    # https://github.com/wemake-services/django-modern-rest/pull/854
     return renderer is not None and renderer.content_type == content_type

@@ -12,8 +12,12 @@ from typing_extensions import override
 
 from dmr.errors import ErrorType, format_error
 from dmr.exceptions import InternalServerError, NotAcceptableError
+from dmr.internal.routing import RouterMetadata
 from dmr.internal.routing import URLExternal as _URLExternal
-from dmr.openapi.collector import controller_mapping_collector
+from dmr.openapi.collector import (
+    collect_normalized_paths,
+    controller_mapping_collector,
+)
 from dmr.openapi.objects import PathItem, Paths
 from dmr.openapi.openapi import OpenAPI
 
@@ -53,6 +57,9 @@ class Router:
             These are merged with endpoint-level tags.
         deprecated: Optional flag to mark all operations as deprecated.
             Combines with endpoint-level deprecated flag using OR logic.
+        ignore_from_spec: If set to ``True``, all routes from this router
+            are excluded from the generated OpenAPI specification.
+            Runtime URL routing is not affected.
 
     .. note::
 
@@ -67,9 +74,19 @@ class Router:
         Also accept any :class:`collections.abc.Sequence` as *tags*.
         *urls* parameter is now optional.
 
+    .. versionchanged:: 0.15.0
+        Added *ignore_from_spec* parameter.
+
     """
 
-    __slots__ = ('deprecated', 'prefix', 'tags', 'urls')
+    __slots__ = (
+        '_path_metadata',
+        'deprecated',
+        'ignore_from_spec',
+        'prefix',
+        'tags',
+        'urls',
+    )
 
     def __init__(
         self,
@@ -78,12 +95,23 @@ class Router:
         *,
         tags: Sequence[str] | None = None,
         deprecated: bool = False,
+        ignore_from_spec: bool = False,
     ) -> None:
         """Initialize a router with routes and optional OpenAPI metadata."""
         self.prefix = prefix
         self.urls = self._maybe_process_external(urls)
         self.tags = list(tags or [])
         self.deprecated = deprecated
+        self.ignore_from_spec = ignore_from_spec
+        # Construct metadata for this new router:
+        self._path_metadata: dict[str, RouterMetadata] = {
+            new_path: RouterMetadata.from_router(self)
+            for _, new_path in collect_normalized_paths(
+                self.urls,
+                original_prefix='',
+                new_prefix=self.prefix,
+            )
+        }
 
     def get_schema(self, context: 'OpenAPIContext') -> OpenAPI:  # noqa: WPS231
         """
@@ -100,6 +128,9 @@ class Router:
             self.urls,
             base_path=self.prefix,
         ):
+            if self.metadata_for(path).ignore_from_spec:
+                # Skip paths hidden by any router in the inclusion chain:
+                continue
             if pattern_or_meta is None:
                 # You can also add external views without adding any OpenAPI,
                 # this way, it would be hidden from the docs:
@@ -136,6 +167,18 @@ class Router:
 
         .. versionadded:: 0.13.0
         """
+        self._path_metadata.update({
+            new_path: RouterMetadata.from_included(
+                self,
+                router.metadata_for(original_path),
+            )
+            for original_path, new_path in collect_normalized_paths(
+                router.urls,
+                original_prefix=router.prefix,
+                new_prefix=self.prefix,
+            )
+        })
+
         self.urls.append(
             router.to_urlpatterns(namespace=namespace, app_name=app_name),
         )
@@ -161,6 +204,17 @@ class Router:
 
         path_spec = self.urls if app_name is None else (self.urls, app_name)
         return path(self.prefix, include(path_spec, namespace=namespace))
+
+    def metadata_for(self, pattern: str) -> 'RouterMetadata':
+        """
+        Returns applied nested metadata from all router layers.
+
+        Raises:
+            KeyError: if pattern is not found.
+
+        .. versionadded:: 0.15.0
+        """
+        return self._path_metadata[pattern]
 
     def _maybe_process_external(
         self,

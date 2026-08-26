@@ -30,9 +30,14 @@
 import dataclasses
 from collections.abc import Mapping
 from http.cookies import Morsel, SimpleCookie
-from typing import Any, ClassVar, Literal, final
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, final
 
 from django.http import HttpResponseBase
+
+if TYPE_CHECKING:
+    from django.utils.functional import (
+        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
+    )
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
@@ -91,7 +96,7 @@ class CookieSpec(_BaseCookie):
 
     is_actionable: ClassVar[Literal[False]] = False
 
-    description: str | None = None
+    description: '_StrOrPromise | None' = None
     required: bool = True
     skip_validation: bool = False
 

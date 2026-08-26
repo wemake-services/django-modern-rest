@@ -142,6 +142,14 @@ of :class:`~dmr.parsers.FormUrlEncodedParser`:
   :language: python
   :linenos:
 
+.. tip::
+
+  If you are using Django 6.1+ and a lot of form requests,
+  you can swap :attr:`django.http.HttpRequest.multipart_parser_class`
+  attribute of requests objects for a faster parsing. We recommend using
+  `multipart <https://github.com/defnull/multipart>`_ package for that.
+  It works twice as fast.
+
 
 Forcing lists and casting nulls in forms
 ----------------------------------------

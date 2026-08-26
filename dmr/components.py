@@ -20,7 +20,6 @@ from dmr.exceptions import (
     RequestSerializationError,
     UnsolvableAnnotationsError,
 )
-from dmr.files import FileBody
 from dmr.internal.django import (
     convert_multi_value_dict,
     extract_files_metadata,
@@ -810,18 +809,20 @@ class FileMetadataComponent(ComponentParser):
     This will parse a ``multipart/form-data`` request with potentially multiple
     receipts and a single contract files.
 
+    See :ref:`conditional-file-types` to learn more about conditional bodies.
+
+    .. versionchanged:: 0.15.0
+        Added support for conditional types.
+        Removed ``self.schema_metadata`` attribute.
+
     .. seealso::
 
         https://docs.djangoproject.com/en/stable/topics/http/file-uploads/
 
     """
 
-    __slots__ = ('schema_metadata',)
+    __slots__ = ()
     context_name: ClassVar[str] = 'parsed_file_metadata'
-
-    def __init__(self, schema_metadata: type[FileBody] = FileBody) -> None:
-        """Provide model type for a schema generation."""
-        self.schema_metadata = schema_metadata
 
     @override
     def provide_context_data(
@@ -847,13 +848,16 @@ class FileMetadataComponent(ComponentParser):
         #    when it is possible.
         controller.serializer.deserialize(
             b'',  # it does not matter what to send here.
+            # Actual `parser` will parse data and populate `request.FILES`:
             parser=parser,
             request=controller.request,
             model=field_model,
         )
 
+        conditional_types = self.conditional_types(field_model, ())
+        target_model = conditional_types.get(parser.content_type, field_model)
         force_list: frozenset[str] = getattr(
-            field_model,
+            target_model,
             '__dmr_force_list__',
             frozenset(),
         )
@@ -891,15 +895,13 @@ class FileMetadataComponent(ComponentParser):
         model_meta: tuple[Any, ...],
     ) -> Mapping[str, Any]:
         """
-        Provide conditional parsing types based on content type.
+        Provide conditional parsing types based on a content type.
 
-        Body model can be conditional based on a content_type.
+        FileMetadata model can be conditional based on the content_type.
         If :data:`typing.Annotated` is passed together
         with :func:`dmr.negotiation.conditional_type`
-        we treat the body as conditional. Otherwise, returns an empty dict.
+        we treat the model as conditional. Otherwise, returns an empty dict.
         """
-        # TODO: test conditional file models and add `application/ocet-stream`
-        # parser support to test it.
         return get_conditional_types(model, model_meta) or {}
 
     @override
@@ -928,7 +930,13 @@ class FileMetadataComponent(ComponentParser):
         }
         return RequestBody(
             content={
-                parser.content_type: self.schema_metadata.media_type(
+                parser.content_type: parser.schema_metadata(
+                    model,
+                    model_meta,
+                    metadata,
+                    serializer,
+                    context,
+                ).media_type(
                     conditional_schemas.get(parser.content_type, schema),
                     model,
                     model_meta,
@@ -936,6 +944,7 @@ class FileMetadataComponent(ComponentParser):
                     context,
                 )
                 for parser in metadata.parsers.values()
+                if isinstance(parser, SupportsFileParsing)
             },
             required=True,
             description=context.registries.schema.maybe_resolve_reference(

@@ -1,5 +1,10 @@
 import dataclasses
-from typing import ClassVar, Literal, final
+from typing import TYPE_CHECKING, ClassVar, Literal, final
+
+if TYPE_CHECKING:
+    from django.utils.functional import (
+        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
+    )
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True, init=False)
@@ -11,7 +16,7 @@ class _BaseResponseHeader:
     https://spec.openapis.org/oas/v3.1.0#parameter-object for doc purposes.
     """
 
-    description: str | None = None
+    description: '_StrOrPromise | None' = None
     deprecated: bool = False
     example: str | None = None
 

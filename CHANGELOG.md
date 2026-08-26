@@ -17,11 +17,57 @@ What is a public API for us (all criteria must be met)?
 Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
+## 0.15.0 WIP
 
-## WIP
+### Breaking changes
+
+- Removed `QueryTokenSyncAuth` and `QueryTokenAsyncAuth` auth classes,
+  because they were insecure, you can use [older existing versions](https://github.com/wemake-services/django-modern-rest/blob/14884b432ee075ec3d78ff388944ebc5f0b5d432/dmr/security/token/auth/header.py), #1288
+- Removed `FileResponseSpec.file_body`,
+  use `FileResponseSpec.return_type` instead, #1278
+- Removed `FileMetadataComponent.schema_metadata`,
+  now we use `SupportsFileParsing.schema_metadata` instead, #1278
+
+### Features
+
+- Added `CookieJWTSyncAuth` and `CookieJWTAsyncAuth`
+  to read JWT tokens from cookies instead of headers, #1193
+- Added `HeaderJWTSyncAuth` and `HeaderJWTAsyncAuth`,
+  `JWTSyncAuth` and `JWTAsyncAuth` are kept as their aliases, #1193
+- Added `XSessionTokenSyncAuth` and `XSessionTokenAsyncAuth`
+  to authenticate `django-allauth` headless session tokens,
+  available via the new `django-modern-rest[allauth]` extra, #1193
+- Added `query` method support for `PathItem` OpenAPI 3.2.0 spec, #1300
+- Added `Parser.validate` method for import-time validation of parser
+  configuration, #1304
+- Added `Renderer.validate` method for import-time validation of renderer
+  configuration, #1306
+- Added `Router.ignore_from_spec` to exclude entire router subtrees
+  from the generated OpenAPI specification, #1309
+- Added `FileMetadata` conditional types, #1278
+- Added `SupportsFileParsing.schema_metadata` method to customize
+  file schema from the parser, #1278
+
+### Bugfixes
+
+- JWT auth, refresh, and verify now return `401` instead of `500`
+  when the token subject cannot be a value of the user lookup field,
+  for example a non-numeric `sub` with the default integer `pk`, #1284
+- Fixed `DjangoSessionSyncAuth`, `DjangoSessionAsyncAuth`,
+  `CookieTokenSyncAuth`, and `CookieTokenAsyncAuth` to check CSRF only
+  when this auth class is actually used and not skipped, #1289
+- Allow using lazy translations in many places,
+  like `Controller.summary`, `ResponseSpec.description`,
+  `HeaderSpec.description`, #1298
+- Fixed `Router.include` dropping `tags` and `deprecated` metadata, #1299
+- Fixed `PathItem` to support `additionalOperations` field for custom
+  HTTP methods (like `PURGE`, `LINK`), #1300
+- Fixed a bug when non-file parsers were listed in the response schema
+  for file responses, #1278
 
 ### Misc
 
+- Fixes AI docs and plugin install instructions, #1311
 - Added `dmr-from-dj-rest-auth` agent skill to migrate `dj-rest-auth`
   installations to `django-modern-rest` and `django-allauth` headless, #1193
 

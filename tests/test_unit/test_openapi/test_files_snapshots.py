@@ -1,5 +1,5 @@
 import json
-from typing import Annotated, ClassVar, Literal
+from typing import Annotated, ClassVar, Literal, TypeAlias
 
 import pydantic
 from django.http import FileResponse
@@ -8,12 +8,14 @@ from syrupy.assertion import SnapshotAssertion
 
 from dmr import Body, Controller, FileMetadata, modify, validate
 from dmr.files import FileResponseSpec
+from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
 from dmr.openapi.objects import Encoding, MediaTypeMetadata
-from dmr.parsers import MultiPartParser
+from dmr.parsers import JsonParser, MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
 from dmr.routing import Router
+from tests.infra.octet import OCTET_STREAM, OctetFileModel, OctetStreamParser
 
 
 class _FileModel(pydantic.BaseModel):
@@ -30,9 +32,7 @@ class _SeveralFiles(pydantic.BaseModel):
     second_file: _FileModel
 
 
-class _FileController(
-    Controller[PydanticSerializer],
-):
+class _FileController(Controller[PydanticSerializer]):
     parsers = (MultiPartParser(),)
 
     @modify(operation_id='file_test_id', deprecated=True)
@@ -123,9 +123,7 @@ class _DescriptionModel(pydantic.BaseModel):
     second: list[int]
 
 
-class _BodyAndFileController(
-    Controller[PydanticSerializer],
-):
+class _BodyAndFileController(Controller[PydanticSerializer]):
     parsers = (MultiPartParser(),)
 
     async def post(
@@ -152,9 +150,7 @@ def test_body_and_file_schema(snapshot: SnapshotAssertion) -> None:
     )
 
 
-class _FileMetadataController(
-    Controller[PydanticSerializer],
-):
+class _FileMetadataController(Controller[PydanticSerializer]):
     parsers = (MultiPartParser(),)
 
     async def get(
@@ -186,6 +182,92 @@ def test_file_with_metadata_schema(snapshot: SnapshotAssertion) -> None:
                         path(
                             'file-with-metadata/',
                             _FileMetadataController.as_view(),
+                        ),
+                    ],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+class _SeveralSimpleFiles(pydantic.BaseModel):
+    first_file: _FileModel
+    second_file: _FileModel
+
+
+class _OctetFileMeta(pydantic.BaseModel):
+    content_type: Literal['application/octet-stream']
+    size: int
+    name: str
+
+
+_ConditionalUploadedFiles: TypeAlias = Annotated[
+    _SeveralSimpleFiles | OctetFileModel[_OctetFileMeta],
+    conditional_type({
+        ContentType.multipart_form_data: _SeveralSimpleFiles,
+        OCTET_STREAM: OctetFileModel[_OctetFileMeta],
+    }),
+]
+
+
+class _ConditionalFileController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(), OctetStreamParser())
+
+    def post(
+        self,
+        parsed_file_metadata: FileMetadata[_ConditionalUploadedFiles],
+    ) -> str:
+        raise NotImplementedError
+
+
+def test_conditional_files_schema(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema is correct for conditional files."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    '',
+                    [
+                        path(
+                            'conditional-files/',
+                            _ConditionalFileController.as_view(),
+                        ),
+                    ],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+class _SeveralParsersController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(), JsonParser())
+
+    def post(
+        self,
+        # `JsonParser` can't parse files, so it must not be present:
+        parsed_file_metadata: FileMetadata[_SeveralSimpleFiles],
+    ) -> str:
+        raise NotImplementedError
+
+    def put(self, parsed_body: Body[dict[str, str]]) -> str:
+        raise NotImplementedError
+
+
+def test_several_parsers_schema(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema is correct for controller using several parsers."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    '',
+                    [
+                        path(
+                            'several-parsers/',
+                            _SeveralParsersController.as_view(),
                         ),
                     ],
                 ),

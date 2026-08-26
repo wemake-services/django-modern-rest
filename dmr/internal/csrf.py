@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, final
 
 from django.http import HttpRequest
 from django.middleware.csrf import CsrfViewMiddleware
@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 _CSRF_FAILED_MSG: Final = _('CSRF Failed: {reason}')
 
 
+@final
 class _EnsureCsrfToken(CsrfViewMiddleware):
     """
     CSRF check middleware that returns the rejection reason.

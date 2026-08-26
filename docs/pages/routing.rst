@@ -73,7 +73,10 @@ Basically, including another router is the same as writing:
 
 Use it to reduce the boilerplate code.
 You can also use :meth:`~dmr.routing.Router.to_urlpatterns` if you prefer.
-It is semantically identical.
+It is semantically identical, except the metadata. ``include`` correctly
+handles nested metadata like ``tags``, ``deprecated`` and ``ignore_from_spec``,
+while this way ignores it. So, if you don't use the router-level metadata,
+it does not matter which way to use.
 
 
 Handling 404 errors

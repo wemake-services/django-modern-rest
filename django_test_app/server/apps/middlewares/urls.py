@@ -40,4 +40,5 @@ router = Router(
             name='csrf_token',
         ),
     ],
+    tags=['middleware'],
 )

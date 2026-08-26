@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'server.apps.token_custom_user',
     'server.apps.etag',
     'server.apps.external_views',
+    'server.apps.allauth_auth',
     # Django:
     'django.contrib.admin',
     'django.contrib.auth',
@@ -65,6 +66,9 @@ INSTALLED_APPS = [
     'dmr.security.token.app',
     # Third party:
     'csp',
+    'allauth',
+    'allauth.account',
+    'allauth.headless',
 ]
 
 MIDDLEWARE = [
@@ -79,6 +83,8 @@ MIDDLEWARE = [
     'django.middleware.locale.LocaleMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Third party:
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'server.urls'

@@ -1,4 +1,5 @@
 import abc
+import importlib
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, TypeAlias, final
@@ -15,6 +16,8 @@ from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
+    from dmr.files import FileBodyLike
+    from dmr.openapi import OpenAPIContext
     from dmr.serializer import BaseSerializer
 
 #: Types that are possible to load json from.
@@ -40,6 +43,19 @@ class Parser(ResponseSpecProvider):
 
     Must be defined for all subclasses.
     """
+
+    def validate(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: EndpointMetadata,
+    ) -> None:
+        """
+        Validate parser configuration at import time.
+
+        Override this method to enforce parser-specific constraints.
+        Raise :class:`dmr.exceptions.EndpointMetadataError`
+        if the parser is used incorrectly.
+        """
 
     @abc.abstractmethod
     def parse(
@@ -177,6 +193,23 @@ class SupportsFileParsing:
         model: Any,
     ) -> None:
         """Populate ``request.FILES`` if possible."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def schema_metadata(
+        self,
+        model: Any,
+        model_meta: tuple[Any, ...],
+        metadata: EndpointMetadata,
+        serializer: type['BaseSerializer'],
+        context: 'OpenAPIContext',
+    ) -> type['FileBodyLike']:
+        """
+        Provide schema for the file request spec.
+
+        .. versionadded:: 0.15.0
+        """
+        raise NotImplementedError
 
 
 class SupportsDjangoDefaultParsing:
@@ -212,6 +245,7 @@ class SupportsDjangoDefaultParsing:
         model: Any,
     ) -> None:
         """Populate ``request.POST`` and ``request.FILES`` if possible."""
+        raise NotImplementedError
 
 
 class MultiPartParser(
@@ -268,13 +302,27 @@ class MultiPartParser(
             raise RequestSerializationError(str(exc)) from None
         # It is already parsed by Django itself, no need to return anything.
 
+    @override
+    def schema_metadata(
+        self,
+        model: Any,
+        model_meta: tuple[Any, ...],
+        metadata: EndpointMetadata,
+        serializer: type['BaseSerializer'],
+        context: 'OpenAPIContext',
+    ) -> type['FileBodyLike']:
+        # We have to do this dynamic import here, because otherwise
+        # our internal tooling (importlinter) goes crazy.
+        # It is not really cool to do, but there's no other way that I can see.
+        return importlib.import_module('dmr.files').FileBody  # type: ignore[no-any-return]
+
 
 class FormUrlEncodedParser(
     SupportsDjangoDefaultParsing,
     Parser,
 ):
     """
-    Parses www urlencoded forms.
+    Parses ``x-www-form-urlencoded`` forms into schemas.
 
     In reality this is a quite tricky parser.
     Since, Django already parses ``application/x-www-form-urlencoded``
@@ -296,7 +344,13 @@ class FormUrlEncodedParser(
         request: HttpRequest,
         model: Any,
     ) -> None:
-        """Returns parsed form data."""
+        """
+        Returns parsed form data.
+
+        Also parses :data:`dmr.settings.Settings.django_treat_as_post`
+        as regular ``POST`` data. Unlike regular Django,
+        which only parses ``POST`` methods.
+        """
         # Circular import:
         from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
