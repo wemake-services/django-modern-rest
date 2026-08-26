@@ -38,6 +38,11 @@
       "repository": "https://github.com/wemake-services/django-modern-rest"
     },
     {
+      "name": "dmr-from-dj-rest-auth",
+      "source": "./dmr-from-dj-rest-auth",
+      "description": "Migrate dj-rest-auth APIs to django-modern-rest and django-allauth headless"
+    },
+    {
       "name": "dmr-openapi-skeleton",
       "source": "./.agents/skills/dmr-openapi-skeleton",
       "description": "Scaffold OpenAPI-compliant Django REST APIs with dmr",
