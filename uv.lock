@@ -1000,7 +1000,7 @@ dev-and-docs = [
 docs = [
     { name = "django-filter", specifier = ">=25.2,<27" },
     { name = "django-mantle", specifier = ">=26.6,<27" },
-    { name = "django-modern-schemas", specifier = ">=0.1.0,<0.2.0" },
+    { name = "django-modern-schemas", specifier = ">=0.1.1,<0.2.0" },
     { name = "docutils", specifier = ">=0.22,<0.23" },
     { name = "myst-parser", specifier = ">=5,<6" },
     { name = "nanodjango", specifier = ">=0.16,<0.17" },
@@ -1047,16 +1047,16 @@ unit-test = [
 
 [[package]]
 name = "django-modern-schemas"
-version = "0.1.0"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "pydantic", extra = ["email"] },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3b/72/c9a2659952307548cc23f15eda3c223e591a2b7cd11d97edbaa874b669e0/django_modern_schemas-0.1.0.tar.gz", hash = "sha256:9a9a6d0834bf63edbd611947df950637c2c3e635fb2eeb09569441df72c2fc33", size = 17995, upload-time = "2026-08-16T05:45:59.712Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b1/64/fa3a29e51b8f4333c4790c658ae9121a54007b2611949e12efb912b3cef0/django_modern_schemas-0.1.1.tar.gz", hash = "sha256:f1ef41e7415422447c621224fa37675465d9966cbd476a43c19f31c73e61bdc2", size = 18642, upload-time = "2026-08-26T05:10:53.736Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1a/26/497ae3d9d79c8201f98cf7448b2532fd862e3bb5bb4dd8a9c5ca8524665a/django_modern_schemas-0.1.0-py3-none-any.whl", hash = "sha256:0ba3ddb60cf58bf28ea6d32a67891a397ee64baeda910bbc682971c8babf61df", size = 24524, upload-time = "2026-08-16T05:45:58.769Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/23/55afa978424aad13ab17ccb8db280f6bf1706d2aea168c61b01865ceee58/django_modern_schemas-0.1.1-py3-none-any.whl", hash = "sha256:3701447642f596c679457739b0ec36882c5cbda178f800e89de045c88ccc2a5f", size = 25295, upload-time = "2026-08-26T05:10:52.738Z" },
 ]
 
 [[package]]
