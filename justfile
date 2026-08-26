@@ -36,8 +36,7 @@ lint:
 
 # Run all checks
 [group('dev')]
-test: lint type-check example benchmarks-type-check package \
-  (smoke 'jwt' 'allauth' 'msgspec' 'pydantic') translations unit
+test: lint type-check example benchmarks-type-check package (smoke 'jwt' 'allauth' 'msgspec' 'pydantic') translations unit
 
 # Run all type checkers
 [group('type-check')]
@@ -108,7 +107,12 @@ example-run:
 # Validate package dependencies and run security audit
 [group('testing')]
 package:
-    # TODO: remove `-` once we can support `orjson` in `pyproject.toml`
+    # Validates `uv.lock` against `pyproject.toml`. Never silence this one,
+    # it does not look at the environment and so `orjson` cannot affect it.
+    uv lock --check
+    # Validates the environment against `uv.lock`.
+    # TODO: remove `-` once we can support `orjson` in `pyproject.toml`,
+    # until then we install it on top of the lock and this always differs.
     -uv sync --all-groups --all-extras --locked --check
     uv pip check
     uv --preview-features audit audit
@@ -141,11 +145,11 @@ docs +targets='clean html': (_docs::build targets)
 # Add new translation strings
 [group('i18n')]
 makemessages:
-  #!/usr/bin/env bash
-  for target in $(find dmr/locale -mindepth 1 -maxdepth 1 -type d); do
-    uv run django-admin makemessages -l "$(basename "$target")" \
-      --add-location never
-  done
+    #!/usr/bin/env bash
+    for target in $(find dmr/locale -mindepth 1 -maxdepth 1 -type d); do
+      uv run django-admin makemessages -l "$(basename "$target")" \
+        --add-location never
+    done
 
 # Run translation QA
 [group('i18n')]

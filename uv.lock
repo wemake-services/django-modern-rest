@@ -949,7 +949,7 @@ unit-test = [
 requires-dist = [
     { name = "attrs", marker = "extra == 'attrs'", specifier = ">=26" },
     { name = "django", specifier = ">=5,<6.2" },
-    { name = "django-allauth", marker = "extra == 'allauth'", specifier = ">=65.4,<66" },
+    { name = "django-allauth", marker = "extra == 'allauth'", specifier = ">=65.4" },
     { name = "msgspec", marker = "extra == 'attrs'", specifier = ">=0.21.1" },
     { name = "msgspec", marker = "extra == 'msgspec'", specifier = ">=0.21.1" },
     { name = "openapi-spec-validator", marker = "extra == 'openapi'", specifier = ">=0.8" },
