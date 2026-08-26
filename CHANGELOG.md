@@ -17,7 +17,6 @@ What is a public API for us (all criteria must be met)?
 Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
-
 ## 0.15.0 WIP
 
 ### Breaking changes
@@ -74,6 +73,8 @@ of requirements for an API to count as public.
 ### Misc
 
 - Fixes AI docs and plugin install instructions, #1311
+- Added `dmr-from-dj-rest-auth` agent skill to migrate `dj-rest-auth`
+  installations to `django-modern-rest` and `django-allauth` headless, #1193
 
 
 ## 0.14.0 (2026-08-14)
