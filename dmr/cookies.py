@@ -123,6 +123,23 @@ class CookieSpec(_BaseCookie):
         """API for compatibility with ``NewCookie``."""
         return self
 
+    def to_new(self, value: str) -> 'NewCookie':  # noqa: WPS110
+        """
+        Build a real cookie out of this description.
+
+        Response validation compares every attribute
+        of the described cookie with the one that was actually set.
+        So, deriving the cookie from its spec is the only way
+        to be sure that the two cannot drift apart.
+
+        .. versionadded:: 0.15.0
+
+        """
+        namespace = dataclasses.asdict(self)
+        for extra_field in self._extra_fields:
+            namespace.pop(extra_field)
+        return NewCookie(value=value, **namespace)
+
 
 @final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)

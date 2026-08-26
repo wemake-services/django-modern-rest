@@ -1,7 +1,7 @@
 import dataclasses
 import inspect
 import warnings
-from collections.abc import Callable, Sequence, Set
+from collections.abc import Callable, Mapping, Sequence, Set
 from http import HTTPMethod, HTTPStatus
 from types import NoneType
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeVar, assert_never
@@ -16,6 +16,7 @@ from dmr.cookies import CookieSpec, NewCookie
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.internal.enums import stringify
+from dmr.lazy import FromController, resolve_lazy_http_parts
 from dmr.metadata import (
     ComponentParserSpec,
     EndpointMetadata,
@@ -70,11 +71,29 @@ class _ResponseListValidator:  # noqa: WPS214
         self,
         responses: list[ResponseSpec],
     ) -> dict[HTTPStatus, ResponseSpec]:
+        # Must run first: every check below reads headers and cookies.
+        self._validate_resolved_http_parts(responses)
         self._validate_unique_responses(responses)
         self._validate_header_descriptions(responses)
         self._validate_cookie_descriptions(responses)
         self._validate_http_spec(responses)
         return self._convert_responses(responses)
+
+    def _validate_resolved_http_parts(
+        self,
+        responses: list[ResponseSpec],
+    ) -> None:
+        endpoint_name = self.metadata.endpoint_name
+        for response in responses:
+            for http_parts in (response.headers, response.cookies):
+                if isinstance(http_parts, FromController):
+                    raise EndpointMetadataError(
+                        f'{http_parts!r} in {response} '
+                        f'of {endpoint_name!r} was never resolved, '
+                        '`FromController` is only supported '
+                        'in `headers=` and `cookies=` '
+                        'of `@validate` and `@modify`',
+                    )
 
     def _validate_unique_responses(
         self,
@@ -299,11 +318,16 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         *,
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
-        self._validate_new_http_parts(payload)
+        # Lazy parts must be resolved before anything reads them,
+        # including `_validate_new_http_parts` right below
+        # and `ResponseModification.to_spec()` later on.
+        headers = resolve_lazy_http_parts(payload.headers, self.controller_cls)
+        cookies = resolve_lazy_http_parts(payload.cookies, self.controller_cls)
+        self._validate_new_http_parts(headers, cookies)
         modification = self.response_modification_cls(
             return_type=return_annotation,
-            headers=payload.headers,
-            cookies=payload.cookies,
+            headers=headers,
+            cookies=cookies,
             status_code=(
                 infer_status_code(
                     method,
@@ -791,11 +815,12 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _validate_new_http_parts(
         self,
-        payload: ModifyEndpointPayload,
+        headers: Mapping[str, NewHeader | HeaderSpec] | None,
+        cookies: Mapping[str, NewCookie | CookieSpec] | None,
     ) -> None:
-        if payload.headers is not None and any(
+        if headers is not None and any(
             isinstance(header, HeaderSpec) and not header.skip_validation
-            for header in payload.headers.values()
+            for header in headers.values()
         ):
             raise EndpointMetadataError(
                 f'Since {self.endpoint_name!r} returns raw data, '
@@ -804,9 +829,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 '`NewHeader` to add new headers to the response. '
                 'Or add `skip_validation=True` to `HeaderSpec`',
             )
-        if payload.cookies is not None and any(
+        if cookies is not None and any(
             isinstance(cookie, CookieSpec) and not cookie.skip_validation
-            for cookie in payload.cookies.values()
+            for cookie in cookies.values()
         ):
             raise EndpointMetadataError(
                 f'Since {self.endpoint_name!r} returns raw data, '
@@ -903,7 +928,9 @@ class EndpointMetadataValidator:  # noqa: WPS214
     ) -> list[ResponseSpec]:
         all_responses = self._limit_stream_responses([
             self._resolve_response_type(
-                response,
+                # Lazy headers and cookies must become regular mappings
+                # before `_ResponseListValidator` starts reading them.
+                response.resolve_http_parts(controller_cls),
                 controller_cls=controller_cls,
             )
             for response in _build_responses(

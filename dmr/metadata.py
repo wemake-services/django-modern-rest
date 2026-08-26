@@ -15,6 +15,8 @@ from typing import (  # noqa: WPS235
     get_origin,
 )
 
+from dmr.lazy import FromController, resolve_lazy_http_parts
+
 if TYPE_CHECKING:
     from django.utils.functional import (
         _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
@@ -42,6 +44,20 @@ if TYPE_CHECKING:
     from dmr.throttling import AsyncThrottle, SyncThrottle
 
 ComponentParserSpec: TypeAlias = tuple['ComponentParser', Any, tuple[Any, ...]]
+
+_HttpPartT = TypeVar('_HttpPartT')
+
+
+def _merge_http_parts(
+    from_metadata: Mapping[str, _HttpPartT] | None,
+    explicit: Mapping[str, _HttpPartT] | None,
+) -> Mapping[str, _HttpPartT] | None:
+    if isinstance(explicit, FromController):
+        # We cannot merge into a lazy mapping, but we don't have to:
+        # resolving it replaces the field with a regular mapping,
+        # which runs `__post_init__` again and merges it then.
+        return explicit
+    return {**(from_metadata or {}), **(explicit or {})}
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -113,13 +129,35 @@ class ResponseSpec:
             object.__setattr__(
                 self,
                 'headers',
-                {**(metadata.headers or {}), **(self.headers or {})},
+                _merge_http_parts(metadata.headers, self.headers),
             )
             object.__setattr__(
                 self,
                 'cookies',
-                {**(metadata.cookies or {}), **(self.cookies or {})},
+                _merge_http_parts(metadata.cookies, self.cookies),
             )
+
+    def resolve_http_parts(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> 'ResponseSpec':
+        """
+        Replace lazy headers and cookies with the concrete controller's ones.
+
+        Returns ``self`` when there is nothing lazy to resolve.
+        Otherwise returns a copy: ``__post_init__`` runs again for it
+        and merges in whatever ``ResponseSpecMetadata`` provides.
+        """
+        if not isinstance(self.headers, FromController) and not isinstance(
+            self.cookies,
+            FromController,
+        ):
+            return self
+        return dataclasses.replace(
+            self,
+            headers=resolve_lazy_http_parts(self.headers, controller_cls),
+            cookies=resolve_lazy_http_parts(self.cookies, controller_cls),
+        )
 
     def get_schema(
         self,
