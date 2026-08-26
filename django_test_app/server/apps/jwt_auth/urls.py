@@ -44,5 +44,16 @@ router = Router(
             views.ControllerWithJWTAsyncAuth.as_view(),
             name='jwt_async_auth',
         ),
+        path(
+            'jwt-cookie-sync-auth/',
+            views.ControllerWithCookieJWTSyncAuth.as_view(),
+            name='jwt_cookie_sync_auth',
+        ),
+        path(
+            'jwt-cookie-async-auth/',
+            views.ControllerWithCookieJWTAsyncAuth.as_view(),
+            name='jwt_cookie_async_auth',
+        ),
     ],
+    tags=['jwt_auth'],
 )

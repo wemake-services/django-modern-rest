@@ -1,6 +1,6 @@
 import re
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING, Final, TypeAlias
 
 from django.contrib.admindocs.views import simplify_regex
 from django.urls import URLPattern, URLResolver
@@ -25,6 +25,10 @@ _PathControllerSpec: TypeAlias = (
     ]
 )
 _ExternalSpec: TypeAlias = tuple[URLPattern, PathItem | None]
+
+_PATH_PATTERN: Final = re.compile(
+    r'<(?:(?P<converter>[^>:]+):)?(?P<parameter>\w+)>',
+)
 
 
 def controller_mapping_collector(
@@ -54,12 +58,30 @@ def controller_mapping_collector(
             )
 
 
+def collect_normalized_paths(
+    urls: Iterable[_AnyPattern],
+    *,
+    original_prefix: str,
+    new_prefix: str,
+) -> Iterable[tuple[str, str]]:
+    """Collects all normalized paths from a router."""
+    for url in urls:
+        original_path = _join_paths(original_prefix, str(url.pattern))
+        if isinstance(url, URLPattern):
+            yield original_path, _join_paths(new_prefix, original_path)
+        else:
+            yield from collect_normalized_paths(
+                url.url_patterns,
+                original_prefix=_join_paths(original_prefix, str(url.pattern)),
+                new_prefix=new_prefix,
+            )
+
+
 def _process_pattern(
     url_pattern: URLPattern,
     base_path: str,
 ) -> _PathControllerSpec:
-    path = _join_paths(base_path, str(url_pattern.pattern))
-    normalized = _normalize_path(path)
+    normalized = _join_paths(base_path, str(url_pattern.pattern))
     try:
         # Try the external url first, it is easier to detect:
         return normalized, url_pattern.callback.__dmr_external_openapi__, None  # type: ignore[attr-defined]
@@ -69,13 +91,11 @@ def _process_pattern(
 
 def _join_paths(base_path: str, pattern_path: str) -> str:
     if not pattern_path:
-        return base_path
+        return _normalize_path(base_path)
     base = base_path.rstrip('/')
     pattern = pattern_path.lstrip('/')
-    return f'{base}/{pattern}' if base else pattern
+    return _normalize_path(f'{base}/{pattern}' if base else pattern)
 
 
 def _normalize_path(path: str) -> str:
-    path = simplify_regex(path)
-    pattern = re.compile(r'<(?:(?P<converter>[^>:]+):)?(?P<parameter>\w+)>')
-    return re.sub(pattern, r'{\g<parameter>}', path)
+    return _PATH_PATTERN.sub(r'{\g<parameter>}', simplify_regex(path))

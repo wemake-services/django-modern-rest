@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 import pydantic
 from django.http import HttpResponse, JsonResponse
+from django.utils.translation import gettext_lazy as _
 
 from dmr import (
     Controller,
@@ -29,7 +30,11 @@ class CorrectModifyController(Controller[PydanticSerializer]):
     def get(self) -> str:
         return 'Done'
 
-    @modify(status_code=HTTPStatus.OK, description='Test POST endpoint')
+    @modify(
+        status_code=HTTPStatus.OK,
+        summary=_('Test'),
+        description=_('Test POST endpoint'),
+    )
     async def post(self) -> int:
         return 1
 
@@ -61,7 +66,8 @@ class CorrectModifyController(Controller[PydanticSerializer]):
 class CorrectValidateController(Controller[PydanticSerializer]):
     @validate(
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
-        description='Test get endpoint',
+        summary=_('Test'),
+        description=_('Test get endpoint'),
     )
     def get(self) -> HttpResponse:
         return HttpResponse()

@@ -6,8 +6,6 @@ from dmr.security.token import (
     CookieTokenSyncAuth,
     HeaderTokenAsyncAuth,
     HeaderTokenSyncAuth,
-    QueryTokenAsyncAuth,
-    QueryTokenSyncAuth,
 )
 
 
@@ -61,32 +59,6 @@ def test_header_schema_for_authorization(
             type='http',
             scheme='bearer',
             description='Opaque token authentication',
-        ),
-    }
-    assert instance.security_requirement == {security_scheme_name: []}
-
-
-@pytest.mark.parametrize('typ', [QueryTokenSyncAuth, QueryTokenAsyncAuth])
-@pytest.mark.parametrize('query_param', ['token', 'custom'])
-@pytest.mark.parametrize('security_scheme_name', ['token', 'customName'])
-def test_query_token_schema(
-    *,
-    typ: type[QueryTokenSyncAuth] | type[QueryTokenAsyncAuth],
-    query_param: str,
-    security_scheme_name: str,
-) -> None:
-    """Ensures QueryToken auth emits an apiKey query security scheme."""
-    instance = typ(
-        query_param=query_param,
-        security_scheme_name=security_scheme_name,
-    )
-
-    assert instance.security_schemes == {
-        security_scheme_name: SecurityScheme(
-            type='apiKey',
-            name=query_param,
-            security_scheme_in='query',
-            description='Opaque token authentication via query string',
         ),
     }
     assert instance.security_requirement == {security_scheme_name: []}

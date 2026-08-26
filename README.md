@@ -36,7 +36,7 @@
 - [x] Supports OpenAPI 3.0 / 3.1 / 3.2 semantic schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages, no custom runtimes
 - [x] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), [tracecov](https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html#api-coverage-with-tracecov), bundled `pytest` plugin, and default Django's testing primitives
-- [x] 100% test coverage with 2000+ of carefully designed unit, integration, and property-based tests
+- [x] 100% test coverage with 3000+ of carefully designed unit, integration, typing, and property-based tests
 - [x] High [security standards](https://github.com/wemake-services/django-modern-rest/blob/master/.github/SECURITY.md)
 - [x] Built [by the community](https://github.com/wemake-services/django-modern-rest/graphs/contributors) for the community, not a single-person project
 - [x] Great [docs](https://django-modern-rest.readthedocs.io/en/latest/)
@@ -89,6 +89,7 @@ There are several included extras:
 - `'django-modern-rest[pydantic]'` provides [`pydantic`](https://github.com/pydantic/pydantic) support
 - `'django-modern-rest[attrs]'` provides [`attrs`](https://github.com/python-attrs/attrs) support
 - `'django-modern-rest[jwt]'` provides [`pyjwt`](https://github.com/jpadilla/pyjwt) auth support
+- `'django-modern-rest[allauth]'` provides [`django-allauth`](https://codeberg.org/allauth/django-allauth) headless auth support
 - `'django-modern-rest[openapi]'` provides `OpenAPI` [schema validation](https://github.com/python-openapi/openapi-spec-validator),
   `yaml` OpenAPI view,
   and generates better OpenAPI examples with [`polyfactory`](https://github.com/litestar-org/polyfactory)

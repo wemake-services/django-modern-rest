@@ -59,6 +59,19 @@ class Renderer(ResponseSpecProvider):
         """
         raise NotImplementedError
 
+    def validate(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: EndpointMetadata,
+    ) -> None:
+        """
+        Validate renderer configuration at import time.
+
+        Override this method to enforce renderer-specific constraints.
+        Raise :class:`dmr.exceptions.EndpointMetadataError`
+        if the renderer is used incorrectly.
+        """
+
     @override
     def provide_response_specs(
         self,

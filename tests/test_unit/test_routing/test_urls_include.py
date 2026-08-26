@@ -1,7 +1,11 @@
+import json
+
 import pytest
 from django.urls import URLResolver
+from syrupy.assertion import SnapshotAssertion
 
 from dmr import Controller
+from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import Router, path
 
@@ -87,3 +91,57 @@ def test_router_to_urlpatterns_all_args() -> None:
     assert patterns.default_kwargs == {}
     assert patterns.namespace == '/x'
     assert patterns.app_name == 'y'
+
+
+def test_router_include_with_metadata(
+    snapshot: SnapshotAssertion,
+) -> None:
+    """Ensure that `router.include()` metadata works as expected."""
+    level1 = Router(
+        prefix='old/',
+        urls=[path('user/', _UserController.as_view())],
+        tags=['level1'],
+        deprecated=True,
+    )
+
+    level2 = Router(
+        prefix='users/',
+        urls=[path('user/', _UserController.as_view())],
+    )
+    level2.include(level1)
+
+    router = Router(
+        prefix='api/',
+        urls=[path('other/', _OtherController.as_view())],
+        tags=['level3'],
+    )
+    router.include(level2)
+
+    assert (
+        json.dumps(
+            build_schema(router).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+def test_nested_router_ignore_from_spec() -> None:
+    """Ensure that `ignore_from_spec` propagates through nested routers."""
+    hidden_router = Router(
+        prefix='private/',
+        urls=[path('user/', _UserController.as_view())],
+        ignore_from_spec=True,
+    )
+    version_router = Router(
+        prefix='v1/',
+        urls=[path('other/', _OtherController.as_view())],
+    )
+    version_router.include(hidden_router)
+    router = Router(prefix='api/')
+    router.include(version_router)
+
+    schema = build_schema(router)
+
+    assert schema.paths is not None
+    assert set(schema.paths) == {'/api/v1/other/'}

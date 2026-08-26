@@ -15,6 +15,10 @@ from dmr.settings import HttpSpec
 from dmr.types import EMPTY
 
 if TYPE_CHECKING:
+    from django.utils.functional import (
+        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
+    )
+
     from dmr.openapi.objects import (
         Callback,
         ExternalDocumentation,
@@ -30,8 +34,8 @@ if TYPE_CHECKING:
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True, init=False)
 class _BasePayload:
     # OpenAPI stuff:
-    summary: str | None = None
-    description: str | None = None
+    summary: '_StrOrPromise | None' = None
+    description: '_StrOrPromise | None' = None
     tags: list[str] | None = None
     operation_id: str | None = None
     deprecated: bool = False

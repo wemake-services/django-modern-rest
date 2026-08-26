@@ -758,15 +758,23 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
         All empty strings are converted to ``None``.
         """
-        if self.payload is not None:
-            if (
-                self.payload.summary is not None
-                or self.payload.description is not None
-            ):
-                return self.payload.summary, self.payload.description
-
-            if self.func.__doc__ is None:
-                return self.payload.summary, self.payload.description
+        if self.payload is not None and (
+            self.payload.summary is not None
+            or self.payload.description is not None
+            or self.func.__doc__ is None
+        ):
+            return (
+                (
+                    None
+                    if self.payload.summary is None
+                    else str(self.payload.summary)
+                ),
+                (
+                    None
+                    if self.payload.description is None
+                    else str(self.payload.description)
+                ),
+            )
 
         summary: str | None
         description: str | None
@@ -844,7 +852,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class EndpointMetadataValidator:
+class EndpointMetadataValidator:  # noqa: WPS214
     """
     Builds responses for the endpoint metadata.
 
@@ -884,6 +892,8 @@ class EndpointMetadataValidator:
         # After that we can do some other validation:
         self._validate_request_http_spec()
         self._validate_components(controller_cls)
+        self._validate_parsers(controller_cls)
+        self._validate_renderers(controller_cls)
 
     def _resolve_all_responses(
         self,
@@ -961,6 +971,20 @@ class EndpointMetadataValidator:
     ) -> None:
         for component, _model, _metadata in self.metadata.component_parsers:
             component.validate(controller_cls, self.metadata)
+
+    def _validate_parsers(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> None:
+        for parser in self.metadata.parsers.values():
+            parser.validate(controller_cls, self.metadata)
+
+    def _validate_renderers(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> None:
+        for renderer in self.metadata.renderers.values():
+            renderer.validate(controller_cls, self.metadata)
 
     def _validate_request_http_spec(self) -> None:
         """Validate HTTP spec rules for request."""

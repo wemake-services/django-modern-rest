@@ -11,8 +11,6 @@ from dmr.security.token import (
     CookieTokenSyncAuth,
     HeaderTokenAsyncAuth,
     HeaderTokenSyncAuth,
-    QueryTokenAsyncAuth,
-    QueryTokenSyncAuth,
     request_token,
 )
 from dmr.security.token.app.models import Token
@@ -22,22 +20,16 @@ _TOKEN_SALT: Final = 'custom-salt'  # noqa: S105
 _TOKEN_ALGORITHM: Final = 'sha512'  # noqa: S105
 _SCHEME_NAME: Final = 'customToken'
 
-_SyncAuthType: TypeAlias = (
-    type[HeaderTokenSyncAuth]
-    | type[CookieTokenSyncAuth]
-    | type[QueryTokenSyncAuth]
-)
+_SyncAuthType: TypeAlias = type[HeaderTokenSyncAuth] | type[CookieTokenSyncAuth]
 _AsyncAuthType: TypeAlias = (
-    type[HeaderTokenAsyncAuth]
-    | type[CookieTokenAsyncAuth]
-    | type[QueryTokenAsyncAuth]
+    type[HeaderTokenAsyncAuth] | type[CookieTokenAsyncAuth]
 )
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'auth_type',
-    [HeaderTokenSyncAuth, CookieTokenSyncAuth, QueryTokenSyncAuth],
+    [HeaderTokenSyncAuth, CookieTokenSyncAuth],
 )
 def test_sync_auth_custom_hashing(
     auth_type: _SyncAuthType,
@@ -73,7 +65,7 @@ def test_sync_auth_custom_hashing(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'auth_type',
-    [HeaderTokenSyncAuth, CookieTokenSyncAuth, QueryTokenSyncAuth],
+    [HeaderTokenSyncAuth, CookieTokenSyncAuth],
 )
 @pytest.mark.parametrize(
     'customize_issue',
@@ -117,7 +109,7 @@ def test_sync_auth_rejects_wrong_hashing(
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.parametrize(
     'auth_type',
-    [HeaderTokenAsyncAuth, CookieTokenAsyncAuth, QueryTokenAsyncAuth],
+    [HeaderTokenAsyncAuth, CookieTokenAsyncAuth],
 )
 async def test_async_auth_custom_hashing(
     auth_type: _AsyncAuthType,
@@ -154,7 +146,7 @@ async def test_async_auth_custom_hashing(
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.parametrize(
     'auth_type',
-    [HeaderTokenAsyncAuth, CookieTokenAsyncAuth, QueryTokenAsyncAuth],
+    [HeaderTokenAsyncAuth, CookieTokenAsyncAuth],
 )
 @pytest.mark.parametrize(
     'customize_issue',
