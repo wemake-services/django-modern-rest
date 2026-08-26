@@ -124,24 +124,24 @@ def test_normalize_path(
     ('base_path', 'pattern_path', 'expected'),
     [
         # Empty cases
-        ('', '', ''),
-        ('', 'api', 'api'),
-        ('api', '', 'api'),
+        ('', '', '/'),
+        ('', 'api', '/api'),
+        ('api', '', '/api'),
         # Basic combinations
-        ('api', 'users', 'api/users'),
-        ('api/', 'users', 'api/users'),
-        ('api', 'users/', 'api/users/'),
-        ('api/', 'users/', 'api/users/'),
+        ('api', 'users', '/api/users'),
+        ('api/', 'users', '/api/users'),
+        ('api', 'users/', '/api/users/'),
+        ('api/', 'users/', '/api/users/'),
         # Complex paths
-        ('api/v1', 'users/{id}', 'api/v1/users/{id}'),
-        ('api/v1/', 'users/{id}/', 'api/v1/users/{id}/'),
+        ('api/v1', 'users/{id}', '/api/v1/users/{id}'),
+        ('api/v1/', 'users/{id}/', '/api/v1/users/{id}/'),
         ('/api/v1', '/users/{id}/', '/api/v1/users/{id}/'),
         ('/api/v1/', '/users/{id}/', '/api/v1/users/{id}/'),
         # Edge cases
-        ('api/', '', 'api/'),
-        ('api/', '/', 'api/'),
-        ('', 'users/', 'users/'),
-        ('api', '/users/', 'api/users/'),
+        ('api/', '', '/api/'),
+        ('api/', '/', '/api/'),
+        ('', 'users/', '/users/'),
+        ('api', '/users/', '/api/users/'),
         ('/api', 'users/', '/api/users/'),
     ],
 )

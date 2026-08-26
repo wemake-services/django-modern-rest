@@ -25,4 +25,5 @@ router = Router(
             name='user_session_async',
         ),
     ],
+    tags=['django_session_auth'],
 )

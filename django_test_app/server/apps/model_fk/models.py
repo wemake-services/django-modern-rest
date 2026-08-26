@@ -1,6 +1,9 @@
+from typing import final
+
 from django.db import models
 
 
+@final
 class Tag(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
@@ -8,6 +11,7 @@ class Tag(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
+@final
 class Role(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
@@ -15,6 +19,7 @@ class Role(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
 
+@final
 class User(models.Model):
     # This is sent to us from another service:
     email = models.EmailField(unique=True)

@@ -24,6 +24,7 @@ from dmr.security.django_session.views import (
     DjangoSessionResponse,
     DjangoSessionSyncController,
 )
+from dmr.security.token import HeaderTokenAsyncAuth, HeaderTokenSyncAuth
 from dmr.settings import Settings
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
@@ -305,3 +306,50 @@ def test_login_schema_includes_csrf_cookie(
     assert isinstance(csrf_spec, CookieSpec)
     assert csrf_spec.skip_validation is True
     assert csrf_spec.required is True
+
+
+def test_sync_try_after_django_session(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that sync controllers work with django session auth."""
+
+    class _TwoAuthController(Controller[PydanticSerializer]):
+        @modify(auth=[DjangoSessionSyncAuth(), HeaderTokenSyncAuth()])
+        def post(self) -> str:
+            raise NotImplementedError
+
+    request = dmr_rf.post('/whatever/')
+    request.user = AnonymousUser()
+
+    response = _TwoAuthController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
+
+
+@pytest.mark.asyncio
+async def test_async_try_after_django_session(
+    dmr_async_rf: DMRAsyncRequestFactory,
+) -> None:
+    """Ensures that async controllers work with django session auth."""
+
+    class _TwoAuthController(Controller[PydanticSerializer]):
+        @modify(auth=[DjangoSessionAsyncAuth(), HeaderTokenAsyncAuth()])
+        async def post(self) -> str:
+            raise NotImplementedError
+
+    request = dmr_async_rf.post('/whatever/')
+    request.user = AnonymousUser()
+
+    response = await dmr_async_rf.wrap(_TwoAuthController.as_view()(request))
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })

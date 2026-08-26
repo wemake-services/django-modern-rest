@@ -41,4 +41,5 @@ router = Router(
             name='user_async',
         ),
     ],
+    tags=['allauth'],
 )

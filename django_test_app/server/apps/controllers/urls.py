@@ -42,4 +42,5 @@ router = Router(
             name='constrained_user_create',
         ),
     ],
+    tags=['controllers'],
 )

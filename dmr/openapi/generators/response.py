@@ -61,8 +61,9 @@ class ResponseGenerator:
 
         return Response(
             description=(
-                response_spec.description
-                or HTTPStatus(response_spec.status_code).phrase
+                HTTPStatus(response_spec.status_code).phrase
+                if response_spec.description is None
+                else str(response_spec.description)
             ),
             links=response_spec.links,
             headers=headers or None,
@@ -87,7 +88,11 @@ class ResponseGenerator:
 
         return {
             name: Header(
-                description=header_spec.description,
+                description=(
+                    None
+                    if header_spec.description is None
+                    else str(header_spec.description)
+                ),
                 deprecated=header_spec.deprecated or None,
                 required=header_spec.required or None,
                 schema=context.generators.schema(str, serializer),
@@ -113,7 +118,11 @@ class ResponseGenerator:
             schema = dataclasses.replace(schema, example=f'{name}=123')
 
             cookies[f'Set-Cookie: {name}'] = Header(
-                description=cookie_spec.description,
+                description=(
+                    None
+                    if cookie_spec.description is None
+                    else str(cookie_spec.description)
+                ),
                 required=cookie_spec.required or None,
                 schema=schema,
             )
@@ -130,7 +139,9 @@ class ResponseGenerator:
         used_for_response: bool,
     ) -> dict[str, MediaType]:
         # Import cycle:
-        from dmr.negotiation import get_conditional_types  # noqa: PLC0415
+        from dmr.internal.negotiation import (  # noqa: PLC0415
+            get_conditional_types,
+        )
 
         return_types = (
             get_conditional_types(response_spec.return_type, ()) or {}

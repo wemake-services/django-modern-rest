@@ -39,23 +39,24 @@ You can use prompt like this:
 How to use in Claude Code
 -------------------------
 
-1. Install the plugin:
+1. Add the marketplace and install the plugin:
 
 .. code-block:: text
 
-   /plugin install github.com/wemake-services/django-modern-rest
+   /plugin marketplace add wemake-services/django-modern-rest
+   /plugin install dmr-openapi-skeleton@django-modern-rest
 
-2. Verify skills are available:
+2. Verify the plugin is installed and enabled:
 
 .. code-block:: text
 
-   /skills list
+   /plugin
 
 3. Invoke the skill:
 
 .. code-block:: text
 
-   /skills dmr-openapi-skeleton
+   /dmr-openapi-skeleton
 
 4. Then provide the OpenAPI source (file path, URL, or pasted spec) and generation constraints.
 
