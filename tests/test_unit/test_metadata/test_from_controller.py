@@ -1,7 +1,7 @@
 import json
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import ClassVar, TypeVar, final
+from typing import Annotated, ClassVar, TypeVar, final
 
 import pytest
 from django.http import HttpResponse
@@ -17,7 +17,14 @@ from dmr import (
     modify,
     validate,
 )
+from dmr.endpoint import Endpoint
+from dmr.errors import ErrorModel
 from dmr.exceptions import EndpointMetadataError
+from dmr.metadata import (
+    EndpointMetadata,
+    ResponseSpecMetadata,
+    ResponseSpecProvider,
+)
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
 from dmr.test import DMRRequestFactory
@@ -196,3 +203,118 @@ def test_unresolved_mapping_repr() -> None:
     )
 
     assert repr(lazy) == snapshot("FromController('cookie_specs')")
+
+
+_AnnotatedBody = Annotated[
+    list[int],
+    ResponseSpecMetadata(
+        cookies={'from_annotation': CookieSpec(httponly=True)},
+    ),
+]
+
+
+class _ReusableMergedController(Controller[_SerializerT]):
+    """Lazy cookies and annotated ones must end up in the same mapping."""
+
+    method_cookie: ClassVar[str] = 'from_method'
+
+    @classmethod
+    def cookie_specs(cls) -> Mapping[str, CookieSpec]:
+        """Only the lazy half of the final mapping."""
+        return {cls.method_cookie: CookieSpec(secure=True)}
+
+    @validate(
+        ResponseSpec(
+            _AnnotatedBody,
+            status_code=HTTPStatus.OK,
+            cookies=FromController(cookie_specs),
+        ),
+    )
+    def get(self) -> HttpResponse:
+        """Sets both cookies: the annotated one and the lazy one."""
+        return self.to_response(
+            [1, 2],
+            cookies={
+                'from_annotation': CookieSpec(httponly=True).to_new('a'),
+                self.method_cookie: CookieSpec(secure=True).to_new('b'),
+            },
+        )
+
+
+@final
+class _MergedController(_ReusableMergedController[PydanticSerializer]):
+    """Renames the lazy cookie, keeps the annotated one."""
+
+    method_cookie: ClassVar[str] = 'renamed_method_cookie'
+
+
+def test_lazy_cookies_merge_with_annotated_ones() -> None:
+    """`ResponseSpecMetadata` cookies survive the lazy resolution."""
+    metadata = _MergedController.api_endpoints['GET'].metadata
+    cookies = metadata.responses[HTTPStatus.OK].cookies
+
+    assert cookies == {
+        'from_annotation': CookieSpec(httponly=True),
+        'renamed_method_cookie': CookieSpec(secure=True),
+    }
+
+
+def test_merged_cookies_are_set_and_validated(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Both cookies pass response validation."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _MergedController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert json.loads(response.content) == [1, 2]
+    assert set(response.cookies) == {'from_annotation', 'renamed_method_cookie'}
+
+
+@final
+class _LazyResponseSpecProvider(ResponseSpecProvider):
+    """Providers run after resolution, so they must not return lazy specs."""
+
+    __slots__ = ()
+
+    @override
+    def provide_response_specs(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+        existing_responses: Mapping[HTTPStatus, ResponseSpec],
+    ) -> list[ResponseSpec]:
+        """Returns a spec that nothing is going to resolve."""
+        return [
+            ResponseSpec(
+                ErrorModel,
+                status_code=HTTPStatus.CONFLICT,
+                cookies=FromController(
+                    _ReusableCookieController.__dict__['cookie_specs'],
+                ),
+            ),
+        ]
+
+
+class _LazyProviderMetadata(EndpointMetadata):
+    @override
+    def response_spec_providers(self) -> list[ResponseSpecProvider]:
+        return [_LazyResponseSpecProvider()]
+
+
+class _LazyProviderEndpoint(Endpoint):
+    metadata_cls = _LazyProviderMetadata
+
+
+def test_lazy_spec_from_provider_is_rejected() -> None:
+    """We fail loudly instead of shipping a lazy mapping into the metadata."""
+    with pytest.raises(EndpointMetadataError, match='was never resolved'):
+
+        class _BrokenController(Controller[PydanticSerializer]):
+            endpoint_cls = _LazyProviderEndpoint
+
+            @validate(ResponseSpec(list[int], status_code=HTTPStatus.OK))
+            def get(self) -> HttpResponse:
+                raise NotImplementedError  # never runs, the class is invalid
