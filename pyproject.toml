@@ -97,7 +97,7 @@ dev = [
   "schemathesis>=4.14,<5",
   "slotscheck>=0.19,<0.21",
   # TODO: relax the pin after a stable `ty` release:
-  "ty==0.0.72",
+  "ty==0.0.73",
   "types-django-filter>=25.2,<27",
   "types-docker>=7.2,<8",
   "types-docutils>=0.22,<0.23",
