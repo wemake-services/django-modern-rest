@@ -43,7 +43,7 @@ class InternalServerError(Exception):
     Indicates that something is broken on our side.
 
     If ``settings.DEBUG`` is enabled, we share the details: what has happened.
-    If it disabled, we hust show a generic message.
+    If it is disabled, we just show a generic message.
     """
 
     default_message: ClassVar[str | Promise] = _('Internal server error')
