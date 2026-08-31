@@ -214,9 +214,9 @@ Here are our amazing people who made this project possible.
   :hidden:
 
   pages/testing/tools-and-styles.rst
+  pages/testing/data-generation.rst
   pages/testing/authentication.rst
   pages/testing/throttling.rst
-  pages/testing/data-generation.rst
   pages/testing/property-based.rst
   pages/testing/tracecov.rst
   pages/testing/api-reference.rst
