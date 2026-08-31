@@ -1060,7 +1060,7 @@ def test_create_user(dmr_rf: DMRRequestFactory) -> None:
 
 **Limitations:** for async controllers, use `DMRAsyncRequestFactory` and `DMRAsyncClient` instead.
 
-Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing/tools-and-styles.html
 
 ### Use `DMRRequestFactory` for faster unit tests
 
@@ -1105,7 +1105,7 @@ def test_create_user(dmr_rf: DMRRequestFactory) -> None:
 
 **Limitations:** `DMRRequestFactory` tests skip URL routing and middleware — use `DMRClient` when you need to test the full request/response cycle.
 
-Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing/tools-and-styles.html
 
 ### Use `Polyfactory` for structured test data generation
 
@@ -1148,7 +1148,7 @@ def test_create_user(dmr_rf: DMRRequestFactory) -> None:
 
 **Limitations:** `Polyfactory` supports `pydantic`, `msgspec`, `@dataclass`, and `TypedDict` models — check its docs for your specific model type.
 
-Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing/data-generation.html
 
 ### Use `schemathesis` for property-based API testing
 
@@ -1179,7 +1179,7 @@ https://schemathesis.readthedocs.io/en/stable/
 
 **Limitations:** `schemathesis` is not bundled with `django-modern-rest` — install it separately with `uv add --group dev schemathesis`.
 
-Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing/property-based.html
 
 
 ## Middleware
