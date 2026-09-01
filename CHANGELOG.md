@@ -50,6 +50,7 @@ of requirements for an API to count as public.
 
 ### Bugfixes
 
+- Empty response body checks now cover 1xx, `205 Reset Content`, and `HEAD`, #1340
 - JWT auth, refresh, and verify now return `401` instead of `500`
   when the token subject cannot be a value of the user lookup field,
   for example a non-numeric `sub` with the default integer `pk`, #1284
