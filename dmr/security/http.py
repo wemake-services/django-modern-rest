@@ -142,7 +142,7 @@ class _HttpBasicAuth:  # noqa: WPS214
         return (
             'HTTP Basic auth via '
             f'`{self.header}` header using '
-            f'`{self.auth_scheme} <base64(username:password)>` format'
+            f'`{self.auth_scheme!r} <base64(username:password)>` format'
         )
 
 
