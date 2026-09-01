@@ -21,3 +21,4 @@ from dmr.security.jwt.auth import request_jwt as request_jwt
 from dmr.security.jwt.cookie import CookieJWTAsyncAuth as CookieJWTAsyncAuth
 from dmr.security.jwt.cookie import CookieJWTSyncAuth as CookieJWTSyncAuth
 from dmr.security.jwt.token import JWToken as JWToken
+from dmr.security.jwt.token import JWTokenError as JWTokenError

@@ -31,6 +31,10 @@ of requirements for an API to count as public.
   it is only used by `JWToken.decode` now, #1324
 - `JWToken` does not validate `exp` and `iat` on creation anymore,
   now `JWToken.encode` validates them instead, #1324
+- `JWToken.encode` and `JWToken.validate_issued_claims` now raise
+  `JWTokenError` instead of `InternalServerError` and `ValueError`,
+  because a token can be created far away from any request,
+  views that we ship still return `500`, #1364
 
 ### Features
 
@@ -53,12 +57,17 @@ of requirements for an API to count as public.
   file schema from the parser, #1278
 - Added `JWToken.validate_issued_claims` method to customize
   the checks we run before signing a token, #1324
+- Added `JWTokenError` raised by `JWToken.encode`,
+  it is a `ValueError` subclass and it keeps the original
+  error as its `__cause__`, #1364
 - Added `security.NO_STORE_HEADERS`, all auth views we ship now
   return the `Cache-Control: no-store` header
   and document it in the OpenAPI schema, #1335
 
 ### Bugfixes
 
+- Fixed `JWToken.encode` raising a bare `TypeError`
+  when `extras` cannot be serialized to json, #1364
 - Added missing `@sensitive_variables` decorator to all auth views,
   so credentials and tokens are hidden
   in error reporting middlewares and logs, #1323

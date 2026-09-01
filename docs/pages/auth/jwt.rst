@@ -383,6 +383,10 @@ API Reference
 .. autoclass:: dmr.security.jwt.token.JWToken
   :members:
 
+.. autoexception:: dmr.security.jwt.token.JWTokenError
+  :members:
+  :show-inheritance:
+
 .. autoclass:: dmr.security.jwt.auth.HeaderJWTSyncAuth
   :members:
   :inherited-members:
