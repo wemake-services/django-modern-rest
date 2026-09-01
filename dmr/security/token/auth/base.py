@@ -82,7 +82,6 @@ class _BaseTokenAuth(Generic[_TokenLikeT]):
         self.security_scheme_name = security_scheme_name
         self._update_last_used = update_last_used
         self.token_secret = token_secret
-        self.token_secret = token_secret
         self.token_salt = token_salt
         self.token_algorithm = token_algorithm
         self._token_model: type[_TokenLikeT] | None = None
