@@ -8,11 +8,15 @@ from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.settings import HttpSpec
 
+_NO_BODY_STATUSES = [
+    HTTPStatus.CONTINUE,
+    HTTPStatus.NO_CONTENT,
+    HTTPStatus.RESET_CONTENT,
+    HTTPStatus.NOT_MODIFIED,
+]
 
-@pytest.mark.parametrize(
-    'status',
-    [HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED],
-)
+
+@pytest.mark.parametrize('status', _NO_BODY_STATUSES)
 def test_empty_response_body(
     *,
     status: HTTPStatus,
@@ -30,10 +34,7 @@ def test_empty_response_body(
                 raise NotImplementedError
 
 
-@pytest.mark.parametrize(
-    'status',
-    [HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED],
-)
+@pytest.mark.parametrize('status', _NO_BODY_STATUSES)
 def test_empty_response_body_controller(
     *,
     status: HTTPStatus,
@@ -52,10 +53,7 @@ def test_empty_response_body_controller(
     assert _Mixed.no_validate_http_spec
 
 
-@pytest.mark.parametrize(
-    'status',
-    [HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED],
-)
+@pytest.mark.parametrize('status', _NO_BODY_STATUSES)
 def test_empty_response_body_scoped_controller(
     *,
     status: HTTPStatus,
@@ -82,10 +80,7 @@ def test_empty_response_body_scoped_controller(
                 raise NotImplementedError
 
 
-@pytest.mark.parametrize(
-    'status',
-    [HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED],
-)
+@pytest.mark.parametrize('status', _NO_BODY_STATUSES)
 def test_empty_response_body_modify(
     *,
     status: HTTPStatus,
@@ -103,10 +98,7 @@ def test_empty_response_body_modify(
             raise NotImplementedError
 
 
-@pytest.mark.parametrize(
-    'status',
-    [HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED],
-)
+@pytest.mark.parametrize('status', _NO_BODY_STATUSES)
 def test_empty_response_body_validate(
     *,
     status: HTTPStatus,
@@ -120,3 +112,33 @@ def test_empty_response_body_validate(
         )
         def get(self) -> HttpResponse:
             raise NotImplementedError
+
+
+def test_empty_response_body_head() -> None:
+    """Successful HEAD must not advertise a response body."""
+    with pytest.raises(EndpointMetadataError, match='return `None` not'):
+
+        class _Mixed(Controller[PydanticSerializer]):
+            def head(self) -> str:
+                raise NotImplementedError
+
+
+def test_empty_response_body_head_ok() -> None:
+    """Successful HEAD may return None."""
+
+    class _Mixed(Controller[PydanticSerializer]):
+        def head(self) -> None:
+            raise NotImplementedError
+
+    assert 'HEAD' in _Mixed.api_endpoints
+
+
+def test_empty_response_body_head_error_can_have_body() -> None:
+    """Failed HEAD responses may advertise a body."""
+
+    class _Mixed(Controller[PydanticSerializer]):
+        @modify(status_code=HTTPStatus.NOT_FOUND)
+        def head(self) -> str:
+            raise NotImplementedError
+
+    assert 'HEAD' in _Mixed.api_endpoints
