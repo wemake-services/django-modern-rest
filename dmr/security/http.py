@@ -154,10 +154,13 @@ class _HttpBasicAuth:  # noqa: WPS214
 
     def _get_custom_security_scheme_description(self) -> str:
         """Describe non-standard basic auth header contracts."""
+        # Empty `auth_scheme` means that the header carries
+        # the credentials alone, without a prefix and a space after it.
+        scheme_prefix = f'{self.auth_scheme} ' if self.auth_scheme else ''
         return (
             'HTTP Basic auth via '
             f'`{self.header}` header using '
-            f'`{self.auth_scheme!r} <base64(username:password)>` format'
+            f'`{scheme_prefix}<base64(username:password)>` format'
         )
 
 

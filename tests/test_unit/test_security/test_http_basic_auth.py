@@ -77,7 +77,7 @@ def test_custom_header_schema(
             type='apiKey',
             description=(
                 'HTTP Basic auth via `X-Api-Auth` header using '
-                "`'Basic' <base64(username:password)>` format"
+                '`Basic <base64(username:password)>` format'
             ),
             name='X-Api-Auth',
             security_scheme_in='header',
@@ -194,7 +194,7 @@ async def test_async_percent_credentials(
             'Custom',
             (
                 'HTTP Basic auth via `Authorization` header using '
-                "`'Custom' <base64(username:password)>` format"
+                '`Custom <base64(username:password)>` format'
             ),
         ),
         # `auth_scheme` is matched exactly, so casing matters:
@@ -202,7 +202,7 @@ async def test_async_percent_credentials(
             'basic',
             (
                 'HTTP Basic auth via `Authorization` header using '
-                "`'basic' <base64(username:password)>` format"
+                '`basic <base64(username:password)>` format'
             ),
         ),
         # Empty scheme reads the credentials without any prefix:
@@ -210,7 +210,7 @@ async def test_async_percent_credentials(
             '',
             (
                 'HTTP Basic auth via `Authorization` header using '
-                "`'' <base64(username:password)>` format"
+                '`<base64(username:password)>` format'
             ),
         ),
     ],
