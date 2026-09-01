@@ -8,6 +8,7 @@ except ImportError:  # pragma: no cover
     raise
 
 import dataclasses
+import time
 from typing import TYPE_CHECKING, Any, ClassVar, Final, cast
 
 from redis import asyncio as aioredis
@@ -94,7 +95,7 @@ class SyncRedis(BaseThrottleSyncBackend):
         )
         cache_object = CachedRateLimit(
             history=[script_result[1]],
-            time=script_result[2],
+            time=int(time.time()) + script_result[2],
         )
         if script_result[0] == 0:
             raise TooManyRequestsError(
@@ -131,7 +132,7 @@ class SyncRedis(BaseThrottleSyncBackend):
         )
         return CachedRateLimit(
             history=[script_result[1]],
-            time=script_result[2],
+            time=int(time.time()) + script_result[2],
         )
 
 
@@ -195,7 +196,7 @@ class AsyncRedis(BaseThrottleAsyncBackend):
         )
         cache_object = CachedRateLimit(
             history=[script_result[1]],
-            time=script_result[2],
+            time=int(time.time()) + script_result[2],
         )
         if script_result[0] == 0:
             raise TooManyRequestsError(
@@ -228,5 +229,5 @@ class AsyncRedis(BaseThrottleAsyncBackend):
         )
         return CachedRateLimit(
             history=[script_result[1]],
-            time=script_result[2],
+            time=int(time.time()) + script_result[2],
         )

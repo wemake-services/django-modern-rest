@@ -50,6 +50,8 @@ of requirements for an API to count as public.
 
 ### Bugfixes
 
+- Fixed Redis throttling reset values sometimes being 1 second above the
+  configured window due to clock skew between Redis and Python, #1308
 - JWT auth, refresh, and verify now return `401` instead of `500`
   when the token subject cannot be a value of the user lookup field,
   for example a non-numeric `sub` with the default integer `pk`, #1284
