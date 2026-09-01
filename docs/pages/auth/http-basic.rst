@@ -48,6 +48,8 @@ Consider using :doc:`jwt` instead.
 Customization
 -------------
 
+.. versionadded:: 0.15.0
+
 You can customize:
 
 - Security scheme name, default: ``http_basic``
