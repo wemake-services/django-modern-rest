@@ -370,11 +370,15 @@ class Endpoint:  # noqa: WPS214
                 # Run checks:
                 await self._run_async_checks(controller)
 
-                # Parse request:
-                context = self._serializer_context(self, controller)
-
-                # Return response:
-                func_result = await func(controller, **context)
+                # Parse request and return response.
+                # NOTE: the parsed context is inlined on purpose,
+                # it must not become a local variable of this frame,
+                # because it can contain credentials that would leak
+                # into error reports of any endpoint.
+                func_result = await func(
+                    controller,
+                    **self._serializer_context(self, controller),
+                )
             except (APIError, RedirectTo) as exc:
                 func_result = controller.to_error(
                     exc.raw_data,
@@ -406,11 +410,15 @@ class Endpoint:  # noqa: WPS214
                 # Run checks:
                 self._run_checks(controller)
 
-                # Parse request:
-                context = self._serializer_context(self, controller)
-
-                # Return response:
-                func_result = func(controller, **context)
+                # Parse request and return response.
+                # NOTE: the parsed context is inlined on purpose,
+                # it must not become a local variable of this frame,
+                # because it can contain credentials that would leak
+                # into error reports of any endpoint.
+                func_result = func(
+                    controller,
+                    **self._serializer_context(self, controller),
+                )
             except (APIError, RedirectTo) as exc:
                 func_result = controller.to_error(
                     exc.raw_data,

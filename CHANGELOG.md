@@ -47,9 +47,18 @@ of requirements for an API to count as public.
 - Added `FileMetadata` conditional types, #1278
 - Added `SupportsFileParsing.schema_metadata` method to customize
   file schema from the parser, #1278
+- Added `security.NO_STORE_HEADERS`, all auth views we ship now
+  return the `Cache-Control: no-store` header
+  and document it in the OpenAPI schema, #1335
 
 ### Bugfixes
 
+- Added missing `@sensitive_variables` decorator to all auth views,
+  so credentials and tokens are hidden
+  in error reporting middlewares and logs, #1323
+- Parsed request data is no longer stored as a local variable
+  of the endpoint's frame, because it was shown
+  in error reports of any endpoint, #1323
 - JWT auth, refresh, and verify now return `401` instead of `500`
   when the token subject cannot be a value of the user lookup field,
   for example a non-numeric `sub` with the default integer `pk`, #1284
