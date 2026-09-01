@@ -48,6 +48,14 @@ of requirements for an API to count as public.
 - Throttling cache keys are now hashed to keep their length bounded, #1337
 - HTTP Basic Auth credentials are no longer URL-decoded,
   so percent-encoded characters such as `%40` are preserved as-is, #1363
+- `HttpBasicSyncAuth` and `HttpBasicAsyncAuth` now require
+  the `auth_scheme` header prefix, it is `Basic` by default
+  and is matched exactly, credentials sent without it
+  are not accepted anymore, #1330
+- `HttpBasicSyncAuth` and `HttpBasicAsyncAuth` now raise
+  `NotAuthenticatedError` when credentials have the right
+  `auth_scheme` prefix, but cannot be decoded,
+  previously the next auth in the chain was tried, #1330
 
 ### Features
 

@@ -45,6 +45,27 @@ Any other authentication method will be better than the one above.
 Consider using :doc:`jwt` instead.
 
 
+Customization
+-------------
+
+You can customize:
+
+- Security scheme name, default: ``http_basic``
+- Header name, default: ``Authorization``
+- Header value prefix (``auth_scheme``), default: ``Basic``
+
+The header value must always start with the ``auth_scheme`` prefix,
+which is matched exactly. So, with the default settings only
+``Authorization: Basic <base64(username:password)>`` is accepted,
+while ``Authorization: basic <base64(username:password)>``
+and a bare ``Authorization: <base64(username:password)>`` are not.
+
+Headers with a different prefix are left to the next auth in the chain.
+But, when the prefix does match and the credentials still cannot be decoded,
+:exc:`~dmr.exceptions.NotAuthenticatedError` is raised right away
+and no other auth classes are tried.
+
+
 API Reference
 -------------
 

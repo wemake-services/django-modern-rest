@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Final, Self
 
 from typing_extensions import override
 
+from dmr.exceptions import NotAuthenticatedError
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.security.base import AsyncAuth, SyncAuth
 
@@ -16,20 +17,32 @@ if TYPE_CHECKING:
 _DEFAULT_BASIC_REALM: Final = 'api'
 
 
-class _HttpBasicAuth:
-    __slots__ = ('header', 'realm', 'security_scheme_name', 'www_authenticate')
+class _HttpBasicAuth:  # noqa: WPS214
+    __slots__ = (
+        'auth_scheme',
+        'header',
+        'realm',
+        'security_scheme_name',
+        'www_authenticate',
+    )
 
-    def __init__(
+    def __init__(  # noqa: WPS211
         self,
         *,
         security_scheme_name: str = 'http_basic',
         header: str = 'Authorization',
+        auth_scheme: str = 'Basic',
         www_authenticate: bool = True,
         realm: str = _DEFAULT_BASIC_REALM,
     ) -> None:
         """
         Apply possible customizations.
 
+        - *security_scheme_name* is the name
+          used in the OpenAPI security scheme map
+        - *header* selects the header to read the credentials from
+        - *auth_scheme* is the prefix that the header value must start with,
+          it is matched exactly, so ``Basic`` won't accept ``basic``
         - *www_authenticate* controls whether ``401`` responses
           advertise this auth in the ``WWW-Authenticate`` header.
           Turn it off to stop browsers from showing
@@ -40,6 +53,7 @@ class _HttpBasicAuth:
         """
         self.security_scheme_name = security_scheme_name
         self.header = header
+        self.auth_scheme = auth_scheme
         self.www_authenticate = www_authenticate
         self.realm = realm
 
@@ -48,8 +62,9 @@ class _HttpBasicAuth:
         """
         Challenge for the ``Basic`` scheme.
 
-        Returns ``None`` for a custom *header*, because a challenge
-        can only ask the client for the ``Authorization`` header.
+        Returns ``None`` for a custom *header* or *auth_scheme*,
+        because a challenge can only ask the client
+        for the ``Basic`` prefix in the ``Authorization`` header.
         """
         if (
             not self.www_authenticate
@@ -91,35 +106,43 @@ class _HttpBasicAuth:
         self,
         controller: 'Controller[BaseSerializer]',
     ) -> tuple[str, str] | None:
+        # We return `None` here, because it might be some other auth.
+        # We don't want to falsely trigger any errors just yet.
         header = controller.request.headers.get(self.header)
         if not header:
             return None
-
-        parts = header.split(' ')
-        if len(parts) == 1:
-            encoded = parts[0]
-        elif len(parts) == 2 and parts[0].lower() == 'basic':
-            encoded = parts[1]
-        else:
+        encoded = self._split_encoded_credentials(header)
+        if encoded is None:
             return None
 
+        # After this point we are sure that these are basic auth credentials.
+        # So, broken ones are an error and not a reason to try other authes.
         try:
             username, password = b64decode(encoded).decode().split(':', 1)
         except Exception:
-            return None
+            raise NotAuthenticatedError from None
         return username, password
+
+    def _split_encoded_credentials(self, header: str) -> str | None:
+        """Splits string like 'Basic credentials' and returns 'credentials'."""
+        parts = header.split(' ')
+        if len(parts) != 2 or parts[0] != self.auth_scheme:
+            return None
+        return parts[1]
 
     def _uses_standard_http_basic_auth(self) -> bool:
         """Whether the auth contract matches OpenAPI HTTP basic auth."""
-        return self.header == 'Authorization'
+        return (
+            self.header == 'Authorization'
+            and self.auth_scheme.casefold() == 'basic'
+        )
 
     def _get_custom_security_scheme_description(self) -> str:
         """Describe non-standard basic auth header contracts."""
         return (
             'HTTP Basic auth via '
             f'`{self.header}` header using '
-            '`<base64(username:password)>` or '
-            '`Basic <base64(username:password)>` format'
+            f'`{self.auth_scheme} <base64(username:password)>` format'
         )
 
 
@@ -142,6 +165,12 @@ class HttpBasicSyncAuth(_HttpBasicAuth, SyncAuth):
 
     See also:
         https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Authentication#basic_authentication_scheme
+
+    .. versionchanged:: 0.15.0
+
+        The ``auth_scheme`` prefix is now required and configurable,
+        it is ``Basic`` by default. Header values without a prefix
+        are not accepted anymore.
 
     """
 
@@ -191,6 +220,12 @@ class HttpBasicAsyncAuth(_HttpBasicAuth, AsyncAuth):
     See also:
         https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Authentication#basic_authentication_scheme
 
+    .. versionchanged:: 0.15.0
+
+        The ``auth_scheme`` prefix is now required and configurable,
+        it is ``Basic`` by default. Header values without a prefix
+        are not accepted anymore.
+
     """
 
     __slots__ = ()
@@ -223,13 +258,16 @@ def basic_auth(username: str, password: str, *, prefix: str = 'Basic ') -> str:
     """
     Return a header value for basic auth for a given *username* and *password*.
 
+    The *prefix* must match the ``auth_scheme`` of the auth class
+    that will read this header, including the trailing space.
+
     .. code:: python
 
       >>> basic_auth('admin', 'pass')
       'Basic YWRtaW46cGFzcw=='
 
-      >>> basic_auth('admin', 'pass', prefix='')
-      'YWRtaW46cGFzcw=='
+      >>> basic_auth('admin', 'pass', prefix='Custom ')
+      'Custom YWRtaW46cGFzcw=='
 
     """
     token = b64encode(f'{username}:{password}'.encode()).decode('utf8')
