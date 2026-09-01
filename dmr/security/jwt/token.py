@@ -29,7 +29,7 @@
 
 import datetime as dt
 from collections.abc import Sequence
-from dataclasses import InitVar, asdict, dataclass, field, fields
+from dataclasses import asdict, dataclass, field, fields
 from typing import Any, Self
 
 import jwt
@@ -39,7 +39,7 @@ from dmr.exceptions import InternalServerError, NotAuthenticatedError
 
 
 @dataclass(frozen=True, slots=True)
-class JWToken:
+class JWToken:  # noqa: WPS214
     """
     JWT Token DTO.
 
@@ -52,6 +52,14 @@ class JWToken:
         aud: Audience - intended audience(s).
         jti: JWT ID - a unique identifier of the JWT between different issuers.
         extras: Extra fields that were found on the JWT token.
+
+    .. versionchanged:: 0.15.0
+
+        Init-only ``leeway`` argument was removed.
+        Time-based claims are now validated in a single place
+        for each direction: :meth:`encode` checks that a token
+        can be issued, while :meth:`decode` fully relies
+        on ``pyjwt`` and its options.
 
     """
 
@@ -71,36 +79,33 @@ class JWToken:
         default_factory=dict,
     )
 
-    # Options for validation:
-    leeway: InitVar[int] = 0
-
-    def __post_init__(self, leeway: int) -> None:
-        """Runs extra validation."""
+    def __post_init__(self) -> None:
+        """Normalizes datetime claims and runs extra validation."""
         if len(self.sub) < 1:
             raise ValueError(
                 'sub must be a string with a length greater than 0',
             )
 
-        exp = _normalize_datetime(self.exp)
-        if (
-            exp + dt.timedelta(seconds=leeway)
-        ).timestamp() >= _normalize_datetime(
-            dt.datetime.now(dt.UTC),
-        ).timestamp():
-            object.__setattr__(self, 'exp', exp)
-        else:
-            raise ValueError(
-                'exp value must be a datetime in the future, '
-                f'leeway is {leeway}',
-            )
+        object.__setattr__(self, 'exp', _normalize_datetime(self.exp))
+        object.__setattr__(self, 'iat', _normalize_datetime(self.iat))
 
-        iat = _normalize_datetime(self.iat)
-        if (
-            iat.timestamp()
-            <= _normalize_datetime(dt.datetime.now(dt.UTC)).timestamp()
-        ):
-            object.__setattr__(self, 'iat', iat)
-        else:
+    def validate_issued_claims(self) -> None:
+        """
+        Ensure that this token makes sense to be issued right now.
+
+        Is called by :meth:`encode`, override it to change or to extend
+        the checks that we run before signing a token.
+
+        Raises:
+            ValueError: If this token cannot be issued right now.
+
+        .. versionadded:: 0.15.0
+
+        """
+        now = _normalize_datetime(dt.datetime.now(dt.UTC)).timestamp()
+        if self.exp.timestamp() < now:
+            raise ValueError('exp value must be a datetime in the future')
+        if self.iat.timestamp() > now:
             raise ValueError('iat must be a current or past time')
 
     def encode(
@@ -122,8 +127,17 @@ class JWToken:
             An encoded token string.
 
         Raises:
+            ValueError: If this token cannot be issued right now.
             InternalServerError: If encoding fails.
+
+        .. versionchanged:: 0.15.0
+
+            ``exp`` and ``iat`` are validated here
+            via :meth:`validate_issued_claims`,
+            previously it was done during the instance creation.
+
         """
+        self.validate_issued_claims()
         try:
             return jwt.encode(
                 payload={
@@ -218,6 +232,14 @@ class JWToken:
         See also:
             https://pyjwt.readthedocs.io/en/stable/api.html#jwt.types.Options
 
+        .. versionchanged:: 0.15.0
+
+            Time-based claims are only validated by ``pyjwt``,
+            we don't validate them a second time anymore.
+            This means that ``leeway``, ``verify_exp``, and ``verify_iat``
+            are now respected, and that invalid tokens always
+            raise :exc:`dmr.exceptions.NotAuthenticatedError`.
+
         """
         options = cls._build_options(
             audience=accepted_audiences,
@@ -254,7 +276,13 @@ class JWToken:
         extras = payload.setdefault('extras', {})
         for key in extra_fields:
             extras[key] = payload.pop(key)
-        return cls(**payload, leeway=leeway)
+
+        try:
+            return cls(**payload)
+        except ValueError:
+            # Time-based claims are already checked by `pyjwt` above,
+            # everything else that is invalid here is still a bad token.
+            raise NotAuthenticatedError from None
 
     @classmethod
     def _build_options(  # noqa: WPS211

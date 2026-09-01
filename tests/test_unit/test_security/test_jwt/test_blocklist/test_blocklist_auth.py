@@ -35,7 +35,6 @@ class _JWTokenKwargs(TypedDict, total=False):
     aud: str | Sequence[str]
     jti: str
     extras: dict[str, Any]
-    leeway: int
 
 
 def test_is_installed() -> None:
