@@ -30,7 +30,7 @@ def _quote_auth_param(auth_param: str) -> str:
       '"say \\"hi\\""'
 
     """
-    escaped = value.replace('\\', r'\\').replace('"', r'\"')
+    escaped = auth_param.replace('\\', r'\\').replace('"', r'\"')
     return f'"{escaped}"'
 
 
