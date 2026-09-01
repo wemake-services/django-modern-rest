@@ -9,13 +9,17 @@ from django.conf import settings
 from django.contrib.auth import aauthenticate, authenticate
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.http import HttpRequest
-from django.views.decorators.debug import sensitive_post_parameters
+from django.views.decorators.debug import (
+    sensitive_post_parameters,
+    sensitive_variables,
+)
 from typing_extensions import TypedDict
 
 from dmr import Body, Controller, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
 from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
+from dmr.security.base import NO_STORE_HEADERS
 from dmr.security.jwt.auth import USER_LOOKUP_ERRORS, set_request_attrs
 from dmr.security.jwt.token import JWToken
 from dmr.serializer import BaseSerializer
@@ -71,6 +75,7 @@ class _BaseTokenController(
     _BaseObtainTokensSettings,
     Controller[_SerializerT],
 ):
+    @sensitive_variables()
     def create_jwt_token(  # noqa: WPS211
         self,
         *,
@@ -135,12 +140,14 @@ class ObtainTokensSyncController(
         ),
     )
 
+    @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.OK)
+    @modify(status_code=HTTPStatus.OK, headers=NO_STORE_HEADERS)
     def post(self, parsed_body: Body[_ObtainTokensT]) -> _TokensResponseT:
         """By default tokens are acquired on post."""
         return self.login(parsed_body)
 
+    @sensitive_variables()
     def login(self, parsed_body: _ObtainTokensT) -> _TokensResponseT:
         """Perform the sync login routine for user."""
         user = authenticate(
@@ -211,12 +218,14 @@ class ObtainTokensAsyncController(
         ),
     )
 
+    @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.OK)
+    @modify(status_code=HTTPStatus.OK, headers=NO_STORE_HEADERS)
     async def post(self, parsed_body: Body[_ObtainTokensT]) -> _TokensResponseT:
         """By default tokens are acquired on post."""
         return await self.login(parsed_body)
 
+    @sensitive_variables()
     async def login(self, parsed_body: _ObtainTokensT) -> _TokensResponseT:
         """Perform the async login routine for user."""
         user = await aauthenticate(
@@ -266,6 +275,7 @@ class RefreshTokenPayload(TypedDict):
 class _BaseRefreshTokenController(_BaseTokenController[_SerializerT]):
     jwt_user_id_field: ClassVar[str] = 'pk'
 
+    @sensitive_variables()
     def _decode_and_validate_refresh_token(self, encoded_token: str) -> JWToken:
         token = self.jwt_token_cls.decode(
             encoded_token=encoded_token,
@@ -310,12 +320,14 @@ class RefreshTokenSyncController(
         ),
     )
 
+    @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.OK)
+    @modify(status_code=HTTPStatus.OK, headers=NO_STORE_HEADERS)
     def post(self, parsed_body: Body[_RefreshTokensT]) -> _TokensResponseT:
         """Refresh tokens on POST."""
         return self.refresh(parsed_body)
 
+    @sensitive_variables()
     def refresh(self, parsed_body: _RefreshTokensT) -> _TokensResponseT:
         """Validate the refresh token, load user, and return new tokens."""
         from django.contrib.auth import get_user_model  # noqa: PLC0415
@@ -388,8 +400,9 @@ class RefreshTokenAsyncController(
         ),
     )
 
+    @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.OK)
+    @modify(status_code=HTTPStatus.OK, headers=NO_STORE_HEADERS)
     async def post(
         self,
         parsed_body: Body[_RefreshTokensT],
@@ -397,6 +410,7 @@ class RefreshTokenAsyncController(
         """Refresh tokens on POST."""
         return await self.refresh(parsed_body)
 
+    @sensitive_variables()
     async def refresh(
         self,
         parsed_body: _RefreshTokensT,
@@ -450,6 +464,7 @@ class VerifyTokenPayload(TypedDict):
 class _BaseVerifyTokenController(_BaseTokenController[_SerializerT]):
     jwt_user_id_field: ClassVar[str] = 'pk'
 
+    @sensitive_variables()
     def _decode_and_validate_access_token(self, encoded_token: str) -> JWToken:
         token = self.jwt_token_cls.decode(
             encoded_token=encoded_token,
@@ -497,12 +512,14 @@ class VerifyTokenSyncController(
         ),
     )
 
+    @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.NO_CONTENT)
+    @modify(status_code=HTTPStatus.NO_CONTENT, headers=NO_STORE_HEADERS)
     def post(self, parsed_body: Body[_VerifyTokenT]) -> None:
         """Verify the token on POST."""
         self.verify(parsed_body)
 
+    @sensitive_variables()
     def verify(self, parsed_body: _VerifyTokenT) -> None:
         """Validate the access token and load its user."""
         token = self._decode_and_validate_access_token(
@@ -567,12 +584,14 @@ class VerifyTokenAsyncController(
         ),
     )
 
+    @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.NO_CONTENT)
+    @modify(status_code=HTTPStatus.NO_CONTENT, headers=NO_STORE_HEADERS)
     async def post(self, parsed_body: Body[_VerifyTokenT]) -> None:
         """Verify the token on POST."""
         await self.verify(parsed_body)
 
+    @sensitive_variables()
     async def verify(self, parsed_body: _VerifyTokenT) -> None:
         """Validate the access token and load its user."""
         token = self._decode_and_validate_access_token(

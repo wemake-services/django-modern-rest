@@ -2,13 +2,14 @@ import dataclasses
 from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from http import HTTPStatus
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Final, Literal, Self, final, overload
 
 from django.http import HttpRequest
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
-from dmr.headers import HeaderSpec
+from dmr.headers import HeaderSpec, NewHeader
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 
@@ -29,6 +30,15 @@ _WWW_AUTHENTICATE_SPEC: Final = HeaderSpec(
     # So, we document the header, but never enforce it in runtime.
     skip_validation=True,
 )
+#: Headers that every view issuing or accepting credentials must return.
+#: Responses of such views must never be written to any cache,
+#: neither shared, nor local.
+NO_STORE_HEADERS: Final = MappingProxyType({
+    'Cache-Control': NewHeader(
+        value='no-store',
+        description='Credentials must not be stored in any cache.',
+    ),
+})
 
 
 def unauth_response_spec(

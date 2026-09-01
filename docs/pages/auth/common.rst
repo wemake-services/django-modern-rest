@@ -291,6 +291,87 @@ in `RFC 6750 <https://www.rfc-editor.org/rfc/rfc6750.html#section-3.1>`_.
   :exc:`~dmr.exceptions.NotAuthenticatedError` responses.
   If you build a ``401`` yourself with :exc:`~dmr.response.APIError`,
   pass the header yourself via its ``headers=`` argument.
+Security of auth views
+----------------------
+
+Views that issue or accept credentials get extra protection out of the box.
+All the auth views we ship already do all of the below,
+you only need this when you write your own auth views.
+
+
+Never cache credentials
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Every response that carries credentials
+must set the ``Cache-Control: no-store`` header,
+so it is never written to any shared or local cache.
+
+Use :data:`~dmr.security.NO_STORE_HEADERS` for that,
+it also documents the header in the OpenAPI schema:
+
+.. code:: python
+
+  @modify(headers=NO_STORE_HEADERS)
+
+.. note::
+
+  Only the successful response gets this header,
+  because only it carries credentials.
+  Error responses of auth views are not affected.
+
+
+Keep credentials out of error reports
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Django hides sensitive data from tracebacks
+that are shown to admins in error reporting middlewares:
+
+1. :func:`django.views.decorators.debug.sensitive_post_parameters`
+   hides the request's ``POST`` data.
+   Apply it with :func:`~dmr.decorators.endpoint_decorator`
+2. :func:`django.views.decorators.debug.sensitive_variables`
+   hides local variables of a single function
+
+.. code:: python
+
+  >>> from django.views.decorators.debug import (
+  ...     sensitive_post_parameters,
+  ...     sensitive_variables,
+  ... )
+
+  >>> from dmr import Body, Controller, modify
+  >>> from dmr.decorators import endpoint_decorator
+  >>> from dmr.plugins.pydantic import PydanticSerializer
+  >>> from dmr.security import NO_STORE_HEADERS
+
+  >>> class MyLoginController(Controller[PydanticSerializer]):
+  ...     @sensitive_variables()
+  ...     @endpoint_decorator(sensitive_post_parameters())
+  ...     @modify(headers=NO_STORE_HEADERS)
+  ...     def post(self, parsed_body: Body[dict[str, str]]) -> str:
+  ...         return self.login(parsed_body)
+  ...
+  ...     def login(self, parsed_body: dict[str, str]) -> str:
+  ...         return 'Logged in!'
+
+.. warning::
+
+  ``@sensitive_variables()`` must be the topmost decorator,
+  otherwise the wrappers below it will still show
+  the parsed request body in the traceback.
+
+.. note::
+
+  Django protects sync and async functions differently.
+
+  A sync ``@sensitive_variables()`` also hides local variables
+  of everything the decorated function calls,
+  which is why ``login`` above needs no decorator of its own.
+
+  Async functions do not have a shared call stack,
+  so every coroutine that keeps credentials in its local variables
+  needs its own decorator. This includes your own overrides,
+  like ``convert_auth_payload``, which receives the raw password.
 
 
 Permissions
@@ -409,6 +490,8 @@ API Reference
 .. autofunction:: dmr.security.request_auth
 
 .. autofunction:: dmr.security.add_auth_challenge
+
+.. autodata:: dmr.security.NO_STORE_HEADERS
 
 
 .. autoclass:: dmr.security.AuthenticatedHttpRequest

@@ -3,6 +3,7 @@ from typing import final
 
 import pydantic
 from asgiref.sync import async_to_sync
+from django.views.decorators.debug import sensitive_variables
 from typing_extensions import override
 
 from dmr import Controller
@@ -72,6 +73,7 @@ class ObtainAccessAndRefreshAsyncController(
     ],
 ):
     @override
+    @sensitive_variables()
     async def convert_auth_payload(
         self,
         payload: ObtainTokensPayload,
@@ -143,6 +145,7 @@ class RefreshAsyncController(
     ],
 ):
     @override
+    @sensitive_variables()
     async def convert_refresh_payload(
         self,
         payload: RefreshTokenPayload,
@@ -192,6 +195,7 @@ class VerifyAsyncController(
     ],
 ):
     @override
+    @sensitive_variables()
     async def convert_verify_payload(
         self,
         payload: VerifyTokenPayload,

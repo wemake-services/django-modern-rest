@@ -81,6 +81,7 @@ def test_correct_auth_params(
 
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
+    assert response.headers['Cache-Control'] == 'no-store'
     response_body = response.json()
     access = jwt.decode(
         response_body['access_token'],
@@ -190,6 +191,7 @@ def test_wrong_auth_params(
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert response.headers['Content-Type'] == 'application/json'
+    assert 'Cache-Control' not in response.headers
     assert response.json() == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
@@ -264,6 +266,7 @@ def test_refresh_valid_token(
 
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
+    assert response.headers['Cache-Control'] == 'no-store'
     new_access = jwt.decode(
         response.json()['access_token'],
         key=settings.SECRET_KEY,
@@ -325,6 +328,7 @@ def test_refresh_with_access_token(
     response = dmr_client.post(url, data={'refresh_token': access_token})
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert 'Cache-Control' not in response.headers
     assert response.json() == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
@@ -486,6 +490,7 @@ def test_verify_valid_token(
     response = dmr_client.post(url, data={'access_token': access_token})
 
     assert response.status_code == HTTPStatus.NO_CONTENT, response.content
+    assert response.headers['Cache-Control'] == 'no-store'
     assert response.content == b''
 
 
@@ -515,6 +520,7 @@ def test_verify_with_refresh_token(
     response = dmr_client.post(url, data={'access_token': refresh_token})
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert 'Cache-Control' not in response.headers
     assert response.json() == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
