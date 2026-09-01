@@ -126,3 +126,28 @@ def test_obtain_failures(
     assert response.json() == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    'url',
+    [
+        reverse('api:token_auth:token_obtain_sync'),
+        reverse('api:token_auth:token_obtain_async'),
+    ],
+)
+def test_obtain_is_never_stored(
+    dmr_client: DMRClient,
+    user: User,
+    password: str,
+    *,
+    url: str,
+) -> None:
+    """Ensures the issued token response is never written to any cache."""
+    response = dmr_client.post(
+        url,
+        data={'username': user.username, 'password': password},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers['Cache-Control'] == 'no-store'
