@@ -64,6 +64,7 @@ of requirements for an API to count as public.
   HTTP methods (like `PURGE`, `LINK`), #1300
 - Fixed a bug when non-file parsers were listed in the response schema
   for file responses, #1278
+- Added `nil` convert to `0` in lua script for `SimpleRate`, #1333
 
 ### Misc
 

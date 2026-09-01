@@ -12,7 +12,7 @@ from redis import asyncio as aioredis
 from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
-from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
+from dmr.throttling import AsyncThrottle, Rate, SyncThrottle, ThrottlingReport
 from dmr.throttling.algorithms import LeakyBucket, SimpleRate
 from dmr.throttling.backends.redis import AsyncRedis, SyncRedis
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter
@@ -28,25 +28,36 @@ def test_redis_sync_simple_rate(
     """Ensure correct sync redis client works with simple rate."""
 
     class _SyncController(Controller[PydanticFastSerializer]):
-        @modify(
-            throttling=[
-                SyncThrottle(
-                    _ATTEMPTS,
-                    _RATE,
-                    backend=SyncRedis(redis_client),
-                    algorithm=SimpleRate(),
-                ),
-            ],
-        )
-        def get(self) -> str:
-            return 'inside'
+        throttling = [
+            SyncThrottle(
+                _ATTEMPTS,
+                _RATE,
+                backend=SyncRedis(redis_client),
+                algorithm=SimpleRate(),
+            ),
+        ]
+
+        def get(self) -> HttpResponse:
+            return self.to_response(
+                'inside',
+                headers=ThrottlingReport(self).report(),
+            )
 
     # Two requests fill the bucket:
-    for _ in range(_ATTEMPTS):
+    expected_remaining = ['1', '0']
+    for attempt in range(_ATTEMPTS):
         request = dmr_rf.get('/whatever/')
         response = _SyncController.as_view()(request)
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.OK
+        assert response.headers == {
+            'Content-Type': 'application/json',
+            'X-RateLimit-Limit': '2',
+            'X-RateLimit-Remaining': expected_remaining[attempt],
+            # Time can vary:
+            'X-RateLimit-Reset': IsOneOf('60', '59'),
+            'Retry-After': IsOneOf('60', '59'),
+        }
 
     # Third is rejected:
     request = dmr_rf.get('/whatever/')
@@ -194,15 +205,29 @@ async def test_redis_async_simple_rate(
             ),
         ]
 
-        async def get(self) -> str:
-            return 'inside'
+        async def get(self) -> HttpResponse:
+            return self.to_response(
+                'inside',
+                headers=await ThrottlingReport(self).areport(),
+            )
 
     # Success attempts:
-    for _ in range(_ATTEMPTS):
+    expected_remaining = ['1', '0']
+    for attempt in range(_ATTEMPTS):
         request = dmr_async_rf.get('/whatever/')
         response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.OK, response.content
+        assert response.headers == {
+            'Content-Type': 'application/json',
+            'RateLimit-Policy': '2;w=60;name="RemoteAddr"',
+            # Time can vary:
+            'RateLimit': IsOneOf(
+                f'"RemoteAddr";r={expected_remaining[attempt]};t=60',
+                f'"RemoteAddr";r={expected_remaining[attempt]};t=59',
+            ),
+            'Retry-After': IsOneOf('60', '59'),
+        }
 
     # Rejected:
     request = dmr_async_rf.get('/whatever/')
