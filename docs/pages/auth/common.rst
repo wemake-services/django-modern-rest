@@ -126,6 +126,8 @@ all auth in further layers.
   because it will globally disable all auth with no ways to re-enable it.
 
 
+.. _auth-views-security:
+
 Security of auth views
 ----------------------
 
@@ -265,6 +267,12 @@ Select auth backend that fits your needs:
       :link-type: doc
 
       Database-backed opaque token auth with revocation support.
+
+    .. grid-item-card:: Your own auth
+      :link: custom
+      :link-type: doc
+
+      Write an auth class for a transport we don't ship.
 
 
 JWT vs Opaque Tokens

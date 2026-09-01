@@ -94,6 +94,8 @@ of requirements for an API to count as public.
   installations to `django-modern-rest` and `django-allauth` headless, #1193
 - Documented why and how to remove expired `BlocklistedJWToken`
   and `Token` rows on a schedule, #1336
+- Added a guide on writing your own auth class
+  for transports we don't ship, #1366
 
 
 ## 0.14.0 (2026-08-14)
