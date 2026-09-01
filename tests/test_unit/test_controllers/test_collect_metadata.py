@@ -26,7 +26,7 @@ class _Controller(Controller[PydanticSerializer]):
     @modify(
         extra_responses=[
             ResponseSpec(bool, status_code=HTTPStatus.CREATED),
-            ResponseSpec(float, status_code=HTTPStatus.RESET_CONTENT),
+            ResponseSpec(float, status_code=HTTPStatus.PARTIAL_CONTENT),
         ],
     )
     def put(self) -> str:
@@ -41,9 +41,9 @@ def test_collected_responses() -> None:
             return_type=bool,
             status_code=HTTPStatus.CREATED,
         ),
-        HTTPStatus.RESET_CONTENT: ResponseSpec(
+        HTTPStatus.PARTIAL_CONTENT: ResponseSpec(
             return_type=float,
-            status_code=HTTPStatus.RESET_CONTENT,
+            status_code=HTTPStatus.PARTIAL_CONTENT,
         ),
         HTTPStatus.ACCEPTED: ResponseSpec(
             return_type=int,
