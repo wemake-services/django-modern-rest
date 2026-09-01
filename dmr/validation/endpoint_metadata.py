@@ -65,6 +65,12 @@ class _ResponseListValidator:  # noqa: WPS214
     """Validates responses metadata."""
 
     metadata: EndpointMetadata
+    #: 1xx responses, 204, 205, and 304 must not have a body. RFC 9110.
+    _NO_RESPONSE_BODY_STATUSES: ClassVar[frozenset[HTTPStatus]] = frozenset((
+        HTTPStatus.NO_CONTENT,
+        HTTPStatus.RESET_CONTENT,
+        HTTPStatus.NOT_MODIFIED,
+    ))
 
     def __call__(
         self,
@@ -148,15 +154,18 @@ class _ResponseListValidator:  # noqa: WPS214
         responses: list[ResponseSpec],
     ) -> None:
         endpoint_name = self.metadata.endpoint_name
-        # For status codes < 100 or 204, 304 statuses,
+        # For 1xx, 204, 205, 304, and successful HEAD responses,
         # no response body is allowed.
         # If you specify a return annotation other than None,
         # an EndpointMetadataError will be raised.
+        is_head = stringify(self.metadata.method).upper() == HTTPMethod.HEAD
         for response in responses:
-            if not is_safe_subclass(response.return_type, NoneType) and (
-                response.status_code < HTTPStatus.CONTINUE
-                or response.status_code
-                in {HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED}
+            if is_safe_subclass(response.return_type, NoneType):
+                continue
+            if (
+                response.status_code < HTTPStatus.OK
+                or response.status_code in self._NO_RESPONSE_BODY_STATUSES
+                or (is_head and response.status_code < HTTPStatus.BAD_REQUEST)
             ):
                 raise EndpointMetadataError(
                     f'Can only return `None` not {response.return_type} '
