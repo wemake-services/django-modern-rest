@@ -128,7 +128,7 @@ class JwtToken(BaseThrottleCacheKey):
         controller: 'Controller[BaseSerializer]',
     ) -> str | None:
         """Return a hash of JWT ``jti`` / ``sub`` claims as a cache key."""
-        from dmr.security.jwt.auth import request_jwt  # noqa: PLC0415
+        from dmr.security.jwt.auth.header import request_jwt  # noqa: PLC0415
 
         jwt_token = request_jwt(controller.request)
         if jwt_token is None:

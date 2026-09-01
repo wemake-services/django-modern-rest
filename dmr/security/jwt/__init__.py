@@ -11,13 +11,17 @@ except ImportError:  # pragma: no cover
     )
     raise
 
-from dmr.security.jwt.auth import BaseJWTAsyncAuth as BaseJWTAsyncAuth
-from dmr.security.jwt.auth import BaseJWTSyncAuth as BaseJWTSyncAuth
-from dmr.security.jwt.auth import HeaderJWTAsyncAuth as HeaderJWTAsyncAuth
-from dmr.security.jwt.auth import HeaderJWTSyncAuth as HeaderJWTSyncAuth
-from dmr.security.jwt.auth import JWTAsyncAuth as JWTAsyncAuth
-from dmr.security.jwt.auth import JWTSyncAuth as JWTSyncAuth
-from dmr.security.jwt.auth import request_jwt as request_jwt
-from dmr.security.jwt.cookie import CookieJWTAsyncAuth as CookieJWTAsyncAuth
-from dmr.security.jwt.cookie import CookieJWTSyncAuth as CookieJWTSyncAuth
+from dmr.security.jwt.auth.cookie import (
+    CookieJWTAsyncAuth as CookieJWTAsyncAuth,
+)
+from dmr.security.jwt.auth.cookie import CookieJWTSyncAuth as CookieJWTSyncAuth
+from dmr.security.jwt.auth.header import BaseJWTAsyncAuth as BaseJWTAsyncAuth
+from dmr.security.jwt.auth.header import BaseJWTSyncAuth as BaseJWTSyncAuth
+from dmr.security.jwt.auth.header import (
+    HeaderJWTAsyncAuth as HeaderJWTAsyncAuth,
+)
+from dmr.security.jwt.auth.header import HeaderJWTSyncAuth as HeaderJWTSyncAuth
+from dmr.security.jwt.auth.header import JWTAsyncAuth as JWTAsyncAuth
+from dmr.security.jwt.auth.header import JWTSyncAuth as JWTSyncAuth
+from dmr.security.jwt.auth.header import request_jwt as request_jwt
 from dmr.security.jwt.token import JWToken as JWToken

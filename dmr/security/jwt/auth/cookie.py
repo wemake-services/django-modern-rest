@@ -9,7 +9,7 @@ from dmr.internal.csrf import ensure_csrf
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityScheme
 from dmr.security.base import unauth_response_spec
-from dmr.security.jwt.auth import BaseJWTAsyncAuth, BaseJWTSyncAuth
+from dmr.security.jwt.auth.header import BaseJWTAsyncAuth, BaseJWTSyncAuth
 from dmr.security.jwt.token import JWToken
 
 if TYPE_CHECKING:
