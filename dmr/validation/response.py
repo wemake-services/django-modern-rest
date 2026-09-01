@@ -13,6 +13,7 @@ from dmr.exceptions import (
 )
 from dmr.files import FileBody
 from dmr.internal.enums import stringify
+from dmr.internal.errors import is_handled_error
 from dmr.internal.negotiation import (
     media_by_precedence,
     negotiatiate_response_validation,
@@ -51,8 +52,18 @@ class ResponseValidator:  # noqa: WPS214
         controller: 'Controller[BaseSerializer]',
         response: _ResponseT,
     ) -> _ResponseT:
-        """Validate response based on provided schema."""
+        """
+        Validate response based on provided schema.
+
+        .. versionchanged:: 0.15.0
+
+            Our own error responses are not validated
+            when their status code is not described by the user.
+
+        """
         if not self._should_validate_responses():
+            return response
+        if self._is_undescribed_handled_error(response):
             return response
         schema = self._get_response_schema(response.status_code)
         self._validate_content_type(response, endpoint.metadata)
@@ -115,6 +126,25 @@ class ResponseValidator:  # noqa: WPS214
 
     def _should_validate_responses(self) -> bool:
         return self.metadata.validate_responses is True
+
+    def _is_undescribed_handled_error(
+        self,
+        response: HttpResponseBase,
+    ) -> bool:
+        """
+        Detects our own error responses that the user did not describe.
+
+        We build them ourselves for the exceptions that we handle,
+        so there's no user schema to validate them against.
+        Telling the client that its request was unprocessable,
+        because we failed to describe our own ``500``, helps nobody.
+
+        Describing such a status code, for example with
+        :data:`~dmr.settings.Settings.responses`, brings the validation back.
+        """
+        if not is_handled_error(response):
+            return False
+        return HTTPStatus(response.status_code) not in self.metadata.responses
 
     def _get_response_schema(
         self,

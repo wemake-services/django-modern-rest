@@ -26,6 +26,7 @@ from dmr.exceptions import (
     TooManyRequestsError,
     ValidationError,
 )
+from dmr.internal.errors import mark_handled_error
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -305,11 +306,13 @@ def global_error_handler(
 
     """
     if isinstance(exc, _default_handled_excs):
-        return controller.to_error(
-            controller.format_error(exc),
-            status_code=exc.status_code,
-            headers=getattr(exc, 'headers', None),
-            cookies=getattr(exc, 'cookies', None),
-            renderer=getattr(exc, 'renderer', None),
+        return mark_handled_error(
+            controller.to_error(
+                controller.format_error(exc),
+                status_code=exc.status_code,
+                headers=getattr(exc, 'headers', None),
+                cookies=getattr(exc, 'cookies', None),
+                renderer=getattr(exc, 'renderer', None),
+            ),
         )
     raise  # noqa: PLE0704

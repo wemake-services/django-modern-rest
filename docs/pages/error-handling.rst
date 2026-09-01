@@ -52,6 +52,24 @@ Here's how it works:
   You don't need to catch ``APIError`` in any way,
   unless you know what you are doing.
 
+.. note::
+
+  .. versionchanged:: 0.15.0
+
+  Responses that :func:`~dmr.errors.global_error_handler` builds
+  for the exceptions we handle ourselves, like
+  :exc:`~dmr.exceptions.InternalServerError`, are not required
+  to be listed in :attr:`~dmr.controller.Controller.responses`.
+  They are our data and not yours, so response validation lets them through.
+
+  Errors that your own handlers return still have to be described,
+  as any other response of your endpoint.
+
+  Describing a status code that we can return, for example with
+  :data:`~dmr.settings.Settings.responses`, is still worth doing:
+  it documents the response in the OpenAPI schema
+  and turns the validation back on for it.
+
 
 Customizing endpoint error handler
 ----------------------------------

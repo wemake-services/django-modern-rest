@@ -59,6 +59,9 @@ of requirements for an API to count as public.
 
 ### Bugfixes
 
+- Fixed `InternalServerError` and other errors we handle ourselves
+  being returned as `422` when their status code
+  was not listed in `responses`, #1370
 - Added missing `@sensitive_variables` decorator to all auth views,
   so credentials and tokens are hidden
   in error reporting middlewares and logs, #1323
