@@ -158,7 +158,7 @@ into a single header value, because
 `RFC 9110 <https://www.rfc-editor.org/rfc/rfc9110.html#section-11.6.1>`_
 allows a challenge list:
 
-.. code-block:: http
+.. code-block:: text
 
   WWW-Authenticate: Basic realm="api", charset="UTF-8", Bearer
 
@@ -198,12 +198,12 @@ has nothing to put there, so it sends no challenge at all:
       :class:`~dmr.security.token.CookieTokenAsyncAuth`
     - none, the token lives in a cookie
     - \-
-  * - :class:`~dmr.security.django_session.DjangoSessionSyncAuth`,
-      :class:`~dmr.security.django_session.DjangoSessionAsyncAuth`
+  * - :class:`~dmr.security.django_session.auth.DjangoSessionSyncAuth`,
+      :class:`~dmr.security.django_session.auth.DjangoSessionAsyncAuth`
     - none, the session lives in a cookie
     - \-
-  * - :class:`~dmr.security.allauth.XSessionTokenSyncAuth`,
-      :class:`~dmr.security.allauth.XSessionTokenAsyncAuth`
+  * - :class:`~dmr.security.allauth.auth.XSessionTokenSyncAuth`,
+      :class:`~dmr.security.allauth.auth.XSessionTokenAsyncAuth`
     - none, ``X-Session-Token`` is not an auth scheme
     - \-
 
