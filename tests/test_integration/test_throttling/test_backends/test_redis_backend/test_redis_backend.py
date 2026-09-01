@@ -9,16 +9,19 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from redis import asyncio as aioredis
 
-from dmr import Controller, modify
+from dmr import Controller, ResponseSpec, modify, validate
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle, ThrottlingReport
 from dmr.throttling.algorithms import LeakyBucket, SimpleRate
 from dmr.throttling.backends.redis import AsyncRedis, SyncRedis
-from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter
+from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
 
 _ATTEMPTS: Final = 2
 _RATE: Final = Rate.minute
+_rate_limit_ietf_draft_headers: Final = RateLimitIETFDraft()
+_retry_after_headers: Final = RetryAfter()
+_x_rate_limit_headers: Final = XRateLimit()
 
 
 def test_redis_sync_simple_rate(
@@ -37,6 +40,16 @@ def test_redis_sync_simple_rate(
             ),
         ]
 
+        @validate(
+            ResponseSpec(
+                str,
+                status_code=HTTPStatus.OK,
+                headers={
+                    **_x_rate_limit_headers.provide_headers_specs(),
+                    **_retry_after_headers.provide_headers_specs(),
+                },
+            ),
+        )
         def get(self) -> HttpResponse:
             return self.to_response(
                 'inside',
@@ -201,10 +214,23 @@ async def test_redis_async_simple_rate(
                 _RATE,
                 algorithm=SimpleRate(),
                 backend=AsyncRedis(redis_async_client),
-                response_headers=[RateLimitIETFDraft(), RetryAfter()],
+                response_headers=[
+                    _rate_limit_ietf_draft_headers,
+                    _retry_after_headers,
+                ],
             ),
         ]
 
+        @validate(
+            ResponseSpec(
+                str,
+                status_code=HTTPStatus.OK,
+                headers={
+                    **_rate_limit_ietf_draft_headers.provide_headers_specs(),
+                    **_retry_after_headers.provide_headers_specs(),
+                },
+            ),
+        )
         async def get(self) -> HttpResponse:
             return self.to_response(
                 'inside',
