@@ -291,6 +291,8 @@ in `RFC 6750 <https://www.rfc-editor.org/rfc/rfc6750.html#section-3.1>`_.
   :exc:`~dmr.exceptions.NotAuthenticatedError` responses.
   If you build a ``401`` yourself with :exc:`~dmr.response.APIError`,
   pass the header yourself via its ``headers=`` argument.
+
+
 Security of auth views
 ----------------------
 
