@@ -6,15 +6,18 @@
 import dataclasses
 import datetime as dt
 import secrets
-from typing import Any
+from typing import Any, Final
 
 import jwt
 import pytest
 from faker import Faker
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, override
 
 from dmr.exceptions import InternalServerError, NotAuthenticatedError
 from dmr.security.jwt import JWToken
+
+#: Clock error in seconds that we allow in tests below.
+_LEEWAY: Final = 30
 
 
 class _DecodeKwargs(TypedDict, total=False):
@@ -80,16 +83,32 @@ def test_empty_token() -> None:
     ],
 )
 def test_exp_in_the_past(exp: dt.datetime) -> None:
-    """Ensures that we can't create an exp date in the past."""
+    """Ensures that we can't issue a token with an exp date in the past."""
     with pytest.raises(ValueError, match='datetime in the future'):
-        JWToken('a', exp)
+        JWToken('a', exp).encode(secrets.token_hex(), 'HS256')
 
 
 def test_iat_in_the_past() -> None:
-    """Ensures that we can't create an iat date in the future."""
+    """Ensures that we can't issue a token with an iat date in the future."""
     exp = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
     with pytest.raises(ValueError, match='current or past time'):
-        JWToken('a', exp, iat=exp)
+        JWToken('a', exp, iat=exp).encode(secrets.token_hex(), 'HS256')
+
+
+class _AnyTimeToken(JWToken):
+    """Token that can be issued with any `exp` and `iat` values."""
+
+    @override
+    def validate_issued_claims(self) -> None:
+        """Allows to issue tokens that are already expired."""
+
+
+def test_custom_issued_claims_validation() -> None:
+    """Ensures that `validate_issued_claims` can be customized."""
+    expired_at = dt.datetime.now(dt.UTC) - dt.timedelta(days=1)
+    token = _AnyTimeToken('a', expired_at)
+
+    assert token.encode(secrets.token_hex(), 'HS256')
 
 
 def test_extra_fields(faker: Faker) -> None:
@@ -336,4 +355,123 @@ def test_invalid_datetime_claim_raises_auth_error() -> None:
             secret=secret,
             algorithm='HS256',
             verify_exp=False,
+        )
+
+
+def test_expired_token_can_skip_exp_verification() -> None:
+    """Ensure `verify_exp=False` is not overridden by our own validation."""
+    secret = secrets.token_hex()
+    expires_at = dt.datetime.now(dt.UTC) - dt.timedelta(days=1)
+    encoded = jwt.encode(
+        {
+            'sub': 'foo',
+            'iat': dt.datetime.now(dt.UTC) - dt.timedelta(days=2),
+            'exp': expires_at,
+        },
+        key=secret,
+        algorithm='HS256',
+    )
+
+    token = JWToken.decode(
+        encoded,
+        secret=secret,
+        algorithm='HS256',
+        verify_exp=False,
+    )
+
+    assert token.exp == expires_at.replace(microsecond=0)
+
+
+def test_future_iat_can_skip_iat_verification() -> None:
+    """Ensure `verify_iat=False` is not overridden by our own validation."""
+    secret = secrets.token_hex()
+    issued_at = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
+    encoded = jwt.encode(
+        {
+            'sub': 'foo',
+            'iat': issued_at,
+            'exp': issued_at + dt.timedelta(days=1),
+        },
+        key=secret,
+        algorithm='HS256',
+    )
+
+    token = JWToken.decode(
+        encoded,
+        secret=secret,
+        algorithm='HS256',
+        verify_iat=False,
+    )
+
+    assert token.iat == issued_at.replace(microsecond=0)
+
+
+@pytest.mark.parametrize('seconds', [_LEEWAY - 1, _LEEWAY])
+def test_leeway_applies_to_iat(seconds: int) -> None:
+    """Ensure `leeway` tolerates an `iat` from the near future."""
+    secret = secrets.token_hex()
+    issued_at = dt.datetime.now(dt.UTC) + dt.timedelta(seconds=seconds)
+    encoded = jwt.encode(
+        {
+            'sub': 'foo',
+            'iat': issued_at,
+            'exp': dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+        },
+        key=secret,
+        algorithm='HS256',
+    )
+
+    token = JWToken.decode(
+        encoded,
+        secret=secret,
+        algorithm='HS256',
+        leeway=_LEEWAY,
+    )
+
+    assert token.iat == issued_at.replace(microsecond=0)
+
+
+@pytest.mark.parametrize(
+    'raw_token_data',
+    [
+        pytest.param(
+            {
+                'sub': 'foo',
+                'iat': dt.datetime.now(dt.UTC) - dt.timedelta(days=1),
+                'exp': dt.datetime.now(dt.UTC) - dt.timedelta(seconds=_LEEWAY),
+            },
+            id='expired-exp',
+        ),
+        pytest.param(
+            {
+                'sub': 'foo',
+                'iat': dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+                'exp': dt.datetime.now(dt.UTC) + dt.timedelta(days=2),
+            },
+            id='immature-iat',
+        ),
+        pytest.param(
+            {
+                'sub': '',
+                'iat': dt.datetime.now(dt.UTC),
+                'exp': dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+            },
+            id='empty-sub',
+        ),
+    ],
+)
+def test_invalid_claims_raise_auth_error(
+    *,
+    raw_token_data: dict[str, Any],
+) -> None:
+    """Ensure invalid claims are auth errors and not server errors."""
+    secret = secrets.token_hex()
+    encoded = jwt.encode(raw_token_data, key=secret, algorithm='HS256')
+
+    with pytest.raises(NotAuthenticatedError):
+        JWToken.decode(
+            encoded,
+            secret=secret,
+            algorithm='HS256',
+            leeway=_LEEWAY,
         )
