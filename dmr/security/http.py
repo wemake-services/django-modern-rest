@@ -132,10 +132,7 @@ class _HttpBasicAuth:  # noqa: WPS214
 
     def _uses_standard_http_basic_auth(self) -> bool:
         """Whether the auth contract matches OpenAPI HTTP basic auth."""
-        return (
-            self.header == 'Authorization'
-            and self.auth_scheme == 'Basic'
-        )
+        return self.header == 'Authorization' and self.auth_scheme == 'Basic'
 
     def _get_custom_security_scheme_description(self) -> str:
         """Describe non-standard basic auth header contracts."""
