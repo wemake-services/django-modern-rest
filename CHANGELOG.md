@@ -27,6 +27,10 @@ of requirements for an API to count as public.
   use `FileResponseSpec.return_type` instead, #1278
 - Removed `FileMetadataComponent.schema_metadata`,
   now we use `SupportsFileParsing.schema_metadata` instead, #1278
+- Removed init-only `leeway` argument of `JWToken`,
+  it is only used by `JWToken.decode` now, #1324
+- `JWToken` does not validate `exp` and `iat` on creation anymore,
+  they are validated in `JWToken.encode` instead, #1324
 
 ### Features
 
@@ -66,6 +70,9 @@ of requirements for an API to count as public.
   for file responses, #1278
 - Fixed `SimpleRate` throttling reports with redis backends,
   it used to error on missing throttling stats, #1333
+- Fixed `JWToken.decode` validating `exp` and `iat` twice,
+  now `leeway`, `verify_exp`, and `verify_iat` are respected
+  and invalid tokens return `401` instead of `500`, #1324
 
 ### Misc
 
