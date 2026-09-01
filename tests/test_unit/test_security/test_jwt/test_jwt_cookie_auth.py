@@ -67,16 +67,14 @@ def test_cookie_jwt_custom_schema(
     """Ensures that cookie and scheme names are customizable."""
     instance = typ(cookie_name='my-jwt', security_scheme_name='my-scheme')
 
-    assert instance.security_schemes == snapshot(
-        {
-            'my-scheme': SecurityScheme(
-                type='apiKey',
-                description='JWT token auth via cookie',
-                name='my-jwt',
-                security_scheme_in='cookie',
-            ),
-        },
-    )
+    assert instance.security_schemes == snapshot({
+        'my-scheme': SecurityScheme(
+            type='apiKey',
+            description='JWT token auth via cookie',
+            name='my-jwt',
+            security_scheme_in='cookie',
+        ),
+    })
     assert instance.security_requirement == snapshot({'my-scheme': []})
 
 
