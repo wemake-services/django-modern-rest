@@ -445,6 +445,7 @@ def test_leeway_applies_to_iat(seconds: int) -> None:
     ],
 )
 def test_invalid_claims_raise_auth_error(
+    *,
     raw_token_data: dict[str, Any],
 ) -> None:
     """Ensure invalid claims are auth errors and not server errors."""
