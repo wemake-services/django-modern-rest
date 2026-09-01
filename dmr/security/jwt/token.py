@@ -39,7 +39,7 @@ from dmr.exceptions import InternalServerError, NotAuthenticatedError
 
 
 @dataclass(frozen=True, slots=True)
-class JWToken:
+class JWToken:  # noqa: WPS214
     """
     JWT Token DTO.
 
@@ -89,6 +89,25 @@ class JWToken:
         object.__setattr__(self, 'exp', _normalize_datetime(self.exp))
         object.__setattr__(self, 'iat', _normalize_datetime(self.iat))
 
+    def validate_issued_claims(self) -> None:
+        """
+        Ensure that this token makes sense to be issued right now.
+
+        Is called by :meth:`encode`, override it to change or to extend
+        the checks that we run before signing a token.
+
+        Raises:
+            ValueError: If this token cannot be issued right now.
+
+        .. versionadded:: 0.15.0
+
+        """
+        now = _normalize_datetime(dt.datetime.now(dt.UTC)).timestamp()
+        if self.exp.timestamp() < now:
+            raise ValueError('exp value must be a datetime in the future')
+        if self.iat.timestamp() > now:
+            raise ValueError('iat must be a current or past time')
+
     def encode(
         self,
         secret: str | bytes,
@@ -113,11 +132,12 @@ class JWToken:
 
         .. versionchanged:: 0.15.0
 
-            ``exp`` and ``iat`` are validated here,
+            ``exp`` and ``iat`` are validated here
+            via :meth:`validate_issued_claims`,
             previously it was done during the instance creation.
 
         """
-        _validate_issued_claims(self)
+        self.validate_issued_claims()
         try:
             return jwt.encode(
                 payload={
@@ -324,15 +344,6 @@ class JWToken:
             )
         except (TypeError, ValueError, OSError):
             raise NotAuthenticatedError from None
-
-
-def _validate_issued_claims(token: JWToken) -> None:
-    """Ensures that this token makes sense to be issued right now."""
-    now = _normalize_datetime(dt.datetime.now(dt.UTC)).timestamp()
-    if token.exp.timestamp() < now:
-        raise ValueError('exp value must be a datetime in the future')
-    if token.iat.timestamp() > now:
-        raise ValueError('iat must be a current or past time')
 
 
 def _normalize_datetime(datetime: dt.datetime) -> dt.datetime:

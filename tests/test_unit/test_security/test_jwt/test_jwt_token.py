@@ -11,7 +11,7 @@ from typing import Any, Final
 import jwt
 import pytest
 from faker import Faker
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, override
 
 from dmr.exceptions import InternalServerError, NotAuthenticatedError
 from dmr.security.jwt import JWToken
@@ -93,6 +93,22 @@ def test_iat_in_the_past() -> None:
     exp = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
     with pytest.raises(ValueError, match='current or past time'):
         JWToken('a', exp, iat=exp).encode(secrets.token_hex(), 'HS256')
+
+
+class _AnyTimeToken(JWToken):
+    """Token that can be issued with any `exp` and `iat` values."""
+
+    @override
+    def validate_issued_claims(self) -> None:
+        """Allows to issue tokens that are already expired."""
+
+
+def test_custom_issued_claims_validation() -> None:
+    """Ensures that `validate_issued_claims` can be customized."""
+    expired_at = dt.datetime.now(dt.UTC) - dt.timedelta(days=1)
+    token = _AnyTimeToken('a', expired_at)
+
+    assert token.encode(secrets.token_hex(), 'HS256')
 
 
 def test_extra_fields(faker: Faker) -> None:
