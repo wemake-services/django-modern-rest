@@ -67,7 +67,7 @@ def unauth_response_spec(
     )
 
 
-def add_auth_challenge(
+def add_www_authenticate(
     exc: NotAuthenticatedError,
     auth: Sequence['SyncAuth | AsyncAuth'] | None,
 ) -> None:

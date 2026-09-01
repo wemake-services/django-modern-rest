@@ -146,11 +146,25 @@ def test_default_challenges(
             ),
             None,
         ),
+        # Async token auth repeats the whole `__init__`, so check it as well:
+        (
+            HeaderTokenAsyncAuth(header_name='Authorization', prefix='Token'),
+            'Token',
+        ),
+        (HeaderTokenAsyncAuth(header_name='Authorization'), None),
+        (
+            HeaderTokenAsyncAuth(
+                header_name='Authorization',
+                prefix='Token',
+                www_authenticate=False,
+            ),
+            None,
+        ),
     ],
 )
 def test_customized_challenges(
     *,
-    auth: SyncAuth,
+    auth: SyncAuth | AsyncAuth,
     expected: str | None,
 ) -> None:
     """Ensures that auth configuration changes the challenge."""

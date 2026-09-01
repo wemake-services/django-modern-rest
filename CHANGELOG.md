@@ -45,8 +45,10 @@ of requirements for an API to count as public.
   send no challenge, because there is none to express.
   Configurable via the new `www_authenticate=` and `realm=` arguments
   and the `SyncAuth.www_authenticate_challenge` property, #1334
-- Added `dmr.security.add_auth_challenge` function to add
-  the `WWW-Authenticate` header to a `NotAuthenticatedError`, #1334
+- Added `dmr.security.add_www_authenticate` function to add
+  the `WWW-Authenticate` header to a `NotAuthenticatedError`.
+  `global_error_handler` calls it, so replacing that handler
+  is how you change or drop this behavior, #1334
 - Added `CookieJWTSyncAuth` and `CookieJWTAsyncAuth`
   to read JWT tokens from cookies instead of headers, #1193
 - Added `HeaderJWTSyncAuth` and `HeaderJWTAsyncAuth`,

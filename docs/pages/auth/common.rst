@@ -261,36 +261,16 @@ Pass ``www_authenticate=False`` to any auth that supports a challenge:
   challenge on a ``401``. If your API is called from a browser and you do
   not want that popup, turn the challenge off for HTTP Basic auth.
 
-Writing your own auth
-~~~~~~~~~~~~~~~~~~~~~
-
-:meth:`~dmr.security.SyncAuth.www_authenticate_challenge` is abstract,
-so every auth class has to answer this question explicitly.
-Return the challenge you want to send, or ``None`` when your auth
-cannot be expressed as one:
-
-.. code-block:: python
-
-  >>> from typing import Self
-  >>> from dmr.security.http import HttpBasicSyncAuth
-
-  >>> class InvalidTokenAuth(HttpBasicSyncAuth):
-  ...     @property
-  ...     def www_authenticate_challenge(self) -> str | None:
-  ...         return 'Bearer error="invalid_token"'
-
-  >>> InvalidTokenAuth().www_authenticate_challenge
-  'Bearer error="invalid_token"'
-
-Extra auth params like ``error="invalid_token"`` are described
-in `RFC 6750 <https://www.rfc-editor.org/rfc/rfc6750.html#section-3.1>`_.
-
 .. note::
 
   We only add this header to
   :exc:`~dmr.exceptions.NotAuthenticatedError` responses.
   If you build a ``401`` yourself with :exc:`~dmr.response.APIError`,
   pass the header yourself via its ``headers=`` argument.
+
+The header is added by :func:`~dmr.errors.global_error_handler`,
+so replacing that handler is how you change or drop this behavior
+for the whole project.
 
 
 Security of auth views

@@ -40,7 +40,7 @@ from dmr.openapi.objects import (
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import APIError, RedirectTo
-from dmr.security.base import AsyncAuth, SyncAuth, add_auth_challenge
+from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.throttling import AsyncThrottle, SyncThrottle
@@ -226,11 +226,6 @@ class Endpoint:  # noqa: WPS214
         """
         # NOTE: if you change something here,
         # also change in `handle_async_error`
-        # We do this here, and not in `_run_auth`, because a `401` can also
-        # come from an auth instance itself or be raised by hand
-        # from an endpoint body. All of them need the same challenge.
-        if isinstance(exc, NotAuthenticatedError):
-            add_auth_challenge(exc, self.metadata.auth)
         if self.metadata.error_handler is not None:
             try:
                 # We validate this, no error possible in runtime:
@@ -265,11 +260,6 @@ class Endpoint:  # noqa: WPS214
         Override this method to add custom async error handling.
         """
         # NOTE: if you change something here, also change in `handle_error`
-        # We do this here, and not in `_run_auth`, because a `401` can also
-        # come from an auth instance itself or be raised by hand
-        # from an endpoint body. All of them need the same challenge.
-        if isinstance(exc, NotAuthenticatedError):
-            add_auth_challenge(exc, self.metadata.auth)
         if self.metadata.error_handler is not None:
             try:
                 # We validate this, no error possible in runtime:
