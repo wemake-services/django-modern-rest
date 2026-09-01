@@ -67,7 +67,7 @@ email = "me@black-as-ink.ru"
 [project.optional-dependencies]
 pydantic = [ "pydantic[email,timezone]>=2.12", "pydantic-extra-types" ]
 msgspec = [ "msgspec>=0.21.1" ]
-attrs = [ "attrs>=26", "msgspec>=0.21.1" ]
+attrs = [ "attrs>=26", "django-modern-rest[msgspec]" ]
 jwt = [ "pyjwt[crypto]>=2.11" ]
 allauth = [ "django-allauth>=65.4" ]
 openapi = [ "openapi-spec-validator>=0.8", "polyfactory>=3.2", "pyyaml" ]
