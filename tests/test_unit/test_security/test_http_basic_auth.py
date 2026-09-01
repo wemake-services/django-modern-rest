@@ -300,6 +300,8 @@ def test_custom_auth_scheme_schema(
     ('auth_header', 'status_code'),
     [
         (basic_auth('test', 'pass'), HTTPStatus.OK),
+        # Right scheme, but the credentials are wrong:
+        (basic_auth('test', 'wrong'), HTTPStatus.UNAUTHORIZED),
         *[
             (auth_header, HTTPStatus.UNAUTHORIZED)
             for auth_header in _UNSUPPORTED_SCHEMES
@@ -312,7 +314,7 @@ def test_sync_auth_scheme(
     auth_header: str,
     status_code: HTTPStatus,
 ) -> None:
-    """Ensures that sync auth requires the exact `Basic` prefix."""
+    """Ensures that sync auth only accepts the exact `Basic` prefix."""
     request = dmr_rf.get('/whatever/', headers={'Authorization': auth_header})
 
     response = _SyncController.as_view()(request)
@@ -326,6 +328,8 @@ def test_sync_auth_scheme(
     ('auth_header', 'status_code'),
     [
         (basic_auth('test', 'pass'), HTTPStatus.OK),
+        # Right scheme, but the credentials are wrong:
+        (basic_auth('test', 'wrong'), HTTPStatus.UNAUTHORIZED),
         *[
             (auth_header, HTTPStatus.UNAUTHORIZED)
             for auth_header in _UNSUPPORTED_SCHEMES
@@ -338,7 +342,7 @@ async def test_async_auth_scheme(
     auth_header: str,
     status_code: HTTPStatus,
 ) -> None:
-    """Ensures that async auth requires the exact `Basic` prefix."""
+    """Ensures that async auth only accepts the exact `Basic` prefix."""
     request = dmr_async_rf.get(
         '/whatever/',
         headers={'Authorization': auth_header},
