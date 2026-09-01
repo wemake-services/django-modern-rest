@@ -16,7 +16,7 @@ from dmr import Body, Controller, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
 from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
-from dmr.security.jwt.auth.header import USER_LOOKUP_ERRORS, set_request_attrs
+from dmr.security.jwt.auth.base import USER_LOOKUP_ERRORS, set_request_attrs
 from dmr.security.jwt.token import JWToken
 from dmr.serializer import BaseSerializer
 
