@@ -1,3 +1,8 @@
+# A lot of code here is inspired by / taken from `litestar` project
+# under a MIT license. See:
+# https://github.com/litestar-org/litestar/blob/main/litestar/security/jwt/auth.py
+# https://github.com/litestar-org/litestar/blob/main/LICENSE
+
 from abc import abstractmethod
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Final, Literal, Self, overload
