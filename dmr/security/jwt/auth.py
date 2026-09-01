@@ -210,9 +210,11 @@ class _HeaderJWTAuth:
         ``realm`` is optional for bearer tokens, see :rfc:`6750#section-3`,
         and we don't send it.
         """
-        if not self.www_authenticate or not self.auth_scheme:
-            return None
-        if self.auth_header != _AUTHORIZATION_HEADER:
+        if (
+            not self.www_authenticate
+            or not self.auth_scheme
+            or self.auth_header != _AUTHORIZATION_HEADER
+        ):
             return None
         return self.auth_scheme
 

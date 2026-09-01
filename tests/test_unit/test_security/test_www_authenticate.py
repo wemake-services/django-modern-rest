@@ -14,15 +14,17 @@ from dmr.exceptions import NotAuthenticatedError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AsyncAuth, SyncAuth
 from dmr.security.allauth import XSessionTokenAsyncAuth, XSessionTokenSyncAuth
-from dmr.security.base import combined_www_authenticate
+from dmr.security.base import (
+    _combined_www_authenticate,  # pyright: ignore[reportPrivateUsage]
+)
 from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
 )
 from dmr.security.http import (
     HttpBasicSyncAuth,
+    _quote_auth_param,  # pyright: ignore[reportPrivateUsage]
     basic_auth,
-    quote_auth_param,
 )
 from dmr.security.jwt import (
     CookieJWTAsyncAuth,
@@ -186,13 +188,13 @@ def test_combined_www_authenticate(
     expected: str | None,
 ) -> None:
     """Ensures that all challenges of an auth chain are joined together."""
-    assert combined_www_authenticate(auth) == expected
+    assert _combined_www_authenticate(auth) == expected
 
 
 def test_quote_auth_param() -> None:
     """Ensures that auth params are escaped as `quoted-string`."""
-    assert quote_auth_param('api') == '"api"'
-    assert quote_auth_param(r'back\slash') == r'"back\\slash"'
+    assert _quote_auth_param('api') == '"api"'
+    assert _quote_auth_param(r'back\slash') == r'"back\\slash"'
 
 
 def test_unauthed_response_has_challenge(dmr_rf: DMRRequestFactory) -> None:

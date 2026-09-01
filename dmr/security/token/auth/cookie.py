@@ -27,6 +27,15 @@ class _BaseCookieTokenAuth(ResponseSpecProvider):
     cookie_name: str
 
     @property
+    def www_authenticate_challenge(self) -> str | None:
+        """
+        Cookie auth has no challenge to advertise, so this returns ``None``.
+
+        A challenge asks the client for the ``Authorization`` header,
+        and this auth reads a cookie instead.
+        """
+
+    @property
     def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
         return {

@@ -13,20 +13,20 @@ if TYPE_CHECKING:
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
 
-#: Default protection space that we advertise in ``WWW-Authenticate``.
-DEFAULT_BASIC_REALM: Final = 'api'
+# Default protection space that we advertise in `WWW-Authenticate`:
+_DEFAULT_BASIC_REALM: Final = 'api'
 
 
-def quote_auth_param(value: str) -> str:  # noqa: WPS110
+def _quote_auth_param(value: str) -> str:  # noqa: WPS110
     r"""
     Return *value* as a ``quoted-string`` auth param, as :rfc:`9110` wants it.
 
     .. code:: python
 
-      >>> quote_auth_param('api')
+      >>> _quote_auth_param('api')
       '"api"'
 
-      >>> quote_auth_param('say "hi"')
+      >>> _quote_auth_param('say "hi"')
       '"say \\"hi\\""'
 
     """
@@ -43,7 +43,7 @@ class _HttpBasicAuth:
         security_scheme_name: str = 'http_basic',
         header: str = 'Authorization',
         www_authenticate: bool = True,
-        realm: str = DEFAULT_BASIC_REALM,
+        realm: str = _DEFAULT_BASIC_REALM,
     ) -> None:
         """
         Apply possible customizations.
@@ -69,13 +69,15 @@ class _HttpBasicAuth:
         Returns ``None`` for a custom *header*, because a challenge
         can only ask the client for the ``Authorization`` header.
         """
-        if not self.www_authenticate:
+        if (
+            not self.www_authenticate
+            or not self._uses_standard_http_basic_auth()
+        ):
             return None
-        if not self._uses_standard_http_basic_auth():
-            return None
-        # `charset` tells the client to encode credentials as UTF-8,
-        # which is what `_get_username_and_password` decodes them as.
-        return f'Basic realm={quote_auth_param(self.realm)}, charset="UTF-8"'
+        # `charset` is defined by RFC 7617 and tells the client to encode
+        # credentials as UTF-8, which is what we decode them as
+        # in `_get_username_and_password`.
+        return f'Basic realm={_quote_auth_param(self.realm)}, charset="UTF-8"'
 
     @property
     def security_schemes(self) -> dict[str, SecurityScheme | Reference]:

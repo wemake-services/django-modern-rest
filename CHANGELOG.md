@@ -31,6 +31,10 @@ of requirements for an API to count as public.
   by RFC 9110, when the endpoint's auth can express a challenge.
   Note that browsers show their native login prompt on a `Basic` challenge,
   pass `www_authenticate=False` to the auth instance to opt out, #1334
+- `SyncAuth` and `AsyncAuth` now have an abstract
+  `www_authenticate_challenge` property, so custom auth classes
+  must say what challenge they send, or return `None`
+  when they cannot be expressed as one, #1334
 
 ### Features
 
@@ -41,7 +45,8 @@ of requirements for an API to count as public.
   send no challenge, because there is none to express.
   Configurable via the new `www_authenticate=` and `realm=` arguments
   and the `SyncAuth.www_authenticate_challenge` property, #1334
-
+- Added `dmr.security.add_auth_challenge` function to add
+  the `WWW-Authenticate` header to a `NotAuthenticatedError`, #1334
 - Added `CookieJWTSyncAuth` and `CookieJWTAsyncAuth`
   to read JWT tokens from cookies instead of headers, #1193
 - Added `HeaderJWTSyncAuth` and `HeaderJWTAsyncAuth`,

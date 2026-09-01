@@ -1,6 +1,7 @@
 from dmr.security.base import AsyncAuth as AsyncAuth
 from dmr.security.base import SyncAuth as SyncAuth
 from dmr.security.base import SyncOrAsyncAuth as SyncOrAsyncAuth
+from dmr.security.base import add_auth_challenge as add_auth_challenge
 from dmr.security.base import request_auth as request_auth
 from dmr.security.types import (
     AuthenticatedHttpRequest as AuthenticatedHttpRequest,

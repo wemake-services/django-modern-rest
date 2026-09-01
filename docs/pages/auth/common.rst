@@ -153,6 +153,17 @@ like this:
   Content-Type: application/json
   WWW-Authenticate: Basic realm="api", charset="UTF-8"
 
+A challenge is a scheme name followed by its auth params. Here ``Basic``
+is the scheme, and it carries two params:
+
+- ``realm`` names the protection space the credentials are for.
+  `RFC 7617 <https://www.rfc-editor.org/rfc/rfc7617.html#section-2>`_
+  requires it for the ``Basic`` scheme. Change it with ``realm=``.
+- ``charset`` tells the client which encoding to use for the
+  username and password. ``UTF-8`` is its only allowed value, and it
+  matches what we decode the credentials as, so we always send it.
+  See `RFC 7617 <https://www.rfc-editor.org/rfc/rfc7617.html#section-2.1>`_.
+
 When an endpoint has several auth instances, we join their challenges
 into a single header value, because
 `RFC 9110 <https://www.rfc-editor.org/rfc/rfc9110.html#section-11.6.1>`_
@@ -161,6 +172,13 @@ allows a challenge list:
 .. code-block:: text
 
   WWW-Authenticate: Basic realm="api", charset="UTF-8", Bearer
+
+.. note::
+
+  Both auth params and challenges are comma-separated, so such a list
+  is ambiguous to parse on its own. Clients resolve it by looking for
+  a token with no ``=`` in it - ``Bearer`` above starts a new challenge,
+  while ``charset="UTF-8"`` is another param of ``Basic``.
 
 
 What is supported
@@ -243,11 +261,29 @@ Pass ``www_authenticate=False`` to any auth that supports a challenge:
   challenge on a ``401``. If your API is called from a browser and you do
   not want that popup, turn the challenge off for HTTP Basic auth.
 
-You can also override
-:meth:`~dmr.security.SyncAuth.www_authenticate_challenge`
-in your own auth class to send whatever challenge you need,
-including extra auth params like ``error="invalid_token"``
-from `RFC 6750 <https://www.rfc-editor.org/rfc/rfc6750.html#section-3.1>`_.
+Writing your own auth
+~~~~~~~~~~~~~~~~~~~~~
+
+:meth:`~dmr.security.SyncAuth.www_authenticate_challenge` is abstract,
+so every auth class has to answer this question explicitly.
+Return the challenge you want to send, or ``None`` when your auth
+cannot be expressed as one:
+
+.. code-block:: python
+
+  >>> from typing import Self
+  >>> from dmr.security.http import HttpBasicSyncAuth
+
+  >>> class InvalidTokenAuth(HttpBasicSyncAuth):
+  ...     @property
+  ...     def www_authenticate_challenge(self) -> str | None:
+  ...         return 'Bearer error="invalid_token"'
+
+  >>> InvalidTokenAuth().www_authenticate_challenge
+  'Bearer error="invalid_token"'
+
+Extra auth params like ``error="invalid_token"`` are described
+in `RFC 6750 <https://www.rfc-editor.org/rfc/rfc6750.html#section-3.1>`_.
 
 .. note::
 
@@ -371,6 +407,8 @@ API Reference
   :members:
 
 .. autofunction:: dmr.security.request_auth
+
+.. autofunction:: dmr.security.add_auth_challenge
 
 
 .. autoclass:: dmr.security.AuthenticatedHttpRequest

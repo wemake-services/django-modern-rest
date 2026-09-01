@@ -17,11 +17,8 @@ if TYPE_CHECKING:
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
 
-#: Name of the header that carries auth challenges in ``401`` responses.
-WWW_AUTHENTICATE: Final = 'WWW-Authenticate'
-
-#: Returned by auth that has no ``WWW-Authenticate`` challenge to advertise.
-NO_CHALLENGE: Final[str | None] = None
+# Name of the header that carries auth challenges in `401` responses:
+_WWW_AUTHENTICATE: Final = 'WWW-Authenticate'
 
 _WWW_AUTHENTICATE_SPEC: Final = HeaderSpec(
     description=(
@@ -46,21 +43,39 @@ def unauth_response_spec(
     """
     has_challenge = (
         metadata is not None
-        and combined_www_authenticate(metadata.auth) is not None
+        and _combined_www_authenticate(metadata.auth) is not None
     )
     return ResponseSpec(
         controller_cls.error_model,
         status_code=NotAuthenticatedError.status_code,
         description='Raised when auth was not successful',
         headers=(
-            {WWW_AUTHENTICATE: _WWW_AUTHENTICATE_SPEC}
+            {_WWW_AUTHENTICATE: _WWW_AUTHENTICATE_SPEC}
             if has_challenge
             else None
         ),
     )
 
 
-def combined_www_authenticate(
+def add_auth_challenge(
+    exc: NotAuthenticatedError,
+    auth: Sequence['SyncAuth | AsyncAuth'] | None,
+) -> None:
+    """
+    Advertise *auth* in ``WWW-Authenticate`` on the ``401`` that *exc* returns.
+
+    :rfc:`9110#section-15.5.2` requires every ``401`` to carry at least one
+    challenge. Headers that *exc* already has always win, so an auth class
+    can raise with a challenge of its own.
+    """
+    if exc.headers is not None:
+        return
+    challenge = _combined_www_authenticate(auth)
+    if challenge is not None:
+        exc.headers = {_WWW_AUTHENTICATE: challenge}
+
+
+def _combined_www_authenticate(
     auth: Sequence['SyncAuth | AsyncAuth'] | None,
 ) -> str | None:
     """
@@ -108,22 +123,22 @@ class _BaseAuth(ResponseSpecProvider):
         raise NotImplementedError
 
     @property
+    @abstractmethod
     def www_authenticate_challenge(self) -> str | None:
         """
         Challenge to advertise in ``WWW-Authenticate`` on ``401`` responses.
 
         :rfc:`9110#section-15.5.2` requires every ``401`` to carry at least
-        one challenge, but a challenge can only describe an HTTP
-        authentication scheme sent in the ``Authorization`` header.
-        Auth that reads credentials from a cookie or from a custom header
-        has nothing to put here and returns ``None``,
-        which is why this is the default implementation.
+        one challenge, but a challenge can only name an HTTP authentication
+        scheme that the client sends in the ``Authorization`` header.
 
-        Override it to send a challenge of your own.
+        Return ``None`` when there is nothing to advertise: auth that reads
+        credentials from a cookie or from a header of its own cannot
+        express itself as a challenge.
 
         .. versionadded:: 0.15.0
         """
-        return NO_CHALLENGE
+        raise NotImplementedError
 
     @override
     def provide_response_specs(

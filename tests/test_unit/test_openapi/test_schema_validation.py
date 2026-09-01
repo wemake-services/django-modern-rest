@@ -49,6 +49,11 @@ class _WrongAuth(SyncAuth):
     def security_requirement(self) -> SecurityRequirement:
         return SecurityRequirement()
 
+    @property
+    @override
+    def www_authenticate_challenge(self) -> str | None:
+        """This auth has no challenge, so this returns ``None``."""
+
 
 class _UserController(Controller[PydanticSerializer]):
     @modify(auth=[_WrongAuth()])
