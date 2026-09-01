@@ -30,10 +30,10 @@ Which one do you need?
     - Token in headers
     - Token in cookies
   * - Classes
-    - :class:`~dmr.security.jwt.auth.header.HeaderJWTSyncAuth`,
-      :class:`~dmr.security.jwt.auth.header.HeaderJWTAsyncAuth`
-    - :class:`~dmr.security.jwt.auth.cookie.CookieJWTSyncAuth`,
-      :class:`~dmr.security.jwt.auth.cookie.CookieJWTAsyncAuth`
+    - :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth`,
+      :class:`~dmr.security.jwt.auth.HeaderJWTAsyncAuth`
+    - :class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth`,
+      :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth`
   * - Best for
     - Mobile apps, server-to-server calls, and SPAs
       that keep the token in memory
@@ -65,8 +65,8 @@ is specifically "the frontend must not be able to read the token".
 
     When in doubt, use this as the default way to receive tokens.
 
-    Use :class:`~dmr.security.jwt.auth.header.HeaderJWTSyncAuth` for sync views
-    and :class:`~dmr.security.jwt.auth.header.HeaderJWTAsyncAuth` for async views.
+    Use :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth` for sync views
+    and :class:`~dmr.security.jwt.auth.HeaderJWTAsyncAuth` for async views.
 
     They are also available under their older names,
     ``JWTSyncAuth`` and ``JWTAsyncAuth``.
@@ -87,8 +87,8 @@ is specifically "the frontend must not be able to read the token".
 
   .. tab:: Token in cookies
 
-    Use :class:`~dmr.security.jwt.auth.cookie.CookieJWTSyncAuth` for sync views
-    and :class:`~dmr.security.jwt.auth.cookie.CookieJWTAsyncAuth` for async views.
+    Use :class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth` for sync views
+    and :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth` for async views.
 
     Unlike the ``Authorization`` header, the cookie stores
     the encoded token as-is, without any ``Bearer`` prefix.
@@ -190,7 +190,7 @@ Here's an example with a lot more customizations:
 
 This example also provides issuer and audience in the token,
 so it can be used together with ``accepted_issuers`` and ``accepted_audiences``
-configurations of :class:`~dmr.security.jwt.auth.header.HeaderJWTSyncAuth`
+configurations of :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth`
 to additionally validate ``aud`` and ``iss`` JWT token claims.
 
 We want to be sure that this class is at the same time:
@@ -270,8 +270,8 @@ On any validation failure it returns ``401 Unauthorized``.
 Issuing tokens as cookies
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:class:`~dmr.security.jwt.auth.cookie.CookieJWTSyncAuth`
-and :class:`~dmr.security.jwt.auth.cookie.CookieJWTAsyncAuth`
+:class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth`
+and :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth`
 read tokens,
 but something has to write them first.
 
@@ -340,30 +340,30 @@ API Reference
 .. autoclass:: dmr.security.jwt.token.JWToken
   :members:
 
-.. autoclass:: dmr.security.jwt.auth.header.HeaderJWTSyncAuth
+.. autoclass:: dmr.security.jwt.auth.HeaderJWTSyncAuth
   :members:
   :inherited-members:
 
-.. autoclass:: dmr.security.jwt.auth.header.HeaderJWTAsyncAuth
+.. autoclass:: dmr.security.jwt.auth.HeaderJWTAsyncAuth
   :members:
   :inherited-members:
 
 .. note::
 
   Since version 0.15.0 ``JWTSyncAuth`` and ``JWTAsyncAuth`` are kept as aliases of
-  :class:`~dmr.security.jwt.auth.header.HeaderJWTSyncAuth` and
-  :class:`~dmr.security.jwt.auth.header.HeaderJWTAsyncAuth`.
+  :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth` and
+  :class:`~dmr.security.jwt.auth.HeaderJWTAsyncAuth`.
   Existing code keeps working unchanged.
 
-.. autoclass:: dmr.security.jwt.auth.cookie.CookieJWTSyncAuth
+.. autoclass:: dmr.security.jwt.cookie.CookieJWTSyncAuth
   :members:
   :inherited-members:
 
-.. autoclass:: dmr.security.jwt.auth.cookie.CookieJWTAsyncAuth
+.. autoclass:: dmr.security.jwt.cookie.CookieJWTAsyncAuth
   :members:
   :inherited-members:
 
-.. autofunction:: dmr.security.jwt.auth.header.request_jwt
+.. autofunction:: dmr.security.jwt.auth.request_jwt
 
 Pre-defined views to fetch JWT tokens
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -44,7 +44,7 @@ All of them have unified API:
   be required for each endpoint using this auth.
 
 Some classes provide configuration to be adjusted when creating instances.
-For example: :class:`~dmr.security.jwt.auth.header.HeaderJWTSyncAuth`
+For example: :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth`
 contains multiple options in its ``__init__`` method.
 
 There are 4 ways to provide auth classes for an endpoint:
