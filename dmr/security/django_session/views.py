@@ -5,13 +5,17 @@ from typing import Any, Generic, TypeVar
 
 from django.conf import settings
 from django.contrib.auth import aauthenticate, alogin, authenticate, login
-from django.views.decorators.debug import sensitive_post_parameters
+from django.views.decorators.debug import (
+    sensitive_post_parameters,
+    sensitive_variables,
+)
 from typing_extensions import TypedDict
 
 from dmr import Body, Controller, CookieSpec, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
 from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
+from dmr.security.base import NO_STORE_HEADERS
 from dmr.serializer import BaseSerializer
 
 _RequestModelT = TypeVar('_RequestModelT', bound=Mapping[str, Any])
@@ -58,9 +62,11 @@ class DjangoSessionSyncController(
         ),
     )
 
+    @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
     @modify(
         status_code=HTTPStatus.OK,
+        headers=NO_STORE_HEADERS,
         cookies={
             settings.SESSION_COOKIE_NAME: CookieSpec(skip_validation=True),
             **(
@@ -79,6 +85,7 @@ class DjangoSessionSyncController(
         """By default cookies are acquired on post."""
         return self.login(parsed_body)
 
+    @sensitive_variables()
     def login(self, parsed_body: _RequestModelT) -> _ResponseT:
         """Perform the sync login routine for user."""
         user = authenticate(
@@ -130,9 +137,11 @@ class DjangoSessionAsyncController(
         ),
     )
 
+    @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
     @modify(
         status_code=HTTPStatus.OK,
+        headers=NO_STORE_HEADERS,
         cookies={
             settings.SESSION_COOKIE_NAME: CookieSpec(skip_validation=True),
             **(
@@ -151,6 +160,7 @@ class DjangoSessionAsyncController(
         """By default cookies are acquired on post."""
         return await self.login(parsed_body)
 
+    @sensitive_variables()
     async def login(self, parsed_body: _RequestModelT) -> _ResponseT:
         """Perform the sync login routine for user."""
         user = await aauthenticate(

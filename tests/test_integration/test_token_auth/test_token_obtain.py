@@ -55,6 +55,7 @@ def test_full_e2e_sync(
 
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
+    assert response.headers['Cache-Control'] == 'no-store'
     response_json = response.json()
     assert response_json['token']
     assert Token.find_raw(
@@ -95,6 +96,7 @@ def test_obtain_custom_token_model(
 
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
+    assert response.headers['Cache-Control'] == 'no-store'
     response_json = response.json()
     assert response_json['token']
     assert Token.find_raw(response_json['token']) is None
@@ -123,6 +125,7 @@ def test_obtain_failures(
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert response.headers['Content-Type'] == 'application/json'
+    assert 'Cache-Control' not in response.headers
     assert response.json() == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
