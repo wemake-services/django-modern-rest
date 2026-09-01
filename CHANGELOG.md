@@ -51,7 +51,9 @@ of requirements for an API to count as public.
 - `HttpBasicSyncAuth` and `HttpBasicAsyncAuth` now require
   the `auth_scheme` header prefix, it is `Basic` by default
   and is matched exactly, credentials sent without it
-  are not accepted anymore, #1330
+  are not accepted anymore.
+  Pass `auth_scheme=''` to keep reading prefixless
+  credentials like the older versions did, #1330
 - `HttpBasicSyncAuth` and `HttpBasicAsyncAuth` now raise
   `NotAuthenticatedError` when credentials have the right
   `auth_scheme` prefix, but cannot be decoded,

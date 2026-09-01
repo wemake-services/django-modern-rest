@@ -62,6 +62,9 @@ which is matched exactly. So, with the default settings only
 while ``Authorization: basic <base64(username:password)>``
 and a bare ``Authorization: <base64(username:password)>`` are not.
 
+Pass ``auth_scheme=''`` if you need to read the credentials
+without any prefix at all, this is how older versions worked.
+
 Headers with a different prefix are left to the next auth in the chain.
 But, when the prefix does match and the credentials still cannot be decoded,
 :exc:`~dmr.exceptions.NotAuthenticatedError` is raised right away

@@ -44,77 +44,7 @@ class _AsyncAuth(HttpBasicAsyncAuth):
         return None
 
 
-class _SyncController(Controller[PydanticSerializer]):
-    auth = (_SyncAuth(),)
-
-    def get(self) -> str:
-        return 'authed'
-
-
-class _AsyncController(Controller[PydanticSerializer]):
-    auth = (_AsyncAuth(),)
-
-    async def get(self) -> str:
-        return 'authed'
-
-
-class _CustomSchemeSyncController(Controller[PydanticSerializer]):
-    auth = (_SyncAuth(auth_scheme='Custom'),)
-
-    def get(self) -> str:
-        return 'authed'
-
-
-class _CustomSchemeAsyncController(Controller[PydanticSerializer]):
-    auth = (_AsyncAuth(auth_scheme='Custom'),)
-
-    async def get(self) -> str:
-        return 'authed'
-
-
-#: Header and value that the fallback auth of chained controllers accepts.
-_FALLBACK_HEADER: Final = 'X-Fallback-Auth'
-_FALLBACK_VALUE: Final = basic_auth('test', 'pass')
-
-
-class _ChainedSyncController(Controller[PydanticSerializer]):
-    auth = (
-        _SyncAuth(),
-        _SyncAuth(header=_FALLBACK_HEADER, security_scheme_name='fallback'),
-    )
-
-    def get(self) -> str:
-        return 'authed'
-
-
-class _ChainedAsyncController(Controller[PydanticSerializer]):
-    auth = (
-        _AsyncAuth(),
-        _AsyncAuth(header=_FALLBACK_HEADER, security_scheme_name='fallback'),
-    )
-
-    async def get(self) -> str:
-        return 'authed'
-
-
-#: Values that have the right prefix, but cannot be parsed at all.
-_BROKEN_CREDENTIALS: Final = (
-    'Basic not-a-base64',
-    'Basic dGVzdEBwYXNz',  # `test@pass` encoded, missing the `:` separator
-)
-
-#: Values that must not be treated as basic auth credentials.
-_UNSUPPORTED_SCHEMES: Final = (
-    # Credentials without the `auth_scheme` prefix:
-    basic_auth('test', 'pass', prefix=''),
-    # `auth_scheme` is matched exactly, so casing matters:
-    basic_auth('test', 'pass', prefix='basic '),
-    # Some other auth might handle these:
-    basic_auth('test', 'pass', prefix='Bearer '),
-    # Prefix alone and extra parts are not valid either:
-    'Basic',
-    f'{basic_auth("test", "pass")} extra',
-)
+# Security schemes:
 
 
 @pytest.mark.parametrize('typ', [HttpBasicSyncAuth, HttpBasicAsyncAuth])
@@ -136,25 +66,6 @@ def test_schema(
 
 
 @pytest.mark.parametrize('typ', [HttpBasicSyncAuth, HttpBasicAsyncAuth])
-@pytest.mark.parametrize('auth_scheme', ['Basic', 'basic', 'BASIC'])
-def test_standard_auth_scheme_schema(
-    *,
-    typ: type[HttpBasicSyncAuth] | type[HttpBasicAsyncAuth],
-    auth_scheme: str,
-) -> None:
-    """Ensures that any casing of `Basic` is a standard http basic auth."""
-    instance = typ(auth_scheme=auth_scheme)
-
-    assert instance.security_schemes == snapshot({
-        'http_basic': SecurityScheme(
-            type='http',
-            description='Http Basic auth',
-            scheme='basic',
-        ),
-    })
-
-
-@pytest.mark.parametrize('typ', [HttpBasicSyncAuth, HttpBasicAsyncAuth])
 def test_custom_header_schema(
     typ: type[HttpBasicSyncAuth] | type[HttpBasicAsyncAuth],
 ) -> None:
@@ -166,7 +77,7 @@ def test_custom_header_schema(
             type='apiKey',
             description=(
                 'HTTP Basic auth via `X-Api-Auth` header using '
-                '`Basic <base64(username:password)>` format'
+                "`'Basic' <base64(username:password)>` format"
             ),
             name='X-Api-Auth',
             security_scheme_in='header',
@@ -276,24 +187,82 @@ async def test_async_percent_credentials(
 
 
 @pytest.mark.parametrize('typ', [HttpBasicSyncAuth, HttpBasicAsyncAuth])
+@pytest.mark.parametrize(
+    ('auth_scheme', 'description'),
+    [
+        (
+            'Custom',
+            (
+                'HTTP Basic auth via `Authorization` header using '
+                "`'Custom' <base64(username:password)>` format"
+            ),
+        ),
+        # `auth_scheme` is matched exactly, so casing matters:
+        (
+            'basic',
+            (
+                'HTTP Basic auth via `Authorization` header using '
+                "`'basic' <base64(username:password)>` format"
+            ),
+        ),
+        # Empty scheme reads the credentials without any prefix:
+        (
+            '',
+            (
+                'HTTP Basic auth via `Authorization` header using '
+                "`'' <base64(username:password)>` format"
+            ),
+        ),
+    ],
+)
 def test_custom_auth_scheme_schema(
     typ: type[HttpBasicSyncAuth] | type[HttpBasicAsyncAuth],
+    *,
+    auth_scheme: str,
+    description: str,
 ) -> None:
-    """Ensures that custom basic auth is documented with the real scheme."""
-    instance = typ(auth_scheme='Custom')
+    """Ensures that a non-standard scheme is documented with its real value."""
+    instance = typ(auth_scheme=auth_scheme)
 
-    assert instance.security_schemes == snapshot({
+    assert instance.security_schemes == {
         'http_basic': SecurityScheme(
             type='apiKey',
-            description=(
-                'HTTP Basic auth via `Authorization` header using '
-                '`Custom <base64(username:password)>` format'
-            ),
+            description=description,
             name='Authorization',
             security_scheme_in='header',
         ),
-    })
-    assert instance.security_requirement == snapshot({'http_basic': []})
+    }
+    assert instance.security_requirement == {'http_basic': []}
+
+
+# Default `Basic` scheme:
+
+#: Values that must not be treated as basic auth credentials.
+_UNSUPPORTED_SCHEMES: Final = (
+    # Credentials without the `auth_scheme` prefix:
+    basic_auth('test', 'pass', prefix=''),
+    # `auth_scheme` is matched exactly, so casing matters:
+    basic_auth('test', 'pass', prefix='basic '),
+    # Some other auth might handle these:
+    basic_auth('test', 'pass', prefix='Bearer '),
+    # Prefix alone and extra parts are not valid either:
+    'Basic',
+    f'{basic_auth("test", "pass")} extra',
+)
+
+
+class _SyncController(Controller[PydanticSerializer]):
+    auth = (_SyncAuth(),)
+
+    def get(self) -> str:
+        return 'authed'
+
+
+class _AsyncController(Controller[PydanticSerializer]):
+    auth = (_AsyncAuth(),)
+
+    async def get(self) -> str:
+        return 'authed'
 
 
 @pytest.mark.parametrize(
@@ -354,6 +323,23 @@ async def test_async_auth_scheme(
     assert response.status_code == status_code, response.content
 
 
+# Custom scheme:
+
+
+class _CustomSchemeSyncController(Controller[PydanticSerializer]):
+    auth = (_SyncAuth(auth_scheme='Custom'),)
+
+    def get(self) -> str:
+        return 'authed'
+
+
+class _CustomSchemeAsyncController(Controller[PydanticSerializer]):
+    auth = (_AsyncAuth(auth_scheme='Custom'),)
+
+    async def get(self) -> str:
+        return 'authed'
+
+
 @pytest.mark.parametrize(
     ('auth_header', 'status_code'),
     [
@@ -402,6 +388,108 @@ async def test_async_custom_auth_scheme(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == status_code, response.content
+
+
+# Empty scheme, the pre-0.15.0 prefixless contract:
+
+
+class _EmptySchemeSyncController(Controller[PydanticSerializer]):
+    auth = (_SyncAuth(auth_scheme=''),)
+
+    def get(self) -> str:
+        return 'authed'
+
+
+class _EmptySchemeAsyncController(Controller[PydanticSerializer]):
+    auth = (_AsyncAuth(auth_scheme=''),)
+
+    async def get(self) -> str:
+        return 'authed'
+
+
+@pytest.mark.parametrize(
+    ('auth_header', 'status_code'),
+    [
+        (basic_auth('test', 'pass', prefix=''), HTTPStatus.OK),
+        # The whole value is the credentials now, so a prefix breaks it:
+        (basic_auth('test', 'pass'), HTTPStatus.UNAUTHORIZED),
+    ],
+)
+def test_sync_empty_auth_scheme(
+    dmr_rf: DMRRequestFactory,
+    *,
+    auth_header: str,
+    status_code: HTTPStatus,
+) -> None:
+    """Ensures that sync auth can read credentials without a prefix."""
+    request = dmr_rf.get('/whatever/', headers={'Authorization': auth_header})
+
+    response = _EmptySchemeSyncController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == status_code, response.content
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('auth_header', 'status_code'),
+    [
+        (basic_auth('test', 'pass', prefix=''), HTTPStatus.OK),
+        # The whole value is the credentials now, so a prefix breaks it:
+        (basic_auth('test', 'pass'), HTTPStatus.UNAUTHORIZED),
+    ],
+)
+async def test_async_empty_auth_scheme(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    auth_header: str,
+    status_code: HTTPStatus,
+) -> None:
+    """Ensures that async auth can read credentials without a prefix."""
+    request = dmr_async_rf.get(
+        '/whatever/',
+        headers={'Authorization': auth_header},
+    )
+
+    response = await dmr_async_rf.wrap(
+        _EmptySchemeAsyncController.as_view()(request),
+    )
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == status_code, response.content
+
+
+# Auth chains:
+
+#: Header and value that the fallback auth of chained controllers accepts.
+_FALLBACK_HEADER: Final = 'X-Fallback-Auth'
+_FALLBACK_VALUE: Final = basic_auth('test', 'pass')
+
+#: Values that have the right prefix, but cannot be parsed at all.
+_BROKEN_CREDENTIALS: Final = (
+    'Basic not-a-base64',
+    'Basic dGVzdEBwYXNz',  # `test@pass` encoded, missing the `:` separator
+)
+
+
+class _ChainedSyncController(Controller[PydanticSerializer]):
+    auth = (
+        _SyncAuth(),
+        _SyncAuth(header=_FALLBACK_HEADER, security_scheme_name='fallback'),
+    )
+
+    def get(self) -> str:
+        return 'authed'
+
+
+class _ChainedAsyncController(Controller[PydanticSerializer]):
+    auth = (
+        _AsyncAuth(),
+        _AsyncAuth(header=_FALLBACK_HEADER, security_scheme_name='fallback'),
+    )
+
+    async def get(self) -> str:
+        return 'authed'
 
 
 def test_sync_missing_header_is_skipped(dmr_rf: DMRRequestFactory) -> None:
