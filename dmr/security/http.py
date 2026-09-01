@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from base64 import b64decode, b64encode
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Final, Self
 from urllib.parse import unquote
 
 from typing_extensions import override
@@ -13,19 +13,69 @@ if TYPE_CHECKING:
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
 
+#: Default protection space that we advertise in ``WWW-Authenticate``.
+DEFAULT_BASIC_REALM: Final = 'api'
+
+
+def quote_auth_param(value: str) -> str:  # noqa: WPS110
+    r"""
+    Return *value* as a ``quoted-string`` auth param, as :rfc:`9110` wants it.
+
+    .. code:: python
+
+      >>> quote_auth_param('api')
+      '"api"'
+
+      >>> quote_auth_param('say "hi"')
+      '"say \\"hi\\""'
+
+    """
+    escaped = value.replace('\\', r'\\').replace('"', r'\"')
+    return f'"{escaped}"'
+
 
 class _HttpBasicAuth:
-    __slots__ = ('header', 'security_scheme_name')
+    __slots__ = ('header', 'realm', 'security_scheme_name', 'www_authenticate')
 
     def __init__(
         self,
         *,
         security_scheme_name: str = 'http_basic',
         header: str = 'Authorization',
+        www_authenticate: bool = True,
+        realm: str = DEFAULT_BASIC_REALM,
     ) -> None:
-        """Apply possible customizations."""
+        """
+        Apply possible customizations.
+
+        - *www_authenticate* controls whether ``401`` responses
+          advertise this auth in the ``WWW-Authenticate`` header.
+          Turn it off to stop browsers from showing
+          their native login prompt for this API.
+        - *realm* names the protection space in that challenge.
+          :rfc:`7617#section-2` requires it for the ``Basic`` scheme.
+
+        """
         self.security_scheme_name = security_scheme_name
         self.header = header
+        self.www_authenticate = www_authenticate
+        self.realm = realm
+
+    @property
+    def www_authenticate_challenge(self) -> str | None:
+        """
+        Challenge for the ``Basic`` scheme.
+
+        Returns ``None`` for a custom *header*, because a challenge
+        can only ask the client for the ``Authorization`` header.
+        """
+        if not self.www_authenticate:
+            return None
+        if not self._uses_standard_http_basic_auth():
+            return None
+        # `charset` tells the client to encode credentials as UTF-8,
+        # which is what `_get_username_and_password` decodes them as.
+        return f'Basic realm={quote_auth_param(self.realm)}, charset="UTF-8"'
 
     @property
     def security_schemes(self) -> dict[str, SecurityScheme | Reference]:

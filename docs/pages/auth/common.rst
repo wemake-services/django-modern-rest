@@ -126,6 +126,137 @@ all auth in further layers.
   because it will globally disable all auth with no ways to re-enable it.
 
 
+``WWW-Authenticate`` challenges
+-------------------------------
+
+.. versionadded:: 0.15.0
+
+`RFC 9110 <https://www.rfc-editor.org/rfc/rfc9110.html#section-15.5.2>`_
+says that a ``401`` response must tell the client how to authenticate:
+
+  The server generating a 401 response MUST send a ``WWW-Authenticate``
+  header field containing at least one challenge
+  applicable to the target resource.
+
+So, we add that header to every ``401`` that
+:exc:`~dmr.exceptions.NotAuthenticatedError` produces.
+It does not matter where the error came from: the auth chain running out
+of options, an auth instance rejecting the credentials,
+or your own endpoint raising it by hand.
+
+With :class:`~dmr.security.http.HttpBasicSyncAuth` enabled, a ``401`` looks
+like this:
+
+.. code-block:: http
+
+  HTTP/1.1 401 Unauthorized
+  Content-Type: application/json
+  WWW-Authenticate: Basic realm="api", charset="UTF-8"
+
+When an endpoint has several auth instances, we join their challenges
+into a single header value, because
+`RFC 9110 <https://www.rfc-editor.org/rfc/rfc9110.html#section-11.6.1>`_
+allows a challenge list:
+
+.. code-block:: http
+
+  WWW-Authenticate: Basic realm="api", charset="UTF-8", Bearer
+
+
+What is supported
+~~~~~~~~~~~~~~~~~
+
+A challenge can only name an HTTP authentication scheme that the client
+is supposed to send in the ``Authorization`` header.
+Auth that reads credentials from a cookie or from a custom header
+has nothing to put there, so it sends no challenge at all:
+
+.. list-table::
+  :header-rows: 1
+  :widths: 45 30 25
+
+  * - Auth
+    - Challenge
+    - Configurable
+  * - :class:`~dmr.security.http.HttpBasicSyncAuth`,
+      :class:`~dmr.security.http.HttpBasicAsyncAuth`
+    - ``Basic realm="api", charset="UTF-8"``
+    - ``realm=``
+  * - :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth`,
+      :class:`~dmr.security.jwt.auth.HeaderJWTAsyncAuth`
+    - ``Bearer``
+    - ``auth_scheme=``
+  * - :class:`~dmr.security.token.HeaderTokenSyncAuth`,
+      :class:`~dmr.security.token.HeaderTokenAsyncAuth`
+    - ``Token``, when a ``prefix=`` is set
+    - ``prefix=``
+  * - :class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth`,
+      :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth`
+    - none, the token lives in a cookie
+    - \-
+  * - :class:`~dmr.security.token.CookieTokenSyncAuth`,
+      :class:`~dmr.security.token.CookieTokenAsyncAuth`
+    - none, the token lives in a cookie
+    - \-
+  * - :class:`~dmr.security.django_session.DjangoSessionSyncAuth`,
+      :class:`~dmr.security.django_session.DjangoSessionAsyncAuth`
+    - none, the session lives in a cookie
+    - \-
+  * - :class:`~dmr.security.allauth.XSessionTokenSyncAuth`,
+      :class:`~dmr.security.allauth.XSessionTokenAsyncAuth`
+    - none, ``X-Session-Token`` is not an auth scheme
+    - \-
+
+The header-based classes only send a challenge when they actually read
+the ``Authorization`` header. Point them at a header of your own, and the
+challenge goes away, because there is no way to ask a client
+for ``X-Api-Auth`` in a standard challenge:
+
+.. code-block:: python
+
+  >>> from dmr.security.jwt import HeaderJWTSyncAuth
+
+  >>> HeaderJWTSyncAuth().www_authenticate_challenge
+  'Bearer'
+
+  >>> HeaderJWTSyncAuth(auth_header='X-Api-Auth').www_authenticate_challenge
+
+The same applies to :class:`~dmr.security.token.HeaderTokenSyncAuth`,
+which defaults to a prefix-less ``X-API-Token`` header:
+without a scheme prefix there is no scheme name to build a challenge from.
+
+
+Disabling it
+~~~~~~~~~~~~
+
+Pass ``www_authenticate=False`` to any auth that supports a challenge:
+
+.. code-block:: python
+
+  >>> from dmr.security.jwt import HeaderJWTSyncAuth
+
+  >>> HeaderJWTSyncAuth(www_authenticate=False).www_authenticate_challenge
+
+.. warning::
+
+  Browsers show their own native login prompt when they see a ``Basic``
+  challenge on a ``401``. If your API is called from a browser and you do
+  not want that popup, turn the challenge off for HTTP Basic auth.
+
+You can also override
+:meth:`~dmr.security.SyncAuth.www_authenticate_challenge`
+in your own auth class to send whatever challenge you need,
+including extra auth params like ``error="invalid_token"``
+from `RFC 6750 <https://www.rfc-editor.org/rfc/rfc6750.html#section-3.1>`_.
+
+.. note::
+
+  We only add this header to
+  :exc:`~dmr.exceptions.NotAuthenticatedError` responses.
+  If you build a ``401`` yourself with :exc:`~dmr.response.APIError`,
+  pass the header yourself via its ``headers=`` argument.
+
+
 Permissions
 -----------
 

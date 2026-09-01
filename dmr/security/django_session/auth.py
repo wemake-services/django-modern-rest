@@ -67,7 +67,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):
         """Provides responses that can happen when user is not authed."""
         return [
             *self._add_new_response(
-                unauth_response_spec(controller_cls),
+                unauth_response_spec(controller_cls, metadata),
                 existing_responses,
             ),
             *self._add_new_response(

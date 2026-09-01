@@ -27,8 +27,20 @@ of requirements for an API to count as public.
   use `FileResponseSpec.return_type` instead, #1278
 - Removed `FileMetadataComponent.schema_metadata`,
   now we use `SupportsFileParsing.schema_metadata` instead, #1278
+- `401` responses now carry a `WWW-Authenticate` header as required
+  by RFC 9110, when the endpoint's auth can express a challenge.
+  Note that browsers show their native login prompt on a `Basic` challenge,
+  pass `www_authenticate=False` to the auth instance to opt out, #1334
 
 ### Features
+
+- Added `WWW-Authenticate` support for auth classes that read
+  the `Authorization` header: `HttpBasicSyncAuth`, `HttpBasicAsyncAuth`,
+  `HeaderJWTSyncAuth`, `HeaderJWTAsyncAuth`, `HeaderTokenSyncAuth`,
+  and `HeaderTokenAsyncAuth`. Cookie-based and custom-header auth
+  send no challenge, because there is none to express.
+  Configurable via the new `www_authenticate=` and `realm=` arguments
+  and the `SyncAuth.www_authenticate_challenge` property, #1334
 
 - Added `CookieJWTSyncAuth` and `CookieJWTAsyncAuth`
   to read JWT tokens from cookies instead of headers, #1193

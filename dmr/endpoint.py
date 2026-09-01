@@ -40,7 +40,12 @@ from dmr.openapi.objects import (
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import APIError, RedirectTo
-from dmr.security.base import AsyncAuth, SyncAuth
+from dmr.security.base import (
+    WWW_AUTHENTICATE,
+    AsyncAuth,
+    SyncAuth,
+    combined_www_authenticate,
+)
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.throttling import AsyncThrottle, SyncThrottle
@@ -226,6 +231,7 @@ class Endpoint:  # noqa: WPS214
         """
         # NOTE: if you change something here,
         # also change in `handle_async_error`
+        self._add_auth_challenge(exc)
         if self.metadata.error_handler is not None:
             try:
                 # We validate this, no error possible in runtime:
@@ -260,6 +266,7 @@ class Endpoint:  # noqa: WPS214
         Override this method to add custom async error handling.
         """
         # NOTE: if you change something here, also change in `handle_error`
+        self._add_auth_challenge(exc)
         if self.metadata.error_handler is not None:
             try:
                 # We validate this, no error possible in runtime:
@@ -520,6 +527,24 @@ class Endpoint:  # noqa: WPS214
             await throttle(self, controller, self._async_lock)  # noqa: WPS476
 
     # Utils:
+
+    def _add_auth_challenge(self, exc: Exception) -> None:
+        """
+        Advertise our auth in ``WWW-Authenticate`` on ``401`` responses.
+
+        :rfc:`9110#section-15.5.2` requires it. We do it here, and not
+        in ``_run_auth``, because a ``401`` can also come from an auth
+        instance itself or be raised by hand from an endpoint body,
+        and all of them need the same challenge.
+        An explicitly passed ``headers=`` always wins.
+        """
+        if not isinstance(exc, NotAuthenticatedError):
+            return
+        if exc.headers is not None:
+            return
+        challenge = combined_www_authenticate(self.metadata.auth)
+        if challenge is not None:
+            exc.headers = {WWW_AUTHENTICATE: challenge}
 
     def _make_http_response(
         self,

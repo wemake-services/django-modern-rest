@@ -48,7 +48,7 @@ class _BaseCookieTokenAuth(ResponseSpecProvider):
         """Declare extra responses for cookie auth + CSRF checks."""
         return [
             *self._add_new_response(
-                unauth_response_spec(controller_cls),
+                unauth_response_spec(controller_cls, metadata),
                 existing_responses,
             ),
             *self._add_new_response(
