@@ -58,6 +58,39 @@ Let's try to create two exact controllers with exact serializers:
 Basically - we just specify what kind of serializer to use. And that's it.
 But, this is just the first step. We can do much more!
 
+.. tip::
+
+  Annotate class-level options like ``responses``, ``auth``, ``parsers``,
+  ``renderers``, and ``throttling`` in controllers that will be subclassed.
+
+  Without an annotation type-checkers infer a fixed-size tuple
+  from the value you assign, and subclasses won't be able
+  to add or to remove items from it.
+
+  .. code:: python
+
+    >>> from collections.abc import Sequence
+    >>> from http import HTTPStatus
+    >>> from typing import ClassVar
+
+    >>> from dmr import Controller, ResponseSpec
+    >>> from dmr.errors import ErrorModel
+    >>> from dmr.plugins.pydantic import PydanticSerializer
+
+    >>> class MyBaseController(Controller[PydanticSerializer]):
+    ...     responses: ClassVar[Sequence[ResponseSpec]] = (
+    ...         ResponseSpec(ErrorModel, status_code=HTTPStatus.NOT_FOUND),
+    ...     )
+    ...
+    ...     def get(self) -> str:
+    ...         return 'reusable'
+
+    >>> class MyController(MyBaseController):
+    ...     responses = (
+    ...         *MyBaseController.responses,
+    ...         ResponseSpec(ErrorModel, status_code=HTTPStatus.CONFLICT),
+    ...     )
+
 
 Generic parsing and response models
 -----------------------------------

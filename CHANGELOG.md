@@ -59,6 +59,10 @@ of requirements for an API to count as public.
 
 ### Bugfixes
 
+- Fixed `responses` of `ObtainTokenSyncController`,
+  `ObtainTokenAsyncController`, `DjangoSessionSyncController`,
+  and `DjangoSessionAsyncController` being narrowed
+  to a fixed-size tuple, subclasses could not change it, #1371
 - Added missing `@sensitive_variables` decorator to all auth views,
   so credentials and tokens are hidden
   in error reporting middlewares and logs, #1323
