@@ -17,23 +17,6 @@ if TYPE_CHECKING:
 _DEFAULT_BASIC_REALM: Final = 'api'
 
 
-def _quote_auth_param(auth_param: str) -> str:
-    r"""
-    Return *value* as a ``quoted-string`` auth param, as :rfc:`9110` wants it.
-
-    .. code:: python
-
-      >>> _quote_auth_param('api')
-      '"api"'
-
-      >>> _quote_auth_param('say "hi"')
-      '"say \\"hi\\""'
-
-    """
-    escaped = auth_param.replace('\\', r'\\').replace('"', r'\"')
-    return f'"{escaped}"'
-
-
 class _HttpBasicAuth:
     __slots__ = ('header', 'realm', 'security_scheme_name', 'www_authenticate')
 
@@ -252,3 +235,20 @@ def basic_auth(username: str, password: str, *, prefix: str = 'Basic ') -> str:
     """
     token = b64encode(f'{username}:{password}'.encode()).decode('utf8')
     return f'{prefix}{token}'
+
+
+def _quote_auth_param(auth_param: str) -> str:
+    r"""
+    Return *value* as a ``quoted-string`` auth param, as :rfc:`9110` wants it.
+
+    .. code:: python
+
+      >>> _quote_auth_param('api')
+      '"api"'
+
+      >>> _quote_auth_param('say "hi"')
+      '"say \\"hi\\""'
+
+    """
+    escaped = auth_param.replace('\\', r'\\').replace('"', r'\"')
+    return f'"{escaped}"'
