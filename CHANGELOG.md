@@ -64,6 +64,8 @@ of requirements for an API to count as public.
   HTTP methods (like `PURGE`, `LINK`), #1300
 - Fixed a bug when non-file parsers were listed in the response schema
   for file responses, #1278
+- Fixed `SimpleRate` throttling reports with redis backends,
+  it used to error on missing throttling stats, #1333
 
 ### Misc
 
