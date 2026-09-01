@@ -55,6 +55,7 @@ def test_full_e2e_sync(
 
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
+    assert response.headers['Cache-Control'] == 'no-store'
     response_json = response.json()
     assert response_json['token']
     assert Token.find_raw(
@@ -95,6 +96,7 @@ def test_obtain_custom_token_model(
 
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
+    assert response.headers['Cache-Control'] == 'no-store'
     response_json = response.json()
     assert response_json['token']
     assert Token.find_raw(response_json['token']) is None
@@ -123,31 +125,7 @@ def test_obtain_failures(
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert response.headers['Content-Type'] == 'application/json'
+    assert 'Cache-Control' not in response.headers
     assert response.json() == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
     })
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    'url',
-    [
-        reverse('api:token_auth:token_obtain_sync'),
-        reverse('api:token_auth:token_obtain_async'),
-    ],
-)
-def test_obtain_is_never_stored(
-    dmr_client: DMRClient,
-    user: User,
-    password: str,
-    *,
-    url: str,
-) -> None:
-    """Ensures the issued token response is never written to any cache."""
-    response = dmr_client.post(
-        url,
-        data={'username': user.username, 'password': password},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.content
-    assert response.headers['Cache-Control'] == 'no-store'

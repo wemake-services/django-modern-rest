@@ -146,16 +146,13 @@ it also documents the header in the OpenAPI schema:
 
 .. code:: python
 
-  >>> from http import HTTPStatus
+  @modify(headers=NO_STORE_HEADERS)
 
-  >>> from dmr import Controller, modify
-  >>> from dmr.plugins.pydantic import PydanticSerializer
-  >>> from dmr.security import NO_STORE_HEADERS
+.. note::
 
-  >>> class MyLoginController(Controller[PydanticSerializer]):
-  ...     @modify(status_code=HTTPStatus.OK, headers=NO_STORE_HEADERS)
-  ...     def post(self) -> str:
-  ...         return 'Logged in!'
+  Only the successful response gets this header,
+  because only it carries credentials.
+  Error responses of auth views are not affected.
 
 
 Keep credentials out of error reports
@@ -189,7 +186,6 @@ that are shown to admins in error reporting middlewares:
   ...     def post(self, parsed_body: Body[dict[str, str]]) -> str:
   ...         return self.login(parsed_body)
   ...
-  ...     @sensitive_variables()
   ...     def login(self, parsed_body: dict[str, str]) -> str:
   ...         return 'Logged in!'
 
@@ -201,17 +197,16 @@ that are shown to admins in error reporting middlewares:
 
 .. note::
 
-  Sync and async functions are protected differently by Django.
+  Django protects sync and async functions differently.
 
   A sync ``@sensitive_variables()`` also hides local variables
   of everything the decorated function calls,
-  so one decorator on the endpoint covers the whole call chain.
+  which is why ``login`` above needs no decorator of its own.
 
   Async functions do not have a shared call stack,
-  so each coroutine is protected on its own.
-  This is why every async method that holds credentials -
-  including your own ``convert_auth_payload`` and
-  ``make_api_response`` overrides - needs its own decorator.
+  so every coroutine that keeps credentials in its local variables
+  needs its own decorator. This includes your own overrides,
+  like ``convert_auth_payload``, which receives the raw password.
 
 
 Permissions

@@ -68,6 +68,7 @@ def test_correct_django_session(
 
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
+    assert response.headers['Cache-Control'] == 'no-store'
     assert response.cookies.keys() == {
         settings.SESSION_COOKIE_NAME,
         settings.CSRF_COOKIE_NAME,
@@ -235,6 +236,7 @@ def test_wrong_auth_params(
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert response.headers['Content-Type'] == 'application/json'
+    assert 'Cache-Control' not in response.headers
     assert not response.cookies
     assert response.json() == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
@@ -267,31 +269,6 @@ def test_login_sends_csrf_cookie(
         settings.SESSION_COOKIE_NAME,
         settings.CSRF_COOKIE_NAME,
     }
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    'url',
-    [
-        reverse('api:django_session_auth:django_session_sync'),
-        reverse('api:django_session_auth:django_session_async'),
-    ],
-)
-def test_login_is_never_stored(
-    dmr_client: DMRClient,
-    user: User,
-    password: str,
-    *,
-    url: str,
-) -> None:
-    """Ensures the login response is never written to any cache."""
-    response = dmr_client.post(
-        url,
-        data={'username': user.username, 'password': password},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.content
-    assert response.headers['Cache-Control'] == 'no-store'
 
 
 @pytest.mark.django_db
