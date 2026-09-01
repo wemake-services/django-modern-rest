@@ -360,16 +360,7 @@ We recommend deleting them with a periodic job:
   :linenos:
   :language: python
 
-And then schedule it, for example with ``cron``:
-
-.. code-block:: bash
-  :caption: crontab
-
-  0 4 * * * /path/to/venv/bin/python /path/to/manage.py cleanup_blocklist
-
-Anything else that runs code on a schedule will do:
-Celery beat, ``django-q``, a ``systemd`` timer,
-or whatever your hosting provides.
+Then run this task as a periodic job.
 
 .. warning::
 

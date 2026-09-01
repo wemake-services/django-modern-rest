@@ -208,14 +208,7 @@ and it is worth doing periodically:
 Note that ``expires_at__lt`` never matches ``NULL``,
 so tokens without an expiry date are safe from this query by construction.
 
-Then run it on a schedule, for example with ``cron``:
-
-.. code-block:: bash
-  :caption: crontab
-
-  0 4 * * * /path/to/venv/bin/python /path/to/manage.py cleanup_tokens
-
-Celery beat, ``django-q``, or a ``systemd`` timer work just as well.
+Then run this task as a periodic job.
 
 .. note::
 
