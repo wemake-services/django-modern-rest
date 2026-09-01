@@ -6,7 +6,7 @@ try:
     import jwt  # noqa: F401  # pyright: ignore[reportUnusedImport]
 except ImportError:  # pragma: no cover
     print(  # noqa: WPS421
-        'Looks like `pyjwt` is not installed, '
+        "Looks like `pyjwt` is not installed, "
         "consider using `pip install 'django-modern-rest[jwt]'`",
     )
     raise
@@ -23,5 +23,5 @@ from dmr.security.jwt.auth.header import (
 from dmr.security.jwt.auth.header import HeaderJWTSyncAuth as HeaderJWTSyncAuth
 from dmr.security.jwt.auth.header import JWTAsyncAuth as JWTAsyncAuth
 from dmr.security.jwt.auth.header import JWTSyncAuth as JWTSyncAuth
-from dmr.security.jwt.auth.header import request_jwt as request_jwt
+from dmr.security.jwt.auth.base import request_jwt as request_jwt
 from dmr.security.jwt.token import JWToken as JWToken
