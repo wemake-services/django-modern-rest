@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 _DEFAULT_BASIC_REALM: Final = 'api'
 
 
-def _quote_auth_param(value: str) -> str:  # noqa: WPS110
+def _quote_auth_param(auth_param: str) -> str:
     r"""
     Return *value* as a ``quoted-string`` auth param, as :rfc:`9110` wants it.
 
