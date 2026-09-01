@@ -16,8 +16,6 @@ from dmr.security.jwt.auth.cookie import (
     CookieJWTAsyncAuth as CookieJWTAsyncAuth,
 )
 from dmr.security.jwt.auth.cookie import CookieJWTSyncAuth as CookieJWTSyncAuth
-from dmr.security.jwt.auth.header import BaseJWTAsyncAuth as BaseJWTAsyncAuth
-from dmr.security.jwt.auth.header import BaseJWTSyncAuth as BaseJWTSyncAuth
 from dmr.security.jwt.auth.header import (
     HeaderJWTAsyncAuth as HeaderJWTAsyncAuth,
 )
