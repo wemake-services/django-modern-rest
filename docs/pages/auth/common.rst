@@ -491,7 +491,7 @@ API Reference
 
 .. autofunction:: dmr.security.request_auth
 
-.. autofunction:: dmr.security.add_auth_challenge
+.. autofunction:: dmr.security.add_www_authenticate
 
 .. autodata:: dmr.security.NO_STORE_HEADERS
 
