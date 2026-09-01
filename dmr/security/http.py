@@ -134,7 +134,7 @@ class _HttpBasicAuth:  # noqa: WPS214
         """Whether the auth contract matches OpenAPI HTTP basic auth."""
         return (
             self.header == 'Authorization'
-            and self.auth_scheme.casefold() == 'basic'
+            and self.auth_scheme == 'Basic'
         )
 
     def _get_custom_security_scheme_description(self) -> str:
