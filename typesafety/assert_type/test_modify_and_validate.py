@@ -135,7 +135,7 @@ class WrongValidateController(Controller[PydanticSerializer]):
     def patch(self) -> JsonResponse:
         return JsonResponse([])
 
-    @validate()  # type: ignore[call-overload, untyped-decorator]  # ty: ignore[no-matching-overload]
+    @validate()  # type: ignore[call-overload, untyped-decorator]  # ty: ignore[no-matching-overload, dynamic-function-decorator-return]
     async def delete(self) -> HttpResponse:
         return JsonResponse([])
 
@@ -143,11 +143,11 @@ class WrongValidateController(Controller[PydanticSerializer]):
 class WrongAuthMixedController(Controller[PydanticSerializer]):
     auth = (DjangoSessionSyncAuth(), DjangoSessionAsyncAuth())  # type: ignore[assignment]
 
-    @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+    @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type, dynamic-function-decorator-return]
     def get(self) -> str:
         return 'mixed'
 
-    @validate(  # type: ignore[arg-type, no-matching-overload, unused-ignore]
+    @validate(  # type: ignore[arg-type, no-matching-overload, unused-ignore]  # ty: ignore[dynamic-function-decorator-return]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
         auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()],  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     )
@@ -158,11 +158,11 @@ class WrongAuthMixedController(Controller[PydanticSerializer]):
 class WrongThrottlingMixedController(Controller[PydanticSerializer]):
     throttling = (SyncThrottle(1, 2), AsyncThrottle(1, 2))  # type: ignore[assignment]
 
-    @modify(throttling=[SyncThrottle(1, 2), AsyncThrottle(1, 2)])  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+    @modify(throttling=[SyncThrottle(1, 2), AsyncThrottle(1, 2)])  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type, dynamic-function-decorator-return]
     def get(self) -> str:
         return 'mixed'
 
-    @validate(  # type: ignore[arg-type, no-matching-overload, unused-ignore]
+    @validate(  # type: ignore[arg-type, no-matching-overload, unused-ignore]  # ty: ignore[dynamic-function-decorator-return]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
         throttling=[SyncThrottle(1, 2), AsyncThrottle(1, 2)],  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
     )
