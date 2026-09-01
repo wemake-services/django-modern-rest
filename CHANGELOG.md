@@ -81,6 +81,8 @@ of requirements for an API to count as public.
 - Fixes AI docs and plugin install instructions, #1311
 - Added `dmr-from-dj-rest-auth` agent skill to migrate `dj-rest-auth`
   installations to `django-modern-rest` and `django-allauth` headless, #1193
+- Documented why and how to remove expired `BlocklistedJWToken`
+  and `Token` rows on a schedule, #1336
 
 
 ## 0.14.0 (2026-08-14)
