@@ -312,6 +312,52 @@ You can also use `self.to_error` when using `@validate` endpoints.
 Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/error-handling.html
 
 
+## Redirects
+
+### Validate user-provided URLs before passing them to `RedirectTo`
+
+`RedirectTo` validates a URL's length and scheme, but does not check whether
+the destination host is trusted. Passing an untrusted URL directly can create
+an open redirect vulnerability.
+
+Wrong:
+
+```python
+from typing import Never
+
+from dmr import RedirectTo
+
+
+def redirect_to_next(next_url: str) -> Never:
+    raise RedirectTo(next_url)
+```
+
+Correct:
+
+```python
+from typing import Never
+
+from django.http import HttpRequest
+from django.utils.http import url_has_allowed_host_and_scheme
+
+from dmr import RedirectTo
+
+
+def redirect_to_next(request: HttpRequest, next_url: str) -> Never:
+    url_is_safe = url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    )
+    raise RedirectTo(next_url if url_is_safe else '/')
+```
+
+**Limitations:** validation is required for user-provided or otherwise
+untrusted redirect targets; hard-coded local URLs do not need this check.
+
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/using-controller/redirects.html
+
+
 ## Routing
 
 ### Use `dmr.routing.path` instead of `django.urls.path`
