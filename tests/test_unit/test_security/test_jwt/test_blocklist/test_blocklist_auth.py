@@ -16,7 +16,7 @@ from typing_extensions import TypedDict
 from dmr import Controller, modify
 from dmr.plugins.pydantic.serializer import PydanticSerializer
 from dmr.security import request_auth
-from dmr.security.jwt.auth.header import JWTAsyncAuth, JWTSyncAuth, request_jwt
+from dmr.security.jwt import JWTAsyncAuth, JWTSyncAuth, request_jwt
 from dmr.security.jwt.blocklist.auth import (
     JWTokenBlocklistAsyncMixin,
     JWTokenBlocklistSyncMixin,
@@ -163,16 +163,14 @@ def test_blocklist_sync_mixin_unauthorized(
         request_jwt(request, strict=True)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED
-    assert json.loads(response.content) == snapshot(
-        {
-            'detail': [
-                {
-                    'msg': 'Not authenticated',
-                    'type': 'security',
-                },
-            ],
-        },
-    )
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'Not authenticated',
+                'type': 'security',
+            },
+        ],
+    })
 
 
 class MyJWTAsyncAuth(JWTokenBlocklistAsyncMixin, JWTAsyncAuth):
@@ -281,13 +279,11 @@ async def test_blocklist_async_mixin_unauthorized(
     assert isinstance(response, HttpResponse)
     assert response.headers == {'Content-Type': 'application/json'}
     assert response.status_code == HTTPStatus.UNAUTHORIZED
-    assert json.loads(response.content) == snapshot(
-        {
-            'detail': [
-                {
-                    'msg': 'Not authenticated',
-                    'type': 'security',
-                },
-            ],
-        },
-    )
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'Not authenticated',
+                'type': 'security',
+            },
+        ],
+    })

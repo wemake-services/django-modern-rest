@@ -17,15 +17,16 @@ from dmr.openapi.objects import SecurityScheme
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security import request_auth
 from dmr.security.jwt import (
-    BaseJWTSyncAuth,
     CookieJWTAsyncAuth,
     CookieJWTSyncAuth,
     HeaderJWTAsyncAuth,
     HeaderJWTSyncAuth,
+    JWTAsyncAuth,
     JWToken,
+    JWTSyncAuth,
     request_jwt,
 )
-from dmr.security.jwt.auth.header import JWTAsyncAuth, JWTSyncAuth
+from dmr.security.jwt.auth.base import BaseJWTSyncAuth
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 _LEEWAY: Final = 30  # seconds
@@ -46,16 +47,14 @@ def test_cookie_jwt_schema(
     """Ensures that security scheme is correct for cookie jwt auth."""
     instance = typ()
 
-    assert instance.security_schemes == snapshot(
-        {
-            'jwt': SecurityScheme(
-                type='apiKey',
-                description='JWT token auth via cookie',
-                name='access_token',
-                security_scheme_in='cookie',
-            ),
-        },
-    )
+    assert instance.security_schemes == snapshot({
+        'jwt': SecurityScheme(
+            type='apiKey',
+            description='JWT token auth via cookie',
+            name='access_token',
+            security_scheme_in='cookie',
+        ),
+    })
     assert instance.security_requirement == snapshot({'jwt': []})
 
 
@@ -186,15 +185,13 @@ def test_sync_cookie_jwt_auth_csrf_enforced(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.FORBIDDEN
-    assert json.loads(response.content) == snapshot(
-        {
-            'detail': [
-                {
-                    'msg': 'CSRF Failed: CSRF cookie not set.',
-                },
-            ],
-        },
-    )
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'CSRF Failed: CSRF cookie not set.',
+            },
+        ],
+    })
 
 
 @pytest.mark.asyncio
@@ -225,15 +222,13 @@ async def test_async_cookie_jwt_auth_csrf_enforced(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.FORBIDDEN
-    assert json.loads(response.content) == snapshot(
-        {
-            'detail': [
-                {
-                    'msg': 'CSRF Failed: CSRF cookie not set.',
-                },
-            ],
-        },
-    )
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'CSRF Failed: CSRF cookie not set.',
+            },
+        ],
+    })
 
 
 @pytest.mark.django_db
