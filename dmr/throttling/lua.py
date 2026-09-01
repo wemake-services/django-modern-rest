@@ -36,7 +36,7 @@ if view_only == 0 then
     end
 else
     -- When reading the key, we don't have to do anything special.
-    current = tonumber(redis.call("GET", key))
+    current = tonumber(redis.call("GET", key)) or 0
 end
 
 local ttl = redis.call("TTL", key)
