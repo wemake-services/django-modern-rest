@@ -90,7 +90,7 @@ and picking the right one is the part that is easy to get wrong:
       and return a ``401``.
   * - raise :exc:`~dmr.response.APIError`
     - Same, but with a status code of your choice.
-      Use it when the credentials are malformed rather than wrong.
+      Use it for unexpected cases.
 
 The rule of thumb: return ``None`` while you still cannot tell whether
 the client meant to use this auth at all, and raise once you can.
