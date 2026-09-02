@@ -40,6 +40,8 @@ of requirements for an API to count as public.
 - `JWToken` does not validate `exp` and `iat` on creation anymore,
   now `JWToken.encode` validates them instead, #1324
 - Throttling cache keys are now hashed to keep their length bounded, #1337
+- HTTP Basic Auth credentials are no longer URL-decoded,
+  so percent-encoded characters such as `%40` are preserved as-is, #1363
 
 ### Features
 
