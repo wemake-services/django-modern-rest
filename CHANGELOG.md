@@ -33,13 +33,33 @@ of requirements for an API to count as public.
 - `check_event_field` now raises `ValidationError` instead of `ValueError`,
   so a wrong field is streamed as an `error` event
   and does not break the whole stream, #1329
+- `401` responses now carry a `WWW-Authenticate` header as required
+  by RFC 9110, when the endpoint's auth can express a challenge.
+  Note that browsers show their native login prompt on a `Basic` challenge,
+  pass `www_authenticate=False` to the auth instance to opt out, #1334
+- `SyncAuth` and `AsyncAuth` now have an abstract
+  `www_authenticate_challenge` property, so custom auth classes
+  must say what challenge they send, or return `None`
+  when they cannot be expressed as one, #1334
 - Removed init-only `leeway` argument of `JWToken`,
   it is only used by `JWToken.decode` now, #1324
 - `JWToken` does not validate `exp` and `iat` on creation anymore,
   now `JWToken.encode` validates them instead, #1324
+- Throttling cache keys are now hashed to keep their length bounded, #1337
 
 ### Features
 
+- Added `WWW-Authenticate` support for auth classes that read
+  the `Authorization` header: `HttpBasicSyncAuth`, `HttpBasicAsyncAuth`,
+  `HeaderJWTSyncAuth`, `HeaderJWTAsyncAuth`, `HeaderTokenSyncAuth`,
+  and `HeaderTokenAsyncAuth`. Cookie-based and custom-header auth
+  send no challenge, because there is none to express.
+  Configurable via the new `www_authenticate=` and `realm=` arguments
+  and the `SyncAuth.www_authenticate_challenge` property, #1334
+- Added `dmr.security.add_www_authenticate` function to add
+  the `WWW-Authenticate` header to a `NotAuthenticatedError`.
+  `global_error_handler` calls it, so replacing that handler
+  is how you change or drop this behavior, #1334
 - Added `CookieJWTSyncAuth` and `CookieJWTAsyncAuth`
   to read JWT tokens from cookies instead of headers, #1193
 - Added `HeaderJWTSyncAuth` and `HeaderJWTAsyncAuth`,
@@ -97,6 +117,8 @@ of requirements for an API to count as public.
 - Fixed `JWToken.decode` validating `exp` and `iat` twice,
   now `leeway`, `verify_exp`, and `verify_iat` are respected
   and invalid tokens return `401` instead of `500`, #1324
+- JWT authentication now rejects refresh tokens when access tokens are expected,
+  #1320
 
 ### Misc
 

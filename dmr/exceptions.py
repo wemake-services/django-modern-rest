@@ -109,12 +109,23 @@ class NotAuthenticatedError(Exception):
     default_message: ClassVar[str | Promise] = _NOT_AUTHENTICATED_MSG
     status_code: ClassVar[HTTPStatus] = HTTPStatus.UNAUTHORIZED
 
-    def __init__(self, msg: str | Promise | None = None) -> None:
-        """Provides default error message."""
+    def __init__(
+        self,
+        msg: str | Promise | None = None,
+        *,
+        headers: dict[str, str] | None = None,
+    ) -> None:
+        """
+        Provides default error message.
+
+        When *headers* is not passed, we fill it with
+        the ``WWW-Authenticate`` challenge of the endpoint's auth chain.
+        """
         # Circular import:
         from dmr.errors import ErrorType  # noqa: PLC0415
 
         super().__init__(msg or self.default_message)
+        self.headers = headers
         self.error_type = ErrorType.security
 
 

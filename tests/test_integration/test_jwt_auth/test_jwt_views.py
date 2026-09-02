@@ -58,10 +58,10 @@ def inactive_user(faker: Faker, password: str) -> User:
     ],
 )
 @pytest.mark.parametrize(
-    'token_type',
+    ('token_type', 'expected_status'),
     [
-        'access_token',
-        'refresh_token',
+        ('access_token', HTTPStatus.CREATED),
+        ('refresh_token', HTTPStatus.UNAUTHORIZED),
     ],
 )
 def test_correct_auth_params(
@@ -72,6 +72,7 @@ def test_correct_auth_params(
     url: str,
     check_url: str,
     token_type: str,
+    expected_status: HTTPStatus,
 ) -> None:
     """Ensures that correct auth params fit."""
     response = dmr_client.post(
@@ -83,6 +84,7 @@ def test_correct_auth_params(
     assert response.headers['Content-Type'] == 'application/json'
     assert response.headers['Cache-Control'] == 'no-store'
     response_body = response.json()
+
     access = jwt.decode(
         response_body['access_token'],
         key=settings.SECRET_KEY,
@@ -95,6 +97,7 @@ def test_correct_auth_params(
         'jti': IsStr(),
         'extras': {'type': 'access'},
     }
+
     refresh = jwt.decode(
         response_body['refresh_token'],
         key=settings.SECRET_KEY,
@@ -119,13 +122,24 @@ def test_correct_auth_params(
         },
     )
 
-    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.status_code == expected_status, response.content
     assert response.headers['Content-Type'] == 'application/json'
-    assert response.json() == {
-        'username': user.username,
-        'email': user.email,
-        'is_active': user.is_active,
-    }
+
+    if expected_status == HTTPStatus.CREATED:
+        assert response.json() == {
+            'username': user.username,
+            'email': user.email,
+            'is_active': user.is_active,
+        }
+    else:
+        assert response.json() == snapshot({
+            'detail': [
+                {
+                    'msg': 'Not authenticated',
+                    'type': 'security',
+                },
+            ],
+        })
 
 
 @pytest.mark.django_db

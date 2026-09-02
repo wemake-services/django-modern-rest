@@ -1,6 +1,7 @@
 import asyncio
 import dataclasses
 import enum
+import hashlib
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
@@ -138,17 +139,21 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
         if cache_key is None:
             return None
 
-        metadata = endpoint.metadata
-        backend_name = type(self._backend).__qualname__
-        algorithm_name = type(self._algorithm).__qualname__
-        cache_key_name = type(self.cache_key).__qualname__
-        # This must ensure that endpoint key is unique:
-        return (
-            f'{metadata.operation_id}::{metadata.method}::'
-            f'{backend_name}::{algorithm_name}::'
-            f'{cache_key_name}::{cache_key}::'
-            f'{self.max_requests}::{self.duration_in_seconds}'
-        )
+        raw_cache_key = '::'.join((
+            str(endpoint.metadata.operation_id),
+            endpoint.metadata.method,
+            type(self._backend).__qualname__,
+            type(self._algorithm).__qualname__,
+            type(self.cache_key).__qualname__,
+            cache_key,
+            str(self.max_requests),
+            str(self.duration_in_seconds),
+        ))
+        cache_key_hash = hashlib.sha256(
+            raw_cache_key.encode('utf-8'),
+        ).hexdigest()
+        cache_key_name = self.cache_key.name
+        return f'{cache_key_name}::{cache_key_hash}'
 
     def replace(
         self,

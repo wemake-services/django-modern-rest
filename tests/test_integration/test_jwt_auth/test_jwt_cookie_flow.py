@@ -6,7 +6,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.urls import reverse
 from faker import Faker
-from inline_snapshot import snapshot
 
 from dmr.security.jwt.token import JWToken
 from dmr.test import DMRClient
@@ -28,6 +27,7 @@ def access_token(user: User) -> str:
     return JWToken(
         sub=str(user.pk),
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+        extras={'type': 'access'},
     ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
 
 
@@ -52,11 +52,11 @@ def test_jwt_cookie_auth(
     response = dmr_client.get(check_url)
 
     assert response.status_code == HTTPStatus.OK, response.content
-    assert response.json() == snapshot({
+    assert response.json() == {
         'username': user.username,
         'email': user.email,
         'is_active': True,
-    })
+    }
 
 
 @pytest.mark.django_db
