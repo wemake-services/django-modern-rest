@@ -103,6 +103,9 @@ of requirements for an API to count as public.
 
 ### Bugfixes
 
+- Fixed `EndpointMetadata.validate_responses` being annotated
+  as `bool | None`, it is always resolved
+  from the settings, the controller, and the endpoint, #1370
 - Fixed `responses` of `ObtainTokenSyncController`,
   `ObtainTokenAsyncController`, `DjangoSessionSyncController`,
   and `DjangoSessionAsyncController` being narrowed
