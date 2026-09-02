@@ -146,15 +146,65 @@ The same error handling logic can be represented as a diagram:
   If :ref:`handler500` is configured, it will catch all unhandled errors
   in the provided scope and return ``500`` errors with the correct payload.
 
-.. warning::
+.. _error-responses-validation:
 
-  Error responses are validated like any other response.
-  So, with :data:`~dmr.settings.Settings.validate_responses` enabled,
-  every status code that your handlers can return must be described,
-  ``500`` included. See the warning in
-  :data:`~dmr.settings.Settings.validate_responses` for the options
-  you have: describing it, or excluding it from the validation with
-  :data:`~dmr.settings.Settings.exclude_validate_responses`.
+Validating error responses
+--------------------------
+
+Error responses are validated like any other response.
+With :data:`~dmr.settings.Settings.validate_responses` enabled,
+only the status codes that you describe are allowed to be returned.
+
+This matters the most for ``500``: we raise
+:exc:`~dmr.exceptions.InternalServerError` ourselves in several places,
+and your own code can raise it as well.
+An undescribed ``500`` will not reach the client, response validation
+will replace it with ``422 Returned status code 500 is not specified``.
+
+So, when running with response validation enabled,
+describe ``500`` as a possible response of your API
+with :data:`~dmr.settings.Settings.responses`:
+
+.. code-block:: python
+  :caption: settings.py
+
+  >>> from http import HTTPStatus
+
+  >>> from dmr import ResponseSpec
+  >>> from dmr.errors import ErrorModel
+  >>> from dmr.settings import Settings
+
+  >>> DMR_SETTINGS = {
+  ...     Settings.responses: [
+  ...         ResponseSpec(
+  ...             ErrorModel,
+  ...             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+  ...         ),
+  ...     ],
+  ... }
+
+Or, if you don't want a ``500`` in your OpenAPI schema at all,
+exclude this status code from the validation
+with :data:`~dmr.settings.Settings.exclude_validate_responses`:
+
+.. code-block:: python
+  :caption: settings.py
+
+  >>> DMR_SETTINGS = {
+  ...     Settings.exclude_validate_responses: {
+  ...         HTTPStatus.INTERNAL_SERVER_ERROR,
+  ...     },
+  ... }
+
+Both work per-controller and per-endpoint as well:
+with :attr:`~dmr.controller.Controller.responses`
+and :attr:`~dmr.controller.Controller.exclude_validate_responses`
+attributes, or with the arguments of the same names
+to :func:`~dmr.endpoint.modify` and :func:`~dmr.endpoint.validate`.
+
+.. versionadded:: 0.15.0
+
+  :data:`~dmr.settings.Settings.exclude_validate_responses`
 
 
 .. _customizing-error-messages:

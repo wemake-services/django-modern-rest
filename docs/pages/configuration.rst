@@ -197,40 +197,6 @@ Response handling
     to :func:`~dmr.endpoint.modify`
     and :func:`~dmr.endpoint.validate`.
 
-  .. warning::
-
-    Only the status codes that you describe are allowed to be returned.
-    If you keep this validation enabled in production, describe ``500``
-    as a possible response of your endpoints.
-
-    We raise :exc:`~dmr.exceptions.InternalServerError` from places
-    like response rendering, and your own code can raise it as well.
-    An undescribed ``500`` will not reach the client:
-    response validation will replace it
-    with ``422 Returned status code 500 is not specified``.
-
-    Describe it globally with :data:`~dmr.settings.Settings.responses`:
-
-    .. code-block:: python
-      :caption: settings.py
-
-      >>> from http import HTTPStatus
-      >>> from dmr import ResponseSpec
-      >>> from dmr.errors import ErrorModel
-
-      >>> DMR_SETTINGS = {
-      ...     Settings.responses: [
-      ...         ResponseSpec(
-      ...             ErrorModel,
-      ...             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-      ...         ),
-      ...     ],
-      ... }
-
-    Or, if you don't want a ``500`` in your OpenAPI schema at all,
-    exclude it from the validation with
-    :data:`~dmr.settings.Settings.exclude_validate_responses`.
-
 .. data:: dmr.settings.Settings.exclude_validate_responses
 
   Default: ``frozenset()``
@@ -241,6 +207,7 @@ Response handling
   Unlike describing a response, this does not add anything
   to the OpenAPI schema: such responses are simply
   returned to the client as-is.
+  See :ref:`error-responses-validation` for the details.
 
   .. code-block:: python
     :caption: settings.py
@@ -253,14 +220,11 @@ Response handling
     ...     },
     ... }
 
-  Same as with all other options, it can be set per-controller
-  with :attr:`~dmr.controller.Controller.exclude_validate_responses`
-  and per-endpoint with ``exclude_validate_responses`` argument
-  to :func:`~dmr.endpoint.modify`
-  and :func:`~dmr.endpoint.validate`.
-
   When this value is set to ``None`` at any level,
   this means that the value is reset.
+  For example, setting ``exclude_validate_responses=None`` on endpoint level
+  will cancel all controller and settings level values
+  and enable all validation back again.
 
   .. versionadded:: 0.15.0
 
