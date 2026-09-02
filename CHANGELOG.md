@@ -33,6 +33,10 @@ of requirements for an API to count as public.
 - `check_event_field` now raises `ValidationError` instead of `ValueError`,
   so a wrong field is streamed as an `error` event
   and does not break the whole stream, #1329
+- Removed init-only `leeway` argument of `JWToken`,
+  it is only used by `JWToken.decode` now, #1324
+- `JWToken` does not validate `exp` and `iat` on creation anymore,
+  now `JWToken.encode` validates them instead, #1324
 
 ### Features
 
@@ -56,9 +60,20 @@ of requirements for an API to count as public.
 - Added `validate_event_fields` to the `SSEStreamingValidator` pipeline,
   it checks `id` and `event` fields of all event types,
   including custom ones, #1329
+- Added `JWToken.validate_issued_claims` method to customize
+  the checks we run before signing a token, #1324
+- Added `security.NO_STORE_HEADERS`, all auth views we ship now
+  return the `Cache-Control: no-store` header
+  and document it in the OpenAPI schema, #1335
 
 ### Bugfixes
 
+- Added missing `@sensitive_variables` decorator to all auth views,
+  so credentials and tokens are hidden
+  in error reporting middlewares and logs, #1323
+- Parsed request data is no longer stored as a local variable
+  of the endpoint's frame, because it was shown
+  in error reports of any endpoint, #1323
 - JWT auth, refresh, and verify now return `401` instead of `500`
   when the token subject cannot be a value of the user lookup field,
   for example a non-numeric `sub` with the default integer `pk`, #1284
@@ -79,12 +94,19 @@ of requirements for an API to count as public.
   `id` and `event` fields used to be checked even then, #1329
 - Custom SSE event types now have their `id` and `event` fields
   validated just like `SSEvent` does, #1329
+- Fixed `JWToken.decode` validating `exp` and `iat` twice,
+  now `leeway`, `verify_exp`, and `verify_iat` are respected
+  and invalid tokens return `401` instead of `500`, #1324
 
 ### Misc
 
 - Fixes AI docs and plugin install instructions, #1311
+- Documented safe use of user-provided redirect targets with `RedirectTo`,
+  #1326
 - Added `dmr-from-dj-rest-auth` agent skill to migrate `dj-rest-auth`
   installations to `django-modern-rest` and `django-allauth` headless, #1193
+- Documented why and how to remove expired `BlocklistedJWToken`
+  and `Token` rows on a schedule, #1336
 
 
 ## 0.14.0 (2026-08-14)

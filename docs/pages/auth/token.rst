@@ -175,6 +175,57 @@ Here's an example with the default model:
   :linenos:
   :language: python
 
+.. _cleaning-up-old-tokens:
+
+Cleaning up old tokens
+~~~~~~~~~~~~~~~~~~~~~~
+
+Auth finds a token by its hash and then checks
+:attr:`~dmr.security.token.app.models.Token.is_active`.
+Expired and revoked tokens always fail that check,
+so deleting their rows changes nothing for the client:
+a ``401`` stays a ``401``, it just says "unknown token" now.
+
+Which means:
+
+- Rows that are still active must stay,
+  including the ones with ``expires_at`` set to ``None``,
+  because such tokens never expire
+- Rows with ``expires_at`` in the past
+  and rows with ``revoked_at`` set can be removed,
+  they can never authenticate anyone again
+
+Deleting a token is not a replacement for revoking it,
+:meth:`~dmr.security.token.token.TokenLikeSync.revoke` is what stops
+a token that is still active. Cleanup is just housekeeping afterwards,
+and it is worth doing periodically:
+
+.. literalinclude:: /examples/auth/token/token_cleanup.py
+  :caption: myapp/management/commands/cleanup_tokens.py
+  :linenos:
+  :language: python
+
+Note that ``expires_at__lt`` never matches ``NULL``,
+so tokens without an expiry date are safe from this query by construction.
+
+Then run this task as a periodic job.
+
+.. note::
+
+  Keep a grace period that matches your auditing needs.
+  Dead rows still tell you when a token was issued, last used, and revoked,
+  which is the kind of thing you want during an incident.
+  For the same reason you might want to archive them
+  somewhere else instead of just deleting them.
+
+  If you :ref:`swapped the token model <swapping-token-model>`,
+  adjust the query to the fields your own model has.
+
+.. tip::
+
+  Blocklisted JWT tokens have the same problem and the same solution,
+  see :ref:`cleaning-up-blocklisted-tokens`.
+
 
 Django admin
 ------------

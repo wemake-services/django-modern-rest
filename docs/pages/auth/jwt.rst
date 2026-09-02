@@ -333,6 +333,49 @@ We provide two mixin types:
 
 If this app is installed, we would provide an admin panel by default.
 
+.. _cleaning-up-blocklisted-tokens:
+
+Cleaning up expired tokens
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The blocklist only answers one question:
+is this *otherwise valid* token still allowed?
+When ``exp`` of a token is in the past,
+:meth:`~dmr.security.jwt.token.JWToken.decode` rejects it
+before we even look into the blocklist.
+
+Which means:
+
+- Rows with ``expires_at`` in the future must stay,
+  they are the ones actually blocking tokens
+- Rows with ``expires_at`` in the past can be removed,
+  they cannot change any auth decision anymore
+
+Nothing removes them for us, so the table grows forever
+while storing rows that can never affect auth again.
+We recommend deleting them with a periodic job:
+
+.. literalinclude:: /examples/auth/jwt/blocklist_cleanup.py
+  :caption: myapp/management/commands/cleanup_blocklist.py
+  :linenos:
+  :language: python
+
+Then run this task as a periodic job.
+
+.. warning::
+
+  Keep the grace period bigger than the largest ``leeway``
+  you pass to your auth classes.
+  With a non-zero ``leeway`` a token is still accepted
+  for that many seconds after ``exp``,
+  and its blocklist row is still doing real work for that long.
+
+.. tip::
+
+  The same reasoning applies to the opaque
+  :class:`~dmr.security.token.app.models.Token` model,
+  see :ref:`cleaning-up-old-tokens`.
+
 
 API Reference
 -------------
@@ -404,6 +447,9 @@ Pre-defined views to fetch JWT tokens
 
 Blocklist app
 ~~~~~~~~~~~~~
+
+.. autoclass:: dmr.security.jwt.blocklist.models.BlocklistedJWToken
+  :members:
 
 .. autoclass:: dmr.security.jwt.blocklist.auth.JWTokenBlocklistSyncMixin
   :members:
