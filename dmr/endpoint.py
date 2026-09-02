@@ -621,6 +621,7 @@ def validate(  # noqa: WPS234
     *responses: ResponseSpec,
     error_handler: AsyncErrorHandler,
     validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
     semantic_responses: bool | None = None,
     exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
@@ -653,6 +654,7 @@ def validate(
     *responses: ResponseSpec,
     error_handler: SyncErrorHandler,
     validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
     semantic_responses: bool | None = None,
     exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
@@ -684,6 +686,7 @@ def validate(
     /,
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
     semantic_responses: bool | None = None,
     exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
@@ -715,6 +718,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     /,
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
     semantic_responses: bool | None = None,
     exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
@@ -784,6 +788,10 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
             Here we only store the per endpoint information.
+        exclude_validate_responses: Set of status codes that we don't
+            validate, even when ``validate_responses`` is enabled.
+            Useful for errors like ``500`` that can be raised
+            from anywhere and that you might not want to describe.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
         exclude_semantic_responses: Set of semantic responses status codes
@@ -847,6 +855,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
         payload=ValidateEndpointPayload(
             responses=[response, *responses],
             validate_responses=validate_responses,
+            exclude_validate_responses=exclude_validate_responses,
             semantic_responses=semantic_responses,
             exclude_semantic_responses=exclude_semantic_responses,
             validate_events=validate_events,
@@ -880,6 +889,7 @@ def modify(
     headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
     semantic_responses: bool | None = None,
     exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
@@ -912,6 +922,7 @@ def modify(
     headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
     semantic_responses: bool | None = None,
     exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
@@ -944,6 +955,7 @@ def modify(
     headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
     semantic_responses: bool | None = None,
     exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
@@ -976,6 +988,7 @@ def modify(  # noqa: WPS211
     headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
     semantic_responses: bool | None = None,
     exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
@@ -1029,6 +1042,10 @@ def modify(  # noqa: WPS211
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
             Here we only store the per endpoint information.
+        exclude_validate_responses: Set of status codes that we don't
+            validate, even when ``validate_responses`` is enabled.
+            Useful for errors like ``500`` that can be raised
+            from anywhere and that you might not want to describe.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
         exclude_semantic_responses: Set of semantic responses status codes
@@ -1099,6 +1116,7 @@ def modify(  # noqa: WPS211
             cookies=cookies,
             responses=extra_responses,
             validate_responses=validate_responses,
+            exclude_validate_responses=exclude_validate_responses,
             semantic_responses=semantic_responses,
             exclude_semantic_responses=exclude_semantic_responses,
             validate_events=validate_events,

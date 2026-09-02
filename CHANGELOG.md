@@ -61,6 +61,9 @@ of requirements for an API to count as public.
 
 ### Features
 
+- Added `exclude_validate_responses` setting, controller attribute,
+  and `@modify` / `@validate` argument to skip response validation
+  for the given status codes, like `500`, #1370
 - Added `WWW-Authenticate` support for auth classes that read
   the `Authorization` header: `HttpBasicSyncAuth`, `HttpBasicAsyncAuth`,
   `HeaderJWTSyncAuth`, `HeaderJWTAsyncAuth`, `HeaderTokenSyncAuth`,
@@ -138,6 +141,8 @@ of requirements for an API to count as public.
 
 ### Misc
 
+- Documented that `500` must be described or excluded from validation,
+  when running with `validate_responses` enabled, #1370
 - Fixes AI docs and plugin install instructions, #1311
 - Documented safe use of user-provided redirect targets with `RedirectTo`,
   #1326

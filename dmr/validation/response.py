@@ -51,8 +51,16 @@ class ResponseValidator:  # noqa: WPS214
         controller: 'Controller[BaseSerializer]',
         response: _ResponseT,
     ) -> _ResponseT:
-        """Validate response based on provided schema."""
-        if not self._should_validate_responses():
+        """
+        Validate response based on provided schema.
+
+        .. versionchanged:: 0.15.0
+
+            Respects
+            :data:`~dmr.settings.Settings.exclude_validate_responses`.
+
+        """
+        if not self._should_validate_responses(response.status_code):
             return response
         schema = self._get_response_schema(response.status_code)
         self._validate_content_type(response, endpoint.metadata)
@@ -102,7 +110,9 @@ class ResponseValidator:  # noqa: WPS214
             cookies=self.metadata.modification.actionable_cookies(),
             renderer=renderer,
         )
-        if not self._should_validate_responses():
+        if not self._should_validate_responses(
+            all_response_data.status_code,
+        ):
             return all_response_data
         schema = self._get_response_schema(all_response_data.status_code)
         self._validate_body(
@@ -113,8 +123,13 @@ class ResponseValidator:  # noqa: WPS214
         )
         return all_response_data
 
-    def _should_validate_responses(self) -> bool:
-        return self.metadata.validate_responses is True
+    def _should_validate_responses(
+        self,
+        status_code: HTTPStatus | int,
+    ) -> bool:
+        if self.metadata.validate_responses is not True:
+            return False
+        return status_code not in self.metadata.exclude_validate_responses
 
     def _get_response_schema(
         self,

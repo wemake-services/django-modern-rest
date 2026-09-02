@@ -47,6 +47,7 @@ class _BasePayload:
 
     # Common fields:
     validate_responses: bool | None = None
+    exclude_validate_responses: Set[HTTPStatus] | None = None
     semantic_responses: bool | None = None
     exclude_semantic_responses: Set[HTTPStatus] | None = None
     validate_events: bool | None = None

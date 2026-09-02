@@ -146,6 +146,16 @@ The same error handling logic can be represented as a diagram:
   If :ref:`handler500` is configured, it will catch all unhandled errors
   in the provided scope and return ``500`` errors with the correct payload.
 
+.. warning::
+
+  Error responses are validated like any other response.
+  So, with :data:`~dmr.settings.Settings.validate_responses` enabled,
+  every status code that your handlers can return must be described,
+  ``500`` included. See the warning in
+  :data:`~dmr.settings.Settings.validate_responses` for the options
+  you have: describing it, or excluding it from the validation with
+  :data:`~dmr.settings.Settings.exclude_validate_responses`.
+
 
 .. _customizing-error-messages:
 
