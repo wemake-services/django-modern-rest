@@ -215,6 +215,7 @@ Here are our amazing people who made this project possible.
 
   pages/testing/tools-and-styles.rst
   pages/testing/data-generation.rst
+  pages/testing/assertions.rst
   pages/testing/authentication.rst
   pages/testing/throttling.rst
   pages/testing/property-based.rst
