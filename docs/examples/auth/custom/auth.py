@@ -46,6 +46,14 @@ class BaseProxyHeaderAuth:
     def security_requirement(self) -> SecurityRequirement:
         return {self.security_scheme_name: []}
 
+    @property
+    def www_authenticate_challenge(self) -> str | None:
+        """
+        We read a header of our own, so there is no challenge to send.
+
+        Returning ``None`` here is the whole implementation.
+        """
+
     def get_username(self, request: HttpRequest) -> str | None:
         return request.headers.get(self.header_name)
 

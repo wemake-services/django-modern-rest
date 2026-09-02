@@ -126,7 +126,8 @@ all auth in further layers.
   because it will globally disable all auth with no ways to re-enable it.
 
 
-.. _auth-views-security:
+.. _auth-www-authenticate:
+
 ``WWW-Authenticate`` challenges
 -------------------------------
 
@@ -273,6 +274,8 @@ The header is added by :func:`~dmr.errors.global_error_handler`,
 so replacing that handler is how you change or drop this behavior
 for the whole project.
 
+
+.. _auth-views-security:
 
 Security of auth views
 ----------------------

@@ -35,6 +35,8 @@ or :class:`~dmr.security.AsyncAuth` and implements several things:
     - Describes the auth itself in the OpenAPI spec.
   * - :meth:`~dmr.security.SyncAuth.security_requirement`
     - References that description from every endpoint using this auth.
+  * - :meth:`~dmr.security.SyncAuth.www_authenticate_challenge`
+    - Tells a rejected client how to authenticate.
 
 There is one more optional method:
 :meth:`~dmr.metadata.ResponseSpecProvider.provide_response_specs`
@@ -157,52 +159,31 @@ a helper to read it back. That is exactly what
 and :func:`~dmr.security.token.request_token` do.
 
 
-.. _auth-extra-responses:
+Telling clients how to authenticate
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Extra responses
----------------
+:rfc:`9110#section-15.5.2` wants every ``401`` to carry a challenge,
+so :meth:`~dmr.security.SyncAuth.www_authenticate_challenge` is abstract:
+every auth has to answer this question explicitly.
 
-Every auth automatically documents the ``401`` it can produce.
-If yours can fail in some other way, say so by overriding
-:meth:`~dmr.metadata.ResponseSpecProvider.provide_response_specs`,
-and the OpenAPI schema will list it:
+A challenge can only name a scheme the client sends in the
+``Authorization`` header. Our example reads a header of its own, so it
+has nothing to advertise and returns ``None``. Read ``Authorization``
+instead, and you would return the scheme name:
 
-.. code:: python
+.. code-block:: python
 
-  @override
-  def provide_response_specs(
-      self,
-      metadata: EndpointMetadata,
-      controller_cls: type[Controller[BaseSerializer]],
-      existing_responses: Mapping[HTTPStatus, ResponseSpec],
-  ) -> list[ResponseSpec]:
-      return [
-          # Keep the `401` that every auth declares:
-          *self._add_new_response(
-              unauth_response_spec(controller_cls),
-              existing_responses,
-          ),
-          *self._add_new_response(
-              ResponseSpec(
-                  controller_cls.error_model,
-                  status_code=HTTPStatus.FORBIDDEN,
-                  description='Raised when the proxy signature is invalid',
-              ),
-              existing_responses,
-          ),
-      ]
+  >>> from dmr.security.jwt import HeaderJWTSyncAuth
+  >>> from examples.auth.custom.auth import ProxyHeaderSyncAuth
 
-Two things to notice:
+  >>> HeaderJWTSyncAuth().www_authenticate_challenge
+  'Bearer'
 
-- Overriding this replaces the default entirely, so call
-  :func:`~dmr.security.base.unauth_response_spec` yourself to keep
-  the ``401``
-- ``_add_new_response`` is protected on purpose: it is meant for
-  subclasses like yours. It skips a response the endpoint already
-  declares, so you never fight with the endpoint's own specs
+  >>> ProxyHeaderSyncAuth().www_authenticate_challenge is None
+  True
 
-This is how our cookie-based auth documents the ``403`` that its CSRF
-check can return.
+See :ref:`the challenges section <auth-www-authenticate>` for what
+the header looks like and how several auth instances combine.
 
 
 Sync and async
@@ -227,19 +208,47 @@ endpoints, wrap the pair in :class:`~dmr.security.SyncOrAsyncAuth`:
 .. code-block:: python
   :caption: settings.py
 
-  from dmr.settings import Settings
-  from dmr.security import SyncOrAsyncAuth
+  >>> from dmr.security import SyncOrAsyncAuth
+  >>> from dmr.settings import Settings
+  >>> from examples.auth.custom.async_auth import ProxyHeaderAsyncAuth
+  >>> from examples.auth.custom.auth import ProxyHeaderSyncAuth
 
-  from your_app.auth import ProxyHeaderAsyncAuth, ProxyHeaderSyncAuth
+  >>> DMR_SETTINGS = {
+  ...     Settings.auth: [
+  ...         SyncOrAsyncAuth(
+  ...             ProxyHeaderSyncAuth(),
+  ...             ProxyHeaderAsyncAuth(),
+  ...         ),
+  ...     ],
+  ... }
 
-  DMR_SETTINGS = {
-      Settings.auth: [
-          SyncOrAsyncAuth(
-              ProxyHeaderSyncAuth(),
-              ProxyHeaderAsyncAuth(),
-          ),
-      ],
-  }
+
+.. _auth-extra-responses:
+
+Extra responses
+---------------
+
+Every auth automatically documents the ``401`` it can produce.
+If yours can fail in some other way, say so by overriding
+:meth:`~dmr.metadata.ResponseSpecProvider.provide_response_specs`,
+and the OpenAPI schema will list it:
+
+.. literalinclude:: /examples/auth/custom/extra_responses.py
+  :caption: extra_responses.py
+  :linenos:
+  :language: python
+
+Two things to notice:
+
+- Overriding this replaces the default entirely, so call
+  :func:`~dmr.security.base.unauth_response_spec` yourself to keep
+  the ``401``
+- ``_add_new_response`` is protected on purpose: it is meant for
+  subclasses like yours. It skips a response the endpoint already
+  declares, so you never fight with the endpoint's own specs
+
+This is how our cookie-based auth documents the ``403`` that its CSRF
+check can return.
 
 
 Rules to follow
@@ -255,13 +264,6 @@ coroutines.
 So configuration set in ``__init__`` is fine, but anything per-request
 is not. Not even a lock. Put per-request data on the request, like
 ``set_request_attrs`` does above.
-
-``__init__`` must work with no arguments
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Every parameter needs a default, so ``YourAuth()`` alone is always
-valid. Make them keyword-only while you are at it, the way our classes
-do, so adding a parameter later never breaks anyone.
 
 Define ``__slots__``
 ~~~~~~~~~~~~~~~~~~~~
