@@ -161,46 +161,92 @@ and your own code can raise it as well.
 An undescribed ``500`` will not reach the client, response validation
 will replace it with ``422 Returned status code 500 is not specified``.
 
-So, when running with response validation enabled,
-describe ``500`` as a possible response of your API
-with :data:`~dmr.settings.Settings.responses`:
+Pick the way that matches how much you promise to your clients:
 
-.. code-block:: python
-  :caption: settings.py
+.. tabs::
 
-  >>> from http import HTTPStatus
+  .. tab:: Describe it
 
-  >>> from dmr import ResponseSpec
-  >>> from dmr.errors import ErrorModel
-  >>> from dmr.settings import Settings
+    The strictest option: ``500`` becomes a part of your public contract.
 
-  >>> DMR_SETTINGS = {
-  ...     Settings.responses: [
-  ...         ResponseSpec(
-  ...             ErrorModel,
-  ...             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-  ...         ),
-  ...     ],
-  ... }
+    It is listed in the OpenAPI schema, so clients can generate code
+    for it and handle it in a typed way. Its body is still validated,
+    so you cannot accidentally return something
+    that does not match the schema.
 
-Or, if you don't want a ``500`` in your OpenAPI schema at all,
-exclude this status code from the validation
-with :data:`~dmr.settings.Settings.exclude_validate_responses`:
+    .. literalinclude:: /examples/error_handling/server_error_described.py
+      :caption: views.py
+      :language: python
+      :linenos:
+      :emphasize-lines: 16-20
 
-.. code-block:: python
-  :caption: settings.py
+    Use :data:`~dmr.settings.Settings.responses`
+    to do the same for the whole API at once:
 
-  >>> DMR_SETTINGS = {
-  ...     Settings.exclude_validate_responses: {
-  ...         HTTPStatus.INTERNAL_SERVER_ERROR,
-  ...     },
-  ... }
+    .. code-block:: python
+      :caption: settings.py
 
-Both work per-controller and per-endpoint as well:
-with :attr:`~dmr.controller.Controller.responses`
-and :attr:`~dmr.controller.Controller.exclude_validate_responses`
-attributes, or with the arguments of the same names
-to :func:`~dmr.endpoint.modify` and :func:`~dmr.endpoint.validate`.
+      >>> from http import HTTPStatus
+
+      >>> from dmr import ResponseSpec
+      >>> from dmr.errors import ErrorModel
+      >>> from dmr.settings import Settings
+
+      >>> DMR_SETTINGS = {
+      ...     Settings.responses: [
+      ...         ResponseSpec(
+      ...             ErrorModel,
+      ...             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+      ...         ),
+      ...     ],
+      ... }
+
+  .. tab:: Test it, disable validation
+
+    Here ``500`` is a bug and not a feature, so we don't promise it
+    to anyone. Instead, we cover the endpoint with tests to be sure
+    that regular requests never produce it:
+
+    .. literalinclude:: /examples/error_handling/server_error_undocumented.py
+      :caption: views.py
+      :language: python
+      :linenos:
+
+    .. literalinclude:: /examples/error_handling/server_error_test.py
+      :caption: tests.py
+      :language: python
+      :linenos:
+
+    And then we turn the validation off in production,
+    where it costs performance anyway, see :ref:`response_validation`:
+
+    .. code-block:: python
+      :caption: settings.py
+
+      >>> DMR_SETTINGS = {Settings.validate_responses: False}
+
+    In development the validation is still on, so an unexpected ``500``
+    shows up as a ``422`` telling you that this status code
+    is not described. Which is exactly what it is: an undescribed response.
+
+  .. tab:: Exclude it
+
+    The simplest option: keep the validation on,
+    but tell us not to validate this status code
+    with :data:`~dmr.settings.Settings.exclude_validate_responses`.
+
+    ``500`` does not get into the OpenAPI schema
+    and reaches the client as-is:
+
+    .. literalinclude:: /examples/error_handling/server_error_excluded.py
+      :caption: views.py
+      :language: python
+      :linenos:
+      :emphasize-lines: 15-16
+
+    All other status codes are still validated.
+    The same can be set globally
+    and per-endpoint, see :ref:`exclude-validate-responses-levels`.
 
 .. versionadded:: 0.15.0
 
