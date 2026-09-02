@@ -127,7 +127,7 @@ class ResponseValidator:  # noqa: WPS214
         self,
         status_code: HTTPStatus | int,
     ) -> bool:
-        if self.metadata.validate_responses is not True:
+        if self.metadata.validate_responses:
             return False
         return status_code not in self.metadata.exclude_validate_responses
 
