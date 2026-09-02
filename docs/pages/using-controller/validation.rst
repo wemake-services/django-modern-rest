@@ -57,6 +57,35 @@ So, you can disable response validation via configuration:
       >>> DMR_SETTINGS = {Settings.validate_responses: False}
 
 
+Excluding some status codes
+---------------------------
+
+.. versionadded:: 0.15.0
+
+Sometimes you don't want to disable the validation completely,
+you just have status codes that are not in your schema.
+``500`` is the usual one: we raise
+:exc:`~dmr.exceptions.InternalServerError` in several places,
+and your own code can raise it as well.
+
+Undescribed status codes are replaced with
+``422 Returned status code 500 is not specified``, which hides the real error.
+To let them through, list them
+in :data:`~dmr.settings.Settings.exclude_validate_responses`,
+in the controller attribute of the same name,
+or in the argument of the same name
+to :func:`~dmr.endpoint.modify` and :func:`~dmr.endpoint.validate`:
+
+.. literalinclude:: /examples/using_controller/exclude_status_codes.py
+  :caption: views.py
+  :language: python
+  :linenos:
+  :emphasize-lines: 15-16
+
+All other status codes are still validated as usual.
+See :ref:`error-responses-validation` for more details.
+
+
 The right way
 -------------
 
