@@ -1,3 +1,4 @@
+import json
 from http import HTTPStatus
 from typing import Final, Self, final
 
@@ -13,6 +14,37 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.http import HttpBasicAsyncAuth, HttpBasicSyncAuth, basic_auth
 from dmr.serializer import BaseSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
+
+
+class _SyncAuth(HttpBasicSyncAuth):
+    @override
+    def authenticate(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[BaseSerializer],
+        username: str,
+        password: str,
+    ) -> Self | None:
+        if username == 'test' and password == 'pass':  # noqa: S105
+            return self
+        return None
+
+
+class _AsyncAuth(HttpBasicAsyncAuth):
+    @override
+    async def authenticate(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[BaseSerializer],
+        username: str,
+        password: str,
+    ) -> Self | None:
+        if username == 'test' and password == 'pass':  # noqa: S105
+            return self
+        return None
+
+
+# Security schemes:
 
 
 @pytest.mark.parametrize('typ', [HttpBasicSyncAuth, HttpBasicAsyncAuth])
@@ -45,7 +77,6 @@ def test_custom_header_schema(
             type='apiKey',
             description=(
                 'HTTP Basic auth via `X-Api-Auth` header using '
-                '`<base64(username:password)>` or '
                 '`Basic <base64(username:password)>` format'
             ),
             name='X-Api-Auth',
@@ -153,3 +184,393 @@ async def test_async_percent_credentials(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == status, response.content
+
+
+@pytest.mark.parametrize('typ', [HttpBasicSyncAuth, HttpBasicAsyncAuth])
+@pytest.mark.parametrize(
+    ('auth_scheme', 'description'),
+    [
+        (
+            'Custom',
+            (
+                'HTTP Basic auth via `Authorization` header using '
+                '`Custom <base64(username:password)>` format'
+            ),
+        ),
+        # `auth_scheme` is matched exactly, so casing matters:
+        (
+            'basic',
+            (
+                'HTTP Basic auth via `Authorization` header using '
+                '`basic <base64(username:password)>` format'
+            ),
+        ),
+        # Empty scheme reads the credentials without any prefix:
+        (
+            '',
+            (
+                'HTTP Basic auth via `Authorization` header using '
+                '`<base64(username:password)>` format'
+            ),
+        ),
+    ],
+)
+def test_custom_auth_scheme_schema(
+    typ: type[HttpBasicSyncAuth] | type[HttpBasicAsyncAuth],
+    *,
+    auth_scheme: str,
+    description: str,
+) -> None:
+    """Ensures that a non-standard scheme is documented with its real value."""
+    instance = typ(auth_scheme=auth_scheme)
+
+    assert instance.security_schemes == {
+        'http_basic': SecurityScheme(
+            type='apiKey',
+            description=description,
+            name='Authorization',
+            security_scheme_in='header',
+        ),
+    }
+    assert instance.security_requirement == {'http_basic': []}
+
+
+# Default `Basic` scheme:
+
+#: Values that must not be treated as basic auth credentials.
+_UNSUPPORTED_SCHEMES: Final = (
+    # Credentials without the `auth_scheme` prefix:
+    basic_auth('test', 'pass', prefix=''),
+    # `auth_scheme` is matched exactly, so casing matters:
+    basic_auth('test', 'pass', prefix='basic '),
+    # Some other auth might handle these:
+    basic_auth('test', 'pass', prefix='Bearer '),
+    # Prefix alone and extra parts are not valid either:
+    'Basic',
+    f'{basic_auth("test", "pass")} extra',
+)
+
+
+class _SyncController(Controller[PydanticSerializer]):
+    auth = (_SyncAuth(),)
+
+    def get(self) -> str:
+        return 'authed'
+
+
+class _AsyncController(Controller[PydanticSerializer]):
+    auth = (_AsyncAuth(),)
+
+    async def get(self) -> str:
+        return 'authed'
+
+
+@pytest.mark.parametrize(
+    ('auth_header', 'status_code'),
+    [
+        (basic_auth('test', 'pass'), HTTPStatus.OK),
+        # Right scheme, but the credentials are wrong:
+        (basic_auth('test', 'wrong'), HTTPStatus.UNAUTHORIZED),
+        *[
+            (auth_header, HTTPStatus.UNAUTHORIZED)
+            for auth_header in _UNSUPPORTED_SCHEMES
+        ],
+    ],
+)
+def test_sync_auth_scheme(
+    dmr_rf: DMRRequestFactory,
+    *,
+    auth_header: str,
+    status_code: HTTPStatus,
+) -> None:
+    """Ensures that sync auth only accepts the exact `Basic` prefix."""
+    request = dmr_rf.get('/whatever/', headers={'Authorization': auth_header})
+
+    response = _SyncController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == status_code, response.content
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('auth_header', 'status_code'),
+    [
+        (basic_auth('test', 'pass'), HTTPStatus.OK),
+        # Right scheme, but the credentials are wrong:
+        (basic_auth('test', 'wrong'), HTTPStatus.UNAUTHORIZED),
+        *[
+            (auth_header, HTTPStatus.UNAUTHORIZED)
+            for auth_header in _UNSUPPORTED_SCHEMES
+        ],
+    ],
+)
+async def test_async_auth_scheme(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    auth_header: str,
+    status_code: HTTPStatus,
+) -> None:
+    """Ensures that async auth only accepts the exact `Basic` prefix."""
+    request = dmr_async_rf.get(
+        '/whatever/',
+        headers={'Authorization': auth_header},
+    )
+
+    response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == status_code, response.content
+
+
+# Custom scheme:
+
+
+class _CustomSchemeSyncController(Controller[PydanticSerializer]):
+    auth = (_SyncAuth(auth_scheme='Custom'),)
+
+    def get(self) -> str:
+        return 'authed'
+
+
+class _CustomSchemeAsyncController(Controller[PydanticSerializer]):
+    auth = (_AsyncAuth(auth_scheme='Custom'),)
+
+    async def get(self) -> str:
+        return 'authed'
+
+
+@pytest.mark.parametrize(
+    ('auth_header', 'status_code'),
+    [
+        (basic_auth('test', 'pass', prefix='Custom '), HTTPStatus.OK),
+        (basic_auth('test', 'pass'), HTTPStatus.UNAUTHORIZED),
+    ],
+)
+def test_sync_custom_auth_scheme(
+    dmr_rf: DMRRequestFactory,
+    *,
+    auth_header: str,
+    status_code: HTTPStatus,
+) -> None:
+    """Ensures that sync auth can require a custom prefix."""
+    request = dmr_rf.get('/whatever/', headers={'Authorization': auth_header})
+
+    response = _CustomSchemeSyncController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == status_code, response.content
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('auth_header', 'status_code'),
+    [
+        (basic_auth('test', 'pass', prefix='Custom '), HTTPStatus.OK),
+        (basic_auth('test', 'pass'), HTTPStatus.UNAUTHORIZED),
+    ],
+)
+async def test_async_custom_auth_scheme(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    auth_header: str,
+    status_code: HTTPStatus,
+) -> None:
+    """Ensures that async auth can require a custom prefix."""
+    request = dmr_async_rf.get(
+        '/whatever/',
+        headers={'Authorization': auth_header},
+    )
+
+    response = await dmr_async_rf.wrap(
+        _CustomSchemeAsyncController.as_view()(request),
+    )
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == status_code, response.content
+
+
+# Empty scheme, the pre-0.15.0 prefixless contract:
+
+
+class _EmptySchemeSyncController(Controller[PydanticSerializer]):
+    auth = (_SyncAuth(auth_scheme=''),)
+
+    def get(self) -> str:
+        return 'authed'
+
+
+class _EmptySchemeAsyncController(Controller[PydanticSerializer]):
+    auth = (_AsyncAuth(auth_scheme=''),)
+
+    async def get(self) -> str:
+        return 'authed'
+
+
+@pytest.mark.parametrize(
+    ('auth_header', 'status_code'),
+    [
+        (basic_auth('test', 'pass', prefix=''), HTTPStatus.OK),
+        # The whole value is the credentials now, so a prefix breaks it:
+        (basic_auth('test', 'pass'), HTTPStatus.UNAUTHORIZED),
+    ],
+)
+def test_sync_empty_auth_scheme(
+    dmr_rf: DMRRequestFactory,
+    *,
+    auth_header: str,
+    status_code: HTTPStatus,
+) -> None:
+    """Ensures that sync auth can read credentials without a prefix."""
+    request = dmr_rf.get('/whatever/', headers={'Authorization': auth_header})
+
+    response = _EmptySchemeSyncController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == status_code, response.content
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ('auth_header', 'status_code'),
+    [
+        (basic_auth('test', 'pass', prefix=''), HTTPStatus.OK),
+        # The whole value is the credentials now, so a prefix breaks it:
+        (basic_auth('test', 'pass'), HTTPStatus.UNAUTHORIZED),
+    ],
+)
+async def test_async_empty_auth_scheme(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    auth_header: str,
+    status_code: HTTPStatus,
+) -> None:
+    """Ensures that async auth can read credentials without a prefix."""
+    request = dmr_async_rf.get(
+        '/whatever/',
+        headers={'Authorization': auth_header},
+    )
+
+    response = await dmr_async_rf.wrap(
+        _EmptySchemeAsyncController.as_view()(request),
+    )
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == status_code, response.content
+
+
+# Auth chains:
+
+#: Header and value that the fallback auth of chained controllers accepts.
+_FALLBACK_HEADER: Final = 'X-Fallback-Auth'
+_FALLBACK_VALUE: Final = basic_auth('test', 'pass')
+
+#: Values that have the right prefix, but cannot be parsed at all.
+_BROKEN_CREDENTIALS: Final = (
+    'Basic not-a-base64',
+    'Basic dGVzdEBwYXNz',  # `test@pass` encoded, missing the `:` separator
+)
+
+
+class _ChainedSyncController(Controller[PydanticSerializer]):
+    auth = (
+        _SyncAuth(),
+        _SyncAuth(header=_FALLBACK_HEADER, security_scheme_name='fallback'),
+    )
+
+    def get(self) -> str:
+        return 'authed'
+
+
+class _ChainedAsyncController(Controller[PydanticSerializer]):
+    auth = (
+        _AsyncAuth(),
+        _AsyncAuth(header=_FALLBACK_HEADER, security_scheme_name='fallback'),
+    )
+
+    async def get(self) -> str:
+        return 'authed'
+
+
+def test_sync_missing_header_is_skipped(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures that a missing header lets the next sync auth run."""
+    request = dmr_rf.get(
+        '/whatever/',
+        headers={_FALLBACK_HEADER: _FALLBACK_VALUE},
+    )
+
+    response = _ChainedSyncController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert json.loads(response.content) == 'authed'
+
+
+@pytest.mark.asyncio
+async def test_async_missing_header_is_skipped(
+    dmr_async_rf: DMRAsyncRequestFactory,
+) -> None:
+    """Ensures that a missing header lets the next async auth run."""
+    request = dmr_async_rf.get(
+        '/whatever/',
+        headers={_FALLBACK_HEADER: _FALLBACK_VALUE},
+    )
+
+    response = await dmr_async_rf.wrap(
+        _ChainedAsyncController.as_view()(request),
+    )
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert json.loads(response.content) == 'authed'
+
+
+@pytest.mark.parametrize('auth_header', _BROKEN_CREDENTIALS)
+def test_sync_broken_credentials_raise(
+    dmr_rf: DMRRequestFactory,
+    *,
+    auth_header: str,
+) -> None:
+    """Ensures that broken credentials don't fall back to the next sync auth."""
+    request = dmr_rf.get(
+        '/whatever/',
+        headers={
+            'Authorization': auth_header,
+            _FALLBACK_HEADER: _FALLBACK_VALUE,
+        },
+    )
+
+    response = _ChainedSyncController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('auth_header', _BROKEN_CREDENTIALS)
+async def test_async_broken_credentials_raise(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    auth_header: str,
+) -> None:
+    """Ensures that broken credentials don't fall back to the next auth."""
+    request = dmr_async_rf.get(
+        '/whatever/',
+        headers={
+            'Authorization': auth_header,
+            _FALLBACK_HEADER: _FALLBACK_VALUE,
+        },
+    )
+
+    response = await dmr_async_rf.wrap(
+        _ChainedAsyncController.as_view()(request),
+    )
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Not authenticated', 'type': 'security'}],
+    })

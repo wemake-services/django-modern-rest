@@ -106,7 +106,7 @@ async def test_parse_headers_ignored_async_content_type(
         headers={
             'Content-Type': 'application/xml',
             'X-API-Token': '123',
-            'Authorization': basic_auth('test', 'pass', prefix=''),
+            'Authorization': basic_auth('test', 'pass'),
         },
     )
 
