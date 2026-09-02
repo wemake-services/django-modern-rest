@@ -64,7 +64,7 @@ def check_event_field(event_field: Any, field_name: str) -> None:
     if _NULL_CHAR in event_field:
         raise ValidationError([
             ErrorDetail(
-                msg=f'Event {field_name} must not contain null byte "\\x00"',
+                msg=rf'Event {field_name} must not contain null byte "\x00"',
                 type=ErrorType.streaming,
                 loc=[field_name],
             ),
