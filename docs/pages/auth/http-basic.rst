@@ -55,6 +55,8 @@ You can customize:
 - Security scheme name, default: ``http_basic``
 - Header name, default: ``Authorization``
 - Header value prefix (``auth_scheme``), default: ``Basic``
+- The ``WWW-Authenticate`` challenge (``www_authenticate`` and ``realm``),
+  see :doc:`common`
 
 The header value must always start with the ``auth_scheme`` prefix,
 which is matched exactly. So, with the default settings only
