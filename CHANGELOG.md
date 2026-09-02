@@ -136,6 +136,11 @@ of requirements for an API to count as public.
 - Fixed `JWToken.decode` validating `exp` and `iat` twice,
   now `leeway`, `verify_exp`, and `verify_iat` are respected
   and invalid tokens return `401` instead of `500`, #1324
+- Fixed the JWT blocklist being silently bypassed by tokens without `jti`,
+  `JWTokenBlocklistSyncMixin` and `JWTokenBlocklistAsyncMixin`
+  now add `jti` to `require_claims`, so such tokens get `401`.
+  Blocklisting them returns `401` as well
+  instead of failing with a database `IntegrityError`, #1322
 - JWT authentication now rejects refresh tokens when access tokens are expected,
   #1320
 
@@ -150,6 +155,8 @@ of requirements for an API to count as public.
   installations to `django-modern-rest` and `django-allauth` headless, #1193
 - Documented why and how to remove expired `BlocklistedJWToken`
   and `Token` rows on a schedule, #1336
+- Added a guide on writing your own auth class
+  for transports we don't ship, #1366
 
 
 ## 0.14.0 (2026-08-14)
