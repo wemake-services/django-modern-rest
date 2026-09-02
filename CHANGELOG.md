@@ -104,6 +104,8 @@ of requirements for an API to count as public.
 - Fixed `JWToken.decode` validating `exp` and `iat` twice,
   now `leeway`, `verify_exp`, and `verify_iat` are respected
   and invalid tokens return `401` instead of `500`, #1324
+- JWT authentication now rejects refresh tokens when access tokens are expected,
+  #1320
 
 ### Misc
 

@@ -51,6 +51,7 @@ def build_user_token(admin_user: User, settings: LazySettings) -> _TokenBuilder:
     """Token factory for tests."""
 
     def factory(**kwargs: Unpack[_JWTokenKwargs]) -> str:
+        kwargs.setdefault('extras', {'type': 'access'})
         token = JWToken(
             sub=str(admin_user.pk),
             **kwargs,
