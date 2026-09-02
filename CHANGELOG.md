@@ -84,6 +84,11 @@ of requirements for an API to count as public.
 - Fixed `JWToken.decode` validating `exp` and `iat` twice,
   now `leeway`, `verify_exp`, and `verify_iat` are respected
   and invalid tokens return `401` instead of `500`, #1324
+- Fixed the JWT blocklist being silently bypassed by tokens without `jti`,
+  `JWTokenBlocklistSyncMixin` and `JWTokenBlocklistAsyncMixin`
+  now add `jti` to `require_claims`, so such tokens get `401`.
+  Blocklisting them returns `401` as well
+  instead of failing with a database `IntegrityError`, #1322
 
 ### Misc
 
