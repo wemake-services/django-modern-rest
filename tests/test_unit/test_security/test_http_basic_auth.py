@@ -56,7 +56,7 @@ def test_custom_header_schema(
 
 
 _USERNAME: Final = 'user%40name'
-_PASSWORD: Final = 'pass%3Aword'
+_PASSWORD: Final = 'pass%3Aword'  # noqa: S105
 
 _CREDENTIALS: Final = (
     ((_USERNAME, _PASSWORD), HTTPStatus.OK),
