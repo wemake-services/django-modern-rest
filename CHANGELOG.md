@@ -27,6 +27,12 @@ of requirements for an API to count as public.
   use `FileResponseSpec.return_type` instead, #1278
 - Removed `FileMetadataComponent.schema_metadata`,
   now we use `SupportsFileParsing.schema_metadata` instead, #1278
+- `SSEvent` does not check `id` and `event` fields for null bytes
+  and line breaks on creation anymore, this is now a part of the events
+  validation pipeline, so it respects `validate_events`, #1329
+- `check_event_field` now raises `ValidationError` instead of `ValueError`,
+  so a wrong field is streamed as an `error` event
+  and does not break the whole stream, #1329
 - `401` responses now carry a `WWW-Authenticate` header as required
   by RFC 9110, when the endpoint's auth can express a challenge.
   Note that browsers show their native login prompt on a `Basic` challenge,
@@ -71,6 +77,9 @@ of requirements for an API to count as public.
 - Added `FileMetadata` conditional types, #1278
 - Added `SupportsFileParsing.schema_metadata` method to customize
   file schema from the parser, #1278
+- Added `validate_event_fields` to the `SSEStreamingValidator` pipeline,
+  it checks `id` and `event` fields of all event types,
+  including custom ones, #1329
 - Added `JWToken.validate_issued_claims` method to customize
   the checks we run before signing a token, #1324
 - Added `security.NO_STORE_HEADERS`, all auth views we ship now
@@ -101,6 +110,10 @@ of requirements for an API to count as public.
   for file responses, #1278
 - Fixed `SimpleRate` throttling reports with redis backends,
   it used to error on missing throttling stats, #1333
+- SSE events are not validated at all when `validate_events` is `False`,
+  `id` and `event` fields used to be checked even then, #1329
+- Custom SSE event types now have their `id` and `event` fields
+  validated just like `SSEvent` does, #1329
 - Fixed `JWToken.decode` validating `exp` and `iat` twice,
   now `leeway`, `verify_exp`, and `verify_iat` are respected
   and invalid tokens return `401` instead of `500`, #1324
