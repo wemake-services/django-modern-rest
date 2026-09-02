@@ -48,6 +48,8 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
     :meth:`get_token_from_request` and :meth:`split_encoded_token`.
     """
 
+    expected_token_type: str = 'access'  # noqa: S105
+
     __slots__ = (
         'accepted_audiences',
         'accepted_issuers',
@@ -153,7 +155,7 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
 
     def decode_token(self, encoded_token: str) -> JWToken:
         """Decodes token object from the encoded string."""
-        return self.token_cls.decode(
+        token = self.token_cls.decode(
             encoded_token=encoded_token,
             secret=self.secret,
             algorithm=self.algorithm,
@@ -169,6 +171,9 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
             strict_audience=self.strict_audience,
             enforce_minimum_key_length=self.enforce_minimum_key_length,
         )
+        if token.extras.get('type') != self.expected_token_type:
+            raise NotAuthenticatedError
+        return token
 
     def claim_from_token(self, token: JWToken) -> str:
         """

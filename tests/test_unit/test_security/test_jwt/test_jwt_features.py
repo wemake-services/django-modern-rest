@@ -37,6 +37,7 @@ def build_user_token(admin_user: User, settings: LazySettings) -> _TokenBuilder:
 
         kwargs.setdefault('sub', str(admin_user.pk))
         kwargs.setdefault('exp', exp_date)
+        kwargs.setdefault('extras', {'type': 'access'})
         return JWToken(
             **kwargs,
         ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
@@ -253,4 +254,41 @@ async def test_custom_jwt_header(
 
     assert isinstance(response, HttpResponse)
     assert response.headers == {'Content-Type': 'application/json'}
+    assert response.status_code == response_code
+
+
+@final
+class _TokenTypeController(Controller[PydanticSerializer]):
+    @modify(auth=[JWTSyncAuth()])
+    def get(self) -> str:
+        return 'authed'
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('token_type', 'response_code'),
+    [
+        ('access', HTTPStatus.OK),
+        ('refresh', HTTPStatus.UNAUTHORIZED),
+    ],
+)
+def test_jwt_token_type_validation(
+    dmr_rf: DMRRequestFactory,
+    build_user_token: _TokenBuilder,
+    *,
+    token_type: str,
+    response_code: HTTPStatus,
+) -> None:
+    """Ensures that only access tokens can be used for authentication."""
+    token = build_user_token(extras={'type': token_type})
+    request = dmr_rf.get(
+        '/whatever/',
+        headers={
+            'Authorization': f'Bearer {token}',
+        },
+    )
+
+    response = _TokenTypeController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
     assert response.status_code == response_code
