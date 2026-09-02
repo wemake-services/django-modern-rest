@@ -1,9 +1,9 @@
 import datetime as dt
 import uuid
 from abc import abstractmethod
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from http import HTTPStatus
-from typing import Any, Generic
+from typing import Any, ClassVar, Generic
 
 from django.contrib.auth import aauthenticate, authenticate
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -90,7 +90,7 @@ class ObtainTokenSyncController(
 
     token_cls: type[TokenLikeSync[_UserT]]
 
-    responses = (
+    responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
@@ -194,7 +194,7 @@ class ObtainTokenAsyncController(
 
     token_cls: type[TokenLikeAsync[_UserT]]
 
-    responses = (
+    responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,

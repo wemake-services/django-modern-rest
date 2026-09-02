@@ -1,7 +1,7 @@
 from abc import abstractmethod
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from http import HTTPStatus
-from typing import Any, Generic, TypeVar
+from typing import Any, ClassVar, Generic, TypeVar
 
 from django.conf import settings
 from django.contrib.auth import aauthenticate, alogin, authenticate, login
@@ -55,7 +55,7 @@ class DjangoSessionSyncController(
 
     """
 
-    responses = (
+    responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
@@ -130,7 +130,7 @@ class DjangoSessionAsyncController(
 
     """
 
-    responses = (
+    responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,

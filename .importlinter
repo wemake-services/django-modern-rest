@@ -42,6 +42,9 @@ ignore_imports =
   dmr.settings -> dmr.openapi.config
   # Schema loading can call pydantic plugin:
   dmr.openapi.mappers.schema_normalization -> dmr.plugins.pydantic
+  # The default error handler adds `WWW-Authenticate` to `401` responses,
+  # it needs the auth chain to know what challenge to send:
+  dmr.errors -> dmr.security.base
 
 [importlinter:contract:no-optional-deps]
 name = Do not use these optional dependencies outside of plugins

@@ -51,6 +51,7 @@ def build_user_token(admin_user: User, settings: LazySettings) -> _TokenBuilder:
     """Token factory for tests."""
 
     def factory(**kwargs: Unpack[_JWTokenKwargs]) -> str:
+        kwargs.setdefault('extras', {'type': 'access'})
         token = JWToken(
             sub=str(admin_user.pk),
             **kwargs,
@@ -160,7 +161,10 @@ def test_blocklist_sync_mixin_unauthorized(
     assert request_jwt(request) is None
     with pytest.raises(AttributeError, match='__dmr_jwt__'):
         request_jwt(request, strict=True)
-    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.headers == {
+        'Content-Type': 'application/json',
+        'WWW-Authenticate': 'Bearer',
+    }
     assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert json.loads(response.content) == snapshot({
         'detail': [
@@ -276,7 +280,10 @@ async def test_blocklist_async_mixin_unauthorized(
     )
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.headers == {
+        'Content-Type': 'application/json',
+        'WWW-Authenticate': 'Bearer',
+    }
     assert response.status_code == HTTPStatus.UNAUTHORIZED
     assert json.loads(response.content) == snapshot({
         'detail': [
