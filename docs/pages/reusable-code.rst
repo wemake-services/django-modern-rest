@@ -67,29 +67,10 @@ But, this is just the first step. We can do much more!
   from the value you assign, and subclasses won't be able
   to add or to remove items from it.
 
-  .. code:: python
-
-    >>> from collections.abc import Sequence
-    >>> from http import HTTPStatus
-    >>> from typing import ClassVar
-
-    >>> from dmr import Controller, ResponseSpec
-    >>> from dmr.errors import ErrorModel
-    >>> from dmr.plugins.pydantic import PydanticSerializer
-
-    >>> class MyBaseController(Controller[PydanticSerializer]):
-    ...     responses: ClassVar[Sequence[ResponseSpec]] = (
-    ...         ResponseSpec(ErrorModel, status_code=HTTPStatus.NOT_FOUND),
-    ...     )
-    ...
-    ...     def get(self) -> str:
-    ...         return 'reusable'
-
-    >>> class MyController(MyBaseController):
-    ...     responses = (
-    ...         *MyBaseController.responses,
-    ...         ResponseSpec(ErrorModel, status_code=HTTPStatus.CONFLICT),
-    ...     )
+  .. literalinclude:: /examples/reusable_code/reusable_options.py
+    :caption: views.py
+    :linenos:
+    :language: python
 
 
 Generic parsing and response models
