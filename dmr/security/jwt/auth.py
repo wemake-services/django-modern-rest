@@ -37,6 +37,10 @@ USER_LOOKUP_ERRORS: Final = (
     ValueError,
 )
 
+# The only header that a `WWW-Authenticate` challenge can ask the client for,
+# and the only one that OpenAPI can describe as `type: http`:
+_AUTHORIZATION_HEADER: Final = 'Authorization'
+
 
 class _BaseJWTAuth:  # noqa: WPS214, WPS230
     """
@@ -47,6 +51,8 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
     Subclasses define the transport by implementing
     :meth:`get_token_from_request` and :meth:`split_encoded_token`.
     """
+
+    expected_token_type: str = 'access'  # noqa: S105
 
     __slots__ = (
         'accepted_audiences',
@@ -153,7 +159,7 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
 
     def decode_token(self, encoded_token: str) -> JWToken:
         """Decodes token object from the encoded string."""
-        return self.token_cls.decode(
+        token = self.token_cls.decode(
             encoded_token=encoded_token,
             secret=self.secret,
             algorithm=self.algorithm,
@@ -169,6 +175,9 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
             strict_audience=self.strict_audience,
             enforce_minimum_key_length=self.enforce_minimum_key_length,
         )
+        if token.extras.get('type') != self.expected_token_type:
+            raise NotAuthenticatedError
+        return token
 
     def claim_from_token(self, token: JWToken) -> str:
         """
@@ -194,6 +203,25 @@ class _HeaderJWTAuth:
     auth_header: str
     auth_scheme: str
     security_scheme_name: str
+    www_authenticate: bool
+
+    @property
+    def www_authenticate_challenge(self) -> str | None:
+        """
+        Challenge naming the scheme this auth expects, like ``Bearer``.
+
+        Returns ``None`` for a custom *auth_header*, because a challenge
+        can only ask the client for the ``Authorization`` header.
+        ``realm`` is optional for bearer tokens, see :rfc:`6750#section-3`,
+        and we don't send it.
+        """
+        if (
+            not self.www_authenticate
+            or not self.auth_scheme
+            or self.auth_header != _AUTHORIZATION_HEADER
+        ):
+            return None
+        return self.auth_scheme
 
     @property
     def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
@@ -231,7 +259,7 @@ class _HeaderJWTAuth:
     def _uses_standard_http_bearer_auth(self) -> bool:
         """Whether the auth contract matches OpenAPI HTTP bearer auth."""
         return (
-            self.auth_header == 'Authorization'
+            self.auth_header == _AUTHORIZATION_HEADER
             and self.auth_scheme.casefold() == 'bearer'
         )
 
@@ -387,13 +415,14 @@ class HeaderJWTSyncAuth(_HeaderJWTAuth, BaseJWTSyncAuth):
 
     """
 
-    __slots__ = ('auth_header', 'auth_scheme')
+    __slots__ = ('auth_header', 'auth_scheme', 'www_authenticate')
 
     def __init__(  # noqa: WPS211
         self,
         *,
         auth_header: str = 'Authorization',
         auth_scheme: str = 'Bearer',
+        www_authenticate: bool = True,
         user_id_field: str = 'pk',
         algorithm: str = 'HS256',
         security_scheme_name: str = 'jwt',
@@ -417,6 +446,8 @@ class HeaderJWTSyncAuth(_HeaderJWTAuth, BaseJWTSyncAuth):
         On top of the regular jwt settings, *auth_header* selects
         the header to read, and *auth_scheme* is the prefix
         that the header value must start with.
+        *www_authenticate* controls whether ``401`` responses advertise
+        this auth in the ``WWW-Authenticate`` header.
         """
         super().__init__(
             user_id_field=user_id_field,
@@ -438,6 +469,7 @@ class HeaderJWTSyncAuth(_HeaderJWTAuth, BaseJWTSyncAuth):
         )
         self.auth_header = auth_header
         self.auth_scheme = auth_scheme
+        self.www_authenticate = www_authenticate
 
 
 class HeaderJWTAsyncAuth(_HeaderJWTAuth, BaseJWTAsyncAuth):
@@ -453,13 +485,14 @@ class HeaderJWTAsyncAuth(_HeaderJWTAuth, BaseJWTAsyncAuth):
 
     """
 
-    __slots__ = ('auth_header', 'auth_scheme')
+    __slots__ = ('auth_header', 'auth_scheme', 'www_authenticate')
 
     def __init__(  # noqa: WPS211
         self,
         *,
         auth_header: str = 'Authorization',
         auth_scheme: str = 'Bearer',
+        www_authenticate: bool = True,
         user_id_field: str = 'pk',
         algorithm: str = 'HS256',
         security_scheme_name: str = 'jwt',
@@ -483,6 +516,8 @@ class HeaderJWTAsyncAuth(_HeaderJWTAuth, BaseJWTAsyncAuth):
         On top of the regular jwt settings, *auth_header* selects
         the header to read, and *auth_scheme* is the prefix
         that the header value must start with.
+        *www_authenticate* controls whether ``401`` responses advertise
+        this auth in the ``WWW-Authenticate`` header.
         """
         super().__init__(
             user_id_field=user_id_field,
@@ -504,6 +539,7 @@ class HeaderJWTAsyncAuth(_HeaderJWTAuth, BaseJWTAsyncAuth):
         )
         self.auth_header = auth_header
         self.auth_scheme = auth_scheme
+        self.www_authenticate = www_authenticate
 
 
 #: Backwards compatible alias of :class:`HeaderJWTSyncAuth`.

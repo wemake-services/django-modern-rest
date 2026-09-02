@@ -36,6 +36,11 @@ class _NoSchemeAuth(SyncAuth):
     def security_requirement(self) -> SecurityRequirement:
         return {'noScheme': []}
 
+    @property
+    @override
+    def www_authenticate_challenge(self) -> str | None:
+        """This auth has no challenge, so this returns ``None``."""
+
 
 class _WithSchemeAuth(SyncAuth):
     @override
@@ -57,6 +62,11 @@ class _WithSchemeAuth(SyncAuth):
     @override
     def security_requirement(self) -> SecurityRequirement:
         return {'testScheme': []}
+
+    @property
+    @override
+    def www_authenticate_challenge(self) -> str | None:
+        """This auth has no challenge, so this returns ``None``."""
 
 
 @pytest.fixture

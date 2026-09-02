@@ -17,6 +17,7 @@ def _encode(subject: str, secret: str) -> str:
     return JWToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub=subject,
+        extras={'type': 'access'},
     ).encode(secret=secret, algorithm='HS256')
 
 

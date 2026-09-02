@@ -47,6 +47,7 @@ async def test_async_jwt_view(
     token = JWToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub=str(admin_user.pk),
+        extras={'type': 'access'},
     ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
     request = dmr_async_rf.get(
         f'/whatever/?user_id={admin_user.pk}',
@@ -94,6 +95,7 @@ def test_sync_jwt_view(
     token = JWToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub=str(admin_user.pk),
+        extras={'type': 'access'},
     ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
     request = dmr_rf.get(
         f'/whatever/?user_id={admin_user.pk}',

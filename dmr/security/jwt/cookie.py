@@ -35,6 +35,15 @@ class _BaseCookieJWTAuth(ResponseSpecProvider):
     security_scheme_name: str
 
     @property
+    def www_authenticate_challenge(self) -> str | None:
+        """
+        Cookie auth has no challenge to advertise, so this returns ``None``.
+
+        A challenge asks the client for the ``Authorization`` header,
+        and this auth reads a cookie instead.
+        """
+
+    @property
     def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
         return {
@@ -56,7 +65,7 @@ class _BaseCookieJWTAuth(ResponseSpecProvider):
         """Declare extra responses for cookie auth + CSRF checks."""
         return [
             *self._add_new_response(
-                unauth_response_spec(controller_cls),
+                unauth_response_spec(controller_cls, metadata),
                 existing_responses,
             ),
             *self._add_new_response(
