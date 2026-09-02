@@ -277,6 +277,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             throttling_allow_unsafe_cache=allow_cache,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
+            exclude_validate_responses=(
+                self._build_exclude_validate_responses()
+            ),
             semantic_responses=self._build_semantic_responses(),
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
             validate_events=self._build_validate_events(),
@@ -338,6 +341,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             throttling_allow_unsafe_cache=allow_cache,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
+            exclude_validate_responses=(
+                self._build_exclude_validate_responses()
+            ),
             semantic_responses=self._build_semantic_responses(),
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
             validate_events=self._build_validate_events(),
@@ -393,6 +399,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             throttling_allow_unsafe_cache=allow_cache,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
+            exclude_validate_responses=(
+                self._build_exclude_validate_responses()
+            ),
             semantic_responses=self._build_semantic_responses(),
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
             validate_events=self._build_validate_events(),
@@ -725,6 +734,13 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         if self.controller_cls.semantic_responses is not None:
             return self.controller_cls.semantic_responses
         return resolve_setting(Settings.semantic_responses)  # type: ignore[no-any-return]
+
+    def _build_exclude_validate_responses(self) -> frozenset[HTTPStatus]:
+        return self._build_optional_set(
+            self.payload.exclude_validate_responses if self.payload else set(),
+            self.controller_cls.exclude_validate_responses,
+            resolve_setting(Settings.exclude_validate_responses),
+        )
 
     def _build_exclude_semantic_responses(self) -> frozenset[HTTPStatus]:
         return self._build_optional_set(
