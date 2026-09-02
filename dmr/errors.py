@@ -26,6 +26,7 @@ from dmr.exceptions import (
     TooManyRequestsError,
     ValidationError,
 )
+from dmr.security.base import add_www_authenticate
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -304,6 +305,10 @@ def global_error_handler(
         in the very end. Unless, you want to disable original error handling.
 
     """
+    if isinstance(exc, NotAuthenticatedError):
+        # :rfc:`9110#section-15.5.2` wants every `401` to say
+        # how to authenticate. Replace this handler to change or drop it.
+        add_www_authenticate(exc, endpoint.metadata.auth)
     if isinstance(exc, _default_handled_excs):
         return controller.to_error(
             controller.format_error(exc),

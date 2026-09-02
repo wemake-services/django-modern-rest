@@ -44,6 +44,16 @@ def build_user_token(admin_user: User, settings: LazySettings) -> _TokenBuilder:
     return factory
 
 
+def _expected_headers(response_code: HTTPStatus) -> dict[str, str]:
+    """A ``401`` from bearer auth also advertises the auth challenge."""
+    if response_code == HTTPStatus.UNAUTHORIZED:
+        return {
+            'Content-Type': 'application/json',
+            'WWW-Authenticate': 'Bearer',
+        }
+    return {'Content-Type': 'application/json'}
+
+
 _ISSUER: Final = 'wemake-services/django-modern-rest'
 
 
@@ -81,7 +91,7 @@ def test_issuer_validation(
     response = _IssuerController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.headers == _expected_headers(response_code)
     assert response.status_code == response_code
 
 
@@ -123,7 +133,7 @@ def test_audience_validation(
     response = _AudienceController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.headers == _expected_headers(response_code)
     assert response.status_code == response_code
 
 
@@ -161,7 +171,7 @@ def test_require_claims_validation(
     response = _RequireClaimsController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.headers == _expected_headers(response_code)
     assert response.status_code == response_code
 
 
@@ -208,7 +218,7 @@ def test_leeway_exp(
     response = _LeewayController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.headers == _expected_headers(response_code)
     assert response.status_code == response_code
 
 
