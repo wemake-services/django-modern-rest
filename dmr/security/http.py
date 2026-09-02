@@ -1,7 +1,6 @@
 from abc import abstractmethod
 from base64 import b64decode, b64encode
 from typing import TYPE_CHECKING, Final, Self
-from urllib.parse import unquote
 
 from typing_extensions import override
 
@@ -108,7 +107,7 @@ class _HttpBasicAuth:
             username, password = b64decode(encoded).decode().split(':', 1)
         except Exception:
             return None
-        return unquote(username), unquote(password)
+        return username, password
 
     def _uses_standard_http_basic_auth(self) -> bool:
         """Whether the auth contract matches OpenAPI HTTP basic auth."""
