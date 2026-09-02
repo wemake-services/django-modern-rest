@@ -52,6 +52,8 @@ class _BaseBlocklistMixin:
         so a token without one can never be blocklisted.
         Accepting such tokens would mean that the blocklist
         is silently bypassed, we require the claim instead.
+        
+        .. versionadded:: 0.15.0
         """
         super().__init__(*args, **kwargs)
         require_claims = list(self.require_claims or ())
