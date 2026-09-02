@@ -82,6 +82,7 @@ class _BaseBlocklistMixin:
         Raises:
             NotAuthenticatedError: If the token has no ``jti``.
 
+        .. versionadded:: 0.15.0
         """
         if token.jti is None:
             raise NotAuthenticatedError
