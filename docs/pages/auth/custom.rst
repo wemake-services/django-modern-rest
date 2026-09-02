@@ -36,7 +36,7 @@ or :class:`~dmr.security.AsyncAuth` and implements several things:
   * - :meth:`~dmr.security.SyncAuth.security_requirement`
     - References that description from every endpoint using this auth.
 
-There is a fourth, optional one:
+There is one more optional method:
 :meth:`~dmr.metadata.ResponseSpecProvider.provide_response_specs`
 declares extra responses your auth can produce.
 We cover it :ref:`below <auth-extra-responses>`.
