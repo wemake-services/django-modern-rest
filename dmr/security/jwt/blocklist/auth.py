@@ -1,11 +1,9 @@
-from typing import TYPE_CHECKING, Any, Final, Protocol
+from typing import TYPE_CHECKING, Final, Protocol
 
 from dmr.exceptions import NotAuthenticatedError
 from dmr.security.jwt.token import JWToken
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from django.contrib.auth.base_user import AbstractBaseUser
 
     from dmr.security.jwt.blocklist.models import BlocklistedJWToken
@@ -40,26 +38,33 @@ class _JWTAsyncAuth(_JWTAuth, Protocol):
     async def get_user(self, token: JWToken) -> 'AbstractBaseUser': ...
 
 
-class _BaseBlocklistMixin:
-    # Provided by the auth class we are mixed into:
-    require_claims: 'Sequence[str] | None'
+class _BaseBlocklistMixin:  # noqa: WPS338
+    if not TYPE_CHECKING:  # noqa: WPS604  # pragma: no branch
+        # This method is hidden from type checkers on purpose.
+        #
+        # We are always mixed in as the first base, so a typed
+        # `__init__` here would shadow the real one of the auth class:
+        # `MyAuth(JWTokenBlocklistSyncMixin, JWTSyncAuth)` would be
+        # resolved as `(*args: Any, **kwargs: Any)` and accept anything.
+        # Hiding it keeps the auth's own signature, and we only need
+        # this method at runtime anyway.
+        #
+        # See `typesafety/assert_type/test_security/test_jwt/`
+        # for the tests that guard this behavior.
+        def __init__(self, *args, **kwargs) -> None:
+            """
+            Force the ``jti`` claim to be required.
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """
-        Force the ``jti`` claim to be required.
-
-        The blocklist stores tokens by their ``jti``,
-        so a token without one can never be blocklisted.
-        Accepting such tokens would mean that the blocklist
-        is silently bypassed, we require the claim instead.
-
-        .. versionadded:: 0.15.0
-        """
-        super().__init__(*args, **kwargs)
-        require_claims = list(self.require_claims or ())
-        if _JTI_CLAIM not in require_claims:
-            require_claims.append(_JTI_CLAIM)
-        self.require_claims = require_claims
+            The blocklist stores tokens by their ``jti``,
+            so a token without one can never be blocklisted.
+            Accepting such tokens would mean that the blocklist
+            is silently bypassed, we require the claim instead.
+            """
+            super().__init__(*args, **kwargs)
+            require_claims = list(self.require_claims or ())
+            if _JTI_CLAIM not in require_claims:
+                require_claims.append(_JTI_CLAIM)
+            self.require_claims = require_claims
 
     def blocklist_model(self) -> type['BlocklistedJWToken']:
         """Returns the model to be used."""
