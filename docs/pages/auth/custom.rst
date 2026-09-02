@@ -21,7 +21,7 @@ The contract
 ------------
 
 Your auth class subclasses :class:`~dmr.security.SyncAuth`
-or :class:`~dmr.security.AsyncAuth` and implements three things:
+or :class:`~dmr.security.AsyncAuth` and implements several things:
 
 .. list-table::
   :header-rows: 1
