@@ -11,6 +11,8 @@ except ImportError:  # pragma: no cover
     )
     raise
 
+from dmr.security.jwt.auth.base import BaseJWTAsyncAuth as BaseJWTAsyncAuth
+from dmr.security.jwt.auth.base import BaseJWTSyncAuth as BaseJWTSyncAuth
 from dmr.security.jwt.auth.base import request_jwt as request_jwt
 from dmr.security.jwt.auth.cookie import (
     CookieJWTAsyncAuth as CookieJWTAsyncAuth,
