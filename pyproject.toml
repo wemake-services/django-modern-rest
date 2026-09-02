@@ -498,7 +498,9 @@ respect-type-ignore-comments = false
 
 [tool.pytest.ini_options]
 # PYTHONPATH configuration:
-pythonpath = [ "django_test_app" ]
+# `docs` is here, so `.rst` doctests can import `examples.*`
+# the same way our sphinx extension does:
+pythonpath = [ "django_test_app", "docs" ]
 # Extra options:
 addopts = [
   # pytest-xdist is only applied to some envs, not all tests
