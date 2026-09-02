@@ -42,8 +42,8 @@ declares extra responses your auth can produce.
 We cover it :ref:`below <auth-extra-responses>`.
 
 
-A worked example
-----------------
+``X-Forwarded-User`` example
+----------------------------
 
 Let's authenticate requests that come through a reverse proxy which has
 already checked the user, and passes the username down in a header.
