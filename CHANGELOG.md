@@ -39,6 +39,7 @@ of requirements for an API to count as public.
   it is only used by `JWToken.decode` now, #1324
 - `JWToken` does not validate `exp` and `iat` on creation anymore,
   now `JWToken.encode` validates them instead, #1324
+- Throttling cache keys are now hashed to keep their length bounded, #1337
 
 ### Features
 
