@@ -15,6 +15,7 @@ from dmr.parsers import JsonParser, MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
 from dmr.routing import Router
+from dmr.settings import HttpSpec
 from tests.infra.octet import OCTET_STREAM, OctetFileModel, OctetStreamParser
 
 
@@ -63,6 +64,7 @@ class _FileResponseController(Controller[PydanticSerializer]):
     @validate(
         FileResponseSpec(),
         renderers=[FileRenderer('image/png')],
+        no_validate_http_spec={HttpSpec.header_name_server_managed},
     )
     async def get(self) -> FileResponse:
         raise NotImplementedError
@@ -72,6 +74,7 @@ class _AttachmentFileResponseController(Controller[PydanticSerializer]):
     @validate(
         FileResponseSpec(as_attachment=True),
         renderers=[FileRenderer('image/png')],
+        no_validate_http_spec={HttpSpec.header_name_server_managed},
     )
     async def get(self) -> FileResponse:
         raise NotImplementedError
