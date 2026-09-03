@@ -2,6 +2,10 @@
 # before `dmr@0.15.0`, `jwt.auth` was a module, not a package.
 from dmr.security.jwt.auth.base import request_jwt as request_jwt
 from dmr.security.jwt.auth.base import set_request_attrs as set_request_attrs
+from dmr.security.jwt.auth.cookie import (
+    CookieJWTAsyncAuth as CookieJWTAsyncAuth,
+)
+from dmr.security.jwt.auth.cookie import CookieJWTSyncAuth as CookieJWTSyncAuth
 from dmr.security.jwt.auth.header import (
     HeaderJWTAsyncAuth as HeaderJWTAsyncAuth,
 )
