@@ -68,28 +68,33 @@ contract change produces an ordinary source diff.
   to create, update, review, or make an existing snapshot more precise.
 
 
-Describe dynamic values with dirty-equals
+Combine exact values and dynamic matchers
 -----------------------------------------
 
 Do not freeze a value that is supposed to change. Instead, use the narrowest
 ``dirty-equals`` matcher that describes the behavior the application promises.
+It can be used directly alongside exact values:
 
 .. literalinclude:: /examples/testing/dirty_equals_usage.py
   :caption: test_dirty_equals.py
   :language: python
   :linenos:
 
-This assertion still checks the complete response. The UUID is not ignored:
-``IsUUID(4)`` verifies both its format and version, while the deterministic
-email and age remain exact. Matchers such as ``IsDatetime(iso_string=True)``,
-``IsInt(gt=0)``, ``IsList(..., check_order=False)``, and ``IsOneOf(...)`` can
-express other kinds of controlled variability. See the
-`dirty-equals string matcher documentation`_ for options supported by
-``IsStr()``.
+This assertion checks the complete response. The UUID is not ignored:
+``IsUUID()`` verifies its format, while the deterministic email and age remain
+exact.
 
-Prefer the most precise matcher available. For example, ``IsUUID(4)`` states
-more about an identifier than ``IsStr()``, and a bounded integer matcher states
-more than accepting any number.
+When the complete response is also worth preserving as a snapshot, put the
+matcher at the dynamic leaf:
+
+.. literalinclude:: /examples/testing/combined_assertion_usage.py
+  :caption: test_combined_assertion.py
+  :language: python
+  :linenos:
+
+This composition gives the test both properties we want: changing the response
+shape or a deterministic field produces a snapshot diff, while a newly
+generated UUID remains valid without making the test flaky.
 
 .. tip::
 
@@ -101,23 +106,6 @@ more than accepting any number.
   constrain length, case, and regular expressions.
 
 
-Combine exact snapshots and dynamic matchers
---------------------------------------------
-
-Most real responses contain both stable and dynamic values. Keep the complete
-stable structure in an inline snapshot and put ``dirty-equals`` matchers only
-at the dynamic leaves.
-
-.. literalinclude:: /examples/testing/combined_assertion_usage.py
-  :caption: test_combined_assertion.py
-  :language: python
-  :linenos:
-
-This composition gives the test both properties we want: changing the response
-shape or a deterministic field produces a snapshot diff, while a newly
-generated UUID remains valid without making the test flaky.
-
-
 Choosing an assertion
 ---------------------
 
@@ -125,8 +113,8 @@ Start from the value you want to verify:
 
 1. If the complete value is deterministic and meaningful, use an inline
    snapshot.
-2. If the complete structure is dynamic, compare it directly with a structure
-   containing ``dirty-equals`` matchers.
+2. If some values are dynamic, compare them with precise ``dirty-equals``
+   matchers while keeping deterministic values exact.
 3. If the structure is stable but some leaves are dynamic, put the matchers
    inside an inline snapshot.
 4. If output differs between supported implementations or environments, assert

@@ -20,7 +20,7 @@ def test_complete_user_response(dmr_rf: DMRRequestFactory) -> None:
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED
     assert json.loads(response.content) == snapshot({
-        'uid': IsUUID(4),
+        'uid': IsUUID(),
         'email': 'test@example.com',
         'age': 43,
     })

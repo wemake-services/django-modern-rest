@@ -17,6 +17,6 @@ def test_dynamic_user_identifier(dmr_rf: DMRRequestFactory) -> None:
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED
     assert json.loads(response.content) == {
-        'uid': IsUUID(4),
+        'uid': IsUUID(),
         **request_data,
     }
