@@ -8,7 +8,6 @@ from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.settings import HttpSpec
 
-
 @pytest.mark.parametrize(
     'status',
     [HTTPStatus.NO_CONTENT, HTTPStatus.NOT_MODIFIED],

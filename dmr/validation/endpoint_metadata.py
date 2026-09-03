@@ -45,6 +45,23 @@ if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.errors import AsyncErrorHandler, SyncErrorHandler
 
+#: HTTP headers that are connection-specific or
+#: normally managed by the server.
+#: See RFC 9110 for more details.
+_FORBIDDEN_RESPONSE_HEADERS: Final = frozenset((
+    'connection',
+    'keep-alive',
+    'proxy-authenticate',
+    'proxy-authorization',
+    'te',
+    'trailer',
+    'transfer-encoding',
+    'upgrade',
+    'content-length',
+    'date',
+    'server',
+))
+
 #: HTTP methods that should not have a request body according to HTTP spec.
 #: These methods are: GET, HEAD, DELETE, CONNECT, TRACE.
 #: See RFC 7231 for more details.
@@ -141,6 +158,12 @@ class _ResponseListValidator:  # noqa: WPS214
             not in self.metadata.no_validate_http_spec
         ):
             self._check_empty_response_body(responses)
+        if (
+            HttpSpec.header_name_server_managed
+            not in self.metadata.no_validate_http_spec
+        ):
+            self._check_header_name_server_managed(responses)
+
         # TODO: add more checks
 
     def _check_empty_response_body(
@@ -163,6 +186,25 @@ class _ResponseListValidator:  # noqa: WPS214
                     f'from an endpoint {endpoint_name!r} '
                     f'with status code {response.status_code}',
                 )
+
+    def _check_header_name_server_managed(  # noqa: WPS231
+        self,
+        responses: list[ResponseSpec],
+    ) -> None:
+        endpoint_name = self.metadata.endpoint_name
+        for response in responses:
+            if not response.headers:
+                continue
+
+            for header_name, header in response.headers.items():
+                if (
+                    header_name.lower() in _FORBIDDEN_RESPONSE_HEADERS
+                    and not header.skip_validation
+                ):
+                    raise EndpointMetadataError(
+                        f'Header {header_name!r} is not allowed in responses '
+                        f'from endpoint {endpoint_name!r}.',
+                    )
 
     def _convert_responses(
         self,
