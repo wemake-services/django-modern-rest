@@ -1,6 +1,6 @@
 from collections.abc import Mapping, Sequence
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Final, Self
+from typing import TYPE_CHECKING, Self
 
 from django.http import HttpRequest
 from typing_extensions import override
@@ -16,12 +16,6 @@ if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
-
-#: Default name of the cookie that stores the access token.
-DEFAULT_ACCESS_COOKIE: Final = 'access_token'
-
-#: Default name of the cookie that stores the refresh token.
-DEFAULT_REFRESH_COOKIE: Final = 'refresh_token'
 
 
 class _BaseCookieJWTAuth(ResponseSpecProvider):
@@ -126,7 +120,7 @@ class CookieJWTSyncAuth(_BaseCookieJWTAuth, BaseJWTSyncAuth):
     def __init__(  # noqa: WPS211
         self,
         *,
-        cookie_name: str = DEFAULT_ACCESS_COOKIE,
+        cookie_name: str = 'access_token',
         user_id_field: str = 'pk',
         algorithm: str = 'HS256',
         security_scheme_name: str = 'jwt',
@@ -209,7 +203,7 @@ class CookieJWTAsyncAuth(_BaseCookieJWTAuth, BaseJWTAsyncAuth):
     def __init__(  # noqa: WPS211
         self,
         *,
-        cookie_name: str = DEFAULT_ACCESS_COOKIE,
+        cookie_name: str = 'access_token',
         user_id_field: str = 'pk',
         algorithm: str = 'HS256',
         security_scheme_name: str = 'jwt',

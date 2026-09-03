@@ -17,15 +17,16 @@ from dmr.openapi.objects import SecurityScheme
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security import request_auth
 from dmr.security.jwt import (
-    BaseJWTSyncAuth,
     CookieJWTAsyncAuth,
     CookieJWTSyncAuth,
     HeaderJWTAsyncAuth,
     HeaderJWTSyncAuth,
+    JWTAsyncAuth,
     JWToken,
+    JWTSyncAuth,
     request_jwt,
 )
-from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth
+from dmr.security.jwt.auth.base import BaseJWTSyncAuth
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 _LEEWAY: Final = 30  # seconds

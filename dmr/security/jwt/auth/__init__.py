@@ -1,6 +1,5 @@
-from dmr.security.jwt.auth.base import USER_LOOKUP_ERRORS as USER_LOOKUP_ERRORS
-from dmr.security.jwt.auth.base import BaseJWTAsyncAuth as BaseJWTAsyncAuth
-from dmr.security.jwt.auth.base import BaseJWTSyncAuth as BaseJWTSyncAuth
+# These re-exports are needed as a backward-compatible solution,
+# before `dmr@0.15.0`, `jwt.auth` was a module, not a package.
 from dmr.security.jwt.auth.base import request_jwt as request_jwt
 from dmr.security.jwt.auth.base import set_request_attrs as set_request_attrs
 from dmr.security.jwt.auth.header import (
