@@ -5,8 +5,7 @@ Docs: https://docs.allauth.org/en/latest/headless/index.html
 
 .. important::
 
-  To use ``allauth`` you must install
-  ``'django-modern-rest[allauth]'`` extra.
+  To use ``allauth`` features you must install ``django-allauth`` separatly.
 
 ``django-allauth`` is a well-established, full-featured library that already
 solves the hard parts of auth: registration, email verification, password

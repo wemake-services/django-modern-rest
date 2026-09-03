@@ -30,7 +30,7 @@ repos:
         args: ["--severity=style"]
 
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "bdc53142c79093f52931be2be9aee90756f39f53"  # frozen: v2.29.0
+    rev: "3b42b9776870badc9eaffdef9a4a0834b764d87c"  # frozen: v2.29.3
     hooks:
       - id: pyproject-fmt
 
@@ -49,7 +49,7 @@ repos:
         files: ^docs/
 
   - repo: https://github.com/crate-ci/typos
-    rev: 7e42c54fbaa9738e072b11e93127845c36cef60d  # frozen: v1
+    rev: c132f8b9e3ac7f8f0625490b1cb5b906d1d6a63a  # frozen: v1
     hooks:
       - id: typos
 
