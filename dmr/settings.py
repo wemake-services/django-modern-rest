@@ -97,7 +97,7 @@ class HttpSpec(enum.StrEnum):
             like ``204`` must not have response bodies.
         header_name_server_managed: Disables validation that headers
             like ``Te``, ``Server``, ``Keep-Alive``, etc. can't be
-            included in response headers
+            included in response headers.
 
     """
 

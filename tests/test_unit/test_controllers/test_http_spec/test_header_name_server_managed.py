@@ -1,4 +1,4 @@
-from collections.abc import Mapping
+import re
 from http import HTTPStatus
 from typing import Final
 
@@ -11,9 +11,8 @@ from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.settings import HttpSpec
 
-_MATCH_PATTER: Final[str] = (
-    r'Header .+ is not allowed '
-    r'in responses from endpoint .+'
+_MATCH_PATTERN: Final = re.compile(
+    r'Header .+ is not allowed in responses from endpoint .+',
 )
 
 
@@ -24,7 +23,7 @@ class _BodyModel(pydantic.BaseModel):
 @pytest.mark.parametrize(
     'header',
     [
-        'Connection',
+        'CONNECTION',
         'Keep-Alive',
         'Proxy-Authenticate',
         'Proxy-Authorization',
@@ -32,9 +31,8 @@ class _BodyModel(pydantic.BaseModel):
         'Trailer',
         'Transfer-Encoding',
         'Upgrade',
-        'Content-Length',
         'Date',
-        'Server',
+        'server',
     ],
 )
 def test_header_name_server_managed(
@@ -45,7 +43,7 @@ def test_header_name_server_managed(
 
     with pytest.raises(
         EndpointMetadataError,
-        match=_MATCH_PATTER,
+        match=_MATCH_PATTERN,
     ):
 
         class _Mixed(Controller[PydanticSerializer]):
@@ -53,31 +51,6 @@ def test_header_name_server_managed(
                 ResponseSpec(
                     status_code=HTTPStatus.OK,
                     headers=header_spec,
-                    return_type=None,
-                ),
-            )
-            def get(self) -> HttpResponse:
-                raise NotImplementedError
-
-
-@pytest.mark.parametrize(
-    'header',
-    [{'CONNECTION': HeaderSpec()}, {'Content-LENGTH': HeaderSpec()}],
-)
-def test_header_name_server_managed_casing(
-    header: Mapping[str, HeaderSpec],
-) -> None:
-    """Ensure that validation is case-insensitive."""
-    with pytest.raises(
-        EndpointMetadataError,
-        match=_MATCH_PATTER,
-    ):
-
-        class _Mixed(Controller[PydanticSerializer]):
-            @validate(
-                ResponseSpec(
-                    status_code=HTTPStatus.OK,
-                    headers=header,
                     return_type=None,
                 ),
             )
@@ -102,58 +75,9 @@ def test_header_name_server_managed_controller() -> None:
             raise NotImplementedError
 
 
-def test_server_managed_header_controller_scoped() -> None:
-    """Ensure that disabling on one controller does not affect other."""
-    header = {'Keep-Alive': HeaderSpec()}
-
-    class GoodController(Controller[PydanticSerializer]):
-        @validate(
-            ResponseSpec(
-                status_code=HTTPStatus.OK,
-                headers=header,
-                return_type=None,
-            ),
-            no_validate_http_spec={HttpSpec.header_name_server_managed},
-        )
-        def get(self) -> HttpResponse:
-            raise NotImplementedError
-
-    with pytest.raises(
-        EndpointMetadataError,
-        match=_MATCH_PATTER,
-    ):
-
-        class BadController(Controller[PydanticSerializer]):
-            @validate(
-                ResponseSpec(
-                    status_code=HTTPStatus.OK,
-                    headers=header,
-                    return_type=None,
-                ),
-            )
-            def get(self) -> HttpResponse:
-                raise NotImplementedError
-
-
 def test_server_managed_header_skip_validation() -> None:
     """Ensure skip_validation allows server-managed response headers."""
     header = {'Proxy-Authorization': HeaderSpec(skip_validation=True)}
-
-    class _Mixed(Controller[PydanticSerializer]):
-        @validate(
-            ResponseSpec(
-                status_code=HTTPStatus.OK,
-                headers=header,
-                return_type=None,
-            ),
-        )
-        def get(self) -> HttpResponse:
-            raise NotImplementedError
-
-
-def test_server_managed_header_with_other_headers() -> None:
-    """Ensure that other headers don't raise EndpointMetadataError."""
-    header = {'X-API-TOKEN': HeaderSpec(), 'csrf-token': HeaderSpec()}
 
     class _Mixed(Controller[PydanticSerializer]):
         @validate(

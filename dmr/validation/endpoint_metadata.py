@@ -1,10 +1,17 @@
 import dataclasses
 import inspect
 import warnings
-from collections.abc import Callable, Sequence, Set
+from collections.abc import Callable, ItemsView, Sequence, Set
 from http import HTTPMethod, HTTPStatus
 from types import NoneType
-from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeVar, assert_never
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Final,
+    TypeVar,
+    assert_never,
+)
 
 from django.contrib.admindocs.utils import parse_docstring
 from django.core.cache.backends import dummy, locmem
@@ -57,7 +64,6 @@ _FORBIDDEN_RESPONSE_HEADERS: Final = frozenset((
     'trailer',
     'transfer-encoding',
     'upgrade',
-    'content-length',
     'date',
     'server',
 ))
@@ -187,7 +193,7 @@ class _ResponseListValidator:  # noqa: WPS214
                     f'with status code {response.status_code}',
                 )
 
-    def _check_header_name_server_managed(  # noqa: WPS231
+    def _check_header_name_server_managed(
         self,
         responses: list[ResponseSpec],
     ) -> None:
@@ -196,21 +202,34 @@ class _ResponseListValidator:  # noqa: WPS214
             if not response.headers:
                 continue
 
-            for header_name, header in response.headers.items():
-                if (
-                    header_name.lower() in _FORBIDDEN_RESPONSE_HEADERS
-                    and not header.skip_validation
-                ):
-                    raise EndpointMetadataError(
-                        f'Header {header_name!r} is not allowed in responses '
-                        f'from endpoint {endpoint_name!r}.',
-                    )
+            forbidden_header = self._get_forbidden_header(
+                response.headers.items(),
+            )
+
+            if forbidden_header:
+                raise EndpointMetadataError(
+                    f'Header {forbidden_header!r} is not allowed in responses '
+                    f'from endpoint {endpoint_name!r}.',
+                )
 
     def _convert_responses(
         self,
         all_responses: list[ResponseSpec],
     ) -> dict[HTTPStatus, ResponseSpec]:
         return {resp.status_code: resp for resp in all_responses}
+
+    def _get_forbidden_header(
+        self,
+        response_headers: ItemsView[str, HeaderSpec],
+    ) -> str | None:
+
+        for header_name, header in response_headers:
+            if (
+                header_name.lower() in _FORBIDDEN_RESPONSE_HEADERS
+                and not header.skip_validation
+            ):
+                return header_name
+        return None
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
