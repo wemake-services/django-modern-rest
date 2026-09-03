@@ -32,8 +32,8 @@ Which one do you need?
   * - Classes
     - :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth`,
       :class:`~dmr.security.jwt.auth.HeaderJWTAsyncAuth`
-    - :class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth`,
-      :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth`
+    - :class:`~dmr.security.jwt.auth.CookieJWTSyncAuth`,
+      :class:`~dmr.security.jwt.auth.CookieJWTAsyncAuth`
   * - Best for
     - Mobile apps, server-to-server calls, and SPAs
       that keep the token in memory
@@ -87,8 +87,8 @@ is specifically "the frontend must not be able to read the token".
 
   .. tab:: Token in cookies
 
-    Use :class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth` for sync views
-    and :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth` for async views.
+    Use :class:`~dmr.security.jwt.auth.CookieJWTSyncAuth` for sync views
+    and :class:`~dmr.security.jwt.auth.CookieJWTAsyncAuth` for async views.
 
     Unlike the ``Authorization`` header, the cookie stores
     the encoded token as-is, without any ``Bearer`` prefix.
@@ -270,8 +270,8 @@ On any validation failure it returns ``401 Unauthorized``.
 Issuing tokens as cookies
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth`
-and :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth`
+:class:`~dmr.security.jwt.auth.CookieJWTSyncAuth`
+and :class:`~dmr.security.jwt.auth.CookieJWTAsyncAuth`
 read tokens,
 but something has to write them first.
 
@@ -398,6 +398,9 @@ API Reference
 .. autoclass:: dmr.security.jwt.token.JWToken
   :members:
 
+Header auth
+~~~~~~~~~~~
+
 .. autoclass:: dmr.security.jwt.auth.HeaderJWTSyncAuth
   :members:
   :inherited-members:
@@ -413,15 +416,23 @@ API Reference
   :class:`~dmr.security.jwt.auth.HeaderJWTAsyncAuth`.
   Existing code keeps working unchanged.
 
-.. autoclass:: dmr.security.jwt.cookie.CookieJWTSyncAuth
+Cookie auth
+~~~~~~~~~~~
+
+.. autoclass:: dmr.security.jwt.auth.CookieJWTSyncAuth
   :members:
   :inherited-members:
 
-.. autoclass:: dmr.security.jwt.cookie.CookieJWTAsyncAuth
+.. autoclass:: dmr.security.jwt.auth.CookieJWTAsyncAuth
   :members:
   :inherited-members:
+
+Helpers
+~~~~~~~
 
 .. autofunction:: dmr.security.jwt.auth.request_jwt
+
+.. autofunction:: dmr.security.jwt.auth.set_request_attrs
 
 Pre-defined views to fetch JWT tokens
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
