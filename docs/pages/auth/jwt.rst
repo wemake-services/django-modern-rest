@@ -118,7 +118,7 @@ Custom user models are automatically supported.
 .. tip::
 
   Auth classes are tried in order, so you can accept both transports
-  at once with ``auth = (CookieJWTSyncAuth(), JWTSyncAuth())``.
+  at once with ``auth = (CookieJWTSyncAuth(), HeaderJWTSyncAuth())``.
   The cookie auth returns ``None`` when its cookie is missing,
   which lets the header auth run next.
 
@@ -411,10 +411,13 @@ Header auth
 
 .. note::
 
-  Since version 0.15.0 ``JWTSyncAuth`` and ``JWTAsyncAuth`` are kept as aliases of
+  Since version 0.15.0 ``JWTSyncAuth`` and ``JWTAsyncAuth``
+  are kept as aliases of
   :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth` and
   :class:`~dmr.security.jwt.auth.HeaderJWTAsyncAuth`.
   Existing code keeps working unchanged.
+  They are soft-deprecated and will be removed before the ``1.0.0`` release.
+  Do not use them.
 
 Cookie auth
 ~~~~~~~~~~~

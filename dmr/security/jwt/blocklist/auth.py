@@ -44,7 +44,7 @@ class _BaseBlocklistMixin:  # noqa: WPS338
         #
         # We are always mixed in as the first base, so a typed
         # `__init__` here would shadow the real one of the auth class:
-        # `MyAuth(JWTokenBlocklistSyncMixin, JWTSyncAuth)` would be
+        # `MyAuth(JWTokenBlocklistSyncMixin, HeaderJWTSyncAuth)` would be
         # resolved as `(*args: Any, **kwargs: Any)` and accept anything.
         # Hiding it keeps the auth's own signature, and we only need
         # this method at runtime anyway.

@@ -12,7 +12,7 @@ from typing_extensions import TypedDict
 
 from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security.jwt import JWTAsyncAuth, JWToken, JWTSyncAuth
+from dmr.security.jwt import HeaderJWTAsyncAuth, HeaderJWTSyncAuth, JWToken
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 _TokenBuilder: TypeAlias = Callable[..., str]
@@ -60,7 +60,7 @@ _ISSUER: Final = 'wemake-services/django-modern-rest'
 
 @final
 class _IssuerController(Controller[PydanticSerializer]):
-    @modify(auth=[JWTSyncAuth(accepted_issuers=_ISSUER)])
+    @modify(auth=[HeaderJWTSyncAuth(accepted_issuers=_ISSUER)])
     def get(self) -> str:
         return 'authed'
 
@@ -101,7 +101,7 @@ _AUDIENCE: Final = ('dev', 'qa')
 
 @final
 class _AudienceController(Controller[PydanticSerializer]):
-    @modify(auth=[JWTSyncAuth(accepted_audiences=_AUDIENCE)])
+    @modify(auth=[HeaderJWTSyncAuth(accepted_audiences=_AUDIENCE)])
     def get(self) -> str:
         return 'authed'
 
@@ -140,7 +140,7 @@ def test_audience_validation(
 
 @final
 class _RequireClaimsController(Controller[PydanticSerializer]):
-    @modify(auth=[JWTSyncAuth(require_claims=['jti'])])
+    @modify(auth=[HeaderJWTSyncAuth(require_claims=['jti'])])
     def get(self) -> str:
         return 'authed'
 
@@ -181,7 +181,7 @@ _LEEWAY: Final = 2
 
 @final
 class _LeewayController(Controller[PydanticSerializer]):
-    @modify(auth=[JWTSyncAuth(leeway=_LEEWAY)])
+    @modify(auth=[HeaderJWTSyncAuth(leeway=_LEEWAY)])
     def get(self) -> str:
         return 'authed'
 
@@ -225,7 +225,9 @@ def test_leeway_exp(
 
 @final
 class _CustomHeaderController(Controller[PydanticSerializer]):
-    @modify(auth=[JWTAsyncAuth(auth_header='X-Api-Auth', auth_scheme='JWT')])
+    @modify(
+        auth=[HeaderJWTAsyncAuth(auth_header='X-Api-Auth', auth_scheme='JWT')],
+    )
     async def get(self) -> str:
         return 'authed'
 
@@ -269,7 +271,7 @@ async def test_custom_jwt_header(
 
 @final
 class _TokenTypeController(Controller[PydanticSerializer]):
-    @modify(auth=[JWTSyncAuth()])
+    @modify(auth=[HeaderJWTSyncAuth()])
     def get(self) -> str:
         return 'authed'
 
