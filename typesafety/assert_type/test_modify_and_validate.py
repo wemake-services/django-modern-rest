@@ -13,16 +13,34 @@ from dmr import (
     modify,
     validate,
 )
+from dmr.endpoint import Endpoint
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
 )
+from dmr.serializer import BaseSerializer
 from dmr.throttling import AsyncThrottle, SyncThrottle
 
 
 class _Model(pydantic.BaseModel):
     field: str
+
+
+def _sync_error_handler(
+    endpoint: Endpoint,
+    controller: Controller[BaseSerializer],
+    exc: Exception,
+) -> HttpResponse:
+    raise exc
+
+
+async def _async_error_handler(
+    endpoint: Endpoint,
+    controller: Controller[BaseSerializer],
+    exc: Exception,
+) -> HttpResponse:
+    raise exc
 
 
 class CorrectModifyController(Controller[PydanticSerializer]):
@@ -143,28 +161,165 @@ class WrongValidateController(Controller[PydanticSerializer]):
 class WrongAuthMixedController(Controller[PydanticSerializer]):
     auth = (DjangoSessionSyncAuth(), DjangoSessionAsyncAuth())  # type: ignore[assignment]
 
-    @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type, dynamic-function-decorator-return]
+    @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[list-item]  # ty: ignore[no-matching-overload, dynamic-function-decorator-return]
     def get(self) -> str:
         return 'mixed'
 
-    @validate(  # type: ignore[arg-type, no-matching-overload, unused-ignore]  # ty: ignore[dynamic-function-decorator-return]
+    @validate(  # pyrefly: ignore[no-matching-overload] # ty: ignore[no-matching-overload, dynamic-function-decorator-return]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
-        auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()],  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()],  # type: ignore[list-item]
     )
     async def meta(self) -> HttpResponse:
+        return HttpResponse()
+
+    @modify(auth=[DjangoSessionAsyncAuth()])  # type: ignore[deprecated]
+    def wrong_async_auth(self) -> str:
+        return 'mixed'
+
+    @modify(auth=[DjangoSessionSyncAuth()])  # type: ignore[deprecated]
+    async def wrong_sync_auth(self) -> str:
+        return 'mixed'
+
+    @validate(  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+        auth=[DjangoSessionAsyncAuth()],
+    )
+    def wrong_async_auth_validate(self) -> HttpResponse:
+        return HttpResponse()
+
+    @validate(  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+        auth=[DjangoSessionSyncAuth()],
+    )
+    async def wrong_sync_auth_validate(self) -> HttpResponse:
         return HttpResponse()
 
 
 class WrongThrottlingMixedController(Controller[PydanticSerializer]):
     throttling = (SyncThrottle(1, 2), AsyncThrottle(1, 2))  # type: ignore[assignment]
 
-    @modify(throttling=[SyncThrottle(1, 2), AsyncThrottle(1, 2)])  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type, dynamic-function-decorator-return]
+    @modify(throttling=[SyncThrottle(1, 2), AsyncThrottle(1, 2)])  # type: ignore[list-item]  # ty: ignore[no-matching-overload, dynamic-function-decorator-return]
     def get(self) -> str:
         return 'mixed'
 
-    @validate(  # type: ignore[arg-type, no-matching-overload, unused-ignore]  # ty: ignore[dynamic-function-decorator-return]
+    @validate(  # pyrefly: ignore[no-matching-overload] # ty: ignore[no-matching-overload, dynamic-function-decorator-return]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
-        throttling=[SyncThrottle(1, 2), AsyncThrottle(1, 2)],  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        throttling=[SyncThrottle(1, 2), AsyncThrottle(1, 2)],  # type: ignore[list-item]
     )
     async def meta(self) -> HttpResponse:
         return HttpResponse()
+
+    @modify(throttling=[AsyncThrottle(1, 2)])  # type: ignore[deprecated]
+    def wrong_async_throttle(self) -> str:
+        return 'mixed'
+
+    @modify(throttling=[SyncThrottle(1, 2)])  # type: ignore[deprecated]
+    async def wrong_sync_throttle(self) -> str:
+        return 'mixed'
+
+    @validate(  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+        throttling=[AsyncThrottle(1, 2)],
+    )
+    def wrong_async_throttle_validate(self) -> HttpResponse:
+        return HttpResponse()
+
+    @validate(  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+        throttling=[SyncThrottle(1, 2)],
+    )
+    async def wrong_sync_throttle_validate(self) -> HttpResponse:
+        return HttpResponse()
+
+    # Different kinds mixed together:
+    @modify(  # pyrefly: ignore[no-matching-overload] # ty: ignore[no-matching-overload, dynamic-function-decorator-return]
+        auth=[DjangoSessionSyncAuth()],  # type: ignore[list-item]
+        throttling=[AsyncThrottle(1, 2)],  # type: ignore[list-item]
+    )
+    def mixed_kinds(self) -> str:
+        return 'mixed'
+
+
+class CorrectColoredController(Controller[PydanticSerializer]):
+    @modify(
+        auth=[DjangoSessionSyncAuth()],
+        throttling=[SyncThrottle(1, 2)],
+        error_handler=_sync_error_handler,
+    )
+    def get(self) -> str:
+        return 'sync'
+
+    @modify(
+        auth=[DjangoSessionAsyncAuth()],
+        throttling=[AsyncThrottle(1, 2)],
+        error_handler=_async_error_handler,
+    )
+    async def post(self) -> str:
+        return 'async'
+
+    # `ty` infers `list[Unknown]` for an empty list literal,
+    # so it matches several overloads and gives up on the return type:
+    @modify(auth=None, throttling=[])  # ty: ignore[dynamic-function-decorator-return]
+    def put(self) -> str:
+        return 'sync'
+
+    @modify(auth=(), throttling=None)
+    async def patch(self) -> str:
+        return 'async'
+
+    @validate(
+        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+        auth=[DjangoSessionSyncAuth()],
+        throttling=[SyncThrottle(1, 2)],
+        error_handler=_sync_error_handler,
+    )
+    def delete(self) -> HttpResponse:
+        return HttpResponse()
+
+    @validate(
+        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+        auth=[DjangoSessionAsyncAuth()],
+        throttling=[AsyncThrottle(1, 2)],
+        error_handler=_async_error_handler,
+    )
+    async def trace(self) -> HttpResponse:
+        return HttpResponse()
+
+    @validate(
+        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+        auth=None,
+        throttling=(),
+    )
+    async def head(self) -> HttpResponse:
+        return HttpResponse()
+
+
+class WrongErrorHandlerController(Controller[PydanticSerializer]):
+    @modify(error_handler=_async_error_handler)  # type: ignore[deprecated]
+    def get(self) -> str:
+        return 'sync'
+
+    @modify(error_handler=_sync_error_handler)  # type: ignore[deprecated]
+    async def post(self) -> str:
+        return 'async'
+
+    @validate(  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+        error_handler=_async_error_handler,
+    )
+    def put(self) -> HttpResponse:
+        return HttpResponse()
+
+    @validate(  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+        ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+        error_handler=_sync_error_handler,
+    )
+    async def delete(self) -> HttpResponse:
+        return HttpResponse()
+
+    @modify(  # pyrefly: ignore[no-matching-overload] # ty: ignore[no-matching-overload, dynamic-function-decorator-return]
+        auth=[DjangoSessionAsyncAuth()],
+        error_handler=_sync_error_handler,  # type: ignore[arg-type]
+    )
+    async def patch(self) -> str:
+        return 'mixed'

@@ -105,6 +105,10 @@ of requirements for an API to count as public.
 
 ### Bugfixes
 
+- Fixed `@modify` and `@validate` typing: passing async `auth`
+  or `throttling` to a sync endpoint
+  (and sync ones to an async endpoint) is now a type error,
+  `links` is now also accepted by all `@modify` overloads, #1393
 - Fixed `EndpointMetadata.validate_responses` being annotated
   as `bool | None`, it is always resolved
   from the settings, the controller, and the endpoint, #1370
