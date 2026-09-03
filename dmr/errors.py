@@ -68,7 +68,7 @@ class ErrorDetail(TypedDict):
     """Text message of the error."""
     msg: str
 
-    """Optional error type identificator."""
+    """Optional error type identifier."""
     type: NotRequired[str]
 
     """Optional location where this error happened."""
