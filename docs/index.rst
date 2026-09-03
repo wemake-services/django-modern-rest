@@ -210,19 +210,6 @@ Here are our amazing people who made this project possible.
 
 
 .. toctree::
-  :caption: Testing
-  :hidden:
-
-  pages/testing/tools-and-styles.rst
-  pages/testing/data-generation.rst
-  pages/testing/authentication.rst
-  pages/testing/throttling.rst
-  pages/testing/property-based.rst
-  pages/testing/tracecov.rst
-  pages/testing/api-reference.rst
-
-
-.. toctree::
   :caption: Auth
   :hidden:
 
@@ -250,6 +237,20 @@ Here are our amazing people who made this project possible.
 
   pages/openapi/schema.rst
   pages/openapi/openapi.rst
+
+
+.. toctree::
+  :caption: Testing
+  :hidden:
+
+  pages/testing/tools-and-styles.rst
+  pages/testing/data-generation.rst
+  pages/testing/assertions.rst
+  pages/testing/authentication.rst
+  pages/testing/throttling.rst
+  pages/testing/property-based.rst
+  pages/testing/tracecov.rst
+  pages/testing/api-reference.rst
 
 
 .. toctree::

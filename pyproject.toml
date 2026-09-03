@@ -69,7 +69,6 @@ pydantic = [ "pydantic[email,timezone]>=2.12", "pydantic-extra-types" ]
 msgspec = [ "msgspec>=0.21.1" ]
 attrs = [ "attrs>=26", "django-modern-rest[msgspec]" ]
 jwt = [ "pyjwt[crypto]>=2.11" ]
-allauth = [ "django-allauth>=65.4" ]
 openapi = [ "openapi-spec-validator>=0.8", "polyfactory>=3.2", "pyyaml" ]
 
 [project.urls]
@@ -137,6 +136,8 @@ build = [
   "pypyp>=1.3,<2",
 ]
 dev-and-docs = [
+  # Needed for auth examples:
+  "django-allauth>=65.4,<66",
   # Needed for the micro-framework examples:
   "nanodjango>=0.16,<0.17",
   "punq>=0.8,<1",
@@ -154,6 +155,7 @@ unit-test = [
   # Pin to Django 5.2 (LTS): it supports Python 3.11+, while Django 6.0
   # requires Python 3.12+. CI runs different django versions as separate jobs
   "django~=5.2.0",
+  "django-allauth",
   "django-csp>=4,<5",
   "faker>=40.36,<41",
   "inline-snapshot>=0.35,<0.36",

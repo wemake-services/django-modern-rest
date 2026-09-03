@@ -42,9 +42,6 @@ Extras for different features:
 
 - ``'django-modern-rest[jwt]'`` for
   `jwt <https://pyjwt.readthedocs.io>`_ support
-- ``'django-modern-rest[allauth]'`` for
-  `django-allauth <https://docs.allauth.org/en/latest/headless/index.html>`_
-  headless auth support
 - ``'django-modern-rest[openapi]'`` for
   `OpenAPI schema validation <https://github.com/python-openapi/openapi-spec-validator>`_
   and better examples generation
