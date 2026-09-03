@@ -434,9 +434,11 @@ API Reference
 
 .. autoclass:: dmr.errors.ErrorModel
   :members:
+  :show-inheritance:
 
 .. autoclass:: dmr.errors.ErrorDetail
   :members:
+  :show-inheritance:
 
 .. autofunction:: dmr.errors.format_error
 

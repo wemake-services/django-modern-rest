@@ -17,15 +17,16 @@ from dmr.openapi.objects import SecurityScheme
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security import request_auth
 from dmr.security.jwt import (
-    BaseJWTSyncAuth,
     CookieJWTAsyncAuth,
     CookieJWTSyncAuth,
     HeaderJWTAsyncAuth,
     HeaderJWTSyncAuth,
+    JWTAsyncAuth,
     JWToken,
+    JWTSyncAuth,
     request_jwt,
 )
-from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth
+from dmr.security.jwt.auth.base import BaseJWTSyncAuth
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 _LEEWAY: Final = 30  # seconds
@@ -297,7 +298,7 @@ def test_sync_cookie_jwt_falls_to_header(
     """Ensures a missing cookie does not block the next auth in the chain."""
 
     class _ChainedController(Controller[PydanticFastSerializer]):
-        auth = (CookieJWTSyncAuth(), JWTSyncAuth())
+        auth = (CookieJWTSyncAuth(), HeaderJWTSyncAuth())
 
         def post(self) -> str:
             return 'authed'
@@ -313,7 +314,7 @@ def test_sync_cookie_jwt_falls_to_header(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED, response.content
-    assert isinstance(request_auth(request), JWTSyncAuth)
+    assert isinstance(request_auth(request), HeaderJWTSyncAuth)
     assert json.loads(response.content) == 'authed'
 
 

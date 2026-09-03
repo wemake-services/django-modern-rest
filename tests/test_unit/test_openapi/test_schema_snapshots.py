@@ -14,7 +14,7 @@ from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
 from dmr.routing import Router
-from dmr.security.jwt import JWTAsyncAuth
+from dmr.security.jwt import HeaderJWTAsyncAuth
 from tests.infra.xml_format import XmlParser, XmlRenderer
 
 
@@ -83,7 +83,7 @@ class _QueryModel(pydantic.BaseModel):
 
 
 class _AuthedAndCookiesController(Controller[PydanticSerializer]):
-    auth = (JWTAsyncAuth(),)
+    auth = (HeaderJWTAsyncAuth(),)
 
     async def get(
         self,

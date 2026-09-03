@@ -3,7 +3,7 @@ from typing import assert_type
 
 from django.contrib.auth.models import AbstractBaseUser
 
-from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth
+from dmr.security.jwt.auth import HeaderJWTAsyncAuth, HeaderJWTSyncAuth
 from dmr.security.jwt.blocklist import (
     JWTokenBlocklistAsyncMixin,
     JWTokenBlocklistSyncMixin,
@@ -18,11 +18,11 @@ def accepts_token(token: BlocklistedJWToken) -> None:
     assert_type(token.expires_at, dt.datetime)
 
 
-class _SyncAuth(JWTokenBlocklistSyncMixin, JWTSyncAuth):
+class _SyncAuth(JWTokenBlocklistSyncMixin, HeaderJWTSyncAuth):
     """Sync jwt auth with the blocklist mixin."""
 
 
-class _AsyncAuth(JWTokenBlocklistAsyncMixin, JWTAsyncAuth):
+class _AsyncAuth(JWTokenBlocklistAsyncMixin, HeaderJWTAsyncAuth):
     """Async jwt auth with the blocklist mixin."""
 
 

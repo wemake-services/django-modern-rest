@@ -11,8 +11,8 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.jwt import (
     CookieJWTAsyncAuth,
     CookieJWTSyncAuth,
-    JWTAsyncAuth,
-    JWTSyncAuth,
+    HeaderJWTAsyncAuth,
+    HeaderJWTSyncAuth,
 )
 from dmr.security.jwt.views import (  # noqa: WPS235
     ObtainTokensAsyncController,
@@ -213,7 +213,7 @@ class _UserOutput(pydantic.BaseModel):
 
 @final
 class ControllerWithJWTSyncAuth(Controller[PydanticSerializer]):
-    auth = (JWTSyncAuth(),)
+    auth = (HeaderJWTSyncAuth(),)
 
     def post(self) -> _UserOutput:
         return _UserOutput.model_validate(
@@ -224,7 +224,7 @@ class ControllerWithJWTSyncAuth(Controller[PydanticSerializer]):
 
 @final
 class ControllerWithJWTAsyncAuth(Controller[PydanticSerializer]):
-    auth = (JWTAsyncAuth(),)
+    auth = (HeaderJWTAsyncAuth(),)
 
     async def post(self) -> _UserOutput:
         return _UserOutput.model_validate(
