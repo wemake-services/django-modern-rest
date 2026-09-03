@@ -14,7 +14,7 @@ def test_sync_endpoint_requires_sync_auth() -> None:
     with pytest.raises(EndpointMetadataError, match=r'base\.SyncAuth'):
 
         class _SyncController(Controller[PydanticSerializer]):
-            @modify(auth=[DjangoSessionAsyncAuth()])
+            @modify(auth=[DjangoSessionAsyncAuth()])  # type: ignore[deprecated]
             def get(self) -> str:
                 raise NotImplementedError
 
@@ -24,7 +24,7 @@ def test_async_endpoint_requires_async_auth() -> None:
     with pytest.raises(EndpointMetadataError, match=r'base\.AsyncAuth'):
 
         class _AsyncController(Controller[PydanticSerializer]):
-            @modify(auth=[DjangoSessionSyncAuth()])
+            @modify(auth=[DjangoSessionSyncAuth()])  # type: ignore[deprecated]
             async def get(self) -> str:
                 raise NotImplementedError
 

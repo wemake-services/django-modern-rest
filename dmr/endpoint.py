@@ -4,7 +4,7 @@ import threading
 from collections.abc import Awaitable, Callable, Mapping, Sequence, Set
 from functools import wraps
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Never, TypeAlias, overload
 
 from django.http import HttpResponse, HttpResponseBase
 from django.urls import URLPattern
@@ -615,11 +615,11 @@ _ResponseT = TypeVar(
 
 
 @overload
-def validate(  # noqa: WPS234
+def validate(
     response: ResponseSpec,
     /,
     *responses: ResponseSpec,
-    error_handler: AsyncErrorHandler,
+    error_handler: None = None,
     validate_responses: bool | None = None,
     exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
     semantic_responses: bool | None = None,
@@ -629,8 +629,41 @@ def validate(  # noqa: WPS234
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
-    auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: _ThrottlingDef = (),
+    auth: Sequence[Never] | None = (),
+    throttling: Sequence[Never] | None = (),
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
+    summary: '_StrOrPromise | None' = None,
+    description: '_StrOrPromise | None' = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    external_docs: ExternalDocumentation | None = None,
+    callbacks: dict[str, Callback | Reference] | None = None,
+    servers: list[Server] | None = None,
+    ignore_from_spec: bool | None = None,
+) -> Callable[
+    [Callable[_ParamT, _ResponseT]],
+    Callable[_ParamT, _ResponseT],
+]: ...
+
+
+@overload
+def validate(  # pyright: ignore[reportOverlappingOverload]  # noqa: WPS234
+    response: ResponseSpec,
+    /,
+    *responses: ResponseSpec,
+    error_handler: AsyncErrorHandler | None = None,
+    validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+    semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
+    parsers: Sequence[Parser] | None = None,
+    renderers: Sequence[Renderer] | None = None,
+    validate_negotiation: bool | None = None,
+    auth: Sequence[AsyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | None = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: '_StrOrPromise | None' = None,
     description: '_StrOrPromise | None' = None,
@@ -652,7 +685,7 @@ def validate(
     response: ResponseSpec,
     /,
     *responses: ResponseSpec,
-    error_handler: SyncErrorHandler,
+    error_handler: SyncErrorHandler | None = None,
     validate_responses: bool | None = None,
     exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
     semantic_responses: bool | None = None,
@@ -662,8 +695,8 @@ def validate(
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
-    auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: _ThrottlingDef = (),
+    auth: Sequence[SyncAuth] | None = (),
+    throttling: Sequence[SyncThrottle] | None = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: '_StrOrPromise | None' = None,
     description: '_StrOrPromise | None' = None,
@@ -677,39 +710,6 @@ def validate(
 ) -> Callable[
     [Callable[_ParamT, HttpResponseBase]],
     Callable[_ParamT, HttpResponseBase],
-]: ...
-
-
-@overload
-def validate(
-    response: ResponseSpec,
-    /,
-    *responses: ResponseSpec,
-    validate_responses: bool | None = None,
-    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
-    semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
-    validate_events: bool | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
-    error_handler: None = None,
-    parsers: Sequence[Parser] | None = None,
-    renderers: Sequence[Renderer] | None = None,
-    validate_negotiation: bool | None = None,
-    auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: _ThrottlingDef = (),
-    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-    summary: '_StrOrPromise | None' = None,
-    description: '_StrOrPromise | None' = None,
-    tags: list[str] | None = None,
-    operation_id: str | None = None,
-    deprecated: bool = False,
-    external_docs: ExternalDocumentation | None = None,
-    callbacks: dict[str, Callback | Reference] | None = None,
-    servers: list[Server] | None = None,
-    ignore_from_spec: bool | None = None,
-) -> Callable[
-    [Callable[_ParamT, _ResponseT]],
-    Callable[_ParamT, _ResponseT],
 ]: ...
 
 
@@ -881,92 +881,24 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
 
 
 @overload
-def modify(
+def modify(  # pyright: ignore[reportOverlappingOverload]
     *,
-    # TODO: make error handlers generic?
-    error_handler: AsyncErrorHandler,
-    status_code: HTTPStatus | None = None,
-    headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
-    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
-    validate_responses: bool | None = None,
-    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
-    semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
-    validate_events: bool | None = None,
-    extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
-    parsers: Sequence[Parser] | None = None,
-    renderers: Sequence[Renderer] | None = None,
-    validate_negotiation: bool | None = None,
-    auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: _ThrottlingDef = (),
-    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-    summary: '_StrOrPromise | None' = None,
-    description: '_StrOrPromise | None' = None,
-    tags: list[str] | None = None,
-    operation_id: str | None = None,
-    deprecated: bool = False,
-    external_docs: ExternalDocumentation | None = None,
-    callbacks: dict[str, Callback | Reference] | None = None,
-    servers: list[Server] | None = None,
-    response_description: str | None = None,
-    ignore_from_spec: bool | None = None,
-) -> ModifyAsyncCallable: ...
-
-
-@overload
-def modify(
-    *,
-    error_handler: SyncErrorHandler,
-    status_code: HTTPStatus | None = None,
-    headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
-    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
-    validate_responses: bool | None = None,
-    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
-    semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
-    validate_events: bool | None = None,
-    extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
-    parsers: Sequence[Parser] | None = None,
-    renderers: Sequence[Renderer] | None = None,
-    validate_negotiation: bool | None = None,
-    auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: _ThrottlingDef = (),
-    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-    summary: '_StrOrPromise | None' = None,
-    description: '_StrOrPromise | None' = None,
-    tags: list[str] | None = None,
-    operation_id: str | None = None,
-    deprecated: bool = False,
-    external_docs: ExternalDocumentation | None = None,
-    callbacks: dict[str, Callback | Reference] | None = None,
-    servers: list[Server] | None = None,
-    links: dict[str, Link | Reference] | None = None,
-    response_description: str | None = None,
-    ignore_from_spec: bool | None = None,
-) -> ModifySyncCallable: ...
-
-
-@overload
-def modify(
-    *,
-    status_code: HTTPStatus | None = None,
-    headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
-    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
-    validate_responses: bool | None = None,
-    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
-    semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
-    validate_events: bool | None = None,
-    extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     error_handler: None = None,
+    status_code: HTTPStatus | None = None,
+    headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
+    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
+    validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+    semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
+    extra_responses: list[ResponseSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
-    auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: _ThrottlingDef = (),
+    auth: Sequence[Never] | None = (),
+    throttling: Sequence[Never] | None = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: '_StrOrPromise | None' = None,
     description: '_StrOrPromise | None' = None,
@@ -980,6 +912,74 @@ def modify(
     response_description: str | None = None,
     ignore_from_spec: bool | None = None,
 ) -> ModifyAnyCallable: ...
+
+
+@overload
+def modify(
+    *,
+    error_handler: AsyncErrorHandler | None = None,
+    status_code: HTTPStatus | None = None,
+    headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
+    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
+    validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+    semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
+    extra_responses: list[ResponseSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
+    parsers: Sequence[Parser] | None = None,
+    renderers: Sequence[Renderer] | None = None,
+    validate_negotiation: bool | None = None,
+    auth: Sequence[AsyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | None = (),
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
+    summary: '_StrOrPromise | None' = None,
+    description: '_StrOrPromise | None' = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    external_docs: ExternalDocumentation | None = None,
+    callbacks: dict[str, Callback | Reference] | None = None,
+    servers: list[Server] | None = None,
+    links: dict[str, Link | Reference] | None = None,
+    response_description: str | None = None,
+    ignore_from_spec: bool | None = None,
+) -> ModifyAsyncCallable: ...
+
+
+@overload
+def modify(
+    *,
+    error_handler: SyncErrorHandler | None = None,
+    status_code: HTTPStatus | None = None,
+    headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
+    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
+    validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+    semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
+    extra_responses: list[ResponseSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
+    parsers: Sequence[Parser] | None = None,
+    renderers: Sequence[Renderer] | None = None,
+    validate_negotiation: bool | None = None,
+    auth: Sequence[SyncAuth] | None = (),
+    throttling: Sequence[SyncThrottle] | None = (),
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
+    summary: '_StrOrPromise | None' = None,
+    description: '_StrOrPromise | None' = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    external_docs: ExternalDocumentation | None = None,
+    callbacks: dict[str, Callback | Reference] | None = None,
+    servers: list[Server] | None = None,
+    links: dict[str, Link | Reference] | None = None,
+    response_description: str | None = None,
+    ignore_from_spec: bool | None = None,
+) -> ModifySyncCallable: ...
 
 
 def modify(  # noqa: WPS211
