@@ -146,6 +146,7 @@ of requirements for an API to count as public.
   instead of failing with a database `IntegrityError`, #1322
 - JWT authentication now rejects refresh tokens when access tokens are expected,
   #1320
+- Fixed a bug when request data might be copied in `parse_as_post` #1328
 
 ### Misc
 

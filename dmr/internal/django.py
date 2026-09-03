@@ -33,7 +33,6 @@
 
 
 from collections.abc import Mapping
-from io import BytesIO
 from typing import Any, Final, TypeAlias
 
 from django.core.exceptions import TooManyFilesSent
@@ -142,7 +141,7 @@ def parse_as_post(request: HttpRequest) -> None:
     """
     # This code is adapted from Django itself:
     if request.content_type == 'multipart/form-data':
-        request_data = BytesIO(request.body)
+        request_data = getattr(request, '_stream', request)
         # This was introduced in Django 6.1:
         multipart_parser_cls = getattr(
             request,
