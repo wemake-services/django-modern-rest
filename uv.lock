@@ -1042,7 +1042,7 @@ docs = [
     { name = "sphinxcontrib-mermaid", specifier = ">=2,<3" },
     { name = "uvicorn", specifier = ">=0.52,<0.53" },
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
-    { name = "zapros", specifier = ">=0.15,<0.17" },
+    { name = "zapros", specifier = ">=0.15,<0.18" },
 ]
 integration = [
     { name = "pytest-codspeed", specifier = ">=4.3,<6" },
@@ -4039,14 +4039,14 @@ wheels = [
 
 [[package]]
 name = "zapros"
-version = "0.16.0"
+version = "0.17.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "h11" },
     { name = "pywhatwgurl" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5b/0b/09d0ee7e750e80802fd73da64b41c2645e7305d4ffa548a39ff6cae771f6/zapros-0.16.0.tar.gz", hash = "sha256:d0ecdcb86ef3b524eef1a51f9a826a55b9c4718e349c3c575fd0f3b3467fe581", size = 953248, upload-time = "2026-07-04T13:13:54.136Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5b/d3/049f59174eec9fa72ff0214e17352b6e5b3012cf24361a631758d2bf69e1/zapros-0.17.0.tar.gz", hash = "sha256:d0a4ab10246ae1431840a00146aa791780b10e98b2a80811858946dbb695f870", size = 960860, upload-time = "2026-08-26T18:29:52.538Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/30/50/1f7baec6d6b0ef47ed57d4aa4376d45e2a63b33a133164401b12b3d927b2/zapros-0.16.0-py3-none-any.whl", hash = "sha256:6c77fc2fb6bec22a809b943ddbdf3e17d7fe710d486c4840107dbc9f2a923d64", size = 120363, upload-time = "2026-07-04T13:13:52.437Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/13/9a0a85328dab1348d56521315f671eee736b10ee2ba5148f80fc80bb2c5d/zapros-0.17.0-py3-none-any.whl", hash = "sha256:e0190405f8981ec77594f0a53d52cbee0dd86985411d20a79b1225d39c77f584", size = 122019, upload-time = "2026-08-26T18:29:50.656Z" },
 ]
