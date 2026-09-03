@@ -17,7 +17,11 @@ from dmr import Controller, modify
 from dmr.exceptions import NotAuthenticatedError
 from dmr.plugins.pydantic.serializer import PydanticSerializer
 from dmr.security import request_auth
-from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth, request_jwt
+from dmr.security.jwt.auth import (
+    HeaderJWTAsyncAuth,
+    HeaderJWTSyncAuth,
+    request_jwt,
+)
 from dmr.security.jwt.blocklist.auth import (
     JWTokenBlocklistAsyncMixin,
     JWTokenBlocklistSyncMixin,
@@ -63,8 +67,8 @@ def build_user_token(admin_user: User, settings: LazySettings) -> _TokenBuilder:
     return factory
 
 
-class MyJWTSyncAuth(JWTokenBlocklistSyncMixin, JWTSyncAuth):
-    """JWTSyncAuth with blocklist mixin."""
+class MyJWTSyncAuth(JWTokenBlocklistSyncMixin, HeaderJWTSyncAuth):
+    """HeaderJWTSyncAuth with blocklist mixin."""
 
 
 @final
@@ -221,8 +225,8 @@ def test_blocklist_sync_add_no_jti(admin_user: User) -> None:
     assert not auth.blocklist_model().objects.exists()
 
 
-class MyJWTAsyncAuth(JWTokenBlocklistAsyncMixin, JWTAsyncAuth):
-    """JWTAsyncAuth with blocklist mixin."""
+class MyJWTAsyncAuth(JWTokenBlocklistAsyncMixin, HeaderJWTAsyncAuth):
+    """HeaderJWTAsyncAuth with blocklist mixin."""
 
 
 @final
