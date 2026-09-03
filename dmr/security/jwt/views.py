@@ -20,7 +20,7 @@ from dmr.decorators import endpoint_decorator
 from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
 from dmr.security.base import NO_STORE_HEADERS
-from dmr.security.jwt.auth import USER_LOOKUP_ERRORS, set_request_attrs
+from dmr.security.jwt.auth.base import USER_LOOKUP_ERRORS, set_request_attrs
 from dmr.security.jwt.token import JWToken
 from dmr.serializer import BaseSerializer
 

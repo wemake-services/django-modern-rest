@@ -210,8 +210,8 @@ has nothing to put there, so it sends no challenge at all:
       :class:`~dmr.security.token.HeaderTokenAsyncAuth`
     - ``Token``, when a ``prefix=`` is set
     - ``prefix=``
-  * - :class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth`,
-      :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth`
+  * - :class:`~dmr.security.jwt.auth.CookieJWTSyncAuth`,
+      :class:`~dmr.security.jwt.auth.CookieJWTAsyncAuth`
     - none, the token lives in a cookie
     - \-
   * - :class:`~dmr.security.token.CookieTokenSyncAuth`,
