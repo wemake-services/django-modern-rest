@@ -14,6 +14,7 @@ from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
 from dmr import Controller, modify
+from dmr.exceptions import NotAuthenticatedError
 from dmr.plugins.pydantic.serializer import PydanticSerializer
 from dmr.security import request_auth
 from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth, request_jwt
@@ -176,6 +177,50 @@ def test_blocklist_sync_mixin_unauthorized(
     })
 
 
+@pytest.mark.django_db
+def test_blocklist_sync_mixin_no_jti(
+    dmr_rf: DMRRequestFactory,
+    build_user_token: _TokenBuilder,
+) -> None:
+    """Ensures that tokens without `jti` cannot pass the blocklist auth."""
+    token = build_user_token(exp=_EXP)
+    request = dmr_rf.get(
+        '/whatever/',
+        headers={
+            'Authorization': f'Bearer {token}',
+        },
+    )
+
+    response = _BlocklistSyncController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert request_auth(request) is None
+    assert request_jwt(request) is None
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+@pytest.mark.django_db
+def test_blocklist_sync_check_auth_no_jti(admin_user: User) -> None:
+    """Ensures that hand-made tokens without `jti` don't bypass the check."""
+    auth = MyJWTSyncAuth()
+    token = JWToken(sub=str(admin_user.pk), exp=_EXP)
+
+    with pytest.raises(NotAuthenticatedError):
+        auth.check_auth(admin_user, token)
+
+
+@pytest.mark.django_db
+def test_blocklist_sync_add_no_jti(admin_user: User) -> None:
+    """Ensures that adding a token without `jti` is a clean error."""
+    auth = MyJWTSyncAuth()
+    token = JWToken(sub=str(admin_user.pk), exp=_EXP)
+
+    with pytest.raises(NotAuthenticatedError):
+        auth.blocklist(token)
+
+    assert not auth.blocklist_model().objects.exists()
+
+
 class MyJWTAsyncAuth(JWTokenBlocklistAsyncMixin, JWTAsyncAuth):
     """JWTAsyncAuth with blocklist mixin."""
 
@@ -293,3 +338,77 @@ async def test_blocklist_async_mixin_unauthorized(
             },
         ],
     })
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_blocklist_async_mixin_no_jti(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    build_user_token: _TokenBuilder,
+) -> None:
+    """Ensures that tokens without `jti` cannot pass the blocklist auth."""
+    token = build_user_token(exp=_EXP)
+    request = dmr_async_rf.get(
+        '/whatever/',
+        headers={
+            'Authorization': f'Bearer {token}',
+        },
+    )
+
+    response = await dmr_async_rf.wrap(
+        _BlocklistAsyncController.as_view()(request),
+    )
+
+    assert isinstance(response, HttpResponse)
+    assert request_auth(request) is None
+    assert request_jwt(request) is None
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_blocklist_async_check_auth_no_jti(admin_user: User) -> None:
+    """Ensures that hand-made tokens without `jti` don't bypass the check."""
+    auth = MyJWTAsyncAuth()
+    token = JWToken(sub=str(admin_user.pk), exp=_EXP)
+
+    with pytest.raises(NotAuthenticatedError):
+        await auth.check_auth(admin_user, token)
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db(transaction=True)
+async def test_blocklist_async_add_no_jti(admin_user: User) -> None:
+    """Ensures that adding a token without `jti` is a clean error."""
+    auth = MyJWTAsyncAuth()
+    token = JWToken(sub=str(admin_user.pk), exp=_EXP)
+
+    with pytest.raises(NotAuthenticatedError):
+        await auth.blocklist(token)
+
+    assert not await auth.blocklist_model().objects.aexists()
+
+
+@pytest.mark.parametrize(
+    'auth_class',
+    [MyJWTSyncAuth, MyJWTAsyncAuth],
+)
+@pytest.mark.parametrize(
+    ('require_claims', 'expected'),
+    [
+        (None, ['jti']),
+        ([], ['jti']),
+        (['iss'], ['iss', 'jti']),
+        (['jti'], ['jti']),
+        (('iss', 'jti'), ['iss', 'jti']),
+    ],
+)
+def test_blocklist_requires_jti_claim(
+    auth_class: type[MyJWTSyncAuth] | type[MyJWTAsyncAuth],
+    require_claims: Sequence[str] | None,
+    expected: list[str],
+) -> None:
+    """Ensures that blocklist auth always requires the `jti` claim."""
+    auth = auth_class(require_claims=require_claims)
+
+    assert auth.require_claims == expected

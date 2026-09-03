@@ -48,9 +48,22 @@ of requirements for an API to count as public.
 - Throttling cache keys are now hashed to keep their length bounded, #1337
 - HTTP Basic Auth credentials are no longer URL-decoded,
   so percent-encoded characters such as `%40` are preserved as-is, #1363
+- `HttpBasicSyncAuth` and `HttpBasicAsyncAuth` now require
+  the `auth_scheme` header prefix, it is `Basic` by default
+  and is matched exactly, credentials sent without it
+  are not accepted anymore.
+  Pass `auth_scheme=''` to keep reading prefixless
+  credentials like the older versions did, #1330
+- `HttpBasicSyncAuth` and `HttpBasicAsyncAuth` now raise
+  `NotAuthenticatedError` when credentials have the right
+  `auth_scheme` prefix, but cannot be decoded,
+  previously the next auth in the chain was tried, #1330
 
 ### Features
 
+- Added `exclude_validate_responses` setting, controller attribute,
+  and `@modify` / `@validate` argument to skip response validation
+  for the given status codes, like `500`, #1370
 - Added `WWW-Authenticate` support for auth classes that read
   the `Authorization` header: `HttpBasicSyncAuth`, `HttpBasicAsyncAuth`,
   `HeaderJWTSyncAuth`, `HeaderJWTAsyncAuth`, `HeaderTokenSyncAuth`,
@@ -90,6 +103,13 @@ of requirements for an API to count as public.
 
 ### Bugfixes
 
+- Fixed `EndpointMetadata.validate_responses` being annotated
+  as `bool | None`, it is always resolved
+  from the settings, the controller, and the endpoint, #1370
+- Fixed `responses` of `ObtainTokenSyncController`,
+  `ObtainTokenAsyncController`, `DjangoSessionSyncController`,
+  and `DjangoSessionAsyncController` being narrowed
+  to a fixed-size tuple, subclasses could not change it, #1371
 - Added missing `@sensitive_variables` decorator to all auth views,
   so credentials and tokens are hidden
   in error reporting middlewares and logs, #1323
@@ -119,11 +139,18 @@ of requirements for an API to count as public.
 - Fixed `JWToken.decode` validating `exp` and `iat` twice,
   now `leeway`, `verify_exp`, and `verify_iat` are respected
   and invalid tokens return `401` instead of `500`, #1324
+- Fixed the JWT blocklist being silently bypassed by tokens without `jti`,
+  `JWTokenBlocklistSyncMixin` and `JWTokenBlocklistAsyncMixin`
+  now add `jti` to `require_claims`, so such tokens get `401`.
+  Blocklisting them returns `401` as well
+  instead of failing with a database `IntegrityError`, #1322
 - JWT authentication now rejects refresh tokens when access tokens are expected,
   #1320
 
 ### Misc
 
+- Documented that `500` must be described or excluded from validation,
+  when running with `validate_responses` enabled, #1370
 - Fixes AI docs and plugin install instructions, #1311
 - Documented safe use of user-provided redirect targets with `RedirectTo`,
   #1326
@@ -131,6 +158,8 @@ of requirements for an API to count as public.
   installations to `django-modern-rest` and `django-allauth` headless, #1193
 - Documented why and how to remove expired `BlocklistedJWToken`
   and `Token` rows on a schedule, #1336
+- Added a guide on writing your own auth class
+  for transports we don't ship, #1366
 
 
 ## 0.14.0 (2026-08-14)

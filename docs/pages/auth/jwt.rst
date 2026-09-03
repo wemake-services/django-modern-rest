@@ -333,6 +333,21 @@ We provide two mixin types:
 
 If this app is installed, we would provide an admin panel by default.
 
+.. important::
+
+  Both mixins add ``'jti'`` to ``require_claims`` of the auth class
+  they are mixed into, on top of whatever you pass yourself.
+
+  Blocklist rows are keyed by ``jti``, so a token without one
+  can never be blocklisted. Accepting such tokens would mean
+  that the blocklist is silently bypassed:
+  the lookup would match no rows and the token would stay valid forever.
+  We reject them with ``401`` instead.
+
+  If you issue tokens with the controllers we ship, make sure that
+  :meth:`~dmr.security.jwt.views.ObtainTokensSyncController.make_jwt_id`
+  returns a value, our default implementation already does.
+
 .. _cleaning-up-blocklisted-tokens:
 
 Cleaning up expired tokens
