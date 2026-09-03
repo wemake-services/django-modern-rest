@@ -155,8 +155,8 @@ unit-test = [
   # Pin to Django 5.2 (LTS): it supports Python 3.11+, while Django 6.0
   # requires Python 3.12+. CI runs different django versions as separate jobs
   "django~=5.2.0",
-  "django-csp>=4,<5",
   "django-allauth",
+  "django-csp>=4,<5",
   "faker>=40.36,<41",
   "inline-snapshot>=0.35,<0.36",
   # We don't install `orjson` on 3.14, because we run `3.14t` as well,
