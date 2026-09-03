@@ -105,26 +105,6 @@ generated UUID remains valid without making the test flaky.
   `dirty-equals string matcher documentation`_ shows, for example, how to
   constrain length, case, and regular expressions.
 
-
-Choosing an assertion
----------------------
-
-Start from the value you want to verify:
-
-1. If the complete value is deterministic and meaningful, use an inline
-   snapshot.
-2. If some values are dynamic, compare them with precise ``dirty-equals``
-   matchers while keeping deterministic values exact.
-3. If the structure is stable but some leaves are dynamic, put the matchers
-   inside an inline snapshot.
-4. If output differs between supported implementations or environments, assert
-   only their shared contract. Do not snapshot an implementation-specific
-   message merely to make the current run pass.
-
-Avoid weakening stable assertions with broad matchers. Conversely, do not
-hard-code generated IDs or timestamps, normalize them into arbitrary constants,
-or regenerate snapshots without reviewing why they changed.
-
 .. _dirty-equals: https://dirty-equals.helpmanual.io/latest/
 .. _dirty-equals documentation: https://dirty-equals.helpmanual.io/latest/
 .. _dirty-equals string matcher documentation: https://dirty-equals.helpmanual.io/latest/types/string/
