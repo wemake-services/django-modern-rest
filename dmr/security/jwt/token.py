@@ -103,7 +103,7 @@ class JWToken:  # noqa: WPS214
 
         """
         now = _normalize_datetime(dt.datetime.now(dt.UTC)).timestamp()
-        if self.exp.timestamp() < now:
+        if self.exp.timestamp() <= now:
             raise ValueError('exp value must be a datetime in the future')
         if self.iat.timestamp() > now:
             raise ValueError('iat must be a current or past time')
