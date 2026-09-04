@@ -21,6 +21,8 @@ of requirements for an API to count as public.
 
 ### Breaking changes
 
+- Renamed `json_dump` to `json_dumps` in `dmr.openapi.dump` and `dmr.internal.json`
+  to follow standard string-serialization conventions, #1399
 - Removed `QueryTokenSyncAuth` and `QueryTokenAsyncAuth` auth classes,
   because they were insecure, you can use [older existing versions](https://github.com/wemake-services/django-modern-rest/blob/14884b432ee075ec3d78ff388944ebc5f0b5d432/dmr/security/token/auth/header.py), #1288
 - Removed `FileResponseSpec.file_body`,
