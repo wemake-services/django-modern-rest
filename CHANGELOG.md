@@ -58,6 +58,9 @@ of requirements for an API to count as public.
   `NotAuthenticatedError` when credentials have the right
   `auth_scheme` prefix, but cannot be decoded,
   previously the next auth in the chain was tried, #1330
+- `OpenAPI.convert()` now caches and returns the same dictionary per instance.
+  Customize the schema before its first conversion and treat the returned
+  dictionary as read-only. Build a new schema instance to reflect later changes.
 
 ### Features
 

@@ -137,3 +137,17 @@ def test_multiple_components_conflict() -> None:
 
     with pytest.raises(ValueError, match=r"with shared keys: \{'test'\}"):
         build_schema(router, config=config)
+
+
+@pytest.mark.parametrize('skip_validation', [True, False])
+def test_schema_conversion_cached(*, skip_validation: bool) -> None:
+    """Ensure each schema instance reuses its own converted dictionary."""
+    schema = build_schema(Router())
+    other_schema = build_schema(Router())
+
+    converted = schema.convert(skip_validation=skip_validation)
+    cached = schema.convert(skip_validation=skip_validation)
+    other_converted = other_schema.convert(skip_validation=skip_validation)
+
+    assert cached is converted
+    assert other_converted is not converted

@@ -108,3 +108,18 @@ def test_schema_validation(snapshot: SnapshotAssertion) -> None:
 
     # It is possible to disable the validation:
     build_schema(router).convert(skip_validation=True)
+
+
+def test_cached_schema_validation() -> None:
+    """Ensure skipping validation does not bypass later validation failures."""
+    schema = build_schema(
+        Router(
+            'api/v1/',
+            [path('user/', _UserController.as_view())],
+        ),
+    )
+    schema.convert(skip_validation=True)
+
+    # Validate the cached schema even if the first conversion skipped it:
+    with pytest.raises(OpenAPIValidationError, match='Wrong'):
+        schema.convert()
