@@ -132,6 +132,35 @@ up to the secret key customization.
 See :meth:`~dmr.security.jwt.token.JWToken.decode`
 for more info on all configuration options.
 
+.. _jwt-json-backend:
+
+JSON backend
+~~~~~~~~~~~~
+
+Token payloads are encoded and decoded with the same JSON backend
+we use for parsers and renderers: ``msgspec`` when it is installed,
+native pure Python :mod:`json` otherwise.
+See :ref:`alternative-json` for the details.
+
+Since JWT auth runs on every authenticated request,
+having ``msgspec`` installed makes
+:meth:`~dmr.security.jwt.token.JWToken.encode` and
+:meth:`~dmr.security.jwt.token.JWToken.decode` noticeably faster.
+
+.. warning::
+
+  Registered claims are always encoded the same way,
+  but ``extras`` can hold arbitrary values.
+  Only json-native values there
+  (``str``, ``int``, ``float``, ``bool``, ``None``, ``list``, and ``dict``)
+  are guaranteed to produce identical tokens
+  with and without ``msgspec`` installed.
+  Other types, like :class:`~datetime.timedelta` or :class:`set`,
+  are either encoded differently or not supported at all
+  by the pure Python fallback.
+  Keep ``extras`` json-native when your tokens are issued
+  and verified by different installs.
+
 
 Reusing pre-existing views
 --------------------------
