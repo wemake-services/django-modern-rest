@@ -36,6 +36,7 @@ import jwt
 from jwt.types import Options
 
 from dmr.exceptions import NotAuthenticatedError
+from dmr.internal.jwt import dmr_jwt
 
 
 @final
@@ -66,6 +67,8 @@ class JWToken:  # noqa: WPS214
         aud: Audience - intended audience(s).
         jti: JWT ID - a unique identifier of the JWT between different issuers.
         extras: Extra fields that were found on the JWT token.
+            Only json-native values are guaranteed to be encoded
+            identically with and without ``msgspec`` installed.
 
     .. versionchanged:: 0.15.0
 
@@ -157,7 +160,7 @@ class JWToken:  # noqa: WPS214
         """
         self.validate_issued_claims()
         try:
-            return jwt.encode(
+            return dmr_jwt.encode(
                 payload={
                     field_name: field_value
                     for field_name, field_value in asdict(self).items()
@@ -187,7 +190,7 @@ class JWToken:  # noqa: WPS214
         options: Options | None,
     ) -> dict[str, Any]:
         """Decode and verify the JWT and return its payload."""
-        return jwt.decode(
+        return dmr_jwt.decode(
             encoded_token,
             key=secret,
             algorithms=algorithms,
