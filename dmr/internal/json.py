@@ -84,7 +84,7 @@ def _wrap_bytes_dumper(
     Wrap a bytes-returning JSON dumper to always return a UTF-8 string.
 
     This is used to normalize different JSON backends (e.g. `msgspec`)
-    to a single `str`-based interface expected by `json_dump`.
+    to a single `str`-based interface expected by `json_dumps`.
     """
 
     def wrapper(data: Any) -> str:
@@ -106,7 +106,7 @@ else:
     json_loads = msgspec.json.decode
 
 
-def json_dump(schema: Any) -> str:
+def json_dumps(schema: Any) -> str:
     """
     Serialize a JSON-serializable object to a string.
 
@@ -118,3 +118,8 @@ def json_dump(schema: Any) -> str:
 
     """
     return _json_dumps(schema)
+
+
+# Deprecated alias for backwards compatibility:
+json_dump = json_dumps
+
