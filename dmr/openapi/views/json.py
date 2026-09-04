@@ -30,4 +30,3 @@ class OpenAPIJsonView(OpenAPIView):
             ),
             content_type=self.content_type,
         )
-

@@ -21,7 +21,6 @@ class _DMRMixin:  # noqa: WPS338
         )
         return json_dumps(data) if should_encode else data
 
-
     def _parse_json(self, response: HttpResponse, **extra: Any) -> Any:
         # This implementation mirrors Django's response JSON parsing
         # behavior instead of introducing a cleaner local abstraction.

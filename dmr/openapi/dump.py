@@ -25,4 +25,3 @@ def json_dumps(schema: 'DumpedSchema') -> str:
 
 # Deprecated alias for backwards compatibility:
 json_dump = json_dumps
-

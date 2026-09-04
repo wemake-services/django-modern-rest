@@ -122,4 +122,3 @@ def json_dumps(schema: Any) -> str:
 
 # Deprecated alias for backwards compatibility:
 json_dump = json_dumps
-
