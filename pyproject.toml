@@ -99,7 +99,7 @@ dev = [
   "ty==0.0.75",
   "types-django-filter>=25.2,<27",
   "types-docker>=7.2,<8",
-  "types-docutils>=0.22,<0.23",
+  "types-docutils>=0.22,<0.24",
   "types-pyyaml>=6,<7",
   "types-redis>=4.6,<5",
   "types-setuptools>=82,<85",
