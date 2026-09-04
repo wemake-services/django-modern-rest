@@ -118,7 +118,3 @@ def json_dumps(schema: Any) -> str:
 
     """
     return _json_dumps(schema)
-
-
-# Deprecated alias for backwards compatibility:
-json_dump = json_dumps

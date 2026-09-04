@@ -21,7 +21,3 @@ def json_dumps(schema: 'DumpedSchema') -> str:
         Renamed from ``json_dump`` to ``json_dumps``.
     """
     return _json_dumps(schema)
-
-
-# Deprecated alias for backwards compatibility:
-json_dump = json_dumps
