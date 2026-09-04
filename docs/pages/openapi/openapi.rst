@@ -58,6 +58,40 @@ What happens in the example above?
    to :func:`require auth / role / permissions / etc <django.contrib.auth.decorators.login_required>`
    as all other regular Django views
 
+Caching schema responses
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Schema conversion is cached on the :class:`~dmr.openapi.openapi.OpenAPI`
+instance after its first :meth:`~dmr.openapi.openapi.OpenAPI.convert` call.
+Views that share this instance reuse the converted dictionary across requests.
+Finish customizing the schema before its first conversion and treat the
+returned dictionary as read-only. To serve an updated schema, build a new
+instance and bind the views to it.
+
+This caches conversion only; JSON/YAML serialization and HTML rendering still
+run on every request. Validation remains independent: a call with
+``skip_validation=True`` does not prevent a later call from validating the
+cached schema.
+
+For public JSON/YAML schema endpoints, you can also cache the serialized
+response with Django's
+`cache_page decorator in URLconf <https://docs.djangoproject.com/en/stable/topics/cache/#specifying-per-view-cache-in-the-urlconf>`_:
+
+.. literalinclude:: /examples/openapi/caching.py
+  :caption: urls.py
+  :language: python
+  :linenos:
+
+Cache hits skip JSON/YAML serialization. This example uses the ``default``
+Django cache; configure its backend through
+`CACHES <https://docs.djangoproject.com/en/stable/topics/cache/#setting-up-the-cache>`_.
+Cached responses can remain available for 15 minutes after a schema update.
+
+JSON/YAML views do not set a CSRF cookie. HTML documentation views continue
+to issue it, and Swagger also embeds a request-specific token in its HTML.
+The caching example applies to public JSON/YAML responses with no
+user-specific content.
+
 Requirements for OpenAPI UIs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

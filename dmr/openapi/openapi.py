@@ -65,6 +65,13 @@ class OpenAPI:
         hash=False,
         compare=False,
     )
+    _converted: DumpedSchema | None = dataclasses.field(
+        default=None,
+        init=False,
+        repr=False,
+        hash=False,
+        compare=False,
+    )
 
     def convert(self, *, skip_validation: bool = False) -> DumpedSchema:
         """
@@ -72,8 +79,19 @@ class OpenAPI:
 
         Runs validation if ``'django-modern-rest[openapi]'`` is installed
         and *skip_validation* is falsy.
+
+        The converted dictionary is cached on this instance and reused by
+        subsequent calls. Finish modifying the schema before the first call
+        and treat the returned dictionary as read-only. Build a new schema
+        instance to reflect later changes.
+
+        Skipping validation does not prevent a later call from validating
+        the cached dictionary.
         """
-        spec = dump_schema(self)
+        # Do not reconvert the same spec.
+        if self._converted is None:
+            self._converted = dump_schema(self)
+        spec = self._converted
         if (
             not skip_validation
             and not self._validated
