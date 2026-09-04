@@ -157,6 +157,7 @@ def parse_as_post(request: HttpRequest) -> None:
         # `HttpRequest` objects is chosen as fallback argument since it has
         # methods to read data from request body too.
         request_data = getattr(request, '_stream', request)
+
         # This was introduced in Django 6.1:
         multipart_parser_cls = getattr(
             request,

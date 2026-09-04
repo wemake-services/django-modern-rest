@@ -3,12 +3,14 @@ from django.core.files.uploadedfile import (
     SimpleUploadedFile,
     TemporaryUploadedFile,
 )
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 from django.test.client import BOUNDARY, MULTIPART_CONTENT, encode_multipart
 
 from dmr.internal.django import parse_as_post
 
 
+# Force Django to use TemporaryFileUploadHandler without a large fixture.
+@override_settings(FILE_UPLOAD_MAX_MEMORY_SIZE=1)
 def test_parse_as_post_not_copy_data(
     rf: RequestFactory,
 ) -> None:
