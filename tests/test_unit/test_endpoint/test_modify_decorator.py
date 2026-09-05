@@ -363,7 +363,7 @@ def test_modify_async_endpoint_error_for_sync() -> None:
             ) -> HttpResponse:
                 raise NotImplementedError
 
-            @modify(  # type: ignore[type-var]
+            @modify(  # type: ignore[deprecated]
                 status_code=HTTPStatus.OK,
                 error_handler=wrap_handler(async_endpoint_error),
             )

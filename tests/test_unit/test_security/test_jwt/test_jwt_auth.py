@@ -12,7 +12,12 @@ from django.http import HttpResponse
 from dmr import Controller, Query
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security import request_auth
-from dmr.security.jwt import JWTAsyncAuth, JWToken, JWTSyncAuth, request_jwt
+from dmr.security.jwt import (
+    HeaderJWTAsyncAuth,
+    HeaderJWTSyncAuth,
+    JWToken,
+    request_jwt,
+)
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
@@ -21,7 +26,7 @@ class _QueryModel(pydantic.BaseModel):
 
 
 class _AsyncController(Controller[PydanticFastSerializer]):
-    auth = (JWTAsyncAuth(),)
+    auth = (HeaderJWTAsyncAuth(),)
 
     async def get(self, parsed_query: Query[_QueryModel]) -> str:
         auser = await self.request.auser()
@@ -47,6 +52,7 @@ async def test_async_jwt_view(
     token = JWToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub=str(admin_user.pk),
+        extras={'type': 'access'},
     ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
     request = dmr_async_rf.get(
         f'/whatever/?user_id={admin_user.pk}',
@@ -58,16 +64,16 @@ async def test_async_jwt_view(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {'Content-Type': 'application/json'}
-    assert isinstance(request_auth(request), JWTAsyncAuth)
+    assert isinstance(request_auth(request), HeaderJWTAsyncAuth)
     assert isinstance(
         request_auth(request, strict=True),
-        JWTAsyncAuth,
+        HeaderJWTAsyncAuth,
     )
     assert json.loads(response.content) == 'authed'
 
 
 class _SyncController(Controller[PydanticFastSerializer]):
-    auth = (JWTSyncAuth(),)
+    auth = (HeaderJWTSyncAuth(),)
 
     def get(self, parsed_query: Query[_QueryModel]) -> str:
         assert self.request.user.is_authenticated
@@ -94,6 +100,7 @@ def test_sync_jwt_view(
     token = JWToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub=str(admin_user.pk),
+        extras={'type': 'access'},
     ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
     request = dmr_rf.get(
         f'/whatever/?user_id={admin_user.pk}',
@@ -105,6 +112,6 @@ def test_sync_jwt_view(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {'Content-Type': 'application/json'}
-    assert isinstance(request_auth(request), JWTSyncAuth)
-    assert isinstance(request_auth(request, strict=True), JWTSyncAuth)
+    assert isinstance(request_auth(request), HeaderJWTSyncAuth)
+    assert isinstance(request_auth(request, strict=True), HeaderJWTSyncAuth)
     assert json.loads(response.content) == 'authed'

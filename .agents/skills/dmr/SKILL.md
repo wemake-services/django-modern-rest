@@ -312,6 +312,115 @@ You can also use `self.to_error` when using `@validate` endpoints.
 Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/error-handling.html
 
 
+## Redirects
+
+### Choose a redirect compatible with the endpoint style
+
+Raise `RedirectTo` from `@modify` endpoints, because they cannot return
+`HttpResponse` subclasses. `@validate` endpoints support both raising
+`RedirectTo` and returning Django's `HttpResponseRedirect` equally. Returning
+`HttpResponseRedirect` from `@validate` is an exception to the general rule
+against returning Django responses directly.
+
+Whichever redirect style you use, document the `Location` header in its
+`ResponseSpec`. For `@modify`, add the spec to `extra_responses`; for
+`@validate`, pass the spec directly:
+
+```python
+from http import HTTPStatus
+from typing import Final
+
+from django.http import HttpResponse, HttpResponseRedirect
+
+from dmr import (
+    Controller,
+    HeaderSpec,
+    RedirectTo,
+    ResponseSpec,
+    modify,
+    validate,
+)
+from dmr.plugins.msgspec import MsgspecSerializer
+
+_REDIRECT_SPEC: Final = ResponseSpec(
+    None,
+    status_code=HTTPStatus.FOUND,
+    headers={'Location': HeaderSpec()},
+)
+
+
+class UserController(Controller[MsgspecSerializer]):
+    @modify(extra_responses=[_REDIRECT_SPEC])
+    def get(self) -> str:
+        raise RedirectTo(
+            '/api/new/users/',
+            status_code=HTTPStatus.FOUND,
+        )
+
+    @validate(_REDIRECT_SPEC)
+    def post(self) -> HttpResponse:
+        raise RedirectTo(
+            '/api/new/users/',
+            status_code=HTTPStatus.FOUND,
+        )
+
+    @validate(_REDIRECT_SPEC)
+    def put(self) -> HttpResponseRedirect:
+        return HttpResponseRedirect(
+            '/api/new/users/',
+            content_type='application/json',
+        )
+```
+
+Select the redirect status code according to the
+[Redirection 3xx section of the HTTP Semantics specification][http-redirects].
+
+[http-redirects]: https://www.rfc-editor.org/rfc/rfc9110.html#name-redirection-3xx
+
+### Validate user-provided URLs before passing them to `RedirectTo`
+
+`RedirectTo` validates a URL's length and scheme, but does not check whether
+the destination host is trusted. Passing an untrusted URL directly can create
+an open redirect vulnerability.
+
+Wrong:
+
+```python
+from typing import Never
+
+from dmr import RedirectTo
+
+
+def redirect_to_next(next_url: str) -> Never:
+    raise RedirectTo(next_url)
+```
+
+Correct:
+
+```python
+from typing import Never
+
+from django.http import HttpRequest
+from django.utils.http import url_has_allowed_host_and_scheme
+
+from dmr import RedirectTo
+
+
+def redirect_to_next(request: HttpRequest, next_url: str) -> Never:
+    url_is_safe = url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    )
+    raise RedirectTo(next_url if url_is_safe else '/')
+```
+
+**Limitations:** validation is required for user-provided or otherwise
+untrusted redirect targets; hard-coded local URLs do not need this check.
+
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/using-controller/redirects.html
+
+
 ## Routing
 
 ### Use `dmr.routing.path` instead of `django.urls.path`
@@ -1060,7 +1169,7 @@ def test_create_user(dmr_rf: DMRRequestFactory) -> None:
 
 **Limitations:** for async controllers, use `DMRAsyncRequestFactory` and `DMRAsyncClient` instead.
 
-Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing/tools-and-styles.html
 
 ### Use `DMRRequestFactory` for faster unit tests
 
@@ -1105,7 +1214,7 @@ def test_create_user(dmr_rf: DMRRequestFactory) -> None:
 
 **Limitations:** `DMRRequestFactory` tests skip URL routing and middleware — use `DMRClient` when you need to test the full request/response cycle.
 
-Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing/tools-and-styles.html
 
 ### Use `Polyfactory` for structured test data generation
 
@@ -1148,7 +1257,7 @@ def test_create_user(dmr_rf: DMRRequestFactory) -> None:
 
 **Limitations:** `Polyfactory` supports `pydantic`, `msgspec`, `@dataclass`, and `TypedDict` models — check its docs for your specific model type.
 
-Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing/data-generation.html
 
 ### Use `schemathesis` for property-based API testing
 
@@ -1179,7 +1288,7 @@ https://schemathesis.readthedocs.io/en/stable/
 
 **Limitations:** `schemathesis` is not bundled with `django-modern-rest` — install it separately with `uv add --group dev schemathesis`.
 
-Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/testing/property-based.html
 
 
 ## Middleware

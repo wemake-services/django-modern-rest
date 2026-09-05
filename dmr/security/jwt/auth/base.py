@@ -5,14 +5,14 @@
 
 from abc import abstractmethod
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Final, Literal, Self, TypeAlias, overload
+from typing import TYPE_CHECKING, Final, Literal, Self, overload
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import HttpRequest
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
-from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
+from dmr.openapi.objects import SecurityRequirement
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.security.jwt.token import JWToken
 
@@ -47,6 +47,8 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
     Subclasses define the transport by implementing
     :meth:`get_token_from_request` and :meth:`split_encoded_token`.
     """
+
+    expected_token_type: str = 'access'  # noqa: S105
 
     __slots__ = (
         'accepted_audiences',
@@ -153,7 +155,7 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
 
     def decode_token(self, encoded_token: str) -> JWToken:
         """Decodes token object from the encoded string."""
-        return self.token_cls.decode(
+        token = self.token_cls.decode(
             encoded_token=encoded_token,
             secret=self.secret,
             algorithm=self.algorithm,
@@ -169,6 +171,9 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
             strict_audience=self.strict_audience,
             enforce_minimum_key_length=self.enforce_minimum_key_length,
         )
+        if token.extras.get('type') != self.expected_token_type:
+            raise NotAuthenticatedError
+        return token
 
     def claim_from_token(self, token: JWToken) -> str:
         """
@@ -182,66 +187,6 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         So, you would need to use: ``token.extras['email']``.
         """
         return token.sub
-
-
-class _HeaderJWTAuth:
-    """Reads jwt tokens from a request header."""
-
-    # Slots are declared on the concrete classes below,
-    # otherwise we get a layout conflict when mixing them in.
-    __slots__ = ()
-
-    auth_header: str
-    auth_scheme: str
-    security_scheme_name: str
-
-    @property
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
-        """Provides a security schema definition."""
-        if self._uses_standard_http_bearer_auth():
-            return {
-                self.security_scheme_name: SecurityScheme(
-                    type='http',
-                    scheme=self.auth_scheme,
-                    bearer_format='JWT',
-                    description='JWT token auth',
-                ),
-            }
-
-        return {
-            self.security_scheme_name: SecurityScheme(
-                type='apiKey',
-                name=self.auth_header,
-                security_scheme_in='header',
-                description=self._get_custom_security_scheme_description(),
-            ),
-        }
-
-    def get_token_from_request(self, request: HttpRequest) -> str | None:
-        """Gets the jwt token from the request header."""
-        return request.headers.get(self.auth_header)
-
-    def split_encoded_token(self, header: str) -> str | None:
-        """Splits string like 'Bearer token' and returns 'token' part."""
-        parts = header.split(' ')
-        if len(parts) != 2 or parts[0] != self.auth_scheme:
-            return None
-        return parts[1]
-
-    def _uses_standard_http_bearer_auth(self) -> bool:
-        """Whether the auth contract matches OpenAPI HTTP bearer auth."""
-        return (
-            self.auth_header == 'Authorization'
-            and self.auth_scheme.casefold() == 'bearer'
-        )
-
-    def _get_custom_security_scheme_description(self) -> str:
-        """Describe non-standard JWT auth contracts for generated docs."""
-        return (
-            'JWT token auth via '
-            f'`{self.auth_header}` header using '
-            f'`{self.auth_scheme} <token>` format'
-        )
 
 
 class BaseJWTSyncAuth(_BaseJWTAuth, SyncAuth):
@@ -372,145 +317,6 @@ class BaseJWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
     ) -> None:
         """Set current user as authed for this request."""
         set_request_attrs(request, user, token=token)
-
-
-class HeaderJWTSyncAuth(_HeaderJWTAuth, BaseJWTSyncAuth):
-    """
-    Sync jwt auth reading the token from a header.
-
-    Defaults to ``Authorization: Bearer <token>``.
-
-    .. versionadded:: 0.15.0
-
-        Previously known as ``JWTSyncAuth``, which is still
-        available as an alias.
-
-    """
-
-    __slots__ = ('auth_header', 'auth_scheme')
-
-    def __init__(  # noqa: WPS211
-        self,
-        *,
-        auth_header: str = 'Authorization',
-        auth_scheme: str = 'Bearer',
-        user_id_field: str = 'pk',
-        algorithm: str = 'HS256',
-        security_scheme_name: str = 'jwt',
-        secret: str | None = None,
-        token_cls: type[JWToken] = JWToken,
-        leeway: int = 0,  # seconds
-        accepted_audiences: str | Sequence[str] | None = None,
-        accepted_issuers: str | Sequence[str] | None = None,
-        require_claims: Sequence[str] | None = None,
-        verify_expiry: bool = True,
-        verify_issued_at: bool = True,
-        verify_jwt_id: bool = True,
-        verify_not_before: bool = True,
-        verify_subject: bool = True,
-        strict_audience: bool = False,
-        enforce_minimum_key_length: bool = True,
-    ) -> None:
-        """
-        Apply possible customizations.
-
-        On top of the regular jwt settings, *auth_header* selects
-        the header to read, and *auth_scheme* is the prefix
-        that the header value must start with.
-        """
-        super().__init__(
-            user_id_field=user_id_field,
-            algorithm=algorithm,
-            security_scheme_name=security_scheme_name,
-            secret=secret,
-            token_cls=token_cls,
-            leeway=leeway,
-            accepted_audiences=accepted_audiences,
-            accepted_issuers=accepted_issuers,
-            require_claims=require_claims,
-            verify_expiry=verify_expiry,
-            verify_issued_at=verify_issued_at,
-            verify_jwt_id=verify_jwt_id,
-            verify_not_before=verify_not_before,
-            verify_subject=verify_subject,
-            strict_audience=strict_audience,
-            enforce_minimum_key_length=enforce_minimum_key_length,
-        )
-        self.auth_header = auth_header
-        self.auth_scheme = auth_scheme
-
-
-class HeaderJWTAsyncAuth(_HeaderJWTAuth, BaseJWTAsyncAuth):
-    """
-    Async jwt auth reading the token from a header.
-
-    Defaults to ``Authorization: Bearer <token>``.
-
-    .. versionadded:: 0.15.0
-
-        Previously known as ``JWTAsyncAuth``, which is still
-        available as an alias.
-
-    """
-
-    __slots__ = ('auth_header', 'auth_scheme')
-
-    def __init__(  # noqa: WPS211
-        self,
-        *,
-        auth_header: str = 'Authorization',
-        auth_scheme: str = 'Bearer',
-        user_id_field: str = 'pk',
-        algorithm: str = 'HS256',
-        security_scheme_name: str = 'jwt',
-        secret: str | None = None,
-        token_cls: type[JWToken] = JWToken,
-        leeway: int = 0,  # seconds
-        accepted_audiences: str | Sequence[str] | None = None,
-        accepted_issuers: str | Sequence[str] | None = None,
-        require_claims: Sequence[str] | None = None,
-        verify_expiry: bool = True,
-        verify_issued_at: bool = True,
-        verify_jwt_id: bool = True,
-        verify_not_before: bool = True,
-        verify_subject: bool = True,
-        strict_audience: bool = False,
-        enforce_minimum_key_length: bool = True,
-    ) -> None:
-        """
-        Apply possible customizations.
-
-        On top of the regular jwt settings, *auth_header* selects
-        the header to read, and *auth_scheme* is the prefix
-        that the header value must start with.
-        """
-        super().__init__(
-            user_id_field=user_id_field,
-            algorithm=algorithm,
-            security_scheme_name=security_scheme_name,
-            secret=secret,
-            token_cls=token_cls,
-            leeway=leeway,
-            accepted_audiences=accepted_audiences,
-            accepted_issuers=accepted_issuers,
-            require_claims=require_claims,
-            verify_expiry=verify_expiry,
-            verify_issued_at=verify_issued_at,
-            verify_jwt_id=verify_jwt_id,
-            verify_not_before=verify_not_before,
-            verify_subject=verify_subject,
-            strict_audience=strict_audience,
-            enforce_minimum_key_length=enforce_minimum_key_length,
-        )
-        self.auth_header = auth_header
-        self.auth_scheme = auth_scheme
-
-
-#: Backwards compatible alias of :class:`HeaderJWTSyncAuth`.
-JWTSyncAuth: TypeAlias = HeaderJWTSyncAuth
-
-#: Backwards compatible alias of :class:`HeaderJWTAsyncAuth`.
-JWTAsyncAuth: TypeAlias = HeaderJWTAsyncAuth
 
 
 @overload

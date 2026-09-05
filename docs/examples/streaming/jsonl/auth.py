@@ -2,7 +2,7 @@ import dataclasses
 from collections.abc import AsyncIterator
 
 from dmr.plugins.msgspec import MsgspecSerializer
-from dmr.security.jwt import JWTAsyncAuth
+from dmr.security.jwt import HeaderJWTAsyncAuth
 from dmr.streaming.jsonl import JsonLinesController
 
 
@@ -12,7 +12,7 @@ class _User:
 
 
 class UserEventsController(JsonLinesController[MsgspecSerializer]):
-    auth = (JWTAsyncAuth(),)
+    auth = (HeaderJWTAsyncAuth(),)
 
     async def get(self) -> AsyncIterator[_User]:
         return self.produce_user_events()

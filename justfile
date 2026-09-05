@@ -91,9 +91,15 @@ example:
       && uv run python manage.py collectstatic --no-input --dry-run
     PYTHONPATH='docs/' uv run python -m pytest -o addopts='' \
       docs/examples/testing/polyfactory_usage.py \
-      docs/examples/testing/django_builtin_client.py \
-      docs/examples/testing/dmr_helpers.py \
-      docs/examples/testing/pytest_plugin.py \
+      docs/examples/testing/django_request_factory.py \
+      docs/examples/testing/dmr_request_factory.py \
+      docs/examples/testing/pytest_request_factory.py \
+      docs/examples/testing/django_test_client.py \
+      docs/examples/testing/dmr_test_client.py \
+      docs/examples/testing/pytest_test_client.py \
+      docs/examples/testing/inline_snapshot_usage.py \
+      docs/examples/testing/dirty_equals_usage.py \
+      docs/examples/testing/combined_assertion_usage.py \
       docs/examples/testing/throttling_unittest.py \
       docs/examples/testing/throttling_pytest.py \
       docs/examples/testing/test_view_with_auth.py \

@@ -11,6 +11,10 @@ We support file and other binary responses.
 
   Instead return files with S3-like systems or at least on a proxy-server level.
 
+
+Returning file contents
+-----------------------
+
 To do so, you indicate that you will return a file with
 :class:`dmr.files.FileResponseSpec` and specify a file renderer.
 We provide :class:`dmr.renderers.FileRenderer` for this case.
@@ -23,6 +27,10 @@ It matches Django's ``FileResponse`` default behavior:
   :language: python
   :linenos:
   :emphasize-lines: 13-14
+
+
+File attachments
+----------------
 
 Set ``as_attachment=True`` when Django's
 :class:`django.http.FileResponse` is returned as an attachment. In this mode

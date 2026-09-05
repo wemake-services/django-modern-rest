@@ -146,6 +146,112 @@ The same error handling logic can be represented as a diagram:
   If :ref:`handler500` is configured, it will catch all unhandled errors
   in the provided scope and return ``500`` errors with the correct payload.
 
+.. _error-responses-validation:
+
+Validating error responses
+--------------------------
+
+Error responses are validated like any other response.
+With :data:`~dmr.settings.Settings.validate_responses` enabled,
+only the status codes that you describe are allowed to be returned.
+
+This matters the most for ``500``: we raise
+:exc:`~dmr.exceptions.InternalServerError` ourselves in several places,
+and your own code can raise it as well.
+An undescribed ``500`` will not reach the client, response validation
+will replace it with ``422 Returned status code 500 is not specified``.
+
+Pick the way that matches how much you promise to your clients:
+
+.. tabs::
+
+  .. tab:: Describe it
+
+    The strictest option: ``500`` becomes a part of your public contract.
+
+    It is listed in the OpenAPI schema, so clients can generate code
+    for it and handle it in a typed way. Its body is still validated,
+    so you cannot accidentally return something
+    that does not match the schema.
+
+    .. literalinclude:: /examples/error_handling/server_error_described.py
+      :caption: views.py
+      :language: python
+      :linenos:
+      :emphasize-lines: 16-20
+
+    Use :data:`~dmr.settings.Settings.responses`
+    to do the same for the whole API at once:
+
+    .. code-block:: python
+      :caption: settings.py
+
+      >>> from http import HTTPStatus
+
+      >>> from dmr import ResponseSpec
+      >>> from dmr.errors import ErrorModel
+      >>> from dmr.settings import Settings
+
+      >>> DMR_SETTINGS = {
+      ...     Settings.responses: [
+      ...         ResponseSpec(
+      ...             ErrorModel,
+      ...             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+      ...         ),
+      ...     ],
+      ... }
+
+  .. tab:: Test it, disable validation
+
+    Here ``500`` is a bug and not a feature, so we don't promise it
+    to anyone. Instead, we cover the endpoint with tests to be sure
+    that regular requests never produce it:
+
+    .. literalinclude:: /examples/error_handling/server_error_undocumented.py
+      :caption: views.py
+      :language: python
+      :linenos:
+
+    .. literalinclude:: /examples/error_handling/server_error_test.py
+      :caption: tests.py
+      :language: python
+      :linenos:
+
+    And then we turn the validation off in production,
+    where it costs performance anyway, see :ref:`response_validation`:
+
+    .. code-block:: python
+      :caption: settings.py
+
+      >>> DMR_SETTINGS = {Settings.validate_responses: False}
+
+    In development the validation is still on, so an unexpected ``500``
+    shows up as a ``422`` telling you that this status code
+    is not described. Which is exactly what it is: an undescribed response.
+
+  .. tab:: Exclude it
+
+    The simplest option: keep the validation on,
+    but tell us not to validate this status code
+    with :data:`~dmr.settings.Settings.exclude_validate_responses`.
+
+    ``500`` does not get into the OpenAPI schema
+    and reaches the client as-is:
+
+    .. literalinclude:: /examples/error_handling/server_error_excluded.py
+      :caption: views.py
+      :language: python
+      :linenos:
+      :emphasize-lines: 15-16
+
+    All other status codes are still validated.
+    The same can be set globally
+    and per-endpoint, see :ref:`exclude-validate-responses-levels`.
+
+.. versionadded:: 0.15.0
+
+  :data:`~dmr.settings.Settings.exclude_validate_responses`
+
 
 .. _customizing-error-messages:
 
@@ -328,9 +434,11 @@ API Reference
 
 .. autoclass:: dmr.errors.ErrorModel
   :members:
+  :show-inheritance:
 
 .. autoclass:: dmr.errors.ErrorDetail
   :members:
+  :show-inheritance:
 
 .. autofunction:: dmr.errors.format_error
 

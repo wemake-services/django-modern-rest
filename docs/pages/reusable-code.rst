@@ -58,6 +58,20 @@ Let's try to create two exact controllers with exact serializers:
 Basically - we just specify what kind of serializer to use. And that's it.
 But, this is just the first step. We can do much more!
 
+.. tip::
+
+  Annotate class-level options like ``responses``, ``auth``, ``parsers``,
+  ``renderers``, and ``throttling`` in controllers that will be subclassed.
+
+  Without an annotation type-checkers infer a fixed-size tuple
+  from the value you assign, and subclasses won't be able
+  to add or to remove items from it.
+
+  .. literalinclude:: /examples/reusable_code/reusable_options.py
+    :caption: views.py
+    :linenos:
+    :language: python
+
 
 Generic parsing and response models
 -----------------------------------

@@ -22,7 +22,7 @@
 [![Supported Python Version](https://img.shields.io/pypi/pyversions/django-modern-rest.svg)](https://pypi.org/project/django-modern-rest/)
 [![Code Style](https://img.shields.io/badge/style-wemake-000000.svg)](https://github.com/wemake-services/wemake-python-styleguide)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/wemake-services/django-modern-rest)
-[![Telegram Chat](https://img.shields.io/badge/chat-join-blue.svg?logo=telegram)](https://t.me/django_modern_rest)
+[![Telegram group](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Ftg.chirizxc.workers.dev%2Fdjango_modern_rest&query=%24.members_summary_pretty&label=t.me%2Fdjango_modern_rest&color=272170&gradient=9D50BB%2C+6E48AA&valueColor=ffffff&labelTextColor=ffffff&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI%2BPHBhdGggZD0iTTEyIDI0YzYuNjI3IDAgMTItNS4zNzMgMTItMTJTMTguNjI3IDAgMTIgMCAwIDUuMzczIDAgMTJzNS4zNzMgMTIgMTIgMTJaIiBmaWxsPSJ1cmwoI2EpIi8%2BPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik01LjQyNSAxMS44NzFhNzk2LjQxNCA3OTYuNDE0IDAgMCAxIDYuOTk0LTMuMDE4YzMuMzI4LTEuMzg4IDQuMDI3LTEuNjI4IDQuNDc3LTEuNjM4LjEgMCAuMzIuMDIuNDcuMTQuMTIuMS4xNS4yMy4xNy4zMy4wMi4xLjA0LjMxLjAyLjQ3LS4xOCAxLjg5OC0uOTYgNi41MDQtMS4zNiA4LjYyMi0uMTcuOS0uNSAxLjE5OS0uODE5IDEuMjI5LS43LjA2LTEuMjI5LS40Ni0xLjg5OC0uOS0xLjA2LS42ODktMS42NDktMS4xMTktMi42NzgtMS43OTgtMS4xOS0uNzgtLjQyLTEuMjA5LjI2LTEuOTA4LjE4LS4xOCAzLjI0Ny0yLjk3OCAzLjMwNy0zLjIyOC4wMS0uMDMuMDEtLjE1LS4wNi0uMjEtLjA3LS4wNi0uMTctLjA0LS4yNS0uMDItLjExLjAyLTEuNzg4IDEuMTQtNS4wNTYgMy4zNDgtLjQ4LjMzLS45MDkuNDktMS4yOTkuNDgtLjQzLS4wMS0xLjI0OC0uMjQtMS44NjgtLjQ0LS43NS0uMjQtMS4zNDktLjM3LTEuMjk5LS43OS4wMy0uMjIuMzMtLjQ0Ljg5LS42NjlaIiBmaWxsPSIjZmZmIi8%2BPGRlZnM%2BPGxpbmVhckdyYWRpZW50IGlkPSJhIiB4MT0iMTEuOTkiIHkxPSIwIiB4Mj0iMTEuOTkiIHkyPSIyMy44MSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIHN0b3AtY29sb3I9IiMyQUFCRUUiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMyMjlFRDkiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48L3N2Zz4K)](https://t.me/django_modern_rest)
 </div>
 
 ## Features
@@ -35,7 +35,7 @@
 - [x] Strict schema validation of both requests and responses, including errors
 - [x] Supports OpenAPI 3.0 / 3.1 / 3.2 semantic schema generation out of the box
 - [x] Supports all your existing `django` primitives and packages, no custom runtimes
-- [x] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), [tracecov](https://django-modern-rest.readthedocs.io/en/latest/pages/testing.html#api-coverage-with-tracecov), bundled `pytest` plugin, and default Django's testing primitives
+- [x] Great testing tools with [schemathesis](https://github.com/schemathesis/schemathesis), [polyfactory](https://github.com/litestar-org/polyfactory), [tracecov](https://django-modern-rest.readthedocs.io/en/latest/pages/testing/tracecov.html), bundled `pytest` plugin, and default Django's testing primitives
 - [x] 100% test coverage with 3000+ of carefully designed unit, integration, typing, and property-based tests
 - [x] High [security standards](https://github.com/wemake-services/django-modern-rest/blob/master/.github/SECURITY.md)
 - [x] Built [by the community](https://github.com/wemake-services/django-modern-rest/graphs/contributors) for the community, not a single-person project
@@ -89,7 +89,6 @@ There are several included extras:
 - `'django-modern-rest[pydantic]'` provides [`pydantic`](https://github.com/pydantic/pydantic) support
 - `'django-modern-rest[attrs]'` provides [`attrs`](https://github.com/python-attrs/attrs) support
 - `'django-modern-rest[jwt]'` provides [`pyjwt`](https://github.com/jpadilla/pyjwt) auth support
-- `'django-modern-rest[allauth]'` provides [`django-allauth`](https://codeberg.org/allauth/django-allauth) headless auth support
 - `'django-modern-rest[openapi]'` provides `OpenAPI` [schema validation](https://github.com/python-openapi/openapi-spec-validator),
   `yaml` OpenAPI view,
   and generates better OpenAPI examples with [`polyfactory`](https://github.com/litestar-org/polyfactory)

@@ -3,11 +3,11 @@ from django.contrib.auth.models import User
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AuthenticatedHttpRequest, request_auth
-from dmr.security.jwt import JWTAsyncAuth, request_jwt
+from dmr.security.jwt import HeaderJWTAsyncAuth, request_jwt
 from dmr.security.jwt.blocklist import JWTokenBlocklistAsyncMixin
 
 
-class JWTAuthWithBlocklist(JWTokenBlocklistAsyncMixin, JWTAsyncAuth):
+class JWTAuthWithBlocklist(JWTokenBlocklistAsyncMixin, HeaderJWTAsyncAuth):
     """This class will also check that tokens are not blocklisted."""
 
 

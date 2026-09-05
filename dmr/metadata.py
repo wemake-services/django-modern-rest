@@ -391,9 +391,8 @@ class EndpointMetadata:
             Used for OpenAPI spec generation and for response validation.
         method: String name of an HTTP method for this endpoint.
         validate_responses: Do we have to run runtime validation
-            of responses for this endpoint? Customizable via global setting,
-            per controller, and per endpoint.
-            Here we only store the per endpoint information.
+            of responses for this endpoint? Already resolved from
+            the global setting, the controller, and the endpoint.
         modification: Default modifications that are applied
             to the returned data. Can be ``None``, when ``@validate`` is used.
         error_handler: Callback function to be called
@@ -429,6 +428,8 @@ class EndpointMetadata:
             to be used after auth checks.
         throttling_allow_unsafe_cache: Should this endpoint allow
             unsafe throttle Django cache backends?
+        exclude_validate_responses: Set of status codes that we don't
+            validate, even when ``validate_responses`` is enabled.
         no_validate_http_spec: Set of checks that user wants
             to disable for validation in this endpoint.
         allowed_http_methods: Set of extra HTTP methods
@@ -477,7 +478,7 @@ class EndpointMetadata:
     endpoint_name: str
     type_annotations: dict[str, Any]
     responses: dict[HTTPStatus, ResponseSpec]
-    validate_responses: bool | None
+    validate_responses: bool
     method: str
     modification: ResponseModification | None
     error_handler: 'SyncErrorHandler | AsyncErrorHandler | None'
@@ -493,6 +494,7 @@ class EndpointMetadata:
     throttling_after_auth: tuple['SyncThrottle | AsyncThrottle', ...] | None
     throttling_allow_unsafe_cache: bool | None
 
+    exclude_validate_responses: frozenset[HTTPStatus]
     no_validate_http_spec: frozenset['HttpSpec']
     allowed_http_methods: frozenset[str]
     semantic_responses: bool

@@ -207,7 +207,6 @@ Here are our amazing people who made this project possible.
   pages/external-views.rst
   pages/integrations.rst
   pages/internationalization.rst
-  pages/testing.rst
 
 
 .. toctree::
@@ -220,6 +219,7 @@ Here are our amazing people who made this project possible.
   pages/auth/jwt.rst
   pages/auth/token.rst
   pages/auth/allauth.rst
+  pages/auth/custom.rst
 
 
 .. toctree::
@@ -237,6 +237,20 @@ Here are our amazing people who made this project possible.
 
   pages/openapi/schema.rst
   pages/openapi/openapi.rst
+
+
+.. toctree::
+  :caption: Testing
+  :hidden:
+
+  pages/testing/tools-and-styles.rst
+  pages/testing/data-generation.rst
+  pages/testing/assertions.rst
+  pages/testing/authentication.rst
+  pages/testing/throttling.rst
+  pages/testing/property-based.rst
+  pages/testing/tracecov.rst
+  pages/testing/api-reference.rst
 
 
 .. toctree::

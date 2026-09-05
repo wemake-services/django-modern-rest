@@ -13,6 +13,7 @@ from dmr.files import FileResponseSpec
 from dmr.headers import HeaderSpec
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
+from dmr.settings import HttpSpec
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 _FILEPATH: Final = (
@@ -30,6 +31,7 @@ class _FileSyncController(Controller[PydanticSerializer]):
     @validate(
         FileResponseSpec(as_attachment=True),
         renderers=[FileRenderer()],
+        no_validate_http_spec={HttpSpec.header_name_server_managed},
     )
     def get(self) -> FileResponse:
         return FileResponse(
@@ -45,6 +47,7 @@ class _InlineFileSyncController(Controller[PydanticSerializer]):
     @validate(
         FileResponseSpec(),
         renderers=[FileRenderer('text/plain')],
+        no_validate_http_spec={HttpSpec.header_name_server_managed},
     )
     def get(self) -> FileResponse:
         return FileResponse(
@@ -128,7 +131,10 @@ def test_file_attachment_headers() -> None:
 class _FileAsyncController(Controller[PydanticSerializer]):
     renderers = (FileRenderer('text/plain'),)
 
-    @validate(FileResponseSpec(as_attachment=True))
+    @validate(
+        FileResponseSpec(as_attachment=True),
+        no_validate_http_spec={HttpSpec.header_name_server_managed},
+    )
     async def get(self) -> FileResponse:
         return FileResponse(
             # We don't care that it is sync:
