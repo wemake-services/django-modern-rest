@@ -9,16 +9,15 @@ import jwt
 import pytest
 from typing_extensions import override
 
-from dmr.internal.json import NativeJson, json_dump_bytes
+from dmr.internal.json import NativeJson, json_dumps_bytes
 from dmr.internal.jwt import dmr_jwt
 from dmr.security.jwt import JWToken
 
 try:
-    import msgspec
+    import msgspec  # noqa: F401  # pyright: ignore[reportUnusedImport]
 except ImportError:  # pragma: no cover
     _has_msgspec = False
 else:
-    del msgspec  # noqa: WPS420
     _has_msgspec = True
 
 #: Parity between the two backends can only be compared with both of them.
@@ -40,8 +39,22 @@ _MATCHING_VALUES: Final = (
 
 #: Values that the two json backends encode differently.
 _DIVERGING_VALUES: Final = (
-    dt.datetime.fromisoformat('2026-09-04T12:30:45.123456+00:00'),
-    dt.timedelta(minutes=1),
+    (
+        dt.datetime.fromisoformat('2026-09-04T12:30:45.123456+00:00'),
+        b'{"v":"2026-09-04T12:30:45.123Z"}',
+        b'{"v":"2026-09-04T12:30:45.123456Z"}',
+    ),
+    (
+        dt.timedelta(minutes=1),
+        b'{"v":"P0DT00H01M00S"}',
+        b'{"v":"PT60S"}',
+    ),
+)
+
+#: Values that only ``msgspec`` can encode, with the fallback error message.
+_MSGSPEC_ONLY_VALUES: Final = (
+    ({1, 2}, b'{"v":[1,2]}', 'Object of type set is not JSON serializable'),
+    (b'ab', b'{"v":"YWI="}', 'Object of type bytes is not JSON serializable'),
 )
 
 
@@ -59,7 +72,7 @@ def _make_payload() -> dict[str, Any]:
 @pytest.fixture
 def _native_backend(monkeypatch: pytest.MonkeyPatch) -> None:
     """Force the json backend we use when ``msgspec`` is missing."""
-    monkeypatch.setattr('dmr.internal.jwt.json_dump_bytes', NativeJson.dumps)
+    monkeypatch.setattr('dmr.internal.jwt.json_dumps_bytes', NativeJson.dumps)
     monkeypatch.setattr('dmr.internal.jwt.json_loads', NativeJson.loads)
 
 
@@ -165,28 +178,40 @@ def test_native_decode_payload_errors(raw_payload: bytes) -> None:
 @pytest.mark.parametrize('claim', _MATCHING_VALUES)
 def test_backends_agree_on_extended_types(claim: Any) -> None:
     """Ensures both backends encode these extra types identically."""
-    assert NativeJson.dumps({'v': claim}) == json_dump_bytes({'v': claim})
+    assert NativeJson.dumps({'v': claim}) == json_dumps_bytes({'v': claim})
 
 
 @_msgspec_only
-@pytest.mark.parametrize('claim', _DIVERGING_VALUES)
-def test_backends_diverge_on_extended_types(claim: Any) -> None:
+@pytest.mark.parametrize(('claim', 'native', 'msgspec_json'), _DIVERGING_VALUES)
+def test_backends_diverge_on_extended_types(
+    claim: Any,
+    native: bytes,
+    msgspec_json: bytes,
+) -> None:
     """Documents that these types are backend dependent in ``extras``."""
-    assert NativeJson.dumps({'v': claim}) != json_dump_bytes({'v': claim})
+    assert NativeJson.dumps({'v': claim}) == native
+    assert json_dumps_bytes({'v': claim}) == msgspec_json
 
 
 @_msgspec_only
-@pytest.mark.parametrize('claim', [{1, 2}, b'ab'])
-def test_native_rejects_msgspec_only_types(claim: Any) -> None:
+@pytest.mark.parametrize(
+    ('claim', 'msgspec_json', 'message'),
+    _MSGSPEC_ONLY_VALUES,
+)
+def test_native_rejects_msgspec_only_types(
+    claim: Any,
+    msgspec_json: bytes,
+    message: str,
+) -> None:
     """Documents that ``set`` and ``bytes`` only work with ``msgspec``."""
-    assert json_dump_bytes({'v': claim})
+    assert json_dumps_bytes({'v': claim}) == msgspec_json
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError, match=message):
         NativeJson.dumps({'v': claim})
 
 
 @_msgspec_only
 def test_backends_diverge_on_nan() -> None:
     """Documents that ``NaN`` is not portable between the backends."""
-    assert json_dump_bytes({'v': float('nan')}) == b'{"v":null}'
+    assert json_dumps_bytes({'v': float('nan')}) == b'{"v":null}'
     assert NativeJson.dumps({'v': float('nan')}) == b'{"v":NaN}'

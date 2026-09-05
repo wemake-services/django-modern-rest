@@ -99,12 +99,12 @@ _compact_json_dumps = _wrap_bytes_dumper(NativeJson.dumps)
 try:
     import msgspec
 except ImportError:  # pragma: no cover
-    json_dump_bytes: Callable[[Any], bytes] = NativeJson.dumps
+    json_dumps_bytes: Callable[[Any], bytes] = NativeJson.dumps
     _json_dumps: Callable[[Any], str] = _compact_json_dumps
     json_loads: Callable[['str | Raw'], Any] = NativeJson.loads
 else:
-    json_dump_bytes = msgspec.json.encode
-    _json_dumps = _wrap_bytes_dumper(msgspec.json.encode)
+    json_dumps_bytes = msgspec.json.encode
+    _json_dumps = _wrap_bytes_dumper(json_dumps_bytes)
     json_loads = msgspec.json.decode
 
 

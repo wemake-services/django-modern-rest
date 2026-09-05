@@ -1,12 +1,13 @@
 import json
-from typing import Any, cast
+from typing import Any, Final, cast, final
 
 import jwt
 from typing_extensions import override
 
-from dmr.internal.json import json_dump_bytes, json_loads
+from dmr.internal.json import json_dumps_bytes, json_loads
 
 
+@final
 class _DMRPyJWT(jwt.PyJWT):
     """
     ``PyJWT`` that serializes the payload with our json backend.
@@ -29,7 +30,7 @@ class _DMRPyJWT(jwt.PyJWT):
     ) -> bytes:
         if json_encoder is not None:
             return super()._encode_payload(payload, headers, json_encoder)
-        return json_dump_bytes(payload)
+        return json_dumps_bytes(payload)
 
     @override
     def _decode_payload(self, decoded: dict[str, Any]) -> dict[str, Any]:
@@ -47,4 +48,4 @@ class _DMRPyJWT(jwt.PyJWT):
         return cast('dict[str, Any]', payload)
 
 
-dmr_jwt = _DMRPyJWT()
+dmr_jwt: Final = _DMRPyJWT()
