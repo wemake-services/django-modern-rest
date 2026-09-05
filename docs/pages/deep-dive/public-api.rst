@@ -61,6 +61,9 @@ Response, headers and cookies
 
 .. autofunction:: dmr.cookies.set_cookies
 
+.. autoclass:: dmr.lazy.FromController
+  :members:
+
 
 Validation
 ----------

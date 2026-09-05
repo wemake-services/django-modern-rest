@@ -175,6 +175,37 @@ And then - implementations:
 This way offers you more control over the response headers, cookies, etc.
 Choose the one that fits best of the job.
 
+Headers and cookies per subclass
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 0.15.0
+
+Generics solve the response model, but response headers and cookies
+have the same problem: :func:`~dmr.endpoint.validate`
+and :func:`~dmr.endpoint.modify` run once, on the reusable base class,
+while header and cookie names usually belong to the final subclass.
+
+Pass a :class:`~dmr.lazy.FromController` mapping to ``headers=``
+or ``cookies=`` to defer the lookup. It wraps a ``classmethod``,
+which we call on each concrete controller
+when we build its endpoint metadata.
+
+.. literalinclude:: /examples/reusable_code/lazy_http_parts.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+.. important::
+
+  Response validation compares every attribute of a described cookie
+  with the one that was actually set. Build the real cookies
+  from their specs with :meth:`~dmr.cookies.CookieSpec.to_new`,
+  otherwise the two can silently drift apart
+  and every response will fail validation.
+
+We look the wrapped method up by name, so a subclass can override
+the method itself and not just the ``ClassVar`` values that it reads.
+
 
 Where is it actually helpful in practice?
 -----------------------------------------

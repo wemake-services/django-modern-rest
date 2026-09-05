@@ -11,6 +11,7 @@ from dmr.endpoint import modify as modify
 from dmr.endpoint import validate as validate
 from dmr.headers import HeaderSpec as HeaderSpec
 from dmr.headers import NewHeader as NewHeader
+from dmr.lazy import FromController as FromController
 from dmr.metadata import ResponseSpec as ResponseSpec
 from dmr.response import APIError as APIError
 from dmr.response import RedirectTo as RedirectTo

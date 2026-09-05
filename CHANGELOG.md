@@ -103,6 +103,11 @@ of requirements for an API to count as public.
 - Added `FileMetadata` conditional types, #1278
 - Added `SupportsFileParsing.schema_metadata` method to customize
   file schema from the parser, #1278
+- Added `FromController` to define response headers and cookies
+  in reusable controllers, it resolves a `classmethod`
+  against each concrete subclass, #1296
+- Added `CookieSpec.to_new` to build a `NewCookie` out of its own spec,
+  so that a described cookie and a real one cannot drift apart, #1296
 - Added `validate_event_fields` to the `SSEStreamingValidator` pipeline,
   it checks `id` and `event` fields of all event types,
   including custom ones, #1329

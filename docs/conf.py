@@ -170,6 +170,7 @@ nitpick_ignore = [
     (_PY_OBJ, 'dmr.components._CookiesT'),
     (_PY_OBJ, 'dmr.components._FileMetadataT'),
     (_PY_CLASS, 'dmr.pagination._ModelT'),
+    (_PY_CLASS, 'dmr.lazy._HttpPartT'),
     (_PY_CLASS, 'dmr.controller._SerializerT_co'),
     (_PY_OBJ, 'dmr.controller._SerializerT_co'),
     (_PY_CLASS, 'dmr.streaming.controller._SerializerT_co'),
