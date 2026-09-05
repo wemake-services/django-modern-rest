@@ -18,10 +18,10 @@ from typing_extensions import TypedDict
 from dmr import Body, Controller, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
 from dmr.errors import ErrorModel
-from dmr.exceptions import NotAuthenticatedError
+from dmr.exceptions import InternalServerError, NotAuthenticatedError
 from dmr.security.base import NO_STORE_HEADERS
 from dmr.security.jwt.auth.base import USER_LOOKUP_ERRORS, set_request_attrs
-from dmr.security.jwt.token import JWToken
+from dmr.security.jwt.token import JWToken, JWTokenError
 from dmr.serializer import BaseSerializer
 
 _ObtainTokensT = TypeVar('_ObtainTokensT', bound=Mapping[str, Any])
@@ -92,18 +92,23 @@ class _BaseTokenController(
         token_headers: dict[str, Any] | None = None,
     ) -> str:
         """Create correct jwt token of a given *expiration* and *token_type*."""
-        return self.jwt_token_cls(
+        token = self.jwt_token_cls(
             sub=subject or str(self.request.user.pk),
             exp=expiration or (dt.datetime.now(dt.UTC) + self.jwt_expiration),
             iss=issuer or self.jwt_issuer,
             aud=audiences or self.jwt_audiences,
             jti=jwt_id or self.make_jwt_id(),
             extras={'type': token_type} if token_type else {},
-        ).encode(
-            secret=secret or self.jwt_secret or settings.SECRET_KEY,
-            algorithm=algorithm or self.jwt_algorithm,
-            headers=token_headers,
         )
+        try:
+            return token.encode(
+                secret=secret or self.jwt_secret or settings.SECRET_KEY,
+                algorithm=algorithm or self.jwt_algorithm,
+                headers=token_headers,
+            )
+        except JWTokenError as exc:
+            # Convert the token-layer semantic error at the HTTP boundary.
+            raise InternalServerError('Failed to encode token') from exc
 
     def make_jwt_id(self) -> str | None:
         """Create unique token's jwt id."""
