@@ -138,7 +138,7 @@ class ObtainTokensSyncController(
 
     """
 
-    responses = (
+    responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
@@ -216,7 +216,7 @@ class ObtainTokensAsyncController(
 
     """
 
-    responses = (
+    responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
@@ -318,7 +318,7 @@ class RefreshTokenSyncController(
 
     """
 
-    responses = (
+    responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
@@ -398,7 +398,7 @@ class RefreshTokenAsyncController(
 
     """
 
-    responses = (
+    responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
@@ -510,7 +510,7 @@ class VerifyTokenSyncController(
 
     """
 
-    responses = (
+    responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
@@ -582,7 +582,7 @@ class VerifyTokenAsyncController(
 
     """
 
-    responses = (
+    responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
