@@ -14,7 +14,7 @@ from faker import Faker
 from typing_extensions import TypedDict, override
 
 from dmr.exceptions import NotAuthenticatedError
-from dmr.security.jwt import JWToken, JWTokenError
+from dmr.security.jwt.token import JWToken, JWTokenError
 
 #: Clock error in seconds that we allow in tests below.
 _LEEWAY: Final = 30
