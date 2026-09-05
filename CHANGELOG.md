@@ -111,6 +111,11 @@ of requirements for an API to count as public.
 - Added `security.NO_STORE_HEADERS`, all auth views we ship now
   return the `Cache-Control: no-store` header
   and document it in the OpenAPI schema, #1335
+- JWT tokens are now encoded and decoded with `msgspec`
+  when it is installed, which makes `JWToken.encode` about 1.3x
+  and `JWToken.decode` about 1.15x faster.
+  Note that only json-native values in `JWToken.extras` are guaranteed
+  to be encoded identically with and without `msgspec`, #1390
 
 ### Bugfixes
 
