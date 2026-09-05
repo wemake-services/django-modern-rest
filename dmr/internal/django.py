@@ -141,21 +141,16 @@ def parse_as_post(request: HttpRequest) -> None:
     """
     # This code is adapted from Django itself:
     if request.content_type == 'multipart/form-data':
-        # There is some cases where request cannot has `_stream`` attribute
-        # 1. App uses custom request class inherited from HttpRequest, which not
-        # initialize `_stream`.
-        # 2. Once the stream has been read
-        # (for example, by a custom middleware that inspects or logs
-        # the request body), it becomes empty and cannot be read again.
-        # Subsequent attempts to read from _stream will return no data,
-        #  making `parse_as_post` fail to retrieve the request body.
-        # 3.Django`s `Client` and `RequestFactory` mock the network socket using
-        # `FakePayload``. Once read, this mock stream is automatically emptied
-        # and cleared by Django. Using `getattr(request, '_stream', request)`
-        # provides a safe fallback if the stream was already consumed or
-        # omitted in the test environment.
-        # `HttpRequest` objects is chosen as fallback argument since it has
-        # methods to read data from request body too.
+        # Use Django's current request stream directly instead of materializing
+        # the multipart body in DMR. This keeps DMR itself streaming-friendly,
+        # but it isn't an "always zero-copy" guarantee: if something has already
+        # accessed `request.body`, Django has cached the whole body in memory;
+        # and while parsing, Django's upload handlers decide whether uploaded
+        # files are kept in memory or written to temporary files.
+        #
+        # Some custom or test request objects may not initialize `_stream`.
+        # Falling back to `request` still gives `MultiPartParser` a file-like
+        # object with `read()` methods.
         request_data = getattr(request, '_stream', request)
 
         # This was introduced in Django 6.1:
@@ -182,7 +177,7 @@ def parse_as_post(request: HttpRequest) -> None:
             request._post = post  # type: ignore[attr-defined]
             request._files = files  # type: ignore[attr-defined]
 
-        request._dmr_parsed_as_post = True  # type: ignore[attr-defined]
+        request.__dmr_parsed_as_post__ = True  # type: ignore[attr-defined]
         return
 
     # Django only supports two content types natively,
