@@ -4,6 +4,7 @@ from http import HTTPStatus
 from typing import final
 
 from dirty_equals import IsStr
+from django.conf import LazySettings
 from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpRequest, HttpResponse
 from inline_snapshot import snapshot
@@ -14,6 +15,7 @@ from dmr.errors import ErrorType, format_error
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.django_session import DjangoSessionSyncAuth
 from dmr.test import DMRRequestFactory
+from tests.test_unit.conftest import with_debug_mode_changed_csrf_failure
 
 
 @final
@@ -70,11 +72,16 @@ class _CustomErrorModelController(
         )
 
 
+@with_debug_mode_changed_csrf_failure
 def test_error_message_controller_customization(
     dmr_rf: DMRRequestFactory,
     fill_csrf: Callable[[HttpRequest], HttpRequest],
+    settings: LazySettings,
+    debug_mode: bool,  # noqa: FBT001
+    expected_csrf_railure_reason: str,
 ) -> None:
     """Ensures we can customize error message via controller."""
+    settings.DEBUG = debug_mode
     metadata = _CustomErrorModelController.api_endpoints['POST'].metadata
     assert metadata.responses == snapshot({
         HTTPStatus.CREATED: ResponseSpec(
@@ -139,7 +146,7 @@ def test_error_message_controller_customization(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.FORBIDDEN, response.content
     assert json.loads(response.content) == snapshot({
-        'error': [{'message': 'CSRF Failed: CSRF cookie not set.'}],
+        'error': [{'message': f'CSRF Failed: {expected_csrf_railure_reason}'}],
     })
 
     request = dmr_rf.post('/whatever/', data={})
