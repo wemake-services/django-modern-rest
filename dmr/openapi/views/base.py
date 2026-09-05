@@ -3,10 +3,8 @@ from typing import TYPE_CHECKING, Any, TypeAlias
 
 from django.http import HttpResponseBase
 from django.views import View
-from django.views.decorators.csrf import ensure_csrf_cookie
 from typing_extensions import override
 
-from dmr.decorators import dispatch_decorator
 from dmr.openapi.openapi import OpenAPI
 
 if TYPE_CHECKING:
@@ -15,7 +13,6 @@ if TYPE_CHECKING:
 SchemaDumper: TypeAlias = Callable[['DumpedSchema'], str]
 
 
-@dispatch_decorator(ensure_csrf_cookie)
 class OpenAPIView(View):
     """
     Base view for serving an OpenAPI schema.
