@@ -23,4 +23,3 @@ from dmr.security.jwt.auth.header import HeaderJWTSyncAuth as HeaderJWTSyncAuth
 from dmr.security.jwt.auth.header import JWTAsyncAuth as JWTAsyncAuth
 from dmr.security.jwt.auth.header import JWTSyncAuth as JWTSyncAuth
 from dmr.security.jwt.token import JWToken as JWToken
-from dmr.security.jwt.token import JWTokenError as JWTokenError

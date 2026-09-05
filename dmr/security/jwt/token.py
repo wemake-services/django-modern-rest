@@ -40,7 +40,16 @@ from dmr.exceptions import NotAuthenticatedError
 
 @final
 class JWTokenError(Exception):
-    """Raised when a token cannot be encoded."""
+    """
+    Raised when a token cannot be created, encoded, or decoded.
+
+    This is a semantic error about the token itself: its claims,
+    the signing algorithm, or the key. It is not an HTTP error,
+    because tokens are regularly created outside of any request:
+    in management commands, background tasks, and scripts.
+
+    .. versionadded:: 0.15.0
+    """
 
 
 @dataclass(frozen=True, slots=True)
