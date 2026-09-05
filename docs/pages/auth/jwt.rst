@@ -398,6 +398,10 @@ API Reference
 .. autoclass:: dmr.security.jwt.token.JWToken
   :members:
 
+.. autoexception:: dmr.security.jwt.token.JWTokenError
+  :members:
+  :show-inheritance:
+
 Header auth
 ~~~~~~~~~~~
 

@@ -21,6 +21,13 @@ of requirements for an API to count as public.
 
 ### Breaking changes
 
+- `JWToken.encode` now raises `JWTokenError` (a token-layer semantic error)
+  instead of the HTTP-layer `InternalServerError` when encoding fails.
+  The error is converted back to `InternalServerError` at the HTTP boundary
+  in `_BaseTokenController.create_jwt_token`, so request-serving paths keep
+  their 500 contract while non-request callers (management commands, Celery
+  tasks, test factories) get a meaningful exception. The original `pyjwt`
+  cause is preserved in the traceback (no more `from None`).
 - Renamed `json_dump` to `json_dumps` in `dmr.openapi.dump` and `dmr.internal.json`
   to follow standard string-serialization conventions, #1399
 - Removed `QueryTokenSyncAuth` and `QueryTokenAsyncAuth` auth classes,
@@ -124,6 +131,8 @@ of requirements for an API to count as public.
 - Parsed request data is no longer stored as a local variable
   of the endpoint's frame, because it was shown
   in error reports of any endpoint, #1323
+- Fixed `JWToken.encode` raising a bare `TypeError`
+  when `extras` cannot be serialized to json, #1373
 - JWT auth, refresh, and verify now return `401` instead of `500`
   when the token subject cannot be a value of the user lookup field,
   for example a non-numeric `sub` with the default integer `pk`, #1284
