@@ -294,6 +294,7 @@ html_static_path = ['_static']
 html_css_files = ['css/landing.css']
 html_js_files = [
     'https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js',
+    'js/sidebar-scroll.js',
 ]
 
 html_show_sourcelink = False

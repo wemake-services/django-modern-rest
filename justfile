@@ -97,6 +97,9 @@ example:
       docs/examples/testing/django_test_client.py \
       docs/examples/testing/dmr_test_client.py \
       docs/examples/testing/pytest_test_client.py \
+      docs/examples/testing/inline_snapshot_usage.py \
+      docs/examples/testing/dirty_equals_usage.py \
+      docs/examples/testing/combined_assertion_usage.py \
       docs/examples/testing/throttling_unittest.py \
       docs/examples/testing/throttling_pytest.py \
       docs/examples/testing/test_view_with_auth.py \

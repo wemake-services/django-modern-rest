@@ -17,15 +17,16 @@ from dmr.openapi.objects import SecurityScheme
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security import request_auth
 from dmr.security.jwt import (
-    BaseJWTSyncAuth,
     CookieJWTAsyncAuth,
     CookieJWTSyncAuth,
     HeaderJWTAsyncAuth,
     HeaderJWTSyncAuth,
+    JWTAsyncAuth,
     JWToken,
+    JWTSyncAuth,
     request_jwt,
 )
-from dmr.security.jwt.auth import JWTAsyncAuth, JWTSyncAuth
+from dmr.security.jwt.auth.base import BaseJWTSyncAuth
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from tests.test_unit.conftest import with_debug_mode_changed_csrf_failure
 
@@ -36,6 +37,7 @@ def _encode(user: User, secret: str) -> str:
     return JWToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub=str(user.pk),
+        extras={'type': 'access'},
     ).encode(secret=secret, algorithm='HS256')
 
 
@@ -305,7 +307,7 @@ def test_sync_cookie_jwt_falls_to_header(
     """Ensures a missing cookie does not block the next auth in the chain."""
 
     class _ChainedController(Controller[PydanticFastSerializer]):
-        auth = (CookieJWTSyncAuth(), JWTSyncAuth())
+        auth = (CookieJWTSyncAuth(), HeaderJWTSyncAuth())
 
         def post(self) -> str:
             return 'authed'
@@ -321,7 +323,7 @@ def test_sync_cookie_jwt_falls_to_header(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED, response.content
-    assert isinstance(request_auth(request), JWTSyncAuth)
+    assert isinstance(request_auth(request), HeaderJWTSyncAuth)
     assert json.loads(response.content) == 'authed'
 
 
@@ -342,6 +344,7 @@ def test_sync_cookie_jwt_custom_algorithm(
     matching = JWToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub=str(admin_user.pk),
+        extras={'type': 'access'},
     ).encode(secret=settings.SECRET_KEY, algorithm='HS512')
     request = dmr_rf.get('/whatever/')
     request.COOKIES['access_token'] = matching
@@ -379,6 +382,7 @@ def test_sync_cookie_jwt_custom_user_id_field(
     token = JWToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub=admin_user.username,
+        extras={'type': 'access'},
     ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
     request = dmr_rf.get('/whatever/')
     request.COOKIES['access_token'] = token
@@ -409,6 +413,7 @@ def test_sync_cookie_jwt_custom_secret(
     request.COOKIES['access_token'] = JWToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub=str(admin_user.pk),
+        extras={'type': 'access'},
     ).encode(secret=secret, algorithm='HS256')
 
     response = _CookieController.as_view()(request)
@@ -455,6 +460,7 @@ def test_sync_cookie_jwt_accepted_issuers(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub=str(admin_user.pk),
         iss=issuer,
+        extras={'type': 'access'},
     ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
 
     response = _CookieController.as_view()(request)
@@ -492,6 +498,7 @@ def test_sync_cookie_jwt_accepted_audiences(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub=str(admin_user.pk),
         aud=audience,
+        extras={'type': 'access'},
     ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
 
     response = _CookieController.as_view()(request)
@@ -529,7 +536,10 @@ def test_sync_cookie_jwt_custom_token_cls(
     request.COOKIES['access_token'] = _EmailToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub=str(admin_user.pk),
-        extras={'email': admin_user.email},
+        extras={
+            'email': admin_user.email,
+            'type': 'access',
+        },
     ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
 
     response = _CookieController.as_view()(request)
@@ -568,6 +578,7 @@ def test_sync_cookie_jwt_leeway(
     token = JWToken(
         exp=dt.datetime.now(dt.UTC),
         sub=str(admin_user.pk),
+        extras={'type': 'access'},
     ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
     # Move into the future, so the token is already expired:
     freezer.tick(delta=elapsed)

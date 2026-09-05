@@ -17,7 +17,7 @@ from dmr.openapi import build_schema
 from dmr.parsers import MultiPartParser
 from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.routing import Router
-from dmr.security.jwt import JWTAsyncAuth
+from dmr.security.jwt import HeaderJWTAsyncAuth
 from dmr.settings import Settings
 
 
@@ -59,7 +59,7 @@ class _CookieModel(msgspec.Struct):
 
 
 class _AuthedAndCookiesController(Controller[MsgspecSerializer]):
-    auth = (JWTAsyncAuth(),)
+    auth = (HeaderJWTAsyncAuth(),)
 
     async def get(self, parsed_cookies: Cookies[_CookieModel]) -> list[int]:
         raise NotImplementedError

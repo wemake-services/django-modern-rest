@@ -21,22 +21,78 @@ of requirements for an API to count as public.
 
 ### Breaking changes
 
+- `JWToken.encode` now raises `JWTokenError` (a token-layer semantic error)
+  instead of the HTTP-layer `InternalServerError` when encoding fails.
+  The error is converted back to `InternalServerError` at the HTTP boundary
+  in `_BaseTokenController.create_jwt_token`, so request-serving paths keep
+  their 500 contract while non-request callers (management commands, Celery
+  tasks, test factories) get a meaningful exception. The original `pyjwt`
+  cause is preserved in the traceback (no more `from None`).
+- Renamed `json_dump` to `json_dumps` in `dmr.openapi.dump` and `dmr.internal.json`
+  to follow standard string-serialization conventions, #1399
 - Removed `QueryTokenSyncAuth` and `QueryTokenAsyncAuth` auth classes,
   because they were insecure, you can use [older existing versions](https://github.com/wemake-services/django-modern-rest/blob/14884b432ee075ec3d78ff388944ebc5f0b5d432/dmr/security/token/auth/header.py), #1288
 - Removed `FileResponseSpec.file_body`,
   use `FileResponseSpec.return_type` instead, #1278
 - Removed `FileMetadataComponent.schema_metadata`,
   now we use `SupportsFileParsing.schema_metadata` instead, #1278
+- `SSEvent` does not check `id` and `event` fields for null bytes
+  and line breaks on creation anymore, this is now a part of the events
+  validation pipeline, so it respects `validate_events`, #1329
+- `check_event_field` now raises `ValidationError` instead of `ValueError`,
+  so a wrong field is streamed as an `error` event
+  and does not break the whole stream, #1329
+- `401` responses now carry a `WWW-Authenticate` header as required
+  by RFC 9110, when the endpoint's auth can express a challenge.
+  Note that browsers show their native login prompt on a `Basic` challenge,
+  pass `www_authenticate=False` to the auth instance to opt out, #1334
+- `SyncAuth` and `AsyncAuth` now have an abstract
+  `www_authenticate_challenge` property, so custom auth classes
+  must say what challenge they send, or return `None`
+  when they cannot be expressed as one, #1334
+- Removed init-only `leeway` argument of `JWToken`,
+  it is only used by `JWToken.decode` now, #1324
+- `JWToken` does not validate `exp` and `iat` on creation anymore,
+  now `JWToken.encode` validates them instead, #1324
+- Throttling cache keys are now hashed to keep their length bounded, #1337
+- HTTP Basic Auth credentials are no longer URL-decoded,
+  so percent-encoded characters such as `%40` are preserved as-is, #1363
+- `HttpBasicSyncAuth` and `HttpBasicAsyncAuth` now require
+  the `auth_scheme` header prefix, it is `Basic` by default
+  and is matched exactly, credentials sent without it
+  are not accepted anymore.
+  Pass `auth_scheme=''` to keep reading prefixless
+  credentials like the older versions did, #1330
+- `HttpBasicSyncAuth` and `HttpBasicAsyncAuth` now raise
+  `NotAuthenticatedError` when credentials have the right
+  `auth_scheme` prefix, but cannot be decoded,
+  previously the next auth in the chain was tried, #1330
 
 ### Features
 
+- Added `exclude_validate_responses` setting, controller attribute,
+  and `@modify` / `@validate` argument to skip response validation
+  for the given status codes, like `500`, #1370
+- Added `WWW-Authenticate` support for auth classes that read
+  the `Authorization` header: `HttpBasicSyncAuth`, `HttpBasicAsyncAuth`,
+  `HeaderJWTSyncAuth`, `HeaderJWTAsyncAuth`, `HeaderTokenSyncAuth`,
+  and `HeaderTokenAsyncAuth`. Cookie-based and custom-header auth
+  send no challenge, because there is none to express.
+  Configurable via the new `www_authenticate=` and `realm=` arguments
+  and the `SyncAuth.www_authenticate_challenge` property, #1334
+- Added `dmr.security.add_www_authenticate` function to add
+  the `WWW-Authenticate` header to a `NotAuthenticatedError`.
+  `global_error_handler` calls it, so replacing that handler
+  is how you change or drop this behavior, #1334
 - Added `CookieJWTSyncAuth` and `CookieJWTAsyncAuth`
   to read JWT tokens from cookies instead of headers, #1193
 - Added `HeaderJWTSyncAuth` and `HeaderJWTAsyncAuth`,
   `JWTSyncAuth` and `JWTAsyncAuth` are kept as their aliases, #1193
 - Added `XSessionTokenSyncAuth` and `XSessionTokenAsyncAuth`
   to authenticate `django-allauth` headless session tokens,
-  available via the new `django-modern-rest[allauth]` extra, #1193
+  you would need to install
+  [`django-allauth`](https://github.com/pennersr/django-allauth)
+  separately, #1193
 - Added `query` method support for `PathItem` OpenAPI 3.2.0 spec, #1300
 - Added `Parser.validate` method for import-time validation of parser
   configuration, #1304
@@ -47,9 +103,44 @@ of requirements for an API to count as public.
 - Added `FileMetadata` conditional types, #1278
 - Added `SupportsFileParsing.schema_metadata` method to customize
   file schema from the parser, #1278
+- Added `validate_event_fields` to the `SSEStreamingValidator` pipeline,
+  it checks `id` and `event` fields of all event types,
+  including custom ones, #1329
+- Added `JWToken.validate_issued_claims` method to customize
+  the checks we run before signing a token, #1324
+- Added `security.NO_STORE_HEADERS`, all auth views we ship now
+  return the `Cache-Control: no-store` header
+  and document it in the OpenAPI schema, #1335
+- JWT tokens are now encoded and decoded with `msgspec`
+  when it is installed, which makes `JWToken.encode` about 1.3x
+  and `JWToken.decode` about 1.15x faster.
+  Note that only json-native values in `JWToken.extras` are guaranteed
+  to be encoded identically with and without `msgspec`, #1390
+- Added `BaseThrottleSyncBackend.lock` and `BaseThrottleAsyncBackend.lock`
+  to control the in-process lock for `incr`,
+  `SyncRedis` and `AsyncRedis` skip it because Lua scripts are atomic, #1339
 
 ### Bugfixes
 
+- Fixed `@modify` and `@validate` typing: passing async `auth`
+  or `throttling` to a sync endpoint
+  (and sync ones to an async endpoint) is now a type error,
+  `links` is now also accepted by all `@modify` overloads, #1393
+- Fixed `EndpointMetadata.validate_responses` being annotated
+  as `bool | None`, it is always resolved
+  from the settings, the controller, and the endpoint, #1370
+- Fixed `responses` of `ObtainTokenSyncController`,
+  `ObtainTokenAsyncController`, `DjangoSessionSyncController`,
+  and `DjangoSessionAsyncController` being narrowed
+  to a fixed-size tuple, subclasses could not change it, #1371
+- Added missing `@sensitive_variables` decorator to all auth views,
+  so credentials and tokens are hidden
+  in error reporting middlewares and logs, #1323
+- Parsed request data is no longer stored as a local variable
+  of the endpoint's frame, because it was shown
+  in error reports of any endpoint, #1323
+- Fixed `JWToken.encode` raising a bare `TypeError`
+  when `extras` cannot be serialized to json, #1373
 - JWT auth, refresh, and verify now return `401` instead of `500`
   when the token subject cannot be a value of the user lookup field,
   for example a non-numeric `sub` with the default integer `pk`, #1284
@@ -64,12 +155,37 @@ of requirements for an API to count as public.
   HTTP methods (like `PURGE`, `LINK`), #1300
 - Fixed a bug when non-file parsers were listed in the response schema
   for file responses, #1278
+- Fixed `SimpleRate` throttling reports with redis backends,
+  it used to error on missing throttling stats, #1333
+- SSE events are not validated at all when `validate_events` is `False`,
+  `id` and `event` fields used to be checked even then, #1329
+- Custom SSE event types now have their `id` and `event` fields
+  validated just like `SSEvent` does, #1329
+- Fixed `JWToken.decode` validating `exp` and `iat` twice,
+  now `leeway`, `verify_exp`, and `verify_iat` are respected
+  and invalid tokens return `401` instead of `500`, #1324
+- Fixed the JWT blocklist being silently bypassed by tokens without `jti`,
+  `JWTokenBlocklistSyncMixin` and `JWTokenBlocklistAsyncMixin`
+  now add `jti` to `require_claims`, so such tokens get `401`.
+  Blocklisting them returns `401` as well
+  instead of failing with a database `IntegrityError`, #1322
+- JWT authentication now rejects refresh tokens when access tokens are expected,
+  #1320
+- Fixed a bug when request data might be copied in `parse_as_post` #1328
 
 ### Misc
 
+- Documented that `500` must be described or excluded from validation,
+  when running with `validate_responses` enabled, #1370
 - Fixes AI docs and plugin install instructions, #1311
+- Documented safe use of user-provided redirect targets with `RedirectTo`,
+  #1326
 - Added `dmr-from-dj-rest-auth` agent skill to migrate `dj-rest-auth`
   installations to `django-modern-rest` and `django-allauth` headless, #1193
+- Documented why and how to remove expired `BlocklistedJWToken`
+  and `Token` rows on a schedule, #1336
+- Added a guide on writing your own auth class
+  for transports we don't ship, #1366
 
 
 ## 0.14.0 (2026-08-14)
@@ -82,6 +198,8 @@ of requirements for an API to count as public.
 ### Features
 
 - Added initial `ty` support, #1257
+- Added `header_name_server_managed` to `HttpSpec` to restrict server-managed headers
+  in responses, #1341
 - Added support of reusable controllers with `@validate`, #1259
 - Added default value to `prefix` parameter in `Router.__init__`, #1267
 - Added `to_urlpatterns` function to include `Router`

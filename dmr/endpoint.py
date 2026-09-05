@@ -4,7 +4,7 @@ import threading
 from collections.abc import Awaitable, Callable, Mapping, Sequence, Set
 from functools import wraps
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Never, TypeAlias, overload
 
 from django.http import HttpResponse, HttpResponseBase
 from django.urls import URLPattern
@@ -370,11 +370,15 @@ class Endpoint:  # noqa: WPS214
                 # Run checks:
                 await self._run_async_checks(controller)
 
-                # Parse request:
-                context = self._serializer_context(self, controller)
-
-                # Return response:
-                func_result = await func(controller, **context)
+                # Parse request and return response.
+                # NOTE: the parsed context is inlined on purpose,
+                # it must not become a local variable of this frame,
+                # because it can contain credentials that would leak
+                # into error reports of any endpoint.
+                func_result = await func(
+                    controller,
+                    **self._serializer_context(self, controller),
+                )
             except (APIError, RedirectTo) as exc:
                 func_result = controller.to_error(
                     exc.raw_data,
@@ -406,11 +410,15 @@ class Endpoint:  # noqa: WPS214
                 # Run checks:
                 self._run_checks(controller)
 
-                # Parse request:
-                context = self._serializer_context(self, controller)
-
-                # Return response:
-                func_result = func(controller, **context)
+                # Parse request and return response.
+                # NOTE: the parsed context is inlined on purpose,
+                # it must not become a local variable of this frame,
+                # because it can contain credentials that would leak
+                # into error reports of any endpoint.
+                func_result = func(
+                    controller,
+                    **self._serializer_context(self, controller),
+                )
             except (APIError, RedirectTo) as exc:
                 func_result = controller.to_error(
                     exc.raw_data,
@@ -607,12 +615,13 @@ _ResponseT = TypeVar(
 
 
 @overload
-def validate(  # noqa: WPS234
+def validate(
     response: ResponseSpec,
     /,
     *responses: ResponseSpec,
-    error_handler: AsyncErrorHandler,
+    error_handler: None = None,
     validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
     semantic_responses: bool | None = None,
     exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
@@ -620,8 +629,41 @@ def validate(  # noqa: WPS234
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
-    auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: _ThrottlingDef = (),
+    auth: Sequence[Never] | None = (),
+    throttling: Sequence[Never] | None = (),
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
+    summary: '_StrOrPromise | None' = None,
+    description: '_StrOrPromise | None' = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    external_docs: ExternalDocumentation | None = None,
+    callbacks: dict[str, Callback | Reference] | None = None,
+    servers: list[Server] | None = None,
+    ignore_from_spec: bool | None = None,
+) -> Callable[
+    [Callable[_ParamT, _ResponseT]],
+    Callable[_ParamT, _ResponseT],
+]: ...
+
+
+@overload
+def validate(  # pyright: ignore[reportOverlappingOverload]  # noqa: WPS234
+    response: ResponseSpec,
+    /,
+    *responses: ResponseSpec,
+    error_handler: AsyncErrorHandler | None = None,
+    validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+    semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
+    parsers: Sequence[Parser] | None = None,
+    renderers: Sequence[Renderer] | None = None,
+    validate_negotiation: bool | None = None,
+    auth: Sequence[AsyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | None = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: '_StrOrPromise | None' = None,
     description: '_StrOrPromise | None' = None,
@@ -643,8 +685,9 @@ def validate(
     response: ResponseSpec,
     /,
     *responses: ResponseSpec,
-    error_handler: SyncErrorHandler,
+    error_handler: SyncErrorHandler | None = None,
     validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
     semantic_responses: bool | None = None,
     exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
@@ -652,8 +695,8 @@ def validate(
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
-    auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: _ThrottlingDef = (),
+    auth: Sequence[SyncAuth] | None = (),
+    throttling: Sequence[SyncThrottle] | None = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: '_StrOrPromise | None' = None,
     description: '_StrOrPromise | None' = None,
@@ -670,43 +713,12 @@ def validate(
 ]: ...
 
 
-@overload
-def validate(
-    response: ResponseSpec,
-    /,
-    *responses: ResponseSpec,
-    validate_responses: bool | None = None,
-    semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
-    validate_events: bool | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
-    error_handler: None = None,
-    parsers: Sequence[Parser] | None = None,
-    renderers: Sequence[Renderer] | None = None,
-    validate_negotiation: bool | None = None,
-    auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: _ThrottlingDef = (),
-    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-    summary: '_StrOrPromise | None' = None,
-    description: '_StrOrPromise | None' = None,
-    tags: list[str] | None = None,
-    operation_id: str | None = None,
-    deprecated: bool = False,
-    external_docs: ExternalDocumentation | None = None,
-    callbacks: dict[str, Callback | Reference] | None = None,
-    servers: list[Server] | None = None,
-    ignore_from_spec: bool | None = None,
-) -> Callable[
-    [Callable[_ParamT, _ResponseT]],
-    Callable[_ParamT, _ResponseT],
-]: ...
-
-
 def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
     response: ResponseSpec,
     /,
     *responses: ResponseSpec,
     validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
     semantic_responses: bool | None = None,
     exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
@@ -776,6 +788,10 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
             Here we only store the per endpoint information.
+        exclude_validate_responses: Set of status codes that we don't
+            validate, even when ``validate_responses`` is enabled.
+            Useful for errors like ``500`` that can be raised
+            from anywhere and that you might not want to describe.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
         exclude_semantic_responses: Set of semantic responses status codes
@@ -839,6 +855,7 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
         payload=ValidateEndpointPayload(
             responses=[response, *responses],
             validate_responses=validate_responses,
+            exclude_validate_responses=exclude_validate_responses,
             semantic_responses=semantic_responses,
             exclude_semantic_responses=exclude_semantic_responses,
             validate_events=validate_events,
@@ -864,89 +881,24 @@ def validate(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
 
 
 @overload
-def modify(
+def modify(  # pyright: ignore[reportOverlappingOverload]
     *,
-    # TODO: make error handlers generic?
-    error_handler: AsyncErrorHandler,
-    status_code: HTTPStatus | None = None,
-    headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
-    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
-    validate_responses: bool | None = None,
-    semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
-    validate_events: bool | None = None,
-    extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
-    parsers: Sequence[Parser] | None = None,
-    renderers: Sequence[Renderer] | None = None,
-    validate_negotiation: bool | None = None,
-    auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: _ThrottlingDef = (),
-    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-    summary: '_StrOrPromise | None' = None,
-    description: '_StrOrPromise | None' = None,
-    tags: list[str] | None = None,
-    operation_id: str | None = None,
-    deprecated: bool = False,
-    external_docs: ExternalDocumentation | None = None,
-    callbacks: dict[str, Callback | Reference] | None = None,
-    servers: list[Server] | None = None,
-    response_description: str | None = None,
-    ignore_from_spec: bool | None = None,
-) -> ModifyAsyncCallable: ...
-
-
-@overload
-def modify(
-    *,
-    error_handler: SyncErrorHandler,
-    status_code: HTTPStatus | None = None,
-    headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
-    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
-    validate_responses: bool | None = None,
-    semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
-    validate_events: bool | None = None,
-    extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
-    parsers: Sequence[Parser] | None = None,
-    renderers: Sequence[Renderer] | None = None,
-    validate_negotiation: bool | None = None,
-    auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: _ThrottlingDef = (),
-    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-    summary: '_StrOrPromise | None' = None,
-    description: '_StrOrPromise | None' = None,
-    tags: list[str] | None = None,
-    operation_id: str | None = None,
-    deprecated: bool = False,
-    external_docs: ExternalDocumentation | None = None,
-    callbacks: dict[str, Callback | Reference] | None = None,
-    servers: list[Server] | None = None,
-    links: dict[str, Link | Reference] | None = None,
-    response_description: str | None = None,
-    ignore_from_spec: bool | None = None,
-) -> ModifySyncCallable: ...
-
-
-@overload
-def modify(
-    *,
-    status_code: HTTPStatus | None = None,
-    headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
-    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
-    validate_responses: bool | None = None,
-    semantic_responses: bool | None = None,
-    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
-    validate_events: bool | None = None,
-    extra_responses: list[ResponseSpec] | None = None,
-    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     error_handler: None = None,
+    status_code: HTTPStatus | None = None,
+    headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
+    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
+    validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+    semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
+    extra_responses: list[ResponseSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
     parsers: Sequence[Parser] | None = None,
     renderers: Sequence[Renderer] | None = None,
     validate_negotiation: bool | None = None,
-    auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-    throttling: _ThrottlingDef = (),
+    auth: Sequence[Never] | None = (),
+    throttling: Sequence[Never] | None = (),
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
     summary: '_StrOrPromise | None' = None,
     description: '_StrOrPromise | None' = None,
@@ -962,12 +914,81 @@ def modify(
 ) -> ModifyAnyCallable: ...
 
 
+@overload
+def modify(
+    *,
+    error_handler: AsyncErrorHandler | None = None,
+    status_code: HTTPStatus | None = None,
+    headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
+    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
+    validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+    semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
+    extra_responses: list[ResponseSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
+    parsers: Sequence[Parser] | None = None,
+    renderers: Sequence[Renderer] | None = None,
+    validate_negotiation: bool | None = None,
+    auth: Sequence[AsyncAuth] | None = (),
+    throttling: Sequence[AsyncThrottle] | None = (),
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
+    summary: '_StrOrPromise | None' = None,
+    description: '_StrOrPromise | None' = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    external_docs: ExternalDocumentation | None = None,
+    callbacks: dict[str, Callback | Reference] | None = None,
+    servers: list[Server] | None = None,
+    links: dict[str, Link | Reference] | None = None,
+    response_description: str | None = None,
+    ignore_from_spec: bool | None = None,
+) -> ModifyAsyncCallable: ...
+
+
+@overload
+def modify(
+    *,
+    error_handler: SyncErrorHandler | None = None,
+    status_code: HTTPStatus | None = None,
+    headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
+    cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
+    validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+    semantic_responses: bool | None = None,
+    exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+    validate_events: bool | None = None,
+    extra_responses: list[ResponseSpec] | None = None,
+    no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
+    parsers: Sequence[Parser] | None = None,
+    renderers: Sequence[Renderer] | None = None,
+    validate_negotiation: bool | None = None,
+    auth: Sequence[SyncAuth] | None = (),
+    throttling: Sequence[SyncThrottle] | None = (),
+    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
+    summary: '_StrOrPromise | None' = None,
+    description: '_StrOrPromise | None' = None,
+    tags: list[str] | None = None,
+    operation_id: str | None = None,
+    deprecated: bool = False,
+    external_docs: ExternalDocumentation | None = None,
+    callbacks: dict[str, Callback | Reference] | None = None,
+    servers: list[Server] | None = None,
+    links: dict[str, Link | Reference] | None = None,
+    response_description: str | None = None,
+    ignore_from_spec: bool | None = None,
+) -> ModifySyncCallable: ...
+
+
 def modify(  # noqa: WPS211
     *,
     status_code: HTTPStatus | None = None,
     headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
     cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
     validate_responses: bool | None = None,
+    exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
     semantic_responses: bool | None = None,
     exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
     validate_events: bool | None = None,
@@ -1021,6 +1042,10 @@ def modify(  # noqa: WPS211
             of responses for this endpoint? Customizable via global setting,
             per controller, and per endpoint.
             Here we only store the per endpoint information.
+        exclude_validate_responses: Set of status codes that we don't
+            validate, even when ``validate_responses`` is enabled.
+            Useful for errors like ``500`` that can be raised
+            from anywhere and that you might not want to describe.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
         exclude_semantic_responses: Set of semantic responses status codes
@@ -1091,6 +1116,7 @@ def modify(  # noqa: WPS211
             cookies=cookies,
             responses=extra_responses,
             validate_responses=validate_responses,
+            exclude_validate_responses=exclude_validate_responses,
             semantic_responses=semantic_responses,
             exclude_semantic_responses=exclude_semantic_responses,
             validate_events=validate_events,

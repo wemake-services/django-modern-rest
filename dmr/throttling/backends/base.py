@@ -1,5 +1,6 @@
 import abc
-from typing import TYPE_CHECKING, ClassVar
+from contextlib import AbstractAsyncContextManager, AbstractContextManager
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from typing_extensions import TypedDict
 
@@ -93,6 +94,13 @@ class BaseThrottleSyncBackend(_BaseThrottleBackend):
         """Sync get the state with no increments."""
         raise NotImplementedError
 
+    def lock(
+        self,
+        lock: AbstractContextManager[Any, Any],
+    ) -> AbstractContextManager[Any, Any]:
+        """Return the context manager to acquire for increment."""
+        return lock
+
 
 class BaseThrottleAsyncBackend(_BaseThrottleBackend):
     """
@@ -127,3 +135,10 @@ class BaseThrottleAsyncBackend(_BaseThrottleBackend):
     ) -> CachedRateLimit | None:
         """Sync get the state with no increments."""
         raise NotImplementedError
+
+    def lock(
+        self,
+        lock: AbstractAsyncContextManager[Any, Any],
+    ) -> AbstractAsyncContextManager[Any, Any]:
+        """Return the context manager to acquire for increment."""
+        return lock

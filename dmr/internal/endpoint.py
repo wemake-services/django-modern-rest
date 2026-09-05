@@ -31,7 +31,7 @@ class ModifySyncCallable(Protocol):
     @deprecated(
         # It is not actually deprecated, but impossible for the day one.
         # But, this is the only way to trigger a typing error.
-        'Passing sync `error_handler` to `@modify` requires sync endpoint',
+        'Sync `error_handler`, `auth` or `throttling` require sync endpoint',
     )
     def __call__(
         self,
@@ -59,11 +59,23 @@ class ModifyAsyncCallable(Protocol):
     def __call__(self, func: Callable[_ParamT, _ResponseT], /) -> Never: ...
 
     @overload
-    def __call__(
+    def __call__(  # type: ignore[overload-overlap]
         self,
         func: Callable[_ParamT, Awaitable[_ReturnT]],
         /,
     ) -> Callable[_ParamT, _ReturnT]: ...
+
+    @overload
+    @deprecated(
+        # It is not actually deprecated, but impossible for the day one.
+        # But, this is the only way to trigger a typing error.
+        'Async `error_handler`, `auth` or `throttling` require async endpoint',
+    )
+    def __call__(
+        self,
+        func: Callable[_ParamT, _ReturnT],
+        /,
+    ) -> Never: ...
 
 
 class ModifyAnyCallable(Protocol):

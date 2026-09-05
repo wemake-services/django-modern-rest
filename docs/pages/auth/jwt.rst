@@ -32,8 +32,8 @@ Which one do you need?
   * - Classes
     - :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth`,
       :class:`~dmr.security.jwt.auth.HeaderJWTAsyncAuth`
-    - :class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth`,
-      :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth`
+    - :class:`~dmr.security.jwt.auth.CookieJWTSyncAuth`,
+      :class:`~dmr.security.jwt.auth.CookieJWTAsyncAuth`
   * - Best for
     - Mobile apps, server-to-server calls, and SPAs
       that keep the token in memory
@@ -87,8 +87,8 @@ is specifically "the frontend must not be able to read the token".
 
   .. tab:: Token in cookies
 
-    Use :class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth` for sync views
-    and :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth` for async views.
+    Use :class:`~dmr.security.jwt.auth.CookieJWTSyncAuth` for sync views
+    and :class:`~dmr.security.jwt.auth.CookieJWTAsyncAuth` for async views.
 
     Unlike the ``Authorization`` header, the cookie stores
     the encoded token as-is, without any ``Bearer`` prefix.
@@ -118,7 +118,7 @@ Custom user models are automatically supported.
 .. tip::
 
   Auth classes are tried in order, so you can accept both transports
-  at once with ``auth = (CookieJWTSyncAuth(), JWTSyncAuth())``.
+  at once with ``auth = (CookieJWTSyncAuth(), HeaderJWTSyncAuth())``.
   The cookie auth returns ``None`` when its cookie is missing,
   which lets the header auth run next.
 
@@ -131,6 +131,35 @@ up to the secret key customization.
 
 See :meth:`~dmr.security.jwt.token.JWToken.decode`
 for more info on all configuration options.
+
+.. _jwt-json-backend:
+
+JSON backend
+~~~~~~~~~~~~
+
+Token payloads are encoded and decoded with the same JSON backend
+we use for parsers and renderers: ``msgspec`` when it is installed,
+native pure Python :mod:`json` otherwise.
+See :ref:`alternative-json` for the details.
+
+Since JWT auth runs on every authenticated request,
+having ``msgspec`` installed makes
+:meth:`~dmr.security.jwt.token.JWToken.encode` and
+:meth:`~dmr.security.jwt.token.JWToken.decode` noticeably faster.
+
+.. warning::
+
+  Registered claims are always encoded the same way,
+  but ``extras`` can hold arbitrary values.
+  Only json-native values there
+  (``str``, ``int``, ``float``, ``bool``, ``None``, ``list``, and ``dict``)
+  are guaranteed to produce identical tokens
+  with and without ``msgspec`` installed.
+  Other types, like :class:`~datetime.timedelta` or :class:`set`,
+  are either encoded differently or not supported at all
+  by the pure Python fallback.
+  Keep ``extras`` json-native when your tokens are issued
+  and verified by different installs.
 
 
 Reusing pre-existing views
@@ -270,8 +299,8 @@ On any validation failure it returns ``401 Unauthorized``.
 Issuing tokens as cookies
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:class:`~dmr.security.jwt.cookie.CookieJWTSyncAuth`
-and :class:`~dmr.security.jwt.cookie.CookieJWTAsyncAuth`
+:class:`~dmr.security.jwt.auth.CookieJWTSyncAuth`
+and :class:`~dmr.security.jwt.auth.CookieJWTAsyncAuth`
 read tokens,
 but something has to write them first.
 
@@ -333,12 +362,77 @@ We provide two mixin types:
 
 If this app is installed, we would provide an admin panel by default.
 
+.. important::
+
+  Both mixins add ``'jti'`` to ``require_claims`` of the auth class
+  they are mixed into, on top of whatever you pass yourself.
+
+  Blocklist rows are keyed by ``jti``, so a token without one
+  can never be blocklisted. Accepting such tokens would mean
+  that the blocklist is silently bypassed:
+  the lookup would match no rows and the token would stay valid forever.
+  We reject them with ``401`` instead.
+
+  If you issue tokens with the controllers we ship, make sure that
+  :meth:`~dmr.security.jwt.views.ObtainTokensSyncController.make_jwt_id`
+  returns a value, our default implementation already does.
+
+.. _cleaning-up-blocklisted-tokens:
+
+Cleaning up expired tokens
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The blocklist only answers one question:
+is this *otherwise valid* token still allowed?
+When ``exp`` of a token is in the past,
+:meth:`~dmr.security.jwt.token.JWToken.decode` rejects it
+before we even look into the blocklist.
+
+Which means:
+
+- Rows with ``expires_at`` in the future must stay,
+  they are the ones actually blocking tokens
+- Rows with ``expires_at`` in the past can be removed,
+  they cannot change any auth decision anymore
+
+Nothing removes them for us, so the table grows forever
+while storing rows that can never affect auth again.
+We recommend deleting them with a periodic job:
+
+.. literalinclude:: /examples/auth/jwt/blocklist_cleanup.py
+  :caption: myapp/management/commands/cleanup_blocklist.py
+  :linenos:
+  :language: python
+
+Then run this task as a periodic job.
+
+.. warning::
+
+  Keep the grace period bigger than the largest ``leeway``
+  you pass to your auth classes.
+  With a non-zero ``leeway`` a token is still accepted
+  for that many seconds after ``exp``,
+  and its blocklist row is still doing real work for that long.
+
+.. tip::
+
+  The same reasoning applies to the opaque
+  :class:`~dmr.security.token.app.models.Token` model,
+  see :ref:`cleaning-up-old-tokens`.
+
 
 API Reference
 -------------
 
 .. autoclass:: dmr.security.jwt.token.JWToken
   :members:
+
+.. autoexception:: dmr.security.jwt.token.JWTokenError
+  :members:
+  :show-inheritance:
+
+Header auth
+~~~~~~~~~~~
 
 .. autoclass:: dmr.security.jwt.auth.HeaderJWTSyncAuth
   :members:
@@ -350,20 +444,31 @@ API Reference
 
 .. note::
 
-  Since version 0.15.0 ``JWTSyncAuth`` and ``JWTAsyncAuth`` are kept as aliases of
+  Since version 0.15.0 ``JWTSyncAuth`` and ``JWTAsyncAuth``
+  are kept as aliases of
   :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth` and
   :class:`~dmr.security.jwt.auth.HeaderJWTAsyncAuth`.
   Existing code keeps working unchanged.
+  They are soft-deprecated and will be removed before the ``1.0.0`` release.
+  Do not use them.
 
-.. autoclass:: dmr.security.jwt.cookie.CookieJWTSyncAuth
+Cookie auth
+~~~~~~~~~~~
+
+.. autoclass:: dmr.security.jwt.auth.CookieJWTSyncAuth
   :members:
   :inherited-members:
 
-.. autoclass:: dmr.security.jwt.cookie.CookieJWTAsyncAuth
+.. autoclass:: dmr.security.jwt.auth.CookieJWTAsyncAuth
   :members:
   :inherited-members:
+
+Helpers
+~~~~~~~
 
 .. autofunction:: dmr.security.jwt.auth.request_jwt
+
+.. autofunction:: dmr.security.jwt.auth.set_request_attrs
 
 Pre-defined views to fetch JWT tokens
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -404,6 +509,9 @@ Pre-defined views to fetch JWT tokens
 
 Blocklist app
 ~~~~~~~~~~~~~
+
+.. autoclass:: dmr.security.jwt.blocklist.models.BlocklistedJWToken
+  :members:
 
 .. autoclass:: dmr.security.jwt.blocklist.auth.JWTokenBlocklistSyncMixin
   :members:

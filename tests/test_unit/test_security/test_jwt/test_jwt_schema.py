@@ -2,13 +2,13 @@ import pytest
 from inline_snapshot import snapshot
 
 from dmr.openapi.objects import SecurityScheme
-from dmr.security.jwt import JWTAsyncAuth, JWTSyncAuth
+from dmr.security.jwt import HeaderJWTAsyncAuth, HeaderJWTSyncAuth
 
 
-@pytest.mark.parametrize('typ', [JWTSyncAuth, JWTAsyncAuth])
+@pytest.mark.parametrize('typ', [HeaderJWTSyncAuth, HeaderJWTAsyncAuth])
 def test_schema(
     *,
-    typ: type[JWTSyncAuth] | type[JWTAsyncAuth],
+    typ: type[HeaderJWTSyncAuth] | type[HeaderJWTAsyncAuth],
 ) -> None:
     """Ensures that security scheme is correct for jwt auth."""
     instance = typ()
@@ -24,10 +24,10 @@ def test_schema(
     assert instance.security_requirement == snapshot({'jwt': []})
 
 
-@pytest.mark.parametrize('typ', [JWTSyncAuth, JWTAsyncAuth])
+@pytest.mark.parametrize('typ', [HeaderJWTSyncAuth, HeaderJWTAsyncAuth])
 def test_custom_header_schema(
     *,
-    typ: type[JWTSyncAuth] | type[JWTAsyncAuth],
+    typ: type[HeaderJWTSyncAuth] | type[HeaderJWTAsyncAuth],
 ) -> None:
     """Ensures that custom jwt auth is documented with the real header."""
     instance = typ(auth_header='X-Api-Auth', auth_scheme='JWT')
@@ -46,10 +46,10 @@ def test_custom_header_schema(
     assert instance.security_requirement == snapshot({'jwt': []})
 
 
-@pytest.mark.parametrize('typ', [JWTSyncAuth, JWTAsyncAuth])
+@pytest.mark.parametrize('typ', [HeaderJWTSyncAuth, HeaderJWTAsyncAuth])
 def test_custom_scheme_schema(
     *,
-    typ: type[JWTSyncAuth] | type[JWTAsyncAuth],
+    typ: type[HeaderJWTSyncAuth] | type[HeaderJWTAsyncAuth],
 ) -> None:
     """Ensures that non-bearer JWT auth is documented as a header contract."""
     instance = typ(auth_scheme='JWT')

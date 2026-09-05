@@ -61,6 +61,7 @@ class Settings(enum.StrEnum):
     throttling_allow_unsafe_cache = 'throttling_allow_unsafe_cache'
     no_validate_http_spec = 'no_validate_http_spec'
     validate_responses = 'validate_responses'
+    exclude_validate_responses = 'exclude_validate_responses'
     semantic_responses = 'semantic_responses'
     exclude_semantic_responses = 'exclude_semantic_responses'
     validate_events = 'validate_events'
@@ -94,11 +95,15 @@ class HttpSpec(enum.StrEnum):
             like ``GET`` and ``HEAD`` can't have request bodies.
         empty_response_body: Disables validation that some status codes
             like ``204`` must not have response bodies.
+        header_name_server_managed: Disables validation that headers
+            like ``Server``, ``Keep-Alive``, etc. can't be
+            included in response headers.
 
     """
 
     empty_request_body = 'empty_request_body'
     empty_response_body = 'empty_response_body'
+    header_name_server_managed = 'header_name_server_managed'
 
 
 class SettingsDict(TypedDict, total=False):
@@ -112,6 +117,7 @@ class SettingsDict(TypedDict, total=False):
     throttling_allow_unsafe_cache: bool | None
     no_validate_http_spec: Set[HttpSpec]
     validate_responses: bool
+    exclude_validate_responses: Set[HTTPStatus]
     semantic_responses: bool
     exclude_semantic_responses: Set[HTTPStatus]
     validate_events: bool | None
@@ -150,6 +156,7 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.no_validate_http_spec: frozenset(),
     # Means that we would run extra validation on the response object.
     Settings.validate_responses: True,
+    Settings.exclude_validate_responses: frozenset(),
     Settings.semantic_responses: True,
     Settings.exclude_semantic_responses: frozenset(),
     # Defaults to the `validate_responses` setting if `None`:

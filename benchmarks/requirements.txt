@@ -1,4 +1,4 @@
--e ..[msgspec]
+-e ..[msgspec,jwt]
 fastapi
 djangorestframework
 django-ninja
