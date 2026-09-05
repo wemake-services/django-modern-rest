@@ -116,6 +116,9 @@ of requirements for an API to count as public.
   and `JWToken.decode` about 1.15x faster.
   Note that only json-native values in `JWToken.extras` are guaranteed
   to be encoded identically with and without `msgspec`, #1390
+- Added `BaseThrottleSyncBackend.lock` and `BaseThrottleAsyncBackend.lock`
+  to control the in-process lock for `incr`,
+  `SyncRedis` and `AsyncRedis` skip it because Lua scripts are atomic, #1339
 
 ### Bugfixes
 
