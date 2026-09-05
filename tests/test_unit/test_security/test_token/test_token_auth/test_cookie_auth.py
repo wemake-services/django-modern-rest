@@ -4,7 +4,7 @@ from http import HTTPStatus
 from typing import Final
 
 import pytest
-from django.conf import settings
+from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.http import HttpRequest, HttpResponse
 from inline_snapshot import snapshot
@@ -20,6 +20,7 @@ from dmr.security.token import (
 )
 from dmr.security.token.app.models import Token
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
+from tests.test_unit.conftest import with_debug_mode_changed_csrf_failure
 
 _CORRECT_TEMPLATE: Final = '{0}'
 
@@ -106,11 +107,16 @@ async def test_async_cookie_token_auth_success(
 
 
 @pytest.mark.django_db
+@with_debug_mode_changed_csrf_failure
 def test_sync_cookie_token_auth_csrf_enforced(
     admin_user: User,
     dmr_rf: DMRRequestFactory,
+    settings: LazySettings,
+    debug_mode: bool,  # noqa: FBT001
+    expected_csrf_railure_reason: str,
 ) -> None:
     """Ensures CookieTokenSyncAuth rejects POST without a CSRF token."""
+    settings.DEBUG = debug_mode
 
     class _CookieController(Controller[PydanticFastSerializer]):
         auth = (CookieTokenSyncAuth(),)
@@ -135,7 +141,7 @@ def test_sync_cookie_token_auth_csrf_enforced(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'msg': 'CSRF Failed: CSRF cookie not set.',
+                'msg': f'CSRF Failed: {expected_csrf_railure_reason}',
             },
         ],
     })
@@ -143,11 +149,16 @@ def test_sync_cookie_token_auth_csrf_enforced(
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
+@with_debug_mode_changed_csrf_failure
 async def test_async_cookie_token_auth_csrf_enforced(
     admin_user: User,
     dmr_async_rf: DMRAsyncRequestFactory,
+    settings: LazySettings,
+    debug_mode: bool,  # noqa: FBT001
+    expected_csrf_railure_reason: str,
 ) -> None:
     """Ensures CookieTokenAsyncAuth rejects POST without a CSRF token."""
+    settings.DEBUG = debug_mode
 
     class _AsyncCookieController(Controller[PydanticFastSerializer]):
         auth = (CookieTokenAsyncAuth(),)
@@ -174,7 +185,7 @@ async def test_async_cookie_token_auth_csrf_enforced(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'msg': 'CSRF Failed: CSRF cookie not set.',
+                'msg': f'CSRF Failed: {expected_csrf_railure_reason}',
             },
         ],
     })
@@ -279,6 +290,7 @@ def test_cookie_auth_try_next_sync(
 async def test_cookie_auth_try_next_async(
     dmr_async_rf: DMRAsyncRequestFactory,
     admin_user: User,
+    settings: LazySettings,
 ) -> None:
     """Ensures async controllers work with token auth."""
 

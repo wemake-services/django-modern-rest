@@ -28,6 +28,7 @@ from dmr.security.jwt import (
 )
 from dmr.security.jwt.auth.base import BaseJWTSyncAuth
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
+from tests.test_unit.conftest import with_debug_mode_changed_csrf_failure
 
 _LEEWAY: Final = 30  # seconds
 
@@ -162,12 +163,16 @@ async def test_async_cookie_jwt_auth(
 
 
 @pytest.mark.django_db
+@with_debug_mode_changed_csrf_failure
 def test_sync_cookie_jwt_auth_csrf_enforced(
     dmr_rf: DMRRequestFactory,
     admin_user: User,
     settings: LazySettings,
+    debug_mode: bool,  # noqa: FBT001
+    expected_csrf_railure_reason: str,
 ) -> None:
     """Ensures CookieJWTSyncAuth rejects POST without a CSRF token."""
+    settings.DEBUG = debug_mode
 
     class _CookieController(Controller[PydanticFastSerializer]):
         auth = (CookieJWTSyncAuth(),)
@@ -189,7 +194,7 @@ def test_sync_cookie_jwt_auth_csrf_enforced(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'msg': 'CSRF Failed: CSRF cookie not set.',
+                'msg': f'CSRF Failed: {expected_csrf_railure_reason}',
             },
         ],
     })
@@ -197,12 +202,16 @@ def test_sync_cookie_jwt_auth_csrf_enforced(
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
+@with_debug_mode_changed_csrf_failure
 async def test_async_cookie_jwt_auth_csrf_enforced(
     dmr_async_rf: DMRAsyncRequestFactory,
     admin_user: User,
     settings: LazySettings,
+    debug_mode: bool,  # noqa: FBT001
+    expected_csrf_railure_reason: str,
 ) -> None:
     """Ensures CookieJWTAsyncAuth rejects POST without a CSRF token."""
+    settings.DEBUG = debug_mode
 
     class _AsyncCookieController(Controller[PydanticFastSerializer]):
         auth = (CookieJWTAsyncAuth(),)
@@ -226,7 +235,7 @@ async def test_async_cookie_jwt_auth_csrf_enforced(
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'msg': 'CSRF Failed: CSRF cookie not set.',
+                'msg': f'CSRF Failed: {expected_csrf_railure_reason}',
             },
         ],
     })
