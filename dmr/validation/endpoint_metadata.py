@@ -62,7 +62,7 @@ if TYPE_CHECKING:
 #: Regex expression to match allowed chars in tokens
 # See RFC 9110 5.6.2 for more details.
 _ALLOWED_TOKENS_PATTERN: Final = re.compile(
-    r'^[a-zA-Z0-9_!#$%\'*+\-.^`|~]+$'
+    r'^[a-zA-Z0-9_!#$%\'*+\-.^`|~]+$',
 )
 
 
