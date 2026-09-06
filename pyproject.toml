@@ -222,9 +222,17 @@ before-test = [
   uv export --format requirements.txt --group unit-test --no-group dev \
   --all-extras > _temp.txt\
   """,
-  "uv pip install -r _temp.txt",
+  # `uv` does not write `.pyc` files by default, unlike `pip`.
+  # Without them, imports that only happen inside a test
+  # have to compile their modules at runtime, which is slow enough
+  # on Windows to trip `pytest-timeout`. See:
+  # https://github.com/wemake-services/django-modern-rest/issues/1401
+  "uv pip install --compile-bytecode -r _temp.txt",
 ]
-test-command = 'pytest {project}/tests/test_unit -o addopts=""'
+# These envs are freshly created for a single run and are much slower
+# than local machines, so our default `timeout = 5` is too strict here.
+# Hanging tests are still reported, just later:
+test-command = 'pytest {project}/tests/test_unit -o addopts="" -o timeout=30'
 
 [tool.cibuildwheel.environment]
 HATCH_BUILD_HOOKS_ENABLE = "1"

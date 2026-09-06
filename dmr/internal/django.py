@@ -33,7 +33,6 @@
 
 
 from collections.abc import Mapping
-from io import BytesIO
 from typing import Any, Final, TypeAlias
 
 from django.core.exceptions import TooManyFilesSent
@@ -142,7 +141,18 @@ def parse_as_post(request: HttpRequest) -> None:
     """
     # This code is adapted from Django itself:
     if request.content_type == 'multipart/form-data':
-        request_data = BytesIO(request.body)
+        # Use Django's current request stream directly instead of materializing
+        # the multipart body in DMR. This keeps DMR itself streaming-friendly,
+        # but it isn't an "always zero-copy" guarantee: if something has already
+        # accessed `request.body`, Django has cached the whole body in memory;
+        # and while parsing, Django's upload handlers decide whether uploaded
+        # files are kept in memory or written to temporary files.
+        #
+        # Some custom or test request objects may not initialize `_stream`.
+        # Falling back to `request` still gives `MultiPartParser` a file-like
+        # object with `read()` methods.
+        request_data = getattr(request, '_stream', request)
+
         # This was introduced in Django 6.1:
         multipart_parser_cls = getattr(
             request,
@@ -167,7 +177,7 @@ def parse_as_post(request: HttpRequest) -> None:
             request._post = post  # type: ignore[attr-defined]
             request._files = files  # type: ignore[attr-defined]
 
-        request._dmr_parsed_as_post = True  # type: ignore[attr-defined]
+        request.__dmr_parsed_as_post__ = True  # type: ignore[attr-defined]
         return
 
     # Django only supports two content types natively,

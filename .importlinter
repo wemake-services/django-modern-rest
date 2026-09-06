@@ -95,6 +95,8 @@ ignore_imports =
   # Optional json support from msgspec:
   dmr.settings -> msgspec
   dmr.internal.json -> msgspec
+  # Optional jwt support:
+  dmr.internal.jwt -> jwt
 
 [importlinter:contract:plugins-independence]
 name = All `plugins` must be independent

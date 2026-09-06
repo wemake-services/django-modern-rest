@@ -144,6 +144,10 @@ it is really fast, returns ``bytes`` directly,
 avoiding an extra encode step, and is significantly
 faster than the standard library ``json``.
 
+The very same backend selection is also used to encode and decode
+JWT payloads, see :ref:`jwt-json-backend`. Note that the ``json_module``
+argument above only affects parsers and renderers, not JWT.
+
 
 Customizing negotiation process
 -------------------------------

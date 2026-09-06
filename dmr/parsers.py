@@ -281,7 +281,7 @@ class MultiPartParser(
         from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
         if (
-            not getattr(request, '_dmr_parsed_as_post', False)
+            not getattr(request, '__dmr_parsed_as_post__', False)
             and request.method
             and (
                 request.method.upper()
@@ -355,7 +355,7 @@ class FormUrlEncodedParser(
         from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
         if (
-            not getattr(request, '_dmr_parsed_as_post', False)
+            not getattr(request, '__dmr_parsed_as_post__', False)
             and request.method
             and (
                 request.method.upper()

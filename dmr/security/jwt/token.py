@@ -30,12 +30,27 @@
 import datetime as dt
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field, fields
-from typing import Any, Self
+from typing import Any, Self, final
 
 import jwt
 from jwt.types import Options
 
-from dmr.exceptions import InternalServerError, NotAuthenticatedError
+from dmr.exceptions import NotAuthenticatedError
+from dmr.internal.jwt import dmr_jwt
+
+
+@final
+class JWTokenError(Exception):
+    """
+    Raised when a token cannot be created, encoded, or decoded.
+
+    This is a semantic error about the token itself: its claims,
+    the signing algorithm, or the key. It is not an HTTP error,
+    because tokens are regularly created outside of any request:
+    in management commands, background tasks, and scripts.
+
+    .. versionadded:: 0.15.0
+    """
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,6 +67,8 @@ class JWToken:  # noqa: WPS214
         aud: Audience - intended audience(s).
         jti: JWT ID - a unique identifier of the JWT between different issuers.
         extras: Extra fields that were found on the JWT token.
+            Only json-native values are guaranteed to be encoded
+            identically with and without ``msgspec`` installed.
 
     .. versionchanged:: 0.15.0
 
@@ -97,16 +114,16 @@ class JWToken:  # noqa: WPS214
         the checks that we run before signing a token.
 
         Raises:
-            ValueError: If this token cannot be issued right now.
+            JWTokenError: If this token cannot be issued right now.
 
         .. versionadded:: 0.15.0
 
         """
         now = _normalize_datetime(dt.datetime.now(dt.UTC)).timestamp()
         if self.exp.timestamp() < now:
-            raise ValueError('exp value must be a datetime in the future')
+            raise JWTokenError('exp value must be a datetime in the future')
         if self.iat.timestamp() > now:
-            raise ValueError('iat must be a current or past time')
+            raise JWTokenError('iat must be a current or past time')
 
     def encode(
         self,
@@ -127,19 +144,23 @@ class JWToken:  # noqa: WPS214
             An encoded token string.
 
         Raises:
-            ValueError: If this token cannot be issued right now.
-            InternalServerError: If encoding fails.
+            JWTokenError: If the token cannot be issued right now
+                (`exp`/`iat` validation) or encoding fails. pyjwt errors
+                are wrapped and the original exception is preserved
+                as the cause.
 
         .. versionchanged:: 0.15.0
 
             ``exp`` and ``iat`` are validated here
             via :meth:`validate_issued_claims`,
             previously it was done during the instance creation.
+            Encoding failures now raise :class:`JWTokenError`
+            instead of the HTTP-layer ``InternalServerError``.
 
         """
         self.validate_issued_claims()
         try:
-            return jwt.encode(
+            return dmr_jwt.encode(
                 payload={
                     field_name: field_value
                     for field_name, field_value in asdict(self).items()
@@ -149,8 +170,12 @@ class JWToken:  # noqa: WPS214
                 algorithm=algorithm,
                 headers=headers,
             )
-        except (jwt.exceptions.PyJWTError, NotImplementedError):
-            raise InternalServerError('Failed to encode token') from None
+        except (
+            jwt.exceptions.PyJWTError,
+            NotImplementedError,
+            TypeError,
+        ) as exc:
+            raise JWTokenError('Failed to encode token') from exc
 
     @classmethod
     def decode_payload(  # noqa: WPS211
@@ -165,7 +190,7 @@ class JWToken:  # noqa: WPS214
         options: Options | None,
     ) -> dict[str, Any]:
         """Decode and verify the JWT and return its payload."""
-        return jwt.decode(
+        return dmr_jwt.decode(
             encoded_token,
             key=secret,
             algorithms=algorithms,

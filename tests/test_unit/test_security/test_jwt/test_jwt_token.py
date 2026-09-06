@@ -13,8 +13,8 @@ import pytest
 from faker import Faker
 from typing_extensions import TypedDict, override
 
-from dmr.exceptions import InternalServerError, NotAuthenticatedError
-from dmr.security.jwt import JWToken
+from dmr.exceptions import NotAuthenticatedError
+from dmr.security.jwt.token import JWToken, JWTokenError
 
 #: Clock error in seconds that we allow in tests below.
 _LEEWAY: Final = 30
@@ -84,14 +84,14 @@ def test_empty_token() -> None:
 )
 def test_exp_in_the_past(exp: dt.datetime) -> None:
     """Ensures that we can't issue a token with an exp date in the past."""
-    with pytest.raises(ValueError, match='datetime in the future'):
+    with pytest.raises(JWTokenError, match='datetime in the future'):
         JWToken('a', exp).encode(secrets.token_hex(), 'HS256')
 
 
 def test_iat_in_the_past() -> None:
     """Ensures that we can't issue a token with an iat date in the future."""
     exp = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
-    with pytest.raises(ValueError, match='current or past time'):
+    with pytest.raises(JWTokenError, match='current or past time'):
         JWToken('a', exp, iat=exp).encode(secrets.token_hex(), 'HS256')
 
 
@@ -196,12 +196,40 @@ def test_encode_validation(
     algorithm: str,
     secret: str,
 ) -> None:
-    """Ensures that incorrect combination of algorithm and secret raises."""
-    with pytest.raises(InternalServerError):
+    """Ensures incorrect algorithm/secret raises the token-layer error."""
+    with pytest.raises(JWTokenError):
         JWToken(
             sub='123',
             exp=(dt.datetime.now(dt.UTC) + dt.timedelta(seconds=10)),
         ).encode(algorithm=algorithm, secret=secret)
+
+
+def test_encode_keeps_the_original_error() -> None:
+    """Ensures that we don't lose why `pyjwt` refused to sign a token."""
+    token = JWToken(
+        sub='123',
+        exp=(dt.datetime.now(dt.UTC) + dt.timedelta(seconds=10)),
+    )
+
+    with pytest.raises(JWTokenError) as exc_info:
+        # `RS256` expects a PEM private key, not an HMAC secret:
+        token.encode(algorithm='RS256', secret='hmac-secret')  # noqa: S106
+
+    assert isinstance(exc_info.value.__cause__, jwt.exceptions.PyJWTError)
+
+
+def test_encode_unserializable_extras() -> None:
+    """Ensures that a payload we cannot serialize is a token error."""
+    token = JWToken(
+        sub='123',
+        exp=(dt.datetime.now(dt.UTC) + dt.timedelta(seconds=10)),
+        extras={'broken': object()},
+    )
+
+    with pytest.raises(JWTokenError) as exc_info:
+        token.encode(algorithm='HS256', secret=secrets.token_hex())
+
+    assert isinstance(exc_info.value.__cause__, TypeError)
 
 
 @pytest.mark.parametrize('issuer', [None, 'text', ['list', 'of', 'values']])

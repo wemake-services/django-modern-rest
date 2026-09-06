@@ -21,6 +21,15 @@ of requirements for an API to count as public.
 
 ### Breaking changes
 
+- `JWToken.encode` now raises `JWTokenError` (a token-layer semantic error)
+  instead of the HTTP-layer `InternalServerError` when encoding fails.
+  The error is converted back to `InternalServerError` at the HTTP boundary
+  in `_BaseTokenController.create_jwt_token`, so request-serving paths keep
+  their 500 contract while non-request callers (management commands, Celery
+  tasks, test factories) get a meaningful exception. The original `pyjwt`
+  cause is preserved in the traceback (no more `from None`).
+- Renamed `json_dump` to `json_dumps` in `dmr.openapi.dump` and `dmr.internal.json`
+  to follow standard string-serialization conventions, #1399
 - Removed `QueryTokenSyncAuth` and `QueryTokenAsyncAuth` auth classes,
   because they were insecure, you can use [older existing versions](https://github.com/wemake-services/django-modern-rest/blob/14884b432ee075ec3d78ff388944ebc5f0b5d432/dmr/security/token/auth/header.py), #1288
 - Removed `FileResponseSpec.file_body`,
@@ -102,6 +111,14 @@ of requirements for an API to count as public.
 - Added `security.NO_STORE_HEADERS`, all auth views we ship now
   return the `Cache-Control: no-store` header
   and document it in the OpenAPI schema, #1335
+- JWT tokens are now encoded and decoded with `msgspec`
+  when it is installed, which makes `JWToken.encode` about 1.3x
+  and `JWToken.decode` about 1.15x faster.
+  Note that only json-native values in `JWToken.extras` are guaranteed
+  to be encoded identically with and without `msgspec`, #1390
+- Added `BaseThrottleSyncBackend.lock` and `BaseThrottleAsyncBackend.lock`
+  to control the in-process lock for `incr`,
+  `SyncRedis` and `AsyncRedis` skip it because Lua scripts are atomic, #1339
 
 ### Bugfixes
 
@@ -122,6 +139,8 @@ of requirements for an API to count as public.
 - Parsed request data is no longer stored as a local variable
   of the endpoint's frame, because it was shown
   in error reports of any endpoint, #1323
+- Fixed `JWToken.encode` raising a bare `TypeError`
+  when `extras` cannot be serialized to json, #1373
 - JWT auth, refresh, and verify now return `401` instead of `500`
   when the token subject cannot be a value of the user lookup field,
   for example a non-numeric `sub` with the default integer `pk`, #1284
@@ -152,6 +171,7 @@ of requirements for an API to count as public.
   instead of failing with a database `IntegrityError`, #1322
 - JWT authentication now rejects refresh tokens when access tokens are expected,
   #1320
+- Fixed a bug when request data might be copied in `parse_as_post` #1328
 
 ### Misc
 
