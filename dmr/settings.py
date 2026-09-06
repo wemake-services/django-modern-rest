@@ -98,12 +98,14 @@ class HttpSpec(enum.StrEnum):
         header_name_server_managed: Disables validation that headers
             like ``Server``, ``Keep-Alive``, etc. can't be
             included in response headers.
-
+        header_name_syntax: Disables validations that check
+            name syntax to avoid headers like X Custom Name or @@@.
     """
 
     empty_request_body = 'empty_request_body'
     empty_response_body = 'empty_response_body'
     header_name_server_managed = 'header_name_server_managed'
+    header_name_syntax = 'header_name_syntax'
 
 
 class SettingsDict(TypedDict, total=False):
