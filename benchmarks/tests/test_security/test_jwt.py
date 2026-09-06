@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime as dt
 import secrets
 import sys
 import time
@@ -9,6 +10,8 @@ from pytest_codspeed import BenchmarkFixture
 
 if TYPE_CHECKING:
     from conftest import CleanModules
+
+    from dmr.security.jwt import JWToken
 
 #: Modules to reimport when switching the json backend.
 _JWT_MODULES: Final = frozenset((
@@ -100,3 +103,44 @@ def test_jwt_decode_native(
                 audience='web',
                 issuer='django-modern-rest',
             )
+
+
+def _make_token() -> JWToken:
+    now = dt.datetime.now(dt.UTC)
+    from dmr.security.jwt import JWToken  # noqa: PLC0415
+
+    return JWToken(
+        sub='1234567890',
+        exp=now + dt.timedelta(hours=1),
+        iat=now,
+        iss='django-modern-rest',
+        aud='web',
+        jti=secrets.token_hex(16),
+        extras={'scopes': ['read', 'write']},
+    )
+
+
+def test_jwtoken_encode(benchmark: BenchmarkFixture) -> None:
+    """Test `JWToken.encode`, which also builds the payload."""
+    token = _make_token()
+
+    @benchmark
+    def factory() -> None:
+        token.encode(_SECRET, _ALGORITHM)
+
+
+def test_jwtoken_decode(benchmark: BenchmarkFixture) -> None:
+    """Test `JWToken.decode`, which also splits the `extras` claims."""
+    from dmr.security.jwt import JWToken  # noqa: PLC0415
+
+    encoded = _make_token().encode(_SECRET, _ALGORITHM)
+
+    @benchmark
+    def factory() -> None:
+        JWToken.decode(
+            encoded,
+            secret=_SECRET,
+            algorithm=_ALGORITHM,
+            accepted_audiences='web',
+            accepted_issuers='django-modern-rest',
+        )

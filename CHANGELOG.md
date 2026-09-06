@@ -116,6 +116,13 @@ of requirements for an API to count as public.
   and `JWToken.decode` about 1.15x faster.
   Note that only json-native values in `JWToken.extras` are guaranteed
   to be encoded identically with and without `msgspec`, #1390
+- `JWToken.encode` no longer builds its payload with `dataclasses.asdict`,
+  which makes it about 2x faster. `JWToken.decode` no longer recomputes
+  `dataclasses.fields` on every call. Tokens are unchanged: claims are still
+  encoded in the field declaration order, and nested dataclasses inside
+  `JWToken.extras` are still converted to json objects.
+  Note that `JWToken` subclasses must not add new dataclass fields,
+  use `extras` instead, #1404
 - Added `BaseThrottleSyncBackend.lock` and `BaseThrottleAsyncBackend.lock`
   to control the in-process lock for `incr`,
   `SyncRedis` and `AsyncRedis` skip it because Lua scripts are atomic, #1339

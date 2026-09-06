@@ -135,6 +135,34 @@ def test_extra_fields(faker: Faker) -> None:
     }
 
 
+def test_encode_claim_order() -> None:
+    """Ensures that claims are encoded in the dataclass field order.
+
+    The order is stable across processes and installs,
+    so the same token always produces the very same string.
+    """
+    token = JWToken(
+        sub=secrets.token_hex(),
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(seconds=10),
+        iss='django-modern-rest',
+        aud='web',
+        jti=secrets.token_hex(),
+        extras={'email': 'test@example.com'},
+    )
+    token_secret = secrets.token_hex()
+
+    payload = jwt.decode(
+        token.encode(token_secret, 'HS256'),
+        token_secret,
+        algorithms=['HS256'],
+        options={'verify_aud': False},
+    )
+
+    assert list(payload) == [
+        field.name for field in dataclasses.fields(JWToken)
+    ]
+
+
 def test_strict_audience_validation() -> None:
     """Ensures that strict_audience validates correctly."""
     with pytest.raises(ValueError, match='a single string'):

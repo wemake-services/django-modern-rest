@@ -3,7 +3,8 @@ import decimal
 import json
 import secrets
 import uuid
-from typing import Any, Final
+from dataclasses import dataclass, field
+from typing import Any, Final, final
 
 import jwt
 import pytest
@@ -56,6 +57,15 @@ _MSGSPEC_ONLY_VALUES: Final = (
     ({1, 2}, b'{"v":[1,2]}', 'Object of type set is not JSON serializable'),
     (b'ab', b'{"v":"YWI="}', 'Object of type bytes is not JSON serializable'),
 )
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class _Profile:
+    """Nested dataclass that users can put inside ``extras``."""
+
+    name: str = 'test'
+    roles: list[str] = field(default_factory=lambda: ['admin'])
 
 
 def _make_payload() -> dict[str, Any]:
@@ -132,6 +142,49 @@ def test_jwtoken_roundtrip_with_extras() -> None:
     )
 
     assert decoded.extras == extras
+
+
+@pytest.mark.parametrize('algorithm', _ALGORITHMS)
+def test_extras_nested_dataclass_is_converted(algorithm: str) -> None:
+    """Ensures nested dataclasses in ``extras`` are encoded as objects."""
+    secret = secrets.token_hex()
+    token = JWToken(
+        sub=secrets.token_hex(),
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(minutes=1),
+        extras={'profile': _Profile()},
+    )
+
+    decoded = JWToken.decode(
+        token.encode(secret=secret, algorithm=algorithm),
+        secret=secret,
+        algorithm=algorithm,
+    )
+
+    assert decoded.extras == {'profile': {'name': 'test', 'roles': ['admin']}}
+
+
+@pytest.mark.usefixtures('_native_backend')
+def test_native_extras_nested_dataclass() -> None:
+    """Ensures the same for the backend used without ``msgspec``.
+
+    Without the conversion this backend raises ``TypeError``,
+    while ``msgspec`` would encode the dataclass on its own.
+    That divergence is exactly what we must not introduce.
+    """
+    secret = secrets.token_hex()
+    token = JWToken(
+        sub=secrets.token_hex(),
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(minutes=1),
+        extras={'profile': _Profile()},
+    )
+
+    decoded = JWToken.decode(
+        token.encode(secret=secret, algorithm='HS256'),
+        secret=secret,
+        algorithm='HS256',
+    )
+
+    assert decoded.extras == {'profile': {'name': 'test', 'roles': ['admin']}}
 
 
 def test_encode_payload_honours_json_encoder() -> None:
