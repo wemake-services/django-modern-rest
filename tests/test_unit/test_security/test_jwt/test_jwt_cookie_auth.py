@@ -2,7 +2,7 @@ import datetime as dt
 import json
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import Final
+from typing import Final, Protocol
 
 import pytest
 from django.conf import LazySettings
@@ -28,9 +28,17 @@ from dmr.security.jwt import (
 )
 from dmr.security.jwt.auth.base import BaseJWTSyncAuth
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
-from tests.test_unit.conftest import with_debug_mode_changed_csrf_failure
 
 _LEEWAY: Final = 30  # seconds
+
+
+class _CsrfFailureAssertion(Protocol):
+    def __call__(
+        self,
+        response: HttpResponse,
+        *,
+        uses_custom_error_model: bool = False,
+    ) -> None: ...
 
 
 def _encode(user: User, secret: str) -> str:
@@ -163,16 +171,13 @@ async def test_async_cookie_jwt_auth(
 
 
 @pytest.mark.django_db
-@with_debug_mode_changed_csrf_failure
 def test_sync_cookie_jwt_auth_csrf_enforced(
     dmr_rf: DMRRequestFactory,
     admin_user: User,
     settings: LazySettings,
-    debug_mode: bool,  # noqa: FBT001
-    expected_csrf_railure_reason: str,
+    assert_csrf_failure_message: _CsrfFailureAssertion,
 ) -> None:
     """Ensures CookieJWTSyncAuth rejects POST without a CSRF token."""
-    settings.DEBUG = debug_mode
 
     class _CookieController(Controller[PydanticFastSerializer]):
         auth = (CookieJWTSyncAuth(),)
@@ -190,28 +195,19 @@ def test_sync_cookie_jwt_auth_csrf_enforced(
     response = _CookieController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.FORBIDDEN
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': f'CSRF Failed: {expected_csrf_railure_reason}',
-            },
-        ],
-    })
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.content
+    assert_csrf_failure_message(response)
 
 
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
-@with_debug_mode_changed_csrf_failure
 async def test_async_cookie_jwt_auth_csrf_enforced(
     dmr_async_rf: DMRAsyncRequestFactory,
     admin_user: User,
     settings: LazySettings,
-    debug_mode: bool,  # noqa: FBT001
-    expected_csrf_railure_reason: str,
+    assert_csrf_failure_message: _CsrfFailureAssertion,
 ) -> None:
     """Ensures CookieJWTAsyncAuth rejects POST without a CSRF token."""
-    settings.DEBUG = debug_mode
 
     class _AsyncCookieController(Controller[PydanticFastSerializer]):
         auth = (CookieJWTAsyncAuth(),)
@@ -231,14 +227,8 @@ async def test_async_cookie_jwt_auth_csrf_enforced(
     )
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.FORBIDDEN
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': f'CSRF Failed: {expected_csrf_railure_reason}',
-            },
-        ],
-    })
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.content
+    assert_csrf_failure_message(response)
 
 
 @pytest.mark.django_db
