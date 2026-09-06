@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 _CSRF_FAILED_MSG: Final = _('CSRF Failed: {reason}')
-_NON_DEBUG_CSRF_FAILED_REASON: Final[str] = 'Forbidden.'
+_NON_DEBUG_CSRF_FAILED_REASON: Final = 'Forbidden.'
 
 
 @final
