@@ -172,6 +172,14 @@ of requirements for an API to count as public.
 - JWT authentication now rejects refresh tokens when access tokens are expected,
   #1320
 - Fixed a bug when request data might be copied in `parse_as_post` #1328
+- Media types with `q=0` in the `Accept` header are not selected
+  for the response anymore, `q=0` means "not acceptable",
+  so such requests now get a `406` response.
+  This matches `django.http.HttpRequest.accepted_types`, #1407
+- Fixed `Accept` headers with out of range `q` values returning `500`,
+  `q=inf` used to raise `OverflowError` while sorting media types.
+  Out of range weights are now discarded and treated as `q=1`,
+  just like `django.http.request.MediaType` does, #1407
 
 ### Misc
 

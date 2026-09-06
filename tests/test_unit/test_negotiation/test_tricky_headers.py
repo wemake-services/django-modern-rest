@@ -18,6 +18,12 @@ class _UncalledController(Controller[PydanticSerializer]):
         raise NotImplementedError  # must not be called
 
 
+@final
+class _EchoController(Controller[PydanticSerializer]):
+    def get(self) -> str:
+        return 'echo'
+
+
 def test_wrong_accept_header(
     dmr_rf: DMRRequestFactory,
 ) -> None:
@@ -75,6 +81,54 @@ def test_wrong_accept_header_with_content_type(
             },
         ],
     })
+
+
+def test_zero_quality_accept_header(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that `q=0` in `Accept` means "not acceptable"."""
+    request = dmr_rf.get(
+        '/whatever/',
+        headers={
+            'Accept': 'application/json;q=0',
+        },
+    )
+
+    response = _UncalledController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.NOT_ACCEPTABLE
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    'Cannot serialize response body with accepted types '
+                    "[], supported=['application/json']"
+                ),
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
+def test_out_of_range_quality_accept_header(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that out of range `q` values do not break negotiation."""
+    request = dmr_rf.get(
+        '/whatever/',
+        headers={
+            'Accept': 'text/html;q=inf,application/json',
+        },
+    )
+
+    response = _EchoController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == 'echo'
 
 
 @final
