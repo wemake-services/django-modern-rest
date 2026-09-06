@@ -45,7 +45,8 @@ By default we exempt all controllers from CSRF checks, unless:
    without CSRF is not secure
 
 .. note::
-   ``note`` Detailed CSRF failure reason on response content will be exposed only in debug mode.
+   Detailed CSRF failure reason on response content will be exposed only in debug mode
+   for security reasons.
 
 .. _bring-your-own-di:
 
