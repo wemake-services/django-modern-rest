@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 _CSRF_FAILED_MSG: Final = _('CSRF Failed: {reason}')
-_NON_DEBUG_CSRF_FAILED_REASON: Final = 'Forbidden.'
 
 
 @final
@@ -28,29 +27,26 @@ class _EnsureCsrfToken(CsrfViewMiddleware):
         # Otherwise, provide default placeholder reason.
 
         if settings.DEBUG:
-            return reason
+            return _CSRF_FAILED_MSG.format(reason=reason)  # type: ignore[no-any-return]
 
-        return _NON_DEBUG_CSRF_FAILED_REASON
+        return 'CSRF Failed.'
 
 
-def _check_csrf_failure(request: HttpRequest) -> tuple[bool, str | None]:
+def _check_csrf_failure(request: HttpRequest) -> str | None:
     """Perform CSRF validation using ``_EnsureCsrfToken``."""
     check = _EnsureCsrfToken(lambda _: None)  # type: ignore[arg-type]
     check.process_request(request)
-    reason = check.process_view(request, None, (), {})  # type: ignore[arg-type]
-    is_failed = reason is not None
-
-    return is_failed, reason  # type: ignore[return-value]
+    return check.process_view(request, None, (), {})  # type: ignore[arg-type, return-value]
 
 
 def ensure_csrf(controller: 'Controller[BaseSerializer]') -> None:
     """Raise ``APIError`` (403) if the CSRF check fails."""
     from dmr.response import APIError  # noqa: PLC0415
 
-    is_failed, reason = _check_csrf_failure(controller.request)
+    reason = _check_csrf_failure(controller.request)
 
-    if is_failed:
+    if reason is not None:
         raise APIError(
-            controller.format_error(_CSRF_FAILED_MSG.format(reason=reason)),
+            controller.format_error(reason),
             status_code=HTTPStatus.FORBIDDEN,
         )
