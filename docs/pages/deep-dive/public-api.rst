@@ -26,6 +26,31 @@ Endpoint
 
 .. autodecorator:: dmr.endpoint.request_endpoint
 
+Lazy endpoints
+~~~~~~~~~~~~~~
+
+.. autodecorator:: dmr.endpoint.modify.lazy
+
+.. autoclass:: dmr.endpoint.ModifySyncCallable
+  :members:
+
+.. autoclass:: dmr.endpoint.ModifyAsyncCallable
+  :members:
+
+.. autoclass:: dmr.endpoint.ModifyAnyCallable
+  :members:
+
+.. autodecorator:: dmr.endpoint.validate.lazy
+
+.. autoclass:: dmr.endpoint.ValidateSyncCallable
+  :members:
+
+.. autoclass:: dmr.endpoint.ValidateAsyncCallable
+  :members:
+
+.. autoclass:: dmr.endpoint.ValidateAnyCallable
+  :members:
+
 
 Response, headers and cookies
 -----------------------------
@@ -69,6 +94,9 @@ Validation
   :members:
 
 .. autoclass:: dmr.validation.ValidateEndpointPayload
+  :members:
+
+.. autoclass:: dmr.validation.payload.PayloadBuilder
   :members:
 
 
@@ -232,10 +260,10 @@ Pydantic
 .. autoclass:: dmr.plugins.pydantic.PydanticFastSerializer
   :members:
 
-.. autoclass:: dmr.plugins.pydantic.serializer.PydanticEndpointOptimizer
+.. autoclass:: dmr.plugins.pydantic.PydanticEndpointOptimizer
   :members:
 
-.. autoclass:: dmr.plugins.pydantic.schema.PydanticSchemaGenerator
+.. autoclass:: dmr.plugins.pydantic.PydanticSchemaGenerator
   :members:
 
 .. autoclass:: dmr.plugins.pydantic.serializer.ToJsonKwargs
@@ -250,10 +278,10 @@ Msgspec
 .. autoclass:: dmr.plugins.msgspec.MsgspecSerializer
   :members:
 
-.. autoclass:: dmr.plugins.msgspec.serializer.MsgspecEndpointOptimizer
+.. autoclass:: dmr.plugins.msgspec.MsgspecEndpointOptimizer
   :members:
 
-.. autoclass:: dmr.plugins.msgspec.schema.MsgspecSchemaGenerator
+.. autoclass:: dmr.plugins.msgspec.MsgspecSchemaGenerator
   :members:
 
 .. autoclass:: dmr.plugins.msgspec.serializer.ToJsonKwargs

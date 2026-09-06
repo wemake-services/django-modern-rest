@@ -1,4 +1,6 @@
+from collections.abc import Callable
 from http import HTTPStatus
+from typing import assert_type
 
 import pydantic
 from django.http import HttpResponse, JsonResponse
@@ -107,8 +109,13 @@ class CorrectValidateController(Controller[PydanticSerializer]):
             },
         ),
     )
-    async def put(self) -> JsonResponse:
+    def put(self) -> JsonResponse:
         return JsonResponse([])
+
+
+# Regression test for `@validate` return type invalid narrowing:
+controller = CorrectValidateController()
+assert_type(controller.put, Callable[[], JsonResponse])
 
 
 class WrongModifyController(Controller[PydanticSerializer]):
@@ -180,14 +187,14 @@ class WrongAuthMixedController(Controller[PydanticSerializer]):
     async def wrong_sync_auth(self) -> str:
         return 'mixed'
 
-    @validate(  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+    @validate(  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
         auth=[DjangoSessionAsyncAuth()],
     )
     def wrong_async_auth_validate(self) -> HttpResponse:
         return HttpResponse()
 
-    @validate(  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+    @validate(  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
         auth=[DjangoSessionSyncAuth()],
     )
@@ -217,14 +224,14 @@ class WrongThrottlingMixedController(Controller[PydanticSerializer]):
     async def wrong_sync_throttle(self) -> str:
         return 'mixed'
 
-    @validate(  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+    @validate(  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
         throttling=[AsyncThrottle(1, 2)],
     )
     def wrong_async_throttle_validate(self) -> HttpResponse:
         return HttpResponse()
 
-    @validate(  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+    @validate(  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
         throttling=[SyncThrottle(1, 2)],
     )
@@ -303,14 +310,14 @@ class WrongErrorHandlerController(Controller[PydanticSerializer]):
     async def post(self) -> str:
         return 'async'
 
-    @validate(  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+    @validate(  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
         error_handler=_async_error_handler,
     )
     def put(self) -> HttpResponse:
         return HttpResponse()
 
-    @validate(  # type: ignore[arg-type]  # ty: ignore[invalid-argument-type]
+    @validate(  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
         ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
         error_handler=_sync_error_handler,
     )

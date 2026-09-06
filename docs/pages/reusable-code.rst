@@ -82,6 +82,9 @@ Next, let's define a reusable controller that will have:
 - customizable request model
 - customizable response body
 
+Raw endpoints support
+~~~~~~~~~~~~~~~~~~~~~
+
 The process will look exactly the same:
 
 .. literalinclude:: /examples/reusable_code/reusable_parsing.py
@@ -174,6 +177,161 @@ And then - implementations:
 
 This way offers you more control over the response headers, cookies, etc.
 Choose the one that fits best of the job.
+
+
+.. _lazy-reusable-endpoints:
+
+Lazy reusable endpoints
+-----------------------
+
+In some cases you need to do even more
+than request / response payload modifications.
+Sometimes, you need to change the status code, header and cookie specs,
+maybe even auth or throttling definitions.
+
+.. important::
+
+  We only create endpoints when **concrete** controller is built.
+  We never create endpoins definitions for reusable controllers.
+  So, all endpoints are always created in the correct - final - context.
+
+To use the full customization, we provide:
+
+- :func:`dmr.endpoint.modify.lazy` function to work
+  with :func:`~dmr.endpoint.modify`. It accepts
+  a function or a :type:`classmethod` to lazily provide a spec in the future
+- :func:`dmr.endpoint.validate.lazy` function to work
+  with :func:`~dmr.endpoint.validate`. It accepts
+  a function or a :type:`classmethod` to lazily provide a spec in the future
+
+Here's how it works:
+
+.. tabs::
+
+  .. tab:: modify
+
+    .. literalinclude:: /examples/reusable_code/lazy_modify.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: validate
+
+    .. literalinclude:: /examples/reusable_code/lazy_validate.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+What happens here?
+
+1. We define a reusable controller with lazy endpoint specification
+2. We define ``_lazy_spec`` classmethod that will provide the actual decorator
+   during the child - final - controller build time
+3. We use class-level API to define constants that people
+   can modify in their child - final - controllers if needed.
+   But, the default implementation would work the way we described it
+
+Notice that we use special types to define
+the return type from the ``_lazy_spec`` classmethod.
+Here are all of them, choose the one for your task:
+
+.. list-table::
+  :header-rows: 1
+
+  * - Type name
+    - Original decorator
+    - What it does
+
+  * - :class:`~dmr.endpoint.ModifyAnyCallable`
+    - :func:`~dmr.endpoint.modify`
+    - Creates a decorator for endpoints without sync / async specifics
+  * - :class:`~dmr.endpoint.ModifySyncCallable`
+    - :func:`~dmr.endpoint.modify`
+    - Creates a decorator for sync endpoints
+  * - :class:`~dmr.endpoint.ModifyAsyncCallable`
+    - :func:`~dmr.endpoint.modify`
+    - Creates a decorator for async endpoints
+
+  * - :class:`~dmr.endpoint.ValidateAnyCallable`
+    - :func:`~dmr.endpoint.validate`
+    - Creates a decorator for endpoints without sync / async specifics
+  * - :class:`~dmr.endpoint.ValidateSyncCallable`
+    - :func:`~dmr.endpoint.validate`
+    - Creates a decorator for sync endpoints
+  * - :class:`~dmr.endpoint.ValidateAsyncCallable`
+    - :func:`~dmr.endpoint.validate`
+    - Creates a decorator for async endpoints
+
+Basically, there are several major rules:
+
+1. Prefer defining decorators that do not care about sync / async code, use
+   :class:`~dmr.endpoint.ModifyAnyCallable`
+   and :class:`~dmr.endpoint.ValidateAnyCallable` by default
+2. If you need sync / async details like ``error_handler``, ``auth``,
+   or ``throttling`` - then use exact type
+   for sync / async decorator of your choice
+3. Do not mix specs for ``@validate`` and ``@modify``, it will be a type error
+
+Customizing definitions
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Now, let's use the reusable controller we defined above,
+but we would customize the response status code,
+just as an example of power that we have:
+
+.. tabs::
+
+  .. tab:: modify
+
+    .. literalinclude:: /examples/reusable_code/lazy_modify_customize.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: validate
+
+    .. literalinclude:: /examples/reusable_code/lazy_validate_customize.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+Notice that the response code would be changed in both the spec and runtime.
+And, of course, you can combine this approach
+with generic serializer, or request and response payloads.
+Giving the full controll over code reuse.
+
+Overriding definitions
+~~~~~~~~~~~~~~~~~~~~~~
+
+To finish this example off, we would completely override the spec
+in a child controller. Sometimes users might want to do that,
+for example: to provide auth or custom OpenAPI spec.
+But, user is free to modify any parts of the spec, if needed.
+
+.. tabs::
+
+  .. tab:: modify
+
+    .. literalinclude:: /examples/reusable_code/lazy_modify_override.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: validate
+
+    .. literalinclude:: /examples/reusable_code/lazy_validate_override.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+.. note::
+
+  Notice that ``_lazy_spec`` classmethod is resolve from the final controller,
+  not the one that was used during the decoration time.
+
+  ``@classmethod`` is preferable over ``lambda`` functions,
+  because they provide easier override API and they are fully typed,
+  unlike ``lambda`` functions.
 
 
 Where is it actually helpful in practice?
