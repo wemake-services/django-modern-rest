@@ -91,13 +91,12 @@ class OpenAPI:
         # Do not reconvert the same spec.
         if self._converted is None:
             self._converted = dump_schema(self)
-        spec = self._converted
         if (
             not skip_validation
             and not self._validated
             and _validate_spec is not None
         ):
-            _validate_spec(spec)
+            _validate_spec(self._converted)
             # Do not revalidate the same spec.
             self._validated = True
-        return spec
+        return self._converted
