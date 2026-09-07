@@ -152,7 +152,7 @@ class ModifyAnyCallable(Protocol):
     Features:
 
     - Does not allow using ``HttpResponse`` as the return annotation
-    - Does not allow specifing sync / async specific parts
+    - Does not allow specifying sync / async specific parts
 
     """
 
@@ -178,7 +178,7 @@ _ModifyDecoratorT = TypeVar(
     bound=ModifyAsyncCallable | ModifySyncCallable | ModifyAnyCallable,
 )
 
-# We can't split this line into multiline stirngs,
+# We can't split this line into multiline strings,
 # because `pyrefly` does not support this pattern.
 _CallableOrClassmethod: TypeAlias = 'Callable[[type[_ControllerT]], _ReturnT] | classmethod[_ControllerT, [], _ReturnT]'  # noqa: E501
 
@@ -548,7 +548,7 @@ class ValidateAnyCallable(Protocol):
 
     - Does not allow using anything other
         than ``HttpResponse`` as the return annotation
-    - Does not allow specifing sync / async specific parts
+    - Does not allow specifying sync / async specific parts
 
     .. versionadded:: 0.15.0
     """
