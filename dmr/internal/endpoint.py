@@ -178,15 +178,14 @@ _ModifyDecoratorT = TypeVar(
     bound=ModifyAsyncCallable | ModifySyncCallable | ModifyAnyCallable,
 )
 
-_CallableOrClassmethod: TypeAlias = (
-    'Callable[[type[_ControllerT]], _ReturnT]'
-    '| classmethod[_ControllerT, [], _ReturnT]'
-)
+# We can't split this line into multiline stirngs,
+# because `pyrefly` does not support this pattern.
+_CallableOrClassmethod: TypeAlias = 'Callable[[type[_ControllerT]], _ReturnT] | classmethod[_ControllerT, [], _ReturnT]'  # noqa: E501
 
 
 @final
-@dataclasses.dataclass(frozen=True, slots=True)
-class _ModifyEndpoint:
+@dataclasses.dataclass(frozen=True)
+class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
     """
     Decorator to modify endpoints that return raw model data.
 
@@ -570,8 +569,8 @@ _ValidateDecoratorT = TypeVar(
 
 
 @final
-@dataclasses.dataclass(frozen=True, slots=True)
-class _ValidateEndpoint:
+@dataclasses.dataclass(frozen=True)
+class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
     """
     Decorator to validate responses from endpoints that return ``HttpResponse``.
 

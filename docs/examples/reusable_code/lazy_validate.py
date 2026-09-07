@@ -19,4 +19,4 @@ class LoginController(Controller[_SerializerT]):
 
     @validate.lazy(lazy_spec)
     def get(self) -> HttpResponse:
-        return self.to_response('login')
+        return self.to_response('login', status_code=self.status_code)
