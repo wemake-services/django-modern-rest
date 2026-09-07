@@ -75,7 +75,6 @@ response with Django's
 Cache hits skip JSON/YAML serialization. This example uses the ``default``
 Django cache; configure its backend through
 `CACHES <https://docs.djangoproject.com/en/stable/topics/cache/#setting-up-the-cache>`_.
-Cached responses can remain available for 15 minutes after a schema update.
 
 Requirements for OpenAPI UIs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
