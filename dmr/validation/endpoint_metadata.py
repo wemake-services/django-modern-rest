@@ -188,8 +188,8 @@ class _ResponseListValidator:  # noqa: WPS214
             HttpSpec.header_name_syntax
             not in self.metadata.no_validate_http_spec
         ):
-            self._check_responses_header_syntax(responses)
             self._check_modification_header_syntax()
+            self._check_responses_header_syntax(responses)
 
         # TODO: add more checks
 
