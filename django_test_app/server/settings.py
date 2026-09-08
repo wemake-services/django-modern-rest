@@ -9,8 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
-import tempfile
+import os
 from pathlib import Path
 
 from csp.constants import NONE, SELF
@@ -24,18 +23,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # NOTE: we don't care, this is a test app
-SECRET_KEY = (
-    'django-insecure-id_rysnz6#-a97mx1mk3izoi$^$0=4#&!@9o&%b-06gu%a4kz&'  # noqa: S105
-)
+
+
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-only-fallback')
+
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = [
-    '127.0.0.1',
-    'localhost',
-]
 
+ALLOWED_HOSTS = os.environ.get(
+    'ALLOWED_HOSTS', '127.0.0.1,localhost',
+).split(',')
 
 # Application definition
 
@@ -76,6 +75,7 @@ MIDDLEWARE = [
     'csp.middleware.CSPMiddleware',
     # Django:
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -154,8 +154,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
-STATIC_ROOT = Path(tempfile.gettempdir()) / 'dmr-example-staticfiles'
-
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

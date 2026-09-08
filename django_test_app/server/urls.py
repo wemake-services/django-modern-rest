@@ -1,5 +1,7 @@
 import json
 
+from django.views.generic import RedirectView
+
 from dmr.openapi import OpenAPIConfig, build_schema, load_schema
 from dmr.openapi.objects import (
     Components,
@@ -67,6 +69,7 @@ openapi_config = OpenAPIConfig(
 schema = build_schema(router, config=openapi_config)
 
 urlpatterns = [
+    path('', RedirectView.as_view(url='docs/swagger/', permanent=False)),
     router.to_urlpatterns(namespace='api'),
     path(
         'docs/openapi.json/',
@@ -78,6 +81,7 @@ urlpatterns = [
         OpenAPIYamlView.as_view(schema),
         name='openapi_yaml',
     ),
+
     path('docs/redoc/', RedocView.as_view(schema), name='redoc'),
     path('docs/scalar/', ScalarView.as_view(schema), name='scalar'),
     path('docs/swagger/', SwaggerView.as_view(schema), name='swagger'),

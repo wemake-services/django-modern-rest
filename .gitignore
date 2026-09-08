@@ -267,3 +267,5 @@ wheelhouse/
 # AI slop:
 .claude/
 .codex/
+django_test_app/staticfiles/
+django_test_app/staticfiles/
