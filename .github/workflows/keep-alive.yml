@@ -1,0 +1,12 @@
+name: Keep Render app awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping deployment
+        run: curl -sf https://django-modern-rest-demo.onrender.com/ || true
