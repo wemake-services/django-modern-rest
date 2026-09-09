@@ -11,7 +11,7 @@ CsrfFailureAssertion: TypeAlias = Callable[[HttpResponse], None]
 
 
 @pytest.fixture(
-    params=[(True), (False)],
+    params=[True, False],
     ids=['debug_on', 'debug_off'],
 )
 def assert_csrf_failure_message(
