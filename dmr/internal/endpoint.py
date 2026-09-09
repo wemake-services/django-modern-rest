@@ -178,9 +178,9 @@ _ModifyDecoratorT = TypeVar(
     bound=ModifyAsyncCallable | ModifySyncCallable | ModifyAnyCallable,
 )
 
-# We can't split this line into multiline stirngs,
+# We can't split this line into multiline strings,
 # because `pyrefly` does not support this pattern.
-_CallableOrClassmethod: TypeAlias = 'Callable[[type[_ControllerT]], _ReturnT] | classmethod[_ControllerT, [], _ReturnT]'  # noqa: E501
+_CallableOrClassmethod: TypeAlias = 'classmethod[_ControllerT, [], _ReturnT] | Callable[[type[_ControllerT]], _ReturnT]'  # noqa: E501
 
 
 @final
@@ -477,17 +477,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
 
         .. versionadded:: 0.15.0
         """
-
-        def factory(controller_cls: type[_ControllerT]) -> Any:
-            if isinstance(provider, classmethod):
-                return getattr(
-                    controller_cls,
-                    provider.__name__,
-                    provider,
-                ).__func__(controller_cls)
-            return provider(controller_cls)
-
-        return _add_payload(payload=factory)  # type: ignore[return-value]
+        return _lazy_payload(provider)
 
 
 modify: Final = _ModifyEndpoint()
@@ -893,10 +883,10 @@ def _lazy_payload(
 ) -> _ReturnT:
     def factory(controller_cls: type[_ControllerT]) -> Any:
         if isinstance(provider, classmethod):
-            return getattr(
+            return getattr(  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
                 controller_cls,
                 provider.__name__,
-                provider,
+                provider,  # pyright: ignore[reportUnknownArgumentType]
             ).__func__(controller_cls)
         return provider(controller_cls)
 
