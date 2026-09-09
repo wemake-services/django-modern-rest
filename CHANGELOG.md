@@ -175,6 +175,7 @@ of requirements for an API to count as public.
 - Fixed a bug when request data might be copied in `parse_as_post` #1328
 - Fixed postponed annotation resolution for wrapped endpoint functions
   whose decorators are defined in another module, #1417
+- Fixed that CSRF failure reasons were shown with `DEBUG=False`, #1406
 
 ### Misc
 
