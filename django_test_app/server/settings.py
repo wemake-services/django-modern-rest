@@ -26,7 +26,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # NOTE: we don't care, this is a test app
 
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-only-fallback-longer-for-the-sake-of-tests-but-not-production-00')
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-dev-only-fallback-longer-for-the-sake-of-tests-but-not-production-00',
+)
 
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
