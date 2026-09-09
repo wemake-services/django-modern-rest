@@ -2,7 +2,6 @@ import json
 from collections.abc import Callable
 from typing import TypeAlias
 
-import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
 from inline_snapshot import snapshot
@@ -25,4 +24,4 @@ def assert_csrf_failure_message(
                 'detail': [{'msg': 'CSRF Failed.'}],
             })
 
-    return _assert
+    return factory
