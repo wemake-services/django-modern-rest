@@ -1,6 +1,6 @@
 import json
 from collections.abc import Callable
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TypeAlias
 
 import pytest
 from django.conf import LazySettings
