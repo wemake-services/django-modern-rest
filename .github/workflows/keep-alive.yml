@@ -7,6 +7,8 @@ on:
   schedule:
     - cron: "*/10 * * * *"
 
+permissions: {}
+
 jobs:
   ping:
     runs-on: ubuntu-latest
