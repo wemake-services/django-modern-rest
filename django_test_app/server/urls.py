@@ -55,11 +55,9 @@ openapi_config = OpenAPIConfig(
     description=(
         'Test application showcasing core functionality of the framework. '
         'Не АСКИИ текст'  # noqa: RUF001
-        """
-        ### Demo Credentials
-        - **Username:** `admin`
-        - **Password:** `password`
-        """
+        '### Demo Credentials'
+        '- **Username:** `admin`'
+        '- **Password:** `password`'
     ),
     terms_of_service='Usage is intended for testing purposes only.',
     contact=Contact(name='Core Developer', email='mail@sobolevn.me'),
