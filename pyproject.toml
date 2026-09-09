@@ -142,7 +142,6 @@ dev-and-docs = [
   # Needed for the micro-framework examples:
   "nanodjango>=0.16,<0.17",
   "punq>=0.8,<1",
-  "whitenoise>=6.12,<7",
 ]
 integration = [
   "pytest-codspeed>=4.3,<6",
@@ -174,6 +173,7 @@ unit-test = [
   "pytest-timeout>=2.4,<3",
   "pytest-xdist>=3.8,<4",
   "syrupy>=5.1,<7",
+  "whitenoise>=6.12.0,<7.0.0",
   "xmltodict-rs>=0.13,<0.14",
 ]
 

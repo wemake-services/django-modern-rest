@@ -902,7 +902,6 @@ dev-and-docs = [
     { name = "django-allauth" },
     { name = "nanodjango" },
     { name = "punq" },
-    { name = "whitenoise" },
 ]
 docs = [
     { name = "django-allauth" },
@@ -926,7 +925,6 @@ docs = [
     { name = "sphinx-tabs" },
     { name = "sphinxcontrib-mermaid" },
     { name = "uvicorn" },
-    { name = "whitenoise" },
     { name = "xmltodict-rs" },
     { name = "zapros" },
 ]
@@ -954,6 +952,7 @@ unit-test = [
     { name = "pytest-timeout" },
     { name = "pytest-xdist" },
     { name = "syrupy" },
+    { name = "whitenoise" },
     { name = "xmltodict-rs" },
 ]
 
@@ -1027,7 +1026,6 @@ dev-and-docs = [
     { name = "django-allauth", specifier = ">=65.4,<66" },
     { name = "nanodjango", specifier = ">=0.16,<0.17" },
     { name = "punq", specifier = ">=0.8,<1" },
-    { name = "whitenoise", specifier = ">=6.12.0,<7.0.0" },
 ]
 docs = [
     { name = "django-allauth", specifier = ">=65.4,<66" },
@@ -1049,7 +1047,6 @@ docs = [
     { name = "sphinx-tabs", specifier = ">=3.5,<4" },
     { name = "sphinxcontrib-mermaid", specifier = ">=2,<3" },
     { name = "uvicorn", specifier = ">=0.52,<0.53" },
-    { name = "whitenoise", specifier = ">=6.12.0,<7.0.0" },
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
     { name = "zapros", specifier = ">=0.15,<0.18" },
 ]
@@ -1077,6 +1074,7 @@ unit-test = [
     { name = "pytest-timeout", specifier = ">=2.4,<3" },
     { name = "pytest-xdist", specifier = ">=3.8,<4" },
     { name = "syrupy", specifier = ">=5.1,<7" },
+    { name = "whitenoise", specifier = ">=6.12.0,<7.0.0" },
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
 ]
 
