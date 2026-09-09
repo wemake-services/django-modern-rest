@@ -1,7 +1,8 @@
 import json
 from http import HTTPStatus
-from typing import final
+from typing import Final, final
 
+import django
 import pydantic
 from django.http import HttpResponse
 from faker import Faker
@@ -10,6 +11,12 @@ from inline_snapshot import snapshot
 from dmr import Body, Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
+
+#: `HttpRequest.accepted_types` only drops `q=0` media types since Django 5.2,
+#: older versions report them, even though nothing is acceptable.
+_ZERO_QUALITY_TYPES: Final = (
+    '[]' if django.VERSION >= (5, 2) else '[<MediaType: application/json; q=0>]'
+)
 
 
 @final
@@ -99,17 +106,17 @@ def test_zero_quality_accept_header(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.NOT_ACCEPTABLE
     assert response.headers == {'Content-Type': 'application/json'}
-    assert json.loads(response.content) == snapshot({
+    assert json.loads(response.content) == {
         'detail': [
             {
                 'msg': (
                     'Cannot serialize response body with accepted types '
-                    "[], supported=['application/json']"
+                    f"{_ZERO_QUALITY_TYPES}, supported=['application/json']"
                 ),
                 'type': 'value_error',
             },
         ],
-    })
+    }
 
 
 def test_out_of_range_quality_accept_header(
