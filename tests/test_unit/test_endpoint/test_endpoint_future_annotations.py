@@ -79,7 +79,7 @@ def test_annotation_inference_context() -> None:
 def test_decorated_endpoint_annotations() -> None:
     """Ensure postponed annotations use the endpoint namespace."""
 
-    class ExampleController:
+    class _EndpointHolder:
         @endpoint_decorator(sensitive_post_parameters())
         def post(
             self,
@@ -87,7 +87,7 @@ def test_decorated_endpoint_annotations() -> None:
         ) -> dict[str, str]:
             return {}
 
-    annotations = AnnotationsContext()(ExampleController.post)
+    annotations = AnnotationsContext()(_EndpointHolder.post)
 
     assert annotations == {
         'parsed_body': Body[_Payload],
@@ -98,7 +98,7 @@ def test_decorated_endpoint_annotations() -> None:
 def test_multiple_decorated_endpoint_annotations() -> None:
     """Ensure postponed annotations survive multiple endpoint decorators."""
 
-    class ExampleController:
+    class _EndpointHolder:
         @endpoint_decorator(csrf_exempt)
         @endpoint_decorator(require_POST)
         @endpoint_decorator(sensitive_post_parameters())
@@ -108,7 +108,7 @@ def test_multiple_decorated_endpoint_annotations() -> None:
         ) -> dict[str, str]:
             return {}
 
-    annotations = AnnotationsContext()(ExampleController.post)
+    annotations = AnnotationsContext()(_EndpointHolder.post)
 
     assert annotations == {
         'parsed_body': Body[_Payload],
