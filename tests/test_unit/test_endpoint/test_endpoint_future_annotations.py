@@ -3,13 +3,13 @@ from __future__ import annotations
 import sys
 import types
 from http import HTTPStatus
-from typing import TYPE_CHECKING, TypeAlias, TypedDict, final
+from typing import TYPE_CHECKING, TypeAlias, final
 
 import pytest
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
-from typing_extensions import Format
+from typing_extensions import Format, TypedDict
 
 from dmr import Body, Controller
 from dmr.decorators import endpoint_decorator
