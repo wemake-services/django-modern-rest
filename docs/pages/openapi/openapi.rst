@@ -58,6 +58,24 @@ What happens in the example above?
    to :func:`require auth / role / permissions / etc <django.contrib.auth.decorators.login_required>`
    as all other regular Django views
 
+Caching schema responses
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The schema conversion result is cached after the first conversion.
+
+For public JSON/YAML schema endpoints, you can also cache the serialized
+response with Django's
+`cache_page decorator in URLconf <https://docs.djangoproject.com/en/stable/topics/cache/#specifying-per-view-cache-in-the-urlconf>`_:
+
+.. literalinclude:: /examples/openapi/caching.py
+  :caption: urls.py
+  :language: python
+  :linenos:
+
+Cache hits skip JSON/YAML serialization. This example uses the ``default``
+Django cache; configure its backend through
+`CACHES <https://docs.djangoproject.com/en/stable/topics/cache/#setting-up-the-cache>`_.
+
 Requirements for OpenAPI UIs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

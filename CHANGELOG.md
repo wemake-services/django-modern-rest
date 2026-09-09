@@ -119,6 +119,7 @@ of requirements for an API to count as public.
 - Added `BaseThrottleSyncBackend.lock` and `BaseThrottleAsyncBackend.lock`
   to control the in-process lock for `incr`,
   `SyncRedis` and `AsyncRedis` skip it because Lua scripts are atomic, #1339
+- `OpenAPI.convert()` now caches and returns the same dictionary per instance.
 - `accepted_type` and `accepted_header` are faster now,
   media types without parameters skip the regex based parsing
   of parameters and of the `q` weight entirely, #1407
