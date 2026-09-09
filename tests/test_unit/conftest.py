@@ -17,7 +17,7 @@ CsrfFailureAssertion: TypeAlias = Callable[[HttpResponse], None]
 def assert_csrf_failure_message(
     settings: LazySettings,
     request: pytest.FixtureRequest,
-) -> 'CsrfFailureAssertion':
+) -> CsrfFailureAssertion:
     """Assert CSRF failure message according to debug mode setting."""
     is_debug_mode_active = request.param
     settings.DEBUG = is_debug_mode_active
