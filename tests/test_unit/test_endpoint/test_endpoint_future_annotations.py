@@ -85,7 +85,7 @@ def test_decorated_endpoint_annotations() -> None:
             self,
             parsed_body: Body[_Payload],
         ) -> dict[str, str]:
-            return {}
+            raise NotImplementedError
 
     annotations = AnnotationsContext()(_EndpointHolder.post)
 
@@ -106,7 +106,7 @@ def test_multiple_decorated_endpoint_annotations() -> None:
             self,
             parsed_body: Body[_Payload],
         ) -> dict[str, str]:
-            return {}
+            raise NotImplementedError
 
     annotations = AnnotationsContext()(_EndpointHolder.post)
 
