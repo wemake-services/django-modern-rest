@@ -3,12 +3,16 @@ from __future__ import annotations
 import sys
 import types
 from http import HTTPStatus
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING, TypeAlias, TypedDict, final
 
 import pytest
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.debug import sensitive_post_parameters
+from django.views.decorators.http import require_POST
 from typing_extensions import Format
 
-from dmr import Controller
+from dmr import Body, Controller
+from dmr.decorators import endpoint_decorator
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.types import AnnotationsContext
@@ -20,6 +24,11 @@ if TYPE_CHECKING:
 
 
 _RegularAlias: TypeAlias = list[int]
+
+
+@final
+class _Payload(TypedDict):
+    token: str
 
 
 def test_unsolvable_annotations() -> None:
@@ -65,6 +74,46 @@ def test_annotation_inference_context() -> None:
     assert AnnotationsContext(globalns={'Undefined': int})(
         some_function,
     ) == {'return': int}
+
+
+def test_decorated_endpoint_annotations() -> None:
+    """Ensure postponed annotations use the endpoint namespace."""
+
+    class ExampleController:
+        @endpoint_decorator(sensitive_post_parameters())
+        def post(
+            self,
+            parsed_body: Body[_Payload],
+        ) -> dict[str, str]:
+            return {}
+
+    annotations = AnnotationsContext()(ExampleController.post)
+
+    assert annotations == {
+        'parsed_body': Body[_Payload],
+        'return': dict[str, str],
+    }
+
+
+def test_multiple_decorated_endpoint_annotations() -> None:
+    """Ensure postponed annotations survive multiple endpoint decorators."""
+
+    class ExampleController:
+        @endpoint_decorator(csrf_exempt)
+        @endpoint_decorator(require_POST)
+        @endpoint_decorator(sensitive_post_parameters())
+        def post(
+            self,
+            parsed_body: Body[_Payload],
+        ) -> dict[str, str]:
+            return {}
+
+    annotations = AnnotationsContext()(ExampleController.post)
+
+    assert annotations == {
+        'parsed_body': Body[_Payload],
+        'return': dict[str, str],
+    }
 
 
 @pytest.mark.skipif(sys.version_info < (3, 14), reason='format added in 3.14')
