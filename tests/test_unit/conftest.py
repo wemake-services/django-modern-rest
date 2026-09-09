@@ -1,10 +1,14 @@
 import json
 from collections.abc import Callable
+from typing import TYPE_CHECKING, TypeAlias
 
 import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
 from inline_snapshot import snapshot
+
+if TYPE_CHECKING:
+    CsrfFailureAssertion: TypeAlias = Callable[[HttpResponse], None]
 
 
 @pytest.fixture(
@@ -14,7 +18,7 @@ from inline_snapshot import snapshot
 def assert_csrf_failure_message(
     settings: LazySettings,
     request: pytest.FixtureRequest,
-) -> Callable[[HttpResponse], None]:
+) -> 'CsrfFailureAssertion':
     """Assert CSRF failure message according to debug mode setting."""
     is_debug_mode_active = request.param
     settings.DEBUG = is_debug_mode_active

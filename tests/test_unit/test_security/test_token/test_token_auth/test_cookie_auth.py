@@ -1,7 +1,7 @@
 import json
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from django.conf import LazySettings
@@ -19,6 +19,9 @@ from dmr.security.token import (
 )
 from dmr.security.token.app.models import Token
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
+
+if TYPE_CHECKING:
+    from tests.test_unit.conftest import CsrfFailureAssertion
 
 _CORRECT_TEMPLATE: Final = '{0}'
 
@@ -109,7 +112,7 @@ def test_sync_cookie_token_auth_csrf_enforced(
     admin_user: User,
     dmr_rf: DMRRequestFactory,
     settings: LazySettings,
-    assert_csrf_failure_message: Callable[[HttpResponse], None],
+    assert_csrf_failure_message: 'CsrfFailureAssertion',
 ) -> None:
     """Ensures CookieTokenSyncAuth rejects POST without a CSRF token."""
 
@@ -142,7 +145,7 @@ async def test_async_cookie_token_auth_csrf_enforced(
     admin_user: User,
     dmr_async_rf: DMRAsyncRequestFactory,
     settings: LazySettings,
-    assert_csrf_failure_message: Callable[[HttpResponse], None],
+    assert_csrf_failure_message: 'CsrfFailureAssertion',
 ) -> None:
     """Ensures CookieTokenAsyncAuth rejects POST without a CSRF token."""
 
