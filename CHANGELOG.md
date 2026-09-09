@@ -173,6 +173,8 @@ of requirements for an API to count as public.
 - JWT authentication now rejects refresh tokens when access tokens are expected,
   #1320
 - Fixed a bug when request data might be copied in `parse_as_post` #1328
+- Fixed postponed annotation resolution for wrapped endpoint functions
+  whose decorators are defined in another module, #1417
 
 ### Misc
 

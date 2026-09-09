@@ -1,3 +1,4 @@
+import inspect
 import sys
 from collections.abc import Callable, Iterator, Mapping
 from typing import (  # noqa: WPS235
@@ -239,7 +240,9 @@ class AnnotationsContext:
         self,
         endpoint_func: Callable[..., Any],
     ) -> dict[str, Any]:
-        return self._globalns or endpoint_func.__globals__
+        if self._globalns is not None:
+            return self._globalns
+        return inspect.unwrap(endpoint_func).__globals__  # type: ignore[no-any-return]
 
 
 class TypeVarInference:

@@ -41,7 +41,7 @@ Here's how it works:
   :language: python
   :linenos:
 
-And then visit https://localhost:8000/docs/swagger/ (or any other renderer)
+And then visit http://localhost:8000/docs/swagger/ (or any other renderer)
 for the interactive docs.
 
 .. image:: /_static/images/swagger.png
