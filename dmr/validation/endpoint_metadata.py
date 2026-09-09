@@ -60,11 +60,10 @@ if TYPE_CHECKING:
     from dmr.errors import AsyncErrorHandler, SyncErrorHandler
 
 #: Regex expression to match allowed chars in tokens
-# See RFC 9110 5.6.2 for more details.
+#: For header and cookie names.
 _ALLOWED_TOKENS_PATTERN: Final = re.compile(
     r'^[a-zA-Z0-9_!#$%\'*+\-.^`|~]+$',
 )
-
 
 #: HTTP headers that are connection-specific or
 #: normally managed by the server.
@@ -191,6 +190,13 @@ class _ResponseListValidator:  # noqa: WPS214
             self._check_modification_header_syntax()
             self._check_responses_header_syntax(responses)
 
+        if (
+            HttpSpec.cookie_name_syntax
+            not in self.metadata.no_validate_http_spec
+        ):
+            self._check_modification_cookie_syntax()
+            self._check_response_cookie_syntax(responses)
+
         # TODO: add more checks
 
     def _check_empty_response_body(
@@ -269,6 +275,42 @@ class _ResponseListValidator:  # noqa: WPS214
                 f'Header name {invalid_header!r} is not following http spec.',
             )
 
+    def _check_modification_cookie_syntax(
+        self,
+    ) -> None:
+
+        modification = self.metadata.modification
+
+        if not modification or not modification.cookies:
+            return
+
+        invalid_cookie = self._get_invalid_cookie(
+            modification.cookies.keys(),
+        )
+
+        if invalid_cookie:
+            raise EndpointMetadataError(
+                f'Cookie name {invalid_cookie!r} is not following http spec.',
+            )
+
+    def _check_response_cookie_syntax(
+        self,
+        responses: list[ResponseSpec],
+    ) -> None:
+        for response in responses:
+            if not response.cookies:
+                continue
+
+            invalid_cookie = self._get_invalid_cookie(
+                response.cookies.keys(),
+            )
+
+            if invalid_cookie:
+                raise EndpointMetadataError(
+                    f'Cookie name {invalid_cookie!r} is '
+                    f'not following http spec.',
+                )
+
     def _convert_responses(
         self,
         all_responses: list[ResponseSpec],
@@ -282,6 +324,16 @@ class _ResponseListValidator:  # noqa: WPS214
         for header_name in header_names:
             if not _ALLOWED_TOKENS_PATTERN.match(header_name):
                 return header_name
+
+        return None
+
+    def _get_invalid_cookie(
+        self,
+        cookie_names: KeysView[str],
+    ) -> str | None:
+        for cookie_name in cookie_names:
+            if not _ALLOWED_TOKENS_PATTERN.match(cookie_name):
+                return cookie_name
 
         return None
 
