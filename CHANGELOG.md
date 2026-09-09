@@ -119,6 +119,7 @@ of requirements for an API to count as public.
 - Added `BaseThrottleSyncBackend.lock` and `BaseThrottleAsyncBackend.lock`
   to control the in-process lock for `incr`,
   `SyncRedis` and `AsyncRedis` skip it because Lua scripts are atomic, #1339
+- `OpenAPI.convert()` now caches and returns the same dictionary per instance.
 
 ### Bugfixes
 
@@ -171,7 +172,10 @@ of requirements for an API to count as public.
   instead of failing with a database `IntegrityError`, #1322
 - JWT authentication now rejects refresh tokens when access tokens are expected,
   #1320
-- Fixed a bug when request data might be copied in `parse_as_post` #1328
+- Fixed a bug when request data might be copied in `parse_as_post`, #1328
+- Fixed postponed annotation resolution for wrapped endpoint functions
+  whose decorators are defined in another module, #1417
+- Detailed CSRF failure reasons are now included in error responses only in debug mode, #1332
 
 ### Misc
 
