@@ -37,6 +37,7 @@ from typing import Any, Final, TypeAlias
 
 from django.core.exceptions import TooManyFilesSent
 from django.core.files.uploadedfile import UploadedFile
+from django.db import models
 from django.http.multipartparser import MultiPartParser, MultiPartParserError
 from django.http.request import HttpRequest, QueryDict
 from django.utils.datastructures import CaseInsensitiveMapping, MultiValueDict
@@ -236,3 +237,23 @@ def _process_file_metadata(uploaded: 'UploadedFile[Any]') -> _FileMetadata:
         attr_name: getattr(uploaded, attr_name, None)
         for attr_name in _FILE_ATTRS
     }
+
+
+def get_model_pks(
+    model: type[models.Model],
+) -> 'list[models.Field[Any, Any]]':  # pragma: no cover
+    """
+    Get model primary keys.
+
+    pk_fields property was added in django5.2
+    along with ``CompositePrimaryKey``.
+
+    Before, people were creating dummy primary
+    key and specifying ``Meta.unique_together``.
+
+    So for django<5.2 this function will always
+    return a single primary key.
+    """
+    if hasattr(model._meta, 'pk_fields'):
+        return model._meta.pk_fields
+    return [model._meta.pk]
