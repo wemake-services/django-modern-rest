@@ -16,9 +16,9 @@ about its future URL. Why so?
   :language: python
   :linenos:
 
-Notice our helper method :meth:`~dmr.routing.Router.to_urlpatterns`,
-it can be used directly, or if some users prefer,
-it can be replaced with raw ``path()`` call:
+Notice our helper method :meth:`~dmr.routing.Router.to_urlpatterns`.
+It can be used directly, or if some users prefer,
+it can be replaced with a raw ``path()`` call:
 
 .. code-block:: python
 
@@ -43,7 +43,7 @@ It is common in Django to use multiple apps with their own URLs and views.
 They might define their own :class:`~dmr.routing.Router` instances,
 which can be included into the main router.
 
-To do so, use :meth:`~dmr.routing.Router.include` method:
+To do so, use the :meth:`~dmr.routing.Router.include` method:
 
 .. literalinclude:: ../../django_test_app/server/urls.py
   :caption: urls.py
@@ -53,7 +53,7 @@ To do so, use :meth:`~dmr.routing.Router.include` method:
   :linenos:
   :no-imports-spoiler:
 
-Automatically uses our own faster :func:`~dmr.routing.path` function.
+It automatically uses our own faster :func:`~dmr.routing.path` function.
 Basically, including another router is the same as writing:
 
 .. code-block:: python
@@ -71,12 +71,13 @@ Basically, including another router is the same as writing:
       ],
   )
 
-Use it to reduce the boilerplate code.
+Use it to reduce boilerplate code.
 You can also use :meth:`~dmr.routing.Router.to_urlpatterns` if you prefer.
-It is semantically identical, except the metadata. ``include`` correctly
+It is semantically identical, except for the metadata. ``include`` correctly
 handles nested metadata like ``tags``, ``deprecated`` and ``ignore_from_spec``,
-while this way ignores it. So, if you don't use the router-level metadata,
-it does not matter which way to use.
+while using ``to_urlpatterns`` ignores it.
+So, if you don't use the router-level metadata,
+it does not matter which one you use.
 
 
 Handling 404 errors
@@ -87,7 +88,7 @@ This is not what we want for API endpoints.
 Instead, we want to return API responses with proper error structure and
 content negotiation (e.g. JSON or XML based on the ``Accept`` header).
 
-But, we still want HTML 404 pages for non API views.
+But, we still want HTML 404 pages for non-API views.
 
 .. important::
 
@@ -97,10 +98,10 @@ But, we still want HTML 404 pages for non API views.
   This is how Django behaves:
   https://docs.djangoproject.com/en/stable/ref/views/#the-404-page-not-found-view
 
-To achieve this, you can use
+To achieve this, you can use the
 :func:`~dmr.routing.build_404_handler` helper.
 It creates a handler that returns API-style 404 responses for specific path
-prefixes (using the same serializer and renderers as your API), and falls back
+prefixes (using the same serializer and renderer as your API), and falls back
 to Django's default handler for everything else.
 
 Here is how you can use it in your root ``urls.py``
@@ -111,7 +112,7 @@ Here is how you can use it in your root ``urls.py``
   :language: python
   :linenos:
 
-This returns json responses for ``api/`` prefixed paths.
+This returns JSON responses for ``api/`` prefixed paths.
 But, will still return regular Django HTML responses for any other path.
 
 
@@ -125,7 +126,7 @@ This is not what we want for API endpoints.
 Instead, we want to return API responses with proper error structure and
 content negotiation (e.g. JSON or XML based on the ``Accept`` header).
 
-But, we still want HTML 500 pages for non API views.
+But, we still want HTML 500 pages for non-API views.
 
 .. important::
 
@@ -135,10 +136,10 @@ But, we still want HTML 500 pages for non API views.
   This is how Django behaves:
   https://docs.djangoproject.com/en/stable/ref/views/#the-500-server-error-view
 
-To achieve this, you can use
+To achieve this, you can use the
 :func:`~dmr.routing.build_500_handler` helper.
 It creates a handler that returns API-style 500 responses for specific path
-prefixes (using the same serializer and renderers as your API), and falls back
+prefixes (using the same serializer and renderer as your API), and falls back
 to Django's default handler for everything else.
 
 Here is how you can use it in your root ``urls.py``
@@ -151,8 +152,8 @@ Here is how you can use it in your root ``urls.py``
 
 .. seealso::
 
-  :doc:`error-handling` if you want to learn how to handle
-  different errors on different levels and fix these ``500``
+  See :doc:`error-handling` if you want to learn how to handle
+  different errors based on different levels and fix these ``500``
   exceptions.
 
 
@@ -170,16 +171,16 @@ on every request, it performs a quick prefix check first.
 Performance Impact
 ~~~~~~~~~~~~~~~~~~
 
-Benchmark results on MacBook Pro M4 Pro:
+Benchmark results on a MacBook Pro M4 Pro:
 
-- **Best case**: 9% faster (match found in first few URL patterns)
-- **Average case**: 13% faster (match found in middle of URL patterns list)
+- **Best case**: 9% faster (match found in the first few URL patterns)
+- **Average case**: 13% faster (match found in the middle of URL patterns list)
 - **Worst case**: 31% faster (404 Not Found, all patterns checked)
 
 The prefix-based optimization dramatically reduces regex operations:
 
 - **Static routes**: Simple string comparison (no regex at all)
-- **Dynamic routes**: Regex only runs when prefix matches
+- **Dynamic routes**: Regex only runs when the prefix matches
 - **Failed matches**: Eliminated in one operation (startswith check)
 
 This is especially beneficial for applications with:
@@ -209,7 +210,7 @@ External views
 --------------
 
 ``django-modern-rest`` can include URLs from other frameworks.
-It can also reuse existing OpenAPI scheme.
-Giving you the most freedom possible.
+It can also reuse an existing OpenAPI schema
+giving you the most freedom possible.
 
-If you needs this advanced feature, see :doc:`external-views` guide.
+If you need this advanced feature, see the :doc:`external-views` guide.

@@ -8,7 +8,7 @@ are validated at runtime to match the schema.
 This allows us to be super strict about schema generation as a pro,
 but as a con, it is slower than it could possibly be.
 
-So, you can disable response validation via configuration:
+So, you can disable response validation via the configuration:
 
 .. warning::
 
