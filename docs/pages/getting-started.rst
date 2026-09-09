@@ -65,8 +65,8 @@ Extras for different features:
   unless you want to serve static files for OpenAPI.
 
 
-LLM support
------------
+LLMs support
+------------
 
 Are you using AI for assisted coding?
 We've got you covered. Use these files for context to make sure that the LLM
