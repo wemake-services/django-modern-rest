@@ -2,7 +2,7 @@ import datetime as dt
 import json
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import Final, Protocol
+from typing import Final
 
 import pytest
 from django.conf import LazySettings
@@ -30,15 +30,6 @@ from dmr.security.jwt.auth.base import BaseJWTSyncAuth
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 _LEEWAY: Final = 30  # seconds
-
-
-class _CsrfFailureAssertion(Protocol):
-    def __call__(
-        self,
-        response: HttpResponse,
-        *,
-        uses_custom_error_model: bool = False,
-    ) -> None: ...
 
 
 def _encode(user: User, secret: str) -> str:
@@ -175,7 +166,7 @@ def test_sync_cookie_jwt_auth_csrf_enforced(
     dmr_rf: DMRRequestFactory,
     admin_user: User,
     settings: LazySettings,
-    assert_csrf_failure_message: _CsrfFailureAssertion,
+    assert_csrf_failure_message: Callable[[HttpResponse], None],
 ) -> None:
     """Ensures CookieJWTSyncAuth rejects POST without a CSRF token."""
 
@@ -205,7 +196,7 @@ async def test_async_cookie_jwt_auth_csrf_enforced(
     dmr_async_rf: DMRAsyncRequestFactory,
     admin_user: User,
     settings: LazySettings,
-    assert_csrf_failure_message: _CsrfFailureAssertion,
+    assert_csrf_failure_message: Callable[[HttpResponse], None],
 ) -> None:
     """Ensures CookieJWTAsyncAuth rejects POST without a CSRF token."""
 
