@@ -81,7 +81,6 @@ urlpatterns = [
         OpenAPIYamlView.as_view(schema),
         name='openapi_yaml',
     ),
-
     path('docs/redoc/', RedocView.as_view(schema), name='redoc'),
     path('docs/scalar/', ScalarView.as_view(schema), name='scalar'),
     path('docs/swagger/', SwaggerView.as_view(schema), name='swagger'),
