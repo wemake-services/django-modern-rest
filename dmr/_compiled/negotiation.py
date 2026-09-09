@@ -128,22 +128,29 @@ class _MediaTypeHeader:
     __slots__ = ('maintype', 'params_str', 'qparams', 'quality', 'subtype')
 
     def __init__(self, type_str: str) -> None:
-        # preserve the original parameters, because the order might be
-        # changed in the dict
-        self.params_str = (
-            f';{type_str.partition(";")[2]}' if ';' in type_str else ''  # noqa: WPS237
-        )
+        if ';' in type_str or _escaped_quote in type_str:
+            # preserve the original parameters, because the order might be
+            # changed in the dict
+            self.params_str = (
+                f';{type_str.partition(";")[2]}' if ';' in type_str else ''  # noqa: WPS237
+            )
+            full_type, qparams = _parse_content_header(type_str)
+            self.qparams = qparams
+            qparam = qparams.get('q')
+            self.quality = (
+                _max_quality if qparam is None else _parse_quality(qparam)
+            )
+        else:
+            # Most media types are just `type/subtype`,
+            # there are no params to parse and no `q` weight to compute:
+            self.params_str = ''
+            self.qparams = {}
+            self.quality = _max_quality
+            full_type = type_str.strip().lower()
 
-        full_type, qparams = _parse_content_header(type_str)
-        self.qparams = qparams
         maintype, _, subtype = full_type.partition('/')
         self.maintype = maintype
         self.subtype = subtype
-        qparam = qparams.get('q')
-        # Most media types have no `q` at all, we don't parse anything then:
-        self.quality = (
-            _max_quality if qparam is None else _parse_quality(qparam)
-        )
 
     def match(self, other: '_MediaTypeHeader') -> bool:
         for key, param_value in self.qparams.items():
@@ -212,6 +219,7 @@ def _parse_quality(qparam: str) -> int:
 _token: Final = r"([\w!#$%&'*+\-.^_`|~]+)"  # noqa: S105
 _quoted: Final = r'"([^"]*)"'
 _param_re: Final = re.compile(rf';\s*{_token}=(?:{_token}|{_quoted})', re.ASCII)
+_escaped_quote: Final = '\\"'
 _firefox_quote_escape: Final = re.compile(r'\\"(?!; |\s*$)')
 
 
@@ -226,7 +234,8 @@ def _parse_content_header(accept: str) -> tuple[str, dict[str, str]]:
         A tuple containing the normalized header string
         and a dictionary of parameters.
     """
-    accept = _firefox_quote_escape.sub('%22', accept)
+    if _escaped_quote in accept:  # only some clients escape quotes
+        accept = _firefox_quote_escape.sub('%22', accept)
     pos = accept.find(';')
     if pos == -1:
         options: dict[str, str] = {}
