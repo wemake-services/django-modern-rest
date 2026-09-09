@@ -296,7 +296,7 @@ class JWToken:  # noqa: WPS214
         payload['iat'] = cls._decode_datetime_claim(payload, 'iat')
         cls._require_claim(payload, 'sub')
 
-        extra_fields = payload.keys() - _JWTOKEN_FIELD_NAME_SET
+        extra_fields = payload.keys() - cls._known_field_names()
         extras = payload.setdefault(_EXTRAS_FIELD, {})
         for key in extra_fields:
             extras[key] = payload.pop(key)
@@ -308,7 +308,25 @@ class JWToken:  # noqa: WPS214
             # everything else that is invalid here is still a bad token.
             raise NotAuthenticatedError from None
 
+    @classmethod
+    def _known_field_names(cls) -> frozenset[str]:
+        if cls is JWToken:
+            return _JWTOKEN_FIELD_NAME_SET
+        # Subclasses can define extra fields, and those are real claims.
+        return frozenset(
+            field_definition.name for field_definition in fields(cls)
+        )
+
     def _build_payload(self) -> dict[str, Any]:
+        if self.__class__ is not JWToken:
+            # Subclasses can define extra fields, and `asdict` is the only
+            # thing that sees them. They are rare, so they keep the old path.
+            return {
+                field_name: field_value
+                for field_name, field_value in asdict(self).items()
+                if field_value is not None
+            }
+
         payload: dict[str, Any] = {}
         for field_name in _JWTOKEN_FIELD_NAMES:
             field_value = getattr(self, field_name)
@@ -317,9 +335,8 @@ class JWToken:  # noqa: WPS214
 
         extra_claims = payload.get(_EXTRAS_FIELD)
         if extra_claims:
-            # `extras` can hold nested dataclasses, and `asdict` is the only
-            # thing that knows how to convert them. Registered claims are
-            # flat, so they don't need it and we don't pay for it.
+            # `extras` can hold nested dataclasses, which only `asdict`
+            # converts. Registered claims are flat, so they skip it.
             converted = asdict(_ExtraClaims(extra_claims))
             payload[_EXTRAS_FIELD] = converted[_EXTRAS_FIELD]
         return payload

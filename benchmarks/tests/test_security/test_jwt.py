@@ -23,6 +23,10 @@ _JWT_MODULES: Final = frozenset((
 _ALGORITHM: Final = 'HS256'
 _SECRET: Final = secrets.token_hex()
 
+#: A single encode / decode is too fast to measure reliably,
+#: so every benchmark below repeats its call this many times.
+_REPEATS: Final = range(1000)
+
 
 def _make_payload() -> dict[str, Any]:
     now = int(time.time())
@@ -45,7 +49,8 @@ def test_jwt_encode_msgspec(benchmark: BenchmarkFixture) -> None:
 
     @benchmark
     def factory() -> None:
-        dmr_jwt.encode(payload, _SECRET, algorithm=_ALGORITHM)
+        for _ in _REPEATS:
+            dmr_jwt.encode(payload, _SECRET, algorithm=_ALGORITHM)
 
 
 def test_jwt_encode_native(
@@ -62,7 +67,8 @@ def test_jwt_encode_native(
 
         @benchmark
         def factory() -> None:
-            dmr_jwt.encode(payload, _SECRET, algorithm=_ALGORITHM)
+            for _ in _REPEATS:
+                dmr_jwt.encode(payload, _SECRET, algorithm=_ALGORITHM)
 
 
 def test_jwt_decode_msgspec(benchmark: BenchmarkFixture) -> None:
@@ -73,13 +79,14 @@ def test_jwt_decode_msgspec(benchmark: BenchmarkFixture) -> None:
 
     @benchmark
     def factory() -> None:
-        dmr_jwt.decode(
-            token,
-            _SECRET,
-            algorithms=[_ALGORITHM],
-            audience='web',
-            issuer='django-modern-rest',
-        )
+        for _ in _REPEATS:
+            dmr_jwt.decode(
+                token,
+                _SECRET,
+                algorithms=[_ALGORITHM],
+                audience='web',
+                issuer='django-modern-rest',
+            )
 
 
 def test_jwt_decode_native(
@@ -96,13 +103,14 @@ def test_jwt_decode_native(
 
         @benchmark
         def factory() -> None:
-            dmr_jwt.decode(
-                token,
-                _SECRET,
-                algorithms=[_ALGORITHM],
-                audience='web',
-                issuer='django-modern-rest',
-            )
+            for _ in _REPEATS:
+                dmr_jwt.decode(
+                    token,
+                    _SECRET,
+                    algorithms=[_ALGORITHM],
+                    audience='web',
+                    issuer='django-modern-rest',
+                )
 
 
 def _make_token() -> JWToken:
@@ -126,7 +134,8 @@ def test_jwtoken_encode(benchmark: BenchmarkFixture) -> None:
 
     @benchmark
     def factory() -> None:
-        token.encode(_SECRET, _ALGORITHM)
+        for _ in _REPEATS:
+            token.encode(_SECRET, _ALGORITHM)
 
 
 def test_jwtoken_decode(benchmark: BenchmarkFixture) -> None:
@@ -137,10 +146,11 @@ def test_jwtoken_decode(benchmark: BenchmarkFixture) -> None:
 
     @benchmark
     def factory() -> None:
-        JWToken.decode(
-            encoded,
-            secret=_SECRET,
-            algorithm=_ALGORITHM,
-            accepted_audiences='web',
-            accepted_issuers='django-modern-rest',
-        )
+        for _ in _REPEATS:
+            JWToken.decode(
+                encoded,
+                secret=_SECRET,
+                algorithm=_ALGORITHM,
+                accepted_audiences='web',
+                accepted_issuers='django-modern-rest',
+            )

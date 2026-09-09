@@ -135,6 +135,34 @@ def test_extra_fields(faker: Faker) -> None:
     }
 
 
+def test_subclass_fields_roundtrip() -> None:
+    """Ensures that fields added by a subclass are real claims.
+
+    They are encoded next to the registered ones and read back
+    into the field, they do not end up in `extras`.
+    """
+
+    @dataclasses.dataclass(frozen=True, slots=True)
+    class _RoleToken(JWToken):
+        role: str = 'default'
+
+    token_secret = secrets.token_hex()
+    token = _RoleToken(
+        sub=secrets.token_hex(),
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(seconds=10),
+        role='staff',
+    )
+
+    decoded = _RoleToken.decode(
+        token.encode(token_secret, 'HS256'),
+        secret=token_secret,
+        algorithm='HS256',
+    )
+
+    assert decoded.role == 'staff'
+    assert decoded.extras == {}
+
+
 def test_encode_claim_order() -> None:
     """Ensures that claims are encoded in the dataclass field order.
 
