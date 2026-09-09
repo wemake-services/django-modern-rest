@@ -7,8 +7,7 @@ from django.conf import LazySettings
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 
-if TYPE_CHECKING:
-    CsrfFailureAssertion: TypeAlias = Callable[[HttpResponse], None]
+CsrfFailureAssertion: TypeAlias = Callable[[HttpResponse], None]
 
 
 @pytest.fixture(
