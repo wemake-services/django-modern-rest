@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Final
 
 import pytest
 from django.http import HttpResponse
@@ -8,12 +9,12 @@ from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.settings import HttpSpec
 
-_NO_BODY_STATUSES = [
+_NO_BODY_STATUSES: Final = (
     HTTPStatus.CONTINUE,
     HTTPStatus.NO_CONTENT,
     HTTPStatus.RESET_CONTENT,
     HTTPStatus.NOT_MODIFIED,
-]
+)
 
 
 @pytest.mark.parametrize('status', _NO_BODY_STATUSES)
@@ -133,7 +134,7 @@ def test_empty_response_body_head_ok() -> None:
     assert 'HEAD' in _Mixed.api_endpoints
 
 
-def test_empty_response_body_head_error_can_have_body() -> None:
+def test_empty_response_body_head_can_have_body() -> None:
     """Failed HEAD responses may advertise a body."""
 
     class _Mixed(Controller[PydanticSerializer]):

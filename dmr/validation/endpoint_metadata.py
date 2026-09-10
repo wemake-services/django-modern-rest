@@ -102,7 +102,7 @@ class _ResponseListValidator:  # noqa: WPS214
 
     metadata: EndpointMetadata
     #: 1xx responses, 204, 205, and 304 must not have a body. RFC 9110.
-    _NO_RESPONSE_BODY_STATUSES: ClassVar[frozenset[HTTPStatus]] = frozenset((
+    _no_response_body_statuses: ClassVar[frozenset[HTTPStatus]] = frozenset((
         HTTPStatus.NO_CONTENT,
         HTTPStatus.RESET_CONTENT,
         HTTPStatus.NOT_MODIFIED,
@@ -210,18 +210,18 @@ class _ResponseListValidator:  # noqa: WPS214
         responses: list[ResponseSpec],
     ) -> None:
         endpoint_name = self.metadata.endpoint_name
-        # For 1xx, 204, 205, 304, and successful HEAD responses,
+        # For several http status codes and successful HEAD responses,
         # no response body is allowed.
         # If you specify a return annotation other than None,
         # an EndpointMetadataError will be raised.
-        is_head = stringify(self.metadata.method).upper() == HTTPMethod.HEAD
         for response in responses:
-            if is_safe_subclass(response.return_type, NoneType):
-                continue
-            if (
+            if not is_safe_subclass(response.return_type, NoneType) and (
                 response.status_code < HTTPStatus.OK
-                or response.status_code in self._NO_RESPONSE_BODY_STATUSES
-                or (is_head and response.status_code < HTTPStatus.BAD_REQUEST)
+                or response.status_code in self._no_response_body_statuses
+                or (
+                    stringify(self.metadata.method).upper() == HTTPMethod.HEAD
+                    and response.status_code < HTTPStatus.BAD_REQUEST
+                )
             ):
                 raise EndpointMetadataError(
                     f'Can only return `None` not {response.return_type} '
@@ -229,6 +229,7 @@ class _ResponseListValidator:  # noqa: WPS214
                     f'with status code {response.status_code}',
                 )
 
+    # TODO: refactor all the name checks to be less verbose and complex
     def _check_header_name_server_managed(
         self,
         responses: list[ResponseSpec],
