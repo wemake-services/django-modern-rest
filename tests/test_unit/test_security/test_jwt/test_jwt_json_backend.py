@@ -3,8 +3,7 @@ import decimal
 import json
 import secrets
 import uuid
-from dataclasses import dataclass, field
-from typing import Any, Final, final
+from typing import Any, Final
 
 import jwt
 import pytest
@@ -57,15 +56,6 @@ _MSGSPEC_ONLY_VALUES: Final = (
     ({1, 2}, b'{"v":[1,2]}', 'Object of type set is not JSON serializable'),
     (b'ab', b'{"v":"YWI="}', 'Object of type bytes is not JSON serializable'),
 )
-
-
-@final
-@dataclass(frozen=True, slots=True)
-class _Profile:
-    """Nested dataclass that users can put inside ``extras``."""
-
-    name: str = 'test'
-    roles: list[str] = field(default_factory=lambda: ['admin'])
 
 
 def _make_payload() -> dict[str, Any]:
@@ -148,10 +138,11 @@ def test_jwtoken_roundtrip_with_extras() -> None:
 def test_extras_nested_dataclass_is_converted(algorithm: str) -> None:
     """Ensures nested dataclasses in ``extras`` are encoded as objects."""
     secret = secrets.token_hex()
+    extras = {'profile': {'name': 'test', 'roles': ['admin']}}
     token = JWToken(
         sub=secrets.token_hex(),
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(minutes=1),
-        extras={'profile': _Profile()},
+        extras=extras,
     )
 
     decoded = JWToken.decode(
@@ -160,7 +151,7 @@ def test_extras_nested_dataclass_is_converted(algorithm: str) -> None:
         algorithm=algorithm,
     )
 
-    assert decoded.extras == {'profile': {'name': 'test', 'roles': ['admin']}}
+    assert decoded.extras == extras
 
 
 @pytest.mark.usefixtures('_native_backend')
@@ -172,10 +163,11 @@ def test_native_extras_nested_dataclass() -> None:
     That divergence is exactly what we must not introduce.
     """
     secret = secrets.token_hex()
+    extras = {'profile': {'name': 'test', 'roles': ['admin']}}
     token = JWToken(
         sub=secrets.token_hex(),
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(minutes=1),
-        extras={'profile': _Profile()},
+        extras=extras,
     )
 
     decoded = JWToken.decode(
@@ -184,7 +176,7 @@ def test_native_extras_nested_dataclass() -> None:
         algorithm='HS256',
     )
 
-    assert decoded.extras == {'profile': {'name': 'test', 'roles': ['admin']}}
+    assert decoded.extras == extras
 
 
 def test_encode_payload_honours_json_encoder() -> None:

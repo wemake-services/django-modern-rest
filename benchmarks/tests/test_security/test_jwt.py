@@ -22,6 +22,7 @@ _JWT_MODULES: Final = frozenset((
 
 _ALGORITHM: Final = 'HS256'
 _SECRET: Final = secrets.token_hex()
+_REPEAT: Final = 1000
 
 #: A single encode / decode is too fast to measure reliably,
 #: so every benchmark below repeats its call this many times.
@@ -49,7 +50,7 @@ def test_jwt_encode_msgspec(benchmark: BenchmarkFixture) -> None:
 
     @benchmark
     def factory() -> None:
-        for _ in _REPEATS:
+        for _ in range(_REPEAT):
             dmr_jwt.encode(payload, _SECRET, algorithm=_ALGORITHM)
 
 
@@ -67,7 +68,7 @@ def test_jwt_encode_native(
 
         @benchmark
         def factory() -> None:
-            for _ in _REPEATS:
+            for _ in range(_REPEAT):
                 dmr_jwt.encode(payload, _SECRET, algorithm=_ALGORITHM)
 
 
@@ -79,7 +80,7 @@ def test_jwt_decode_msgspec(benchmark: BenchmarkFixture) -> None:
 
     @benchmark
     def factory() -> None:
-        for _ in _REPEATS:
+        for _ in range(_REPEAT):
             dmr_jwt.decode(
                 token,
                 _SECRET,
@@ -103,7 +104,7 @@ def test_jwt_decode_native(
 
         @benchmark
         def factory() -> None:
-            for _ in _REPEATS:
+            for _ in range(_REPEAT):
                 dmr_jwt.decode(
                     token,
                     _SECRET,
@@ -126,31 +127,3 @@ def _make_token() -> JWToken:
         jti=secrets.token_hex(16),
         extras={'scopes': ['read', 'write']},
     )
-
-
-def test_jwtoken_encode(benchmark: BenchmarkFixture) -> None:
-    """Test `JWToken.encode`, which also builds the payload."""
-    token = _make_token()
-
-    @benchmark
-    def factory() -> None:
-        for _ in _REPEATS:
-            token.encode(_SECRET, _ALGORITHM)
-
-
-def test_jwtoken_decode(benchmark: BenchmarkFixture) -> None:
-    """Test `JWToken.decode`, which also splits the `extras` claims."""
-    from dmr.security.jwt import JWToken  # noqa: PLC0415
-
-    encoded = _make_token().encode(_SECRET, _ALGORITHM)
-
-    @benchmark
-    def factory() -> None:
-        for _ in _REPEATS:
-            JWToken.decode(
-                encoded,
-                secret=_SECRET,
-                algorithm=_ALGORITHM,
-                accepted_audiences='web',
-                accepted_issuers='django-modern-rest',
-            )

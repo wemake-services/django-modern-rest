@@ -80,6 +80,7 @@ class JWToken:  # noqa: WPS214
         for each direction: :meth:`encode` checks that a token
         can be issued, while :meth:`decode` fully relies
         on ``pyjwt`` and its options.
+        Dataclasses in ``extras`` field is no longer allowed.
 
     """
 
@@ -332,13 +333,6 @@ class JWToken:  # noqa: WPS214
             field_value = getattr(self, field_name)
             if field_value is not None:
                 payload[field_name] = field_value
-
-        extra_claims = payload.get(_EXTRAS_FIELD)
-        if extra_claims:
-            # `extras` can hold nested dataclasses, which only `asdict`
-            # converts. Registered claims are flat, so they skip it.
-            converted = asdict(_ExtraClaims(extra_claims))
-            payload[_EXTRAS_FIELD] = converted[_EXTRAS_FIELD]
         return payload
 
     @classmethod
@@ -403,20 +397,6 @@ class JWToken:  # noqa: WPS214
             raise NotAuthenticatedError from None
 
 
-@final
-@dataclass(frozen=True, slots=True)
-class _ExtraClaims:
-    """
-    Wraps ``extras`` so we can reuse :func:`~dataclasses.asdict` on it alone.
-
-    ``asdict`` only accepts dataclass instances, but it is the single place
-    that knows how to recursively convert nested dataclasses. We need that
-    conversion for ``extras``, and we don't need it for anything else.
-    """
-
-    extras: dict[str, Any]
-
-
 #: Field names of :class:`JWToken` in declaration order, they never change.
 #: The order is a part of our API: it defines the claim order in a token.
 _JWTOKEN_FIELD_NAMES: Final = tuple(
@@ -424,7 +404,9 @@ _JWTOKEN_FIELD_NAMES: Final = tuple(
 )
 
 #: Same names, but for the membership checks in :meth:`JWToken.decode`.
-_JWTOKEN_FIELD_NAME_SET: Final = frozenset(_JWTOKEN_FIELD_NAMES)
+_JWTOKEN_FIELD_NAME_SET: Final = frozenset(
+    field_definition.name for field_definition in fields(JWToken)
+)
 
 
 def _normalize_datetime(datetime: dt.datetime) -> dt.datetime:

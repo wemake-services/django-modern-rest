@@ -35,8 +35,11 @@ def accepted_type(  # noqa: C901
         return None
 
     if ',' in accept_value:
+        # Media types with `q=0` are not acceptable at all, we drop them:
         accepted_types = [
-            _MediaTypeHeader(typ) for typ in accept_value.split(',') if typ
+            media
+            for typ in accept_value.split(',')
+            if typ and (media := _MediaTypeHeader(typ)).quality != 0
         ]
         accepted_types.sort(
             key=lambda media: media.priority,
@@ -53,16 +56,21 @@ def accepted_type(  # noqa: C901
                     )
     else:
         accepted = _MediaTypeHeader(accept_value)
-        for provided in types:
-            if provided.match(accepted):  # noqa: WPS441
-                # Return the accepted type with wildcards replaced
-                # by concrete parts from the provided type:
-                return provided.as_string(accepted.maintype, accepted.subtype)  # noqa: WPS441
+        # Media types with `q=0` are not acceptable at all:
+        if accepted.quality != 0:  # noqa: WPS441
+            for provided in types:
+                if provided.match(accepted):  # noqa: WPS441
+                    # Return the accepted type with wildcards replaced
+                    # by concrete parts from the provided type:
+                    return provided.as_string(
+                        accepted.maintype,  # noqa: WPS441
+                        accepted.subtype,  # noqa: WPS441
+                    )
 
     return None
 
 
-def accepted_header(accept_value: str, media_type: str) -> bool:  # noqa: C901
+def accepted_header(accept_value: str, media_type: str) -> bool:
     """
     Does the client accept a response in the given media type?
 
@@ -88,6 +96,10 @@ def accepted_header(accept_value: str, media_type: str) -> bool:  # noqa: C901
         ...     )
         ...     is True
         ... )
+        >>> assert (
+        ...     accepted_header('application/json;q=0', 'application/json')
+        ...     is False
+        ... )
 
     """
     if not accept_value or not media_type:
@@ -99,29 +111,43 @@ def accepted_header(accept_value: str, media_type: str) -> bool:  # noqa: C901
         for typ in accept_value.split(','):
             if not typ:
                 continue
-            if provided.match(_MediaTypeHeader(typ)):
+            accepted = _MediaTypeHeader(typ)
+            # Media types with `q=0` are not acceptable at all:
+            if accepted.quality != 0 and provided.match(accepted):
                 return True
-    elif provided.match(_MediaTypeHeader(accept_value)):
-        return True
+        return False
 
-    return False
+    accepted = _MediaTypeHeader(accept_value)
+    return accepted.quality != 0 and provided.match(accepted)
 
 
 @final
 class _MediaTypeHeader:
     """A helper class for ``Accept`` header parsing."""
 
-    __slots__ = ('maintype', 'params_str', 'qparams', 'subtype')
+    __slots__ = ('maintype', 'params_str', 'qparams', 'quality', 'subtype')
 
     def __init__(self, type_str: str) -> None:
-        # preserve the original parameters, because the order might be
-        # changed in the dict
-        self.params_str = (
-            f';{type_str.partition(";")[2]}' if ';' in type_str else ''  # noqa: WPS237
-        )
+        if ';' in type_str or _escaped_quote in type_str:
+            # preserve the original parameters, because the order might be
+            # changed in the dict
+            self.params_str = (
+                f';{type_str.partition(";")[2]}' if ';' in type_str else ''  # noqa: WPS237
+            )
+            full_type, qparams = _parse_content_header(type_str)
+            self.qparams = qparams
+            qparam = qparams.get('q')
+            self.quality = (
+                _max_quality if qparam is None else _parse_quality(qparam)
+            )
+        else:
+            # Most media types are just `type/subtype`,
+            # there are no params to parse and no `q` weight to compute:
+            self.params_str = ''
+            self.qparams = {}
+            self.quality = _max_quality
+            full_type = type_str.strip().lower()
 
-        full_type, qparams = _parse_content_header(type_str)
-        self.qparams = qparams
         maintype, _, subtype = full_type.partition('/')
         self.maintype = maintype
         self.subtype = subtype
@@ -150,16 +176,7 @@ class _MediaTypeHeader:
 
     @property  # don't use cached_property since it's accessed only once
     def priority(self) -> tuple[int, int]:
-        # Use fixed point values with two decimals to avoid problems
-        # when comparing float values
-        quality = 100
         qparam = self.qparams.get('q')
-        if qparam is not None:
-            try:  # noqa: SIM105
-                quality = int(100 * float(qparam))
-            except ValueError:
-                pass  # noqa: WPS420
-
         if self.maintype == '*':
             specificity = 0
         elif self.subtype == '*':
@@ -172,12 +189,37 @@ class _MediaTypeHeader:
         else:
             specificity = 3
 
-        return quality, specificity
+        return self.quality, specificity
+
+
+#: Quality is a fixed point value with two decimals,
+#: this avoids problems when comparing float values.
+_max_quality: Final = 100
+
+
+def _parse_quality(qparam: str) -> int:
+    """
+    Return the ``q`` weight of a media type as a fixed point value.
+
+    Malformed and out of range weights are discarded
+    and treated as ``1``, the same way
+    :class:`django.http.request.MediaType` treats them.
+    ``inf`` and ``nan`` are out of range as well,
+    so they never reach the int conversion.
+    """
+    try:
+        quality = float(qparam)
+    except ValueError:
+        return _max_quality
+    if not 0 <= quality <= 1:
+        return _max_quality
+    return int(_max_quality * quality)
 
 
 _token: Final = r"([\w!#$%&'*+\-.^_`|~]+)"  # noqa: S105
 _quoted: Final = r'"([^"]*)"'
 _param_re: Final = re.compile(rf';\s*{_token}=(?:{_token}|{_quoted})', re.ASCII)
+_escaped_quote: Final = r'\"'
 _firefox_quote_escape: Final = re.compile(r'\\"(?!; |\s*$)')
 
 
@@ -192,7 +234,8 @@ def _parse_content_header(accept: str) -> tuple[str, dict[str, str]]:
         A tuple containing the normalized header string
         and a dictionary of parameters.
     """
-    accept = _firefox_quote_escape.sub('%22', accept)
+    if _escaped_quote in accept:  # only some clients escape quotes
+        accept = _firefox_quote_escape.sub('%22', accept)
     pos = accept.find(';')
     if pos == -1:
         options: dict[str, str] = {}

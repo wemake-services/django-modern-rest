@@ -44,6 +44,15 @@ def clean_modules() -> _CleanModules:
         ('text/plain;p=test', ['text/plain'], 'text/plain'),
         ('text/plain', ['text/plain;p=test'], None),
         ('text/plain;p=test', ['text/plain;p=test'], 'text/plain;p=test'),
+        # Escaped quotes in params are unescaped before matching:
+        (
+            r'text/plain;p="a\"b"',
+            [r'text/plain;p="a\"b"'],
+            r'text/plain;p="a\"b"',
+        ),
+        # An escaped quote can also arrive with no params at all,
+        # it is still unescaped, so it does not match a plain type:
+        (r'text/plain\"', ['text/plain'], None),
         ('text/plain', ['text/*'], 'text/plain'),
         ('text/html', ['*/*'], 'text/html'),
         (
@@ -63,6 +72,30 @@ def clean_modules() -> _CleanModules:
         ),
         ('text/*,text/html', ['text/plain', 'text/html'], 'text/html'),
         ('text/*,text/html', ['application/json', 'application/xml'], None),
+        # `q=0` means "not acceptable", such types are never selected:
+        ('text/html;q=0', ['text/html'], None),
+        ('text/html;q=0.0', ['text/html'], None),
+        ('text/html;q=0,text/plain;q=0', ['text/html', 'text/plain'], None),
+        (
+            'text/html;q=0,text/plain;q=0.5',
+            ['text/html', 'text/plain'],
+            'text/plain',
+        ),
+        ('*/*;q=0', ['text/html'], None),
+        ('*/*;q=0,text/html', ['text/html', 'text/plain'], 'text/html'),
+        # Out of range weights are discarded, they are treated as `q=1`:
+        (
+            'text/html;q=inf,text/plain',
+            ['text/html', 'text/plain'],
+            'text/html',
+        ),
+        (
+            'text/html;q=nan,text/plain',
+            ['text/html', 'text/plain'],
+            'text/html',
+        ),
+        ('text/html;q=-1,text/plain', ['text/html', 'text/plain'], 'text/html'),
+        ('text/html;q=2,text/plain', ['text/html', 'text/plain'], 'text/html'),
         ('', [], None),
         ('text/plain,', [], None),
         ('', ['text/plain'], None),
@@ -133,6 +166,10 @@ def test_accept_correct_type() -> None:  # pragma: no cover
         ('text/*', 'text/html', True),
         ('*/*', 'text/html', True),
         ('text/plain;p=test', 'text/plain;p=test', True),
+        # Escaped quotes in params are unescaped before matching:
+        (r'text/plain;p="a\"b"', r'text/plain;p="a\"b"', True),
+        # An escaped quote can also arrive with no params at all:
+        (r'text/plain\"', 'text/plain', False),
         (
             'text/*;q=0.3, text/html;q=0.7, text/html;level=1, */*;q=0.5',
             'text/plain',
@@ -146,6 +183,14 @@ def test_accept_correct_type() -> None:  # pragma: no cover
         ('text/plain;q=ab,text/html', 'text/html', True),
         ('text/*,text/html', 'text/plain', True),
         ('text/*,text/html', 'text/html', True),
+        # `q=0` means "not acceptable", same as `HttpRequest.accepts`:
+        ('text/plain;q=0', 'text/plain', False),
+        ('text/plain;q=0,text/html', 'text/plain', False),
+        ('text/plain;q=0,text/html', 'text/html', True),
+        ('*/*;q=0', 'text/plain', False),
+        # Out of range weights are discarded, they are treated as `q=1`:
+        ('text/plain;q=inf', 'text/plain', True),
+        ('text/plain;q=nan,text/html', 'text/plain', True),
         ('application/json', 'text/plain', False),
         ('', 'text/plain', False),
         ('', '', False),

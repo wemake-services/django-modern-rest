@@ -31,7 +31,7 @@ def test_empty_request_body_head_with_body() -> None:
     with pytest.raises(EndpointMetadataError, match=_MATCH_PATTERN):
 
         class _Controller(Controller[PydanticSerializer]):
-            def head(self, parsed_body: Body[_BodyModel]) -> str:
+            def head(self, parsed_body: Body[_BodyModel]) -> None:
                 raise NotImplementedError
 
 

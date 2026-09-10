@@ -54,6 +54,7 @@ of requirements for an API to count as public.
   it is only used by `JWToken.decode` now, #1324
 - `JWToken` does not validate `exp` and `iat` on creation anymore,
   now `JWToken.encode` validates them instead, #1324
+- `JWToken` does not allow dataclass instances in `extras` anymore, #1408
 - Throttling cache keys are now hashed to keep their length bounded, #1337
 - HTTP Basic Auth credentials are no longer URL-decoded,
   so percent-encoded characters such as `%40` are preserved as-is, #1363
@@ -70,6 +71,8 @@ of requirements for an API to count as public.
 
 ### Features
 
+- Added `@modify.lazy` and `@validate.lazy` decorators
+  for reusable controllers, #1409
 - Added `exclude_validate_responses` setting, controller attribute,
   and `@modify` / `@validate` argument to skip response validation
   for the given status codes, like `500`, #1370
@@ -111,20 +114,22 @@ of requirements for an API to count as public.
 - Added `security.NO_STORE_HEADERS`, all auth views we ship now
   return the `Cache-Control: no-store` header
   and document it in the OpenAPI schema, #1335
+- Added `@modify.lazy` support and `modify_spec` method
+  to all all views we ship, #1423
 - JWT tokens are now encoded and decoded with `msgspec`
   when it is installed, which makes `JWToken.encode` about 1.3x
   and `JWToken.decode` about 1.15x faster.
   Note that only json-native values in `JWToken.extras` are guaranteed
   to be encoded identically with and without `msgspec`, #1390
-- `JWToken.encode` no longer builds its payload with `dataclasses.asdict`
-  and `JWToken.decode` no longer recomputes `dataclasses.fields`
-  on every call, which makes `JWToken.encode` about 2x faster.
-  Behavior is unchanged: the same tokens are produced, `extras` still
-  accepts nested dataclasses, and `JWToken` subclasses that add
-  their own fields keep working exactly as before, #1404
+- Optimized `JWToken` encoding and decoding algorithms, #1408
 - Added `BaseThrottleSyncBackend.lock` and `BaseThrottleAsyncBackend.lock`
   to control the in-process lock for `incr`,
   `SyncRedis` and `AsyncRedis` skip it because Lua scripts are atomic, #1339
+- `OpenAPI.convert()` now caches and returns
+  the same dictionary per instance, #1402
+- `accepted_type` and `accepted_header` are faster now,
+  media types without parameters skip the regex based parsing
+  of parameters and of the `q` weight entirely, #1407
 
 ### Bugfixes
 
@@ -132,6 +137,8 @@ of requirements for an API to count as public.
   or `throttling` to a sync endpoint
   (and sync ones to an async endpoint) is now a type error,
   `links` is now also accepted by all `@modify` overloads, #1393
+- Fixed `@validate` return type inference for all the type-checkers,
+  now it does not change the original `HttpResponseBase` subtype, #1409
 - Fixed `EndpointMetadata.validate_responses` being annotated
   as `bool | None`, it is always resolved
   from the settings, the controller, and the endpoint, #1370
@@ -177,7 +184,21 @@ of requirements for an API to count as public.
   instead of failing with a database `IntegrityError`, #1322
 - JWT authentication now rejects refresh tokens when access tokens are expected,
   #1320
-- Fixed a bug when request data might be copied in `parse_as_post` #1328
+- Fixed a bug when request data might be copied in `parse_as_post`, #1328
+- Fixed postponed annotation resolution for wrapped endpoint functions
+  whose decorators are defined in another module, #1417
+- Detailed CSRF failure reasons are now included
+  in error responses only in debug mode and not in production, #1332
+- Empty response body checks now cover `1xx`,
+  `205 Reset Content`, and `HEAD`, #1340
+- Media types with `q=0` in the `Accept` header are not selected
+  for the response anymore, `q=0` means "not acceptable",
+  so such requests now get a `406` response.
+  This matches `django.http.HttpRequest.accepted_types`, #1407
+- Fixed `Accept` headers with out of range `q` values returning `500`,
+  `q=inf` used to raise `OverflowError` while sorting media types.
+  Out of range weights are now discarded and treated as `q=1`,
+  just like `django.http.request.MediaType` does, #1407
 
 ### Misc
 
@@ -193,6 +214,7 @@ of requirements for an API to count as public.
 - Added a guide on writing your own auth class
   for transports we don't ship, #1366
 
+
 ## 0.14.0 (2026-08-14)
 
 ### Breaking changes
@@ -203,8 +225,7 @@ of requirements for an API to count as public.
 ### Features
 
 - Added initial `ty` support, #1257
-- Added `header_name_server_managed` to `HttpSpec` to restrict server-managed headers
-  in responses, #1341
+- Added new checks for HTTP spec validation, #1341
 - Added support of reusable controllers with `@validate`, #1259
 - Added default value to `prefix` parameter in `Router.__init__`, #1267
 - Added `to_urlpatterns` function to include `Router`
@@ -218,15 +239,16 @@ of requirements for an API to count as public.
 
 - Improve reusable controllers docs, #1259
 
+
 ## 0.13.0 (2026-08-10)
 
 This release was focused on better routing and better OpenAPI support.
-See <https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0>
+See https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Breaking changes
 
 Since this release, we would only publish migration prompts
-on the releases page: <https://github.com/wemake-services/django-modern-rest/releases>
+on the releases page: https://github.com/wemake-services/django-modern-rest/releases
 
 - `Schema.then` is renamed to be `Schema.schema_then`
   to be consistent with other similar names, #1221
@@ -279,6 +301,7 @@ on the releases page: <https://github.com/wemake-services/django-modern-rest/rel
 
 - Improved testing docs, #1216
 
+
 ## 0.12.1 (2026-07-31)
 
 ### Bugfixes
@@ -288,6 +311,7 @@ on the releases page: <https://github.com/wemake-services/django-modern-rest/rel
 - Fixed `@endpoint_decorator` passing incorrect parameters
   to the endpoint function, #1189
 - Fixed `@endpoint_decorator` not working properly with async endpoints, #1189
+
 
 ## 0.12.0 (2026-07-30)
 
@@ -318,6 +342,7 @@ on the releases page: <https://github.com/wemake-services/django-modern-rest/rel
 - Improved `pytest` plugin docs
 - Added `nanodjango` and µDjango examples
   to the micro-framework docs page, #1049
+
 
 ## Version 0.11.0 (2026-06-27)
 
@@ -352,11 +377,12 @@ for both sync and async controllers at the same time.
   to `Your Awesome Project` and documented all `OpenAPIConfig`
   fields, #1021
 
+
 ## Version 0.10.0 (2026-05-26)
 
 ### Breaking changes
 
-- _Breaking_: `FileResponseSpec()` now describes inline file responses
+- *Breaking*: `FileResponseSpec()` now describes inline file responses
   and does not include `Content-Disposition` by default. Use
   `FileResponseSpec(as_attachment=True)` when returning Django's
   `FileResponse(..., as_attachment=True)`, #1020
@@ -383,6 +409,7 @@ to include `as_attachment=True` parameter.
 - `pyrefly@1.0` official support, #1015
 - `mypy@2.0` and `mypy@2.1` official support, #1013
 
+
 ## Version 0.9.0 (2026-05-07)
 
 ### Features
@@ -400,19 +427,20 @@ to include `as_attachment=True` parameter.
 - Fixed minimum allowed django version, #1008
 - Fixed `ImportError` while using with `django==5.2.0`, #1006
 
+
 ## Version 0.8.0 (2026-04-26)
 
 ### Breaking changes
 
-- _Breaking_: Renamed `APIRedirectError` to `RedirectTo`, #922
-- _Breaking_: Split `BaseThrottleBackend` into `BaseThrottleAsyncBackend`
+- *Breaking*: Renamed `APIRedirectError` to `RedirectTo`, #922
+- *Breaking*: Split `BaseThrottleBackend` into `BaseThrottleAsyncBackend`
   and `BaseThrottleSyncBackend`, #942
-- _Breaking_: Renamed `DjangoCache` into `SyncDjangoCache`,
+- *Breaking*: Renamed `DjangoCache` into `SyncDjangoCache`,
   added `AsyncDjangoCache`, #942
-- _Breaking_: Changed `BaseThrottleBackend` API: now it requires
+- *Breaking*: Changed `BaseThrottleBackend` API: now it requires
   `.incr` and `.get` methods, the first one should ideally
   be an atomic increment, the second one is for reading objects only, #942
-- _Breaking_: Removed `BaseThrottleAlgorithm.record` method,
+- *Breaking*: Removed `BaseThrottleAlgorithm.record` method,
   now `BaseThrottleAlgorithm.access` must also record accesses.
   This will help to make throttling more atomic, #942
 
@@ -422,7 +450,6 @@ User-facing changes:
 
 ```md
 Apply this change to the code that uses `django-modern-rest`:
-
 1. Replace `dmr.response.APIRedirectError` with `dmr.response.RedirectTo`
 2. Replace `dmr.throttling.backend.DjangoCache`
    with `dmr.throttling.backend.SyncDjangoCache` for sync throttles
@@ -468,6 +495,7 @@ Apply this change to the code that uses `django-modern-rest`:
   for JSON encoding and decoding when available, #889 and #976
 - Optimized how per-endpoint throttle locks are used, #942
 
+
 ## Version 0.7.0 (2026-04-14)
 
 ### Breaking changes
@@ -477,17 +505,16 @@ Apply this change to the code that uses `django-modern-rest`:
    the concrete view and override `.get()` instead.
    For JSON output, use `dmr.openapi.core.dump.json_dump`
    if you need the framework's default serializer
-2. _Breaking_: `get_jwt` is renamed to `request_jwt`, #868
-3. _Breaking_: `ResponseSpecProvider.provide_response_specs` is now
+2. *Breaking*: `get_jwt` is renamed to `request_jwt`, #868
+3. *Breaking*: `ResponseSpecProvider.provide_response_specs` is now
    an instance method, #877
-4. _Breaking_: new required `router` parameter added
+4. *Breaking*: new required `router` parameter added
    to `Endpoint.get_schema` and `Controller.get_path_item`, #879
 
 ### Migration Prompt
 
 ```md
 Apply this change to the code that uses `django-modern-rest`:
-
 1. Replace `OpenAPIView.dumps` usage with `dmr.openapi.core.dump.json_dump`
    usage
 2. Change `dmr.security.jwt.auth.get_jwt` function
@@ -540,6 +567,7 @@ Apply this change to the code that uses `django-modern-rest`:
 - Switched from `Make` to [`just`](https://github.com/casey/just)
   as a command runner
 
+
 ## Version 0.6.0 (2026-04-09)
 
 In this release we significantly increased the performance of `pydantic`
@@ -572,6 +600,7 @@ No breaking changes in this release.
 - Bumped `msgspec` to `0.21.0`, #856
 - Added official `SECURITY.md` policy
 
+
 ## Version 0.5.0 (2026-04-05)
 
 AKA "The first compiled version".
@@ -585,7 +614,7 @@ No breaking changes in this release.
 - Added `mypyc` support for compiling parts of the framework
   to run significantly faster, for example our compiled content
   negotiation is now 35 times faster then the Django's default one, #202
-  See our <https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html#mypyc-compilation> docs about that
+  See our https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html#mypyc-compilation docs about that
 - Added older Django versions `4.2`, `5.0`, `5.1` official support, #803
 - Added official `NamedTuple` support, #774
 - Added `timezone` and `pydantic-extra-types` dependencies
@@ -612,6 +641,7 @@ No breaking changes in this release.
 - Migrated from `poetry` to `uv` for dependency management
 - Set up automated secure publishing to PyPI, #823
 - Added CodSpeed integration for continuous performance monitoring, #810
+
 
 ## Version 0.4.0 (2026-03-29)
 
@@ -640,138 +670,136 @@ to a newer version using AI tool of your choice.
 ### Migration Prompt
 
 To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
-
-1. Load the latest documentation from <https://django-modern-rest.readthedocs.io/llms-full.txt>
+1. Load the latest documentation from https://django-modern-rest.readthedocs.io/llms-full.txt
 2. Convert component parsing from old class-based API to new method-based API.
-   Before:
+  Before:
 
-```python
-from dmr import Blueprint, Body
-from dmr.routing import compose_blueprints
-from dmr.plugins.pydantic import PydanticSerializer
-
-
-class UserCreateBlueprint(
-    Body[_UserInput],  # <- needs a request body
-    Blueprint[PydanticSerializer],
-):
-    def post(self) -> _UserOutput:
-        return _UserOutput(
-            uid=uuid.uuid4(),
-            email=self.parsed_body.email,
-            age=self.parsed_body.age,
-        )
+  ```python
+  from dmr import Blueprint, Body
+  from dmr.routing import compose_blueprints
+  from dmr.plugins.pydantic import PydanticSerializer
 
 
-class UserListBlueprint(Blueprint[PydanticSerializer]):
-    def get(self) -> list[_UserInput]:
-        return [
-            _UserInput(email='first@example.org', age=1),
-            _UserInput(email='second@example.org', age=2),
-        ]
+  class UserCreateBlueprint(
+      Body[_UserInput],  # <- needs a request body
+      Blueprint[PydanticSerializer],
+  ):
+      def post(self) -> _UserOutput:
+          return _UserOutput(
+              uid=uuid.uuid4(),
+              email=self.parsed_body.email,
+              age=self.parsed_body.age,
+          )
 
 
-UsersController = compose_blueprints(UserCreateBlueprint, UserListBlueprint)
-```
-
-To:
-
-```python
-from dmr import Controller, Body
-from dmr.plugins.pydantic import PydanticSerializer
+  class UserListBlueprint(Blueprint[PydanticSerializer]):
+      def get(self) -> list[_UserInput]:
+          return [
+              _UserInput(email='first@example.org', age=1),
+              _UserInput(email='second@example.org', age=2),
+          ]
 
 
-class UsersController(Controller[PydanticSerializer]):
-    def get(self) -> list[_UserInput]:
-        return [
-            _UserInput(email='first@example.org', age=1),
-            _UserInput(email='second@example.org', age=2),
-        ]
+  UsersController = compose_blueprints(UserCreateBlueprint, UserListBlueprint)
+  ```
 
-    def post(self, parsed_body: Body[_UserInput]) -> _UserOutput:
-        return _UserOutput(
-            uid=uuid.uuid4(),
-            email=self.parsed_body.email,
-            age=self.parsed_body.age,
-        )
-```
+  To:
 
-1. Replace all `Blueprint` and `compose_blueprints` references with a new API:
-   Instead you must use `Controller` and different methods under a single class
-2. Now, change all `@sse`-based controllers to new `SSEController` API, from:
-
-```python
-from collections.abc import AsyncIterator
-
-import msgspec
-from django.http import HttpRequest
-
-from dmr.components import Headers
-from dmr.plugins.msgspec import MsgspecSerializer
-from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
+  ```python
+  from dmr import Controller, Body
+  from dmr.plugins.pydantic import PydanticSerializer
 
 
-class HeaderModel(msgspec.Struct):
-    last_event_id: int | None = msgspec.field(
-        default=None,
-        name='Last-Event-ID',
-    )
+  class UsersController(Controller[PydanticSerializer]):
+      def get(self) -> list[_UserInput]:
+          return [
+              _UserInput(email='first@example.org', age=1),
+              _UserInput(email='second@example.org', age=2),
+          ]
+
+      def post(self, parsed_body: Body[_UserInput]) -> _UserOutput:
+          return _UserOutput(
+              uid=uuid.uuid4(),
+              email=self.parsed_body.email,
+              age=self.parsed_body.age,
+          )
+  ```
+
+3. Replace all `Blueprint` and `compose_blueprints` references with a new API:
+  Instead you must use `Controller` and different methods under a single class
+4. Now, change all `@sse`-based controllers to new `SSEController` API, from:
+
+  ```python
+  from collections.abc import AsyncIterator
+
+  import msgspec
+  from django.http import HttpRequest
+
+  from dmr.components import Headers
+  from dmr.plugins.msgspec import MsgspecSerializer
+  from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
 
 
-async def produce_user_events(
-    request_headers: HeaderModel,
-) -> AsyncIterator[SSEvent[str]]:
-    if request_headers.last_event_id:
-        yield SSEvent(f'starting from {request_headers.last_event_id}')
-    else:
-        yield SSEvent('starting from scratch')
+  class HeaderModel(msgspec.Struct):
+      last_event_id: int | None = msgspec.field(
+          default=None,
+          name='Last-Event-ID',
+      )
 
 
-@sse(MsgspecSerializer, headers=Headers[HeaderModel])
-async def user_events(
-    request: HttpRequest,
-    context: SSEContext[None, None, HeaderModel],
-) -> SSEResponse[SSEvent[str]]:
-    return SSEResponse(produce_user_events(context.parsed_headers))
-```
-
-To:
-
-```python
-from collections.abc import AsyncIterator
-
-import msgspec
-
-from dmr.components import Headers
-from dmr.plugins.msgspec import MsgspecSerializer
-from dmr.streaming.sse import SSEController, SSEvent
+  async def produce_user_events(
+      request_headers: HeaderModel,
+  ) -> AsyncIterator[SSEvent[str]]:
+      if request_headers.last_event_id:
+          yield SSEvent(f'starting from {request_headers.last_event_id}')
+      else:
+          yield SSEvent('starting from scratch')
 
 
-class HeaderModel(msgspec.Struct):
-    last_event_id: int | None = msgspec.field(
-        default=None,
-        name='Last-Event-ID',
-    )
+  @sse(MsgspecSerializer, headers=Headers[HeaderModel])
+  async def user_events(
+      request: HttpRequest,
+      context: SSEContext[None, None, HeaderModel],
+  ) -> SSEResponse[SSEvent[str]]:
+      return SSEResponse(produce_user_events(context.parsed_headers))
+  ```
+
+  To:
+
+  ```python
+  from collections.abc import AsyncIterator
+
+  import msgspec
+
+  from dmr.components import Headers
+  from dmr.plugins.msgspec import MsgspecSerializer
+  from dmr.streaming.sse import SSEController, SSEvent
 
 
-class UserEventsController(SSEController[MsgspecSerializer]):
-    def get(
-        self,
-        parsed_headers: Headers[HeaderModel],
-    ) -> AsyncIterator[SSEvent[str]]:
-        return self.produce_user_events(parsed_headers)
+  class HeaderModel(msgspec.Struct):
+      last_event_id: int | None = msgspec.field(
+          default=None,
+          name='Last-Event-ID',
+      )
 
-    async def produce_user_events(
-        self,
-        parsed_headers: HeaderModel,
-    ) -> AsyncIterator[SSEvent[str]]:
-        if parsed_headers.last_event_id is None:
-            yield SSEvent('starting from scratch')
-        else:
-            yield SSEvent(f'starting from {parsed_headers.last_event_id}')
-```
 
-1. Replace old `dmr.sse` imports with new `dmr.streaming.sse` alternatives
+  class UserEventsController(SSEController[MsgspecSerializer]):
+      def get(
+          self,
+          parsed_headers: Headers[HeaderModel],
+      ) -> AsyncIterator[SSEvent[str]]:
+          return self.produce_user_events(parsed_headers)
+
+      async def produce_user_events(
+          self,
+          parsed_headers: HeaderModel,
+      ) -> AsyncIterator[SSEvent[str]]:
+          if parsed_headers.last_event_id is None:
+              yield SSEvent('starting from scratch')
+          else:
+              yield SSEvent(f'starting from {parsed_headers.last_event_id}')
+  ```
+5. Replace old `dmr.sse` imports with new `dmr.streaming.sse` alternatives
 
 ### Features
 
@@ -810,6 +838,7 @@ class UserEventsController(SSEController[MsgspecSerializer]):
 - Now `MsgspecJsonRenderer` and `JsonRenderer` produce
   the same `json` string in terms of whitespaces, #736
 
+
 ## Version 0.3.0 (2026-03-17)
 
 ### Features
@@ -833,11 +862,12 @@ class UserEventsController(SSEController[MsgspecSerializer]):
 
 - Improved "Returning responses" docs, #684
 
+
 ## Version 0.2.0 (2026-03-15)
 
 ### Features
 
-- _Breaking_: Renamed `schema_only` parameter to `skip_validation`
+- *Breaking*: Renamed `schema_only` parameter to `skip_validation`
 - Added `dmr.routing.build_500_handler` handler, #661
 - Added support for `__dmr_split_commas__` in `Headers` component, #659
 - Added support for native Django urls to be rendered in the OpenAPI,
@@ -861,6 +891,7 @@ class UserEventsController(SSEController[MsgspecSerializer]):
 ### Misc
 
 - Improved components and auth docs
+
 
 ## Version 0.1.0 (2026-03-13)
 
