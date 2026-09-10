@@ -70,6 +70,8 @@ of requirements for an API to count as public.
 
 ### Features
 
+- Added `@modify.lazy` and `@validate.lazy` decorators
+  for reusable controllers, #1409
 - Added `exclude_validate_responses` setting, controller attribute,
   and `@modify` / `@validate` argument to skip response validation
   for the given status codes, like `500`, #1370
@@ -111,6 +113,8 @@ of requirements for an API to count as public.
 - Added `security.NO_STORE_HEADERS`, all auth views we ship now
   return the `Cache-Control: no-store` header
   and document it in the OpenAPI schema, #1335
+- Added `@modify.lazy` support and `modify_spec` method
+  to all all views we ship, #1423
 - JWT tokens are now encoded and decoded with `msgspec`
   when it is installed, which makes `JWToken.encode` about 1.3x
   and `JWToken.decode` about 1.15x faster.
@@ -119,7 +123,8 @@ of requirements for an API to count as public.
 - Added `BaseThrottleSyncBackend.lock` and `BaseThrottleAsyncBackend.lock`
   to control the in-process lock for `incr`,
   `SyncRedis` and `AsyncRedis` skip it because Lua scripts are atomic, #1339
-- `OpenAPI.convert()` now caches and returns the same dictionary per instance.
+- `OpenAPI.convert()` now caches and returns
+  the same dictionary per instance, #1402
 - `accepted_type` and `accepted_header` are faster now,
   media types without parameters skip the regex based parsing
   of parameters and of the `q` weight entirely, #1407
@@ -130,6 +135,8 @@ of requirements for an API to count as public.
   or `throttling` to a sync endpoint
   (and sync ones to an async endpoint) is now a type error,
   `links` is now also accepted by all `@modify` overloads, #1393
+- Fixed `@validate` return type inference for all the type-checkers,
+  now it does not change the original `HttpResponseBase` subtype, #1409
 - Fixed `EndpointMetadata.validate_responses` being annotated
   as `bool | None`, it is always resolved
   from the settings, the controller, and the endpoint, #1370
@@ -178,7 +185,8 @@ of requirements for an API to count as public.
 - Fixed a bug when request data might be copied in `parse_as_post`, #1328
 - Fixed postponed annotation resolution for wrapped endpoint functions
   whose decorators are defined in another module, #1417
-- Detailed CSRF failure reasons are now included in error responses only in debug mode, #1332
+- Detailed CSRF failure reasons are now included
+  in error responses only in debug mode and not in production, #1332
 - Media types with `q=0` in the `Accept` header are not selected
   for the response anymore, `q=0` means "not acceptable",
   so such requests now get a `406` response.
@@ -213,9 +221,7 @@ of requirements for an API to count as public.
 ### Features
 
 - Added initial `ty` support, #1257
-- Added `header_name_server_managed`, `header_name_syntax` to `HttpSpec`
-  to restrict server-managed headers in responses and
-  check header name syntax, #1341
+- Added new checks for HTTP spec validation, #1341
 - Added support of reusable controllers with `@validate`, #1259
 - Added default value to `prefix` parameter in `Router.__init__`, #1267
 - Added `to_urlpatterns` function to include `Router`

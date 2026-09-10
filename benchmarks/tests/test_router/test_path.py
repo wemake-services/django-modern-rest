@@ -84,7 +84,7 @@ def _pick_url(case: Literal['best', 'avg', 'worst']) -> str:
             assert_never(other)
 
 
-_REPEAT: Final = 1_000
+_REPEAT: Final = 1000
 
 
 def test_router_path_native(

@@ -96,7 +96,7 @@ dev = [
   "schemathesis>=4.14,<5",
   "slotscheck>=0.19,<0.21",
   # TODO: relax the pin after a stable `ty` release:
-  "ty==0.0.77",
+  "ty==0.0.78",
   "types-django-filter>=25.2,<27",
   "types-docker>=7.2,<8",
   "types-docutils>=0.22,<0.24",
@@ -593,5 +593,6 @@ exclude-modules = '''
   |dmr\.security\.token\.views
   |dmr\.security\.token\.app
   |dmr\.internal\.model_fields
+  |dmr\.internal\.endpoint
 )
 '''

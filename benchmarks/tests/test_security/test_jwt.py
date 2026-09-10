@@ -19,6 +19,7 @@ _JWT_MODULES: Final = frozenset((
 
 _ALGORITHM: Final = 'HS256'
 _SECRET: Final = secrets.token_hex()
+_REPEAT: Final = 1000
 
 
 def _make_payload() -> dict[str, Any]:
@@ -42,7 +43,8 @@ def test_jwt_encode_msgspec(benchmark: BenchmarkFixture) -> None:
 
     @benchmark
     def factory() -> None:
-        dmr_jwt.encode(payload, _SECRET, algorithm=_ALGORITHM)
+        for _ in range(_REPEAT):
+            dmr_jwt.encode(payload, _SECRET, algorithm=_ALGORITHM)
 
 
 def test_jwt_encode_native(
@@ -59,7 +61,8 @@ def test_jwt_encode_native(
 
         @benchmark
         def factory() -> None:
-            dmr_jwt.encode(payload, _SECRET, algorithm=_ALGORITHM)
+            for _ in range(_REPEAT):
+                dmr_jwt.encode(payload, _SECRET, algorithm=_ALGORITHM)
 
 
 def test_jwt_decode_msgspec(benchmark: BenchmarkFixture) -> None:
@@ -70,13 +73,14 @@ def test_jwt_decode_msgspec(benchmark: BenchmarkFixture) -> None:
 
     @benchmark
     def factory() -> None:
-        dmr_jwt.decode(
-            token,
-            _SECRET,
-            algorithms=[_ALGORITHM],
-            audience='web',
-            issuer='django-modern-rest',
-        )
+        for _ in range(_REPEAT):
+            dmr_jwt.decode(
+                token,
+                _SECRET,
+                algorithms=[_ALGORITHM],
+                audience='web',
+                issuer='django-modern-rest',
+            )
 
 
 def test_jwt_decode_native(
@@ -93,10 +97,11 @@ def test_jwt_decode_native(
 
         @benchmark
         def factory() -> None:
-            dmr_jwt.decode(
-                token,
-                _SECRET,
-                algorithms=[_ALGORITHM],
-                audience='web',
-                issuer='django-modern-rest',
-            )
+            for _ in range(_REPEAT):
+                dmr_jwt.decode(
+                    token,
+                    _SECRET,
+                    algorithms=[_ALGORITHM],
+                    audience='web',
+                    issuer='django-modern-rest',
+                )
