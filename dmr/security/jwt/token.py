@@ -313,21 +313,12 @@ class JWToken:  # noqa: WPS214
 
     @classmethod
     def _known_field_names(cls) -> frozenset[str]:
-        if cls is JWToken:
-            return _JWTOKEN_FIELD_NAME_SET
         # Subclasses can define extra fields, and those are real claims.
         return frozenset(
             field_definition.name for field_definition in fields(cls)
         )
 
     def _build_payload(self) -> dict[str, Any]:
-        if type(self) is JWToken:  # noqa: WPS516
-            payload: dict[str, Any] = {}
-            for field in _JWTOKEN_FIELD_NAMES:
-                field_value = getattr(self, field)
-                if field_value is not None:
-                    payload[field] = field_value
-            return payload
         # Subclasses can define extra fields, and `asdict` is the only
         # thing that sees them. They are rare, so they keep the old path.
         return {
