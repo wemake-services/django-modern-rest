@@ -175,7 +175,10 @@ of requirements for an API to count as public.
   instead of failing with a database `IntegrityError`, #1322
 - JWT authentication now rejects refresh tokens when access tokens are expected,
   #1320
-- Fixed a bug when request data might be copied in `parse_as_post` #1328
+- Fixed a bug when request data might be copied in `parse_as_post`, #1328
+- Fixed postponed annotation resolution for wrapped endpoint functions
+  whose decorators are defined in another module, #1417
+- Detailed CSRF failure reasons are now included in error responses only in debug mode, #1332
 - Media types with `q=0` in the `Accept` header are not selected
   for the response anymore, `q=0` means "not acceptable",
   so such requests now get a `406` response.

@@ -1,13 +1,12 @@
 import json
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pytest
-from django.conf import settings
+from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.http import HttpRequest, HttpResponse
-from inline_snapshot import snapshot
 
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticFastSerializer
@@ -20,6 +19,9 @@ from dmr.security.token import (
 )
 from dmr.security.token.app.models import Token
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
+
+if TYPE_CHECKING:
+    from tests.test_unit.conftest import CsrfFailureAssertion
 
 _CORRECT_TEMPLATE: Final = '{0}'
 
@@ -109,6 +111,8 @@ async def test_async_cookie_token_auth_success(
 def test_sync_cookie_token_auth_csrf_enforced(
     admin_user: User,
     dmr_rf: DMRRequestFactory,
+    settings: LazySettings,
+    assert_csrf_failure_message: 'CsrfFailureAssertion',
 ) -> None:
     """Ensures CookieTokenSyncAuth rejects POST without a CSRF token."""
 
@@ -131,14 +135,8 @@ def test_sync_cookie_token_auth_csrf_enforced(
     response = _CookieController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.FORBIDDEN
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': 'CSRF Failed: CSRF cookie not set.',
-            },
-        ],
-    })
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.content
+    assert_csrf_failure_message(response)
 
 
 @pytest.mark.asyncio
@@ -146,6 +144,8 @@ def test_sync_cookie_token_auth_csrf_enforced(
 async def test_async_cookie_token_auth_csrf_enforced(
     admin_user: User,
     dmr_async_rf: DMRAsyncRequestFactory,
+    settings: LazySettings,
+    assert_csrf_failure_message: 'CsrfFailureAssertion',
 ) -> None:
     """Ensures CookieTokenAsyncAuth rejects POST without a CSRF token."""
 
@@ -170,14 +170,8 @@ async def test_async_cookie_token_auth_csrf_enforced(
     )
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.FORBIDDEN
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': 'CSRF Failed: CSRF cookie not set.',
-            },
-        ],
-    })
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.content
+    assert_csrf_failure_message(response)
 
 
 @pytest.mark.django_db
@@ -279,6 +273,7 @@ def test_cookie_auth_try_next_sync(
 async def test_cookie_auth_try_next_async(
     dmr_async_rf: DMRAsyncRequestFactory,
     admin_user: User,
+    settings: LazySettings,
 ) -> None:
     """Ensures async controllers work with token auth."""
 

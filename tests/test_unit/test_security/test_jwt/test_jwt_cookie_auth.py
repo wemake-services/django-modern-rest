@@ -2,7 +2,7 @@ import datetime as dt
 import json
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from django.conf import LazySettings
@@ -28,6 +28,9 @@ from dmr.security.jwt import (
 )
 from dmr.security.jwt.auth.base import BaseJWTSyncAuth
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
+
+if TYPE_CHECKING:
+    from tests.test_unit.conftest import CsrfFailureAssertion
 
 _LEEWAY: Final = 30  # seconds
 
@@ -166,6 +169,7 @@ def test_sync_cookie_jwt_auth_csrf_enforced(
     dmr_rf: DMRRequestFactory,
     admin_user: User,
     settings: LazySettings,
+    assert_csrf_failure_message: 'CsrfFailureAssertion',
 ) -> None:
     """Ensures CookieJWTSyncAuth rejects POST without a CSRF token."""
 
@@ -185,14 +189,8 @@ def test_sync_cookie_jwt_auth_csrf_enforced(
     response = _CookieController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.FORBIDDEN
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': 'CSRF Failed: CSRF cookie not set.',
-            },
-        ],
-    })
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.content
+    assert_csrf_failure_message(response)
 
 
 @pytest.mark.asyncio
@@ -201,6 +199,7 @@ async def test_async_cookie_jwt_auth_csrf_enforced(
     dmr_async_rf: DMRAsyncRequestFactory,
     admin_user: User,
     settings: LazySettings,
+    assert_csrf_failure_message: 'CsrfFailureAssertion',
 ) -> None:
     """Ensures CookieJWTAsyncAuth rejects POST without a CSRF token."""
 
@@ -222,14 +221,8 @@ async def test_async_cookie_jwt_auth_csrf_enforced(
     )
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.FORBIDDEN
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': 'CSRF Failed: CSRF cookie not set.',
-            },
-        ],
-    })
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.content
+    assert_csrf_failure_message(response)
 
 
 @pytest.mark.django_db
