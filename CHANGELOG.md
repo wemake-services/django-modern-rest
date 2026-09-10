@@ -70,6 +70,8 @@ of requirements for an API to count as public.
 
 ### Features
 
+- Added `@modify.lazy` and `@validate.lazy` decorators
+  for reusable controllers, #1409
 - Added `exclude_validate_responses` setting, controller attribute,
   and `@modify` / `@validate` argument to skip response validation
   for the given status codes, like `500`, #1370
@@ -127,6 +129,8 @@ of requirements for an API to count as public.
   or `throttling` to a sync endpoint
   (and sync ones to an async endpoint) is now a type error,
   `links` is now also accepted by all `@modify` overloads, #1393
+- Fixed `@validate` return type inference for all the type-checkers,
+  now it does not change the original `HttpResponseBase` subtype, #1409
 - Fixed `EndpointMetadata.validate_responses` being annotated
   as `bool | None`, it is always resolved
   from the settings, the controller, and the endpoint, #1370

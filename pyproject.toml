@@ -593,5 +593,6 @@ exclude-modules = '''
   |dmr\.security\.token\.views
   |dmr\.security\.token\.app
   |dmr\.internal\.model_fields
+  |dmr\.internal\.endpoint
 )
 '''

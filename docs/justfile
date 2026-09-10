@@ -19,4 +19,4 @@ sphinx +targets:
   done
 
 # Pass-through: route any target to Sphinx
-build +targets='clean html': (sphinx targets)
+build +targets='html': (sphinx targets)
