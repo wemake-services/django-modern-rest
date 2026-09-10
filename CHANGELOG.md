@@ -113,6 +113,8 @@ of requirements for an API to count as public.
 - Added `security.NO_STORE_HEADERS`, all auth views we ship now
   return the `Cache-Control: no-store` header
   and document it in the OpenAPI schema, #1335
+- Added `@modify.lazy` support and `modify_spec` method
+  to all all views we ship, #1423
 - JWT tokens are now encoded and decoded with `msgspec`
   when it is installed, which makes `JWToken.encode` about 1.3x
   and `JWToken.decode` about 1.15x faster.
@@ -121,7 +123,8 @@ of requirements for an API to count as public.
 - Added `BaseThrottleSyncBackend.lock` and `BaseThrottleAsyncBackend.lock`
   to control the in-process lock for `incr`,
   `SyncRedis` and `AsyncRedis` skip it because Lua scripts are atomic, #1339
-- `OpenAPI.convert()` now caches and returns the same dictionary per instance.
+- `OpenAPI.convert()` now caches and returns
+  the same dictionary per instance, #1402
 
 ### Bugfixes
 
@@ -179,7 +182,8 @@ of requirements for an API to count as public.
 - Fixed a bug when request data might be copied in `parse_as_post`, #1328
 - Fixed postponed annotation resolution for wrapped endpoint functions
   whose decorators are defined in another module, #1417
-- Detailed CSRF failure reasons are now included in error responses only in debug mode, #1332
+- Detailed CSRF failure reasons are now included
+  in error responses only in debug mode and not in production, #1332
 
 ### Misc
 

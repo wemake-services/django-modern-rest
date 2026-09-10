@@ -562,7 +562,7 @@ class VerifyTokenSyncController(
 
     """
 
-    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
+    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.NO_CONTENT
     responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
@@ -646,7 +646,7 @@ class VerifyTokenAsyncController(
 
     """
 
-    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
+    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.NO_CONTENT
     responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
