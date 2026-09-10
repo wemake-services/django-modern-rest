@@ -202,9 +202,7 @@ of requirements for an API to count as public.
 ### Features
 
 - Added initial `ty` support, #1257
-- Added `header_name_server_managed`, `header_name_syntax` to `HttpSpec`
-  to restrict server-managed headers in responses and
-  check header name syntax, #1341
+- Added new checks for HTTP spec validation, #1341
 - Added support of reusable controllers with `@validate`, #1259
 - Added default value to `prefix` parameter in `Router.__init__`, #1267
 - Added `to_urlpatterns` function to include `Router`
