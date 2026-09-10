@@ -184,7 +184,9 @@ def test_lazy_validate_override(
 
         @classmethod
         def lazy_spec(cls) -> ValidateAnyCallable:
-            return validate(ResponseSpec(str, status_code=cls.status_code))  # pragma: no cover
+            return validate(
+                ResponseSpec(str, status_code=cls.status_code)
+            )  # pragma: no cover
 
         @validate.lazy(lazy_spec)
         def post(self, parsed_body: Body[_ModelT]) -> HttpResponse:
