@@ -152,7 +152,7 @@ class ModifyAnyCallable(Protocol):
     Features:
 
     - Does not allow using ``HttpResponse`` as the return annotation
-    - Does not allow specifing sync / async specific parts
+    - Does not allow specifying sync / async specific parts
 
     """
 
@@ -538,7 +538,7 @@ class ValidateAnyCallable(Protocol):
 
     - Does not allow using anything other
         than ``HttpResponse`` as the return annotation
-    - Does not allow specifing sync / async specific parts
+    - Does not allow specifying sync / async specific parts
 
     .. versionadded:: 0.15.0
     """

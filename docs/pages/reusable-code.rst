@@ -298,7 +298,7 @@ just as an example of power that we have:
 Notice that the response code would be changed in both the spec and runtime.
 And, of course, you can combine this approach
 with generic serializer, or request and response payloads.
-Giving the full controll over code reuse.
+Giving the full control over code reuse.
 
 Overriding definitions
 ~~~~~~~~~~~~~~~~~~~~~~
