@@ -84,7 +84,7 @@ def test_lazy_modify_override(
 
         @classmethod
         def lazy_spec(cls) -> ModifyAnyCallable:
-            return modify(status_code=cls.status_code)
+            return modify(status_code=cls.status_code)  # pragma: no cover
 
         @modify.lazy(lazy_spec)
         def post(self, parsed_body: Body[_ModelT]) -> str:
@@ -184,7 +184,7 @@ def test_lazy_validate_override(
 
         @classmethod
         def lazy_spec(cls) -> ValidateAnyCallable:
-            return validate(ResponseSpec(str, status_code=cls.status_code))
+            return validate(ResponseSpec(str, status_code=cls.status_code))  # pragma: no cover
 
         @validate.lazy(lazy_spec)
         def post(self, parsed_body: Body[_ModelT]) -> HttpResponse:
