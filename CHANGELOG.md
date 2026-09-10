@@ -125,6 +125,9 @@ of requirements for an API to count as public.
   `SyncRedis` and `AsyncRedis` skip it because Lua scripts are atomic, #1339
 - `OpenAPI.convert()` now caches and returns
   the same dictionary per instance, #1402
+- `accepted_type` and `accepted_header` are faster now,
+  media types without parameters skip the regex based parsing
+  of parameters and of the `q` weight entirely, #1407
 
 ### Bugfixes
 
@@ -186,6 +189,14 @@ of requirements for an API to count as public.
   in error responses only in debug mode and not in production, #1332
 - Empty response body checks now cover `1xx`,
   `205 Reset Content`, and `HEAD`, #1340
+- Media types with `q=0` in the `Accept` header are not selected
+  for the response anymore, `q=0` means "not acceptable",
+  so such requests now get a `406` response.
+  This matches `django.http.HttpRequest.accepted_types`, #1407
+- Fixed `Accept` headers with out of range `q` values returning `500`,
+  `q=inf` used to raise `OverflowError` while sorting media types.
+  Out of range weights are now discarded and treated as `q=1`,
+  just like `django.http.request.MediaType` does, #1407
 
 ### Misc
 
