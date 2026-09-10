@@ -228,7 +228,7 @@ class ObtainTokenAsyncController(
 
     @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.OK, headers=NO_STORE_HEADERS)
+    @modify.lazy(modify_spec)
     async def post(self, parsed_body: Body[_ObtainTokenT]) -> _TokenResponseT:
         """By default tokens are acquired on post."""
         return await self.login(parsed_body)
