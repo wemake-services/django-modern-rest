@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime as dt
 import secrets
 import sys
 import time
@@ -9,6 +10,8 @@ from pytest_codspeed import BenchmarkFixture
 
 if TYPE_CHECKING:
     from conftest import CleanModules
+
+    from dmr.security.jwt import JWToken
 
 #: Modules to reimport when switching the json backend.
 _JWT_MODULES: Final = frozenset((
@@ -20,6 +23,10 @@ _JWT_MODULES: Final = frozenset((
 _ALGORITHM: Final = 'HS256'
 _SECRET: Final = secrets.token_hex()
 _REPEAT: Final = 1000
+
+#: A single encode / decode is too fast to measure reliably,
+#: so every benchmark below repeats its call this many times.
+_REPEATS: Final = range(1000)
 
 
 def _make_payload() -> dict[str, Any]:
@@ -105,3 +112,18 @@ def test_jwt_decode_native(
                     audience='web',
                     issuer='django-modern-rest',
                 )
+
+
+def _make_token() -> JWToken:
+    now = dt.datetime.now(dt.UTC)
+    from dmr.security.jwt import JWToken  # noqa: PLC0415
+
+    return JWToken(
+        sub='1234567890',
+        exp=now + dt.timedelta(hours=1),
+        iat=now,
+        iss='django-modern-rest',
+        aud='web',
+        jti=secrets.token_hex(16),
+        extras={'scopes': ['read', 'write']},
+    )

@@ -30,13 +30,16 @@
 import datetime as dt
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field, fields
-from typing import Any, Self, final
+from typing import Any, Final, Self, final
 
 import jwt
 from jwt.types import Options
 
 from dmr.exceptions import NotAuthenticatedError
 from dmr.internal.jwt import dmr_jwt
+
+#: Name of the field that carries every non-registered claim.
+_EXTRAS_FIELD: Final = 'extras'
 
 
 @final
@@ -77,6 +80,7 @@ class JWToken:  # noqa: WPS214
         for each direction: :meth:`encode` checks that a token
         can be issued, while :meth:`decode` fully relies
         on ``pyjwt`` and its options.
+        Dataclasses in ``extras`` field is no longer allowed.
 
     """
 
@@ -161,11 +165,7 @@ class JWToken:  # noqa: WPS214
         self.validate_issued_claims()
         try:
             return dmr_jwt.encode(
-                payload={
-                    field_name: field_value
-                    for field_name, field_value in asdict(self).items()
-                    if field_value is not None
-                },
+                payload=self._build_payload(),
                 key=secret,
                 algorithm=algorithm,
                 headers=headers,
@@ -297,8 +297,8 @@ class JWToken:  # noqa: WPS214
         payload['iat'] = cls._decode_datetime_claim(payload, 'iat')
         cls._require_claim(payload, 'sub')
 
-        extra_fields = payload.keys() - {field.name for field in fields(cls)}
-        extras = payload.setdefault('extras', {})
+        extra_fields = payload.keys() - cls._known_field_names()
+        extras = payload.setdefault(_EXTRAS_FIELD, {})
         for key in extra_fields:
             extras[key] = payload.pop(key)
 
@@ -308,6 +308,32 @@ class JWToken:  # noqa: WPS214
             # Time-based claims are already checked by `pyjwt` above,
             # everything else that is invalid here is still a bad token.
             raise NotAuthenticatedError from None
+
+    @classmethod
+    def _known_field_names(cls) -> frozenset[str]:
+        if cls is JWToken:
+            return _JWTOKEN_FIELD_NAME_SET
+        # Subclasses can define extra fields, and those are real claims.
+        return frozenset(
+            field_definition.name for field_definition in fields(cls)
+        )
+
+    def _build_payload(self) -> dict[str, Any]:
+        if self.__class__ is not JWToken:
+            # Subclasses can define extra fields, and `asdict` is the only
+            # thing that sees them. They are rare, so they keep the old path.
+            return {
+                field_name: field_value
+                for field_name, field_value in asdict(self).items()
+                if field_value is not None
+            }
+
+        payload: dict[str, Any] = {}
+        for field_name in _JWTOKEN_FIELD_NAMES:
+            field_value = getattr(self, field_name)
+            if field_value is not None:
+                payload[field_name] = field_value
+        return payload
 
     @classmethod
     def _build_options(  # noqa: WPS211
@@ -369,6 +395,18 @@ class JWToken:  # noqa: WPS214
             )
         except (TypeError, ValueError, OSError):
             raise NotAuthenticatedError from None
+
+
+#: Field names of :class:`JWToken` in declaration order, they never change.
+#: The order is a part of our API: it defines the claim order in a token.
+_JWTOKEN_FIELD_NAMES: Final = tuple(
+    field_definition.name for field_definition in fields(JWToken)
+)
+
+#: Same names, but for the membership checks in :meth:`JWToken.decode`.
+_JWTOKEN_FIELD_NAME_SET: Final = frozenset(
+    field_definition.name for field_definition in fields(JWToken)
+)
 
 
 def _normalize_datetime(datetime: dt.datetime) -> dt.datetime:

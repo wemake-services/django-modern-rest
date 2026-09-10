@@ -134,6 +134,51 @@ def test_jwtoken_roundtrip_with_extras() -> None:
     assert decoded.extras == extras
 
 
+@pytest.mark.parametrize('algorithm', _ALGORITHMS)
+def test_extras_nested_dataclass_is_converted(algorithm: str) -> None:
+    """Ensures nested dataclasses in ``extras`` are encoded as objects."""
+    secret = secrets.token_hex()
+    extras = {'profile': {'name': 'test', 'roles': ['admin']}}
+    token = JWToken(
+        sub=secrets.token_hex(),
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(minutes=1),
+        extras=extras,
+    )
+
+    decoded = JWToken.decode(
+        token.encode(secret=secret, algorithm=algorithm),
+        secret=secret,
+        algorithm=algorithm,
+    )
+
+    assert decoded.extras == extras
+
+
+@pytest.mark.usefixtures('_native_backend')
+def test_native_extras_nested_dataclass() -> None:
+    """Ensures the same for the backend used without ``msgspec``.
+
+    Without the conversion this backend raises ``TypeError``,
+    while ``msgspec`` would encode the dataclass on its own.
+    That divergence is exactly what we must not introduce.
+    """
+    secret = secrets.token_hex()
+    extras = {'profile': {'name': 'test', 'roles': ['admin']}}
+    token = JWToken(
+        sub=secrets.token_hex(),
+        exp=dt.datetime.now(dt.UTC) + dt.timedelta(minutes=1),
+        extras=extras,
+    )
+
+    decoded = JWToken.decode(
+        token.encode(secret=secret, algorithm='HS256'),
+        secret=secret,
+        algorithm='HS256',
+    )
+
+    assert decoded.extras == extras
+
+
 def test_encode_payload_honours_json_encoder() -> None:
     """Ensures a custom ``json_encoder`` falls back to ``pyjwt``."""
 

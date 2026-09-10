@@ -54,6 +54,7 @@ of requirements for an API to count as public.
   it is only used by `JWToken.decode` now, #1324
 - `JWToken` does not validate `exp` and `iat` on creation anymore,
   now `JWToken.encode` validates them instead, #1324
+- `JWToken` does not allow dataclass instances in `extras` anymore, #1408
 - Throttling cache keys are now hashed to keep their length bounded, #1337
 - HTTP Basic Auth credentials are no longer URL-decoded,
   so percent-encoded characters such as `%40` are preserved as-is, #1363
@@ -120,6 +121,7 @@ of requirements for an API to count as public.
   and `JWToken.decode` about 1.15x faster.
   Note that only json-native values in `JWToken.extras` are guaranteed
   to be encoded identically with and without `msgspec`, #1390
+- Optimized `JWToken` encoding and decoding algorithms, #1408
 - Added `BaseThrottleSyncBackend.lock` and `BaseThrottleAsyncBackend.lock`
   to control the in-process lock for `incr`,
   `SyncRedis` and `AsyncRedis` skip it because Lua scripts are atomic, #1339
