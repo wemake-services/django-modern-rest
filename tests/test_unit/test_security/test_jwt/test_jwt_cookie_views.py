@@ -208,17 +208,37 @@ def test_refresh_of_a_deleted_user(
     assert not response.cookies
 
 
+# `None` means "the real user's pk" and is the control case.
+# It is also required for coverage: on python 3.11 the lines after
+# `await` are not traced when the awaited coroutine is resumed with
+# an exception thrown in from the thread that `aget` runs in.
+# The failing cases alone would leave the assertions below unmeasured.
+_ASYNC_REFRESH_CASES: Final = (
+    (None, HTTPStatus.NO_CONTENT, {'access_token', 'refresh_token'}),
+    ('404', HTTPStatus.UNAUTHORIZED, set()),
+)
+
+
 @pytest.mark.asyncio
 @pytest.mark.django_db(transaction=True)
-async def test_async_refresh_of_a_deleted_user(
+@pytest.mark.parametrize(
+    ('subject', 'expected_status', 'expected_cookies'),
+    _ASYNC_REFRESH_CASES,
+)
+async def test_async_refresh(
     dmr_async_rf: DMRAsyncRequestFactory,
+    admin_user: User,
     settings: LazySettings,
     fill_csrf: Callable[[HttpRequest], HttpRequest],
+    *,
+    subject: str | None,
+    expected_status: HTTPStatus,
+    expected_cookies: set[str],
 ) -> None:
-    """Ensures that a token of a missing user is rejected, async case."""
+    """Ensures that only an existing user can refresh, async case."""
     request = fill_csrf(dmr_async_rf.post('/whatever/'))
     request.COOKIES['refresh_token'] = JWToken(
-        sub='404',
+        sub=subject or str(admin_user.pk),
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         extras={'type': 'refresh'},
     ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
@@ -228,8 +248,8 @@ async def test_async_refresh_of_a_deleted_user(
     )
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
-    assert not response.cookies
+    assert response.status_code == expected_status, response.content
+    assert response.cookies.keys() == expected_cookies
 
 
 @pytest.mark.django_db
