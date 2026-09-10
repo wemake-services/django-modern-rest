@@ -36,7 +36,7 @@ Extras for different serializers:
 - ``'django-modern-rest[pydantic]'`` for ``pydantic`` support
 - ``'django-modern-rest[attrs]'`` for ``attrs`` support
 - ``'django-modern-rest[msgspec]'`` for ``msgspec`` support
-  and the fastest ``json`` parsing
+  and the fastest ``json`` parsing in requests, ``jwt``, testing, and OpenAPI
 
 Extras for different features:
 

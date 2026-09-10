@@ -80,6 +80,8 @@ class JWToken:  # noqa: WPS214
         for each direction: :meth:`encode` checks that a token
         can be issued, while :meth:`decode` fully relies
         on ``pyjwt`` and its options.
+        Now we use ``msgspec`` for payload encoding and decoding,
+        when it is installed.
         Dataclasses in ``extras`` field is no longer allowed.
 
     """
@@ -319,21 +321,20 @@ class JWToken:  # noqa: WPS214
         )
 
     def _build_payload(self) -> dict[str, Any]:
-        if self.__class__ is not JWToken:
-            # Subclasses can define extra fields, and `asdict` is the only
-            # thing that sees them. They are rare, so they keep the old path.
-            return {
-                field_name: field_value
-                for field_name, field_value in asdict(self).items()
-                if field_value is not None
-            }
-
-        payload: dict[str, Any] = {}
-        for field_name in _JWTOKEN_FIELD_NAMES:
-            field_value = getattr(self, field_name)
-            if field_value is not None:
-                payload[field_name] = field_value
-        return payload
+        if type(self) is JWToken:  # noqa: WPS516
+            payload: dict[str, Any] = {}
+            for field in _JWTOKEN_FIELD_NAMES:
+                field_value = getattr(self, field)
+                if field_value is not None:
+                    payload[field] = field_value
+            return payload
+        # Subclasses can define extra fields, and `asdict` is the only
+        # thing that sees them. They are rare, so they keep the old path.
+        return {
+            field_name: field_value
+            for field_name, field_value in asdict(self).items()
+            if field_value is not None
+        }
 
     @classmethod
     def _build_options(  # noqa: WPS211
