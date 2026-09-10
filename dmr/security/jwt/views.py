@@ -17,6 +17,7 @@ from typing_extensions import TypedDict
 
 from dmr import Body, Controller, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
+from dmr.endpoint import ModifyAnyCallable
 from dmr.errors import ErrorModel
 from dmr.exceptions import InternalServerError, NotAuthenticatedError
 from dmr.security.base import NO_STORE_HEADERS
@@ -129,15 +130,19 @@ class ObtainTokensSyncController(
         jwt_expiration: Default access token expiration timedelta.
         jwt_refresh_expiration: Default refresh token expiration timedelta.
         jwt_secret: Alternative token secret for signing.
-            By default uses ``secret.SECRET_KEY``
+            By default uses ``secret.SECRET_KEY``.
         jwt_token_cls: Possible custom JWT token class.
 
     See also:
         https://pyjwt.readthedocs.io/en/stable
         for all the JWT terms and options explanation.
 
+    .. versionchanged:: 0.15.0
+        Now using ``@modify.lazy`` with the ability to change the spec.
+
     """
 
+    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
     responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
@@ -145,9 +150,17 @@ class ObtainTokensSyncController(
         ),
     )
 
+    @classmethod
+    def modify_spec(cls) -> ModifyAnyCallable:
+        """Lazy endpoint spec."""
+        return modify(
+            status_code=cls.response_status_code,
+            headers=NO_STORE_HEADERS,
+        )
+
     @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.OK, headers=NO_STORE_HEADERS)
+    @modify.lazy(modify_spec)
     def post(self, parsed_body: Body[_ObtainTokensT]) -> _TokensResponseT:
         """By default tokens are acquired on post."""
         return self.login(parsed_body)
@@ -207,15 +220,19 @@ class ObtainTokensAsyncController(
         jwt_expiration: Default token expiration timedelta.
         jwt_refresh_expiration: Default refresh token expiration timedelta.
         jwt_secret: Alternative token secret for signing.
-            By default uses ``secret.SECRET_KEY``
+            By default uses ``secret.SECRET_KEY``.
         jwt_token_cls: Possible custom JWT token class.
 
     See also:
         https://pyjwt.readthedocs.io/en/stable
         for all the JWT terms and options explanation.
 
+    .. versionchanged:: 0.15.0
+        Now using ``@modify.lazy`` with the ability to change the spec.
+
     """
 
+    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
     responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
@@ -223,9 +240,17 @@ class ObtainTokensAsyncController(
         ),
     )
 
+    @classmethod
+    def modify_spec(cls) -> ModifyAnyCallable:
+        """Lazy endpoint spec."""
+        return modify(
+            status_code=cls.response_status_code,
+            headers=NO_STORE_HEADERS,
+        )
+
     @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.OK, headers=NO_STORE_HEADERS)
+    @modify.lazy(modify_spec)
     async def post(self, parsed_body: Body[_ObtainTokensT]) -> _TokensResponseT:
         """By default tokens are acquired on post."""
         return await self.login(parsed_body)
@@ -313,11 +338,15 @@ class RefreshTokenSyncController(
         jwt_expiration: Default token expiration timedelta.
         jwt_refresh_expiration: Default refresh token expiration timedelta.
         jwt_secret: Alternative token secret for signing.
-            By default uses ``secret.SECRET_KEY``
+            By default uses ``secret.SECRET_KEY``.
         jwt_token_cls: Possible custom JWT token class.
+
+    .. versionchanged:: 0.15.0
+        Now using ``@modify.lazy`` with the ability to change the spec.
 
     """
 
+    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
     responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
@@ -325,9 +354,17 @@ class RefreshTokenSyncController(
         ),
     )
 
+    @classmethod
+    def modify_spec(cls) -> ModifyAnyCallable:
+        """Lazy endpoint spec for sync verify tokens controller."""
+        return modify(
+            status_code=cls.response_status_code,
+            headers=NO_STORE_HEADERS,
+        )
+
     @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.OK, headers=NO_STORE_HEADERS)
+    @modify.lazy(modify_spec)
     def post(self, parsed_body: Body[_RefreshTokensT]) -> _TokensResponseT:
         """Refresh tokens on POST."""
         return self.refresh(parsed_body)
@@ -393,11 +430,15 @@ class RefreshTokenAsyncController(
         jwt_expiration: Default token expiration timedelta.
         jwt_refresh_expiration: Default refresh token expiration timedelta.
         jwt_secret: Alternative token secret for signing.
-            By default uses ``secret.SECRET_KEY``
+            By default uses ``secret.SECRET_KEY``.
         jwt_token_cls: Possible custom JWT token class.
+
+    .. versionchanged:: 0.15.0
+        Now using ``@modify.lazy`` with the ability to change the spec.
 
     """
 
+    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
     responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
@@ -405,9 +446,17 @@ class RefreshTokenAsyncController(
         ),
     )
 
+    @classmethod
+    def modify_spec(cls) -> ModifyAnyCallable:
+        """Lazy endpoint spec for async refresh tokens controller."""
+        return modify(
+            status_code=cls.response_status_code,
+            headers=NO_STORE_HEADERS,
+        )
+
     @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.OK, headers=NO_STORE_HEADERS)
+    @modify.lazy(modify_spec)
     async def post(
         self,
         parsed_body: Body[_RefreshTokensT],
@@ -505,11 +554,15 @@ class VerifyTokenSyncController(
         jwt_expiration: Default token expiration timedelta.
         jwt_refresh_expiration: Default refresh token expiration timedelta.
         jwt_secret: Alternative token secret for signing.
-            By default uses ``secret.SECRET_KEY``
+            By default uses ``secret.SECRET_KEY``.
         jwt_token_cls: Possible custom JWT token class.
+
+    .. versionchanged:: 0.15.0
+        Now using ``@modify.lazy`` with the ability to change the spec.
 
     """
 
+    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
     responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
@@ -517,9 +570,17 @@ class VerifyTokenSyncController(
         ),
     )
 
+    @classmethod
+    def modify_spec(cls) -> ModifyAnyCallable:
+        """Lazy endpoint spec for sync verify tokens controller."""
+        return modify(
+            status_code=cls.response_status_code,
+            headers=NO_STORE_HEADERS,
+        )
+
     @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.NO_CONTENT, headers=NO_STORE_HEADERS)
+    @modify.lazy(modify_spec)
     def post(self, parsed_body: Body[_VerifyTokenT]) -> None:
         """Verify the token on POST."""
         self.verify(parsed_body)
@@ -577,11 +638,15 @@ class VerifyTokenAsyncController(
         jwt_expiration: Default token expiration timedelta.
         jwt_refresh_expiration: Default refresh token expiration timedelta.
         jwt_secret: Alternative token secret for signing.
-            By default uses ``secret.SECRET_KEY``
+            By default uses ``secret.SECRET_KEY``.
         jwt_token_cls: Possible custom JWT token class.
+
+    .. versionchanged:: 0.15.0
+        Now using ``@modify.lazy`` with the ability to change the spec.
 
     """
 
+    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
     responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
@@ -589,9 +654,17 @@ class VerifyTokenAsyncController(
         ),
     )
 
+    @classmethod
+    def modify_spec(cls) -> ModifyAnyCallable:
+        """Lazy endpoint spec for async verify tokens controller."""
+        return modify(
+            status_code=cls.response_status_code,
+            headers=NO_STORE_HEADERS,
+        )
+
     @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.NO_CONTENT, headers=NO_STORE_HEADERS)
+    @modify.lazy(modify_spec)
     async def post(self, parsed_body: Body[_VerifyTokenT]) -> None:
         """Verify the token on POST."""
         await self.verify(parsed_body)

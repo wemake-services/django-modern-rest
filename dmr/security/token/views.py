@@ -16,6 +16,7 @@ from typing_extensions import Sentinel, TypedDict, TypeVar
 
 from dmr import Body, Controller, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
+from dmr.endpoint import ModifyAnyCallable
 from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
 from dmr.security.base import NO_STORE_HEADERS
@@ -86,10 +87,14 @@ class ObtainTokenSyncController(
         token_expiration: Default token expiration.
 
     .. versionadded:: 0.12.0
+    .. versionchanged:: 0.15.0
+        Now using ``@modify.lazy`` with the ability to change the spec.
+
     """
 
     token_cls: type[TokenLikeSync[_UserT]]
 
+    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
     responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
@@ -97,9 +102,17 @@ class ObtainTokenSyncController(
         ),
     )
 
+    @classmethod
+    def modify_spec(cls) -> ModifyAnyCallable:
+        """Lazy endpoint spec."""
+        return modify(
+            status_code=cls.response_status_code,
+            headers=NO_STORE_HEADERS,
+        )
+
     @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.OK, headers=NO_STORE_HEADERS)
+    @modify.lazy(modify_spec)
     def post(self, parsed_body: Body[_ObtainTokenT]) -> _TokenResponseT:
         """By default tokens are acquired on post."""
         return self.login(parsed_body)
@@ -190,16 +203,28 @@ class ObtainTokenAsyncController(
             Defaults to ``sha256``.
 
     .. versionadded:: 0.12.0
+    .. versionchanged:: 0.15.0
+        Now using ``@modify.lazy`` with the ability to change the spec.
+
     """
 
     token_cls: type[TokenLikeAsync[_UserT]]
 
+    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
     responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
         ),
     )
+
+    @classmethod
+    def modify_spec(cls) -> ModifyAnyCallable:
+        """Lazy endpoint spec."""
+        return modify(
+            status_code=cls.response_status_code,
+            headers=NO_STORE_HEADERS,
+        )
 
     @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
