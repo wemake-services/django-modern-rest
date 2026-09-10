@@ -54,6 +54,41 @@ router = Router(
             views.ControllerWithCookieJWTAsyncAuth.as_view(),
             name='jwt_cookie_async_auth',
         ),
+        path(
+            'jwt-cookie-obtain-sync/',
+            views.CookieObtainSyncController.as_view(),
+            name='jwt_cookie_obtain_sync',
+        ),
+        path(
+            'jwt-cookie-obtain-async/',
+            views.CookieObtainAsyncController.as_view(),
+            name='jwt_cookie_obtain_async',
+        ),
+        path(
+            'jwt-cookie-obtain-body/',
+            views.CookieObtainWithBodySyncController.as_view(),
+            name='jwt_cookie_obtain_body',
+        ),
+        path(
+            'jwt-cookie-refresh-sync/',
+            views.CookieRefreshSyncController.as_view(),
+            name='jwt_cookie_refresh_sync',
+        ),
+        path(
+            'jwt-cookie-refresh-async/',
+            views.CookieRefreshAsyncController.as_view(),
+            name='jwt_cookie_refresh_async',
+        ),
+        path(
+            'jwt-cookie-logout-sync/',
+            views.CookieLogoutSyncView.as_view(),
+            name='jwt_cookie_logout_sync',
+        ),
+        path(
+            'jwt-cookie-logout-async/',
+            views.CookieLogoutAsyncView.as_view(),
+            name='jwt_cookie_logout_async',
+        ),
     ],
     tags=['jwt_auth'],
 )

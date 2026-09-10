@@ -96,6 +96,21 @@ it is required to describe the set cookies with
   :linenos:
   :emphasize-lines: 23-24
 
+.. tip::
+
+  A response cookie must match its spec exactly, so keeping the flags
+  in two places is a source of bugs. Build the cookie from its spec with
+  :meth:`NewCookie.from_spec <dmr.cookies.NewCookie.from_spec>`
+  when only the value is known in runtime:
+
+  .. code:: python
+
+    >>> from dmr import CookieSpec, NewCookie
+
+    >>> session_spec = CookieSpec(httponly=True, secure=True)
+    >>> NewCookie.from_spec(session_spec, value='abc')
+    NewCookie(path='/', max_age=None, ..., value='abc')
+
 The last important thing about cookies
 is :attr:`~dmr.cookies.CookieSpec.skip_validation` attribute.
 It is used to describe cookies that:

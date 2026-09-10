@@ -296,37 +296,150 @@ On any validation failure it returns ``401 Unauthorized``.
   :language: python
 
 
+.. _issuing-tokens-as-cookies:
+
 Issuing tokens as cookies
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :class:`~dmr.security.jwt.auth.CookieJWTSyncAuth`
 and :class:`~dmr.security.jwt.auth.CookieJWTAsyncAuth`
-read tokens,
-but something has to write them first.
+read tokens, and these :ref:`reusable-controllers` write them.
+They are the cookie counterparts of the controllers above:
+same jwt settings, same hooks, but the tokens end up
+in ``Set-Cookie`` instead of the response body.
 
-.. todo::
+1. :class:`~dmr.security.jwt.views.CookieObtainTokensSyncController`
+   authenticates the user and sets both cookies
+2. :class:`~dmr.security.jwt.views.CookieRefreshTokensSyncController`
+   reads the refresh cookie and rotates both cookies
+3. :class:`~dmr.security.jwt.views.CookieLogoutSyncController`
+   sends both cookies back empty and already expired
 
-  Provide a reusable controller that issues jwt tokens as cookies,
-  the same way :class:`~dmr.security.jwt.views.ObtainTokensSyncController`
-  issues them in the response body.
-  Until then we deliberately ship no example here,
-  because getting the cookie flags right is the whole point
-  and an example is too easy to copy incorrectly.
+Every one of them has an ``Async`` version as well.
+
+.. tabs::
+
+  .. tab:: Obtain
+
+    .. literalinclude:: /examples/auth/jwt/jwt_cookie_obtain.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: Refresh
+
+    Rotating tokens takes no request body at all:
+    the browser sends the refresh cookie on its own.
+
+    .. literalinclude:: /examples/auth/jwt/jwt_cookie_refresh.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: Log out
+
+    .. literalinclude:: /examples/auth/jwt/jwt_cookie_logout.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+``jwt_refresh_cookie_path`` is the only required setting,
+and it has no default on purpose:
+it scopes the refresh cookie to your refresh endpoint,
+so the refresh token is not sent with any other request.
+Pass ``'/'`` if you really want it everywhere.
+
+Everything else already has a safe default:
+
+.. list-table::
+  :header-rows: 1
+  :widths: 34 22 44
+
+  * - Attribute
+    - Default
+    - What it does
+  * - ``jwt_access_cookie``
+    - ``'access_token'``
+    - Name of the access token cookie, must match ``cookie_name``
+      of the auth class that reads it
+  * - ``jwt_refresh_cookie``
+    - ``'refresh_token'``
+    - Name of the refresh token cookie
+  * - ``jwt_access_cookie_path``
+    - ``'/'``
+    - ``path`` of the access token cookie
+  * - ``jwt_refresh_cookie_path``
+    - required
+    - ``path`` of the refresh token cookie
+  * - ``jwt_cookie_domain``
+    - ``None``
+    - ``domain`` of both cookies
+  * - ``jwt_cookie_secure``
+    - ``True``
+    - Only send both cookies over https
+  * - ``jwt_cookie_httponly``
+    - ``True``
+    - Hide both cookies from javascript
+  * - ``jwt_cookie_samesite``
+    - ``'lax'``
+    - ``samesite`` policy of both cookies
+  * - ``jwt_ensure_csrf``
+    - ``True``
+    - Check CSRF on refresh and logout
+
+The cookies live exactly as long as the tokens inside them:
+``max-age`` comes from ``jwt_expiration``
+and ``jwt_refresh_expiration``.
 
 .. danger::
 
-  Always set ``httponly=True`` and ``secure=True`` on these cookies.
+  ``httponly=True`` and ``secure=True`` are the whole point of this flow.
   Without ``httponly`` any XSS on your pages can read the token,
   and without ``secure`` it can leak over plain HTTP.
+  Only weaken ``samesite`` to ``'none'``
+  when your frontend really is on another site.
 
-  Prefer ``samesite='strict'`` (or at least ``'lax'``)
-  and scope the refresh token to the refresh endpoint's ``path``,
-  so it is never sent to the rest of your API.
+There is no response body by default: the tokens are already in the cookies,
+and sending them in the body as well would hand them
+to any script on the page. When you do need a body,
+pass its type as the last type argument and change the status code:
 
-To log the user out, set the same cookies to an empty value
-with ``max_age=0``, which tells the browser to drop them right away.
-Blocklisting the access token on logout is a good idea too,
-see :ref:`the section below <blocklisting-tokens>`.
+.. code:: python
+
+  class ObtainCookiesController(
+      CookieObtainTokensSyncController[
+          PydanticSerializer,
+          ObtainTokensPayload,
+          UserModel,  # response body type
+      ],
+  ):
+      response_status_code = HTTPStatus.OK
+      jwt_refresh_cookie_path = '/api/auth/refresh/'
+
+      @override
+      def make_api_response(self) -> UserModel: ...
+
+CSRF and logout
+^^^^^^^^^^^^^^^
+
+Refresh and logout act on cookies alone, and browsers send cookies
+on their own. So both endpoints run the same CSRF check
+that :class:`~dmr.security.jwt.auth.CookieJWTSyncAuth` runs,
+and both document the ``403`` response it can raise.
+The login endpoint does not: it needs credentials in the body,
+and it issues a fresh CSRF token for the frontend to use
+on every request after it.
+
+Logging out is transport-only by default: the cookies are dropped,
+but a token that leaked before the logout stays valid until it expires.
+Override
+:meth:`~dmr.security.jwt.views.CookieLogoutSyncController.revoke_tokens`
+to also blocklist it, see :ref:`blocklisting-tokens`:
+
+.. literalinclude:: /examples/auth/jwt/jwt_cookie_logout_blocklist.py
+  :caption: views.py
+  :linenos:
+  :language: python
 
 
 .. _blocklisting-tokens:
@@ -506,6 +619,27 @@ Pre-defined views to fetch JWT tokens
 .. autoclass:: dmr.security.jwt.views.VerifyTokenPayload
   :members:
   :show-inheritance:
+
+Pre-defined views to issue JWT tokens as cookies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: dmr.security.jwt.views.CookieObtainTokensSyncController
+  :members: post, login, convert_auth_payload, make_api_response, issue_cookies, access_cookie_spec, refresh_cookie_spec, rotate_csrf_token, create_jwt_token, make_jwt_id
+
+.. autoclass:: dmr.security.jwt.views.CookieObtainTokensAsyncController
+  :members: post, login, convert_auth_payload, make_api_response, issue_cookies, access_cookie_spec, refresh_cookie_spec, rotate_csrf_token, create_jwt_token, make_jwt_id
+
+.. autoclass:: dmr.security.jwt.views.CookieRefreshTokensSyncController
+  :members: post, refresh, get_user, check_auth, make_api_response, issue_cookies, check_csrf, create_jwt_token, make_jwt_id
+
+.. autoclass:: dmr.security.jwt.views.CookieRefreshTokensAsyncController
+  :members: post, refresh, get_user, check_auth, make_api_response, issue_cookies, check_csrf, create_jwt_token, make_jwt_id
+
+.. autoclass:: dmr.security.jwt.views.CookieLogoutSyncController
+  :members: post, logout, revoke_tokens, make_api_response, discard_cookies, check_csrf
+
+.. autoclass:: dmr.security.jwt.views.CookieLogoutAsyncController
+  :members: post, logout, revoke_tokens, make_api_response, discard_cookies, check_csrf
 
 Blocklist app
 ~~~~~~~~~~~~~

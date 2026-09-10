@@ -154,6 +154,7 @@ nitpick_ignore = [
     (_PY_CLASS, 'dmr.security.jwt.views._RefreshTokensT'),
     (_PY_CLASS, 'dmr.security.jwt.views._VerifyTokenT'),
     (_PY_CLASS, 'dmr.security.jwt.views._TokensResponseT'),
+    (_PY_CLASS, 'dmr.security.jwt.views._CookieResponseT'),
     (
         _PY_CLASS,
         'dmr.security.django_session.views._RequestModelT',

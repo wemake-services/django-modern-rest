@@ -110,18 +110,29 @@ class CookieSpec(_BaseCookie):
         for field in dataclasses.fields(self):
             if field.name in self._extra_fields:
                 continue
-            if field.name == 'expires':
-                # It is relative to the current time, can't check it.
-                namespace[field.name] = other[field.name]
-                continue
-            field_name = 'max-age' if field.name == 'max_age' else field.name
-            namespace[field_name] = getattr(self, field.name) or ''
+            field_name, field_value = self._morsel_field(field.name, other)
+            namespace[field_name] = field_value
 
         return cookie[other.key] == other
 
     def to_spec(self) -> 'CookieSpec':
         """API for compatibility with ``NewCookie``."""
         return self
+
+    def _morsel_field(
+        self,
+        field_name: str,
+        other: Morsel[str],
+    ) -> tuple[str, Any]:
+        if field_name == 'expires':
+            # It is relative to the current time, can't check it.
+            return field_name, other[field_name]
+        if field_name == 'max_age':
+            # `0` is a real value here: it tells the browser to drop
+            # the cookie right away. So, unlike all the other fields,
+            # we cannot treat it as a missing one.
+            return 'max-age', '' if self.max_age is None else self.max_age
+        return field_name, getattr(self, field_name) or ''
 
 
 @final
@@ -152,6 +163,28 @@ class NewCookie(_BaseCookie):
     is_actionable: ClassVar[Literal[True]] = True
 
     value: str  # noqa: WPS110
+
+    @classmethod
+    def from_spec(cls, spec: CookieSpec, *, value: str) -> 'NewCookie':  # noqa: WPS110
+        """
+        Create a cookie with *value* that matches the given *spec*.
+
+        Use it when the cookie is described by ``@validate``,
+        but its value is only known in runtime.
+        Copying the flags by hand would mean two places to keep in sync,
+        and a response cookie that does not match its spec
+        is a validation error.
+
+        .. versionadded:: 0.15.0
+        """
+        return cls(
+            value=value,
+            **{
+                field.name: getattr(spec, field.name)
+                for field in dataclasses.fields(spec)
+                if field.name not in spec._extra_fields  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
+            },
+        )
 
     def to_spec(self) -> CookieSpec:
         """Converts the modification to spec."""

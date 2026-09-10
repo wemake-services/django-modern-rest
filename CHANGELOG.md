@@ -89,6 +89,22 @@ of requirements for an API to count as public.
   is how you change or drop this behavior, #1334
 - Added `CookieJWTSyncAuth` and `CookieJWTAsyncAuth`
   to read JWT tokens from cookies instead of headers, #1193
+- Added `CookieObtainTokensSyncController`,
+  `CookieObtainTokensAsyncController`,
+  `CookieRefreshTokensSyncController`,
+  `CookieRefreshTokensAsyncController`,
+  `CookieLogoutSyncController`, and `CookieLogoutAsyncController`
+  to issue, rotate, and drop JWT tokens as cookies
+  that `CookieJWTSyncAuth` and `CookieJWTAsyncAuth` read back.
+  Cookies are `httponly`, `secure`, and `samesite='lax'` by default,
+  the refresh cookie is scoped to the refresh endpoint,
+  and refresh and logout enforce CSRF, #1290
+- Added `DEFAULT_ACCESS_COOKIE` and `DEFAULT_REFRESH_COOKIE` constants
+  to `dmr.security.jwt.auth.cookie`, they are the default cookie names
+  of both the cookie auth and the cookie views, #1290
+- Added `NewCookie.from_spec` to build a response cookie
+  from its `CookieSpec`, so runtime cookies of `@validate` endpoints
+  cannot drift away from the spec they are validated against, #1290
 - Added `HeaderJWTSyncAuth` and `HeaderJWTAsyncAuth`,
   `JWTSyncAuth` and `JWTAsyncAuth` are kept as their aliases, #1193
 - Added `XSessionTokenSyncAuth` and `XSessionTokenAsyncAuth`
@@ -133,6 +149,12 @@ of requirements for an API to count as public.
 
 ### Bugfixes
 
+- Fixed `CookieSpec(max_age=0)` never matching the response cookie
+  it describes, `0` was treated as a missing value.
+  It is how a cookie is dropped, so it could not be described at all, #1290
+- Fixed `PydanticFastSerializer` failing to validate an empty response body,
+  so `@validate` endpoints that return `204` with it
+  raised a serialization error instead of the response, #1290
 - Fixed `@modify` and `@validate` typing: passing async `auth`
   or `throttling` to a sync endpoint
   (and sync ones to an async endpoint) is now a type error,
