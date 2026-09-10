@@ -1,10 +1,11 @@
 import json
 from http import HTTPStatus
-from typing import ClassVar, Generic, TypeVar, override
+from typing import ClassVar, Generic, TypeVar
 
 import pydantic
 from django.http import HttpResponse
 from faker import Faker
+from typing_extensions import override
 
 from dmr import Body, Controller, ResponseSpec, modify, validate
 from dmr.endpoint import ModifyAnyCallable, ValidateAnyCallable
