@@ -219,7 +219,7 @@ def _parse_quality(qparam: str) -> int:
 _token: Final = r"([\w!#$%&'*+\-.^_`|~]+)"  # noqa: S105
 _quoted: Final = r'"([^"]*)"'
 _param_re: Final = re.compile(rf';\s*{_token}=(?:{_token}|{_quoted})', re.ASCII)
-_escaped_quote: Final = '\\"'
+_escaped_quote: Final = r'\"'
 _firefox_quote_escape: Final = re.compile(r'\\"(?!; |\s*$)')
 
 

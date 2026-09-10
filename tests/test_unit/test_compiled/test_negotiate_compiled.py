@@ -46,9 +46,9 @@ def clean_modules() -> _CleanModules:
         ('text/plain;p=test', ['text/plain;p=test'], 'text/plain;p=test'),
         # Escaped quotes in params are unescaped before matching:
         (
-            'text/plain;p="a\\"b"',
-            ['text/plain;p="a\\"b"'],
-            'text/plain;p="a\\"b"',
+            r'text/plain;p="a\"b"',
+            [r'text/plain;p="a\"b"'],
+            r'text/plain;p="a\"b"',
         ),
         ('text/plain', ['text/*'], 'text/plain'),
         ('text/html', ['*/*'], 'text/html'),
@@ -164,7 +164,7 @@ def test_accept_correct_type() -> None:  # pragma: no cover
         ('*/*', 'text/html', True),
         ('text/plain;p=test', 'text/plain;p=test', True),
         # Escaped quotes in params are unescaped before matching:
-        ('text/plain;p="a\\"b"', 'text/plain;p="a\\"b"', True),
+        (r'text/plain;p="a\"b"', r'text/plain;p="a\"b"', True),
         (
             'text/*;q=0.3, text/html;q=0.7, text/html;level=1, */*;q=0.5',
             'text/plain',
