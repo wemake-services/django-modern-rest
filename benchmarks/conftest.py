@@ -1,21 +1,23 @@
 import sys
-from collections.abc import Callable, Generator, Set
+from collections.abc import Generator, Set
 from contextlib import AbstractContextManager, contextmanager
 from types import ModuleType
-from typing import Final, TypeAlias
+from typing import Final, Protocol
 
 import pytest
-
-CleanModules: TypeAlias = Callable[
-    ...,
-    AbstractContextManager[dict[str, ModuleType]],
-]
 
 _COMPILED_MODULES: Final = frozenset((
     'dmr.envs',
     'dmr.compiled',
     'dmr._compiled',
 ))
+
+
+class CleanModules(Protocol):
+    def __call__(
+        self,
+        names: Set[str] = ...,
+    ) -> AbstractContextManager[dict[str, ModuleType]]: ...
 
 
 @pytest.fixture

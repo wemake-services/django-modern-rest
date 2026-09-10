@@ -1,7 +1,14 @@
 import dataclasses
 import inspect
+import re
 import warnings
-from collections.abc import Callable, ItemsView, Sequence, Set
+from collections.abc import (
+    Callable,
+    ItemsView,
+    KeysView,
+    Sequence,
+    Set,
+)
 from http import HTTPMethod, HTTPStatus
 from types import NoneType
 from typing import (
@@ -51,6 +58,12 @@ from dmr.validation.payload import (
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.errors import AsyncErrorHandler, SyncErrorHandler
+
+#: Regex expression to match allowed chars in tokens
+#: For header and cookie names.
+_ALLOWED_TOKENS_PATTERN: Final = re.compile(
+    r'^[a-zA-Z0-9_!#$%\'*+\-.^`|~]+$',
+)
 
 #: HTTP headers that are connection-specific or
 #: normally managed by the server.
@@ -170,6 +183,20 @@ class _ResponseListValidator:  # noqa: WPS214
         ):
             self._check_header_name_server_managed(responses)
 
+        if (
+            HttpSpec.header_name_syntax
+            not in self.metadata.no_validate_http_spec
+        ):
+            self._check_modification_header_syntax()
+            self._check_responses_header_syntax(responses)
+
+        if (
+            HttpSpec.cookie_name_syntax
+            not in self.metadata.no_validate_http_spec
+        ):
+            self._check_modification_cookie_syntax()
+            self._check_response_cookie_syntax(responses)
+
         # TODO: add more checks
 
     def _check_empty_response_body(
@@ -212,11 +239,103 @@ class _ResponseListValidator:  # noqa: WPS214
                     f'from endpoint {endpoint_name!r}.',
                 )
 
+    def _check_responses_header_syntax(
+        self,
+        responses: list[ResponseSpec],
+    ) -> None:
+
+        for response in responses:
+            if not response.headers:
+                continue
+
+            invalid_header = self._get_invalid_header(
+                response.headers.keys(),
+            )
+
+            if invalid_header:
+                raise EndpointMetadataError(
+                    f'Header name {invalid_header!r} is not '
+                    f'following http spec.',
+                )
+
+    def _check_modification_header_syntax(
+        self,
+    ) -> None:
+        modification = self.metadata.modification
+
+        if not modification or not modification.headers:
+            return
+
+        invalid_header = self._get_invalid_header(
+            modification.headers.keys(),
+        )
+
+        if invalid_header:
+            raise EndpointMetadataError(
+                f'Header name {invalid_header!r} is not following http spec.',
+            )
+
+    def _check_modification_cookie_syntax(
+        self,
+    ) -> None:
+
+        modification = self.metadata.modification
+
+        if not modification or not modification.cookies:
+            return
+
+        invalid_cookie = self._get_invalid_cookie(
+            modification.cookies.keys(),
+        )
+
+        if invalid_cookie:
+            raise EndpointMetadataError(
+                f'Cookie name {invalid_cookie!r} is not following http spec.',
+            )
+
+    def _check_response_cookie_syntax(
+        self,
+        responses: list[ResponseSpec],
+    ) -> None:
+        for response in responses:
+            if not response.cookies:
+                continue
+
+            invalid_cookie = self._get_invalid_cookie(
+                response.cookies.keys(),
+            )
+
+            if invalid_cookie:
+                raise EndpointMetadataError(
+                    f'Cookie name {invalid_cookie!r} is '
+                    f'not following http spec.',
+                )
+
     def _convert_responses(
         self,
         all_responses: list[ResponseSpec],
     ) -> dict[HTTPStatus, ResponseSpec]:
         return {resp.status_code: resp for resp in all_responses}
+
+    def _get_invalid_header(
+        self,
+        header_names: KeysView[str],
+    ) -> str | None:
+        for header_name in header_names:
+            if not _ALLOWED_TOKENS_PATTERN.match(header_name):
+                return header_name
+
+        return None
+
+    def _get_invalid_cookie(
+        self,
+        cookie_names: KeysView[str],
+    ) -> str | None:
+        for cookie_name in cookie_names:
+            if not _ALLOWED_TOKENS_PATTERN.match(cookie_name):
+                return cookie_name
+
+        return None
 
     def _get_forbidden_header(
         self,

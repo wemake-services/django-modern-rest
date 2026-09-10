@@ -9,7 +9,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-07-29 16:42+0300\n"
 "PO-Revision-Date: 2026-04-13 19:20+0500\n"
-"Last-Translator: \n"
+"Last-Translator: Abduaziz Ziyodov\n"
 "Language-Team: Uzbek\n"
 "Language: uz\n"
 "MIME-Version: 1.0\n"
@@ -17,102 +17,126 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
+#: components.py:53
 #, python-brace-format
 msgid ""
 "Path {cls} with field_model={field_model} does not allow unnamed path "
 "parameters args={args}"
 msgstr ""
-"field_model={field_model} bilan {cls} yo'li nomsiz path parametrlari "
-"args={args} ga ruxsat bermaydi"
+"field_model={field_model} bilan {cls} yo'li, nomsiz yo'l parametrlariga "
+"ruxsat bermaydi args={args}"
 
+#: components.py:58
 #, python-brace-format
 msgid ""
 "Trying to parse files with {parser_name} that does not support "
 "SupportsFileParsing protocol"
 msgstr ""
-"SupportsFileParsing protokolini qo'llamaydigan {parser_name} yordamida "
-"fayllarni tahlil qilishga urinish"
+"SupportsFileParsing protokolini qo'llab-quvvatlamaydigan {parser_name} parser'i yordamida "
+"fayllarni tahlil qilishga urinilmoqda"
 
+#: controller.py:40
 #, python-brace-format
 msgid "Method {method} is not allowed, allowed: {allowed}"
 msgstr "{method} metodiga ruxsat berilmagan, ruxsat etilganlari: {allowed}"
 
+#: exceptions.py:10
 msgid "Not authenticated"
-msgstr "Autentifikatsiyadan o'tilmagan"
+msgstr "Autentifikatsiya qilinmagan"
 
+#: exceptions.py:11
 msgid "Too many requests"
 msgstr "So'rovlar soni juda ko'p"
 
+#: exceptions.py:49
 msgid "Internal server error"
-msgstr "Serverning ichki xatosi"
+msgstr "Ichki server xatosi"
 
+#: internal/csrf.py:13
 #, python-brace-format
 msgid "CSRF Failed: {reason}"
-msgstr "CSRF muvaffaqiyatsiz tugadi: {reason}"
+msgstr "CSRF tekshiruvi muvaffaqiyatsiz tugadi: {reason}"
 
+#: internal/django.py:48
 msgid ""
 "HTTP requests with the 'application/x-www-form-urlencoded' content type must "
 "be UTF-8 encoded."
 msgstr ""
-"'application/x-www-form-urlencoded' content type ga ega HTTP so'rovlari "
-"UTF-8 da kodlangan bo'lishi kerak."
+"'application/x-www-form-urlencoded' kontent turiga ega HTTP so'rovlar "
+"UTF-8 orqali kodlangan bo'lishi kerak."
 
+#: internal/negotiation.py:20
 #, python-brace-format
 msgid ""
 "Negotiated renderer {renderer_type} does not match returned content-type "
 "{content_type}"
 msgstr ""
+"Tanlangan renderchi {renderer_type} qaytarilgan {content_type} kontent turiga mos kelmaydi "
 
+#: internal/negotiation.py:25
 #, python-brace-format
 msgid ""
 "Cannot serialize response body with accepted types {accepted_types}, "
 "supported={supported}"
 msgstr ""
-"Response body ni qabul qilingan {accepted_types} turlari bilan "
-"serializatsiya qilib bo'lmaydi, qo'llab-quvvatlanadiganlari: {supported}"
+"Javob matnini kelishilgan {accepted_types} turlari bilan "
+"serializatsiya qilib bo'lmaydi, qo'llab-quvvatlanganlari: {supported}"
 
+#: negotiation.py:28
 #, python-brace-format
 msgid ""
 "Cannot parse request body with content type {content_type}, "
 "expected={expected}"
 msgstr ""
-"{content_type} content type li request body ni parse qilib bo'lmaydi, "
-"kutilgani: {expected}"
+"{content_type} kontent turiga ega so'rov matnini tahlil qilib bo'lmadi, "
+"kutilgan edi: {expected}"
 
+#: security/jwt/blocklist/models.py:36
 msgid "BlocklistedJWToken"
 msgstr "Bloklangan JWToken"
 
+#: security/jwt/blocklist/models.py:37
 msgid "BlocklistedJWTokens"
 msgstr "Bloklangan JWT tokenlar"
 
+#: security/token/app/models.py:45
 msgid "Name"
-msgstr ""
+msgstr "Nomi"
 
+#: security/token/app/models.py:50
 msgid "Token hash"
-msgstr ""
+msgstr "Token xesh"
 
+#: security/token/app/models.py:55
 msgid "Expires at"
-msgstr ""
+msgstr "Muddati"
 
+#: security/token/app/models.py:60
 msgid "Revoked at"
-msgstr ""
+msgstr "Bekor qilingan vaqti"
 
+#: security/token/app/models.py:65
 msgid "Last used at"
-msgstr ""
+msgstr "Oxirgi marotaba foydalanilgan vaqti"
 
+#: security/token/app/models.py:69
 msgid "Created at"
-msgstr ""
+msgstr "Yaratilgan vaqti"
 
+#: security/token/app/models.py:73
 msgid "Updated at"
-msgstr ""
+msgstr "Yangilangan vaqti"
 
+#: security/token/app/models.py:78
 msgid "Token"
-msgstr ""
+msgstr "Token"
 
+#: security/token/app/models.py:79
 msgid "Tokens"
-msgstr ""
+msgstr "Tokenlar"
 
+#: serializer.py:17
 #, python-brace-format
 msgid "Value {value} of type {type} is not supported for {target_type}"
 msgstr ""
-"{type} turidagi {value} qiymati {target_type} uchun qo'llab-quvvatlanmaydi"
+"{type} turidagi {value} qiymati, {target_type} uchun qo'llab-quvvatlanmaydi"

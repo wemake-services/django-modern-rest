@@ -118,6 +118,10 @@ of requirements for an API to count as public.
   and `JWToken.decode` about 1.15x faster.
   Note that only json-native values in `JWToken.extras` are guaranteed
   to be encoded identically with and without `msgspec`, #1390
+- Added `BaseThrottleSyncBackend.lock` and `BaseThrottleAsyncBackend.lock`
+  to control the in-process lock for `incr`,
+  `SyncRedis` and `AsyncRedis` skip it because Lua scripts are atomic, #1339
+- `OpenAPI.convert()` now caches and returns the same dictionary per instance.
 
 ### Bugfixes
 
@@ -172,7 +176,10 @@ of requirements for an API to count as public.
   instead of failing with a database `IntegrityError`, #1322
 - JWT authentication now rejects refresh tokens when access tokens are expected,
   #1320
-- Fixed a bug when request data might be copied in `parse_as_post` #1328
+- Fixed a bug when request data might be copied in `parse_as_post`, #1328
+- Fixed postponed annotation resolution for wrapped endpoint functions
+  whose decorators are defined in another module, #1417
+- Detailed CSRF failure reasons are now included in error responses only in debug mode, #1332
 
 ### Misc
 
@@ -199,8 +206,7 @@ of requirements for an API to count as public.
 ### Features
 
 - Added initial `ty` support, #1257
-- Added `header_name_server_managed` to `HttpSpec` to restrict server-managed headers
-  in responses, #1341
+- Added new checks for HTTP spec validation, #1341
 - Added support of reusable controllers with `@validate`, #1259
 - Added default value to `prefix` parameter in `Router.__init__`, #1267
 - Added `to_urlpatterns` function to include `Router`
