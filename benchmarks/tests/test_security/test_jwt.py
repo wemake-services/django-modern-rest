@@ -22,11 +22,7 @@ _JWT_MODULES: Final = frozenset((
 
 _ALGORITHM: Final = 'HS256'
 _SECRET: Final = secrets.token_hex()
-_REPEAT: Final = 1000
-
-#: A single encode / decode is too fast to measure reliably,
-#: so every benchmark below repeats its call this many times.
-_REPEATS: Final = range(1000)
+_REPEAT: Final = 100
 
 
 def _make_payload() -> dict[str, Any]:
