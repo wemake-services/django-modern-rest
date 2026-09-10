@@ -13,6 +13,7 @@ from typing_extensions import TypedDict
 
 from dmr import Body, Controller, CookieSpec, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
+from dmr.endpoint import ModifyAnyCallable
 from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
 from dmr.security.base import NO_STORE_HEADERS
@@ -53,8 +54,12 @@ class DjangoSessionSyncController(
     See also:
         https://docs.djangoproject.com/en/stable/topics/auth/
 
+    .. versionchanged:: 0.15.0
+        Now using ``@modify.lazy`` with the ability to change the spec.
+
     """
 
+    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
     responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
@@ -62,25 +67,30 @@ class DjangoSessionSyncController(
         ),
     )
 
+    @classmethod
+    def modify_spec(cls) -> ModifyAnyCallable:
+        """Lazy endpoint spec."""
+        return modify(
+            status_code=cls.response_status_code,
+            headers=NO_STORE_HEADERS,
+            cookies={
+                settings.SESSION_COOKIE_NAME: CookieSpec(skip_validation=True),
+                **(
+                    {}
+                    if settings.CSRF_USE_SESSIONS
+                    else {
+                        settings.CSRF_COOKIE_NAME: CookieSpec(
+                            skip_validation=True,
+                            description='CSRF protection.',
+                        ),
+                    }
+                ),
+            },
+        )
+
     @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(
-        status_code=HTTPStatus.OK,
-        headers=NO_STORE_HEADERS,
-        cookies={
-            settings.SESSION_COOKIE_NAME: CookieSpec(skip_validation=True),
-            **(
-                {}
-                if settings.CSRF_USE_SESSIONS
-                else {
-                    settings.CSRF_COOKIE_NAME: CookieSpec(
-                        skip_validation=True,
-                        description='CSRF protection.',
-                    ),
-                }
-            ),
-        },
-    )
+    @modify.lazy(modify_spec)
     def post(self, parsed_body: Body[_RequestModelT]) -> _ResponseT:
         """By default cookies are acquired on post."""
         return self.login(parsed_body)
@@ -128,8 +138,12 @@ class DjangoSessionAsyncController(
     See also:
         https://docs.djangoproject.com/en/stable/topics/auth/
 
+    .. versionchanged:: 0.15.0
+        Now using ``@modify.lazy`` with the ability to change the spec.
+
     """
 
+    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
     responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
@@ -137,25 +151,30 @@ class DjangoSessionAsyncController(
         ),
     )
 
+    @classmethod
+    def modify_spec(cls) -> ModifyAnyCallable:
+        """Lazy endpoint spec."""
+        return modify(
+            status_code=cls.response_status_code,
+            headers=NO_STORE_HEADERS,
+            cookies={
+                settings.SESSION_COOKIE_NAME: CookieSpec(skip_validation=True),
+                **(
+                    {}
+                    if settings.CSRF_USE_SESSIONS
+                    else {
+                        settings.CSRF_COOKIE_NAME: CookieSpec(
+                            skip_validation=True,
+                            description='CSRF protection.',
+                        ),
+                    }
+                ),
+            },
+        )
+
     @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(
-        status_code=HTTPStatus.OK,
-        headers=NO_STORE_HEADERS,
-        cookies={
-            settings.SESSION_COOKIE_NAME: CookieSpec(skip_validation=True),
-            **(
-                {}
-                if settings.CSRF_USE_SESSIONS
-                else {
-                    settings.CSRF_COOKIE_NAME: CookieSpec(
-                        skip_validation=True,
-                        description='CSRF protection.',
-                    ),
-                }
-            ),
-        },
-    )
+    @modify.lazy(modify_spec)
     async def post(self, parsed_body: Body[_RequestModelT]) -> _ResponseT:
         """By default cookies are acquired on post."""
         return await self.login(parsed_body)
