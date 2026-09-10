@@ -59,10 +59,6 @@ _AnyResponseT = TypeVar(
 _SyncResponseT = TypeVar('_SyncResponseT', bound=HttpResponseBase)
 _AsyncResponseT = TypeVar('_AsyncResponseT', bound=Awaitable[HttpResponseBase])
 
-_ThrottlingDef: TypeAlias = (
-    Sequence['AsyncThrottle'] | Sequence['SyncThrottle'] | None
-)
-
 
 # Re-exported API:
 
@@ -412,7 +408,9 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         renderers: Sequence[Renderer] | None = None,
         validate_negotiation: bool | None = None,
         auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-        throttling: _ThrottlingDef = (),
+        throttling: (
+            Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None
+        ) = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: _StrOrPromise | None = None,
         description: _StrOrPromise | None = None,
@@ -778,7 +776,9 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         renderers: Sequence[Renderer] | None = None,
         validate_negotiation: bool | None = None,
         auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
-        throttling: _ThrottlingDef = (),
+        throttling: (
+            Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None
+        ) = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: _StrOrPromise | None = None,
         description: _StrOrPromise | None = None,

@@ -260,10 +260,10 @@ Pydantic
 .. autoclass:: dmr.plugins.pydantic.PydanticFastSerializer
   :members:
 
-.. autoclass:: dmr.plugins.pydantic.PydanticEndpointOptimizer
+.. autoclass:: dmr.plugins.pydantic.serializer.PydanticEndpointOptimizer
   :members:
 
-.. autoclass:: dmr.plugins.pydantic.PydanticSchemaGenerator
+.. autoclass:: dmr.plugins.pydantic.schema.PydanticSchemaGenerator
   :members:
 
 .. autoclass:: dmr.plugins.pydantic.serializer.ToJsonKwargs
@@ -278,10 +278,10 @@ Msgspec
 .. autoclass:: dmr.plugins.msgspec.MsgspecSerializer
   :members:
 
-.. autoclass:: dmr.plugins.msgspec.MsgspecEndpointOptimizer
+.. autoclass:: dmr.plugins.msgspec.serializer.MsgspecEndpointOptimizer
   :members:
 
-.. autoclass:: dmr.plugins.msgspec.MsgspecSchemaGenerator
+.. autoclass:: dmr.plugins.msgspec.schema.MsgspecSchemaGenerator
   :members:
 
 .. autoclass:: dmr.plugins.msgspec.serializer.ToJsonKwargs

@@ -199,10 +199,10 @@ To use the full customization, we provide:
 
 - :func:`dmr.endpoint.modify.lazy` function to work
   with :func:`~dmr.endpoint.modify`. It accepts
-  a function or a :type:`classmethod` to lazily provide a spec in the future
+  a function or a :class:`classmethod` to lazily provide a spec in the future
 - :func:`dmr.endpoint.validate.lazy` function to work
   with :func:`~dmr.endpoint.validate`. It accepts
-  a function or a :type:`classmethod` to lazily provide a spec in the future
+  a function or a :class:`classmethod` to lazily provide a spec in the future
 
 Here's how it works:
 
