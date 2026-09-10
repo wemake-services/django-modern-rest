@@ -1,7 +1,7 @@
 import datetime as dt
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, TypeAlias
 
 import pytest
 from django.conf import LazySettings
@@ -208,12 +208,15 @@ def test_refresh_of_a_deleted_user(
     assert not response.cookies
 
 
+#: Token subject, expected status, and expected cookies of the response.
+_AsyncRefreshCase: TypeAlias = tuple[str | None, HTTPStatus, set[str]]
+
 # `None` means "the real user's pk" and is the control case.
 # It is also required for coverage: on python 3.11 the lines after
 # `await` are not traced when the awaited coroutine is resumed with
 # an exception thrown in from the thread that `aget` runs in.
 # The failing cases alone would leave the assertions below unmeasured.
-_ASYNC_REFRESH_CASES: Final = (
+_ASYNC_REFRESH_CASES: Final[tuple[_AsyncRefreshCase, ...]] = (
     (None, HTTPStatus.NO_CONTENT, {'access_token', 'refresh_token'}),
     ('404', HTTPStatus.UNAUTHORIZED, set()),
 )
