@@ -68,6 +68,7 @@ def test_correct_django_session(
 
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
+    assert response.headers['Cache-Control'] == 'no-store'
     assert response.cookies.keys() == {
         settings.SESSION_COOKIE_NAME,
         settings.CSRF_COOKIE_NAME,
@@ -235,6 +236,7 @@ def test_wrong_auth_params(
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert response.headers['Content-Type'] == 'application/json'
+    assert 'Cache-Control' not in response.headers
     assert not response.cookies
     assert response.json() == snapshot({
         'detail': [{'msg': 'Not authenticated', 'type': 'security'}],

@@ -9,7 +9,7 @@ from django.http import HttpResponse
 
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticFastSerializer
-from dmr.security.jwt import JWTAsyncAuth, JWToken, JWTSyncAuth
+from dmr.security.jwt import HeaderJWTAsyncAuth, HeaderJWTSyncAuth, JWToken
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
@@ -17,18 +17,19 @@ def _encode(subject: str, secret: str) -> str:
     return JWToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
         sub=subject,
+        extras={'type': 'access'},
     ).encode(secret=secret, algorithm='HS256')
 
 
 class _SyncController(Controller[PydanticFastSerializer]):
-    auth = (JWTSyncAuth(),)
+    auth = (HeaderJWTSyncAuth(),)
 
     def get(self) -> str:
         return 'authed'
 
 
 class _AsyncController(Controller[PydanticFastSerializer]):
-    auth = (JWTAsyncAuth(),)
+    auth = (HeaderJWTAsyncAuth(),)
 
     async def get(self) -> str:
         return 'authed'
@@ -108,7 +109,7 @@ def test_sync_jwt_subject_validation_error(
     class _ValidatingController(Controller[PydanticFastSerializer]):
         # `date_joined` validates on conversion and raises
         # `ValidationError` instead of `ValueError`, same as `UUIDField`:
-        auth = (JWTSyncAuth(user_id_field='date_joined'),)
+        auth = (HeaderJWTSyncAuth(user_id_field='date_joined'),)
 
         def get(self) -> str:
             raise NotImplementedError

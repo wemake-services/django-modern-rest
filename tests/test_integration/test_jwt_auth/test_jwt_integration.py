@@ -70,6 +70,7 @@ def test_valid_auth(
     token = JWToken(
         sub=str(admin_user.pk),
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+        extras={'type': 'access'},
     ).encode(settings.SECRET_KEY, algorithm='HS256')
     response = dmr_client.post(
         url,
@@ -106,6 +107,7 @@ def test_missing_user(
     token = JWToken(
         sub='-1',
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+        extras={'type': 'access'},
     ).encode(settings.SECRET_KEY, algorithm='HS256')
     response = dmr_client.post(
         url,
@@ -144,6 +146,7 @@ def test_inactive_user(
     token = JWToken(
         sub=str(admin_user.pk),
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
+        extras={'type': 'access'},
     ).encode(settings.SECRET_KEY, algorithm='HS256')
     response = dmr_client.post(
         url,

@@ -15,6 +15,21 @@ class _BaseHeaderTokenAuth:
     header_name: str
     prefix: str
     security_scheme_name: str
+    www_authenticate: bool
+
+    @property
+    def www_authenticate_challenge(self) -> str | None:
+        """
+        Challenge naming the scheme this auth expects, like ``Bearer``.
+
+        Returns ``None`` for a custom *header_name*, because a challenge
+        can only ask the client for the ``Authorization`` header.
+        Also returns ``None`` for an empty *prefix*: without one
+        there is no scheme name to build a challenge from.
+        """
+        if not self.www_authenticate or self.header_name != 'Authorization':
+            return None
+        return self.prefix or None
 
     @property
     def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
@@ -56,13 +71,14 @@ class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, BaseTokenSyncAuth):
     .. versionadded:: 0.12.0
     """
 
-    __slots__ = ('header_name', 'prefix')
+    __slots__ = ('header_name', 'prefix', 'www_authenticate')
 
     def __init__(  # noqa: WPS211
         self,
         *,
         header_name: str = 'X-API-Token',
         prefix: str = '',
+        www_authenticate: bool = True,
         security_scheme_name: str = 'token',
         update_last_used: bool = False,
         token_secret: str | None = None,
@@ -80,6 +96,9 @@ class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, BaseTokenSyncAuth):
           Set to ``'Token'`` or ``'Bearer'`` when *header_name* is
           ``'Authorization'`` - e.g. ``prefix='Token'`` requires the client
           to send ``Authorization: Token <raw-token>``.
+        - *www_authenticate* - whether ``401`` responses advertise this auth
+          in the ``WWW-Authenticate`` header. Only has an effect when
+          *header_name* is ``'Authorization'`` and *prefix* is set.
         - *security_scheme_name* - name used in OpenAPI security scheme map.
 
         **Common configurations:**
@@ -112,6 +131,7 @@ class HeaderTokenSyncAuth(_BaseHeaderTokenAuth, BaseTokenSyncAuth):
         )
         self.header_name = header_name
         self.prefix = prefix
+        self.www_authenticate = www_authenticate
 
 
 class HeaderTokenAsyncAuth(_BaseHeaderTokenAuth, BaseTokenAsyncAuth):
@@ -121,13 +141,14 @@ class HeaderTokenAsyncAuth(_BaseHeaderTokenAuth, BaseTokenAsyncAuth):
     .. versionadded:: 0.12.0
     """
 
-    __slots__ = ('header_name', 'prefix')
+    __slots__ = ('header_name', 'prefix', 'www_authenticate')
 
     def __init__(  # noqa: WPS211
         self,
         *,
         header_name: str = 'X-API-Token',
         prefix: str = '',
+        www_authenticate: bool = True,
         security_scheme_name: str = 'token',
         update_last_used: bool = False,
         token_secret: str | None = None,
@@ -144,3 +165,4 @@ class HeaderTokenAsyncAuth(_BaseHeaderTokenAuth, BaseTokenAsyncAuth):
         )
         self.header_name = header_name
         self.prefix = prefix
+        self.www_authenticate = www_authenticate

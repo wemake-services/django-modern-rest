@@ -185,11 +185,26 @@ for `this purpose <https://docs.pydantic.dev/latest/concepts/json_schema/#implem
 
 .. note::
 
-  When creating custom event types, don't forget to validate
-  that ``id`` and ``event`` fields do not contain: ``'\x00'``,
-  ``'\n'``, and ``'\r'`` chars.
+  Custom event types are validated exactly like
+  :class:`~dmr.streaming.sse.metadata.SSEvent` is.
+  Their ``id`` and ``event`` fields are checked
+  for ``'\x00'``, ``'\n'``, and ``'\r'`` chars
+  by :func:`dmr.streaming.sse.validation.validate_event_fields`,
+  you don't have to do anything.
 
-  Use :func:`dmr.streaming.sse.validation.check_event_field` to do that.
+.. warning::
+
+  This check is a part of the events validation pipeline,
+  so it is skipped together with all the other checks
+  when ``validate_events`` is ``False``.
+
+  These two fields are rendered into the stream as-is,
+  a line break in them lets anyone who controls their value inject
+  arbitrary SSE fields into your stream.
+  So, if you turn the events validation off, make sure that ``id``
+  and ``event`` values are safe by construction.
+  You can use :func:`dmr.streaming.sse.validation.check_event_field`
+  to check a single field by hand.
 
 
 Best practices
@@ -244,6 +259,8 @@ Validation
   :show-inheritance:
 
 .. autofunction:: dmr.streaming.sse.validation.validate_event_data
+
+.. autofunction:: dmr.streaming.sse.validation.validate_event_fields
 
 .. autofunction:: dmr.streaming.sse.validation.check_event_field
 

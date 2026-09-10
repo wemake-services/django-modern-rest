@@ -8,7 +8,7 @@ from dmr import Controller, modify
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
-from dmr.security.jwt import JWTAsyncAuth
+from dmr.security.jwt import HeaderJWTAsyncAuth
 
 
 class _UserModel(pydantic.BaseModel):
@@ -41,7 +41,7 @@ def test_per_endpoint_schema(snapshot: SnapshotAssertion) -> None:
 
 
 class _PerController(Controller[PydanticSerializer]):
-    auth = (JWTAsyncAuth(),)
+    auth = (HeaderJWTAsyncAuth(),)
     semantic_responses = False
 
     async def get(self) -> _UserModel:

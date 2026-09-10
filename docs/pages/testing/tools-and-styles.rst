@@ -172,4 +172,9 @@ the test client example does.
 ``response.json()`` requires the response ``Content-Type`` to be
 ``application/json``. Inspect ``response.content`` directly for other formats.
 
+Once you have the decoded value, choose an assertion that captures its complete
+stable contract without hard-coding runtime-generated data. The
+:doc:`test assertions guide <assertions>` explains how to use
+``inline-snapshot`` and ``dirty-equals`` for both cases.
+
 .. _pytest-django: https://pytest-django.readthedocs.io/

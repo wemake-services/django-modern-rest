@@ -66,6 +66,15 @@ class _BaseXSessionTokenAuth:
         """Provides a security schema usage requirement."""
         return {self.security_scheme_name: []}
 
+    @property
+    def www_authenticate_challenge(self) -> str | None:
+        """
+        Session tokens have no challenge, so this returns ``None``.
+
+        A challenge names a scheme for the ``Authorization`` header,
+        while ``X-Session-Token`` is not an authentication scheme.
+        """
+
     def get_session_token(self, request: HttpRequest) -> str | None:
         """
         Return the raw session token for the given request.

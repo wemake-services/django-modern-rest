@@ -2,6 +2,7 @@ from typing import final
 
 import pydantic
 from django.contrib.auth.models import User
+from django.views.decorators.debug import sensitive_variables
 from typing_extensions import override
 
 from dmr import Controller
@@ -57,6 +58,7 @@ class CustomObtainTokenAsyncController(
     token_size = 64
 
     @override
+    @sensitive_variables()
     async def convert_auth_payload(
         self,
         payload: ObtainTokenPayload,

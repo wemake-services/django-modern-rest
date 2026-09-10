@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 
-class _DjangoSessionAuth(ResponseSpecProvider):
+class _DjangoSessionAuth(ResponseSpecProvider):  # noqa: WPS214
     __slots__ = ('csrf_scheme_name', 'security_scheme_name')
 
     def __init__(
@@ -57,6 +57,15 @@ class _DjangoSessionAuth(ResponseSpecProvider):
             requirement[self.csrf_scheme_name] = []
         return requirement
 
+    @property
+    def www_authenticate_challenge(self) -> str | None:
+        """
+        Session auth has no challenge to advertise, so this returns ``None``.
+
+        A challenge asks the client for the ``Authorization`` header,
+        and this auth reads the session cookie instead.
+        """
+
     @override
     def provide_response_specs(
         self,
@@ -67,7 +76,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):
         """Provides responses that can happen when user is not authed."""
         return [
             *self._add_new_response(
-                unauth_response_spec(controller_cls),
+                unauth_response_spec(controller_cls, metadata),
                 existing_responses,
             ),
             *self._add_new_response(

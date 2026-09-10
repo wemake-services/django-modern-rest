@@ -3,6 +3,7 @@ from typing import final
 
 import pydantic
 from asgiref.sync import async_to_sync
+from django.views.decorators.debug import sensitive_variables
 from typing_extensions import override
 
 from dmr import Controller
@@ -10,8 +11,8 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.jwt import (
     CookieJWTAsyncAuth,
     CookieJWTSyncAuth,
-    JWTAsyncAuth,
-    JWTSyncAuth,
+    HeaderJWTAsyncAuth,
+    HeaderJWTSyncAuth,
 )
 from dmr.security.jwt.views import (  # noqa: WPS235
     ObtainTokensAsyncController,
@@ -72,6 +73,7 @@ class ObtainAccessAndRefreshAsyncController(
     ],
 ):
     @override
+    @sensitive_variables()
     async def convert_auth_payload(
         self,
         payload: ObtainTokensPayload,
@@ -143,6 +145,7 @@ class RefreshAsyncController(
     ],
 ):
     @override
+    @sensitive_variables()
     async def convert_refresh_payload(
         self,
         payload: RefreshTokenPayload,
@@ -192,6 +195,7 @@ class VerifyAsyncController(
     ],
 ):
     @override
+    @sensitive_variables()
     async def convert_verify_payload(
         self,
         payload: VerifyTokenPayload,
@@ -209,7 +213,7 @@ class _UserOutput(pydantic.BaseModel):
 
 @final
 class ControllerWithJWTSyncAuth(Controller[PydanticSerializer]):
-    auth = (JWTSyncAuth(),)
+    auth = (HeaderJWTSyncAuth(),)
 
     def post(self) -> _UserOutput:
         return _UserOutput.model_validate(
@@ -220,7 +224,7 @@ class ControllerWithJWTSyncAuth(Controller[PydanticSerializer]):
 
 @final
 class ControllerWithJWTAsyncAuth(Controller[PydanticSerializer]):
-    auth = (JWTAsyncAuth(),)
+    auth = (HeaderJWTAsyncAuth(),)
 
     async def post(self) -> _UserOutput:
         return _UserOutput.model_validate(

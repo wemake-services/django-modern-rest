@@ -2,11 +2,14 @@ from typing import ClassVar
 
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.views.decorators.csrf import ensure_csrf_cookie
 
+from dmr.decorators import dispatch_decorator
 from dmr.openapi.views.base import OpenAPIView
 from dmr.settings import Settings, resolve_setting
 
 
+@dispatch_decorator(ensure_csrf_cookie)
 class RedocView(OpenAPIView):
     """
     View for rendering the OpenAPI schema with Redoc.

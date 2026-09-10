@@ -1,20 +1,25 @@
 import datetime as dt
 import uuid
 from abc import abstractmethod
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from http import HTTPStatus
-from typing import Any, Generic
+from typing import Any, ClassVar, Generic
 
 from django.contrib.auth import aauthenticate, authenticate
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.http import HttpRequest
-from django.views.decorators.debug import sensitive_post_parameters
+from django.views.decorators.debug import (
+    sensitive_post_parameters,
+    sensitive_variables,
+)
 from typing_extensions import Sentinel, TypedDict, TypeVar
 
 from dmr import Body, Controller, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
+from dmr.endpoint import ModifyAnyCallable
 from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
+from dmr.security.base import NO_STORE_HEADERS
 from dmr.security.token.constants import TOKEN_DEFAULT_EXPIRY
 from dmr.security.token.request import set_request_attrs
 from dmr.security.token.token import (
@@ -82,23 +87,37 @@ class ObtainTokenSyncController(
         token_expiration: Default token expiration.
 
     .. versionadded:: 0.12.0
+    .. versionchanged:: 0.15.0
+        Now using ``@modify.lazy`` with the ability to change the spec.
+
     """
 
     token_cls: type[TokenLikeSync[_UserT]]
 
-    responses = (
+    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
+    responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
         ),
     )
 
+    @classmethod
+    def modify_spec(cls) -> ModifyAnyCallable:
+        """Lazy endpoint spec."""
+        return modify(
+            status_code=cls.response_status_code,
+            headers=NO_STORE_HEADERS,
+        )
+
+    @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.OK)
+    @modify.lazy(modify_spec)
     def post(self, parsed_body: Body[_ObtainTokenT]) -> _TokenResponseT:
         """By default tokens are acquired on post."""
         return self.login(parsed_body)
 
+    @sensitive_variables()
     def login(self, parsed_body: _ObtainTokenT) -> _TokenResponseT:
         """Perform the sync login routine for user."""
         user = authenticate(
@@ -110,6 +129,7 @@ class ObtainTokenSyncController(
         self.set_request_attrs(self.request, user)
         return self.make_api_response()
 
+    @sensitive_variables()
     def issue_token(  # noqa: WPS211
         self,
         *,
@@ -183,23 +203,37 @@ class ObtainTokenAsyncController(
             Defaults to ``sha256``.
 
     .. versionadded:: 0.12.0
+    .. versionchanged:: 0.15.0
+        Now using ``@modify.lazy`` with the ability to change the spec.
+
     """
 
     token_cls: type[TokenLikeAsync[_UserT]]
 
-    responses = (
+    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
+    responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
         ),
     )
 
+    @classmethod
+    def modify_spec(cls) -> ModifyAnyCallable:
+        """Lazy endpoint spec."""
+        return modify(
+            status_code=cls.response_status_code,
+            headers=NO_STORE_HEADERS,
+        )
+
+    @sensitive_variables()
     @endpoint_decorator(sensitive_post_parameters())
-    @modify(status_code=HTTPStatus.OK)
+    @modify.lazy(modify_spec)
     async def post(self, parsed_body: Body[_ObtainTokenT]) -> _TokenResponseT:
         """By default tokens are acquired on post."""
         return await self.login(parsed_body)
 
+    @sensitive_variables()
     async def login(self, parsed_body: _ObtainTokenT) -> _TokenResponseT:
         """Perform the sync login routine for user."""
         user = await aauthenticate(
@@ -211,6 +245,7 @@ class ObtainTokenAsyncController(
         await self.set_request_attrs(self.request, user)
         return await self.make_api_response()
 
+    @sensitive_variables()
     async def issue_token(  # noqa: WPS211
         self,
         *,

@@ -64,6 +64,8 @@ def test_invalid_auth(
         'several different words',
         '12345',
         'Bearer dGVzdDpwYXNz',  # correct `test:pass` encoded, but `Bearer`
+        'basic dGVzdDpwYXNz',  # correct, but the scheme casing is wrong
+        'dGVzdDpwYXNz',  # correct, but there is no `Basic` scheme
         # `test@pass` encoded:
         'dGVzdEBwYXNz',
         'Basic dGVzdEBwYXNz',

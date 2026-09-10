@@ -1,3 +1,4 @@
+import hashlib
 import json
 from http import HTTPMethod, HTTPStatus
 from typing import Final, TypeAlias
@@ -14,6 +15,7 @@ from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
+from dmr.throttling.cache_keys import RemoteAddr
 
 _Serializes: TypeAlias = list[type[BaseSerializer]]
 serializers: Final[_Serializes] = [
@@ -381,3 +383,76 @@ def test_throttle_sync_rates(
     assert response.status_code == HTTPStatus.OK, response.headers
     assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == 'inside'
+
+
+def test_throttle_full_cache_key_is_hashed(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that full throttle cache keys are hashed."""
+    throttle = SyncThrottle(
+        5,
+        Rate.minute,
+        cache_key=RemoteAddr(name='per-ip'),
+    )
+
+    class _SyncController(Controller[PydanticSerializer]):
+        throttling = [throttle]
+
+        def get(self) -> str:  # pragma: no cover
+            return 'inside'
+
+    controller = _SyncController()
+    controller.setup(
+        dmr_rf.get('/whatever/', REMOTE_ADDR='192.0.2.1'),
+    )
+    endpoint = _SyncController.api_endpoints['GET']
+
+    raw_cache_key = '::'.join((
+        str(endpoint.metadata.operation_id),
+        endpoint.metadata.method,
+        'SyncDjangoCache',
+        'SimpleRate',
+        'RemoteAddr',
+        '192.0.2.1',
+        '5',
+        '60',
+    ))
+    expected_hash = hashlib.sha256(
+        raw_cache_key.encode('utf-8'),
+    ).hexdigest()
+
+    assert throttle.full_cache_key(endpoint, controller) == (
+        f'per-ip::{expected_hash}'  # noqa: WPS237
+    )
+
+
+def test_throttle_full_cache_key_is_unique(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures different throttle inputs produce different cache keys."""
+    throttle = SyncThrottle(
+        5,
+        Rate.minute,
+        cache_key=RemoteAddr(name='per-ip'),
+    )
+
+    class _SyncController(Controller[PydanticSerializer]):
+        throttling = [throttle]
+
+        def get(self) -> str:  # pragma: no cover
+            return 'inside'
+
+    endpoint = _SyncController.api_endpoints['GET']
+    controller = _SyncController()
+
+    controller.setup(
+        dmr_rf.get('/whatever/', REMOTE_ADDR='192.0.2.1'),
+    )
+    first_key = throttle.full_cache_key(endpoint, controller)
+
+    controller.setup(
+        dmr_rf.get('/whatever/', REMOTE_ADDR='192.0.2.2'),
+    )
+    second_key = throttle.full_cache_key(endpoint, controller)
+
+    assert first_key != second_key

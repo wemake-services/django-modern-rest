@@ -250,6 +250,11 @@ class _TestSyncAuth(SyncAuth):
     def security_requirement(self) -> SecurityRequirement:
         raise NotImplementedError
 
+    @property
+    @override
+    def www_authenticate_challenge(self) -> str | None:
+        """This auth has no challenge, so this returns ``None``."""
+
 
 class _TestAsyncAuth(AsyncAuth):
     error_message = 'from auth'
@@ -271,6 +276,11 @@ class _TestAsyncAuth(AsyncAuth):
     @override
     def security_requirement(self) -> SecurityRequirement:
         raise NotImplementedError
+
+    @property
+    @override
+    def www_authenticate_challenge(self) -> str | None:
+        """This auth has no challenge, so this returns ``None``."""
 
 
 class _ControllerWithTestSyncAuth(Controller[PydanticSerializer]):

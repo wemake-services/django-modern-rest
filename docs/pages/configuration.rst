@@ -197,6 +197,37 @@ Response handling
     to :func:`~dmr.endpoint.modify`
     and :func:`~dmr.endpoint.validate`.
 
+.. data:: dmr.settings.Settings.exclude_validate_responses
+
+  Default: ``frozenset()``
+
+  Pass any status code that you don't want to be validated,
+  even when :data:`~dmr.settings.Settings.validate_responses` is enabled.
+
+  Unlike describing a response, this does not add anything
+  to the OpenAPI schema: such responses are simply
+  returned to the client as-is.
+  See :ref:`error-responses-validation` for the details.
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> from http import HTTPStatus
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.exclude_validate_responses: {
+    ...         HTTPStatus.INTERNAL_SERVER_ERROR,
+    ...     },
+    ... }
+
+  When this value is set to ``None`` at any level,
+  this means that the value is reset.
+  For example, setting ``exclude_validate_responses=None`` on endpoint level
+  will cancel all controller and settings level values
+  and enable all validation back again.
+
+  .. versionadded:: 0.15.0
+
 .. data:: dmr.settings.Settings.semantic_responses
 
   Default: ``True``

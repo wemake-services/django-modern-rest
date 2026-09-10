@@ -1,8 +1,6 @@
 import dataclasses
 from typing import Any, Generic, Literal, Protocol, TypeVar, final, overload
 
-from dmr.streaming.sse.validation import check_event_field
-
 _DataT_co = TypeVar('_DataT_co', covariant=True)
 
 
@@ -148,6 +146,14 @@ class SSEvent(_SSEventSlots, Generic[_DataT_co]):
             It is recommended for end users to define their own types
             that will be type-safe and will have the correct schema.
 
+        .. note::
+
+            ``id`` and ``event`` contents are not checked here.
+            They are validated by
+            :func:`~dmr.streaming.sse.validation.validate_event_fields`
+            while streaming, so that ``validate_events=False``
+            can turn this check off.
+
         See also:
             https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#fields
 
@@ -165,14 +171,6 @@ class SSEvent(_SSEventSlots, Generic[_DataT_co]):
             and comment is None
         ):
             raise ValueError('At least one event field must be non-None')
-
-        # Check null byte and new lines:
-        # TODO: this also works when `validate_events` is `False`,
-        # I don't think that it is correct. When `validate_events` is `False`
-        # we need to trust the user to provide valid data and allow everything
-        # for performance reasons.
-        check_event_field(id, field_name='id')
-        check_event_field(event, field_name='event')
 
         self.data = data
         self.event = event

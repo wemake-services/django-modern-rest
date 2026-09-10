@@ -77,6 +77,15 @@
             },
             "401": {
               "description": "Raised when auth was not successful",
+              "headers": {
+                "WWW-Authenticate": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "Challenges that the client can use to authenticate this request",
+                  "required": true
+                }
+              },
               "content": {
                 "application/json": {
                   "schema": {

@@ -365,3 +365,51 @@ It’s your type-safe layer around Django’s liquid core.
   :caption: views.py
   :language: python
   :linenos:
+
+
+django-modern-schemas
+---------------------
+
+If you want to automate the schema definition part and derive your
+serializer schemas from the models you already have, you can use
+`django-modern-schemas <https://github.com/open-byte/django-modern-schemas>`_.
+
+- Generates :class:`pydantic.BaseModel` subclasses
+  from your :class:`~django.db.models.Model` definitions,
+  reusing field types, constraints, defaults, choices and relationships,
+  so things like ``max_length`` are declared once.
+- Keeps the API contract explicit: ``fields``, ``exclude`` and ``optional``
+  define what a schema exposes, so read, create and ``PATCH`` schemas
+  are built from the same model without repeating it.
+- Maps model methods and dotted ORM paths into schema fields with
+  ``MethodSource`` and ``Source``, including reverse relations,
+  nested schemas and aggregates.
+- ``ModelSchema`` is generic in its model, so ``.create()``, ``.update()``
+  and ``.save()`` are typed as returning that exact model.
+- Needs nothing in ``INSTALLED_APPS``: schemas are regular Python classes.
+
+From the controller's point of view they are just ``pydantic`` schemas:
+:class:`~django.db.models.query.QuerySet`
+and :class:`~django.db.models.Model` instances are valid inputs,
+and ``.save()`` writes a parsed body back to the database.
+The very same schema serves a collection and a single object.
+
+.. literalinclude:: /examples/queryset/django_modern_schemas.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+.. note::
+
+  Schemas generated this way follow your database tables by default.
+  Keep ``fields`` and ``exclude`` explicit
+  to decide what your API really exposes,
+  as described in the sections above.
+
+.. seealso::
+
+  A complete application built with ``django-modern-rest`` and
+  ``django-modern-schemas``, with nested schemas, reverse relations
+  and partial updates, can be found here:
+
+  https://github.com/open-byte/dmr-with-django-modern-schemas

@@ -12,7 +12,7 @@ from typing_extensions import TypedDict
 
 from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security.jwt import JWTAsyncAuth, JWToken, JWTSyncAuth
+from dmr.security.jwt import HeaderJWTAsyncAuth, HeaderJWTSyncAuth, JWToken
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 _TokenBuilder: TypeAlias = Callable[..., str]
@@ -37,6 +37,7 @@ def build_user_token(admin_user: User, settings: LazySettings) -> _TokenBuilder:
 
         kwargs.setdefault('sub', str(admin_user.pk))
         kwargs.setdefault('exp', exp_date)
+        kwargs.setdefault('extras', {'type': 'access'})
         return JWToken(
             **kwargs,
         ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
@@ -44,12 +45,22 @@ def build_user_token(admin_user: User, settings: LazySettings) -> _TokenBuilder:
     return factory
 
 
+def _expected_headers(response_code: HTTPStatus) -> dict[str, str]:
+    """A ``401`` from bearer auth also advertises the auth challenge."""
+    if response_code == HTTPStatus.UNAUTHORIZED:
+        return {
+            'Content-Type': 'application/json',
+            'WWW-Authenticate': 'Bearer',
+        }
+    return {'Content-Type': 'application/json'}
+
+
 _ISSUER: Final = 'wemake-services/django-modern-rest'
 
 
 @final
 class _IssuerController(Controller[PydanticSerializer]):
-    @modify(auth=[JWTSyncAuth(accepted_issuers=_ISSUER)])
+    @modify(auth=[HeaderJWTSyncAuth(accepted_issuers=_ISSUER)])
     def get(self) -> str:
         return 'authed'
 
@@ -81,7 +92,7 @@ def test_issuer_validation(
     response = _IssuerController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.headers == _expected_headers(response_code)
     assert response.status_code == response_code
 
 
@@ -90,7 +101,7 @@ _AUDIENCE: Final = ('dev', 'qa')
 
 @final
 class _AudienceController(Controller[PydanticSerializer]):
-    @modify(auth=[JWTSyncAuth(accepted_audiences=_AUDIENCE)])
+    @modify(auth=[HeaderJWTSyncAuth(accepted_audiences=_AUDIENCE)])
     def get(self) -> str:
         return 'authed'
 
@@ -123,13 +134,13 @@ def test_audience_validation(
     response = _AudienceController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.headers == _expected_headers(response_code)
     assert response.status_code == response_code
 
 
 @final
 class _RequireClaimsController(Controller[PydanticSerializer]):
-    @modify(auth=[JWTSyncAuth(require_claims=['jti'])])
+    @modify(auth=[HeaderJWTSyncAuth(require_claims=['jti'])])
     def get(self) -> str:
         return 'authed'
 
@@ -161,7 +172,7 @@ def test_require_claims_validation(
     response = _RequireClaimsController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.headers == _expected_headers(response_code)
     assert response.status_code == response_code
 
 
@@ -170,7 +181,7 @@ _LEEWAY: Final = 2
 
 @final
 class _LeewayController(Controller[PydanticSerializer]):
-    @modify(auth=[JWTSyncAuth(leeway=_LEEWAY)])
+    @modify(auth=[HeaderJWTSyncAuth(leeway=_LEEWAY)])
     def get(self) -> str:
         return 'authed'
 
@@ -208,13 +219,15 @@ def test_leeway_exp(
     response = _LeewayController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.headers == {'Content-Type': 'application/json'}
+    assert response.headers == _expected_headers(response_code)
     assert response.status_code == response_code
 
 
 @final
 class _CustomHeaderController(Controller[PydanticSerializer]):
-    @modify(auth=[JWTAsyncAuth(auth_header='X-Api-Auth', auth_scheme='JWT')])
+    @modify(
+        auth=[HeaderJWTAsyncAuth(auth_header='X-Api-Auth', auth_scheme='JWT')],
+    )
     async def get(self) -> str:
         return 'authed'
 
@@ -253,4 +266,41 @@ async def test_custom_jwt_header(
 
     assert isinstance(response, HttpResponse)
     assert response.headers == {'Content-Type': 'application/json'}
+    assert response.status_code == response_code
+
+
+@final
+class _TokenTypeController(Controller[PydanticSerializer]):
+    @modify(auth=[HeaderJWTSyncAuth()])
+    def get(self) -> str:
+        return 'authed'
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ('token_type', 'response_code'),
+    [
+        ('access', HTTPStatus.OK),
+        ('refresh', HTTPStatus.UNAUTHORIZED),
+    ],
+)
+def test_jwt_token_type_validation(
+    dmr_rf: DMRRequestFactory,
+    build_user_token: _TokenBuilder,
+    *,
+    token_type: str,
+    response_code: HTTPStatus,
+) -> None:
+    """Ensures that only access tokens can be used for authentication."""
+    token = build_user_token(extras={'type': token_type})
+    request = dmr_rf.get(
+        '/whatever/',
+        headers={
+            'Authorization': f'Bearer {token}',
+        },
+    )
+
+    response = _TokenTypeController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
     assert response.status_code == response_code

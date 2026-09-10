@@ -177,7 +177,7 @@ def test_validate_negotiation_per_endpoint(
         parsers = [XmlParser(), default_parser]
         renderers = [XmlRenderer(), default_renderer]
 
-        @validate(
+        @validate(  # type: ignore[untyped-decorator]
             ResponseSpec(dict[str, str], status_code=HTTPStatus.OK),
             **flags,
         )

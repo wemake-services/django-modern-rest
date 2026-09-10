@@ -133,6 +133,11 @@ fields that never belonged in an auth library.
 - Never return password fields, tokens the client should not see,
   or full user objects where the old serializer returned a subset.
 - Apply `@sensitive_post_parameters` to anything accepting credentials.
+- Apply `@sensitive_variables()` to every method that holds credentials
+  or tokens in its local variables, so they never reach error reports.
+  Async methods need it on each coroutine, sync ones also cover their callees.
+- Return `NO_STORE_HEADERS` from `dmr.security` in `@modify` for any view
+  that issues or accepts credentials.
 
 ### 8. Port token issuing
 

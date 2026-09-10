@@ -1,4 +1,4 @@
-from typing import Any
+from typing import cast
 
 import pytest
 from django.conf import LazySettings
@@ -126,12 +126,15 @@ def test_sync_or_async_throttle_not_allowed_at_endpoint_level(  # noqa: WPS118
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures SyncOrAsyncThrottle raises an error at endpoint level."""
-    wrong_throttling: Any = [
-        SyncOrAsyncThrottle(
-            SyncThrottle(1, Rate.second),
-            AsyncThrottle(1, Rate.second),
-        ),
-    ]
+    wrong_throttling = cast(
+        'list[SyncThrottle]',
+        [
+            SyncOrAsyncThrottle(
+                SyncThrottle(1, Rate.second),
+                AsyncThrottle(1, Rate.second),
+            ),
+        ],
+    )
     with pytest.raises(EndpointMetadataError, match='SyncOrAsyncThrottle'):
 
         class _SyncEndpointController(

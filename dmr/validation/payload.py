@@ -1,7 +1,7 @@
 import dataclasses
-from collections.abc import Mapping, Sequence, Set
+from collections.abc import Callable, Mapping, Sequence, Set
 from http import HTTPStatus
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, final
 
 from typing_extensions import Sentinel
 
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
         _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
     )
 
+    from dmr.controller import Controller
     from dmr.openapi.objects import (
         Callback,
         ExternalDocumentation,
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
         Server,
     )
     from dmr.security.base import AsyncAuth, SyncAuth
+    from dmr.serializer import BaseSerializer
     from dmr.throttling import AsyncThrottle, SyncThrottle
 
 
@@ -47,6 +49,7 @@ class _BasePayload:
 
     # Common fields:
     validate_responses: bool | None = None
+    exclude_validate_responses: Set[HTTPStatus] | None = None
     semantic_responses: bool | None = None
     exclude_semantic_responses: Set[HTTPStatus] | None = None
     validate_events: bool | None = None
@@ -60,6 +63,7 @@ class _BasePayload:
     throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY
 
 
+@final
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class ValidateEndpointPayload(_BasePayload):
     """Payload created by ``@validate``."""
@@ -67,6 +71,7 @@ class ValidateEndpointPayload(_BasePayload):
     responses: list[ResponseSpec]
 
 
+@final
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class ModifyEndpointPayload(_BasePayload):
     """Payload created by ``@modify``."""
@@ -86,3 +91,45 @@ class ModifyEndpointPayload(_BasePayload):
 
 #: Alias for different payload types:
 Payload: TypeAlias = ValidateEndpointPayload | ModifyEndpointPayload | None
+
+_PayloadOrLazy: TypeAlias = (
+    Callable[[type['Controller[BaseSerializer]']], Callable[..., Any]] | Payload
+)
+
+
+@dataclasses.dataclass(slots=True, frozen=True)
+class PayloadBuilder:
+    """
+    Builds the payload from the endpoint function and the controller class.
+
+    .. versionadded:: 0.15.0
+    """
+
+    func: Callable[..., Any]
+
+    # Class-level API:
+    _payload_key: ClassVar[str] = '__dmr_payload__'
+
+    def __call__(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> Payload:
+        """Processes the callable payloads from ``modify.lazy`` and others."""
+        payload: _PayloadOrLazy = getattr(
+            self.func,
+            self._payload_key,
+            None,
+        )
+        # `modify.lazy` and `validate.lazy` can provide callable payloads:
+        if callable(payload):
+            return getattr(  # type: ignore[no-any-return]
+                payload(controller_cls)(
+                    # What happens here? We need to extract `__dmr_payload__`
+                    # from a function that our decorators attach it to.
+                    # But, we don't want to over-write the original function's
+                    # payload metadata. So, we create a throw-away one.
+                    lambda: ...,
+                ),
+                self._payload_key,
+            )
+        return payload

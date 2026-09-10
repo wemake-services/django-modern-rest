@@ -203,6 +203,9 @@ nitpick_ignore = [
     (_PY_CLASS, 'Reference'),
     (_PY_CLASS, 'Paths'),
     (_PY_CLASS, 'Responses'),
+    # Typing parts from `internal/endpoint.py`:
+    (_PY_CLASS, 'Sentinel'),
+    (_PY_CLASS, 'HTTPStatus'),
     # Test fixtures:
     (_PY_FUNC, 'pytest_django.fixtures.settings'),
     (_PY_CLASS, 'LazySettings'),
@@ -294,6 +297,7 @@ html_static_path = ['_static']
 html_css_files = ['css/landing.css']
 html_js_files = [
     'https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js',
+    'js/sidebar-scroll.js',
 ]
 
 html_show_sourcelink = False

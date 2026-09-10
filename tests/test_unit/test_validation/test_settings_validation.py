@@ -44,6 +44,7 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
         {'openapi_config': []},
         {'global_error_handler': None},
         {'exclude_semantic_responses': 1},
+        {'exclude_validate_responses': 1},
     ],
 )
 @pytest.mark.parametrize('serializer', serializers)
@@ -74,6 +75,8 @@ def test_wrong_settings_validation(
         {'no_validate_http_spec': frozenset()},
         {'exclude_semantic_responses': set()},
         {'exclude_semantic_responses': frozenset()},
+        {'exclude_validate_responses': set()},
+        {'exclude_validate_responses': frozenset()},
     ],
 )
 @pytest.mark.parametrize('serializer', serializers)

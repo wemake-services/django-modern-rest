@@ -26,6 +26,31 @@ Endpoint
 
 .. autodecorator:: dmr.endpoint.request_endpoint
 
+Lazy endpoints
+~~~~~~~~~~~~~~
+
+.. autodecorator:: dmr.endpoint.modify.lazy
+
+.. autoclass:: dmr.endpoint.ModifySyncCallable
+  :members:
+
+.. autoclass:: dmr.endpoint.ModifyAsyncCallable
+  :members:
+
+.. autoclass:: dmr.endpoint.ModifyAnyCallable
+  :members:
+
+.. autodecorator:: dmr.endpoint.validate.lazy
+
+.. autoclass:: dmr.endpoint.ValidateSyncCallable
+  :members:
+
+.. autoclass:: dmr.endpoint.ValidateAsyncCallable
+  :members:
+
+.. autoclass:: dmr.endpoint.ValidateAnyCallable
+  :members:
+
 
 Response, headers and cookies
 -----------------------------
@@ -69,6 +94,9 @@ Validation
   :members:
 
 .. autoclass:: dmr.validation.ValidateEndpointPayload
+  :members:
+
+.. autoclass:: dmr.validation.payload.PayloadBuilder
   :members:
 
 

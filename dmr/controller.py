@@ -73,6 +73,10 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             that we disable for this class.
         validate_responses: Boolean whether or not validating responses.
             Works in runtime, can be disabled for better performance.
+        exclude_validate_responses: Set of status codes that we don't
+            validate, even when ``validate_responses`` is enabled.
+            Useful for errors like ``500`` that can be raised
+            from anywhere and that you might not want to describe.
         semantic_responses: Should semantic responses be collected
             from different providers for all endpoints in this class.
         exclude_semantic_responses: Set of semantic responses
@@ -146,6 +150,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
     no_validate_http_spec: ClassVar[Set[HttpSpec] | None] = frozenset()
     validate_responses: ClassVar[bool | None] = None
+    exclude_validate_responses: ClassVar[Set[HTTPStatus] | None] = frozenset()
     semantic_responses: ClassVar[bool | None] = None
     exclude_semantic_responses: ClassVar[Set[HTTPStatus] | None] = frozenset()
     validate_events: ClassVar[bool | None] = None

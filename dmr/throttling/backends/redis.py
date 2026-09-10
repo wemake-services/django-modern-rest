@@ -8,6 +8,11 @@ except ImportError:  # pragma: no cover
     raise
 
 import dataclasses
+from contextlib import (
+    AbstractAsyncContextManager,
+    AbstractContextManager,
+    nullcontext,
+)
 from typing import TYPE_CHECKING, Any, ClassVar, Final, cast
 
 from redis import asyncio as aioredis
@@ -80,6 +85,7 @@ class SyncRedis(BaseThrottleSyncBackend):
         cache_key: str,
         algorithm: 'BaseThrottleAlgorithm',
     ) -> CachedRateLimit:
+        """Atomic sync increment via Lua script."""
         script_result = cast(
             tuple[int, int, int],
             self._script(
@@ -134,6 +140,14 @@ class SyncRedis(BaseThrottleSyncBackend):
             time=script_result[2],
         )
 
+    @override
+    def lock(
+        self,
+        lock: AbstractContextManager[Any, Any],
+    ) -> AbstractContextManager[Any, Any]:
+        """Skip the in-process lock: the `incr` is atomic."""
+        return nullcontext()
+
 
 @dataclasses.dataclass(slots=True, frozen=True)
 class AsyncRedis(BaseThrottleAsyncBackend):
@@ -186,6 +200,7 @@ class AsyncRedis(BaseThrottleAsyncBackend):
         cache_key: str,
         algorithm: 'BaseThrottleAlgorithm',
     ) -> CachedRateLimit:
+        """Atomic async increment via Lua script."""
         script_result = cast(
             tuple[int, int, int],
             await self._script(
@@ -230,3 +245,11 @@ class AsyncRedis(BaseThrottleAsyncBackend):
             history=[script_result[1]],
             time=script_result[2],
         )
+
+    @override
+    def lock(
+        self,
+        lock: AbstractAsyncContextManager[Any, Any],
+    ) -> AbstractAsyncContextManager[Any, Any]:
+        """Skip the in-process lock: the `incr` is atomic."""
+        return nullcontext()

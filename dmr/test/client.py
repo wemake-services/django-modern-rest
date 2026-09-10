@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 from django.http import HttpResponse
 from django.test import AsyncClient, AsyncRequestFactory, Client, RequestFactory
 
-from dmr.internal.json import json_dump, json_loads
+from dmr.internal.json import json_dumps, json_loads
 
 _ThingT = TypeVar('_ThingT')
 
@@ -19,7 +19,7 @@ class _DMRMixin:  # noqa: WPS338
             content_type == self.default_content_type
             and not isinstance(data, (str, bytes))
         )
-        return json_dump(data) if should_encode else data
+        return json_dumps(data) if should_encode else data
 
     def _parse_json(self, response: HttpResponse, **extra: Any) -> Any:
         # This implementation mirrors Django's response JSON parsing

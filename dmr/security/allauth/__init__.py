@@ -3,7 +3,7 @@ try:
 except ImportError:  # pragma: no cover
     print(  # noqa: WPS421
         'Looks like `django-allauth` is not installed, '
-        "consider using `pip install 'django-modern-rest[allauth]'`",
+        'consider using `pip install django-allauth`',
     )
     raise
 
