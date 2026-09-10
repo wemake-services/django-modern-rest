@@ -187,6 +187,8 @@ of requirements for an API to count as public.
   whose decorators are defined in another module, #1417
 - Detailed CSRF failure reasons are now included
   in error responses only in debug mode and not in production, #1332
+- Empty response body checks now cover `1xx`,
+  `205 Reset Content`, and `HEAD`, #1340
 - Media types with `q=0` in the `Accept` header are not selected
   for the response anymore, `q=0` means "not acceptable",
   so such requests now get a `406` response.
