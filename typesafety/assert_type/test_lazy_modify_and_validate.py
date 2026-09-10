@@ -35,7 +35,7 @@ class CorrectModify(Controller[PydanticSerializer]):
             auth=[DjangoSessionSyncAuth()],
         )
 
-    @modify.lazy(_sync_spec)
+    @modify.lazy(_sync_spec)  # ty: ignore[invalid-argument-type]
     def get(self) -> int:
         return 1
 
@@ -46,7 +46,7 @@ class CorrectModify(Controller[PydanticSerializer]):
             auth=[DjangoSessionAsyncAuth()],
         )
 
-    @modify.lazy(_async_spec)
+    @modify.lazy(_async_spec)  # ty: ignore[invalid-argument-type]
     async def post(self) -> int:
         return 1
 
@@ -54,11 +54,11 @@ class CorrectModify(Controller[PydanticSerializer]):
     def _any_spec(cls) -> ModifyAnyCallable:
         return modify(status_code=cls.status_code)
 
-    @modify.lazy(_any_spec)
+    @modify.lazy(_any_spec)  # ty: ignore[invalid-argument-type]
     async def put(self) -> int:
         return 1
 
-    @modify.lazy(_any_spec)
+    @modify.lazy(_any_spec)  # ty: ignore[invalid-argument-type]
     def patch(self) -> int:
         return 1
 
@@ -74,11 +74,11 @@ class AsyncAndSyncMixedModify(Controller[PydanticSerializer]):
             auth=[DjangoSessionAsyncAuth()],
         )
 
-    @modify.lazy(_sync_spec)  # type: ignore[deprecated]
+    @modify.lazy(_sync_spec)  # type: ignore[deprecated]  # ty: ignore[invalid-argument-type]
     async def get(self) -> int:
         return 1
 
-    @modify.lazy(_sync_spec)  # type: ignore[deprecated]
+    @modify.lazy(_sync_spec)  # type: ignore[deprecated]  # ty: ignore[invalid-argument-type]
     def post(self) -> HttpResponse:
         return self.to_response(1)
 
@@ -94,11 +94,11 @@ class SyncAndAsyncMixedModify(Controller[PydanticSerializer]):
             auth=[DjangoSessionSyncAuth()],
         )
 
-    @modify.lazy(_async_spec)  # type: ignore[deprecated]
+    @modify.lazy(_async_spec)  # type: ignore[deprecated]  # ty: ignore[invalid-argument-type]
     def get(self) -> int:
         return 1
 
-    @modify.lazy(_async_spec)  # type: ignore[deprecated]
+    @modify.lazy(_async_spec)  # type: ignore[deprecated]  # ty: ignore[invalid-argument-type]
     async def post(self) -> HttpResponse:
         return self.to_response(1)
 
@@ -114,15 +114,15 @@ class AnyMixedModify(Controller[PydanticSerializer]):
             auth=[DjangoSessionSyncAuth()],
         )
 
-    @modify.lazy(_any_spec)
+    @modify.lazy(_any_spec)  # ty: ignore[invalid-argument-type]
     def get(self) -> int:
         return 1
 
-    @modify.lazy(_any_spec)
+    @modify.lazy(_any_spec)  # ty: ignore[invalid-argument-type]
     async def put(self) -> int:
         return 1
 
-    @modify.lazy(_any_spec)  # type: ignore[deprecated]
+    @modify.lazy(_any_spec)  # type: ignore[deprecated]  # ty: ignore[invalid-argument-type]
     async def post(self) -> HttpResponse:
         return self.to_response(1)
 
@@ -141,7 +141,7 @@ class CorrectValidate(Controller[PydanticSerializer]):
             auth=[DjangoSessionSyncAuth()],
         )
 
-    @validate.lazy(_sync_spec)
+    @validate.lazy(_sync_spec)  # ty: ignore[invalid-argument-type]
     def get(self) -> HttpResponse:
         return self.to_response(1)
 
@@ -152,7 +152,7 @@ class CorrectValidate(Controller[PydanticSerializer]):
             auth=[DjangoSessionAsyncAuth()],
         )
 
-    @validate.lazy(_async_spec)
+    @validate.lazy(_async_spec)  # ty: ignore[invalid-argument-type]
     async def post(self) -> HttpResponse:
         return self.to_response(1)
 
@@ -160,11 +160,11 @@ class CorrectValidate(Controller[PydanticSerializer]):
     def _any_spec(cls) -> ValidateAnyCallable:
         return validate(ResponseSpec(int, status_code=cls.status_code))
 
-    @validate.lazy(_any_spec)
+    @validate.lazy(_any_spec)  # ty: ignore[invalid-argument-type]
     async def put(self) -> HttpResponse:
         return self.to_response(1)
 
-    @validate.lazy(_any_spec)
+    @validate.lazy(_any_spec)  # ty: ignore[invalid-argument-type]
     def patch(self) -> HttpResponse:
         return self.to_response(1)
 
@@ -180,11 +180,11 @@ class AsyncAndSyncMixedValidate(Controller[PydanticSerializer]):
             auth=[DjangoSessionAsyncAuth()],
         )
 
-    @validate.lazy(_sync_spec)  # type: ignore[type-var]
+    @validate.lazy(_sync_spec)  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
     async def get(self) -> HttpResponse:
         return self.to_response(1)
 
-    @validate.lazy(_sync_spec)  # type: ignore[type-var]
+    @validate.lazy(_sync_spec)  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
     def post(self) -> int:
         return 1
 
@@ -200,11 +200,11 @@ class SyncAndAsyncMixedValidate(Controller[PydanticSerializer]):
             auth=[DjangoSessionSyncAuth()],
         )
 
-    @validate.lazy(_async_spec)  # type: ignore[type-var]
+    @validate.lazy(_async_spec)  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
     def get(self) -> HttpResponse:
         return self.to_response(1)
 
-    @validate.lazy(_async_spec)  # type: ignore[type-var]
+    @validate.lazy(_async_spec)  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
     async def post(self) -> int:
         return 1
 
@@ -220,15 +220,15 @@ class AnyMixedValidate(Controller[PydanticSerializer]):
             auth=[DjangoSessionSyncAuth()],
         )
 
-    @validate.lazy(_any_spec)
+    @validate.lazy(_any_spec)  # ty: ignore[invalid-argument-type]
     def get(self) -> HttpResponse:
         return self.to_response(1)
 
-    @validate.lazy(_any_spec)
+    @validate.lazy(_any_spec)  # ty: ignore[invalid-argument-type]
     async def put(self) -> HttpResponse:
         return self.to_response(1)
 
-    @validate.lazy(_any_spec)  # type: ignore[type-var]
+    @validate.lazy(_any_spec)  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
     async def post(self) -> int:
         return 1
 
@@ -248,5 +248,5 @@ class MixedSpec(Controller[PydanticSerializer]):
     def _validate_spec(cls) -> ValidateAnyCallable:
         return validate(ResponseSpec(int, status_code=cls.status_code))
 
-    validate.lazy(_modify_spec)  # type: ignore[type-var]
-    modify.lazy(_validate_spec)  # type: ignore[type-var]
+    validate.lazy(_modify_spec)  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
+    modify.lazy(_validate_spec)  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]

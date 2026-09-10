@@ -483,7 +483,23 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
 modify: Final = _ModifyEndpoint()
 
 
-class ValidateSyncCallable(Protocol):
+class _ValidateCallable(Protocol):
+    """
+    Common base for all ``@validate`` decorator callables.
+
+    Serves as a nominal bound for ``@validate.lazy``: type checkers
+    must not structurally compare the sync / async / any protocols
+    against each other, since their generic ``__call__`` signatures
+    have incompatible type variable bounds.
+    """
+
+    # This is a typing-hack to make `@modify` and `@validate` decorators
+    # incompatible, so `@validate.lazy(modify_spec)` and vice a versa
+    # can't be used in a real code.
+    __dmr_fake_marker__: Literal['validate']
+
+
+class ValidateSyncCallable(_ValidateCallable, Protocol):
     """
     Type that represents ``@validate`` decorator for sync functions.
 
@@ -496,11 +512,6 @@ class ValidateSyncCallable(Protocol):
     .. versionadded:: 0.15.0
     """
 
-    # This is a typing-hack to make `@modify` and `@validate` decorators
-    # incompatible, so `@validate.lazy(modify_spec)` and vice a versa
-    # can't be used in a real code.
-    __dmr_fake_marker__: Literal['validate']
-
     def __call__(  # noqa: D102
         self,
         func: Callable[_ParamT, _SyncResponseT],
@@ -508,7 +519,7 @@ class ValidateSyncCallable(Protocol):
     ) -> Callable[_ParamT, _SyncResponseT]: ...
 
 
-class ValidateAsyncCallable(Protocol):
+class ValidateAsyncCallable(_ValidateCallable, Protocol):
     """
     Type that represents ``@validate`` decorator for async functions.
 
@@ -521,8 +532,6 @@ class ValidateAsyncCallable(Protocol):
     .. versionadded:: 0.15.0
     """
 
-    __dmr_fake_marker__: Literal['validate']
-
     def __call__(  # noqa: D102
         self,
         func: Callable[_ParamT, _AsyncResponseT],
@@ -530,7 +539,7 @@ class ValidateAsyncCallable(Protocol):
     ) -> Callable[_ParamT, _AsyncResponseT]: ...
 
 
-class ValidateAnyCallable(Protocol):
+class ValidateAnyCallable(_ValidateCallable, Protocol):
     """
     Type that represents ``@modify`` decorator for any function.
 
@@ -543,8 +552,6 @@ class ValidateAnyCallable(Protocol):
     .. versionadded:: 0.15.0
     """
 
-    __dmr_fake_marker__: Literal['validate']
-
     def __call__(  # noqa: D102
         self,
         func: Callable[_ParamT, _AnyResponseT],
@@ -552,10 +559,7 @@ class ValidateAnyCallable(Protocol):
     ) -> Callable[_ParamT, _AnyResponseT]: ...
 
 
-_ValidateDecoratorT = TypeVar(
-    '_ValidateDecoratorT',
-    bound=ValidateAsyncCallable | ValidateSyncCallable | ValidateAnyCallable,
-)
+_ValidateDecoratorT = TypeVar('_ValidateDecoratorT', bound=_ValidateCallable)
 
 
 @final

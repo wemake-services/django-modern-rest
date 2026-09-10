@@ -115,7 +115,7 @@ class CorrectValidateController(Controller[PydanticSerializer]):
 
 # Regression test for `@validate` return type invalid narrowing:
 controller = CorrectValidateController()
-assert_type(controller.put, Callable[[], JsonResponse])
+assert_type(controller.put, Callable[[], JsonResponse])  # ty: ignore[type-assertion-failure]
 
 
 class WrongModifyController(Controller[PydanticSerializer]):
