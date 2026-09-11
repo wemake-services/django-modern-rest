@@ -151,3 +151,16 @@ def test_schema_conversion_cached(*, skip_validation: bool) -> None:
 
     assert cached is converted
     assert other_converted is not converted
+
+
+def test_schema_conversion_cache_clear() -> None:
+    """Ensures that converted schema cache can be cleared."""
+    schema = build_schema(Router())
+
+    converted = schema.convert(skip_validation=True)
+    schema.tags = [Tag(name='new-tag')]
+    schema.cache_clear()
+    refreshed = schema.convert(skip_validation=True)
+
+    assert refreshed is not converted
+    assert refreshed['tags'] == [{'name': 'new-tag'}]
