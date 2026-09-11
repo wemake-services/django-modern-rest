@@ -81,9 +81,8 @@ class OpenAPI:
         and *skip_validation* is falsy.
 
         The converted dictionary is cached on this instance and reused by
-        subsequent calls. Finish modifying the schema before the first call
-        and treat the returned dictionary as read-only. Build a new schema
-        instance to reflect later changes.
+        subsequent calls. Treat the returned dictionary as read-only and call
+        :meth:`cache_clear` after modifying an already converted schema.
 
         Skipping validation does not prevent a later call from validating
         the cached dictionary.
@@ -100,3 +99,14 @@ class OpenAPI:
             # Do not revalidate the same spec.
             self._validated = True
         return self._converted
+
+    def cache_clear(self) -> None:
+        """
+        Clear cached schema conversion and validation state.
+
+        Use this method after modifying an already converted schema. The next
+        :meth:`convert` call rebuilds the schema and validates it unless
+        validation is skipped.
+        """
+        self._converted = None
+        self._validated = False
