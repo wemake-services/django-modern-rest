@@ -68,6 +68,7 @@ of requirements for an API to count as public.
   `NotAuthenticatedError` when credentials have the right
   `auth_scheme` prefix, but cannot be decoded,
   previously the next auth in the chain was tried, #1330
+- `ToJsonKwargs` and `ToModelKwargs` are now `closed=True` typed dicts, #1430
 
 ### Features
 
@@ -130,6 +131,8 @@ of requirements for an API to count as public.
 - `accepted_type` and `accepted_header` are faster now,
   media types without parameters skip the regex based parsing
   of parameters and of the `q` weight entirely, #1407
+- `dmr.openapi.OpenAPI` now has `cache_clear` method
+  to drop all cached internal state, #1431
 
 ### Bugfixes
 

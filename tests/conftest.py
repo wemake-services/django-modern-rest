@@ -1,6 +1,7 @@
 import pathlib
 from collections.abc import Callable, Iterator
 
+import freezegun
 import pytest
 from django.http import HttpRequest
 from django.middleware.csrf import get_token
@@ -11,6 +12,10 @@ from dmr.openapi.core.context import OpenAPIContext
 
 # This import is required to always clean the settings cache:
 from dmr_pytest import settings  # noqa: F401
+
+# `freezegun` inspects all attributes of all imported modules
+# to find `datetime` and `time` objects to patch.
+freezegun.configure(extend_ignore_list=['testcontainers', 'docker'])
 
 
 @pytest.fixture

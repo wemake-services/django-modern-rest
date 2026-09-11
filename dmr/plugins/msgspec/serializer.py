@@ -15,15 +15,17 @@ if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata
 
 
-class ToModelKwargs(TypedDict, total=False):
-    """Custom serializer API options, taken by :func:`msgspec.convert`."""
-
+class _CommonKwargs(TypedDict, total=False):
     # `from_attributes` is explicitly left out. It is always `False`.
     builtin_types: Iterable[type[Any]] | None
     str_keys: bool
 
 
-class ToJsonKwargs(ToModelKwargs, total=False):
+class ToModelKwargs(_CommonKwargs, total=False, closed=True):
+    """Custom serializer API options, taken by :func:`msgspec.convert`."""
+
+
+class ToJsonKwargs(_CommonKwargs, total=False, closed=True):
     """Custom deserializer API options, taken by :func:`msgspec.to_builtins`."""
 
     order: Literal['deterministic', 'sorted'] | None

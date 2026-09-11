@@ -18,7 +18,7 @@ from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 _TokenBuilder: TypeAlias = Callable[..., str]
 
 
-class _TokenData(TypedDict, total=False):
+class _TokenData(TypedDict, total=False, closed=True):
     sub: str
     exp: dt.datetime
     iat: dt.datetime

@@ -1,5 +1,5 @@
 import inspect
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 from dataclasses import dataclass
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
@@ -97,9 +97,7 @@ def create_async_dispatch(
         ) -> HttpResponse:
             return original_dispatch(self, req, *view_args, **view_kwargs)  # type: ignore[no-any-return]
 
-        response: HttpResponse | Awaitable[HttpResponse] = middleware(
-            view_callable,
-        )(request, *args, **kwargs)
+        response = middleware(view_callable)(request, *args, **kwargs)
         # Django middleware can be either sync or async. When we wrap an async
         # view with middleware, the middleware itself might be sync
         # (returning HttpResponse) or async (returning Awaitable[HttpResponse]).
