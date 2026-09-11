@@ -93,6 +93,9 @@ class Command(BaseCommand):
             )
         else:
             self.stdout.write(
+                # We don't use `msgspec` here, because it is a single operation
+                # and it might require extra spacing / indentation
+                # which `msgspec` can't really do.
                 json.dumps(
                     converted_schema,
                     indent=options['indent'],
