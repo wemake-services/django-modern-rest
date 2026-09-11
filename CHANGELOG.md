@@ -68,7 +68,7 @@ of requirements for an API to count as public.
   `NotAuthenticatedError` when credentials have the right
   `auth_scheme` prefix, but cannot be decoded,
   previously the next auth in the chain was tried, #1330
-- `ToJsonKwargs` and `ToModelKwargs` are now `closed=True` typed dicts
+- `ToJsonKwargs` and `ToModelKwargs` are now `closed=True` typed dicts, #1430
 
 ### Features
 
