@@ -123,3 +123,21 @@ def test_cached_schema_validation() -> None:
     # Validate the cached schema even if the first conversion skipped it:
     with pytest.raises(OpenAPIValidationError, match='Wrong'):
         schema.convert()
+
+
+def test_schema_validation_after_cache_clear() -> None:
+    """Ensures that schema is validated again after clearing its cache."""
+    schema = build_schema(Router())
+    schema.convert()
+    schema.components = Components(
+        security_schemes={
+            'wrong': SecurityScheme(type='http', name='Wrong'),
+        },
+    )
+    schema.cache_clear()
+
+    with pytest.raises(
+        OpenAPIValidationError,
+        match='"scheme" is a required property',
+    ):
+        schema.convert()
