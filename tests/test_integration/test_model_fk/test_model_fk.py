@@ -98,6 +98,32 @@ def test_user_create_name_too_long_rejected(
 
 
 @pytest.mark.django_db
+def test_user_create_invalid_email_rejected(
+    dmr_client: DMRClient,
+    faker: Faker,
+) -> None:
+    """Invalid email addresses are rejected at the serializer layer.
+
+    Regression for #945: the Pydantic schema accepted any string, so
+    malformed emails passed validation and either failed at the database
+    layer with an unhandled error or were stored as garbage data.
+    """
+    response = dmr_client.post(
+        reverse('api:model_fk:user'),
+        data={
+            'email': 'not-an-email',
+            'role': {'name': faker.name()},
+            'tags': [{'name': faker.name()}],
+        },
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    payload = response.json()
+    assert payload['detail'][0]['type'] == 'value_error'
+    assert 'value is not a valid email address' in payload['detail'][0]['msg']
+
+
+@pytest.mark.django_db
 def test_user_create_unique_email_error(
     dmr_client: DMRClient,
     faker: Faker,
