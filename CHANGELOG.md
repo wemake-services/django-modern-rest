@@ -132,7 +132,7 @@ of requirements for an API to count as public.
   media types without parameters skip the regex based parsing
   of parameters and of the `q` weight entirely, #1407
 - `dmr.openapi.OpenAPI` now has `cache_clear` method
-  to drop all cached internal state, #1431 
+  to drop all cached internal state, #1431
 
 ### Bugfixes
 

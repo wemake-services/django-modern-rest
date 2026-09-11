@@ -88,7 +88,7 @@ class OpenAPI:
         the cached dictionary.
 
         .. versionchanged:: 0.15.0
-            Now we only run schema convertion once
+            Now we only run schema conversion once
             per instance and cache the result.
 
         """
