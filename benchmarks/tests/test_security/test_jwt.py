@@ -22,7 +22,7 @@ _JWT_MODULES: Final = frozenset((
 
 _ALGORITHM: Final = 'HS256'
 _SECRET: Final = secrets.token_hex()
-_REPEAT: Final = 100
+_REPEAT: Final = 1000
 
 
 def _make_payload() -> dict[str, Any]:

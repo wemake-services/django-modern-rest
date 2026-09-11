@@ -45,12 +45,16 @@ def test_export_schema_json(
         keys = list(parsed.keys())
         assert keys == sorted(keys)
 
-    assert ('  ' in output) is bool(kwargs.get('indent'))
-
     if kwargs.get('no_ensure_ascii'):
         assert _NON_ASCII_TEXT in output
     else:
         assert _NON_ASCII_TEXT not in output
+
+    # Clean the kwargs and try to compare the results with what `json` produces:
+    kwargs = kwargs.copy()
+    kwargs.pop('format', None)
+    kwargs['ensure_ascii'] = not kwargs.pop('no_ensure_ascii', False)
+    assert json.dumps(parsed, **kwargs) == output.strip()
 
 
 @pytest.mark.parametrize(

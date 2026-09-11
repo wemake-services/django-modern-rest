@@ -33,7 +33,7 @@ _EXP: Final = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
 _JTI: Final = secrets.token_hex()
 
 
-class _JWTokenKwargs(TypedDict, total=False):
+class _JWTokenKwargs(TypedDict, total=False, closed=True):
     exp: dt.datetime
     iat: dt.datetime
     iss: str
