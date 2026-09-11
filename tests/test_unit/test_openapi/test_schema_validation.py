@@ -138,6 +138,6 @@ def test_schema_validation_after_cache_clear() -> None:
 
     with pytest.raises(
         OpenAPIValidationError,
-        match="'scheme' is a required property",
+        match='"scheme" is a required property',
     ):
         schema.convert()
