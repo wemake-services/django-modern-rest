@@ -6,7 +6,7 @@ from django.http import HttpResponse
 
 from dmr import Controller
 from dmr.options_mixins import AsyncMetaMixin, MetaMixin
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
@@ -77,6 +77,32 @@ async def test_meta_async(dmr_async_rf: DMRAsyncRequestFactory) -> None:
     assert response.status_code == HTTPStatus.NO_CONTENT, response.content
     assert response.headers == {
         'Allow': 'DELETE, GET, OPTIONS',
+        'Content-Type': 'application/json',
+    }
+    assert response.content == b''
+
+
+@final
+class _FastMetaController(
+    MetaMixin,
+    Controller[PydanticFastSerializer],
+):
+    """Same as above, but with the fast serializer."""
+
+    def post(self) -> str:
+        raise NotImplementedError
+
+
+def test_meta_sync_fast_serializer(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures that an empty `204` body is validated by the fast serializer."""
+    request = dmr_rf.options('/whatever/', data={})
+
+    response = _FastMetaController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.content
+    assert response.headers == {
+        'Allow': 'OPTIONS, POST',
         'Content-Type': 'application/json',
     }
     assert response.content == b''

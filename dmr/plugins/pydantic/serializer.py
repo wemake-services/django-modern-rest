@@ -340,6 +340,12 @@ class PydanticFastSerializer(PydanticSerializer):
                 **cls.to_model_kwargs,
             )
         except pydantic_core.ValidationError as exc:
+            # Corner case: an empty body is `None` for us,
+            # just like `JsonParser` treats it. Happens for `204` responses.
+            # We do this here, because we don't want
+            # a penalty for all positive cases.
+            if not buffer:
+                return None
             raise DataParsingError(exc.errors()[0]['msg']) from exc
 
     @classmethod
