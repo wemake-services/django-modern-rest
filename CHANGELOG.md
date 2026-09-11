@@ -17,7 +17,12 @@ What is a public API for us (all criteria must be met)?
 Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
-## 0.15.0 WIP
+All migration prompts since `0.13.0` release
+are stored as descriptions in version releases on GitHub, example:
+https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
+
+
+## 0.15.0 (2026-09-11)
 
 ### Breaking changes
 

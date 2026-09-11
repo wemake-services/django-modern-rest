@@ -5,7 +5,7 @@ requires = [ "hatch-fancy-pypi-readme", "hatchling" ]
 
 [project]
 name = "django-modern-rest"
-version = "0.14.0"
+version = "0.15.0"
 description = "Modern REST framework for Django with types and async support"
 keywords = [
   "API",
