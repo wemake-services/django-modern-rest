@@ -348,6 +348,8 @@ and it has no default on purpose:
 it scopes the refresh cookie to your refresh endpoint,
 so the refresh token is not sent with any other request.
 Pass ``'/'`` if you really want it everywhere.
+It takes lazy strings, so :func:`django.urls.reverse_lazy`
+keeps it in sync with your urls.
 
 Everything else already has a safe default:
 
@@ -399,25 +401,25 @@ and ``jwt_refresh_expiration``.
   Only weaken ``samesite`` to ``'none'``
   when your frontend really is on another site.
 
+.. note::
+
+  ``secure=True`` does not get in the way of local development:
+  browsers treat ``http://localhost`` and ``http://127.0.0.1``
+  as secure contexts and store such cookies anyway.
+  It only matters when you serve your dev environment
+  over plain HTTP on some other host name,
+  and then ``jwt_cookie_secure = settings.DEBUG is False``
+  is better than turning it off for good.
+
 There is no response body by default: the tokens are already in the cookies,
 and sending them in the body as well would hand them
 to any script on the page. When you do need a body,
 pass its type as the last type argument and change the status code:
 
-.. code:: python
-
-  class ObtainCookiesController(
-      CookieObtainTokensSyncController[
-          PydanticSerializer,
-          ObtainTokensPayload,
-          UserModel,  # response body type
-      ],
-  ):
-      response_status_code = HTTPStatus.OK
-      jwt_refresh_cookie_path = '/api/auth/refresh/'
-
-      @override
-      def make_api_response(self) -> UserModel: ...
+.. literalinclude:: /examples/auth/jwt/jwt_cookie_obtain_body.py
+  :caption: views.py
+  :linenos:
+  :language: python
 
 CSRF and logout
 ^^^^^^^^^^^^^^^
@@ -475,10 +477,27 @@ We provide two mixin types:
 
 If this app is installed, we would provide an admin panel by default.
 
+The same mixins also work on the controllers that accept a token:
+:class:`~dmr.security.jwt.views.RefreshTokenSyncController`,
+:class:`~dmr.security.jwt.views.CookieRefreshTokensSyncController`,
+and their async versions.
+Without them a blocklisted access token is rejected by auth,
+while the refresh token it was issued with still buys a new pair.
+Mix them in as the first base, so that their ``check_auth``
+runs before the one of the controller.
+
+.. literalinclude:: /examples/auth/jwt/blocklist_refresh.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
 .. important::
 
   Both mixins add ``'jti'`` to ``require_claims`` of the auth class
   they are mixed into, on top of whatever you pass yourself.
+  Controllers have no claim configuration to adjust,
+  there a token without ``jti`` is rejected when it is looked up
+  in the blocklist.
 
   Blocklist rows are keyed by ``jti``, so a token without one
   can never be blocklisted. Accepting such tokens would mean
@@ -601,10 +620,10 @@ Pre-defined views to fetch JWT tokens
   :show-inheritance:
 
 .. autoclass:: dmr.security.jwt.views.RefreshTokenSyncController
-  :members: post, refresh, check_auth, convert_refresh_payload, make_api_response, create_jwt_token, make_jwt_id
+  :members: post, refresh, get_user, check_auth, convert_refresh_payload, make_api_response, create_jwt_token, make_jwt_id
 
 .. autoclass:: dmr.security.jwt.views.RefreshTokenAsyncController
-  :members: post, refresh, check_auth, convert_refresh_payload, make_api_response, create_jwt_token, make_jwt_id
+  :members: post, refresh, get_user, check_auth, convert_refresh_payload, make_api_response, create_jwt_token, make_jwt_id
 
 .. autoclass:: dmr.security.jwt.views.RefreshTokenPayload
   :members:
@@ -624,22 +643,22 @@ Pre-defined views to issue JWT tokens as cookies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: dmr.security.jwt.views.CookieObtainTokensSyncController
-  :members: post, login, convert_auth_payload, make_api_response, issue_cookies, access_cookie_spec, refresh_cookie_spec, rotate_csrf_token, create_jwt_token, make_jwt_id
+  :members: post, login, convert_auth_payload, make_api_response, validate_spec, issue_cookies, access_cookie_spec, refresh_cookie_spec, response_headers, response_headers_spec, rotate_csrf_token, create_jwt_token, make_jwt_id
 
 .. autoclass:: dmr.security.jwt.views.CookieObtainTokensAsyncController
-  :members: post, login, convert_auth_payload, make_api_response, issue_cookies, access_cookie_spec, refresh_cookie_spec, rotate_csrf_token, create_jwt_token, make_jwt_id
+  :members: post, login, convert_auth_payload, make_api_response, validate_spec, issue_cookies, access_cookie_spec, refresh_cookie_spec, response_headers, response_headers_spec, rotate_csrf_token, create_jwt_token, make_jwt_id
 
 .. autoclass:: dmr.security.jwt.views.CookieRefreshTokensSyncController
-  :members: post, refresh, get_user, check_auth, make_api_response, issue_cookies, check_csrf, create_jwt_token, make_jwt_id
+  :members: post, refresh, get_user, check_auth, make_api_response, validate_spec, issue_cookies, response_headers, response_headers_spec, check_csrf, create_jwt_token, make_jwt_id
 
 .. autoclass:: dmr.security.jwt.views.CookieRefreshTokensAsyncController
-  :members: post, refresh, get_user, check_auth, make_api_response, issue_cookies, check_csrf, create_jwt_token, make_jwt_id
+  :members: post, refresh, get_user, check_auth, make_api_response, validate_spec, issue_cookies, response_headers, response_headers_spec, check_csrf, create_jwt_token, make_jwt_id
 
 .. autoclass:: dmr.security.jwt.views.CookieLogoutSyncController
-  :members: post, logout, revoke_tokens, make_api_response, discard_cookies, check_csrf
+  :members: post, logout, revoke_tokens, make_api_response, validate_spec, discard_cookies, response_headers, response_headers_spec, check_csrf
 
 .. autoclass:: dmr.security.jwt.views.CookieLogoutAsyncController
-  :members: post, logout, revoke_tokens, make_api_response, discard_cookies, check_csrf
+  :members: post, logout, revoke_tokens, make_api_response, validate_spec, discard_cookies, response_headers, response_headers_spec, check_csrf
 
 Blocklist app
 ~~~~~~~~~~~~~

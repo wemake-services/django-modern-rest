@@ -1,11 +1,18 @@
 import dataclasses
 import datetime as dt
-import uuid
 from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from http import HTTPStatus
 from types import MappingProxyType
-from typing import Any, ClassVar, Final, Generic, Literal, TypeAlias, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Final,
+    Generic,
+    Literal,
+    TypeAlias,
+)
 
 from django.conf import settings
 from django.contrib.auth import aauthenticate, authenticate
@@ -16,25 +23,14 @@ from django.views.decorators.debug import (
     sensitive_post_parameters,
     sensitive_variables,
 )
-from typing_extensions import TypedDict, TypeVar
+from typing_extensions import TypeVar
 
-from dmr import (
-    Body,
-    Controller,
-    CookieSpec,
-    NewCookie,
-    ResponseSpec,
-    modify,
-    validate,
-)
+from dmr import Body, CookieSpec, NewCookie, ResponseSpec, validate
 from dmr.decorators import endpoint_decorator
-from dmr.endpoint import ModifyAnyCallable, ValidateAnyCallable
+from dmr.endpoint import ValidateAnyCallable
 from dmr.errors import ErrorModel
-from dmr.exceptions import (
-    EndpointMetadataError,
-    InternalServerError,
-    NotAuthenticatedError,
-)
+from dmr.exceptions import EndpointMetadataError, NotAuthenticatedError
+from dmr.headers import HeaderSpec
 from dmr.internal.csrf import ensure_csrf
 from dmr.security.base import NO_STORE_HEADERS
 from dmr.security.jwt.auth.base import USER_LOOKUP_ERRORS, set_request_attrs
@@ -42,22 +38,30 @@ from dmr.security.jwt.auth.cookie import (
     DEFAULT_ACCESS_COOKIE,
     DEFAULT_REFRESH_COOKIE,
 )
-from dmr.security.jwt.token import JWToken, JWTokenError
+from dmr.security.jwt.token import JWToken
+from dmr.security.jwt.views.base import (
+    BaseRefreshTokenController,
+    BaseTokenController,
+    ObtainTokensPayload,
+)
 from dmr.serializer import BaseSerializer
 from dmr.types import safe_typevar
 
+if TYPE_CHECKING:
+    from django.utils.functional import (
+        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
+    )
+
+#: Request body of all the controllers that authenticate a user.
 _ObtainTokensT = TypeVar('_ObtainTokensT', bound=Mapping[str, Any])
-_RefreshTokensT = TypeVar('_RefreshTokensT', bound=Mapping[str, Any])
-_VerifyTokenT = TypeVar('_VerifyTokenT', bound=Mapping[str, Any])
-_TokensResponseT = TypeVar('_TokensResponseT')
-#: Cookie views send their tokens in cookies, the body is empty by default.
-_CookieResponseT = TypeVar('_CookieResponseT', default=None)
 _SerializerT = TypeVar(
     '_SerializerT',
     bound=BaseSerializer,
 )
 
-_TokenType: TypeAlias = Literal['access', 'refresh']
+#: Cookie views send their tokens in cookies, the body is empty by default.
+_CookieResponseT = TypeVar('_CookieResponseT', default=None)
+
 _SameSite: TypeAlias = Literal['lax', 'strict', 'none']
 
 # `_CookieResponseT` as a value, so it can be passed to `ResponseSpec`.
@@ -76,671 +80,8 @@ _NO_STORE_VALUES: Final = MappingProxyType({
 })
 
 
-class ObtainTokensPayload(TypedDict):
-    """
-    Payload for default version of a jwt request body.
-
-    Is also used as kwargs for :func:`django.contrib.auth.authenticate`.
-    """
-
-    username: str
-    password: str
-
-
-class ObtainTokensResponse(TypedDict):
-    """Default response type for refresh token endpoint."""
-
-    access_token: str
-    refresh_token: str
-
-
-class _BaseTokenSettings:
-    """Collection of jwt settings that can be applied to any jwt controller."""
-
-    jwt_audiences: ClassVar[str | Sequence[str] | None] = None
-    jwt_issuer: ClassVar[str | None] = None
-    jwt_algorithm: ClassVar[str] = 'HS256'
-    jwt_expiration: ClassVar[dt.timedelta] = dt.timedelta(days=1)
-    jwt_secret: ClassVar[str | None] = None
-    jwt_token_cls: ClassVar[type[JWToken]] = JWToken
-
-
-class _BaseObtainTokensSettings(_BaseTokenSettings):
-    """Settings that can be applied to controllers with refresh tokens."""
-
-    jwt_refresh_expiration: ClassVar[dt.timedelta] = dt.timedelta(days=10)
-
-
-class _BaseTokenController(
-    _BaseObtainTokensSettings,
-    Controller[_SerializerT],
-):
-    @sensitive_variables()
-    def create_jwt_token(  # noqa: WPS211
-        self,
-        *,
-        # Most frequent:
-        expiration: dt.datetime | None = None,
-        token_type: _TokenType | None = None,
-        # Less frequent:
-        subject: str | None = None,
-        issuer: str | None = None,
-        audiences: str | Sequence[str] | None = None,
-        jwt_id: str | None = None,
-        secret: str | None = None,
-        algorithm: str | None = None,
-        token_headers: dict[str, Any] | None = None,
-    ) -> str:
-        """Create correct jwt token of a given *expiration* and *token_type*."""
-        token = self.jwt_token_cls(
-            sub=subject or str(self.request.user.pk),
-            exp=expiration or (dt.datetime.now(dt.UTC) + self.jwt_expiration),
-            iss=issuer or self.jwt_issuer,
-            aud=audiences or self.jwt_audiences,
-            jti=jwt_id or self.make_jwt_id(),
-            extras={'type': token_type} if token_type else {},
-        )
-        try:
-            return token.encode(
-                secret=secret or self.jwt_secret or settings.SECRET_KEY,
-                algorithm=algorithm or self.jwt_algorithm,
-                headers=token_headers,
-            )
-        except JWTokenError as exc:
-            # Convert the token-layer semantic error at the HTTP boundary.
-            raise InternalServerError('Failed to encode token') from exc
-
-    def make_jwt_id(self) -> str | None:
-        """Create unique token's jwt id."""
-        return uuid.uuid4().hex
-
-
-class ObtainTokensSyncController(
-    _BaseTokenController[_SerializerT],
-    Generic[_SerializerT, _ObtainTokensT, _TokensResponseT],
-):
-    """
-    Sync controller to get access and refresh tokens.
-
-    Attributes:
-        jwt_audiences: String or sequence of string of audiences for JWT token.
-        jwt_issuer: String of who issued this JWT token.
-        jwt_algorithm: Default algorithm to use for token signing.
-        jwt_expiration: Default access token expiration timedelta.
-        jwt_refresh_expiration: Default refresh token expiration timedelta.
-        jwt_secret: Alternative token secret for signing.
-            By default uses ``secret.SECRET_KEY``.
-        jwt_token_cls: Possible custom JWT token class.
-
-    See also:
-        https://pyjwt.readthedocs.io/en/stable
-        for all the JWT terms and options explanation.
-
-    .. versionchanged:: 0.15.0
-        Now using ``@modify.lazy`` with the ability to change the spec.
-
-    """
-
-    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
-
-    @classmethod
-    def modify_spec(cls) -> ModifyAnyCallable:
-        """Lazy endpoint spec."""
-        return modify(
-            status_code=cls.response_status_code,
-            headers=NO_STORE_HEADERS,
-        )
-
-    @sensitive_variables()
-    @endpoint_decorator(sensitive_post_parameters())
-    @modify.lazy(modify_spec)
-    def post(self, parsed_body: Body[_ObtainTokensT]) -> _TokensResponseT:
-        """By default tokens are acquired on post."""
-        return self.login(parsed_body)
-
-    @sensitive_variables()
-    def login(self, parsed_body: _ObtainTokensT) -> _TokensResponseT:
-        """Perform the sync login routine for user."""
-        user = authenticate(
-            self.request,
-            **self.convert_auth_payload(parsed_body),
-        )
-        if user is None:
-            raise NotAuthenticatedError
-        self.set_request_attrs(self.request, user)
-        return self.make_api_response()
-
-    def set_request_attrs(
-        self,
-        request: HttpRequest,
-        user: AbstractBaseUser,
-    ) -> None:
-        """Set current user as authed for this request."""
-        set_request_attrs(request, user)
-
-    @abstractmethod
-    def convert_auth_payload(
-        self,
-        payload: _ObtainTokensT,
-    ) -> ObtainTokensPayload:
-        """
-        Convert your custom payload to kwargs that django supports.
-
-        See :func:`django.contrib.auth.authenticate` docs
-        on which kwargs it supports.
-
-        Basically it needs ``username`` and ``password`` strings.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def make_api_response(self) -> _TokensResponseT:
-        """Abstract method to create a response payload."""
-        raise NotImplementedError
-
-
-class ObtainTokensAsyncController(
-    _BaseTokenController[_SerializerT],
-    Generic[_SerializerT, _ObtainTokensT, _TokensResponseT],
-):
-    """
-    Async controller to get access and refresh tokens.
-
-    Attributes:
-        jwt_audiences: String or sequence of string of audiences for JWT token.
-        jwt_issuer: String of who issued this JWT token.
-        jwt_algorithm: Default algorithm to use for token signing.
-        jwt_expiration: Default token expiration timedelta.
-        jwt_refresh_expiration: Default refresh token expiration timedelta.
-        jwt_secret: Alternative token secret for signing.
-            By default uses ``secret.SECRET_KEY``.
-        jwt_token_cls: Possible custom JWT token class.
-
-    See also:
-        https://pyjwt.readthedocs.io/en/stable
-        for all the JWT terms and options explanation.
-
-    .. versionchanged:: 0.15.0
-        Now using ``@modify.lazy`` with the ability to change the spec.
-
-    """
-
-    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
-
-    @classmethod
-    def modify_spec(cls) -> ModifyAnyCallable:
-        """Lazy endpoint spec."""
-        return modify(
-            status_code=cls.response_status_code,
-            headers=NO_STORE_HEADERS,
-        )
-
-    @sensitive_variables()
-    @endpoint_decorator(sensitive_post_parameters())
-    @modify.lazy(modify_spec)
-    async def post(self, parsed_body: Body[_ObtainTokensT]) -> _TokensResponseT:
-        """By default tokens are acquired on post."""
-        return await self.login(parsed_body)
-
-    @sensitive_variables()
-    async def login(self, parsed_body: _ObtainTokensT) -> _TokensResponseT:
-        """Perform the async login routine for user."""
-        user = await aauthenticate(
-            self.request,
-            **(await self.convert_auth_payload(parsed_body)),
-        )
-        if user is None:
-            raise NotAuthenticatedError
-        await self.set_request_attrs(self.request, user)
-        return await self.make_api_response()
-
-    async def set_request_attrs(
-        self,
-        request: HttpRequest,
-        user: AbstractBaseUser,
-    ) -> None:
-        """Set current user as authed for this request."""
-        set_request_attrs(request, user)
-
-    @abstractmethod
-    async def convert_auth_payload(
-        self,
-        payload: _ObtainTokensT,
-    ) -> ObtainTokensPayload:
-        """
-        Convert your custom payload to kwargs that django supports.
-
-        See :func:`django.contrib.auth.authenticate` docs
-        on which kwargs it supports.
-
-        Basically it needs ``username`` and ``password`` strings.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    async def make_api_response(self) -> _TokensResponseT:
-        """Abstract method to create a response payload."""
-        raise NotImplementedError
-
-
-class RefreshTokenPayload(TypedDict):
-    """Default request body type for the refresh token endpoint."""
-
-    refresh_token: str
-
-
-class _BaseRefreshTokenController(_BaseTokenController[_SerializerT]):
-    jwt_user_id_field: ClassVar[str] = 'pk'
-
-    @sensitive_variables()
-    def _decode_and_validate_refresh_token(self, encoded_token: str) -> JWToken:
-        token = self.jwt_token_cls.decode(
-            encoded_token=encoded_token,
-            secret=self.jwt_secret or settings.SECRET_KEY,
-            algorithm=self.jwt_algorithm,
-            accepted_audiences=self.jwt_audiences,
-            accepted_issuers=self.jwt_issuer,
-        )
-        if token.extras.get('type') != 'refresh':
-            raise NotAuthenticatedError
-        return token
-
-
-class RefreshTokenSyncController(
-    _BaseRefreshTokenController[_SerializerT],
-    Generic[_SerializerT, _RefreshTokensT, _TokensResponseT],
-):
-    """
-    Sync controller to refresh access and refresh tokens.
-
-    Accepts a refresh token in the request body, validates it,
-    loads the user, and calls :meth:`make_api_response` to build the response.
-
-    Attributes:
-        jwt_user_id_field: User model field matched against ``token.sub``.
-            Defaults to ``'pk'``.
-        jwt_audiences: String or sequence of string of audiences for JWT token.
-        jwt_issuer: String of who issued this JWT token.
-        jwt_algorithm: Default algorithm to use for token signing.
-        jwt_expiration: Default token expiration timedelta.
-        jwt_refresh_expiration: Default refresh token expiration timedelta.
-        jwt_secret: Alternative token secret for signing.
-            By default uses ``secret.SECRET_KEY``.
-        jwt_token_cls: Possible custom JWT token class.
-
-    .. versionchanged:: 0.15.0
-        Now using ``@modify.lazy`` with the ability to change the spec.
-
-    """
-
-    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
-
-    @classmethod
-    def modify_spec(cls) -> ModifyAnyCallable:
-        """Lazy endpoint spec for sync verify tokens controller."""
-        return modify(
-            status_code=cls.response_status_code,
-            headers=NO_STORE_HEADERS,
-        )
-
-    @sensitive_variables()
-    @endpoint_decorator(sensitive_post_parameters())
-    @modify.lazy(modify_spec)
-    def post(self, parsed_body: Body[_RefreshTokensT]) -> _TokensResponseT:
-        """Refresh tokens on POST."""
-        return self.refresh(parsed_body)
-
-    @sensitive_variables()
-    def refresh(self, parsed_body: _RefreshTokensT) -> _TokensResponseT:
-        """Validate the refresh token, load user, and return new tokens."""
-        from django.contrib.auth import get_user_model  # noqa: PLC0415
-
-        token = self._decode_and_validate_refresh_token(
-            self.convert_refresh_payload(parsed_body),
-        )
-        try:
-            user = get_user_model().objects.get(**{
-                self.jwt_user_id_field: token.sub,
-            })
-        except USER_LOOKUP_ERRORS:
-            raise NotAuthenticatedError from None
-        self.check_auth(user)
-        self.set_request_attrs(self.request, user)
-        return self.make_api_response()
-
-    def check_auth(self, user: Any) -> None:
-        """Run extra auth checks, raise if something is wrong."""
-        if not user.is_active:
-            raise NotAuthenticatedError
-
-    def set_request_attrs(
-        self,
-        request: HttpRequest,
-        user: AbstractBaseUser,
-    ) -> None:
-        """Apply authed user to the current request."""
-        set_request_attrs(request, user)
-
-    @abstractmethod
-    def convert_refresh_payload(self, payload: _RefreshTokensT) -> str:
-        """Extract the refresh token string from the request payload."""
-        raise NotImplementedError
-
-    @abstractmethod
-    def make_api_response(self) -> _TokensResponseT:
-        """Build the token pair response after a successful refresh."""
-        raise NotImplementedError
-
-
-class RefreshTokenAsyncController(
-    _BaseRefreshTokenController[_SerializerT],
-    Generic[_SerializerT, _RefreshTokensT, _TokensResponseT],
-):
-    """
-    Async controller to refresh access and refresh tokens.
-
-    Accepts a refresh token in the request body, validates it,
-    loads the user, and calls :meth:`make_api_response` to build the response.
-
-    Attributes:
-        jwt_user_id_field: User model field matched against ``token.sub``.
-            Defaults to ``'pk'``.
-        jwt_audiences: String or sequence of string of audiences for JWT token.
-        jwt_issuer: String of who issued this JWT token.
-        jwt_algorithm: Default algorithm to use for token signing.
-        jwt_expiration: Default token expiration timedelta.
-        jwt_refresh_expiration: Default refresh token expiration timedelta.
-        jwt_secret: Alternative token secret for signing.
-            By default uses ``secret.SECRET_KEY``.
-        jwt_token_cls: Possible custom JWT token class.
-
-    .. versionchanged:: 0.15.0
-        Now using ``@modify.lazy`` with the ability to change the spec.
-
-    """
-
-    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
-
-    @classmethod
-    def modify_spec(cls) -> ModifyAnyCallable:
-        """Lazy endpoint spec for async refresh tokens controller."""
-        return modify(
-            status_code=cls.response_status_code,
-            headers=NO_STORE_HEADERS,
-        )
-
-    @sensitive_variables()
-    @endpoint_decorator(sensitive_post_parameters())
-    @modify.lazy(modify_spec)
-    async def post(
-        self,
-        parsed_body: Body[_RefreshTokensT],
-    ) -> _TokensResponseT:
-        """Refresh tokens on POST."""
-        return await self.refresh(parsed_body)
-
-    @sensitive_variables()
-    async def refresh(
-        self,
-        parsed_body: _RefreshTokensT,
-    ) -> _TokensResponseT:
-        """Validate the refresh token, load user, and return new tokens."""
-        from django.contrib.auth import get_user_model  # noqa: PLC0415
-
-        token = self._decode_and_validate_refresh_token(
-            await self.convert_refresh_payload(parsed_body),
-        )
-        try:
-            user = await get_user_model().objects.aget(**{
-                self.jwt_user_id_field: token.sub,
-            })
-        except USER_LOOKUP_ERRORS:
-            raise NotAuthenticatedError from None
-        await self.check_auth(user)
-        await self.set_request_attrs(self.request, user)
-        return await self.make_api_response()
-
-    async def check_auth(self, user: Any) -> None:
-        """Run extra auth checks, raise if something is wrong."""
-        if not user.is_active:
-            raise NotAuthenticatedError
-
-    async def set_request_attrs(
-        self,
-        request: HttpRequest,
-        user: AbstractBaseUser,
-    ) -> None:
-        """Apply authed user to the current request."""
-        set_request_attrs(request, user)
-
-    @abstractmethod
-    async def convert_refresh_payload(self, payload: _RefreshTokensT) -> str:
-        """Extract the refresh token string from the request payload."""
-        raise NotImplementedError
-
-    @abstractmethod
-    async def make_api_response(self) -> _TokensResponseT:
-        """Build the token pair response after a successful refresh."""
-        raise NotImplementedError
-
-
-class VerifyTokenPayload(TypedDict):
-    """Default request body type for the verify token endpoint."""
-
-    access_token: str
-
-
-class _BaseVerifyTokenController(_BaseTokenController[_SerializerT]):
-    jwt_user_id_field: ClassVar[str] = 'pk'
-
-    @sensitive_variables()
-    def _decode_and_validate_access_token(self, encoded_token: str) -> JWToken:
-        token = self.jwt_token_cls.decode(
-            encoded_token=encoded_token,
-            secret=self.jwt_secret or settings.SECRET_KEY,
-            algorithm=self.jwt_algorithm,
-            accepted_audiences=self.jwt_audiences,
-            accepted_issuers=self.jwt_issuer,
-        )
-        if token.extras.get('type') != 'access':
-            raise NotAuthenticatedError
-        return token
-
-
-class VerifyTokenSyncController(
-    _BaseVerifyTokenController[_SerializerT],
-    Generic[_SerializerT, _VerifyTokenT],
-):
-    """
-    Sync controller to verify an access token.
-
-    Accepts an access token in the request body, decodes and validates it,
-    ensures it is an access token (not a refresh token), and confirms that
-    the token subject belongs to an existing, active user.
-
-    Returns an empty ``204 No Content`` response when the token is valid.
-
-    Attributes:
-        jwt_user_id_field: User model field matched against ``token.sub``.
-            Defaults to ``'pk'``.
-        jwt_audiences: String or sequence of string of audiences for JWT token.
-        jwt_issuer: String of who issued this JWT token.
-        jwt_algorithm: Default algorithm to use for token signing.
-        jwt_expiration: Default token expiration timedelta.
-        jwt_refresh_expiration: Default refresh token expiration timedelta.
-        jwt_secret: Alternative token secret for signing.
-            By default uses ``secret.SECRET_KEY``.
-        jwt_token_cls: Possible custom JWT token class.
-
-    .. versionchanged:: 0.15.0
-        Now using ``@modify.lazy`` with the ability to change the spec.
-
-    """
-
-    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.NO_CONTENT
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
-
-    @classmethod
-    def modify_spec(cls) -> ModifyAnyCallable:
-        """Lazy endpoint spec for sync verify tokens controller."""
-        return modify(
-            status_code=cls.response_status_code,
-            headers=NO_STORE_HEADERS,
-        )
-
-    @sensitive_variables()
-    @endpoint_decorator(sensitive_post_parameters())
-    @modify.lazy(modify_spec)
-    def post(self, parsed_body: Body[_VerifyTokenT]) -> None:
-        """Verify the token on POST."""
-        self.verify(parsed_body)
-
-    @sensitive_variables()
-    def verify(self, parsed_body: _VerifyTokenT) -> None:
-        """Validate the access token and load its user."""
-        token = self._decode_and_validate_access_token(
-            self.convert_verify_payload(parsed_body),
-        )
-        user = self.get_user(token)
-        self.check_auth(user)
-
-    def get_user(self, token: JWToken) -> AbstractBaseUser:
-        """Fetch user by token."""
-        from django.contrib.auth import get_user_model  # noqa: PLC0415
-
-        try:
-            return get_user_model().objects.get(**{
-                self.jwt_user_id_field: token.sub,
-            })
-        except USER_LOOKUP_ERRORS:
-            raise NotAuthenticatedError from None
-
-    def check_auth(self, user: Any) -> None:
-        """Run extra checks on the token's user, raise if something is off."""
-        if not user.is_active:
-            raise NotAuthenticatedError
-
-    @abstractmethod
-    def convert_verify_payload(self, payload: _VerifyTokenT) -> str:
-        """Extract the access token string from the request payload."""
-        raise NotImplementedError
-
-
-class VerifyTokenAsyncController(
-    _BaseVerifyTokenController[_SerializerT],
-    Generic[_SerializerT, _VerifyTokenT],
-):
-    """
-    Async controller to verify an access token.
-
-    Accepts an access token in the request body, decodes and validates it,
-    ensures it is an access token (not a refresh token), and confirms that
-    the token subject belongs to an existing, active user.
-
-    Returns an empty ``204 No Content`` response when the token is valid.
-
-    Attributes:
-        jwt_user_id_field: User model field matched against ``token.sub``.
-            Defaults to ``'pk'``.
-        jwt_audiences: String or sequence of string of audiences for JWT token.
-        jwt_issuer: String of who issued this JWT token.
-        jwt_algorithm: Default algorithm to use for token signing.
-        jwt_expiration: Default token expiration timedelta.
-        jwt_refresh_expiration: Default refresh token expiration timedelta.
-        jwt_secret: Alternative token secret for signing.
-            By default uses ``secret.SECRET_KEY``.
-        jwt_token_cls: Possible custom JWT token class.
-
-    .. versionchanged:: 0.15.0
-        Now using ``@modify.lazy`` with the ability to change the spec.
-
-    """
-
-    response_status_code: ClassVar[HTTPStatus] = HTTPStatus.NO_CONTENT
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
-
-    @classmethod
-    def modify_spec(cls) -> ModifyAnyCallable:
-        """Lazy endpoint spec for async verify tokens controller."""
-        return modify(
-            status_code=cls.response_status_code,
-            headers=NO_STORE_HEADERS,
-        )
-
-    @sensitive_variables()
-    @endpoint_decorator(sensitive_post_parameters())
-    @modify.lazy(modify_spec)
-    async def post(self, parsed_body: Body[_VerifyTokenT]) -> None:
-        """Verify the token on POST."""
-        await self.verify(parsed_body)
-
-    @sensitive_variables()
-    async def verify(self, parsed_body: _VerifyTokenT) -> None:
-        """Validate the access token and load its user."""
-        token = self._decode_and_validate_access_token(
-            await self.convert_verify_payload(parsed_body),
-        )
-        user = await self.get_user(token)
-        await self.check_auth(user)
-
-    async def get_user(self, token: JWToken) -> AbstractBaseUser:
-        """Fetch user by token."""
-        from django.contrib.auth import get_user_model  # noqa: PLC0415
-
-        try:
-            return await get_user_model().objects.aget(**{
-                self.jwt_user_id_field: token.sub,
-            })
-        except USER_LOOKUP_ERRORS:
-            raise NotAuthenticatedError from None
-
-    async def check_auth(self, user: Any) -> None:
-        """Run extra checks on the token's user, raise if something is off."""
-        if not user.is_active:
-            raise NotAuthenticatedError
-
-    @abstractmethod
-    async def convert_verify_payload(self, payload: _VerifyTokenT) -> str:
-        """Extract the access token string from the request payload."""
-        raise NotImplementedError
-
-
 class _BaseCookieTokensController(  # noqa: WPS214
-    _BaseTokenController[_SerializerT],
+    BaseTokenController[_SerializerT],
     Generic[_SerializerT, _CookieResponseT],
 ):
     """
@@ -777,8 +118,8 @@ class _BaseCookieTokensController(  # noqa: WPS214
 
     jwt_access_cookie: ClassVar[str] = DEFAULT_ACCESS_COOKIE
     jwt_refresh_cookie: ClassVar[str] = DEFAULT_REFRESH_COOKIE
-    jwt_access_cookie_path: ClassVar[str] = '/'
-    jwt_refresh_cookie_path: ClassVar[str | None] = None
+    jwt_access_cookie_path: ClassVar['_StrOrPromise'] = '/'
+    jwt_refresh_cookie_path: ClassVar['_StrOrPromise | None'] = None
     jwt_cookie_domain: ClassVar[str | None] = None
     jwt_cookie_secure: ClassVar[bool] = True
     jwt_cookie_httponly: ClassVar[bool] = True
@@ -845,6 +186,20 @@ class _BaseCookieTokensController(  # noqa: WPS214
             )
             for cookie_name, cookie_spec in cls.issued_cookies_spec().items()
         }
+
+    @classmethod
+    def response_headers_spec(cls) -> Mapping[str, HeaderSpec]:
+        """
+        Describes the headers of every response this controller sends.
+
+        Credentials must not be written to any cache, neither shared,
+        nor local. Redefine it together with :meth:`response_headers`.
+        """
+        return _NO_STORE_SPEC
+
+    def response_headers(self) -> Mapping[str, str]:
+        """Headers of every response this controller sends."""
+        return _NO_STORE_VALUES
 
     @classmethod
     def csrf_cookie_spec(cls) -> dict[str, CookieSpec]:
@@ -965,7 +320,8 @@ class _BaseCookieTokensSyncController(
 
         Change the response status code from ``204`` when you return a body.
         """
-        return cast(_CookieResponseT, None)
+        # Tokens live in the cookies, so there is nothing to send here:
+        return None  # type: ignore[return-value]
 
 
 class _BaseCookieTokensAsyncController(
@@ -991,7 +347,8 @@ class _BaseCookieTokensAsyncController(
 
         Change the response status code from ``204`` when you return a body.
         """
-        return cast(_CookieResponseT, None)
+        # Tokens live in the cookies, so there is nothing to send here:
+        return None  # type: ignore[return-value]
 
 
 class CookieObtainTokensSyncController(
@@ -1039,7 +396,7 @@ class CookieObtainTokensSyncController(
             ResponseSpec(
                 _COOKIE_RESPONSE_TYPE,
                 status_code=cls.response_status_code,
-                headers=_NO_STORE_SPEC,
+                headers=cls.response_headers_spec(),
                 cookies={
                     **cls.issued_cookies_spec(),
                     **cls.csrf_cookie_spec(),
@@ -1054,7 +411,6 @@ class CookieObtainTokensSyncController(
         """By default cookies are acquired on post."""
         return self.login(parsed_body)
 
-    @sensitive_variables()
     def login(self, parsed_body: _ObtainTokensT) -> HttpResponse:
         """Perform the sync login routine and set the token cookies."""
         user = authenticate(
@@ -1068,7 +424,7 @@ class CookieObtainTokensSyncController(
         return self.to_response(
             self.make_api_response(),
             status_code=self.response_status_code,
-            headers=_NO_STORE_VALUES,
+            headers=self.response_headers(),
             cookies=self.issue_cookies(),
         )
 
@@ -1132,7 +488,7 @@ class CookieObtainTokensAsyncController(
             ResponseSpec(
                 _COOKIE_RESPONSE_TYPE,
                 status_code=cls.response_status_code,
-                headers=_NO_STORE_SPEC,
+                headers=cls.response_headers_spec(),
                 cookies={
                     **cls.issued_cookies_spec(),
                     **cls.csrf_cookie_spec(),
@@ -1161,7 +517,7 @@ class CookieObtainTokensAsyncController(
         return self.to_response(
             await self.make_api_response(),
             status_code=self.response_status_code,
-            headers=_NO_STORE_VALUES,
+            headers=self.response_headers(),
             cookies=self.issue_cookies(),
         )
 
@@ -1182,7 +538,7 @@ class CookieObtainTokensAsyncController(
 
 class CookieRefreshTokensSyncController(
     _BaseCookieTokensSyncController[_SerializerT, _CookieResponseT],
-    _BaseRefreshTokenController[_SerializerT],
+    BaseRefreshTokenController[_SerializerT],
     Generic[_SerializerT, _CookieResponseT],
 ):
     """
@@ -1218,7 +574,7 @@ class CookieRefreshTokensSyncController(
             ResponseSpec(
                 _COOKIE_RESPONSE_TYPE,
                 status_code=cls.response_status_code,
-                headers=_NO_STORE_SPEC,
+                headers=cls.response_headers_spec(),
                 cookies=cls.issued_cookies_spec(),
             ),
             *cls.csrf_response_specs(),
@@ -1230,7 +586,6 @@ class CookieRefreshTokensSyncController(
         """Rotate both cookies on post."""
         return self.refresh()
 
-    @sensitive_variables()
     def refresh(self) -> HttpResponse:
         """Validate the refresh cookie, load user, and set new cookies."""
         self.check_csrf()
@@ -1238,12 +593,12 @@ class CookieRefreshTokensSyncController(
             self.get_cookie_token(self.jwt_refresh_cookie),
         )
         user = self.get_user(token)
-        self.check_auth(user)
+        self.check_auth(user, token)
         self.set_request_attrs(self.request, user)
         return self.to_response(
             self.make_api_response(),
             status_code=self.response_status_code,
-            headers=_NO_STORE_VALUES,
+            headers=self.response_headers(),
             cookies=self.issue_cookies(),
         )
 
@@ -1258,7 +613,11 @@ class CookieRefreshTokensSyncController(
         except USER_LOOKUP_ERRORS:
             raise NotAuthenticatedError from None
 
-    def check_auth(self, user: Any) -> None:
+    def check_auth(
+        self,
+        user: AbstractBaseUser,
+        token: JWToken,
+    ) -> None:
         """Run extra checks on the refreshing user, raise to reject."""
         if not user.is_active:
             raise NotAuthenticatedError
@@ -1266,7 +625,7 @@ class CookieRefreshTokensSyncController(
 
 class CookieRefreshTokensAsyncController(
     _BaseCookieTokensAsyncController[_SerializerT, _CookieResponseT],
-    _BaseRefreshTokenController[_SerializerT],
+    BaseRefreshTokenController[_SerializerT],
     Generic[_SerializerT, _CookieResponseT],
 ):
     """
@@ -1302,7 +661,7 @@ class CookieRefreshTokensAsyncController(
             ResponseSpec(
                 _COOKIE_RESPONSE_TYPE,
                 status_code=cls.response_status_code,
-                headers=_NO_STORE_SPEC,
+                headers=cls.response_headers_spec(),
                 cookies=cls.issued_cookies_spec(),
             ),
             *cls.csrf_response_specs(),
@@ -1322,15 +681,16 @@ class CookieRefreshTokensAsyncController(
             self.get_cookie_token(self.jwt_refresh_cookie),
         )
         user = await self.get_user(token)
-        await self.check_auth(user)
+        await self.check_auth(user, token)
         await self.set_request_attrs(self.request, user)
         return self.to_response(
             await self.make_api_response(),
             status_code=self.response_status_code,
-            headers=_NO_STORE_VALUES,
+            headers=self.response_headers(),
             cookies=self.issue_cookies(),
         )
 
+    @sensitive_variables()
     async def get_user(self, token: JWToken) -> AbstractBaseUser:
         """Fetch the user this refresh token was issued for."""
         from django.contrib.auth import get_user_model  # noqa: PLC0415
@@ -1342,7 +702,12 @@ class CookieRefreshTokensAsyncController(
         except USER_LOOKUP_ERRORS:
             raise NotAuthenticatedError from None
 
-    async def check_auth(self, user: Any) -> None:
+    @sensitive_variables()
+    async def check_auth(
+        self,
+        user: AbstractBaseUser,
+        token: JWToken,
+    ) -> None:
         """Run extra checks on the refreshing user, raise to reject."""
         if not user.is_active:
             raise NotAuthenticatedError
@@ -1375,12 +740,13 @@ class CookieLogoutSyncController(
             ResponseSpec(
                 _COOKIE_RESPONSE_TYPE,
                 status_code=cls.response_status_code,
-                headers=_NO_STORE_SPEC,
+                headers=cls.response_headers_spec(),
                 cookies=cls.discarded_cookies_spec(),
             ),
             *cls.csrf_response_specs(),
         )
 
+    @sensitive_variables()
     @validate.lazy(validate_spec)
     def post(self) -> HttpResponse:
         """By default cookies are dropped on post."""
@@ -1393,7 +759,7 @@ class CookieLogoutSyncController(
         return self.to_response(
             self.make_api_response(),
             status_code=self.response_status_code,
-            headers=_NO_STORE_VALUES,
+            headers=self.response_headers(),
             cookies=self.discard_cookies(),
         )
 
@@ -1434,12 +800,13 @@ class CookieLogoutAsyncController(
             ResponseSpec(
                 _COOKIE_RESPONSE_TYPE,
                 status_code=cls.response_status_code,
-                headers=_NO_STORE_SPEC,
+                headers=cls.response_headers_spec(),
                 cookies=cls.discarded_cookies_spec(),
             ),
             *cls.csrf_response_specs(),
         )
 
+    @sensitive_variables()
     @validate.lazy(validate_spec)
     async def post(self) -> HttpResponse:
         """By default cookies are dropped on post."""
@@ -1452,7 +819,7 @@ class CookieLogoutAsyncController(
         return self.to_response(
             await self.make_api_response(),
             status_code=self.response_status_code,
-            headers=_NO_STORE_VALUES,
+            headers=self.response_headers(),
             cookies=self.discard_cookies(),
         )
 

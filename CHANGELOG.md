@@ -21,10 +21,21 @@ of requirements for an API to count as public.
 
 ### Breaking changes
 
+- `check_auth` of `RefreshTokenSyncController`, `RefreshTokenAsyncController`,
+  `VerifyTokenSyncController`, and `VerifyTokenAsyncController` now takes
+  the decoded `token` as its second argument and types `user`
+  as `AbstractBaseUser` instead of `Any`.
+  It used to differ from `check_auth` of the auth classes,
+  which is why `JWTokenBlocklistSyncMixin` and `JWTokenBlocklistAsyncMixin`
+  could not be mixed into these controllers, #1290
+- `dmr.security.jwt.views` is now a package
+  of `base`, `body`, and `cookie` modules.
+  Every public name is still importable from `dmr.security.jwt.views`,
+  only the private bases moved, #1290
 - `JWToken.encode` now raises `JWTokenError` (a token-layer semantic error)
   instead of the HTTP-layer `InternalServerError` when encoding fails.
   The error is converted back to `InternalServerError` at the HTTP boundary
-  in `_BaseTokenController.create_jwt_token`, so request-serving paths keep
+  in `BaseTokenController.create_jwt_token`, so request-serving paths keep
   their 500 contract while non-request callers (management commands, Celery
   tasks, test factories) get a meaningful exception. The original `pyjwt`
   cause is preserved in the traceback (no more `from None`).
@@ -105,6 +116,18 @@ of requirements for an API to count as public.
 - Added `NewCookie.from_spec` to build a response cookie
   from its `CookieSpec`, so runtime cookies of `@validate` endpoints
   cannot drift away from the spec they are validated against, #1290
+- `JWTokenBlocklistSyncMixin` and `JWTokenBlocklistAsyncMixin` can now
+  be mixed into the refresh controllers, both the body and the cookie ones,
+  so a blocklisted token cannot buy a new pair of tokens.
+  They used to only work with auth classes, #1290
+- Added `get_user` to `RefreshTokenSyncController`
+  and `RefreshTokenAsyncController`, the user lookup used to be inlined
+  into `refresh` with no way to override it alone, #1290
+- Added `response_headers` and `response_headers_spec`
+  to the cookie controllers, so `validate_spec` can be redefined
+  without repeating the `Cache-Control` header by hand, #1290
+- `CookieSpec.path` and `NewCookie.path` now accept lazy strings,
+  so a cookie can be scoped to a `reverse_lazy` url, #1290
 - Added `HeaderJWTSyncAuth` and `HeaderJWTAsyncAuth`,
   `JWTSyncAuth` and `JWTAsyncAuth` are kept as their aliases, #1193
 - Added `XSessionTokenSyncAuth` and `XSessionTokenAsyncAuth`

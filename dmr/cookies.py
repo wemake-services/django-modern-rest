@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 class _BaseCookie:
     """Base class for all cookies."""
 
-    path: str = '/'
+    path: '_StrOrPromise' = '/'
     max_age: int | None = None
     expires: int | None = None
     domain: str | None = None
@@ -62,6 +62,8 @@ class CookieSpec(_BaseCookie):
     Attributes:
         path: Path fragment that must exist in the request
             url for the cookie to be valid. Defaults to ``/``.
+            Can be a lazy string, so a cookie can be scoped
+            to a :func:`django.urls.reverse_lazy` url.
         max_age: Maximal age of the cookie before its invalidated.
         expires: Seconds from now until the cookie expires.
         domain: Domain for which the cookie is valid.
@@ -145,6 +147,8 @@ class NewCookie(_BaseCookie):
         value: Value for the cookie.
         path: Path fragment that must exist in the request
             url for the cookie to be valid. Defaults to ``/``.
+            Can be a lazy string, so a cookie can be scoped
+            to a :func:`django.urls.reverse_lazy` url.
         max_age: Maximal age of the cookie before its invalidated.
         expires: Seconds from now until the cookie expires.
         domain: Domain for which the cookie is valid.

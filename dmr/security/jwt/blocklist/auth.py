@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Final, Protocol
 
 from dmr.exceptions import NotAuthenticatedError
 from dmr.security.jwt.token import JWToken
+from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from django.contrib.auth.base_user import AbstractBaseUser
@@ -60,10 +61,17 @@ class _BaseBlocklistMixin:  # noqa: WPS338
             Accepting such tokens would mean that the blocklist
             is silently bypassed, we require the claim instead.
 
+            Controllers have no claim configuration to adjust,
+            they decode the token themselves.
+            Tokens without ``jti`` are rejected by :meth:`token_jti` there.
+
             .. versionadded:: 0.15.0
             """
             super().__init__(*args, **kwargs)
-            require_claims = list(self.require_claims or ())
+            existing_claims = getattr(self, 'require_claims', EMPTY)
+            if existing_claims is EMPTY:
+                return  # We are mixed into a controller, not into an auth.
+            require_claims = list(existing_claims or ())
             if _JTI_CLAIM not in require_claims:
                 require_claims.append(_JTI_CLAIM)
             self.require_claims = require_claims

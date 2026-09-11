@@ -1,4 +1,5 @@
 import datetime as dt
+import json
 from collections.abc import Callable
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Final, TypeAlias
@@ -9,7 +10,9 @@ from django.contrib.auth.models import User
 from django.http import HttpRequest, HttpResponse
 from typing_extensions import override
 
+from dmr import ResponseSpec, validate
 from dmr.cookies import CookieSpec
+from dmr.endpoint import ValidateAnyCallable
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.jwt.token import JWToken
@@ -72,6 +75,33 @@ class _LogoutController(CookieLogoutSyncController[PydanticFastSerializer]):
 
 class _NoCsrfLogoutController(_LogoutController):
     jwt_ensure_csrf = False
+
+
+class _CustomSpecLogoutController(
+    CookieLogoutSyncController[PydanticFastSerializer, str],
+):
+    """Redefines the whole endpoint spec, not just its parts."""
+
+    response_status_code = HTTPStatus.OK
+    jwt_refresh_cookie_path = _REFRESH_PATH
+    jwt_ensure_csrf = False
+
+    @classmethod
+    @override
+    def validate_spec(cls) -> ValidateAnyCallable:
+        return validate(
+            ResponseSpec(
+                str,
+                status_code=cls.response_status_code,
+                headers=cls.response_headers_spec(),
+                cookies=cls.discarded_cookies_spec(),
+            ),
+            tags=['auth'],
+        )
+
+    @override
+    def make_api_response(self) -> str:
+        return 'bye'
 
 
 @pytest.mark.parametrize(
@@ -302,3 +332,25 @@ def test_refresh_cookie_path_is_required(
 
         class _BrokenController(base[PydanticFastSerializer]):  # type: ignore[misc, valid-type]
             """Missing `jwt_refresh_cookie_path` here."""
+
+
+@pytest.mark.django_db
+def test_redefined_validate_spec(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures that a final controller can replace the whole spec."""
+    metadata = _CustomSpecLogoutController.api_endpoints['POST'].metadata
+    spec = metadata.responses[HTTPStatus.OK]
+
+    assert metadata.tags == ['auth']
+    assert spec.return_type is str
+    assert spec.cookies is not None
+    assert spec.cookies.keys() == {'access_token', 'refresh_token'}
+    assert HTTPStatus.NO_CONTENT not in metadata.responses
+    assert HTTPStatus.FORBIDDEN not in metadata.responses
+
+    response = _CustomSpecLogoutController.as_view()(dmr_rf.post('/whatever/'))
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert json.loads(response.content) == 'bye'
+    assert response.headers['Cache-Control'] == 'no-store'
+    assert response.cookies.keys() == {'access_token', 'refresh_token'}

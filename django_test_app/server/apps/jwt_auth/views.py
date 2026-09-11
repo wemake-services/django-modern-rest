@@ -4,6 +4,7 @@ from typing import Final, final
 
 import pydantic
 from asgiref.sync import async_to_sync
+from django.urls import reverse_lazy
 from django.views.decorators.debug import sensitive_variables
 from typing_extensions import override
 
@@ -262,7 +263,11 @@ class ControllerWithCookieJWTAsyncAuth(Controller[PydanticSerializer]):
         )
 
 
-_REFRESH_COOKIE_PATH: Final = '/api/jwt-auth/jwt-cookie-refresh-sync/'
+#: Both refresh endpoints are scoped to the sync one on purpose,
+#: so that a single cookie can be replayed against both of them.
+_REFRESH_COOKIE_PATH: Final = reverse_lazy(
+    'api:jwt_auth:jwt_cookie_refresh_sync',
+)
 
 
 @final

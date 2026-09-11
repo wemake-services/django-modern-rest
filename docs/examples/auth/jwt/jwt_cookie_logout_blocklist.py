@@ -1,3 +1,4 @@
+from django.urls import reverse_lazy
 from typing_extensions import override
 
 from dmr.plugins.pydantic import PydanticSerializer
@@ -23,7 +24,7 @@ class LogoutAndBlocklistController(
     # Which also means that this endpoint answers `401`
     # when the access token has already expired.
     auth = (cookie_blocklist_auth,)
-    jwt_refresh_cookie_path = '/api/auth/refresh/'
+    jwt_refresh_cookie_path = reverse_lazy('api:jwt_refresh')
 
     @override
     def revoke_tokens(self) -> None:
