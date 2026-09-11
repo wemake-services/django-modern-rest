@@ -87,7 +87,7 @@ class OpenAPI:
         Skipping validation does not prevent a later call from validating
         the cached dictionary.
 
-        .. versionchaged:: 0.15.0
+        .. versionchanged:: 0.15.0
             Now we only run schema convertion once
             per instance and cache the result.
 
