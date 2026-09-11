@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 import pytest
@@ -20,6 +21,15 @@ def tracecov_map() -> 'tracecov.CoverageMap | None':
     from django_test_app.server.urls import schema  # noqa: PLC0415
 
     return tracecov.CoverageMap.from_dict(schema.convert())
+
+
+@pytest.fixture(autouse=True)
+def _openapi_schema_cache_clear() -> Iterator[None]:
+    """Clear the cache on the OpenAPI instance that is used for tests."""
+    from server.urls import schema  # type: ignore[import-not-found]  #  noqa: PLC0415
+
+    yield
+    schema.cache_clear()
 
 
 @pytest.fixture(autouse=True)

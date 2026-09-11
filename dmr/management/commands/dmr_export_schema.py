@@ -37,7 +37,7 @@ class Command(BaseCommand):
         parser.add_argument(
             '--indent',
             type=int,
-            default=0,
+            default=None,
             dest='indent',
             help=(
                 'How many spaces we should use for pretty print indentation. '

@@ -86,6 +86,11 @@ class OpenAPI:
 
         Skipping validation does not prevent a later call from validating
         the cached dictionary.
+
+        .. versionchaged:: 0.15.0
+            Now we only run schema convertion once
+            per instance and cache the result.
+
         """
         # Do not reconvert the same spec.
         if self._converted is None:
@@ -107,6 +112,8 @@ class OpenAPI:
         Use this method after modifying an already converted schema. The next
         :meth:`convert` call rebuilds the schema and validates it unless
         validation is skipped.
+
+        .. versionadded:: 0.15.0
         """
         self._converted = None
         self._validated = False
