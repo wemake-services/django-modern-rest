@@ -81,6 +81,10 @@ class OpenAPIConfig:
             ValueError: if ``openapi_version`` is older than ``'3.1.0'``.
 
         """
+        # NOTE: we don't limit the upper bound on purpose,
+        # we would only limit in the future if case
+        # of a real incompatibility. There's a high chance
+        # that it will just work (c)
         if self.openapi_version_info[:2] < _MIN_OPENAPI_VERSION:
             raise ValueError(
                 'OpenAPI versions before 3.1.0 are not supported, because '
