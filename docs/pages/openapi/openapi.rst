@@ -275,6 +275,46 @@ To customize a schema, use the native methods.
 
   By default docstring or ``__doc__`` from the model is used as a description.
 
+Customizing schema generation parameters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Both ``msgspec`` and ``pydantic`` accept extra parameters
+that control *how* the whole schema is generated,
+not just a single model.
+To customize them, create your own serializer:
+subclass :class:`~dmr.serializer.BaseSchemaGenerator`
+(:class:`~dmr.plugins.msgspec.schema.MsgspecSchemaGenerator`
+or :class:`~dmr.plugins.pydantic.schema.PydanticSchemaGenerator`),
+override the relevant attribute, and point your serializer's
+``schema_generator`` to it.
+
+.. tabs::
+
+  .. tab:: msgspec
+
+    Docs: https://msgspec.dev/jsonschema (``schema_hook``)
+
+    .. literalinclude:: /examples/openapi/msgspec_schema_hook_customization.py
+      :caption: serializers.py
+      :language: python
+      :linenos:
+      :no-imports-spoiler:
+
+  .. tab:: pydantic
+
+    Docs: https://docs.pydantic.dev/latest/concepts/json_schema
+    (``schema_generator``, ``union_format``)
+
+    .. literalinclude:: /examples/openapi/pydantic_schema_generator_customization.py
+      :caption: serializers.py
+      :language: python
+      :linenos:
+      :no-imports-spoiler:
+
+Then use ``MySerializer`` the same way you would use
+``MsgspecSerializer`` or ``PydanticSerializer``,
+for example: ``Controller[MySerializer]``.
+
 Customizing path items
 ~~~~~~~~~~~~~~~~~~~~~~
 
