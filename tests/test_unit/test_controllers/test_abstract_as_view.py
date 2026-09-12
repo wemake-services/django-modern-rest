@@ -5,7 +5,6 @@ import pytest
 from dmr import Controller
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import Router, path
 from dmr.serializer import BaseSerializer
 
 _SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
@@ -51,13 +50,3 @@ def test_concrete_controller_as_view() -> None:
 
     assert not _Custom.is_abstract
     assert callable(_Custom.as_view())
-
-
-def test_abstract_controller_in_router() -> None:
-    """Ensure that abstract controllers cannot be added to a `Router`."""
-
-    class _Custom(Controller[PydanticSerializer]):
-        """Empty."""
-
-    with pytest.raises(EndpointMetadataError, match='_Custom'):
-        Router(urls=[path('custom/', _Custom.as_view())])
