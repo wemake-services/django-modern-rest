@@ -40,7 +40,13 @@ from django.core.handlers.asgi import ASGIHandler
 from django.db import IntegrityError
 from django.http import HttpResponse
 from django.test import override_settings
-from django.urls import URLPattern, clear_url_caches, path
+from django.urls import (
+    URLPattern,
+    URLResolver,
+    clear_url_caches,
+    include,
+    path,
+)
 from docutils.nodes import (
     Element,
     General,
@@ -94,10 +100,17 @@ _TEST_USERNAME: Final = 'test_user'
 _TOKEN_TEMPLATE: Final = '$X_API_TOKEN'  # noqa: S105
 _JWT_ACCESS_TOKEN_TEMPLATE: Final = '$JWT_ACCESS_TOKEN'  # noqa: S105
 _JWT_REFRESH_TOKEN_TEMPLATE: Final = '$JWT_REFRESH_TOKEN'  # noqa: S105
+_CSRF_TOKEN_TEMPLATE: Final = '$CSRF_TOKEN'  # noqa: S105
 
 #: Same defaults our own jwt controllers use.
-_JWT_EXPIRATION: Final = dt.timedelta(days=1)
-_JWT_REFRESH_EXPIRATION: Final = dt.timedelta(days=10)
+_JWT_EXPIRATIONS: Final = MappingProxyType({
+    'access': dt.timedelta(days=1),
+    'refresh': dt.timedelta(days=10),
+})
+
+#: Django compares the `csrftoken` cookie with the `X-CSRFToken` header,
+#: any `CSRF_SECRET_LENGTH` chars of `CSRF_ALLOWED_CHARS` work as both halves.
+_CSRF_TOKEN: Final = 'dmrDocsExampleCsrfTokenValue0001'  # noqa: S105
 
 _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
 _RGX_RUN_COMMENT: Final = re.compile(r'^\s*#\s*run:')
@@ -108,6 +121,7 @@ _AppRunArgs: TypeAlias = dict[str, Any]
 _OpenAPIRunArgs: TypeAlias = dict[str, Any]
 _JWTokenType: TypeAlias = Literal['access', 'refresh']
 _TokenLoader: TypeAlias = Callable[[], str]
+_AnyURLPattern: TypeAlias = URLPattern | URLResolver
 
 logger: Final = logging.getLogger(__name__)
 ignore_missing_output: Final = True
@@ -439,7 +453,7 @@ class _BaseBuilder:  # noqa: WPS214
         )
         sys.modules['url_conf'] = url_conf_module
 
-    def _generate_urls(self, module: ModuleType) -> list[URLPattern]:
+    def _generate_urls(self, module: ModuleType) -> list[_AnyURLPattern]:
         clear_url_caches()
 
         if self.config.get('use_urlpatterns', False):
@@ -449,7 +463,10 @@ class _BaseBuilder:  # noqa: WPS214
         url_path = _get_route_path_from_run_args(
             self.config,
         ).lstrip('/')  # noqa: WPS226
-        return [path(url_path, controller)]
+        return [
+            path(url_path, controller),
+            *_build_named_urls(self.config, controller),
+        ]
 
 
 class _AppBuilder(_BaseBuilder):
@@ -460,7 +477,7 @@ class _OpenAPIBuilder(_BaseBuilder):
     """Builds an OpenAPI application from configuration."""
 
     @override
-    def _generate_urls(self, module: ModuleType) -> list[URLPattern]:
+    def _generate_urls(self, module: ModuleType) -> list[_AnyURLPattern]:
         from dmr.openapi import build_schema  # noqa: PLC0415
         from dmr.openapi.views import OpenAPIJsonView  # noqa: PLC0415
         from dmr.routing import Router  # noqa: PLC0415
@@ -509,6 +526,49 @@ def _get_route_path_from_run_args(run_args: _AppRunArgs) -> str:
         assert isinstance(url_pattern, str)  # noqa: S101
         return url_pattern
     return _get_url_path_from_run_args(run_args)
+
+
+def _build_named_urls(
+    run_args: _AppRunArgs,
+    controller: Callable[..., HttpResponse],
+) -> list[_AnyURLPattern]:
+    """
+    Register the named routes that `"url_names"` asks for.
+
+    Cookie controllers scope their refresh cookie with
+    `reverse_lazy('api:jwt_refresh')`, which needs that name to resolve.
+    A single-controller example has no such route, so the names listed
+    here are served by the very same controller, and only the one
+    under `"url"` is ever requested.
+    """
+    named_urls = run_args.get('url_names', {})
+    if not named_urls:
+        return []
+
+    namespaces = {full_name.rpartition(':')[0] for full_name in named_urls}
+    assert len(namespaces) == 1, (  # noqa: S101
+        f'All `url_names` must share one namespace, got {namespaces}'
+    )
+
+    urlpatterns = [
+        path(
+            named_path.lstrip('/'),
+            controller,
+            name=full_name.rpartition(':')[2],
+        )
+        for full_name, named_path in named_urls.items()
+    ]
+    return _wrap_in_namespace(urlpatterns, namespaces.pop())
+
+
+def _wrap_in_namespace(
+    urlpatterns: list[URLPattern],
+    namespace: str,
+) -> list[_AnyURLPattern]:
+    """Mount *urlpatterns* under *namespace*, so `'api:name'` reverses."""
+    if not namespace:
+        return list(urlpatterns)
+    return [path('', include((urlpatterns, namespace), namespace=namespace))]
 
 
 @contextmanager
@@ -1029,24 +1089,21 @@ class _StoredToken:
 
 class _IssuedJWTokens:
     """
-    Pair of jwt tokens of the example user.
+    Access and refresh jwt tokens of the example user.
 
     Unlike :class:`_StoredToken`, jwt tokens are not stored anywhere:
     they just have to be signed with our secret and to point
     at an existing user. So, there is no file to read them back from,
-    we issue a single pair per docs build instead.
-    """
+    we sign a new one every time an example asks.
 
-    _pair: ClassVar[dict[_JWTokenType, str]] = {}
+    Every token also gets its own `jti`, which keeps the examples
+    independent: `jwt_cookie_logout_blocklist.py` blocklists the token
+    it is given, and that must not reach any other example.
+    """
 
     @classmethod
     def load(cls, token_type: _JWTokenType) -> str:
-        if not cls._pair:
-            cls._pair = {
-                'access': cls._issue('access', _JWT_EXPIRATION),
-                'refresh': cls._issue('refresh', _JWT_REFRESH_EXPIRATION),
-            }
-        return cls._pair[token_type]
+        return cls._issue(token_type, _JWT_EXPIRATIONS[token_type])
 
     @classmethod
     def _issue(cls, token_type: _JWTokenType, expires_in: dt.timedelta) -> str:
@@ -1073,6 +1130,7 @@ _TOKEN_TEMPLATES: Final[Mapping[str, _TokenLoader]] = MappingProxyType({
     _TOKEN_TEMPLATE: _StoredToken.load,
     _JWT_ACCESS_TOKEN_TEMPLATE: partial(_IssuedJWTokens.load, 'access'),
     _JWT_REFRESH_TOKEN_TEMPLATE: partial(_IssuedJWTokens.load, 'refresh'),
+    _CSRF_TOKEN_TEMPLATE: lambda: _CSRF_TOKEN,
 })
 
 
