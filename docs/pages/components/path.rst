@@ -55,6 +55,12 @@ use :data:`~dmr.components.Path` component with a model.
   you can use set ``__dmr_converter_schema__`` attribute
   with the specific type that you need in the schema.
 
+.. note::
+
+  Built-in converters also contribute to the parameter schema:
+  ``slug`` is documented with the ``pattern`` from its converter,
+  and ``path`` is documented as being able to contain slashes.
+
 
 Using Path component and parsing models
 ---------------------------------------
