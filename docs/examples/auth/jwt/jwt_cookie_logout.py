@@ -12,4 +12,5 @@ class LogoutCookiesSyncController(
     jwt_refresh_cookie_path = reverse_lazy('api:jwt_refresh')
 
 
+# run: {"controller": "LogoutCookiesSyncController", "method": "post", "url": "/api/auth/logout/", "url_names": {"api:jwt_refresh": "/api/auth/refresh/"}, "cookies": {"csrftoken": "$CSRF_TOKEN"}, "headers": {"X-CSRFToken": "$CSRF_TOKEN"}, "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
 # openapi: {"controller": "LogoutCookiesSyncController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

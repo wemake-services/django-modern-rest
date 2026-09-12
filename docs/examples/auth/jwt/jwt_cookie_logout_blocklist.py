@@ -35,4 +35,5 @@ class LogoutAndBlocklistController(
         )
 
 
+# run: {"controller": "LogoutAndBlocklistController", "method": "post", "url": "/api/auth/logout/", "url_names": {"api:jwt_refresh": "/api/auth/refresh/"}, "cookies": {"access_token": "$JWT_ACCESS_TOKEN", "csrftoken": "$CSRF_TOKEN"}, "headers": {"X-CSRFToken": "$CSRF_TOKEN"}, "populate_db": true, "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
 # openapi: {"controller": "LogoutAndBlocklistController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

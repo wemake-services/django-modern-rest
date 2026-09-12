@@ -15,4 +15,5 @@ class RefreshWithBlocklistController(
     jwt_refresh_cookie_path = reverse_lazy('api:jwt_refresh')
 
 
+# run: {"controller": "RefreshWithBlocklistController", "method": "post", "url": "/api/auth/refresh/", "url_names": {"api:jwt_refresh": "/api/auth/refresh/"}, "cookies": {"refresh_token": "$JWT_REFRESH_TOKEN", "csrftoken": "$CSRF_TOKEN"}, "headers": {"X-CSRFToken": "$CSRF_TOKEN"}, "populate_db": true, "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
 # openapi: {"controller": "RefreshWithBlocklistController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

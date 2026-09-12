@@ -16,4 +16,5 @@ class VerifySyncController(
         return payload['access_token']
 
 
+# run: {"controller": "VerifySyncController", "method": "post", "url": "/api/auth/verify/", "body": {"access_token": "$JWT_ACCESS_TOKEN"}, "populate_db": true, "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
 # openapi: {"controller": "VerifySyncController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
