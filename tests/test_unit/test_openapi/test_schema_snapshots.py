@@ -3,7 +3,7 @@ from http import HTTPStatus
 from typing import Annotated, ClassVar, TypeAlias
 
 import pydantic
-from django.urls import path, re_path
+from django.urls import path, re_path, register_converter
 from syrupy.assertion import SnapshotAssertion
 
 from dmr import Body, Controller, Cookies, Path, Query, ResponseSpec
@@ -262,6 +262,41 @@ class _GetPostController(Controller[PydanticSerializer]):
 
     def get(self) -> str:
         raise NotImplementedError
+
+
+
+class _YearIntConverter:
+    """Custom converter that reports ``int`` via ``__dmr_converter_schema__``."""
+
+    regex = '[0-9]{4}'
+    __dmr_converter_schema__ = int
+
+    def to_python(self, value: str) -> int:
+        return int(value)
+
+    def to_url(self, value: int) -> str:
+        return str(value)
+
+
+def test_custom_converter_schema() -> None:
+    """Ensure ``__dmr_converter_schema__`` is used for custom path converters."""
+    register_converter(_YearIntConverter, 'dmr_year_int')
+    schema = build_schema(
+        Router(
+            'api/v1/',
+            [
+                path(
+                    'archive/<dmr_year_int:year>/',
+                    _GetPostController.as_view(),
+                ),
+            ],
+        ),
+    ).convert()
+    params = schema['paths']['/api/v1/archive/{year}/']['get']['parameters']
+    year_param = next(param for param in params if param['name'] == 'year')
+    assert year_param['in'] == 'path'
+    assert year_param['required'] is True
+    assert year_param['schema']['type'] == 'integer'
 
 
 def test_raw_path_schema(snapshot: SnapshotAssertion) -> None:

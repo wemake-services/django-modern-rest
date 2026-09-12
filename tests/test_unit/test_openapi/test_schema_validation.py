@@ -1,5 +1,5 @@
 import pytest
-from django.urls import path
+from django.urls import path, register_converter
 from faker import Faker
 from inline_snapshot import snapshot
 from syrupy.assertion import SnapshotAssertion
@@ -7,6 +7,7 @@ from typing_extensions import override
 
 from dmr import Controller, modify
 from dmr.endpoint import Endpoint
+from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.openapi.objects import (
     Components,
@@ -141,3 +142,45 @@ def test_schema_validation_after_cache_clear() -> None:
         match=r'["\']scheme["\'] is a required property',
     ):
         schema.convert()
+
+
+class _UnserializableConverterType:
+    """Type that cannot be converted into an OpenAPI schema."""
+
+
+class _InvalidSchemaConverter:
+    """Custom converter whose schema type cannot be serialized."""
+
+    regex = '[^/]+'
+    __dmr_converter_schema__ = _UnserializableConverterType
+
+    def to_python(self, value: str) -> str:
+        return value
+
+    def to_url(self, value: str) -> str:
+        return value
+
+
+class _InvalidConverterController(Controller[PydanticSerializer]):
+    def get(self) -> str:
+        raise NotImplementedError
+
+
+def test_invalid_converter_schema_fails_validation() -> None:
+    """Ensure invalid ``__dmr_converter_schema__`` fails schema generation."""
+    register_converter(_InvalidSchemaConverter, 'dmr_invalid_schema')
+    router = Router(
+        'api/v1/',
+        [
+            path(
+                'item/<dmr_invalid_schema:item>/',
+                _InvalidConverterController.as_view(),
+            ),
+        ],
+    )
+
+    with pytest.raises(
+        UnsolvableAnnotationsError,
+        match='Cannot generate OpenAPI schema',
+    ):
+        build_schema(router).convert()
