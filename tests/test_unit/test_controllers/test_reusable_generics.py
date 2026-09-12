@@ -6,12 +6,13 @@ from typing import Generic, TypeVar
 import pydantic
 import pytest
 from django.http import HttpResponse
+from typing_extensions import TypeVar as ExtTypeVar
 
 from dmr import Body, Controller, ResponseSpec, validate
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
-from dmr.types import safe_typevar
+from dmr.types import infer_annotation, safe_typevar
 
 _SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
 _ModelT = TypeVar('_ModelT')
@@ -125,6 +126,41 @@ def test_generics_in_validate() -> None:
     response = metadata.responses[HTTPStatus.OK]
     assert response.return_type == list[str]
     assert response.status_code == HTTPStatus.OK
+
+
+def test_typevar_default_used_when_unbound() -> None:
+    """A ``TypeVar`` with ``default=`` (PEP 696) resolves when not given."""
+    DefaultModelT = ExtTypeVar('DefaultModelT', default=_BodyModel)
+
+    class _BaseController(
+        Controller[_SerializerT],
+        Generic[_SerializerT, DefaultModelT],
+    ):
+        def post(self, parsed_body: Body[DefaultModelT]) -> str:
+            raise NotImplementedError
+
+    class ConcreteController(_BaseController[PydanticSerializer]):
+        """Leaves ``DefaultModelT`` unbound, so its default is used."""
+
+    assert not ConcreteController.is_abstract
+    metadata = ConcreteController.api_endpoints['POST'].metadata
+    assert metadata.component_parsers[0][1] is _BodyModel
+
+    class OverriddenController(_BaseController[PydanticSerializer, str]):
+        """Explicitly overrides the default."""
+
+    metadata = OverriddenController.api_endpoints['POST'].metadata
+    assert metadata.component_parsers[0][1] is str
+
+
+def test_infer_annotation_uses_default() -> None:
+    """``infer_annotation`` uses ``default=`` for a fully unbound base."""
+    DefaultT = ExtTypeVar('DefaultT', default=int)
+
+    class _Base(Generic[DefaultT]):
+        """Never subscribed, so ``DefaultT`` stays unbound."""
+
+    assert infer_annotation(DefaultT, _Base) is int
 
 
 @pytest.mark.skipif(

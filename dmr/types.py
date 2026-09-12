@@ -317,10 +317,6 @@ class TypeVarInference:
 
             is_needed = type_map.get(type_param.__name__)
             if is_needed:
-                # TODO: most likely this will require
-                # some extra work to support
-                # type var defaults. Right now defaults
-                # are ignored in the resolution.
                 type_map.update({type_param.__name__: type_arg})
                 if isinstance(type_arg, TypeVar):
                     type_map.update({type_arg.__name__: type_arg})
@@ -333,16 +329,26 @@ class TypeVarInference:
         inferenced: dict[TypeVar, Any] = {}
         type_param: Any
         for type_param in type_parameters:
-            orig_type_param = type_param
-            iterations = 0
-            while isinstance(type_param, TypeVar):
-                iterations += 1
-                type_param = type_map[type_param.__name__]
-                if iterations >= self._max_depth:
-                    raise UnsolvableAnnotationsError(
-                        f'Cannot solve type annotations for {type_param!r}. '
-                        f'Is definition for {self._to_infer!r} generic? '
-                        'It must be concrete',
-                    )
-            inferenced.update({orig_type_param: type_param})
+            inferenced[type_param] = self._resolve(type_param, type_map)
         return inferenced
+
+    def _resolve(
+        self,
+        type_param: Any,
+        type_map: dict[str, Any],
+    ) -> Any:
+        iterations = 0
+        while isinstance(type_param, TypeVar):
+            mapped = type_map[type_param.__name__]
+            has_default = getattr(type_param, 'has_default', None)
+            if mapped is type_param and callable(has_default) and has_default():
+                return type_param.__default__
+            iterations += 1
+            type_param = mapped
+            if iterations >= self._max_depth:
+                raise UnsolvableAnnotationsError(
+                    f'Cannot solve type annotations for {type_param!r}. '
+                    f'Is definition for {self._to_infer!r} generic? '
+                    'It must be concrete',
+                )
+        return type_param

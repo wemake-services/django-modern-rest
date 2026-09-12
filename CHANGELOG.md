@@ -27,6 +27,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 ### Features
 
 - Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
+- `TypeVar` `default=` values (PEP 696) are now honored during controller
+  type var inference when a type var is left unbound, #1452
 
 
 ## 0.15.0 (2026-09-11)
