@@ -15,6 +15,7 @@ from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorModel, ErrorType, format_error
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
+from dmr.internal.docstrings import resolve_summary_and_description
 from dmr.internal.io import identity
 from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
@@ -129,7 +130,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         csrf_exempt: Should this controller be exempted from the CSRF check?
             Is ``True`` by default.
         summary: A short summary of what this path item does.
+            Defaults to the first paragraph of the controller's docstring.
+            Set it to ``None`` to have no summary at all.
         description: A verbose explanation of the path item behavior.
+            Defaults to everything that goes after the first paragraph
+            of the controller's docstring.
+            Set it to ``None`` to have no description at all.
         tags: A list of tags to group all operations
             from this controller in OpenAPI documentation.
             These are merged with router-level and endpoint-level tags.
@@ -181,8 +187,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     annotations_context: ClassVar[AnnotationsContext] = AnnotationsContext()
 
     # OpenAPI:
-    summary: ClassVar['_StrOrPromise | None'] = None
-    description: ClassVar['_StrOrPromise | None'] = None
+    summary: ClassVar['_StrOrPromise | Sentinel | None'] = EMPTY
+    description: ClassVar['_StrOrPromise | Sentinel | None'] = EMPTY
     tags: ClassVar[Sequence[str] | None] = None
     servers: ClassVar[Sequence[Server] | None] = None
     ignore_from_spec: ClassVar[bool] = False
@@ -555,6 +561,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             - Now allows to return ``None`` to ignore whole
               path items from OpenAPI schema
 
+        .. versionchanged:: 0.16.0
+
+            ``summary`` and ``description`` are now parsed
+            from the controller's docstring when they are not set explicitly.
+
         """
         operations: dict[str, Operation] = {}
         for method, endpoint in cls.api_endpoints.items():
@@ -577,11 +588,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
         return PathItem(
             **standard_ops,
-            additional_operations=additional_ops,
-            summary=None if cls.summary is None else str(cls.summary),
-            description=(
-                None if cls.description is None else str(cls.description)
+            **resolve_summary_and_description(
+                cls.__doc__,
+                cls.summary,
+                cls.description,
             ),
+            additional_operations=additional_ops,
             servers=None if cls.servers is None else list(cls.servers),
         )
 

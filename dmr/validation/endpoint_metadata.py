@@ -20,7 +20,6 @@ from typing import (
     assert_never,
 )
 
-from django.contrib.admindocs.utils import parse_docstring
 from django.core.cache.backends import dummy, locmem
 from django.http import HttpResponseBase
 from typing_extensions import Sentinel
@@ -29,6 +28,7 @@ from dmr.components import BodyComponent
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.headers import HeaderSpec, NewHeader
+from dmr.internal.docstrings import parse_summary_and_description
 from dmr.internal.enums import stringify
 from dmr.metadata import (
     ComponentParserSpec,
@@ -991,18 +991,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 ),
             )
 
-        summary: str | None
-        description: str | None
-
-        summary, description, _ = parse_docstring(self.func.__doc__ or '')
-
-        if not summary:
-            summary = None
-
-        if not description:
-            description = None
-
-        return summary, description
+        return parse_summary_and_description(self.func.__doc__)
 
     def _validate_new_http_parts(
         self,

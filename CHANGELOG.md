@@ -38,6 +38,11 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Features
 
+- `summary` and `description` of a `PathItem` are now parsed
+  from the controller's docstring, just like they are parsed
+  from the endpoint's docstring for an `Operation`.
+  Setting `Controller.summary` or `Controller.description` explicitly
+  still wins, `None` means that nothing is generated at all, #1446
 - Added `tags` controller attribute to apply OpenAPI tags
   to all endpoints of this controller. They are merged
   with router-level and endpoint-level tags, #1434
