@@ -552,7 +552,7 @@ Environment variables
 
 .. envvar:: DMR_MAX_CACHE_SIZE
 
-  Default: ``256``
+  Default: ``1024``
 
   We use :func:`functools.lru_cache` in many places internally.
   For example:
