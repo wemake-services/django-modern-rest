@@ -16,4 +16,5 @@ class APIController(Controller[PydanticSerializer]):
         return 'authed'
 
 
+# run: {"controller": "APIController", "method": "get", "url": "/api/users/", "headers": {"Authorization": "Bearer $JWT_ACCESS_TOKEN"}, "populate_db": true}  # noqa: ERA001, E501
 # openapi: {"controller": "APIController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001

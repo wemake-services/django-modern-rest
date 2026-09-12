@@ -15,7 +15,6 @@ class Page(Generic[_ModelT]):
     Attributes:
         number: Page number. For example: ``5`` page out of ``10`` total pages.
         object_list: Generic sequence of objects on this page.
-
     """
 
     number: int
