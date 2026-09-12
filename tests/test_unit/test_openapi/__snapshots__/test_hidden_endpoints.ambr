@@ -59,8 +59,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "patch": {
           "description": "Patch",
@@ -96,8 +95,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -204,8 +202,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "operationId": "postPartiallyhiddenendpointsApiHiddenEndpoints",
@@ -263,8 +260,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },

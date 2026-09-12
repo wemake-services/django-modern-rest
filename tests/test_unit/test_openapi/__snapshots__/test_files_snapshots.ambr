@@ -57,8 +57,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -217,8 +216,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -385,8 +383,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -726,8 +723,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -883,8 +879,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -1019,8 +1014,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "operationId": "postSeveralparserscontrollerSeveralParsers",
@@ -1098,8 +1092,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },

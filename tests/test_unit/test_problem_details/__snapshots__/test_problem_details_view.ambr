@@ -13,7 +13,6 @@
           "operationId": "getProblemdetailscontrollerApiV1WithNegotiation",
           "parameters": [
             {
-              "deprecated": false,
               "name": "number",
               "in": "query",
               "schema": {
@@ -130,7 +129,6 @@
               }
             }
           },
-          "deprecated": false,
           "security": [
             {
               "django_session": [],
@@ -144,7 +142,6 @@
           "operationId": "getProblemdetailsdefaultcontrollerApiV1Default",
           "parameters": [
             {
-              "deprecated": false,
               "name": "number",
               "in": "query",
               "schema": {
@@ -205,8 +202,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/api/v1/regular": {
@@ -214,7 +210,6 @@
           "operationId": "getProblemdetailsvalidationcontrollerApiV1Regular",
           "parameters": [
             {
-              "deprecated": false,
               "name": "number",
               "in": "query",
               "schema": {
@@ -275,8 +270,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },

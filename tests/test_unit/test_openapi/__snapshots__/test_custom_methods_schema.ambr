@@ -43,8 +43,7 @@
                   }
                 }
               }
-            },
-            "deprecated": false
+            }
           }
         }
       }
@@ -155,8 +154,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "operationId": "postStandardcontrollerApiV1Standard",
@@ -194,8 +192,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/api/v1/meta/": {
@@ -238,8 +235,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "options": {
           "summary": "Default sync implementation for ``OPTIONS`` http method.",
@@ -283,8 +279,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },

@@ -45,8 +45,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/api/users/user/": {
@@ -86,8 +85,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/api/users/old/user/": {

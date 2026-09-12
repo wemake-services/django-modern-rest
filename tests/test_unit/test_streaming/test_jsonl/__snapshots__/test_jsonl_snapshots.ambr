@@ -13,7 +13,6 @@
           "operationId": "getComplexjsonlApiV1Complex",
           "parameters": [
             {
-              "deprecated": false,
               "name": "X-Header",
               "in": "header",
               "schema": {
@@ -91,8 +90,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -193,7 +191,6 @@
           "operationId": "getComplexjsonlApiV1Complex",
           "parameters": [
             {
-              "deprecated": false,
               "name": "X-Header",
               "in": "header",
               "schema": {
@@ -271,8 +268,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -420,8 +416,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "operationId": "postClassbasedjsonlApiV1Jsonl",
@@ -474,8 +469,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
