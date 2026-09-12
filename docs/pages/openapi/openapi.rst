@@ -423,6 +423,14 @@ but sometimes it is better than nothing.
 
   However, we recommend adding semantic named examples by hand.
 
+.. note::
+
+  The seed is a global setting, it cannot be changed
+  per controller or per endpoint.
+  Generated examples are stored on shared ``components/schemas`` entries,
+  which several endpoints and controllers can reference at once.
+  See :data:`~dmr.settings.Settings.openapi_examples_seed` for the reasoning.
+
 
 Top level API
 -------------

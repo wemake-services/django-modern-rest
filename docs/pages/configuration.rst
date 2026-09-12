@@ -480,12 +480,18 @@ OpenAPI
   .. code-block:: python
     :caption: settings.py
 
-    >>> from dmr.settings import HttpSpec
-    >>> from dmr.openapi.config import OpenAPIConfig
-
     >>> DMR_SETTINGS = {
     ...     Settings.openapi_examples_seed: 10,
     ... }
+
+  .. note::
+
+    This is a global setting, it cannot be changed
+    per controller or per endpoint.
+    Generated examples are stored on shared ``components/schemas`` entries,
+    which several endpoints and controllers can reference at once,
+    so there's no single endpoint to read a local seed from.
+    See :ref:`openapi-examples-generation`.
 
 .. data:: dmr.settings.Settings.openapi_static_cdn
 
