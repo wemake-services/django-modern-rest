@@ -5,7 +5,6 @@ import warnings
 from collections.abc import (
     Callable,
     ItemsView,
-    KeysView,
     Sequence,
     Set,
 )
@@ -193,15 +192,13 @@ class _ResponseListValidator:  # noqa: WPS214
             HttpSpec.header_name_syntax
             not in self.metadata.no_validate_http_spec
         ):
-            self._check_modification_header_syntax()
-            self._check_responses_header_syntax(responses)
+            self._check_header_syntax(responses)
 
         if (
             HttpSpec.cookie_name_syntax
             not in self.metadata.no_validate_http_spec
         ):
-            self._check_modification_cookie_syntax()
-            self._check_response_cookie_syntax(responses)
+            self._check_cookie_syntax(responses)
 
         # TODO: add more checks
 
@@ -229,7 +226,6 @@ class _ResponseListValidator:  # noqa: WPS214
                     f'with status code {response.status_code}',
                 )
 
-    # TODO: refactor all the name checks to be less verbose and complex
     def _check_header_name_server_managed(
         self,
         responses: list[ResponseSpec],
@@ -249,77 +245,53 @@ class _ResponseListValidator:  # noqa: WPS214
                     f'from endpoint {endpoint_name!r}.',
                 )
 
-    def _check_responses_header_syntax(
+    def _check_header_syntax(
         self,
         responses: list[ResponseSpec],
     ) -> None:
+
+        header_names = []
+
+        modification = self.metadata.modification
+
+        if modification and modification.headers:
+            header_names = list(modification.headers.keys())
 
         for response in responses:
             if not response.headers:
                 continue
 
-            invalid_header = self._get_invalid_header(
-                response.headers.keys(),
-            )
+            header_names += list(response.headers.keys())
 
-            if invalid_header:
-                raise EndpointMetadataError(
-                    f'Header name {invalid_header!r} is not '
-                    f'following http spec.',
-                )
-
-    def _check_modification_header_syntax(
-        self,
-    ) -> None:
-        modification = self.metadata.modification
-
-        if not modification or not modification.headers:
-            return
-
-        invalid_header = self._get_invalid_header(
-            modification.headers.keys(),
-        )
+        invalid_header = self._check_invalid_tokens(header_names)
 
         if invalid_header:
             raise EndpointMetadataError(
                 f'Header name {invalid_header!r} is not following http spec.',
             )
 
-    def _check_modification_cookie_syntax(
-        self,
-    ) -> None:
-
-        modification = self.metadata.modification
-
-        if not modification or not modification.cookies:
-            return
-
-        invalid_cookie = self._get_invalid_cookie(
-            modification.cookies.keys(),
-        )
-
-        if invalid_cookie:
-            raise EndpointMetadataError(
-                f'Cookie name {invalid_cookie!r} is not following http spec.',
-            )
-
-    def _check_response_cookie_syntax(
+    def _check_cookie_syntax(
         self,
         responses: list[ResponseSpec],
     ) -> None:
+        header_names = []
+
+        modification = self.metadata.modification
+
+        if modification and modification.cookies:
+            header_names = list(modification.cookies.keys())
+
         for response in responses:
             if not response.cookies:
                 continue
 
-            invalid_cookie = self._get_invalid_cookie(
-                response.cookies.keys(),
-            )
+            header_names += list(response.cookies.keys())
 
-            if invalid_cookie:
-                raise EndpointMetadataError(
-                    f'Cookie name {invalid_cookie!r} is '
-                    f'not following http spec.',
-                )
+        invalid_cookie = self._check_invalid_tokens(header_names)
+        if invalid_cookie:
+            raise EndpointMetadataError(
+                f'Cookie name {invalid_cookie!r} is not following http spec.',
+            )
 
     def _convert_responses(
         self,
@@ -327,23 +299,13 @@ class _ResponseListValidator:  # noqa: WPS214
     ) -> dict[HTTPStatus, ResponseSpec]:
         return {resp.status_code: resp for resp in all_responses}
 
-    def _get_invalid_header(
+    def _check_invalid_tokens(
         self,
-        header_names: KeysView[str],
+        names: list[str],
     ) -> str | None:
-        for header_name in header_names:
-            if not _ALLOWED_TOKENS_PATTERN.match(header_name):
-                return header_name
-
-        return None
-
-    def _get_invalid_cookie(
-        self,
-        cookie_names: KeysView[str],
-    ) -> str | None:
-        for cookie_name in cookie_names:
-            if not _ALLOWED_TOKENS_PATTERN.match(cookie_name):
-                return cookie_name
+        for name in names:
+            if not _ALLOWED_TOKENS_PATTERN.match(name):
+                return name
 
         return None
 
