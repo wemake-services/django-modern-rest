@@ -46,8 +46,8 @@ def parse_named_groups(source: str) -> dict[str, str]:
 
 def _closed_named_group(
     source: str,
-    opened: 're.Match[str]',
-    closed: 're.Match[str]',
+    opened: re.Match[str],
+    closed: re.Match[str],
 ) -> dict[str, str]:
     group_name = opened.group('name')
     if group_name is None:  # unnamed group, like `(\d+)`
