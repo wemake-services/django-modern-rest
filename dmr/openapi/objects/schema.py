@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Annotated, Any, Final
+from typing import TYPE_CHECKING, Annotated, Any
 
 from dmr.internal.dataclass_aliases import Field
 
@@ -9,9 +9,6 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.external_documentation import ExternalDocumentation
     from dmr.openapi.objects.reference import Reference
     from dmr.openapi.objects.xml import XML
-
-
-_ALIAS: Final = 'alias'
 
 
 @dataclass(kw_only=True, slots=True)
