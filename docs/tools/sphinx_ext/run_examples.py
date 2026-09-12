@@ -263,6 +263,7 @@ class _BaseBuilder:  # noqa: WPS214
                 'dmr.security.token.app',
                 'server.apps.model_simple',
                 'server.apps.model_fk',
+                'server.apps.model_cursor',
                 'server.apps.token_auth',
                 # Needed by the `allauth` auth examples, its headless
                 # views import `allauth.account` models on import:
@@ -350,6 +351,23 @@ class _BaseBuilder:  # noqa: WPS214
                 expires_at=None,
             )
             _StoredToken.store(raw_token)
+
+        # Seeded in the same order as `tests/.../test_cursor_pagination.py`,
+        # so the documented cursors stay stable:
+        from server.apps.model_cursor.models import (  # type: ignore[import-not-found, unused-ignore]  # noqa: PLC0415
+            Entry,
+        )
+
+        if Entry.objects.count() == 0:
+            Entry.objects.bulk_create(
+                [
+                    Entry(rank=1, name='c'),
+                    Entry(rank=2, name='a'),
+                    Entry(rank=3, name='e'),
+                    Entry(rank=4, name='b'),
+                    Entry(rank=5, name='d'),
+                ],
+            )
 
         db_populated = True
 

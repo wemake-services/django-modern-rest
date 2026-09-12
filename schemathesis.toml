@@ -18,3 +18,10 @@ extract_selector = '/access_token'
 [output.sanitization]
 # We don't have any real data to hide, but it is easier to debug:
 enabled = false
+
+# Cursor-paginated endpoints answer `400`, when
+[[operations]]
+include-tag = 'model_cursor'
+
+[operations.checks.positive_data_acceptance ]
+expected-statuses = ['2xx', '400']

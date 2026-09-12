@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     # Custom:
     'server.apps.model_simple',
     'server.apps.model_fk',
+    'server.apps.model_cursor',
     'server.apps.middlewares',
     'server.apps.controllers',
     'server.apps.negotiations',

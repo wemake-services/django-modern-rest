@@ -25,6 +25,7 @@ from server.apps.external_views import urls as external_views_urls
 from server.apps.external_views.views import EXTERNAL_CLASS_COMPONENTS
 from server.apps.jwt_auth import urls as jwt_auth_urls
 from server.apps.middlewares import urls as middleware_urls
+from server.apps.model_cursor import urls as model_cursor_urls
 from server.apps.model_fk import urls as model_fk_urls
 from server.apps.model_simple import urls as model_simple_urls
 from server.apps.negotiations import urls as negotiations_urls
@@ -34,6 +35,7 @@ from server.apps.token_custom_user import urls as token_custom_user_urls
 router = Router(prefix='api/')
 router.include(model_simple_urls.router, namespace='model_simple')
 router.include(model_fk_urls.router, namespace='model_fk')
+router.include(model_cursor_urls.router, namespace='model_cursor')
 router.include(middleware_urls.router, namespace='middlewares')
 router.include(controllers_urls.router, namespace='controllers')
 router.include(negotiations_urls.router, namespace='negotiations')
