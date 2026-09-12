@@ -1,7 +1,7 @@
 import dataclasses
 import uuid
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, cast
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
 from django.urls import URLPattern, converters
 from typing_extensions import TypedDict
@@ -160,20 +160,25 @@ class ComponentParserGenerator:
         params_list: list[Parameter | Reference],
         regex_source: str,
     ) -> list[Parameter | Reference]:
-        # Named groups are wrapped, because otherwise top-level alternations
-        # like `a|b` would only be anchored on one side: `^a|b$`.
+        # In json schema `pattern` is a search, but a url group always
+        # matches the whole value, so we anchor the sub-pattern:
+        # `(?P<year>[0-9]{4})` becomes `^(?:[0-9]{4})$`.
+        # It is also wrapped, because anchors bind weaker than `|`:
+        # `^json|xml$` would mean "starts with `json`" or "ends with `xml`",
+        # while `^(?:json|xml)$` means what `(?P<format>json|xml)` matches.
         named_groups = {
             group_name: f'^(?:{group_source})$'
             for group_name, group_source in parse_named_groups(
                 regex_source,
             ).items()
         }
-        # Named groups are the only source of `re_path()` parameters,
-        # so all the parameters here are plain `str` schemas we've just built.
-        for param_spec in cast('list[Parameter]', params_list):
-            cast('Schema', param_spec.schema).pattern = named_groups.get(
-                param_spec.name,
-            )
+        for param_spec in params_list:
+            # We've just built these parameters from a `TypedDict`
+            # of plain `str` fields, one per named group,
+            # so they all have inline schemas and none of them is a reference:
+            assert isinstance(param_spec, Parameter)  # noqa: S101
+            assert isinstance(param_spec.schema, Schema)  # noqa: S101
+            param_spec.schema.pattern = named_groups.get(param_spec.name)
         return params_list
 
     def _merge_bodies(
