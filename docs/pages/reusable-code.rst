@@ -58,6 +58,16 @@ Let's try to create two exact controllers with exact serializers:
 Basically - we just specify what kind of serializer to use. And that's it.
 But, this is just the first step. We can do much more!
 
+.. note::
+
+  Only controllers with an exact serializer and at least one endpoint
+  can be routed. Reusable ones have ``is_abstract`` set to ``True``
+  and raise :exc:`~dmr.exceptions.EndpointMetadataError`
+  when you call ``.as_view()`` on them.
+  Route their subclasses instead.
+
+  .. versionadded:: 0.16.0
+
 .. tip::
 
   Annotate class-level options like ``responses``, ``auth``, ``parsers``,
