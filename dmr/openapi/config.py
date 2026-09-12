@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import cast
+from typing import Final, cast
 
 from dmr.openapi.objects import (  # noqa: WPS235
     Components,
@@ -12,6 +12,9 @@ from dmr.openapi.objects import (  # noqa: WPS235
     Server,
     Tag,
 )
+
+#: Oldest OpenAPI version we support: earlier ones are not JSON Schema based.
+_MIN_OPENAPI_VERSION: Final = (3, 1)
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -30,6 +33,8 @@ class OpenAPIConfig:
         version: Version of your API
             (your application's own version, not the OpenAPI spec version).
         openapi_version: Version of the OpenAPI specification to target.
+            Only ``'3.1.0'`` and newer versions are supported,
+            because older ones are not based on JSON Schema.
             Defaults to ``'3.1.0'``.
         summary: Short, one-line summary of the API.
         description: Longer description of the API. May use CommonMark syntax.
@@ -45,6 +50,10 @@ class OpenAPIConfig:
         tags: Metadata tags used to group operations in the documentation.
         webhooks: Webhook definitions that may be initiated by the API,
             keyed by name.
+
+    .. versionchanged:: 0.16.0
+        ``openapi_version`` older than ``'3.1.0'`` now raises a ``ValueError``.
+
     """
 
     title: str
@@ -63,6 +72,25 @@ class OpenAPIConfig:
     servers: list[Server] | None = None
     tags: list[Tag] | None = None
     webhooks: dict[str, PathItem | Reference] | None = None
+
+    def __post_init__(self) -> None:
+        """
+        Validates that ``openapi_version`` is supported.
+
+        Raises:
+            ValueError: if ``openapi_version`` is older than ``'3.1.0'``.
+
+        """
+        # NOTE: we don't limit the upper bound on purpose,
+        # we would only limit in the future if case
+        # of a real incompatibility. There's a high chance
+        # that it will just work (c)
+        if self.openapi_version_info[:2] < _MIN_OPENAPI_VERSION:
+            raise ValueError(
+                'OpenAPI versions before 3.1.0 are not supported, because '
+                'they are not based on JSON Schema, which is what we use '
+                f'to generate model schemas, got {self.openapi_version!r}',
+            )
 
     @property
     def openapi_version_info(self) -> tuple[int, int, int]:

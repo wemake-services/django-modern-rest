@@ -22,10 +22,19 @@ are stored as descriptions in version releases on GitHub, example:
 https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 
-## Unreleased
+## 0.16.0 WIP
+
+### Breaking changes
+
+- `OpenAPIConfig` now raises `ValueError` for `openapi_version` below `3.1.0`.
+  OpenAPI `3.0.x` was never really supported: it predates JSON Schema,
+  which is what `pydantic` and `msgspec` generate for our models, #1435
 
 ### Features
 
+- Added `tags` controller attribute to apply OpenAPI tags
+  to all endpoints of this controller. They are merged
+  with router-level and endpoint-level tags, #1434
 - Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
 - `slug` and `path` Django url converters now have more detailed
   OpenAPI schemas in path parameters: `slug` has a `pattern`
