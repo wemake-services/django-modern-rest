@@ -264,7 +264,6 @@ class _GetPostController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-
 class _YearIntConverter:
     """Custom converter that reports ``int`` via ``__dmr_converter_schema__``."""
 
