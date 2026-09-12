@@ -6,7 +6,7 @@ from dmr.plugins.msgspec import MsgspecSerializer
 class UserController(Controller[MsgspecSerializer]):
     """
     Users API.
-    
+
     Replaced description.
     """  # This docstring becomes the `summary`, but not `description`
 

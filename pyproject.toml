@@ -254,9 +254,9 @@ before-all = [
 
 
 [tool.ruff]
+# Ruff config: https://docs.astral.sh/ruff/settings
 target-version = "py311"
 line-length = 80
-# Ruff config: https://docs.astral.sh/ruff/settings
 preview = true
 fix = true
 output-prefer-rule-codes = true
@@ -367,8 +367,8 @@ ignore = [
   "TRY003",   # long exception messages from `tryceratops`
 ]
 external = [ "WPS" ]
-flake8-gettext.extend-function-names = [ "_" ]
 # Plugin configs:
+flake8-gettext.extend-function-names = [ "_" ]
 flake8-quotes.inline-quotes = "single"
 # For `django_test_app` and `docs` only:
 isort.known-first-party = [ "server", "examples" ]
@@ -403,10 +403,8 @@ sub_table_spacing = "\n"
 separate_root_table = "\n\n"
 
 
-[tool.typos]
-
-# Docs: https://github.com/crate-ci/typos
 [tool.typos.default]
+# Docs: https://github.com/crate-ci/typos
 extend-identifiers = { _SerT = "_SerT" }
 
 [tool.typos.files]
@@ -427,6 +425,7 @@ extend-exclude = [
 
 
 [tool.mypy]
+# The mypy configurations: http://bit.ly/2zEl9WI
 exclude = [
   # We don't care about benchmark code:
   "benchmarks/",
@@ -449,7 +448,6 @@ enable_error_code = [
   "unimported-reveal",
   "unused-awaitable",
 ]
-# The mypy configurations: http://bit.ly/2zEl9WI
 extra_checks = true
 strict_equality_for_none = true
 strict = true
@@ -483,10 +481,10 @@ unused-ignore = true
 
 
 [tool.pyright]
+# Docs: https://microsoft.github.io/pyright/#/configuration
 venv = ".venv"
 venvPath = "."
 strict = [ "dmr/**/*", "dmr_pytest.py", "typesafety/**/*" ]
-# Docs: https://microsoft.github.io/pyright/#/configuration
 include = [ "dmr", "dmr_pytest.py", "tests", "typesafety" ]
 exclude = [
   # It has a lot of ugly code:
@@ -494,12 +492,10 @@ exclude = [
 ]
 
 
-[tool.ty]
-
 [tool.ty.src]
+# Docs: https://docs.astral.sh/ty/reference/configuration
 include = [ "typesafety/" ]
 
-# More details at https://docs.astral.sh/ty/coming-from-mypy-or-pyright/#stricter-checking-with-ty
 [tool.ty.analysis]
 strict-literal-narrowing = true
 strict-generic-narrowing = true
@@ -508,6 +504,7 @@ respect-type-ignore-comments = false
 
 
 [tool.pytest.ini_options]
+# pytest config: http://doc.pytest.org/en/latest/customize.html
 # PYTHONPATH configuration:
 # `docs` is here, so `.rst` doctests can import `examples.*`
 # the same way our sphinx extension does:
@@ -553,7 +550,6 @@ addopts = [
   # Ignores compiled:
   "--ignore=dmr/_compiled",
 ]
-# pytest config: http://doc.pytest.org/en/latest/customize.html
 # Strict `@xfail` by default:
 xfail_strict = true
 # Fail on warnings:

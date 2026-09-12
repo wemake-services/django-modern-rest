@@ -14,7 +14,7 @@ from dmr import throttling as dmr_throttling
 from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorModel, ErrorType, format_error
-from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.internal.docstrings import parse_summary_and_description
 from dmr.internal.io import identity
 from dmr.metadata import ResponseSpec
@@ -119,6 +119,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         is_abstract: Whether or not this controller is abstract.
             We consider controller "abstract" when it does not have
             exact serializer type or exact ``api_endpoints`` instances.
+            Abstract controllers cannot be routed, ``as_view`` raises
+            :class:`~dmr.exceptions.EndpointMetadataError` for them.
         is_async: Whether or not this controller is async.
         streaming: Does this controller work with streaming responses like SSE?
         controller_validator_cls: Runs full controller validation on definition.
@@ -225,7 +227,26 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         This override applies CSRF exemption to the view. Session-based
         authentication will still be explicitly validated for CSRF,
         while all other authentication methods will be CSRF-exempt.
+
+        Raises:
+            EndpointMetadataError: When called on an abstract controller,
+                because it has nothing to serve.
+
+        .. versionchanged:: 0.16.0
+
+            Abstract controllers now raise
+            :class:`~dmr.exceptions.EndpointMetadataError`
+            instead of silently returning a broken view.
+
         """
+        if cls.is_abstract:
+            raise EndpointMetadataError(
+                f'{cls!r} is abstract, it cannot be used as a view. '
+                'Controllers are abstract when they do not have '
+                'an exact serializer type or any endpoints. '
+                'Use a subclass with a real serializer '
+                'and at least one endpoint',
+            )
         return (
             csrf_exempt(super().as_view(**initkwargs))
             if cls.csrf_exempt

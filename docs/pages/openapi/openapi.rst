@@ -1,13 +1,20 @@
 OpenAPI
 =======
 
-We support OpenAPI versions from ``3.0.0`` through ``3.2.0``.
+We support OpenAPI versions from ``3.1.0`` through ``3.2.0``.
 
 .. note::
 
   By default, we use OpenAPI ``3.1.0``, since tooling such as Swagger, Scalar,
   Redoc, and Stoplight does not yet fully support the latest specification.
   You can track the `current progress here <https://github.com/wemake-services/django-modern-rest/issues/519>`_.
+
+.. important::
+
+  OpenAPI ``3.0.x`` is not supported. It predates JSON Schema,
+  while we generate all model schemas as JSON Schema with ``pydantic``
+  or ``msgspec``. Passing it to :class:`dmr.openapi.OpenAPIConfig`
+  raises a ``ValueError``.
 
 
 Setting up OpenAPI views
