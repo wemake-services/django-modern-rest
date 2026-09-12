@@ -27,6 +27,10 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 ### Features
 
 - Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
+- Url parameters of `re_path()` routes now have `pattern` in their schema,
+  it is copied from the sub-pattern of the matching named group:
+  `r'^v(?P<version>\d+)/$'` documents `version`
+  as `{'type': 'string', 'pattern': '^(?:\d+)$'}`, #1439
 
 
 ## 0.15.0 (2026-09-11)
