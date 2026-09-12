@@ -93,7 +93,7 @@ dev = [
   # TODO: update after `mypy` and `pyrefly` will support `EMPTY` as a type:
   "pyright>=1.1,<1.1.410",
   "ruff>=0.16,<0.17",
-  "schemathesis>=4.14,<5",
+  "schemathesis==4.26.1",
   "slotscheck>=0.19,<0.21",
   # TODO: relax the pin after a stable `ty` release:
   "ty==0.0.78",
