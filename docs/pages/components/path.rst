@@ -31,8 +31,32 @@ What happens here?
    and a common Django syntax for path parameters:
    ``'user/<int:user_id>/post/<uuid:post_id>/'``
 
-Django supports multiple pre-defined path converter types:
-``int``, ``uuid``, ``str``, ``slug``, ``path``.
+Django supports multiple pre-defined path converter types.
+This is how we describe them in the OpenAPI schema:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 20 80
+
+   * - Converter
+     - Schema
+   * - ``int``
+     - ``{"type": "integer"}``
+   * - ``uuid``
+     - ``{"type": "string", "format": "uuid"}``
+   * - ``str``
+     - ``{"type": "string"}``
+   * - ``slug``
+     - ``{"type": "string", "pattern": "^[-a-zA-Z0-9_]+$"}``
+   * - ``path``
+     - ``{"type": "string", "description": "Can contain slashes"}``
+
+Your serializer can add more keys to these schemas, like ``title``.
+
+.. versionchanged:: 0.16.0
+
+  ``slug`` and ``path`` converters were previously
+  described as plain ``{"type": "string"}``.
 
 .. seealso::
 
