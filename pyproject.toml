@@ -253,8 +253,8 @@ before-all = [
 ]
 
 
-# Ruff config: https://docs.astral.sh/ruff/settings
 [tool.ruff]
+# Ruff config: https://docs.astral.sh/ruff/settings
 target-version = "py311"
 line-length = 80
 preview = true
@@ -403,8 +403,8 @@ sub_table_spacing = "\n"
 separate_root_table = "\n\n"
 
 
-# Docs: https://github.com/crate-ci/typos
 [tool.typos.default]
+# Docs: https://github.com/crate-ci/typos
 extend-identifiers = { _SerT = "_SerT" }
 
 [tool.typos.files]
@@ -424,8 +424,8 @@ extend-exclude = [
 ]
 
 
-# The mypy configurations: http://bit.ly/2zEl9WI
 [tool.mypy]
+# The mypy configurations: http://bit.ly/2zEl9WI
 exclude = [
   # We don't care about benchmark code:
   "benchmarks/",
@@ -480,8 +480,8 @@ implicit-any-lambda = false
 unused-ignore = true
 
 
-# Docs: https://microsoft.github.io/pyright/#/configuration
 [tool.pyright]
+# Docs: https://microsoft.github.io/pyright/#/configuration
 venv = ".venv"
 venvPath = "."
 strict = [ "dmr/**/*", "dmr_pytest.py", "typesafety/**/*" ]
@@ -493,9 +493,9 @@ exclude = [
 
 
 [tool.ty.src]
+# Docs: https://docs.astral.sh/ty/reference/configuration
 include = [ "typesafety/" ]
 
-# More details at https://docs.astral.sh/ty/coming-from-mypy-or-pyright/#stricter-checking-with-ty
 [tool.ty.analysis]
 strict-literal-narrowing = true
 strict-generic-narrowing = true
@@ -503,8 +503,8 @@ strict-generic-narrowing = true
 respect-type-ignore-comments = false
 
 
-# pytest config: http://doc.pytest.org/en/latest/customize.html
 [tool.pytest.ini_options]
+# pytest config: http://doc.pytest.org/en/latest/customize.html
 # PYTHONPATH configuration:
 # `docs` is here, so `.rst` doctests can import `examples.*`
 # the same way our sphinx extension does:
