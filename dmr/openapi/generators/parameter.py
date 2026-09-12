@@ -45,7 +45,7 @@ class ParameterGenerator:
                 name=property_name,
                 param_in=param_in,
                 schema=property_schema,
-                required=property_name in schema.required,
+                required=(property_name in schema.required) or None,
                 **self._compute_metadata(
                     metadata,
                     property_name,
@@ -89,6 +89,5 @@ class ParameterGenerator:
                 property_schema.deprecated
                 or metadata_params.get('deprecated')
                 or schema.deprecated
-                or False
             ),
         }
