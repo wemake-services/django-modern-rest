@@ -333,6 +333,32 @@ You can also set ``tags`` and ``deprecated`` at the individual endpoint level
 via :deco:`~dmr.endpoint.modify` to override or extend router-level settings.
 
 
+.. _customizing_tags_openapi:
+
+Customizing tags
+~~~~~~~~~~~~~~~~
+
+Tags can be defined on three levels:
+
+1. On a router with the ``tags`` parameter
+2. On a controller with
+   the :attr:`~dmr.controller.Controller.tags` attribute,
+   it applies to all endpoints of this controller
+3. On an endpoint with the ``tags`` parameter
+   of :deco:`~dmr.endpoint.modify` or :deco:`~dmr.endpoint.validate`
+
+All of them are merged together in this exact order,
+none of them replaces the others:
+
+.. literalinclude:: /examples/openapi/controller_tags.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+.. versionadded:: 0.16.0
+  Controller-level ``tags``.
+
+
 .. _customizing_parameter_openapi:
 
 Customizing parameter

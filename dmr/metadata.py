@@ -408,6 +408,8 @@ class EndpointMetadata:
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
+            Controller-level tags are already included here,
+            router-level ones are added during the schema generation.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
         security: A declaration of which security mechanisms can be used
