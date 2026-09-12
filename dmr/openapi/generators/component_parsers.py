@@ -1,7 +1,7 @@
 import dataclasses
 import uuid
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, cast
 
 from django.urls import URLPattern, converters
 from typing_extensions import TypedDict
@@ -23,7 +23,31 @@ if TYPE_CHECKING:
 
 _RequestBody: TypeAlias = RequestBody | Reference | None
 _RequestParameters: TypeAlias = list[Parameter | Reference] | None
-_ConvertersMapping: TypeAlias = Mapping[type[Any], Any]
+
+_SLUG_REGEX: Final = converters.SlugConverter.regex
+# Django's converter regexes are not anchored,
+# because they are used as parts of a bigger url regex.
+# But, in the schema we describe a single value, so we need a full match:
+_SLUG_PATTERN: Final = f'^{_SLUG_REGEX}$'
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class _ConverterSpec:
+    """
+    Describes how a single Django url converter is shown in the schema.
+
+    We support multiple serializers, so we cannot use serializer-specific
+    annotations (like ``msgspec.Meta`` or ``pydantic.Field``)
+    to describe url converters. Instead, ``annotation`` is passed
+    to the serializer to generate the basic schema
+    and ``prepared_schema`` is merged on top of the generated one.
+    """
+
+    annotation: Any
+    prepared_schema: Schema | None = None
+
+
+_ConvertersMapping: TypeAlias = Mapping[type[Any], _ConverterSpec]
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -34,8 +58,16 @@ class ComponentParserGenerator:
 
     # Class API:
     _converters: ClassVar[_ConvertersMapping] = {
-        converters.IntConverter: int,
-        converters.UUIDConverter: uuid.UUID,
+        converters.IntConverter: _ConverterSpec(int),
+        converters.UUIDConverter: _ConverterSpec(uuid.UUID),
+        converters.SlugConverter: _ConverterSpec(
+            str,
+            Schema(pattern=_SLUG_PATTERN),
+        ),
+        converters.PathConverter: _ConverterSpec(
+            str,
+            Schema(description='Can contain slashes'),
+        ),
         # Any custom registered converter can have `__dmr_converter_schema__`
         # attribute to resolve our schema.
     }
@@ -114,29 +146,23 @@ class ComponentParserGenerator:
         params_list: list[Parameter | Reference] = []
 
         # `path()` and `RoutePattern`:
-        schema = {
-            converter_name: self._converters.get(
-                type(converter),  # pyright: ignore[reportUnknownArgumentType]
-                getattr(converter, '__dmr_converter_schema__', str),
-            )
+        converter_specs = {
+            converter_name: self._resolve_converter(converter)
             for converter_name, converter in pattern.pattern.converters.items()
         }
-        if schema:
+        if converter_specs:
             params_list.extend(
-                self._context.generators.parameter(
-                    TypedDict(f'{operation_id}_Path', schema),  # type: ignore[operator]
-                    (),
+                self._parse_converters(
+                    operation_id,
+                    converter_specs,
                     serializer,
-                    self._context,
-                    param_in='path',
                 ),
             )
             return params_list
 
         # `re_path()` and `RegexPattern`:
-        regex = pattern.pattern.regex
         schema = dict.fromkeys(
-            regex.groupindex,
+            pattern.pattern.regex.groupindex,
             str,
         )
         if schema:
@@ -150,6 +176,44 @@ class ComponentParserGenerator:
                 ),
             )
         return params_list or None
+
+    def _resolve_converter(self, converter: Any) -> _ConverterSpec:
+        return self._converters.get(
+            type(converter),  # pyright: ignore[reportUnknownArgumentType]
+            _ConverterSpec(
+                getattr(converter, '__dmr_converter_schema__', str),
+            ),
+        )
+
+    def _parse_converters(
+        self,
+        operation_id: str,
+        converter_specs: Mapping[str, _ConverterSpec],
+        serializer: type['BaseSerializer'],
+    ) -> list[Parameter]:
+        schema = {
+            converter_name: converter_spec.annotation
+            for converter_name, converter_spec in converter_specs.items()
+        }
+        # We don't support `parameter` references yet,
+        # so path parameters are always generated as inline objects:
+        params_list = cast(
+            'list[Parameter]',
+            self._context.generators.parameter(
+                TypedDict(f'{operation_id}_Path', schema),  # type: ignore[operator]
+                (),
+                serializer,
+                self._context,
+                param_in='path',
+            ),
+        )
+        return [
+            _merge_prepared_schema(
+                param_spec,
+                converter_specs[param_spec.name],
+            )
+            for param_spec in params_list
+        ]
 
     def _merge_bodies(
         self,
@@ -190,3 +254,27 @@ class ComponentParserGenerator:
                 schema=Schema(all_of=media_items),
             )
         return new_content
+
+
+def _merge_prepared_schema(
+    param_spec: Parameter,
+    converter_spec: _ConverterSpec,
+) -> Parameter:
+    prepared_schema = converter_spec.prepared_schema
+    if prepared_schema is None:
+        return param_spec
+
+    changes = {
+        schema_field.name: field_value
+        for schema_field in dataclasses.fields(prepared_schema)
+        if (field_value := getattr(prepared_schema, schema_field.name))
+    }
+    return dataclasses.replace(
+        param_spec,
+        # Prepared schemas are only defined for primitive annotations,
+        # that's why the generated schema is never a reference here:
+        schema=dataclasses.replace(
+            cast('Schema', param_spec.schema),
+            **changes,
+        ),
+    )
