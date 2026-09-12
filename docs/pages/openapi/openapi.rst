@@ -302,8 +302,8 @@ and create your own serializer that uses it:
   which is called for each custom type
   that ``msgspec`` cannot describe natively.
   Note that custom types will also need runtime serialization support:
-  override the ``serialize_hook`` method of your serializer,
-  as shown in the example below
+  override the ``serialize_hook`` and ``deserialize_hook`` methods
+  of your serializer, as shown in the example below
 
 .. note::
 

@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from typing import Any, ClassVar
 
 import pydantic
@@ -22,10 +23,26 @@ class NoTitleJsonSchema(GenerateJsonSchema):
         schema: CoreSchema,
         mode: JsonSchemaMode = 'validation',
     ) -> dict[str, Any]:
-        """Generate a JSON schema and remove its title."""
+        """Generate a JSON schema and remove all titles from it."""
         json_schema = super().generate(schema, mode=mode)
-        json_schema.pop('title', None)
-        return json_schema
+        return _drop_titles(json_schema)
+
+
+def _drop_titles(json_schema: dict[str, Any]) -> dict[str, Any]:
+    """Recursively remove ``title`` keys from all nested schemas."""
+    for subschema in _iter_nested(json_schema):
+        subschema.pop('title', None)
+    return json_schema
+
+
+def _iter_nested(node: Any) -> Iterator[dict[str, Any]]:
+    """Yield all dicts nested inside ``node``, including ``node`` itself."""
+    if isinstance(node, dict):
+        yield node
+        yield from _iter_nested(list(node.values()))
+    elif isinstance(node, list):
+        for child in node:
+            yield from _iter_nested(child)
 
 
 class SchemaGenerator(PydanticSchemaGenerator):
@@ -34,17 +51,19 @@ class SchemaGenerator(PydanticSchemaGenerator):
     }
 
 
-class NoTitleSerializer(PydanticSerializer):
+class PointPydanticSerializer(PydanticSerializer):
     schema_generator = SchemaGenerator
 
 
-class UserModel(pydantic.BaseModel):
-    email: str
+class Point(pydantic.BaseModel):
+    x: float
+    y: float
 
 
-class UserController(Controller[NoTitleSerializer]):
-    def get(self) -> UserModel:
-        return UserModel(email='user@example.com')
+class PointsController(Controller[PointPydanticSerializer]):
+    def get(self) -> list[Point]:
+        return [Point(x=1, y=2), Point(x=3, y=4)]
 
 
-# openapi: {"controller": "UserController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
+# run: {"controller": "PointsController", "method": "get", "url": "/api/points/"}  # noqa: ERA001, E501
+# openapi: {"controller": "PointsController", "url": "/api/points/", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

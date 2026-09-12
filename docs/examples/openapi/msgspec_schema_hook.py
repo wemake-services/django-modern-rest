@@ -1,6 +1,5 @@
 from typing import Any, ClassVar
 
-import msgspec
 from typing_extensions import override
 
 from dmr import Controller
@@ -16,7 +15,7 @@ class Point:  # noqa: B903
         self.y = y
 
 
-def point_schema(type_: type) -> dict[str, Any]:
+def point_schema(type_: type[Any]) -> dict[str, Any]:
     """Generate JSON schemas for custom types."""
     if type_ is Point:
         return {
@@ -34,7 +33,7 @@ class SchemaGenerator(MsgspecSchemaGenerator):
     schema_hook: ClassVar[SchemaHook | None] = point_schema
 
 
-class PointSerializer(MsgspecSerializer):
+class PointMsgspecSerializer(MsgspecSerializer):
     schema_generator = SchemaGenerator
 
     @classmethod
@@ -45,14 +44,25 @@ class PointSerializer(MsgspecSerializer):
             return {'x': to_serialize.x, 'y': to_serialize.y}
         return super().serialize_hook(to_serialize)
 
+    @classmethod
+    @override
+    def deserialize_hook(
+        cls,
+        target_type: type[Any],
+        to_deserialize: Any,
+    ) -> Any:
+        """Deserialize ``Point`` objects, ``msgspec`` cannot do it natively."""
+        if target_type is Point:
+            if isinstance(to_deserialize, Point):
+                return to_deserialize
+            return Point(to_deserialize['x'], to_deserialize['y'])
+        return super().deserialize_hook(target_type, to_deserialize)
 
-class Polygon(msgspec.Struct):
-    points: list[Point]
+
+class PointsController(Controller[PointMsgspecSerializer]):
+    def get(self) -> list[Point]:
+        return [Point(1, 2), Point(3, 4)]
 
 
-class PolygonController(Controller[PointSerializer]):
-    def get(self) -> Polygon:
-        return Polygon(points=[Point(1, 2), Point(3, 4)])
-
-
-# openapi: {"controller": "PolygonController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
+# run: {"controller": "PointsController", "method": "get", "url": "/api/points/"}  # noqa: ERA001, E501
+# openapi: {"controller": "PointsController", "url": "/api/points/", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
