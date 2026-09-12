@@ -46,8 +46,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -152,8 +151,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -257,8 +255,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },

@@ -30,6 +30,10 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   to all endpoints of this controller. They are merged
   with router-level and endpoint-level tags, #1434
 - Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
+- `bool` fields in `dmr.openapi.objects` (`Parameter.deprecated`,
+  `Parameter.required`, `Operation.deprecated`, `XML.attribute`,
+  `XML.wrapped`) now default to `None` instead of `False`,
+  so the default value is no longer dumped into the OpenAPI schema, #1437
 
 
 ## 0.15.0 (2026-09-11)

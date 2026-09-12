@@ -14,7 +14,6 @@
           "parameters": [
             {
               "description": "Cookies metadata",
-              "deprecated": false,
               "examples": {},
               "name": "session_id",
               "in": "cookie",
@@ -26,7 +25,6 @@
             },
             {
               "description": "Override",
-              "deprecated": false,
               "examples": {},
               "name": "CSRF",
               "in": "cookie",
@@ -39,7 +37,6 @@
             },
             {
               "description": "Short summary.\n\nAnd some other description text.",
-              "deprecated": false,
               "style": "deepObject",
               "explode": true,
               "examples": {
@@ -68,7 +65,6 @@
             },
             {
               "description": "Short summary.\n\nAnd some other description text.",
-              "deprecated": false,
               "style": "deepObject",
               "explode": true,
               "examples": {
@@ -101,7 +97,6 @@
             },
             {
               "description": "Short summary.\n\nAnd some other description text.",
-              "deprecated": false,
               "style": "deepObject",
               "explode": true,
               "examples": {
@@ -190,7 +185,6 @@
               }
             }
           },
-          "deprecated": false,
           "security": [
             {
               "jwt": []
@@ -361,8 +355,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -600,8 +593,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -754,7 +746,6 @@
           "operationId": "getGetpostcontrollerApiV1UserUserIdPostPostId",
           "parameters": [
             {
-              "deprecated": false,
               "name": "user_id",
               "in": "path",
               "schema": {
@@ -764,7 +755,6 @@
               "required": true
             },
             {
-              "deprecated": false,
               "name": "post_id",
               "in": "path",
               "schema": {
@@ -816,8 +806,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/api/v1/articles/{year}/{slug}/": {
@@ -825,7 +814,6 @@
           "operationId": "getGetpostcontrollerApiV1ArticlesYearSlug",
           "parameters": [
             {
-              "deprecated": false,
               "name": "year",
               "in": "path",
               "schema": {
@@ -835,7 +823,6 @@
               "required": true
             },
             {
-              "deprecated": false,
               "name": "slug",
               "in": "path",
               "schema": {
@@ -886,8 +873,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -994,8 +980,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "operationId": "postUsercontrollerApiV1User",
@@ -1053,8 +1038,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/api/v1/user/{id}/": {
@@ -1062,7 +1046,6 @@
           "operationId": "getGetusercontrollerApiV1UserId",
           "parameters": [
             {
-              "deprecated": false,
               "name": "id",
               "in": "path",
               "schema": {
@@ -1123,8 +1106,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },

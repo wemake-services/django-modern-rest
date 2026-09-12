@@ -34,8 +34,7 @@
             "200": {
               "$ref": "#/components/responses/Configuration"
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/login": {
@@ -103,8 +102,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/signup": {
@@ -176,8 +174,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/email/verify": {
@@ -224,8 +221,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "tags": [
@@ -276,8 +272,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/email/verify/resend": {
@@ -312,8 +307,7 @@
             "429": {
               "$ref": "#/components/responses/TooManyRequests"
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/phone/verify": {
@@ -361,8 +355,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/phone/verify/resend": {
@@ -397,8 +390,7 @@
             "429": {
               "$ref": "#/components/responses/TooManyRequests"
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/reauthenticate": {
@@ -438,8 +430,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/password/request": {
@@ -479,8 +470,7 @@
             "401": {
               "$ref": "#/components/responses/Authentication"
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/password/reset": {
@@ -527,8 +517,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "tags": [
@@ -576,8 +565,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/browser/v1/auth/provider/redirect": {
@@ -602,8 +590,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/provider/token": {
@@ -671,8 +658,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/provider/signup": {
@@ -701,8 +687,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "tags": [
@@ -772,8 +757,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/2fa/authenticate": {
@@ -816,8 +800,7 @@
             "401": {
               "$ref": "#/components/responses/Authentication"
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/2fa/reauthenticate": {
@@ -857,8 +840,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/browser/v1/auth/2fa/trust": {
@@ -890,8 +872,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/webauthn/authenticate": {
@@ -913,8 +894,7 @@
             "200": {
               "$ref": "#/components/responses/WebAuthnRequestOptionsResponse"
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "tags": [
@@ -947,8 +927,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/webauthn/reauthenticate": {
@@ -970,8 +949,7 @@
             "200": {
               "$ref": "#/components/responses/WebAuthnRequestOptionsResponse"
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "tags": [
@@ -1004,8 +982,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/webauthn/login": {
@@ -1027,8 +1004,7 @@
             "200": {
               "$ref": "#/components/responses/WebAuthnRequestOptionsResponse"
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "tags": [
@@ -1076,8 +1052,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/webauthn/signup": {
@@ -1109,8 +1084,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "put": {
           "tags": [
@@ -1168,8 +1142,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "tags": [
@@ -1239,8 +1212,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/code/request": {
@@ -1289,8 +1261,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/code/confirm": {
@@ -1352,8 +1323,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/code/resend": {
@@ -1388,8 +1358,7 @@
             "429": {
               "$ref": "#/components/responses/TooManyRequests"
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/account/providers": {
@@ -1410,8 +1379,7 @@
             "200": {
               "$ref": "#/components/responses/ProviderAccounts"
             }
-          },
-          "deprecated": false
+          }
         },
         "delete": {
           "tags": [
@@ -1452,8 +1420,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/account/email": {
@@ -1478,8 +1445,7 @@
             "401": {
               "$ref": "#/components/responses/Authentication"
             }
-          },
-          "deprecated": false
+          }
         },
         "put": {
           "tags": [
@@ -1527,8 +1493,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "tags": [
@@ -1579,8 +1544,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "delete": {
           "tags": [
@@ -1618,8 +1582,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "patch": {
           "tags": [
@@ -1657,8 +1620,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/account/phone": {
@@ -1683,8 +1645,7 @@
             "401": {
               "$ref": "#/components/responses/Authentication"
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "tags": [
@@ -1737,8 +1698,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/account/authenticators": {
@@ -1765,8 +1725,7 @@
             "410": {
               "$ref": "#/components/responses/SessionGone"
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/account/authenticators/totp": {
@@ -1794,8 +1753,7 @@
             "409": {
               "$ref": "#/components/responses/AddAuthenticatorConflict"
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "tags": [
@@ -1839,8 +1797,7 @@
             "409": {
               "$ref": "#/components/responses/AddAuthenticatorConflict"
             }
-          },
-          "deprecated": false
+          }
         },
         "delete": {
           "tags": [
@@ -1863,8 +1820,7 @@
             "401": {
               "$ref": "#/components/responses/ReauthenticationRequired"
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/account/authenticators/recovery-codes": {
@@ -1892,8 +1848,7 @@
             "404": {
               "$ref": "#/components/responses/NotFound"
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "tags": [
@@ -1927,8 +1882,7 @@
             "401": {
               "$ref": "#/components/responses/ReauthenticationRequired"
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/account/authenticators/webauthn": {
@@ -1959,8 +1913,7 @@
             "409": {
               "$ref": "#/components/responses/AddAuthenticatorConflict"
             }
-          },
-          "deprecated": false
+          }
         },
         "put": {
           "tags": [
@@ -1986,8 +1939,7 @@
             "401": {
               "$ref": "#/components/responses/ReauthenticationRequired"
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "tags": [
@@ -2015,8 +1967,7 @@
             "409": {
               "$ref": "#/components/responses/AddAuthenticatorConflict"
             }
-          },
-          "deprecated": false
+          }
         },
         "delete": {
           "tags": [
@@ -2041,8 +1992,7 @@
             "401": {
               "$ref": "#/components/responses/ReauthenticationRequired"
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/session": {
@@ -2070,8 +2020,7 @@
             "410": {
               "$ref": "#/components/responses/SessionGone"
             }
-          },
-          "deprecated": false
+          }
         },
         "delete": {
           "tags": [
@@ -2091,8 +2040,7 @@
             "401": {
               "$ref": "#/components/responses/Unauthenticated"
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/app/v1/tokens/refresh": {
@@ -2119,8 +2067,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/account/password/change": {
@@ -2148,8 +2095,7 @@
             "401": {
               "$ref": "#/components/responses/Authentication"
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/_allauth/{client}/v1/auth/sessions": {
@@ -2170,8 +2116,7 @@
             "200": {
               "$ref": "#/components/responses/Sessions"
             }
-          },
-          "deprecated": false
+          }
         },
         "delete": {
           "tags": [
@@ -2196,8 +2141,7 @@
             "401": {
               "$ref": "#/components/responses/Authentication"
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -4383,7 +4327,6 @@
       "parameters": {
         "Client": {
           "description": "The type of client accessing the API.",
-          "deprecated": false,
           "name": "client",
           "in": "path",
           "schema": {
@@ -4397,7 +4340,6 @@
         },
         "EmailVerificationKey": {
           "description": "The email verification key",
-          "deprecated": false,
           "name": "X-Email-Verification-Key",
           "in": "header",
           "schema": {
@@ -4407,7 +4349,6 @@
         },
         "PasswordResetKey": {
           "description": "The password reset key",
-          "deprecated": false,
           "name": "X-Password-Reset-Key",
           "in": "header",
           "schema": {
@@ -4417,7 +4358,6 @@
         },
         "SessionToken": {
           "description": "Session token. Only needed when `client` is equal to `app`.\n",
-          "deprecated": false,
           "name": "X-Session-Token",
           "in": "header",
           "schema": {
@@ -4426,7 +4366,6 @@
         },
         "PasswordLess": {
           "description": "When present (regardless of its value), enables passwordless sign-in via a WebAuthn credential (Passkey),\nbut may enforce additional multi-factor authentication (MFA) requirements. Omit the parameter to disable.\n",
-          "deprecated": false,
           "allowEmptyValue": true,
           "name": "passwordless",
           "in": "query",

@@ -13,7 +13,6 @@
           "operationId": "getAuthedandcookiescontrollerApiCookies",
           "parameters": [
             {
-              "deprecated": false,
               "name": "session_id",
               "in": "cookie",
               "schema": {
@@ -22,7 +21,6 @@
               "required": true
             },
             {
-              "deprecated": false,
               "name": "CSRF",
               "in": "cookie",
               "schema": {
@@ -95,7 +93,6 @@
               }
             }
           },
-          "deprecated": false,
           "security": [
             {
               "jwt": []
@@ -227,8 +224,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -355,8 +351,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -576,8 +571,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -697,8 +691,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -864,8 +857,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },

@@ -23,7 +23,6 @@
               }
             }
           },
-          "deprecated": false,
           "security": [
             {
               "jwt": []
@@ -44,7 +43,6 @@
               }
             }
           },
-          "deprecated": false,
           "security": [
             {
               "jwt": []
@@ -124,8 +122,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "operationId": "postPerendpointPerEndpoint",
@@ -140,8 +137,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },

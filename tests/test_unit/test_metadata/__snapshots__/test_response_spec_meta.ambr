@@ -128,8 +128,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "patch": {
           "operationId": "patchHeaderandcookiecontrollerApiV1HeaderAndCookie",
@@ -250,8 +249,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
