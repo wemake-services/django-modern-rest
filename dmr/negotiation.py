@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Final, Literal, final, overload
 from django.http.request import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
+from dmr.envs import MAX_CACHE_SIZE
 from dmr.exceptions import (
     EndpointMetadataError,
     NotAcceptableError,
@@ -40,6 +41,7 @@ class RequestNegotiator:
         '_media_by_precedence',
         '_parsers',
         '_serializer',
+        '_wildcard_cache',
     )
 
     def __init__(
@@ -59,6 +61,9 @@ class RequestNegotiator:
         self._media_by_precedence = media_by_precedence(self._parsers.keys())
         # The last configured parser is the most specific one:
         self._default = next(iter(self._parsers.values()))
+        # Caches `content_type -> parser` for the non-exact (wildcard)
+        # matches only, since exact matches are already O(1) dict lookups:
+        self._wildcard_cache: dict[str, Parser] = {}
 
     def __call__(self, request: HttpRequest) -> Parser:
         """
@@ -90,25 +95,39 @@ class RequestNegotiator:
 
     def _decide(self, request: HttpRequest) -> Parser:
         # TODO: compile this code
-        if request.content_type is None:
+        content_type = request.content_type
+        if content_type is None:
             return self._default
         # Try the exact match first, since it is faster, O(1):
-        parser_type = self._exact_parsers.get(request.content_type)
+        parser_type = self._exact_parsers.get(content_type)
         if parser_type is not None:
             # Do not allow invalid content types to be matched exactly.
             return parser_type
 
-        # Now, try to find parser types based on `*/*` patterns, O(n):
+        # Was this exact (non-registered) content type already resolved
+        # via the `*/*` patterns below? Most repeated requests will hit
+        # this cache instead of re-running the O(n) loop every time.
+        cached_parser_type = self._wildcard_cache.get(content_type)
+        if cached_parser_type is not None:
+            return cached_parser_type
+
+        return self._decide_wildcard(content_type)
+
+    def _decide_wildcard(self, content_type: str) -> Parser:
+        # Try to find parser types based on `*/*` patterns, O(n):
         for media in self._media_by_precedence:
             # TODO: replace this with a compiled implementation:
-            if media_match(media, request.content_type):
-                return self._parsers[str(media)]
+            if media_match(media, content_type):
+                parser_type = self._parsers[str(media)]
+                if len(self._wildcard_cache) < MAX_CACHE_SIZE:
+                    self._wildcard_cache[content_type] = parser_type
+                return parser_type
 
         # No parsers found, raise an error:
         expected = list(self._parsers.keys())
         raise RequestSerializationError(
             _CANNOT_PARSE_MSG.format(
-                content_type=repr(request.content_type),
+                content_type=repr(content_type),
                 expected=repr(expected),
             ),
         )
@@ -127,8 +146,10 @@ class ResponseNegotiator:
 
     __slots__ = (
         '_default',
+        '_non_streaming_cache',
         '_non_streaming_default',
         '_non_streaming_renderers',
+        '_renderer_cache',
         '_renderer_keys',
         '_renderers',
         '_serializer',
@@ -165,6 +186,12 @@ class ResponseNegotiator:
         self._non_streaming_default = next(
             iter(self._non_streaming_renderers.values()),
         )
+        # Caches `Accept header value -> renderer`. Most clients send the
+        # exact same `Accept` header on every request (e.g. always
+        # `application/json`), so there is no need to re-run the full
+        # negotiation algorithm for a value we already resolved:
+        self._renderer_cache: dict[str, Renderer] = {}
+        self._non_streaming_cache: dict[str, Renderer] = {}
 
     def __call__(self, request: HttpRequest) -> Renderer:
         """
@@ -190,17 +217,19 @@ class ResponseNegotiator:
             NotAcceptableError: when ``Accept`` request header is not supported.
 
         """
-        renderer = _negotiate_renderer(
+        renderer = self._negotiate_cached(
             request,
             self._renderers,
+            self._renderer_cache,
             default=self._default,
         )
         request.__dmr_renderer__ = renderer  # type: ignore[attr-defined]
         if self._streaming:
             try:
-                non_streaming = _negotiate_renderer(
+                non_streaming = self._negotiate_cached(
                     request,
                     self._non_streaming_renderers,
+                    self._non_streaming_cache,
                     default=self._non_streaming_default,
                 )
             except NotAcceptableError:
@@ -212,6 +241,27 @@ class ResponseNegotiator:
                 # type (e.g. browser ``EventSource``).
                 non_streaming = self._non_streaming_default
             request.__dmr_nonstreaming_renderer__ = non_streaming  # type: ignore[attr-defined]
+        return renderer
+
+    def _negotiate_cached(
+        self,
+        request: HttpRequest,
+        renderers: Mapping[str, Renderer],
+        cache: dict[str, Renderer],
+        *,
+        default: Renderer,
+    ) -> Renderer:
+        accept = request.headers.get('Accept')
+        if accept is None:
+            return default
+
+        cached_renderer = cache.get(accept)
+        if cached_renderer is not None:
+            return cached_renderer
+
+        renderer = _negotiate_renderer(request, renderers, default=default)
+        if len(cache) < MAX_CACHE_SIZE:
+            cache[accept] = renderer
         return renderer
 
 
