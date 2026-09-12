@@ -1,11 +1,12 @@
 import dataclasses
 import uuid
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, cast
 
 from django.urls import URLPattern, converters
 from typing_extensions import TypedDict
 
+from dmr.internal.regex import parse_named_groups
 from dmr.openapi.objects import (
     MediaType,
     Parameter,
@@ -141,15 +142,39 @@ class ComponentParserGenerator:
         )
         if schema:
             params_list.extend(
-                self._context.generators.parameter(
-                    TypedDict(f'{operation_id}_RePath', schema),  # type: ignore[operator]
-                    (),
-                    serializer,
-                    self._context,
-                    param_in='path',
+                self._add_group_patterns(
+                    self._context.generators.parameter(
+                        TypedDict(f'{operation_id}_RePath', schema),  # type: ignore[operator]
+                        (),
+                        serializer,
+                        self._context,
+                        param_in='path',
+                    ),
+                    regex.pattern,
                 ),
             )
         return params_list or None
+
+    def _add_group_patterns(
+        self,
+        params_list: list[Parameter | Reference],
+        regex_source: str,
+    ) -> list[Parameter | Reference]:
+        # Named groups are wrapped, because otherwise top-level alternations
+        # like `a|b` would only be anchored on one side: `^a|b$`.
+        named_groups = {
+            group_name: f'^(?:{group_source})$'
+            for group_name, group_source in parse_named_groups(
+                regex_source,
+            ).items()
+        }
+        # Named groups are the only source of `re_path()` parameters,
+        # so all the parameters here are plain `str` schemas we've just built.
+        for param_spec in cast('list[Parameter]', params_list):
+            cast('Schema', param_spec.schema).pattern = named_groups.get(
+                param_spec.name,
+            )
+        return params_list
 
     def _merge_bodies(
         self,
