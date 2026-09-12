@@ -475,7 +475,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
-            tags=payload.tags,
+            tags=self._build_tags(payload.tags),
             operation_id=payload.operation_id,
             deprecated=payload.deprecated,
             external_docs=payload.external_docs,
@@ -539,7 +539,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
-            tags=payload.tags,
+            tags=self._build_tags(payload.tags),
             operation_id=payload.operation_id,
             deprecated=payload.deprecated,
             external_docs=payload.external_docs,
@@ -597,7 +597,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
-            tags=None,
+            tags=self._build_tags(None),
             operation_id=None,
             deprecated=False,
             external_docs=None,
@@ -892,6 +892,15 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         if self.payload and self.payload.ignore_from_spec is not None:
             return self.payload.ignore_from_spec
         return self.controller_cls.ignore_from_spec
+
+    def _build_tags(self, payload_tags: list[str] | None) -> list[str] | None:
+        # Controller tags are prepended to the endpoint ones,
+        # the same way router tags are prepended to these later on.
+        tags = [
+            *(self.controller_cls.tags or []),
+            *(payload_tags or []),
+        ]
+        return tags or None
 
     def _build_error_handler(
         self,

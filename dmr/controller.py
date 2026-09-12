@@ -128,6 +128,9 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             Is ``True`` by default.
         summary: A short summary of what this path item does.
         description: A verbose explanation of the path item behavior.
+        tags: A list of tags to group all operations
+            from this controller in OpenAPI documentation.
+            These are merged with router-level and endpoint-level tags.
         servers: An alternative servers array to service this path item.
         ignore_from_spec: If set to ``True``, all endpoints from this controller
             would not be added to the final OpenAPI spec.
@@ -178,6 +181,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     # OpenAPI:
     summary: ClassVar['_StrOrPromise | None'] = None
     description: ClassVar['_StrOrPromise | None'] = None
+    tags: ClassVar[Sequence[str] | None] = None
     servers: ClassVar[Sequence[Server] | None] = None
     ignore_from_spec: ClassVar[bool] = False
 
