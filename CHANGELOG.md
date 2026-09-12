@@ -28,6 +28,12 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 - Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
 
+### Misc
+
+- Caches `Content-Type` / `Accept` header negotiation results per endpoint,
+  so repeated requests with the same header value skip re-running
+  the negotiation algorithm, #1455
+
 
 ## 0.15.0 (2026-09-11)
 
