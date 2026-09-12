@@ -1,5 +1,7 @@
 import json
 
+from django.views.generic import RedirectView
+
 from dmr.openapi import OpenAPIConfig, build_schema, load_schema
 from dmr.openapi.objects import (
     Components,
@@ -53,6 +55,9 @@ openapi_config = OpenAPIConfig(
     description=(
         'Test application showcasing core functionality of the framework. '
         'Не АСКИИ текст'  # noqa: RUF001
+        '### Demo Credentials'
+        '- **Username:** `admin`'
+        '- **Password:** `password`'
     ),
     terms_of_service='Usage is intended for testing purposes only.',
     contact=Contact(name='Core Developer', email='mail@sobolevn.me'),
@@ -67,6 +72,7 @@ openapi_config = OpenAPIConfig(
 schema = build_schema(router, config=openapi_config)
 
 urlpatterns = [
+    path('', RedirectView.as_view(url='docs/swagger/', permanent=False)),
     router.to_urlpatterns(namespace='api'),
     path(
         'docs/openapi.json/',

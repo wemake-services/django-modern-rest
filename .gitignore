@@ -122,6 +122,7 @@ tracecov-report.html
 # Django stuff:
 *.log
 local_settings.py
+django_test_app/staticfiles/
 
 # Flask stuff:
 instance/

@@ -1,0 +1,17 @@
+
+# Render's free tier spins down after 15 min idle; cold starts then take
+# 30-60s. This ping runs every 10 min (under the 15 min threshold) to
+# keep the demo responsive for visitors.name: Keep Render app awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping deployment
+        run: curl -sf https://django-modern-rest-demo.onrender.com/ || true
