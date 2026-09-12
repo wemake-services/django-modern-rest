@@ -31,6 +31,13 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   with router-level and endpoint-level tags, #1434
 - Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
 
+### Misc
+
+- Improves the performance of `Endpoint._run_checks`
+  and `Endpoint._run_async_checks` by skipping throttle and auth calls
+  entirely when they are not configured for an endpoint,
+  instead of calling into them and checking internally, #1454
+
 
 ## 0.15.0 (2026-09-11)
 
