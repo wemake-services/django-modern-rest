@@ -30,7 +30,7 @@ class OpenAPIConfig:
         version: Version of your API
             (your application's own version, not the OpenAPI spec version).
         openapi_version: Version of the OpenAPI specification to target.
-            Defaults to ``'3.1.0'``.
+            Must be ``'3.1.0'`` or newer. Defaults to ``'3.1.0'``.
         summary: Short, one-line summary of the API.
         description: Longer description of the API. May use CommonMark syntax.
         terms_of_service: URL to the terms of service for the API.
@@ -63,6 +63,14 @@ class OpenAPIConfig:
     servers: list[Server] | None = None
     tags: list[Tag] | None = None
     webhooks: dict[str, PathItem | Reference] | None = None
+
+    def __post_init__(self) -> None:
+        """Validate the config."""
+        if self.openapi_version_info[:2] < (3, 1):
+            raise ValueError(
+                'OpenAPI versions before `3.1.0` are not supported, '
+                f'got {self.openapi_version!r}',
+            )
 
     @property
     def openapi_version_info(self) -> tuple[int, int, int]:

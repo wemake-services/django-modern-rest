@@ -1,7 +1,7 @@
 OpenAPI
 =======
 
-We support OpenAPI versions from ``3.0.0`` through ``3.2.0``.
+We support OpenAPI versions from ``3.1.0`` through ``3.2.0``.
 
 .. note::
 

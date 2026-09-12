@@ -70,6 +70,22 @@ def test_schema_collections_can_be_mutated(
     assert schema.tags == [tag]
 
 
+def test_config_rejects_old_openapi_version() -> None:
+    """Ensure OpenAPI ``3.0.x`` is no longer accepted."""
+    with pytest.raises(ValueError, match=r'3\.1\.0'):
+        OpenAPIConfig(
+            title='my title',
+            version='1.0.0',
+            openapi_version='3.0.3',
+        )
+
+
+def test_config_accepts_supported_versions() -> None:
+    """Ensure OpenAPI ``3.1.x`` and ``3.2.x`` are still accepted."""
+    OpenAPIConfig(title='my title', version='1.0.0', openapi_version='3.1.0')
+    OpenAPIConfig(title='my title', version='1.0.0', openapi_version='3.2.0')
+
+
 def test_pass_both_context_and_config() -> None:
     """Ensures that you can't pass both ``config`` and ``context``."""
     router = Router()

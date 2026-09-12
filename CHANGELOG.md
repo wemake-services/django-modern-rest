@@ -22,6 +22,15 @@ are stored as descriptions in version releases on GitHub, example:
 https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 
+## 0.16.0 WIP
+
+### Breaking changes
+
+- `OpenAPIConfig` now rejects `openapi_version` values before `3.1.0`.
+  We only ever supported a subset of `3.0.x`, since `3.1` was the first
+  version to adopt JSON Schema for models, #1435
+
+
 ## 0.15.0 (2026-09-11)
 
 ### Breaking changes
