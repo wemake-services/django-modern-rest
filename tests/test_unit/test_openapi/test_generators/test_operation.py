@@ -144,3 +144,92 @@ def test_explicit_operation_id(generator: OperationIdGenerator) -> None:
 
     assert operation_id == 'customGetUser'
     assert 'customGetUser' in registry._operation_ids
+
+
+class _PlainController(Controller[PydanticSerializer]):
+    def get(self) -> list[int]:
+        raise NotImplementedError
+
+
+def test_default_operation_id_generator_unchanged(
+    generator: OperationIdGenerator,
+) -> None:
+    """Ensure the default algorithm is used when no callback is configured."""
+    assert generator._context.config.operation_id_generator is None
+
+    controller = _PlainController()
+    operation_id = generator(
+        '/users',
+        '',
+        metadata=controller.api_endpoints['GET'].metadata,
+        serializer=PydanticSerializer,
+    )
+
+    assert operation_id == 'getUsers'
+
+
+def test_custom_operation_id_generator() -> None:
+    """Ensure a configured ``operation_id_generator`` callback is used."""
+
+    def custom_generator(
+        path: str,
+        suffix: str,
+        metadata: object,
+        serializer: object,
+    ) -> str:
+        return f'custom_{suffix}_{path}'.replace('/', '_')
+
+    context = OpenAPIContext(
+        OpenAPIConfig(
+            title='Test API',
+            version='1.0.0',
+            operation_id_generator=custom_generator,
+        ),
+    )
+    generator = context.generators.operation_id
+    controller = _PlainController()
+
+    operation_id = generator(
+        '/users',
+        'ctrl',
+        metadata=controller.api_endpoints['GET'].metadata,
+        serializer=PydanticSerializer,
+    )
+
+    registry = generator._context.registries.operation_id
+    assert operation_id == 'custom_ctrl__users'
+    assert operation_id in registry._operation_ids
+
+
+def test_generator_ignored_when_explicit_id() -> None:
+    """Explicit per-endpoint ``operation_id`` still wins over the callback."""
+    calls: list[str] = []
+
+    def custom_generator(
+        path: str,
+        suffix: str,
+        metadata: object,
+        serializer: object,
+    ) -> str:
+        calls.append(path)
+        return 'shouldNotBeUsed'
+
+    context = OpenAPIContext(
+        OpenAPIConfig(
+            title='Test API',
+            version='1.0.0',
+            operation_id_generator=custom_generator,
+        ),
+    )
+    generator = context.generators.operation_id
+    controller = _ControllerWithOperationId()
+
+    operation_id = generator(
+        'whatever',
+        'controller',
+        metadata=controller.api_endpoints['GET'].metadata,
+        serializer=PydanticSerializer,
+    )
+
+    assert operation_id == 'customGetUser'
+    assert not calls

@@ -44,6 +44,12 @@ class OperationIdGenerator:
             self._context.registries.operation_id.register(operation_id)
             return operation_id
 
+        custom_generator = self._context.config.operation_id_generator
+        if custom_generator is not None:
+            operation_id = custom_generator(path, suffix, metadata, serializer)
+            self._context.registries.operation_id.register(operation_id)
+            return operation_id
+
         # Generate operation_id from path and method
         operation_id = metadata.method.lower() + ''.join(
             self._tokenize_path(suffix + path),

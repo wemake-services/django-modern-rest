@@ -27,6 +27,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 ### Features
 
 - Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
+- Added `OpenAPIConfig.operation_id_generator` to allow customizing
+  `operationId` generation via a callback, #1461
 
 
 ## 0.15.0 (2026-09-11)

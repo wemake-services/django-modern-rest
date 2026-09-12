@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from dmr.openapi.objects import (  # noqa: WPS235
     Components,
@@ -12,6 +13,15 @@ from dmr.openapi.objects import (  # noqa: WPS235
     Server,
     Tag,
 )
+
+if TYPE_CHECKING:
+    from dmr.metadata import EndpointMetadata
+    from dmr.serializer import BaseSerializer
+
+    OperationIdGeneratorCallback = Callable[
+        [str, str, EndpointMetadata, type[BaseSerializer]],
+        str,
+    ]
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -45,6 +55,15 @@ class OpenAPIConfig:
         tags: Metadata tags used to group operations in the documentation.
         webhooks: Webhook definitions that may be initiated by the API,
             keyed by name.
+        operation_id_generator: Optional callback used to generate the
+            ``operationId`` for operations that don't have an explicit one
+            set via endpoint metadata. Receives ``(path, suffix, metadata,
+            serializer)`` and must return the final operation id string.
+            When not set, the default ``method + tokenized path`` algorithm
+            is used.
+
+            .. versionadded:: 0.16.0
+
     """
 
     title: str
@@ -63,6 +82,7 @@ class OpenAPIConfig:
     servers: list[Server] | None = None
     tags: list[Tag] | None = None
     webhooks: dict[str, PathItem | Reference] | None = None
+    operation_id_generator: 'OperationIdGeneratorCallback | None' = None
 
     @property
     def openapi_version_info(self) -> tuple[int, int, int]:
