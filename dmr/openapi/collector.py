@@ -24,7 +24,6 @@ _PathControllerSpec: TypeAlias = (
         None,
     ]
 )
-_ExternalSpec: TypeAlias = tuple[URLPattern, PathItem | None]
 
 _PATH_PATTERN: Final = re.compile(
     r'<(?:(?P<converter>[^>:]+):)?(?P<parameter>\w+)>',
