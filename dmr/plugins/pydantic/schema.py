@@ -27,6 +27,11 @@ class PydanticSchemaGenerator(BaseSchemaGenerator):
         json_schema_kwargs: Dictionary of kwargs that will be passed
             to the ``json_schema`` method of pydantic's ``TypeAdapter``.
 
+    Schemas are registered and cached per annotation, not per serializer.
+    If the same model is used by several serializers with different
+    ``json_schema_kwargs``, only the kwargs of the serializer
+    that generates the schema first will be applied.
+
     """
 
     __slots__ = ()

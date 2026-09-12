@@ -19,6 +19,11 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
             It must return a JSON schema dict for that type
             or raise ``NotImplementedError`` to use the default behavior.
 
+    Schemas are registered and cached per annotation, not per serializer.
+    If the same model is used by several serializers with different
+    ``schema_hook`` callables, only the hook of the serializer
+    that generates the schema first will be applied.
+
     """
 
     __slots__ = ()

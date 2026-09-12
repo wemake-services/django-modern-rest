@@ -300,7 +300,19 @@ and create your own serializer that uses it:
 - ``msgspec`` supports
   :attr:`~dmr.plugins.msgspec.schema.MsgspecSchemaGenerator.schema_hook`,
   which is called for each custom type
-  that ``msgspec`` cannot describe natively
+  that ``msgspec`` cannot describe natively.
+  Note that custom types will also need runtime serialization support:
+  override the ``serialize_hook`` method of your serializer,
+  as shown in the example below
+
+.. note::
+
+  Generated schemas are registered and cached per annotation,
+  they are shared between all serializers of the same API.
+  So, if the same model is used by several serializers
+  with different schema generation settings,
+  only the settings of the serializer
+  that generates the schema first will be applied.
 
 .. tabs::
 
