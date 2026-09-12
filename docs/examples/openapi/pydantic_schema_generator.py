@@ -1,4 +1,3 @@
-from collections.abc import Iterator
 from typing import Any, ClassVar
 
 import pydantic
@@ -18,31 +17,22 @@ class NoTitleJsonSchema(GenerateJsonSchema):
     """Drops ``title`` keys from the generated schemas."""
 
     @override
+    def field_title_should_be_set(self, schema: Any) -> bool:
+        """Do not generate titles for fields."""
+        return False
+
+    @override
     def generate(
         self,
         schema: CoreSchema,
         mode: JsonSchemaMode = 'validation',
     ) -> dict[str, Any]:
-        """Generate a JSON schema and remove all titles from it."""
+        """Generate a JSON schema and remove model titles from it."""
         json_schema = super().generate(schema, mode=mode)
-        return _drop_titles(json_schema)
-
-
-def _drop_titles(json_schema: dict[str, Any]) -> dict[str, Any]:
-    """Recursively remove ``title`` keys from all nested schemas."""
-    for subschema in _iter_nested(json_schema):
-        subschema.pop('title', None)
-    return json_schema
-
-
-def _iter_nested(node: Any) -> Iterator[dict[str, Any]]:
-    """Yield all dicts nested inside ``node``, including ``node`` itself."""
-    if isinstance(node, dict):
-        yield node
-        yield from _iter_nested(list(node.values()))
-    elif isinstance(node, list):
-        for child in node:
-            yield from _iter_nested(child)
+        json_schema.pop('title', None)
+        for component in json_schema.get('$defs', {}).values():
+            component.pop('title', None)
+        return json_schema
 
 
 class SchemaGenerator(PydanticSchemaGenerator):
@@ -56,13 +46,13 @@ class PointPydanticSerializer(PydanticSerializer):
 
 
 class Point(pydantic.BaseModel):
-    x: float
-    y: float
+    coord_x: float
+    coord_y: float
 
 
 class PointsController(Controller[PointPydanticSerializer]):
     def get(self) -> list[Point]:
-        return [Point(x=1, y=2), Point(x=3, y=4)]
+        return [Point(coord_x=1, coord_y=2), Point(coord_x=3, coord_y=4)]
 
 
 # run: {"controller": "PointsController", "method": "get", "url": "/api/points/"}  # noqa: ERA001, E501

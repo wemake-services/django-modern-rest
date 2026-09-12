@@ -10,9 +10,9 @@ from dmr.plugins.msgspec.schema import MsgspecSchemaGenerator, SchemaHook
 class Point:  # noqa: B903
     """Custom type that ``msgspec`` cannot describe natively."""
 
-    def __init__(self, x: float, y: float) -> None:
-        self.x = x
-        self.y = y
+    def __init__(self, coord_x: float, coord_y: float) -> None:
+        self.coord_x = coord_x
+        self.coord_y = coord_y
 
 
 def point_schema(type_: type[Any]) -> dict[str, Any]:
@@ -21,10 +21,10 @@ def point_schema(type_: type[Any]) -> dict[str, Any]:
         return {
             'type': 'object',
             'properties': {
-                'x': {'type': 'number'},
-                'y': {'type': 'number'},
+                'coord_x': {'type': 'number'},
+                'coord_y': {'type': 'number'},
             },
-            'required': ['x', 'y'],
+            'required': ['coord_x', 'coord_y'],
         }
     raise NotImplementedError(type_)
 
@@ -41,7 +41,10 @@ class PointMsgspecSerializer(MsgspecSerializer):
     def serialize_hook(cls, to_serialize: Any) -> Any:
         """Serialize ``Point`` objects, ``msgspec`` cannot do it natively."""
         if isinstance(to_serialize, Point):
-            return {'x': to_serialize.x, 'y': to_serialize.y}
+            return {
+                'coord_x': to_serialize.coord_x,
+                'coord_y': to_serialize.coord_y,
+            }
         return super().serialize_hook(to_serialize)
 
     @classmethod
@@ -55,7 +58,10 @@ class PointMsgspecSerializer(MsgspecSerializer):
         if target_type is Point:
             if isinstance(to_deserialize, Point):
                 return to_deserialize
-            return Point(to_deserialize['x'], to_deserialize['y'])
+            return Point(
+                to_deserialize['coord_x'],
+                to_deserialize['coord_y'],
+            )
         return super().deserialize_hook(target_type, to_deserialize)
 
 
