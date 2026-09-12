@@ -4,7 +4,11 @@ from dmr.plugins.msgspec import MsgspecSerializer
 
 
 class UserController(Controller[MsgspecSerializer]):
-    """Users API."""  # This docstring becomes the `summary`
+    """
+    Users API.
+    
+    Replaced description.
+    """  # This docstring becomes the `summary`, but not `description`
 
     description = 'Create new users'  # Set explicitly, not from the docstring
     servers = (
