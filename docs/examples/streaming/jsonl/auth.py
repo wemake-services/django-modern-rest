@@ -21,5 +21,6 @@ class UserEventsController(JsonLinesController[MsgspecSerializer]):
         yield _User(email='first@example.com')
 
 
+# run: {"controller": "UserEventsController", "method": "get", "url": "/api/user/events/", "headers": {"Authorization": "Bearer $JWT_ACCESS_TOKEN"}, "populate_db": true}  # noqa: ERA001, E501
 # run: {"controller": "UserEventsController", "method": "get", "url": "/api/user/events/", "fail-with-body": false, "assert-error-text": "Not authenticated"}  # noqa: ERA001, E501
 # openapi: {"controller": "UserEventsController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
