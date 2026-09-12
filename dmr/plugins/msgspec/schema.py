@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Any
 
 from msgspec.json import schema
@@ -10,6 +11,10 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
     """Generates JSON schema for msgspec objects."""
 
     __slots__ = ()
+
+    #: Subclass and override to hook into msgspec's schema generation
+    #: for types it does not know how to handle natively.
+    schema_hook: Callable[[type], dict[str, Any]] | None = None
 
     @override
     @classmethod
@@ -24,6 +29,7 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
         out = schema(
             model,
             ref_template=ref_template + '{name}',  # noqa: WPS336
+            schema_hook=cls.schema_hook,
         )
         components = out.pop('$defs', {})
         return out, components
