@@ -55,6 +55,30 @@ class _PayloadDocOnlyDescriptionController(
         raise NotImplementedError
 
 
+class _PayloadNoSummaryController(
+    Controller[PydanticSerializer],
+):
+    @modify(summary=None)
+    def get(self) -> list[int]:
+        """Summary from docstring.
+
+        Description from docstring.
+        """
+        raise NotImplementedError
+
+
+class _PayloadNoDescriptionController(
+    Controller[PydanticSerializer],
+):
+    @modify(description=None)
+    def get(self) -> list[int]:
+        """Summary from docstring.
+
+        Description from docstring.
+        """
+        raise NotImplementedError
+
+
 class _DocFullDescriptionController(
     Controller[PydanticSerializer],
 ):
@@ -111,12 +135,22 @@ class _RawDescriptionController(
         (
             _PayloadDocOnlySummaryController,
             'Summary from payload.',
-            None,
+            'Description from docstring.',
         ),
         (
             _PayloadDocOnlyDescriptionController,
-            None,
+            'Summary from docstring.',
             'Description from payload.',
+        ),
+        (
+            _PayloadNoSummaryController,
+            None,
+            'Description from docstring.',
+        ),
+        (
+            _PayloadNoDescriptionController,
+            'Summary from docstring.',
+            None,
         ),
         (
             _DocFullDescriptionController,

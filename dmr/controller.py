@@ -545,7 +545,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         )
 
     @classmethod
-    def get_schema(
+    def get_schema(  # noqa: WPS210
         cls,
         path: str,
         pattern: URLPattern,
@@ -585,15 +585,17 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             return None
 
         standard_ops, additional_ops = PathItem.split_operations(operations)
+        summary, description = resolve_summary_and_description(
+            cls.__doc__,
+            cls.summary,
+            cls.description,
+        )
 
         return PathItem(
             **standard_ops,
-            **resolve_summary_and_description(
-                cls.__doc__,
-                cls.summary,
-                cls.description,
-            ),
             additional_operations=additional_ops,
+            summary=summary,
+            description=description,
             servers=None if cls.servers is None else list(cls.servers),
         )
 

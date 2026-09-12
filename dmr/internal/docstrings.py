@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from django.contrib.admindocs.utils import parse_docstring
-from typing_extensions import Sentinel, TypedDict
+from typing_extensions import Sentinel
 
 if TYPE_CHECKING:
     from django.utils.functional import (
@@ -9,48 +9,27 @@ if TYPE_CHECKING:
     )
 
 
-@final
-class _SummaryAndDescription(TypedDict, closed=True):
-    """Both docs fields of an OpenAPI object, ready to be passed with ``**``."""
-
-    summary: str | None
-    description: str | None
-
-
-def parse_summary_and_description(
-    docstring: str | None,
-) -> tuple[str | None, str | None]:
-    """
-    Split a docstring into OpenAPI ``summary`` and ``description`` parts.
-
-    Uses django's ``parse_docstring()`` helper: the first paragraph
-    becomes the summary, everything after it becomes the description.
-
-    All empty strings are converted to ``None``.
-    """
-    summary, description, _ = parse_docstring(docstring or '')
-    return summary or None, description or None
-
-
 def resolve_summary_and_description(
     docstring: str | None,
     summary: '_StrOrPromise | Sentinel | None',
     description: '_StrOrPromise | Sentinel | None',
-) -> SummaryAndDescription:
+) -> tuple[str | None, str | None]:
     """
-    Resolve explicitly set summary and description against a docstring.
+    Resolve OpenAPI ``summary`` and ``description`` against a docstring.
 
-    Each field is resolved on its own: ``EMPTY`` means that the value
-    is taken from *docstring*, explicit ``None`` stays ``None``,
-    so nothing is generated at all.
+    Both are resolved on their own, they never affect each other:
+    a value left as ``EMPTY`` is taken from *docstring*,
+    an explicit ``None`` stays ``None``, so nothing is generated at all.
+
+    Django's ``parse_docstring()`` does the parsing: the first paragraph
+    of *docstring* becomes the summary, everything after it becomes
+    the description. All empty strings are converted to ``None``.
     """
-    parsed_summary, parsed_description = parse_summary_and_description(
-        docstring,
+    parsed_summary, parsed_description, _ = parse_docstring(docstring or '')
+    return (
+        _resolve_doc_field(summary, parsed_summary or None),
+        _resolve_doc_field(description, parsed_description or None),
     )
-    return {
-        'summary': _resolve_doc_field(summary, parsed_summary),
-        'description': _resolve_doc_field(description, parsed_description),
-    }
 
 
 def _resolve_doc_field(
