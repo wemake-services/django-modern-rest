@@ -2,19 +2,24 @@
 
 import enum
 from collections.abc import Iterable, Mapping
-from typing import Annotated, Any, Literal, Optional, Union
+from typing import Annotated, Any, ClassVar, Literal, Optional, Union, final
 
 import pydantic
 import pytest
-from typing_extensions import TypedDict
+from pydantic.json_schema import GenerateJsonSchema
+from typing_extensions import TypedDict, override
 
 from dmr import Controller, Cookies, Headers, Path, Query
 from dmr.exceptions import UnsolvableAnnotationsError
-from dmr.openapi import build_schema
+from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators import SchemaGenerator
 from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Reference, Schema
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic.schema import (
+    JsonSchemaKwargs,
+    PydanticSchemaGenerator,
+)
 from dmr.routing import Router, path
 
 
@@ -505,3 +510,115 @@ def test_unsupported_type(schema_generator: SchemaGenerator) -> None:
         match='Cannot generate OpenAPI schema',
     ):
         schema_generator(_TestClass, PydanticSerializer)
+
+
+class _NoTitleJsonSchema(GenerateJsonSchema):
+    """Drops ``title`` keys from the generated root schemas."""
+
+    @override
+    def generate(
+        self,
+        schema: Any,
+        mode: Any = 'validation',
+    ) -> dict[str, Any]:
+        """Generate a schema and remove its title."""
+        json_schema = super().generate(schema, mode=mode)
+        json_schema.pop('title', None)
+        return json_schema
+
+
+@final
+class _NoTitleSchemaGenerator(PydanticSchemaGenerator):
+    json_schema_kwargs: ClassVar[JsonSchemaKwargs] = {
+        'schema_generator': _NoTitleJsonSchema,
+    }
+
+
+@final
+class _NoTitleSerializer(PydanticSerializer):
+    schema_generator = _NoTitleSchemaGenerator
+
+
+def test_custom_schema_generator(
+    schema_generator: SchemaGenerator,
+) -> None:
+    """Ensure custom ``schema_generator`` option is respected."""
+    schema = schema_generator(_TestTypedDict, _NoTitleSerializer)
+
+    assert isinstance(schema, Schema)  # no title means no reference
+    assert schema.title is None
+    assert schema.properties == {
+        'attr': Schema(type=OpenAPIType.INTEGER, title='Attr'),
+        'specific_field': Schema(
+            type=OpenAPIType.STRING,
+            min_length=1,
+            format=OpenAPIFormat.URI,
+            title='Specific Field',
+        ),
+    }
+
+
+@final
+class _AliasedModel(pydantic.BaseModel):
+    field_name: str = pydantic.Field(alias='fieldAlias')
+
+
+@final
+class _NoAliasSchemaGenerator(PydanticSchemaGenerator):
+    json_schema_kwargs: ClassVar[JsonSchemaKwargs] = {'by_alias': False}
+
+
+@final
+class _NoAliasSerializer(PydanticSerializer):
+    schema_generator = _NoAliasSchemaGenerator
+
+
+def test_custom_by_alias(openapi_context: OpenAPIContext) -> None:
+    """Ensure custom ``by_alias`` option is respected."""
+    default_reference = openapi_context.generators.schema(
+        _AliasedModel,
+        PydanticSerializer,
+    )
+    assert isinstance(default_reference, Reference)
+    default_schema = openapi_context.registries.schema.maybe_resolve_reference(
+        default_reference,
+    )
+    assert default_schema.properties is not None
+    assert list(default_schema.properties) == ['fieldAlias']
+
+    # A fresh context, because schemas are registered and cached
+    # per annotation, regardless of the serializer used:
+    custom_context = OpenAPIContext(
+        OpenAPIConfig(title='custom', version='0.0.1'),
+    )
+    custom_reference = custom_context.generators.schema(
+        _AliasedModel,
+        _NoAliasSerializer,
+    )
+    assert isinstance(custom_reference, Reference)
+    custom_schema = custom_context.registries.schema.maybe_resolve_reference(
+        custom_reference,
+    )
+    assert custom_schema.properties is not None
+    assert list(custom_schema.properties) == ['field_name']
+
+
+@final
+class _PrimitiveUnionSchemaGenerator(PydanticSchemaGenerator):
+    json_schema_kwargs: ClassVar[JsonSchemaKwargs] = {
+        'union_format': 'primitive_type_array',
+    }
+
+
+@final
+class _PrimitiveUnionSerializer(PydanticSerializer):
+    schema_generator = _PrimitiveUnionSchemaGenerator
+
+
+def test_custom_union_format(schema_generator: SchemaGenerator) -> None:
+    """Ensure custom ``union_format`` option is respected."""
+    schema = schema_generator(int | str, _PrimitiveUnionSerializer)
+
+    assert isinstance(schema, Schema)
+    assert schema.any_of is None
+    assert schema.type == [OpenAPIType.INTEGER, OpenAPIType.STRING]

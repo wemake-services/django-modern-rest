@@ -266,6 +266,9 @@ Pydantic
 .. autoclass:: dmr.plugins.pydantic.schema.PydanticSchemaGenerator
   :members:
 
+.. autoclass:: dmr.plugins.pydantic.schema.JsonSchemaKwargs
+  :members:
+
 .. autoclass:: dmr.plugins.pydantic.serializer.ToJsonKwargs
   :members:
 

@@ -2,7 +2,16 @@
 
 import enum
 from collections.abc import Collection, Mapping
-from typing import Annotated, Any, Final, Literal, Optional, Union
+from typing import (
+    Annotated,
+    Any,
+    ClassVar,
+    Final,
+    Literal,
+    Optional,
+    Union,
+    final,
+)
 
 import pytest
 from typing_extensions import TypedDict
@@ -21,6 +30,7 @@ except ImportError:  # pragma: no cover
     pytest.skip(reason='msgspec is not installed', allow_module_level=True)
 
 from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.plugins.msgspec.schema import MsgspecSchemaGenerator, SchemaHook
 
 
 @pytest.fixture
@@ -467,3 +477,45 @@ def test_unsupported_type(schema_generator: SchemaGenerator) -> None:
         match='Cannot generate OpenAPI schema',
     ):
         schema_generator(_TestClass, MsgspecSerializer)
+
+
+class _CustomType:
+    """Custom type that ``msgspec`` cannot describe natively."""
+
+
+class _OtherCustomType:
+    """Another custom type without any schema support."""
+
+
+def _custom_schema_hook(type_: type) -> dict[str, Any]:
+    """Describe custom types for the JSON schema generation."""
+    if type_ is _CustomType:
+        return {'type': 'string'}
+    raise NotImplementedError(type_)
+
+
+@final
+class _HookedSchemaGenerator(MsgspecSchemaGenerator):
+    schema_hook: ClassVar[SchemaHook | None] = _custom_schema_hook
+
+
+@final
+class _HookedSerializer(MsgspecSerializer):
+    schema_generator = _HookedSchemaGenerator
+
+
+def test_custom_schema_hook(schema_generator: SchemaGenerator) -> None:
+    """Ensure custom ``schema_hook`` option is respected."""
+    schema = schema_generator(_CustomType, _HookedSerializer)
+
+    assert isinstance(schema, Schema)
+    assert schema.type == OpenAPIType.STRING
+
+
+def test_schema_hook_fallback(schema_generator: SchemaGenerator) -> None:
+    """Ensure types a hook does not support still raise."""
+    with pytest.raises(
+        UnsolvableAnnotationsError,
+        match='Cannot generate OpenAPI schema',
+    ):
+        schema_generator(_OtherCustomType, _HookedSerializer)
