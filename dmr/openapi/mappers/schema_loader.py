@@ -186,7 +186,7 @@ def _try_additional_properties(
 
 def _try_type_field(raw_value: Any) -> OpenAPIType | list[OpenAPIType] | None:
     """Load 'type' which can be a single string or a list of strings."""
-    if isinstance(raw_value, list):  # pragma: no cover
+    if isinstance(raw_value, list):
         return [OpenAPIType(seq_value) for seq_value in raw_value]
     return None if raw_value is None else OpenAPIType(raw_value)
 
