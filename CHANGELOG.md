@@ -24,6 +24,15 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ## 0.16.0 WIP
 
+### Breaking changes
+
+- `Controller.as_view` now raises `EndpointMetadataError`
+  when it is called on an abstract controller: one without
+  an exact serializer type or without any endpoints.
+  Previously such controllers could be added to `Router`
+  and to `urlpatterns` silently, but they could not serve
+  any requests, #1445
+
 ### Features
 
 - Added `tags` controller attribute to apply OpenAPI tags

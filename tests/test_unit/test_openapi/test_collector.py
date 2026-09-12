@@ -59,15 +59,6 @@ class _PostController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-@final
-class _EmptyController(Controller[PydanticSerializer]):
-    """Test controller with no API endpoints."""
-
-    def incorrect_method(self) -> str:
-        """Non-API method that should be ignored."""
-        raise NotImplementedError
-
-
 @pytest.mark.parametrize(
     ('input_path', 'expected_output'),
     [
@@ -159,7 +150,7 @@ def test_join_paths(
     [
         ('full/', _FullController),
         ('sla/shed/', _GetController),
-        ('', _EmptyController),
+        ('', _PostController),
     ],
 )
 def test_process_pattern_with_different_views(
