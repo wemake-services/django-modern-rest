@@ -15,7 +15,7 @@ from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorModel, ErrorType, format_error
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
-from dmr.internal.docstrings import parse_summary_and_description
+from dmr.internal.docstrings import resolve_summary_and_description
 from dmr.internal.io import identity
 from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
@@ -588,9 +588,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
         return PathItem(
             **standard_ops,
+            **resolve_summary_and_description(
+                cls.__doc__,
+                cls.summary,
+                cls.description,
+            ),
             additional_operations=additional_ops,
-            summary=cls._build_summary(),
-            description=cls._build_description(),
             servers=None if cls.servers is None else list(cls.servers),
         )
 
@@ -602,32 +605,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         return cls.is_async is True
 
     # Protected API:
-
-    @classmethod
-    def _build_summary(cls) -> str | None:
-        """
-        Resolve the summary of this controller's path item.
-
-        When ``summary`` is not set explicitly, we use the first paragraph
-        of the controller's own docstring. Explicit ``None`` means
-        that no summary is generated at all.
-        """
-        if isinstance(cls.summary, Sentinel):
-            return parse_summary_and_description(cls.__doc__)[0]
-        return None if cls.summary is None else str(cls.summary)
-
-    @classmethod
-    def _build_description(cls) -> str | None:
-        """
-        Resolve the description of this controller's path item.
-
-        When ``description`` is not set explicitly, we use everything
-        that goes after the first paragraph of the controller's own docstring.
-        Explicit ``None`` means that no description is generated at all.
-        """
-        if isinstance(cls.description, Sentinel):
-            return parse_summary_and_description(cls.__doc__)[1]
-        return None if cls.description is None else str(cls.description)
 
     @classmethod
     def _infer_serializer(cls) -> type[_SerializerT_co] | None:
