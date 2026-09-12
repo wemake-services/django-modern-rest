@@ -9,7 +9,8 @@ if TYPE_CHECKING:
     )
 
 
-class SummaryAndDescription(TypedDict, closed=True):
+@final
+class _SummaryAndDescription(TypedDict, closed=True):
     """Both docs fields of an OpenAPI object, ready to be passed with ``**``."""
 
     summary: str | None
