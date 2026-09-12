@@ -29,6 +29,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `tags` controller attribute to apply OpenAPI tags
   to all endpoints of this controller. They are merged
   with router-level and endpoint-level tags, #1434
+- Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
 
 
 ## 0.15.0 (2026-09-11)
