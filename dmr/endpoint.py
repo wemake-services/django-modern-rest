@@ -415,29 +415,38 @@ class Endpoint:  # noqa: WPS214
     # Sync checks:
 
     def _run_checks(self, controller: 'Controller[BaseSerializer]') -> None:
-        # First round of throttling:
-        self._run_throttle_before(controller)
+        # Only call the parts that are actually configured for this
+        # endpoint: checking `is None` here avoids the (non-free) call
+        # into a method that would otherwise just check and return.
+        throttling_before_auth = self.metadata.throttling_before_auth
+        if throttling_before_auth is not None:
+            self._run_throttle_before(controller, throttling_before_auth)
         # Negotiate response:
         self.response_negotiator(controller.request)
         # Auth:
-        self._run_auth(controller)
+        auth = self.metadata.auth
+        if auth is not None:
+            self._run_auth(controller, auth)
         # Second round of throttling:
-        self._run_throttle_after(controller)
+        throttling_after_auth = self.metadata.throttling_after_auth
+        if throttling_after_auth is not None:
+            self._run_throttle_after(controller, throttling_after_auth)
 
     def _run_throttle_before(
         self,
         controller: 'Controller[BaseSerializer]',
+        throttles: 'tuple[SyncThrottle | AsyncThrottle, ...]',
     ) -> None:
-        if self.metadata.throttling_before_auth is None:
-            return
-        for throttle in self.metadata.throttling_before_auth:
+        for throttle in throttles:
             assert isinstance(throttle, SyncThrottle)  # noqa: S101
             throttle(self, controller, self._sync_lock)
 
-    def _run_auth(self, controller: 'Controller[BaseSerializer]') -> None:
-        if self.metadata.auth is None:
-            return
-        for auth in self.metadata.auth:
+    def _run_auth(
+        self,
+        controller: 'Controller[BaseSerializer]',
+        auths: 'list[SyncAuth | AsyncAuth]',
+    ) -> None:
+        for auth in auths:
             assert isinstance(auth, SyncAuth)  # noqa: S101
             authed_by = auth(self, controller)
             if authed_by is not None:
@@ -448,10 +457,9 @@ class Endpoint:  # noqa: WPS214
     def _run_throttle_after(
         self,
         controller: 'Controller[BaseSerializer]',
+        throttles: 'tuple[SyncThrottle | AsyncThrottle, ...]',
     ) -> None:
-        if self.metadata.throttling_after_auth is None:
-            return
-        for throttle in self.metadata.throttling_after_auth:
+        for throttle in throttles:
             assert isinstance(throttle, SyncThrottle)  # noqa: S101
             throttle(self, controller, self._sync_lock)
 
@@ -461,22 +469,35 @@ class Endpoint:  # noqa: WPS214
         self,
         controller: 'Controller[BaseSerializer]',
     ) -> None:
-        # First round of throttling:
-        await self._run_async_throttle_before(controller)
+        # Only await the parts that are actually configured for this
+        # endpoint, instead of always awaiting all 4 coroutines and
+        # letting each check internally no-op.
+        throttling_before_auth = self.metadata.throttling_before_auth
+        if throttling_before_auth is not None:
+            await self._run_async_throttle_before(
+                controller,
+                throttling_before_auth,
+            )
         # Negotiate response:
         self.response_negotiator(controller.request)
         # Auth:
-        await self._run_async_auth(controller)
+        auth = self.metadata.auth
+        if auth is not None:
+            await self._run_async_auth(controller, auth)
         # Second round of throttling:
-        await self._run_async_throttle_after(controller)
+        throttling_after_auth = self.metadata.throttling_after_auth
+        if throttling_after_auth is not None:
+            await self._run_async_throttle_after(
+                controller,
+                throttling_after_auth,
+            )
 
     async def _run_async_throttle_before(
         self,
         controller: 'Controller[BaseSerializer]',
+        throttles: 'tuple[SyncThrottle | AsyncThrottle, ...]',
     ) -> None:
-        if self.metadata.throttling_before_auth is None:
-            return
-        for throttle in self.metadata.throttling_before_auth:
+        for throttle in throttles:
             assert isinstance(throttle, AsyncThrottle)  # noqa: S101
             # We have to check them in sync one by one :(
             await throttle(self, controller, self._async_lock)  # noqa: WPS476
@@ -484,10 +505,9 @@ class Endpoint:  # noqa: WPS214
     async def _run_async_auth(
         self,
         controller: 'Controller[BaseSerializer]',
+        auths: 'list[SyncAuth | AsyncAuth]',
     ) -> None:
-        if self.metadata.auth is None:
-            return
-        for auth in self.metadata.auth:
+        for auth in auths:
             assert isinstance(auth, AsyncAuth)  # noqa: S101
             authed_by = await auth(self, controller)  # noqa: WPS476
             if authed_by is not None:
@@ -498,10 +518,9 @@ class Endpoint:  # noqa: WPS214
     async def _run_async_throttle_after(
         self,
         controller: 'Controller[BaseSerializer]',
+        throttles: 'tuple[SyncThrottle | AsyncThrottle, ...]',
     ) -> None:
-        if self.metadata.throttling_after_auth is None:
-            return
-        for throttle in self.metadata.throttling_after_auth:
+        for throttle in throttles:
             assert isinstance(throttle, AsyncThrottle)  # noqa: S101
             # We have to check them in sync one by one :(
             await throttle(self, controller, self._async_lock)  # noqa: WPS476
