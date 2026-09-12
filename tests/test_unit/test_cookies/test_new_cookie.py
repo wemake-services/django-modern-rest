@@ -1,6 +1,7 @@
+import dataclasses
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import final
+from typing import ClassVar, final
 
 import pytest
 from django.http import HttpResponse
@@ -236,3 +237,78 @@ def test_validate_cookies(
         response.content
     )
     assert json.loads(response.content)['detail']
+
+
+@final
+class _DiscardCookieController(Controller[PydanticSerializer]):
+    """Shows how cookies are dropped: empty value and ``max_age=0``."""
+
+    _spec: ClassVar[CookieSpec] = CookieSpec(
+        max_age=0,
+        httponly=True,
+        secure=True,
+        samesite='strict',
+        path='/api/',
+    )
+
+    @validate(
+        ResponseSpec(
+            None,
+            status_code=HTTPStatus.NO_CONTENT,
+            cookies={'session_id': _spec},
+        ),
+    )
+    def get(self) -> HttpResponse:
+        return self.to_response(
+            None,
+            status_code=HTTPStatus.NO_CONTENT,
+            cookies={'session_id': NewCookie.from_spec(self._spec, value='')},
+        )
+
+
+@pytest.mark.freeze_time('02-11-2025 10:15:00')
+def test_discard_cookies(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures that a `max_age=0` cookie matches its spec."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _DiscardCookieController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.content
+    assert response.cookies.output() == snapshot("""\
+Set-Cookie: session_id=""; expires=Tue, 11 Feb 2025 10:15:00 GMT; HttpOnly; \
+Max-Age=0; Path=/api/; SameSite=strict; Secure\
+""")
+
+
+def test_new_cookie_from_spec() -> None:
+    """Ensures that all the spec flags are copied to the new cookie."""
+    spec = CookieSpec(
+        path='/api/',
+        max_age=100,
+        domain='example.com',
+        secure=True,
+        httponly=True,
+        samesite='strict',
+        description='Only used for the docs.',
+        required=False,
+        skip_validation=True,
+    )
+
+    cookie = NewCookie.from_spec(spec, value='abc')
+
+    assert cookie == NewCookie(
+        value='abc',
+        path='/api/',
+        max_age=100,
+        domain='example.com',
+        secure=True,
+        httponly=True,
+        samesite='strict',
+    )
+    assert cookie.to_spec() == dataclasses.replace(
+        spec,
+        description=None,
+        required=True,
+        skip_validation=False,
+    )

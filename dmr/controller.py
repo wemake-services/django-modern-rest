@@ -14,7 +14,7 @@ from dmr import throttling as dmr_throttling
 from dmr.cookies import NewCookie
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorModel, ErrorType, format_error
-from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.internal.io import identity
 from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
@@ -118,6 +118,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         is_abstract: Whether or not this controller is abstract.
             We consider controller "abstract" when it does not have
             exact serializer type or exact ``api_endpoints`` instances.
+            Abstract controllers cannot be routed, ``as_view`` raises
+            :class:`~dmr.exceptions.EndpointMetadataError` for them.
         is_async: Whether or not this controller is async.
         streaming: Does this controller work with streaming responses like SSE?
         controller_validator_cls: Runs full controller validation on definition.
@@ -128,6 +130,9 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             Is ``True`` by default.
         summary: A short summary of what this path item does.
         description: A verbose explanation of the path item behavior.
+        tags: A list of tags to group all operations
+            from this controller in OpenAPI documentation.
+            These are merged with router-level and endpoint-level tags.
         servers: An alternative servers array to service this path item.
         ignore_from_spec: If set to ``True``, all endpoints from this controller
             would not be added to the final OpenAPI spec.
@@ -178,6 +183,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     # OpenAPI:
     summary: ClassVar['_StrOrPromise | None'] = None
     description: ClassVar['_StrOrPromise | None'] = None
+    tags: ClassVar[Sequence[str] | None] = None
     servers: ClassVar[Sequence[Server] | None] = None
     ignore_from_spec: ClassVar[bool] = False
 
@@ -215,7 +221,26 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         This override applies CSRF exemption to the view. Session-based
         authentication will still be explicitly validated for CSRF,
         while all other authentication methods will be CSRF-exempt.
+
+        Raises:
+            EndpointMetadataError: When called on an abstract controller,
+                because it has nothing to serve.
+
+        .. versionchanged:: 0.16.0
+
+            Abstract controllers now raise
+            :class:`~dmr.exceptions.EndpointMetadataError`
+            instead of silently returning a broken view.
+
         """
+        if cls.is_abstract:
+            raise EndpointMetadataError(
+                f'{cls!r} is abstract, it cannot be used as a view. '
+                'Controllers are abstract when they do not have '
+                'an exact serializer type or any endpoints. '
+                'Use a subclass with a real serializer '
+                'and at least one endpoint',
+            )
         return (
             csrf_exempt(super().as_view(**initkwargs))
             if cls.csrf_exempt

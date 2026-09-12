@@ -150,9 +150,10 @@ docs +targets='clean html': (_docs::build targets)
 
 # Add new translation strings
 [group('i18n')]
+[working-directory: 'dmr']
 makemessages:
     #!/usr/bin/env bash
-    for target in $(find dmr/locale -mindepth 1 -maxdepth 1 -type d); do
+    for target in $(find locale -mindepth 1 -maxdepth 1 -type d); do
       uv run django-admin makemessages -l "$(basename "$target")" \
         --add-location never
     done

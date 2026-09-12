@@ -259,6 +259,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
+            These are merged with controller-level and router-level tags.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
         external_docs: Additional external documentation for this operation.
@@ -645,6 +646,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
+            These are merged with controller-level and router-level tags.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
         external_docs: Additional external documentation for this operation.

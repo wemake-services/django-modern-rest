@@ -20,7 +20,7 @@ from dmr.security.jwt.token import JWToken, JWTokenError
 _LEEWAY: Final = 30
 
 
-class _DecodeKwargs(TypedDict, total=False):
+class _DecodeKwargs(TypedDict, total=False, closed=True):
     verify_exp: bool
     verify_iat: bool
     verify_sub: bool

@@ -187,8 +187,6 @@ class TokenLikeAsync(_TokenLikeBase, Generic[_UserT]):
         raise NotImplementedError
 
 
-# TODO: make easily customizable
-_RAW_TOKEN_SIZE: Final = 32
 DEFAULT_TOKEN_SALT: Final = 'dmr.security.token'  # noqa: S105
 DEFAULT_TOKEN_ALGORITHM: Final = 'sha256'  # noqa: S105
 

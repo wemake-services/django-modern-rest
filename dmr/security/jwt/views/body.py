@@ -1,9 +1,7 @@
-import datetime as dt
-import uuid
 from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from http import HTTPStatus
-from typing import Any, ClassVar, Generic, Literal, TypeAlias, TypeVar
+from typing import Any, ClassVar, Generic
 
 from django.conf import settings
 from django.contrib.auth import aauthenticate, authenticate
@@ -13,39 +11,34 @@ from django.views.decorators.debug import (
     sensitive_post_parameters,
     sensitive_variables,
 )
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, TypeVar
 
-from dmr import Body, Controller, ResponseSpec, modify
+from dmr import Body, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
 from dmr.endpoint import ModifyAnyCallable
 from dmr.errors import ErrorModel
-from dmr.exceptions import InternalServerError, NotAuthenticatedError
+from dmr.exceptions import NotAuthenticatedError
 from dmr.security.base import NO_STORE_HEADERS
 from dmr.security.jwt.auth.base import USER_LOOKUP_ERRORS, set_request_attrs
-from dmr.security.jwt.token import JWToken, JWTokenError
+from dmr.security.jwt.token import JWToken
+from dmr.security.jwt.views.base import (
+    BaseRefreshTokenController,
+    BaseTokenController,
+    ObtainTokensPayload,
+)
 from dmr.serializer import BaseSerializer
 
+#: Request body of all the controllers that authenticate a user.
 _ObtainTokensT = TypeVar('_ObtainTokensT', bound=Mapping[str, Any])
-_RefreshTokensT = TypeVar('_RefreshTokensT', bound=Mapping[str, Any])
-_VerifyTokenT = TypeVar('_VerifyTokenT', bound=Mapping[str, Any])
-_TokensResponseT = TypeVar('_TokensResponseT')
 _SerializerT = TypeVar(
     '_SerializerT',
     bound=BaseSerializer,
 )
 
-_TokenType: TypeAlias = Literal['access', 'refresh']
 
-
-class ObtainTokensPayload(TypedDict):
-    """
-    Payload for default version of a jwt request body.
-
-    Is also used as kwargs for :func:`django.contrib.auth.authenticate`.
-    """
-
-    username: str
-    password: str
+_RefreshTokensT = TypeVar('_RefreshTokensT', bound=Mapping[str, Any])
+_VerifyTokenT = TypeVar('_VerifyTokenT', bound=Mapping[str, Any])
+_TokensResponseT = TypeVar('_TokensResponseT')
 
 
 class ObtainTokensResponse(TypedDict):
@@ -55,69 +48,8 @@ class ObtainTokensResponse(TypedDict):
     refresh_token: str
 
 
-class _BaseTokenSettings:
-    """Collection of jwt settings that can be applied to any jwt controller."""
-
-    jwt_audiences: ClassVar[str | Sequence[str] | None] = None
-    jwt_issuer: ClassVar[str | None] = None
-    jwt_algorithm: ClassVar[str] = 'HS256'
-    jwt_expiration: ClassVar[dt.timedelta] = dt.timedelta(days=1)
-    jwt_secret: ClassVar[str | None] = None
-    jwt_token_cls: ClassVar[type[JWToken]] = JWToken
-
-
-class _BaseObtainTokensSettings(_BaseTokenSettings):
-    """Settings that can be applied to controllers with refresh tokens."""
-
-    jwt_refresh_expiration: ClassVar[dt.timedelta] = dt.timedelta(days=10)
-
-
-class _BaseTokenController(
-    _BaseObtainTokensSettings,
-    Controller[_SerializerT],
-):
-    @sensitive_variables()
-    def create_jwt_token(  # noqa: WPS211
-        self,
-        *,
-        # Most frequent:
-        expiration: dt.datetime | None = None,
-        token_type: _TokenType | None = None,
-        # Less frequent:
-        subject: str | None = None,
-        issuer: str | None = None,
-        audiences: str | Sequence[str] | None = None,
-        jwt_id: str | None = None,
-        secret: str | None = None,
-        algorithm: str | None = None,
-        token_headers: dict[str, Any] | None = None,
-    ) -> str:
-        """Create correct jwt token of a given *expiration* and *token_type*."""
-        token = self.jwt_token_cls(
-            sub=subject or str(self.request.user.pk),
-            exp=expiration or (dt.datetime.now(dt.UTC) + self.jwt_expiration),
-            iss=issuer or self.jwt_issuer,
-            aud=audiences or self.jwt_audiences,
-            jti=jwt_id or self.make_jwt_id(),
-            extras={'type': token_type} if token_type else {},
-        )
-        try:
-            return token.encode(
-                secret=secret or self.jwt_secret or settings.SECRET_KEY,
-                algorithm=algorithm or self.jwt_algorithm,
-                headers=token_headers,
-            )
-        except JWTokenError as exc:
-            # Convert the token-layer semantic error at the HTTP boundary.
-            raise InternalServerError('Failed to encode token') from exc
-
-    def make_jwt_id(self) -> str | None:
-        """Create unique token's jwt id."""
-        return uuid.uuid4().hex
-
-
 class ObtainTokensSyncController(
-    _BaseTokenController[_SerializerT],
+    BaseTokenController[_SerializerT],
     Generic[_SerializerT, _ObtainTokensT, _TokensResponseT],
 ):
     """
@@ -207,7 +139,7 @@ class ObtainTokensSyncController(
 
 
 class ObtainTokensAsyncController(
-    _BaseTokenController[_SerializerT],
+    BaseTokenController[_SerializerT],
     Generic[_SerializerT, _ObtainTokensT, _TokensResponseT],
 ):
     """
@@ -302,25 +234,8 @@ class RefreshTokenPayload(TypedDict):
     refresh_token: str
 
 
-class _BaseRefreshTokenController(_BaseTokenController[_SerializerT]):
-    jwt_user_id_field: ClassVar[str] = 'pk'
-
-    @sensitive_variables()
-    def _decode_and_validate_refresh_token(self, encoded_token: str) -> JWToken:
-        token = self.jwt_token_cls.decode(
-            encoded_token=encoded_token,
-            secret=self.jwt_secret or settings.SECRET_KEY,
-            algorithm=self.jwt_algorithm,
-            accepted_audiences=self.jwt_audiences,
-            accepted_issuers=self.jwt_issuer,
-        )
-        if token.extras.get('type') != 'refresh':
-            raise NotAuthenticatedError
-        return token
-
-
-class RefreshTokenSyncController(
-    _BaseRefreshTokenController[_SerializerT],
+class RefreshTokenSyncController(  # noqa: WPS214
+    BaseRefreshTokenController[_SerializerT],
     Generic[_SerializerT, _RefreshTokensT, _TokensResponseT],
 ):
     """
@@ -372,22 +287,30 @@ class RefreshTokenSyncController(
     @sensitive_variables()
     def refresh(self, parsed_body: _RefreshTokensT) -> _TokensResponseT:
         """Validate the refresh token, load user, and return new tokens."""
-        from django.contrib.auth import get_user_model  # noqa: PLC0415
-
         token = self._decode_and_validate_refresh_token(
             self.convert_refresh_payload(parsed_body),
         )
+        user = self.get_user(token)
+        self.check_auth(user, token)
+        self.set_request_attrs(self.request, user)
+        return self.make_api_response()
+
+    def get_user(self, token: JWToken) -> AbstractBaseUser:
+        """Fetch the user this refresh token was issued for."""
+        from django.contrib.auth import get_user_model  # noqa: PLC0415
+
         try:
-            user = get_user_model().objects.get(**{
+            return get_user_model().objects.get(**{
                 self.jwt_user_id_field: token.sub,
             })
         except USER_LOOKUP_ERRORS:
             raise NotAuthenticatedError from None
-        self.check_auth(user)
-        self.set_request_attrs(self.request, user)
-        return self.make_api_response()
 
-    def check_auth(self, user: Any) -> None:
+    def check_auth(
+        self,
+        user: AbstractBaseUser,
+        token: JWToken,
+    ) -> None:
         """Run extra auth checks, raise if something is wrong."""
         if not user.is_active:
             raise NotAuthenticatedError
@@ -411,8 +334,8 @@ class RefreshTokenSyncController(
         raise NotImplementedError
 
 
-class RefreshTokenAsyncController(
-    _BaseRefreshTokenController[_SerializerT],
+class RefreshTokenAsyncController(  # noqa: WPS214
+    BaseRefreshTokenController[_SerializerT],
     Generic[_SerializerT, _RefreshTokensT, _TokensResponseT],
 ):
     """
@@ -470,22 +393,32 @@ class RefreshTokenAsyncController(
         parsed_body: _RefreshTokensT,
     ) -> _TokensResponseT:
         """Validate the refresh token, load user, and return new tokens."""
-        from django.contrib.auth import get_user_model  # noqa: PLC0415
-
         token = self._decode_and_validate_refresh_token(
             await self.convert_refresh_payload(parsed_body),
         )
+        user = await self.get_user(token)
+        await self.check_auth(user, token)
+        await self.set_request_attrs(self.request, user)
+        return await self.make_api_response()
+
+    @sensitive_variables()
+    async def get_user(self, token: JWToken) -> AbstractBaseUser:
+        """Fetch the user this refresh token was issued for."""
+        from django.contrib.auth import get_user_model  # noqa: PLC0415
+
         try:
-            user = await get_user_model().objects.aget(**{
+            return await get_user_model().objects.aget(**{
                 self.jwt_user_id_field: token.sub,
             })
         except USER_LOOKUP_ERRORS:
             raise NotAuthenticatedError from None
-        await self.check_auth(user)
-        await self.set_request_attrs(self.request, user)
-        return await self.make_api_response()
 
-    async def check_auth(self, user: Any) -> None:
+    @sensitive_variables()
+    async def check_auth(
+        self,
+        user: AbstractBaseUser,
+        token: JWToken,
+    ) -> None:
         """Run extra auth checks, raise if something is wrong."""
         if not user.is_active:
             raise NotAuthenticatedError
@@ -515,7 +448,7 @@ class VerifyTokenPayload(TypedDict):
     access_token: str
 
 
-class _BaseVerifyTokenController(_BaseTokenController[_SerializerT]):
+class _BaseVerifyTokenController(BaseTokenController[_SerializerT]):
     jwt_user_id_field: ClassVar[str] = 'pk'
 
     @sensitive_variables()
@@ -592,7 +525,7 @@ class VerifyTokenSyncController(
             self.convert_verify_payload(parsed_body),
         )
         user = self.get_user(token)
-        self.check_auth(user)
+        self.check_auth(user, token)
 
     def get_user(self, token: JWToken) -> AbstractBaseUser:
         """Fetch user by token."""
@@ -605,7 +538,11 @@ class VerifyTokenSyncController(
         except USER_LOOKUP_ERRORS:
             raise NotAuthenticatedError from None
 
-    def check_auth(self, user: Any) -> None:
+    def check_auth(
+        self,
+        user: AbstractBaseUser,
+        token: JWToken,
+    ) -> None:
         """Run extra checks on the token's user, raise if something is off."""
         if not user.is_active:
             raise NotAuthenticatedError
@@ -676,8 +613,9 @@ class VerifyTokenAsyncController(
             await self.convert_verify_payload(parsed_body),
         )
         user = await self.get_user(token)
-        await self.check_auth(user)
+        await self.check_auth(user, token)
 
+    @sensitive_variables()
     async def get_user(self, token: JWToken) -> AbstractBaseUser:
         """Fetch user by token."""
         from django.contrib.auth import get_user_model  # noqa: PLC0415
@@ -689,7 +627,12 @@ class VerifyTokenAsyncController(
         except USER_LOOKUP_ERRORS:
             raise NotAuthenticatedError from None
 
-    async def check_auth(self, user: Any) -> None:
+    @sensitive_variables()
+    async def check_auth(
+        self,
+        user: AbstractBaseUser,
+        token: JWToken,
+    ) -> None:
         """Run extra checks on the token's user, raise if something is off."""
         if not user.is_active:
             raise NotAuthenticatedError

@@ -35,8 +35,6 @@ _CapturedArgs: TypeAlias = tuple[Any, ...]
 _CapturedKwargs: TypeAlias = dict[str, int | str]
 _RouteMatch: TypeAlias = tuple[str, _CapturedArgs, _CapturedKwargs]
 _AnyPattern: TypeAlias = URLPattern | URLResolver
-_OpenAPIMetadata: TypeAlias = dict[str, Any]
-_ExternalSpec: TypeAlias = tuple[URLPattern, PathItem | None]
 _DjangoView: TypeAlias = Callable[
     ...,
     HttpResponseBase | Coroutine[Any, Any, HttpResponseBase],

@@ -9,8 +9,6 @@ if TYPE_CHECKING:
 
 DumpedSchema: TypeAlias = dict[str, Any]
 _ConverterFunc: TypeAlias = Callable[['DataclassInstance'], DumpedSchema]
-_NormalizeKeyFunc: TypeAlias = Callable[[str], str]
-_NormalizeValueFunc: TypeAlias = Callable[[Any, _ConverterFunc], Any]
 
 _DataclassT = TypeVar('_DataclassT', bound='DataclassInstance')
 

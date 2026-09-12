@@ -41,7 +41,7 @@ _IncEx: TypeAlias = (
 
 
 @final
-class ToJsonKwargs(TypedDict, total=False):
+class ToJsonKwargs(TypedDict, total=False, closed=True):
     """Keyword arguments for pydantic's model dump method."""
 
     # `mode` is explicitly left out. It is always `json`.
@@ -60,7 +60,7 @@ class ToJsonKwargs(TypedDict, total=False):
 
 
 @final
-class ToModelKwargs(TypedDict, total=False):
+class ToModelKwargs(TypedDict, total=False, closed=True):
     """Keyword arguments for pydantic's python object validation method."""
 
     # `from_attributes` is explicitly left out. It is always `False`.
@@ -145,7 +145,10 @@ class PydanticSerializer(BaseSerializer):
     def serialize_hook(cls, to_serialize: Any) -> Any:
         """Customize how some objects are serialized into simple objects."""
         if isinstance(to_serialize, pydantic.BaseModel):
-            return to_serialize.model_dump(mode='json', **cls.to_json_kwargs)
+            return to_serialize.model_dump(
+                mode='json',
+                **cls.to_json_kwargs,
+            )
         # We support dataclasses here, because raw `JsonRenderer`
         # does not support them, however, we use them in multiple places inside:
         if is_dataclass(to_serialize):
@@ -158,7 +161,11 @@ class PydanticSerializer(BaseSerializer):
         if hasattr(to_serialize, '__get_pydantic_core_schema__'):
             return _get_cached_type_adapter(
                 type(to_serialize),  # type: ignore[arg-type]
-            ).dump_python(to_serialize, mode='json', **cls.to_json_kwargs)
+            ).dump_python(
+                to_serialize,
+                mode='json',
+                **cls.to_json_kwargs,
+            )
         return super().serialize_hook(to_serialize)
 
     @override
@@ -333,6 +340,12 @@ class PydanticFastSerializer(PydanticSerializer):
                 **cls.to_model_kwargs,
             )
         except pydantic_core.ValidationError as exc:
+            # Corner case: an empty body is `None` for us,
+            # just like `JsonParser` treats it. Happens for `204` responses.
+            # We do this here, because we don't want
+            # a penalty for all positive cases.
+            if not buffer:
+                return None
             raise DataParsingError(exc.errors()[0]['msg']) from exc
 
     @classmethod

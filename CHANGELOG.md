@@ -17,14 +17,52 @@ What is a public API for us (all criteria must be met)?
 Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
-## 0.15.0 WIP
+All migration prompts since `0.13.0` release
+are stored as descriptions in version releases on GitHub, example:
+https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
+
+
+## 0.16.0 WIP
 
 ### Breaking changes
 
+- `Controller.as_view` now raises `EndpointMetadataError`
+  when it is called on an abstract controller: one without
+  an exact serializer type or without any endpoints.
+  Previously such controllers could be added to `Router`
+  and to `urlpatterns` silently, but they could not serve
+  any requests, #1445
+- `OpenAPIConfig` now raises `ValueError` for `openapi_version` below `3.1.0`.
+  OpenAPI `3.0.x` was never really supported: it predates JSON Schema,
+  which is what `pydantic` and `msgspec` generate for our models, #1435
+
+### Features
+
+- Added `tags` controller attribute to apply OpenAPI tags
+  to all endpoints of this controller. They are merged
+  with router-level and endpoint-level tags, #1434
+- Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
+
+
+## 0.15.0 (2026-09-11)
+
+### Breaking changes
+
+- `check_auth` of `RefreshTokenSyncController`, `RefreshTokenAsyncController`,
+  `VerifyTokenSyncController`, and `VerifyTokenAsyncController` now takes
+  the decoded `token` as its second argument and types `user`
+  as `AbstractBaseUser` instead of `Any`.
+  It used to differ from `check_auth` of the auth classes,
+  which is why `JWTokenBlocklistSyncMixin` and `JWTokenBlocklistAsyncMixin`
+  could not be mixed into these controllers, #1290
+- `dmr.security.jwt.views` is now a package
+  of `base`, `body`, and `cookie` modules.
+  Every public name is still importable from `dmr.security.jwt.views`,
+  only the private bases moved, #1290
 - `JWToken.encode` now raises `JWTokenError` (a token-layer semantic error)
   instead of the HTTP-layer `InternalServerError` when encoding fails.
   The error is converted back to `InternalServerError` at the HTTP boundary
-  in `_BaseTokenController.create_jwt_token`, so request-serving paths keep
+  in `BaseTokenController.create_jwt_token`, so request-serving paths keep
   their 500 contract while non-request callers (management commands, Celery
   tasks, test factories) get a meaningful exception. The original `pyjwt`
   cause is preserved in the traceback (no more `from None`).
@@ -68,6 +106,7 @@ of requirements for an API to count as public.
   `NotAuthenticatedError` when credentials have the right
   `auth_scheme` prefix, but cannot be decoded,
   previously the next auth in the chain was tried, #1330
+- `ToJsonKwargs` and `ToModelKwargs` are now `closed=True` typed dicts, #1430
 
 ### Features
 
@@ -89,6 +128,34 @@ of requirements for an API to count as public.
   is how you change or drop this behavior, #1334
 - Added `CookieJWTSyncAuth` and `CookieJWTAsyncAuth`
   to read JWT tokens from cookies instead of headers, #1193
+- Added `CookieObtainTokensSyncController`,
+  `CookieObtainTokensAsyncController`,
+  `CookieRefreshTokensSyncController`,
+  `CookieRefreshTokensAsyncController`,
+  `CookieLogoutSyncController`, and `CookieLogoutAsyncController`
+  to issue, rotate, and drop JWT tokens as cookies
+  that `CookieJWTSyncAuth` and `CookieJWTAsyncAuth` read back.
+  Cookies are `httponly`, `secure`, and `samesite='lax'` by default,
+  the refresh cookie is scoped to the refresh endpoint,
+  and refresh and logout enforce CSRF, #1290
+- Added `DEFAULT_ACCESS_COOKIE` and `DEFAULT_REFRESH_COOKIE` constants
+  to `dmr.security.jwt.auth.cookie`, they are the default cookie names
+  of both the cookie auth and the cookie views, #1290
+- Added `NewCookie.from_spec` to build a response cookie
+  from its `CookieSpec`, so runtime cookies of `@validate` endpoints
+  cannot drift away from the spec they are validated against, #1290
+- `JWTokenBlocklistSyncMixin` and `JWTokenBlocklistAsyncMixin` can now
+  be mixed into the refresh controllers, both the body and the cookie ones,
+  so a blocklisted token cannot buy a new pair of tokens.
+  They used to only work with auth classes, #1290
+- Added `get_user` to `RefreshTokenSyncController`
+  and `RefreshTokenAsyncController`, the user lookup used to be inlined
+  into `refresh` with no way to override it alone, #1290
+- Added `response_headers` and `response_headers_spec`
+  to the cookie controllers, so `validate_spec` can be redefined
+  without repeating the `Cache-Control` header by hand, #1290
+- `CookieSpec.path` and `NewCookie.path` now accept lazy strings,
+  so a cookie can be scoped to a `reverse_lazy` url, #1290
 - Added `HeaderJWTSyncAuth` and `HeaderJWTAsyncAuth`,
   `JWTSyncAuth` and `JWTAsyncAuth` are kept as their aliases, #1193
 - Added `XSessionTokenSyncAuth` and `XSessionTokenAsyncAuth`
@@ -130,9 +197,17 @@ of requirements for an API to count as public.
 - `accepted_type` and `accepted_header` are faster now,
   media types without parameters skip the regex based parsing
   of parameters and of the `q` weight entirely, #1407
+- `dmr.openapi.OpenAPI` now has `cache_clear` method
+  to drop all cached internal state, #1431
 
 ### Bugfixes
 
+- Fixed `CookieSpec(max_age=0)` never matching the response cookie
+  it describes, `0` was treated as a missing value.
+  It is how a cookie is dropped, so it could not be described at all, #1290
+- Fixed `PydanticFastSerializer` failing to validate an empty response body,
+  so `@validate` endpoints that return `204` with it
+  raised a serialization error instead of the response, #1290
 - Fixed `@modify` and `@validate` typing: passing async `auth`
   or `throttling` to a sync endpoint
   (and sync ones to an async endpoint) is now a type error,
