@@ -58,10 +58,7 @@ class PointMsgspecSerializer(MsgspecSerializer):
         if target_type is Point:
             if isinstance(to_deserialize, Point):
                 return to_deserialize
-            return Point(
-                to_deserialize['coord_x'],
-                to_deserialize['coord_y'],
-            )
+            return Point(**to_deserialize)
         return super().deserialize_hook(target_type, to_deserialize)
 
 
