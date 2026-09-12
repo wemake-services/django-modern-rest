@@ -10,6 +10,7 @@ This module is also allowed to contain AI slop.
 from __future__ import annotations
 
 import ast
+import datetime as dt
 import importlib
 import json
 import logging
@@ -21,11 +22,13 @@ import socket
 import subprocess  # noqa: S404
 import sys
 import time
-from collections.abc import Callable, Generator
+import uuid
+from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager, redirect_stderr, suppress
+from functools import partial
 from pathlib import Path
-from types import ModuleType
-from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, cast
+from types import MappingProxyType, ModuleType
+from typing import TYPE_CHECKING, Any, ClassVar, Final, Literal, TypeAlias, cast
 from urllib.parse import urlencode
 
 import django
@@ -83,7 +86,19 @@ _BASE_DIR: Final = Path(__file__).parent.parent.parent.parent
 
 _PATH_TO_TMP_EXAMPLES: Final = '_build/_tmp_example/'
 _PATH_TO_TEST_TOKEN: Final = '_build/token.txt'  # noqa: S105
+
+#: User that every example with `"populate_db"` can authenticate as.
+_TEST_USERNAME: Final = 'test_user'
+
+#: Templates that `# run:` comments use to ask for real auth tokens.
 _TOKEN_TEMPLATE: Final = '$X_API_TOKEN'  # noqa: S105
+_JWT_ACCESS_TOKEN_TEMPLATE: Final = '$JWT_ACCESS_TOKEN'  # noqa: S105
+_JWT_REFRESH_TOKEN_TEMPLATE: Final = '$JWT_REFRESH_TOKEN'  # noqa: S105
+
+#: Same defaults our own jwt controllers use.
+_JWT_EXPIRATION: Final = dt.timedelta(days=1)
+_JWT_REFRESH_EXPIRATION: Final = dt.timedelta(days=10)
+
 _RGX_RUN: Final = re.compile(r'# +?run:(.*)')
 _RGX_RUN_COMMENT: Final = re.compile(r'^\s*#\s*run:')
 _RGX_OPENAPI: Final = re.compile(r'# +?openapi:(.*)')
@@ -91,6 +106,8 @@ _RGX_OPENAPI_COMMENT: Final = re.compile(r'^\s*#\s*openapi:')
 
 _AppRunArgs: TypeAlias = dict[str, Any]
 _OpenAPIRunArgs: TypeAlias = dict[str, Any]
+_JWTokenType: TypeAlias = Literal['access', 'refresh']
+_TokenLoader: TypeAlias = Callable[[], str]
 
 logger: Final = logging.getLogger(__name__)
 ignore_missing_output: Final = True
@@ -253,7 +270,9 @@ class _BaseBuilder:  # noqa: WPS214
             ROOT_URLCONF='url_conf',
             ALLOWED_HOSTS=['*'],
             DEBUG=False,  # NOTE: this must be `False`
-            SECRET_KEY='dummy-key-for-examples',  # noqa: S106
+            # NOTE: must be at least 32 bytes long, `pyjwt` refuses
+            # to decode `HS256` tokens signed with a shorter key.
+            SECRET_KEY='dummy-key-for-examples-long-enough-for-jwt',  # noqa: S106
             INSTALLED_APPS=[
                 'django.contrib.auth',
                 'django.contrib.sessions',
@@ -338,7 +357,7 @@ class _BaseBuilder:  # noqa: WPS214
 
         with suppress(IntegrityError):
             user = User.objects.create_user(
-                'test_user',
+                _TEST_USERNAME,
                 email='test@example.com',
                 password='password',  # noqa: S106
                 is_active=True,
@@ -837,11 +856,8 @@ def _build_curl_request(
     url_path: str,
 ) -> tuple[_CurlArgs, _CurlCleanArgs]:
     query = run_args.pop('query', '')
-    if query:
-        if not query.startswith('?'):
-            raise ValueError(f'{query!r} must start with "?"')
-        if _TOKEN_TEMPLATE in query:
-            query = query.replace(_TOKEN_TEMPLATE, _StoredToken.load(run_args))
+    if query and not query.startswith('?'):
+        raise ValueError(f'{query!r} must start with "?"')
 
     args = [
         'curl',
@@ -892,6 +908,7 @@ def _add_body_and_content_type(  # noqa: C901, WPS210, WPS213, WPS231
     if 'body' not in run_args:
         return
 
+    run_args['body'] = _substitute_tokens(run_args['body'])
     content_type = run_args.get('headers', {}).get(
         'Content-Type',
         None,
@@ -948,8 +965,7 @@ def _add_headers(
     if isinstance(headers, dict):
         headers = headers.items()
     for header_name, header_value in headers:
-        if header_value == _TOKEN_TEMPLATE:
-            header_value = _StoredToken.load(run_args)
+        header_value = _substitute_tokens(header_value)
 
         args.extend([header_flag, f'{header_name}: {header_value}'])
         clean_args.extend([header_flag, f'{header_name}: {header_value}'])
@@ -964,20 +980,21 @@ def _add_cookies(
 
     cookies = run_args.get('cookies', {})
     for cookie_name, cookie_value in cookies.items():
-        if cookie_value == _TOKEN_TEMPLATE:
-            cookie_value = _StoredToken.load(run_args)
+        cookie_value = _substitute_tokens(cookie_value)
 
         args.extend([cookie_flag, f'{cookie_name}={cookie_value}'])
         clean_args.extend([cookie_flag, f'{cookie_name}={cookie_value}'])
 
 
 class _StoredToken:
+    """Opaque token of the example user, it only exists as a db row."""
+
     @classmethod
     def store(cls, token: str) -> None:
         cls._resolve_path().write_text(token)
 
     @classmethod
-    def load(cls, run_args: _AppRunArgs) -> str:
+    def load(cls) -> str:
         from dmr.security.token.app.models import Token  # noqa: PLC0415
 
         path = cls._resolve_path()
@@ -990,6 +1007,79 @@ class _StoredToken:
     @classmethod
     def _resolve_path(cls) -> Path:
         return _resolve_docs_dir() / _PATH_TO_TEST_TOKEN
+
+
+class _IssuedJWTokens:
+    """
+    Pair of jwt tokens of the example user.
+
+    Unlike :class:`_StoredToken`, jwt tokens are not stored anywhere:
+    they just have to be signed with our secret and to point
+    at an existing user. So, there is no file to read them back from,
+    we issue a single pair per docs build instead.
+    """
+
+    _pair: ClassVar[dict[_JWTokenType, str]] = {}
+
+    @classmethod
+    def load(cls, token_type: _JWTokenType) -> str:
+        if not cls._pair:
+            cls._pair = {
+                'access': cls._issue('access', _JWT_EXPIRATION),
+                'refresh': cls._issue('refresh', _JWT_REFRESH_EXPIRATION),
+            }
+        return cls._pair[token_type]
+
+    @classmethod
+    def _issue(cls, token_type: _JWTokenType, expires_in: dt.timedelta) -> str:
+        from django.contrib.auth.models import User  # noqa: PLC0415
+
+        from dmr.security.jwt.token import JWToken  # noqa: PLC0415
+
+        user = User.objects.filter(username=_TEST_USERNAME).first()
+        assert user is not None, (  # noqa: S101
+            f'User {_TEST_USERNAME!r} is not found, '
+            'jwt examples require "populate_db"'
+        )
+        return JWToken(
+            sub=str(user.pk),
+            exp=dt.datetime.now(dt.UTC) + expires_in,
+            # Blocklist mixins reject tokens without a `jti` claim:
+            jti=uuid.uuid4().hex,
+            extras={'type': token_type},
+        ).encode(secret=settings.SECRET_KEY, algorithm='HS256')
+
+
+#: What each template in a `# run:` comment is replaced with.
+_TOKEN_TEMPLATES: Final[Mapping[str, _TokenLoader]] = MappingProxyType({
+    _TOKEN_TEMPLATE: _StoredToken.load,
+    _JWT_ACCESS_TOKEN_TEMPLATE: partial(_IssuedJWTokens.load, 'access'),
+    _JWT_REFRESH_TOKEN_TEMPLATE: partial(_IssuedJWTokens.load, 'refresh'),
+})
+
+
+def _substitute_tokens(raw_value: Any) -> Any:
+    """
+    Replace every token template in *raw_value* with a real token.
+
+    Headers and cookies pass their values here, request bodies pass
+    whole json structures, so anything that is not a string
+    is either walked into or returned as-is.
+    """
+    if isinstance(raw_value, dict):
+        return {
+            raw_key: _substitute_tokens(raw_item)
+            for raw_key, raw_item in raw_value.items()
+        }
+    if isinstance(raw_value, list):
+        return [_substitute_tokens(raw_item) for raw_item in raw_value]
+    if not isinstance(raw_value, str):
+        return raw_value
+
+    for template, load_token in _TOKEN_TEMPLATES.items():
+        if template in raw_value:
+            raw_value = raw_value.replace(template, load_token())
+    return raw_value
 
 
 def _find_imports_block_end_line(file_content: str) -> int:
