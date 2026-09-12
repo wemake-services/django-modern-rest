@@ -2,12 +2,11 @@ import json
 from http import HTTPStatus
 from typing import Any, final
 
-import dmr.negotiation as negotiation
 import pytest
 from django.http import HttpRequest, HttpResponse
 from typing_extensions import override
 
-from dmr import Body, Controller
+from dmr import Body, Controller, negotiation
 from dmr.parsers import DeserializeFunc, Parser, Raw
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer, Renderer
