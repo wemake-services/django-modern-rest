@@ -32,6 +32,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   Previously such controllers could be added to `Router`
   and to `urlpatterns` silently, but they could not serve
   any requests, #1445
+- `OpenAPIConfig` now raises `ValueError` for `openapi_version` below `3.1.0`.
+  OpenAPI `3.0.x` was never really supported: it predates JSON Schema,
+  which is what `pydantic` and `msgspec` generate for our models, #1435
 
 ### Features
 
