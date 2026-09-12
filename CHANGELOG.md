@@ -27,6 +27,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 ### Features
 
 - Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
+- Pre-compute `@modify` actionable headers and cookies once when the
+  endpoint is built instead of on every request, #1456
 
 
 ## 0.15.0 (2026-09-11)

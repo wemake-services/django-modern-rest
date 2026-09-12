@@ -4,6 +4,8 @@ from http import HTTPStatus
 from types import MappingProxyType
 from typing import Any, Final, final
 
+from typing_extensions import override
+
 from dmr.cookies import CookieSpec
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.metadata import ResponseModification, ResponseSpec
@@ -29,10 +31,18 @@ class StreamResponseModification(ResponseModification):
 
     headers: Mapping[str, 'NewHeader | HeaderSpec'] | None
 
+    @override
     def __post_init__(self) -> None:
         """Set header specs if it is missing."""
         if self.headers is None:
             object.__setattr__(self, 'headers', STREAMING_HEADERS_SPEC)
+        # Base class caches actionable headers/cookies; must run after
+        # the default `headers` value above is finalized. Uses explicit
+        # `super()` args: zero-arg `super()` breaks here because
+        # `@dataclass(slots=True)` recreates this class after the method
+        # body is compiled, so the `__class__` closure cell it relies on
+        # points to the pre-slots class object.
+        super(StreamResponseModification, self).__post_init__()  # noqa: WPS608
 
 
 def streaming_response_spec(  # noqa: WPS211

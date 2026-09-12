@@ -1,6 +1,7 @@
 import json
 from http import HTTPStatus
 from typing import final
+from unittest import mock
 
 import pytest
 from dirty_equals import IsStr
@@ -20,6 +21,7 @@ from dmr import (
 from dmr.endpoint import Endpoint
 from dmr.errors import wrap_handler
 from dmr.exceptions import EndpointMetadataError
+from dmr.metadata import ResponseModification
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.response import APIError
 from dmr.test import DMRRequestFactory
@@ -390,3 +392,56 @@ def test_modify_with_set_cookie(header_name: str) -> None:
             )
             def post(self) -> dict[str, str]:
                 return {'result': 'done'}  # pragma: no cover
+
+
+def test_modify_headers_cookies_precomputed_once(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Actionable headers/cookies are computed once, not per request."""
+    calls: list[ResponseModification] = []
+    original_post_init = ResponseModification.__post_init__
+
+    def _spy_post_init(self: ResponseModification) -> None:
+        calls.append(self)
+        original_post_init(self)
+
+    with mock.patch.object(
+        ResponseModification,
+        '__post_init__',
+        _spy_post_init,
+    ):
+
+        @final
+        class _PrecomputedController(Controller[PydanticSerializer]):
+            @modify(
+                headers={'X-Test': NewHeader(value='true')},
+                cookies={'session': NewCookie(value='abc123')},
+            )
+            def get(self) -> int:
+                return 1
+
+    # Computed exactly once, at class-definition (endpoint build) time:
+    assert len(calls) == 1
+
+    responses = [
+        _PrecomputedController.as_view()(dmr_rf.get('/whatever/'))
+        for _ in range(2)
+    ]
+
+    # Handling requests must not trigger any extra computation:
+    assert len(calls) == 1
+    for response in responses:
+        assert isinstance(response, HttpResponse)
+        assert response.headers['X-Test'] == 'true'
+
+    modification = _PrecomputedController.api_endpoints[
+        'GET'
+    ].metadata.modification
+    assert modification is not None
+    # The exact same cached mapping is reused across calls, never rebuilt:
+    assert (
+        modification.actionable_cookies() is modification.actionable_cookies()
+    )
+    assert modification._cached_static_headers is (
+        modification._cached_static_headers
+    )

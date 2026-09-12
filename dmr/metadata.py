@@ -224,6 +224,35 @@ class ResponseModification:
     description: '_StrOrPromise | None'
     links: dict[str, 'Link | Reference'] | None
 
+    # Precomputed at build time (see `__post_init__`), reused on every request:
+    _cached_actionable_cookies: 'Mapping[str, NewCookie] | None' = (
+        dataclasses.field(init=False, repr=False, compare=False, default=None)
+    )
+    _cached_static_headers: 'Mapping[str, str]' = dataclasses.field(
+        init=False,
+        repr=False,
+        compare=False,
+        default_factory=dict,
+    )
+
+    def __post_init__(self) -> None:
+        """Precompute request-independent header/cookie data once."""
+        cookies = (  # pyright: ignore[reportGeneralTypeIssues]
+            None  # pyrefly: ignore[bad-assignment]
+            if self.cookies is None
+            else {
+                cookie_key: cookie
+                for cookie_key, cookie in self.cookies.items()
+                if cookie.is_actionable
+            }
+        )
+        object.__setattr__(self, '_cached_actionable_cookies', cookies)
+        object.__setattr__(
+            self,
+            '_cached_static_headers',
+            self._compute_static_headers(),
+        )
+
     def to_spec(self) -> ResponseSpec:
         """Convert response modification to response description."""
         return self.response_spec_cls(
@@ -282,30 +311,27 @@ class ResponseModification:
 
     def actionable_cookies(self) -> Mapping[str, 'NewCookie'] | None:
         """Returns an optional mapping of cookies that should be added."""
-        return (  # pyright: ignore[reportReturnType]
-            None  # pyrefly: ignore[bad-return]
-            if self.cookies is None
-            else {
-                cookie_key: cookie
-                for cookie_key, cookie in self.cookies.items()
-                if cookie.is_actionable
-            }
-        )
+        return self._cached_actionable_cookies  # pyright: ignore[reportReturnType]
 
     def build_headers(
         self,
         renderer: 'Renderer',
     ) -> dict[str, str]:
         """Returns headers with values for raw data endpoints."""
-        result_headers: dict[str, Any] = {'Content-Type': renderer.content_type}
+        return {
+            'Content-Type': renderer.content_type,
+            **self._cached_static_headers,
+        }
+
+    def _compute_static_headers(self) -> Mapping[str, str]:
+        """Computed once at build time, cached in `_cached_static_headers`."""
         headers = self.actionable_headers()
         if not headers:
-            return result_headers
-        result_headers.update({
+            return {}
+        return {
             header_name: response_header.value
             for header_name, response_header in headers.items()
-        })
-        return result_headers
+        }
 
 
 class ResponseSpecProvider:
