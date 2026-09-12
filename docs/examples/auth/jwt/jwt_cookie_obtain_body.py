@@ -39,4 +39,5 @@ class ObtainCookiesWithBodyController(
         return UserModel(username=self.request.user.get_username())
 
 
+# run: {"controller": "ObtainCookiesWithBodyController", "method": "post", "url": "/api/auth/", "url_names": {"api:jwt_refresh": "/api/auth/refresh/"}, "body": {"username": "test_user", "password": "password"}, "populate_db": true, "curl_args": ["-D", "-"]}  # noqa: ERA001, E501
 # openapi: {"controller": "ObtainCookiesWithBodyController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
