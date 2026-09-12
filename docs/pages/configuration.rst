@@ -480,12 +480,33 @@ OpenAPI
   .. code-block:: python
     :caption: settings.py
 
-    >>> from dmr.settings import HttpSpec
-    >>> from dmr.openapi.config import OpenAPIConfig
-
     >>> DMR_SETTINGS = {
     ...     Settings.openapi_examples_seed: 10,
     ... }
+
+  .. note::
+
+    Unlike most other settings, this one can only be set globally.
+    There are no controller and endpoint level counterparts for it.
+
+    Examples are attached to schemas in ``components/schemas``,
+    and schemas are generated per spec, not per endpoint:
+    a type is turned into a schema once,
+    and every endpoint and controller that uses this type
+    points to that single schema with a ``$ref``.
+
+    So, a schema does not belong to any particular endpoint
+    or controller, and there is nothing to read a local seed from.
+    If several endpoints sharing a schema declared different seeds,
+    the winner would be whichever endpoint happened
+    to be visited first during the spec generation.
+    We prefer one predictable seed
+    over a value that depends on the traversal order.
+
+    Hand-written examples don't have this problem,
+    because they are defined on the type itself,
+    which is exactly where the schema comes from.
+    See :ref:`openapi-examples-generation`.
 
 .. data:: dmr.settings.Settings.openapi_static_cdn
 
