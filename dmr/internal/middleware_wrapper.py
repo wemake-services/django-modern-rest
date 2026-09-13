@@ -19,7 +19,6 @@ _ConverterSpec: TypeAlias = tuple[
     dict[HTTPStatus, 'ResponseSpec'],
     ResponseConverter,
 ]
-_ViewDecorator: TypeAlias = Callable[[_CallableAny], _CallableAny]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

@@ -198,6 +198,7 @@ Here are our amazing people who made this project possible.
   pages/configuration.rst
   pages/plugins.rst
   pages/queryset.rst
+  pages/pagination.rst
   pages/negotiation.rst
   pages/error-handling.rst
   pages/throttling.rst

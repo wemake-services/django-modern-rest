@@ -234,7 +234,7 @@ What happens here?
    which we get using ``HasContainer.resolve`` call, which is our DI
 2. We now don't construct any serializer schemas inside our views,
    we move to its independent infra layer
-3. We now use :ref:`pagination` to list all users
+3. We now use :doc:`pagination` to list all users
 
 Our views here are reduced to a single line of code, which do everything
 inside the business logic. Exactly the way it should
@@ -312,7 +312,7 @@ Mappers just map database models into serialization schemas.
   Or it can do some small representation logic, like combining
   ``first_name`` and ``last_name`` of users into ``full_name``.
 
-  Or handle :ref:`pagination`, as we do in this example.
+  Or handle :doc:`pagination`, as we do in this example.
 
 .. literalinclude:: ../../django_test_app/server/apps/model_fk/mappers.py
   :caption: mappers.py
