@@ -23,7 +23,7 @@ def test_multiple_unique_security_schemes() -> None:
 
 
 def test_duplicate_security_scheme_raises_error() -> None:
-    """Test that registering a duplicate security scheme raises ``ValueError``."""
+    """Test that registering a duplicate security scheme raises `ValueError`."""
     registry = SecuritySchemeRegistry()
     scheme = SecurityScheme(type='http', scheme='bearer')
     registry.register('BearerAuth', scheme)
