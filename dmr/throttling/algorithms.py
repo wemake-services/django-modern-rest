@@ -124,6 +124,9 @@ class SimpleRate(BaseThrottleAlgorithm):
     ) -> tuple[CachedRateLimit, int]:
         now = int(time.time())
         if cache_object is None or (
+            # When ``is_ttl`` is ``True``, ``time`` holds the remaining
+            # ttl from the backend (e.g. Redis), so window expiry is
+            # managed by the backend itself and we must not reset here.
             not cache_object.get('is_ttl') and cache_object['time'] <= now
         ):
             # For this algorithm we use a single history
@@ -148,6 +151,10 @@ class SimpleRate(BaseThrottleAlgorithm):
         *,
         report_all: bool = True,
     ) -> dict[str, str]:
+        # When ``is_ttl`` is set by the backend (e.g. Redis), ``time``
+        # already holds the remaining seconds, so we use it directly.
+        # Otherwise ``time`` is an absolute ``expire_at`` timestamp
+        # and we subtract the current time to get remaining seconds.
         if cache_object.get('is_ttl'):
             reset = cache_object['time']
         else:
