@@ -123,7 +123,9 @@ class SimpleRate(BaseThrottleAlgorithm):
         cache_object: CachedRateLimit | None,
     ) -> tuple[CachedRateLimit, int]:
         now = int(time.time())
-        if cache_object is None or cache_object['time'] <= now:
+        if cache_object is None or (
+            not cache_object.get('is_ttl') and cache_object['time'] <= now
+        ):
             # For this algorithm we use a single history
             # item which is the number of calls:
             return (
@@ -146,11 +148,15 @@ class SimpleRate(BaseThrottleAlgorithm):
         *,
         report_all: bool = True,
     ) -> dict[str, str]:
+        if cache_object.get('is_ttl'):
+            reset = cache_object['time']
+        else:
+            reset = cache_object['time'] - now
         return throttle.collect_response_headers(
             endpoint,
             controller,
             remaining=throttle.max_requests - cache_object['history'][0],
-            reset=cache_object['time'] - now,
+            reset=reset,
             report_all=report_all,
         )
 

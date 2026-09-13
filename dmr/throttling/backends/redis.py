@@ -94,13 +94,14 @@ class SyncRedis(BaseThrottleSyncBackend):
                 args=[
                     throttle.max_requests,
                     throttle.duration_in_seconds,
-                    _WRITE,
+                     _WRITE,
                 ],
             ),
         )
         cache_object = CachedRateLimit(
             history=[script_result[1]],
             time=script_result[2],
+            is_ttl=True,
         )
         if script_result[0] == 0:
             raise TooManyRequestsError(
@@ -131,13 +132,14 @@ class SyncRedis(BaseThrottleSyncBackend):
                 args=[
                     throttle.max_requests,
                     throttle.duration_in_seconds,
-                    _READ,
+                     _READ,
                 ],
             ),
         )
         return CachedRateLimit(
             history=[script_result[1]],
             time=script_result[2],
+            is_ttl=True,
         )
 
     @override
@@ -211,6 +213,7 @@ class AsyncRedis(BaseThrottleAsyncBackend):
         cache_object = CachedRateLimit(
             history=[script_result[1]],
             time=script_result[2],
+            is_ttl=True,
         )
         if script_result[0] == 0:
             raise TooManyRequestsError(
@@ -244,6 +247,7 @@ class AsyncRedis(BaseThrottleAsyncBackend):
         return CachedRateLimit(
             history=[script_result[1]],
             time=script_result[2],
+            is_ttl=True,
         )
 
     @override

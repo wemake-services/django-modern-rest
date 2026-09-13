@@ -1,6 +1,6 @@
 import abc
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, NotRequired
 
 from typing_extensions import TypedDict
 
@@ -17,7 +17,12 @@ if TYPE_CHECKING:
 class CachedRateLimit(TypedDict):
     """Representation of a cached object's metadata."""
 
-    # We usually store `int(time.time())` result here:
+    # When ``True``, ``time`` stores the remaining ``ttl``
+    # returned by the backend (e.g. from Redis ``TTL`` command).
+    # When ``False`` (default), ``time`` stores an absolute
+    # expiry timestamp (``expire_at``).
+    is_ttl: NotRequired[bool]
+    # We usually store ``expire_at`` or ``ttl`` here:
     time: int
     # We overly complicate the storage a bit, because this design
     # allows future potential algorithms to store requests as lists,

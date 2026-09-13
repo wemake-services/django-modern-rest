@@ -72,6 +72,10 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Bugfixes
 
+- Fixed Redis throttling reset values sometimes being 1 second above the
+  configured window due to clock skew between Redis server time and Python
+  time. The Redis backend now uses the ``ttl`` returned by Redis directly
+  instead of computing an absolute timestamp, #1308
 - Fixed an empty `description` being generated for the merged `requestBody`
   in the OpenAPI schema, when a controller has several request body
   components and none of them provides a description, #1495
