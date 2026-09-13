@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 from django.urls import URLPattern, converters
 from typing_extensions import TypedDict
 
+from dmr.internal.regex import parse_named_groups
 from dmr.openapi.objects import (
     MediaType,
     Parameter,
@@ -141,15 +142,44 @@ class ComponentParserGenerator:
         )
         if schema:
             params_list.extend(
-                self._context.generators.parameter(
-                    TypedDict(f'{operation_id}_RePath', schema),  # type: ignore[operator]
-                    (),
-                    serializer,
-                    self._context,
-                    param_in='path',
+                self._add_group_patterns(
+                    self._context.generators.parameter(
+                        TypedDict(f'{operation_id}_RePath', schema),  # type: ignore[operator]
+                        (),
+                        serializer,
+                        self._context,
+                        param_in='path',
+                    ),
+                    regex.pattern,
                 ),
             )
         return params_list or None
+
+    def _add_group_patterns(
+        self,
+        params_list: list[Parameter | Reference],
+        regex_source: str,
+    ) -> list[Parameter | Reference]:
+        # In json schema `pattern` is a search, but a url group always
+        # matches the whole value, so we anchor the sub-pattern:
+        # `(?P<year>[0-9]{4})` becomes `^(?:[0-9]{4})$`.
+        # It is also wrapped, because anchors bind weaker than `|`:
+        # `^json|xml$` would mean "starts with `json`" or "ends with `xml`",
+        # while `^(?:json|xml)$` means what `(?P<format>json|xml)` matches.
+        named_groups = {
+            group_name: f'^(?:{group_source})$'
+            for group_name, group_source in parse_named_groups(
+                regex_source,
+            ).items()
+        }
+        for param_spec in params_list:
+            # We've just built these parameters from a `TypedDict`
+            # of plain `str` fields, one per named group,
+            # so they all have inline schemas and none of them is a reference:
+            assert isinstance(param_spec, Parameter)  # noqa: S101
+            assert isinstance(param_spec.schema, Schema)  # noqa: S101
+            param_spec.schema.pattern = named_groups.get(param_spec.name)
+        return params_list
 
     def _merge_bodies(
         self,

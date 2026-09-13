@@ -1,15 +1,17 @@
 import re
 from typing import Annotated, Any, Generic, TypeAlias, TypeVar
 
+import pydantic
 import pytest
-from django.urls import path
+from django.urls import path, re_path
 from typing_extensions import override
 
-from dmr import Controller
+from dmr import Controller, Path
 from dmr.components import ComponentParser
 from dmr.endpoint import Endpoint
 from dmr.metadata import EndpointMetadata
 from dmr.openapi.core.context import OpenAPIContext
+from dmr.openapi.objects import OpenAPIType, Parameter, Schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
 
@@ -63,3 +65,64 @@ def test_fake_component(openapi_context: OpenAPIContext) -> None:
             _FakeController.api_endpoints['GET'].metadata,
             PydanticSerializer,
         )
+
+
+class _RePathController(Controller[PydanticSerializer]):
+    def get(self) -> str:
+        raise NotImplementedError
+
+
+def test_re_path_group_patterns(openapi_context: OpenAPIContext) -> None:
+    """Ensures that `re_path` groups are copied into parameter schemas."""
+    _, params_list = openapi_context.generators.component_parsers(
+        'unique-operationid',
+        re_path(
+            r'^(?P<year>[0-9]{4})/(?P<format>json|xml)/$',
+            _RePathController.as_view(),
+        ),
+        _RePathController.api_endpoints['GET'].metadata,
+        PydanticSerializer,
+    )
+
+    assert params_list is not None
+    assert [
+        (param_spec.name, param_spec.schema.pattern)
+        for param_spec in params_list
+        if isinstance(param_spec, Parameter)
+        and isinstance(param_spec.schema, Schema)
+    ] == [
+        ('year', '^(?:[0-9]{4})$'),
+        ('format', '^(?:json|xml)$'),
+    ]
+
+
+class _UserPath(pydantic.BaseModel):
+    user_id: int
+
+
+class _RePathWithComponentController(Controller[PydanticSerializer]):
+    def get(self, parsed_path: Path[_UserPath]) -> str:
+        raise NotImplementedError
+
+
+def test_re_path_with_path_component(openapi_context: OpenAPIContext) -> None:
+    """Ensures that `Path` component wins over `re_path` groups."""
+    _, params_list = openapi_context.generators.component_parsers(
+        'unique-operationid',
+        re_path(
+            r'^user/(?P<user_id>[0-9]+)/$',
+            _RePathWithComponentController.as_view(),
+        ),
+        _RePathWithComponentController.api_endpoints['GET'].metadata,
+        PydanticSerializer,
+    )
+
+    assert params_list is not None
+    # The model defines the schema, so `user_id` is an `int`
+    # and it does not get the `pattern` of the url group:
+    assert [
+        (param_spec.name, param_spec.schema.type, param_spec.schema.pattern)
+        for param_spec in params_list
+        if isinstance(param_spec, Parameter)
+        and isinstance(param_spec.schema, Schema)
+    ] == [('user_id', OpenAPIType.INTEGER, None)]

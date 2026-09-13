@@ -830,6 +830,7 @@
               "in": "path",
               "schema": {
                 "type": "string",
+                "pattern": "^(?:[0-9]{4})$",
                 "title": "Year"
               },
               "required": true
@@ -840,6 +841,7 @@
               "in": "path",
               "schema": {
                 "type": "string",
+                "pattern": "^(?:[\\w-]+)$",
                 "title": "Slug"
               },
               "required": true
