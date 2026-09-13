@@ -123,6 +123,9 @@ def load_schema(
         example=example,
         dynamic_ref=raw_data.get('$dynamicRef'),
         dynamic_anchor=raw_data.get('$dynamicAnchor'),
+        anchor=raw_data.get('$anchor'),
+        comment=raw_data.get('$comment'),
+        schema_uri=raw_data.get('$schema'),
         defs=_try_dict(raw_data.get('$defs')),
     )
 

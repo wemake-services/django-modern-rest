@@ -75,6 +75,13 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Fixed an empty `description` being generated for the merged `requestBody`
   in the OpenAPI schema, when a controller has several request body
   components and none of them provides a description, #1495
+- `load_schema` now fills `Schema.anchor`, `Schema.comment` and
+  `Schema.schema_uri` from `$anchor`, `$comment` and `$schema`.
+  All three attributes existed and were always `None`, so those keywords
+  were lost on the way in. `$ref` is left alone on purpose: it needs
+  the `Reference | Schema` handling fixed in every call site at once, #1490
+- Fixed a bug that `load_schema` was not loading `anchor`,
+  `comment`, and `schema_uri` fields, #1490
 
 
 ## 0.15.0 (2026-09-11)
