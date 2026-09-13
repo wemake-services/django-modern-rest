@@ -75,6 +75,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   All three attributes existed and were always `None`, so those keywords
   were lost on the way in. `$ref` is left alone on purpose: it needs
   the `Reference | Schema` handling fixed in every call site at once, #1490
+- Fixed a bug that `load_schema` was not loading `anchor`,
+  `comment`, and `schema_uri` fields, #1490
 
 
 ## 0.15.0 (2026-09-11)

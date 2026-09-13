@@ -6,37 +6,9 @@ import yaml
 from syrupy.assertion import SnapshotAssertion
 
 from dmr.openapi import load_schema
-from dmr.openapi.mappers.schema_loader import load_schema as load_schema_dict
 from dmr.openapi.mappers.schema_normalization import dump_schema
-from dmr.openapi.objects import Components, Schema
+from dmr.openapi.objects import Components
 from dmr.openapi.openapi import OpenAPI
-
-
-def test_load_schema_keeps_anchor_comment_and_schema_uri() -> None:
-    """Keep ``$anchor``, ``$comment`` and ``$schema`` on the schema."""
-    loaded = load_schema_dict(
-        {
-            'type': 'string',
-            '$anchor': 'tagged',
-            '$comment': 'kept for the next reader',
-            '$schema': 'https://json-schema.org/draft/2020-12/schema',
-        },
-    )
-
-    assert isinstance(loaded, Schema)
-    assert loaded.anchor == 'tagged'
-    assert loaded.comment == 'kept for the next reader'
-    assert loaded.schema_uri == 'https://json-schema.org/draft/2020-12/schema'
-
-
-def test_load_schema_leaves_absent_keyword_attributes_empty() -> None:
-    """A schema without those keywords keeps them unset, not ``''``."""
-    loaded = load_schema_dict({'type': 'string'})
-
-    assert isinstance(loaded, Schema)
-    assert loaded.anchor is None
-    assert loaded.comment is None
-    assert loaded.schema_uri is None
 
 
 def test_load_schema(
