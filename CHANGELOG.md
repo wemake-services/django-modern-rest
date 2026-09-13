@@ -24,6 +24,11 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ## 0.16.0 WIP
 
+### Features
+
+- `OpenAPIConfig.operation_id_callback` can customize generated
+  OpenAPI ``operationId`` values while keeping the default generator, #1461
+
 ### Breaking changes
 
 - `Controller.as_view` now raises `EndpointMetadataError`

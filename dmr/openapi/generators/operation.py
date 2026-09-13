@@ -49,6 +49,10 @@ class OperationIdGenerator:
             self._tokenize_path(suffix + path),
         )
 
+        callback = self._context.config.operation_id_callback
+        if callback is not None:
+            operation_id = callback(operation_id)
+
         self._context.registries.operation_id.register(operation_id)
         return operation_id
 
