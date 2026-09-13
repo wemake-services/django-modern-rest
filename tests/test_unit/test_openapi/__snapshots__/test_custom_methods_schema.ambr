@@ -11,7 +11,7 @@
       "/api/v1/items/": {
         "additionalOperations": {
           "PURGE": {
-            "operationId": "purgePurgecontrollerApiV1Items",
+            "operationId": "purgePurgeControllerApiV1Items",
             "responses": {
               "200": {
                 "description": "OK",
@@ -117,7 +117,7 @@
     "paths": {
       "/api/v1/standard/": {
         "get": {
-          "operationId": "getStandardcontrollerApiV1Standard",
+          "operationId": "getStandardControllerApiV1Standard",
           "responses": {
             "200": {
               "description": "OK",
@@ -159,7 +159,7 @@
           "deprecated": false
         },
         "post": {
-          "operationId": "postStandardcontrollerApiV1Standard",
+          "operationId": "postStandardControllerApiV1Standard",
           "responses": {
             "201": {
               "description": "Created",
@@ -200,7 +200,7 @@
       },
       "/api/v1/meta/": {
         "get": {
-          "operationId": "getMetacontrollerApiV1Meta",
+          "operationId": "getMetaControllerApiV1Meta",
           "responses": {
             "200": {
               "description": "OK",
@@ -243,7 +243,7 @@
         },
         "options": {
           "summary": "Default sync implementation for ``OPTIONS`` http method.",
-          "operationId": "optionsMetacontrollerApiV1Meta",
+          "operationId": "optionsMetaControllerApiV1Meta",
           "responses": {
             "204": {
               "description": "No Content",

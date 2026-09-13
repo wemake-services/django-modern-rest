@@ -10,7 +10,7 @@
     "paths": {
       "/api/v1/header-and-cookie": {
         "put": {
-          "operationId": "putHeaderandcookiecontrollerApiV1HeaderAndCookie",
+          "operationId": "putHeaderAndCookieControllerApiV1HeaderAndCookie",
           "requestBody": {
             "content": {
               "application/json": {
@@ -132,7 +132,7 @@
           "deprecated": false
         },
         "patch": {
-          "operationId": "patchHeaderandcookiecontrollerApiV1HeaderAndCookie",
+          "operationId": "patchHeaderAndCookieControllerApiV1HeaderAndCookie",
           "requestBody": {
             "content": {
               "application/json": {

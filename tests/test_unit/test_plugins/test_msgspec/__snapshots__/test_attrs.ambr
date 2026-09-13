@@ -10,7 +10,7 @@
     "paths": {
       "/api/attrs": {
         "post": {
-          "operationId": "postUsercontrollerApiAttrs",
+          "operationId": "postUserControllerApiAttrs",
           "requestBody": {
             "content": {
               "application/json": {

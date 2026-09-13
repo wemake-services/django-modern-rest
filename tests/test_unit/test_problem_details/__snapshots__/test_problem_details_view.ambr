@@ -10,7 +10,7 @@
     "paths": {
       "/api/v1/with-negotiation": {
         "get": {
-          "operationId": "getProblemdetailscontrollerApiV1WithNegotiation",
+          "operationId": "getProblemDetailsControllerApiV1WithNegotiation",
           "parameters": [
             {
               "deprecated": false,
@@ -141,7 +141,7 @@
       },
       "/api/v1/default": {
         "get": {
-          "operationId": "getProblemdetailsdefaultcontrollerApiV1Default",
+          "operationId": "getProblemDetailsDefaultControllerApiV1Default",
           "parameters": [
             {
               "deprecated": false,
@@ -211,7 +211,7 @@
       },
       "/api/v1/regular": {
         "get": {
-          "operationId": "getProblemdetailsvalidationcontrollerApiV1Regular",
+          "operationId": "getProblemDetailsValidationControllerApiV1Regular",
           "parameters": [
             {
               "deprecated": false,

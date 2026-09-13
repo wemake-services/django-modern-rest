@@ -10,7 +10,7 @@
     "paths": {
       "/api/items": {
         "get": {
-          "operationId": "getTestOpenapiSpecNoSemanticResponsesLocalsSimplecontrollerApiItems",
+          "operationId": "getTestOpenapiSpecNoSemanticResponsesLocalsSimpleControllerApiItems",
           "responses": {
             "200": {
               "description": "OK",

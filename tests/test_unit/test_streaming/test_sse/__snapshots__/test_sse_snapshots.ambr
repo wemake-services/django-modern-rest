@@ -10,7 +10,7 @@
     "paths": {
       "/api/v1/complex": {
         "get": {
-          "operationId": "getComplexsseApiV1Complex",
+          "operationId": "getComplexSSEApiV1Complex",
           "parameters": [
             {
               "deprecated": false,
@@ -229,7 +229,7 @@
     "paths": {
       "/api/v1/overridden": {
         "get": {
-          "operationId": "getOverriddensseApiV1Overridden",
+          "operationId": "getOverriddenSSEApiV1Overridden",
           "responses": {
             "200": {
               "description": "OK",
@@ -367,7 +367,7 @@
     "paths": {
       "/api/v1/sse": {
         "get": {
-          "operationId": "getClassbasedsseApiV1Sse",
+          "operationId": "getClassBasedSSEApiV1Sse",
           "responses": {
             "200": {
               "description": "OK",
@@ -423,7 +423,7 @@
           "deprecated": false
         },
         "post": {
-          "operationId": "postClassbasedsseApiV1Sse",
+          "operationId": "postClassBasedSSEApiV1Sse",
           "responses": {
             "200": {
               "description": "OK",

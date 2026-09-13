@@ -14,7 +14,7 @@
             "v1",
             "users"
           ],
-          "operationId": "getTaggedcontrollerApiV1Users",
+          "operationId": "getTaggedControllerApiV1Users",
           "responses": {
             "200": {
               "description": "OK",
@@ -55,7 +55,7 @@
             "users",
             "admin"
           ],
-          "operationId": "putTaggedcontrollerApiV1Users",
+          "operationId": "putTaggedControllerApiV1Users",
           "responses": {
             "200": {
               "description": "OK",
@@ -96,7 +96,7 @@
             "users",
             "admin"
           ],
-          "operationId": "postTaggedcontrollerApiV1Users",
+          "operationId": "postTaggedControllerApiV1Users",
           "responses": {
             "201": {
               "description": "Created",

@@ -33,7 +33,7 @@
           "tags": [
             "custom"
           ],
-          "operationId": "getAsynccontrollerApiV1Async",
+          "operationId": "getAsyncControllerApiV1Async",
           "responses": {
             "200": {
               "description": "OK",

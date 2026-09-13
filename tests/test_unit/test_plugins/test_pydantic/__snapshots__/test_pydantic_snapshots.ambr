@@ -10,7 +10,7 @@
     "paths": {
       "/api/v1/generic": {
         "post": {
-          "operationId": "postGenericcontrollerApiV1Generic",
+          "operationId": "postGenericControllerApiV1Generic",
           "requestBody": {
             "content": {
               "application/json": {
@@ -212,7 +212,7 @@
     "paths": {
       "/api/v1/issue990": {
         "post": {
-          "operationId": "postExamplecontrollerApiV1Issue990",
+          "operationId": "postExampleControllerApiV1Issue990",
           "requestBody": {
             "content": {
               "application/json": {
@@ -381,7 +381,7 @@
     "paths": {
       "/api/v1/user": {
         "post": {
-          "operationId": "postUsercontrollerApiV1User",
+          "operationId": "postUserControllerApiV1User",
           "requestBody": {
             "content": {
               "application/json": {
@@ -439,7 +439,7 @@
       },
       "/api/v1/user-fast": {
         "post": {
-          "operationId": "postUserfastcontrollerApiV1UserFast",
+          "operationId": "postUserFastControllerApiV1UserFast",
           "requestBody": {
             "content": {
               "application/json": {

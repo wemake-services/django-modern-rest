@@ -14,7 +14,7 @@
             "items",
             "search"
           ],
-          "operationId": "getTestRouterWithCustomConfigLocalsCustomcontrollerApiV1Items",
+          "operationId": "getTestRouterWithCustomConfigLocalsCustomControllerApiV1Items",
           "responses": {
             "200": {
               "description": "OK",
@@ -53,7 +53,7 @@
           "tags": [
             "items"
           ],
-          "operationId": "postTestRouterWithCustomConfigLocalsCustomcontrollerApiV1Items",
+          "operationId": "postTestRouterWithCustomConfigLocalsCustomControllerApiV1Items",
           "responses": {
             "201": {
               "description": "Created",
