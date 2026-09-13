@@ -10,12 +10,6 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
     """
     Generates JSON schema for msgspec objects.
 
-    Methods:
-        schema_hook: Called for each custom type
-            that ``msgspec`` cannot describe natively.
-            It must return a JSON schema dict for that type
-            or raise ``NotImplementedError`` to use the default behavior.
-
     Schemas are registered and cached per annotation, not per serializer.
     If the same model is used by several serializers with different
     ``schema_hook`` implementations, only the hook of the serializer
@@ -27,7 +21,11 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
 
     @classmethod
     def schema_hook(cls, type_: type[Any]) -> dict[str, Any]:
-        """Override to describe custom types; unsupported types still raise."""
+        """Called for custom types that ``msgspec`` cannot describe natively.
+
+        Must return a JSON schema dict for that type
+        or raise ``NotImplementedError`` to use the default behavior.
+        """
         raise NotImplementedError(type_)
 
     @override
