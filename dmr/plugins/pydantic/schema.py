@@ -32,6 +32,9 @@ class PydanticSchemaGenerator(BaseSchemaGenerator):
     ``json_schema_kwargs``, only the kwargs of the serializer
     that generates the schema first will be applied.
 
+    .. versionchanged:: 0.16.0
+        Added ``json_schema_kwargs``.
+
     """
 
     __slots__ = ()

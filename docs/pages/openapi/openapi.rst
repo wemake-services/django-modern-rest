@@ -295,10 +295,10 @@ and create your own serializer that uses it.
 
   .. tab:: msgspec
 
-    ``msgspec`` supports
-    :attr:`~dmr.plugins.msgspec.schema.MsgspecSchemaGenerator.schema_hook`,
-    which is called for each custom type
-    that ``msgspec`` cannot describe natively.
+    ``msgspec`` allows passing extra keyword arguments
+    to :meth:`msgspec.json.schema`
+    via :attr:`~dmr.plugins.msgspec.schema.MsgspecSchemaGenerator.json_schema_kwargs`.
+    Note that ``ref_template`` and ``mode`` are always defined by us.
 
     Docs: https://msgspec.dev/jsonschema
 

@@ -284,6 +284,9 @@ Msgspec
 .. autoclass:: dmr.plugins.msgspec.serializer.MsgspecEndpointOptimizer
   :members:
 
+.. autoclass:: dmr.plugins.msgspec.schema.JsonSchemaKwargs
+  :members:
+
 .. autoclass:: dmr.plugins.msgspec.schema.MsgspecSchemaGenerator
   :members:
 
