@@ -172,6 +172,8 @@ nitpick_ignore = [
     (_PY_OBJ, 'dmr.components._BodyT'),
     (_PY_OBJ, 'dmr.components._CookiesT'),
     (_PY_OBJ, 'dmr.components._FileMetadataT'),
+    (_PY_CLASS, 'dmr.metadata._AuthT'),
+    (_PY_CLASS, 'dmr.metadata._ThrottlingT'),
     (_PY_CLASS, 'dmr.pagination.base._ModelT'),
     (_PY_CLASS, 'dmr.pagination.cursor._ModelT'),
     (_PY_CLASS, 'dmr.pagination.cursor._DjangoModel'),
