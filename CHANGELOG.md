@@ -41,6 +41,14 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   They also default to `EMPTY` instead of `None`, so passing `None`
   explicitly now means "generate nothing" instead of "use the docstring", #1446
 
+### Performance improvements
+
+- Improved checks performance, now we don't call checks
+  that are not defined for an endpoint. For example,
+  if there's no throttle, the check function won't even be called.
+  Previously, it was called and early returned from it, #1454
+- Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
+
 ### Features
 
 - `summary` and `description` of a `PathItem` are now parsed
@@ -51,7 +59,6 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `tags` controller attribute to apply OpenAPI tags
   to all endpoints of this controller. They are merged
   with router-level and endpoint-level tags, #1434
-- Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
 - Added `CursorPagination` support at `drm.pagination`, #1428
 - Url parameters of `re_path()` routes now have `pattern` in their schema,
   it is copied from the sub-pattern of the matching named group:

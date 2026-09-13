@@ -9,11 +9,13 @@ from typing import (  # noqa: WPS235
     Any,
     ClassVar,
     Final,
+    Generic,
     TypeAlias,
-    TypeVar,
     get_args,
     get_origin,
 )
+
+from typing_extensions import TypeVar
 
 if TYPE_CHECKING:
     from django.utils.functional import (
@@ -338,8 +340,20 @@ class ResponseSpecProvider:
         return [response]
 
 
+_AuthT = TypeVar(
+    '_AuthT',
+    bound='SyncAuth | AsyncAuth',
+    default='SyncAuth | AsyncAuth',
+)
+_ThrottlingT = TypeVar(
+    '_ThrottlingT',
+    bound='SyncThrottle | AsyncThrottle',
+    default='SyncThrottle | AsyncThrottle',
+)
+
+
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class EndpointMetadata:
+class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     """
     Base class for common endpoint metadata.
 
@@ -450,12 +464,12 @@ class EndpointMetadata:
     parsers: dict[str, 'Parser']
     renderers: dict[str, 'Renderer']
     validate_negotiation: bool
-    auth: list['SyncAuth | AsyncAuth'] | None
+    auth: list[_AuthT] | None
 
     # First line of throttling:
-    throttling_before_auth: tuple['SyncThrottle | AsyncThrottle', ...] | None
+    throttling_before_auth: tuple[_ThrottlingT, ...] | None
     # Second line of throttling:
-    throttling_after_auth: tuple['SyncThrottle | AsyncThrottle', ...] | None
+    throttling_after_auth: tuple[_ThrottlingT, ...] | None
     throttling_allow_unsafe_cache: bool | None
 
     exclude_validate_responses: frozenset[HTTPStatus]
@@ -477,9 +491,7 @@ class EndpointMetadata:
     ignore_from_spec: bool
 
     # Pre-computed fields:
-    throttling: tuple['SyncThrottle | AsyncThrottle', ...] | None = (
-        dataclasses.field(init=False)
-    )
+    throttling: tuple[_ThrottlingT, ...] | None = dataclasses.field(init=False)
 
     def __post_init__(self) -> None:
         """Set pre-computed fields."""
@@ -503,7 +515,7 @@ class EndpointMetadata:
         all_responses: list[ResponseSpec] = []
         for provider in self.response_spec_providers():
             responses = provider.provide_response_specs(
-                self,
+                self,  # type: ignore[arg-type]
                 controller_cls,
                 existing_responses,
             )
