@@ -35,9 +35,19 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `OpenAPIConfig` now raises `ValueError` for `openapi_version` below `3.1.0`.
   OpenAPI `3.0.x` was never really supported: it predates JSON Schema,
   which is what `pydantic` and `msgspec` generate for our models, #1435
+- `summary` and `description` of `@modify` and `@validate` are now resolved
+  one at a time. Passing just one of them used to drop the endpoint's
+  docstring entirely, now the other one is still parsed from it.
+  They also default to `EMPTY` instead of `None`, so passing `None`
+  explicitly now means "generate nothing" instead of "use the docstring", #1446
 
 ### Features
 
+- `summary` and `description` of a `PathItem` are now parsed
+  from the controller's docstring, just like they are parsed
+  from the endpoint's docstring for an `Operation`.
+  Setting `Controller.summary` or `Controller.description` explicitly
+  still wins, `None` means that nothing is generated at all, #1446
 - Added `tags` controller attribute to apply OpenAPI tags
   to all endpoints of this controller. They are merged
   with router-level and endpoint-level tags, #1434

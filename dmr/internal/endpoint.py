@@ -256,7 +256,12 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         throttling_allow_unsafe_cache: Should this endpoint allow
             unsafe throttle Django cache backends?
         summary: A short summary of what the operation does.
+            Defaults to the first paragraph of the endpoint's docstring.
+            Set it to ``None`` to have no summary at all.
         description: A verbose explanation of the operation behavior.
+            Defaults to everything that goes after the first paragraph
+            of the endpoint's docstring.
+            Set it to ``None`` to have no description at all.
         tags: A list of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
             These are merged with controller-level and router-level tags.
@@ -310,8 +315,8 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         auth: Sequence[Never] | None = (),
         throttling: Sequence[Never] | None = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | None = None,
-        description: _StrOrPromise | None = None,
+        summary: _StrOrPromise | Sentinel | None = EMPTY,
+        description: _StrOrPromise | Sentinel | None = EMPTY,
         tags: list[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
@@ -344,8 +349,8 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         auth: Sequence[AsyncAuth] | None = (),
         throttling: Sequence[AsyncThrottle] | None = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | None = None,
-        description: _StrOrPromise | None = None,
+        summary: _StrOrPromise | Sentinel | None = EMPTY,
+        description: _StrOrPromise | Sentinel | None = EMPTY,
         tags: list[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
@@ -378,8 +383,8 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         auth: Sequence[SyncAuth] | None = (),
         throttling: Sequence[SyncThrottle] | None = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | None = None,
-        description: _StrOrPromise | None = None,
+        summary: _StrOrPromise | Sentinel | None = EMPTY,
+        description: _StrOrPromise | Sentinel | None = EMPTY,
         tags: list[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
@@ -413,8 +418,8 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None
         ) = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | None = None,
-        description: _StrOrPromise | None = None,
+        summary: _StrOrPromise | Sentinel | None = EMPTY,
+        description: _StrOrPromise | Sentinel | None = EMPTY,
         tags: list[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
@@ -643,7 +648,12 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         throttling_allow_unsafe_cache: Should this controller allow
             unsafe throttle Django cache backends?
         summary: A short summary of what the operation does.
+            Defaults to the first paragraph of the endpoint's docstring.
+            Set it to ``None`` to have no summary at all.
         description: A verbose explanation of the operation behavior.
+            Defaults to everything that goes after the first paragraph
+            of the endpoint's docstring.
+            Set it to ``None`` to have no description at all.
         tags: A list of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
             These are merged with controller-level and router-level tags.
@@ -691,8 +701,8 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         auth: Sequence[Never] | None = (),
         throttling: Sequence[Never] | None = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | None = None,
-        description: _StrOrPromise | None = None,
+        summary: _StrOrPromise | Sentinel | None = EMPTY,
+        description: _StrOrPromise | Sentinel | None = EMPTY,
         tags: list[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
@@ -721,8 +731,8 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         auth: Sequence[AsyncAuth] | None = (),
         throttling: Sequence[AsyncThrottle] | None = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | None = None,
-        description: _StrOrPromise | None = None,
+        summary: _StrOrPromise | Sentinel | None = EMPTY,
+        description: _StrOrPromise | Sentinel | None = EMPTY,
         tags: list[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
@@ -751,8 +761,8 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         auth: Sequence[SyncAuth] | None = (),
         throttling: Sequence[SyncThrottle] | None = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | None = None,
-        description: _StrOrPromise | None = None,
+        summary: _StrOrPromise | Sentinel | None = EMPTY,
+        description: _StrOrPromise | Sentinel | None = EMPTY,
         tags: list[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
@@ -782,8 +792,8 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
             Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None
         ) = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | None = None,
-        description: _StrOrPromise | None = None,
+        summary: _StrOrPromise | Sentinel | None = EMPTY,
+        description: _StrOrPromise | Sentinel | None = EMPTY,
         tags: list[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,

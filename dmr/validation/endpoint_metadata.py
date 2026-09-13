@@ -20,7 +20,6 @@ from typing import (
     assert_never,
 )
 
-from django.contrib.admindocs.utils import parse_docstring
 from django.core.cache.backends import dummy, locmem
 from django.http import HttpResponseBase
 from typing_extensions import Sentinel
@@ -29,6 +28,7 @@ from dmr.components import BodyComponent
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.headers import HeaderSpec, NewHeader
+from dmr.internal.docstrings import resolve_summary_and_description
 from dmr.internal.enums import stringify
 from dmr.metadata import (
     ComponentParserSpec,
@@ -963,46 +963,15 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         """
         Resolve summary and description for an endpoint.
 
-        Follows the priority:
-
-        1. If payload is provided and has non-None , returns those.
-        2. If func has no docstring,
-           returns payload values (or None if no payload).
-        3. Otherwise extracts values from ``func.__doc__``
-           via django's ``parse_docstring()`` helper
-
-        All empty strings are converted to ``None``.
+        Uses the very same rules as a controller does for its path item:
+        each one is parsed from ``func.__doc__`` on its own,
+        unless ``@modify`` or ``@validate`` sets it explicitly.
         """
-        if self.payload is not None and (
-            self.payload.summary is not None
-            or self.payload.description is not None
-            or self.func.__doc__ is None
-        ):
-            return (
-                (
-                    None
-                    if self.payload.summary is None
-                    else str(self.payload.summary)
-                ),
-                (
-                    None
-                    if self.payload.description is None
-                    else str(self.payload.description)
-                ),
-            )
-
-        summary: str | None
-        description: str | None
-
-        summary, description, _ = parse_docstring(self.func.__doc__ or '')
-
-        if not summary:
-            summary = None
-
-        if not description:
-            description = None
-
-        return summary, description
+        return resolve_summary_and_description(
+            self.func.__doc__,
+            EMPTY if self.payload is None else self.payload.summary,
+            EMPTY if self.payload is None else self.payload.description,
+        )
 
     def _validate_new_http_parts(
         self,
