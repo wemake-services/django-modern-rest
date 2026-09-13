@@ -6,9 +6,9 @@ import pydantic
 from django.urls import path, re_path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import Body, Controller, Cookies, Path, Query, ResponseSpec
+from dmr import Body, Controller, Cookies, Path, Query, ResponseSpec, modify
 from dmr.negotiation import ContentType, conditional_type
-from dmr.openapi import build_schema
+from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.openapi.objects import Example, MediaTypeMetadata, ParameterMetadata
 from dmr.parsers import JsonParser
 from dmr.plugins.pydantic import PydanticSerializer
@@ -130,6 +130,36 @@ def test_auth_and_cookies_schema(snapshot: SnapshotAssertion) -> None:
         )
         == snapshot
     )
+
+
+class _AuthDisabledController(Controller[PydanticSerializer]):
+    @modify(auth=None)
+    def get(self) -> str:
+        raise NotImplementedError
+
+
+def test_auth_none_with_global_security() -> None:
+    """Ensure that endpoint auth=None overrides global security."""
+    config = OpenAPIConfig(
+        title='Test API',
+        version='1.0.0',
+        security=[{'jwt': []}],
+    )
+
+    schema = build_schema(
+        Router(
+            'api/',
+            [
+                path(
+                    'public/',
+                    _AuthDisabledController.as_view(),
+                ),
+            ],
+        ),
+        config=config,
+    ).convert()
+
+    assert schema['paths']['/api/public/']['get']['security'] == []
 
 
 class _XmlModel(pydantic.BaseModel):

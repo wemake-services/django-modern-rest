@@ -65,6 +65,10 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   `r'^v(?P<version>\d+)/$'` documents `version`
   as `{'type': 'string', 'pattern': '^(?:\d+)$'}`, #1439
 
+### Bugfixes
+
+- Fixed OpenAPI security requirements for endpoints with `auth=None` when global security is configured, #1497
+
 
 ## 0.15.0 (2026-09-11)
 

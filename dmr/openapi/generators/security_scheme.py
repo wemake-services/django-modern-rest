@@ -34,7 +34,7 @@ class SecuritySchemeGenerator:
         usage requirements.
         """
         if not auth_providers:
-            return None
+            return [] if self._context.config.security else None
 
         requirements: list[SecurityRequirement] = []
 
