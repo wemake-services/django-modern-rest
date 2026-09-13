@@ -340,6 +340,7 @@ select = [
 ignore = [
   "A005",     # allow to shadow stdlib and builtin module names
   "ASYNC119", # `contextlib.aclosing` is not detected
+  "COM812",   # conflicts with formatter
   # Different doc rules that we don't really care about:
   "D100",
   "D104",
