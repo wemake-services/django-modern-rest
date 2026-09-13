@@ -5,7 +5,6 @@ from collections.abc import Collection, Mapping
 from typing import (
     Annotated,
     Any,
-    ClassVar,
     Final,
     Literal,
     Optional,
@@ -14,7 +13,7 @@ from typing import (
 )
 
 import pytest
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, override
 
 from dmr import Controller, Cookies, Headers, Path, Query
 from dmr.exceptions import UnsolvableAnnotationsError
@@ -30,7 +29,7 @@ except ImportError:  # pragma: no cover
     pytest.skip(reason='msgspec is not installed', allow_module_level=True)
 
 from dmr.plugins.msgspec import MsgspecSerializer
-from dmr.plugins.msgspec.schema import MsgspecSchemaGenerator, SchemaHook
+from dmr.plugins.msgspec.schema import MsgspecSchemaGenerator
 
 
 @pytest.fixture
@@ -487,16 +486,15 @@ class _OtherCustomType:
     """Another custom type without any schema support."""
 
 
-def _custom_schema_hook(type_: type) -> dict[str, Any]:
-    """Describe custom types for the JSON schema generation."""
-    if type_ is _CustomType:
-        return {'type': 'string'}
-    raise NotImplementedError(type_)
-
-
 @final
 class _HookedSchemaGenerator(MsgspecSchemaGenerator):
-    schema_hook: ClassVar[SchemaHook | None] = _custom_schema_hook
+    @classmethod
+    @override
+    def schema_hook(cls, type_: type[Any]) -> dict[str, Any]:
+        """Describe custom types for the JSON schema generation."""
+        if type_ is _CustomType:
+            return {'type': 'string'}
+        raise NotImplementedError(type_)
 
 
 @final
@@ -509,7 +507,7 @@ def test_custom_schema_hook(schema_generator: SchemaGenerator) -> None:
     schema = schema_generator(_CustomType, _HookedSerializer)
 
     assert isinstance(schema, Schema)
-    assert schema.type == OpenAPIType.STRING
+    assert schema == Schema(type=OpenAPIType.STRING)
 
 
 def test_schema_hook_fallback(schema_generator: SchemaGenerator) -> None:

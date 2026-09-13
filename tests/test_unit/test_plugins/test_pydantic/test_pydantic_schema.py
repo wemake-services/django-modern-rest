@@ -7,15 +7,16 @@ from typing import Annotated, Any, ClassVar, Literal, Optional, Union, final
 import pydantic
 import pytest
 from pydantic.json_schema import GenerateJsonSchema
+from pydantic_core import core_schema
 from typing_extensions import TypedDict, override
 
 from dmr import Controller, Cookies, Headers, Path, Query
 from dmr.exceptions import UnsolvableAnnotationsError
-from dmr.openapi import OpenAPIConfig, build_schema
+from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators import SchemaGenerator
 from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Reference, Schema
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.plugins.pydantic.schema import (
     JsonSchemaKwargs,
     PydanticSchemaGenerator,
@@ -503,59 +504,80 @@ class _TestClass:
     attr: int
 
 
-def test_unsupported_type(schema_generator: SchemaGenerator) -> None:
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+def test_unsupported_type(
+    schema_generator: SchemaGenerator,
+    serializer: type[PydanticSerializer],
+) -> None:
     """Ensures that unsupported types raise."""
     with pytest.raises(
         UnsolvableAnnotationsError,
         match='Cannot generate OpenAPI schema',
     ):
-        schema_generator(_TestClass, PydanticSerializer)
+        schema_generator(_TestClass, serializer)
 
 
-class _NoTitleJsonSchema(GenerateJsonSchema):
-    """Drops ``title`` keys from the generated root schemas."""
+class _CustomType(pydantic.BaseModel):
+    """Custom model with an explicitly defined JSON schema."""
+
+
+class _OtherCustomType(pydantic.BaseModel):
+    """Another model without custom schema support."""
+
+
+class _CustomJsonSchema(GenerateJsonSchema):
+    """Describe custom types for the JSON schema generation."""
 
     @override
-    def generate(
-        self,
-        schema: Any,
-        mode: Any = 'validation',
-    ) -> dict[str, Any]:
-        """Generate a schema and remove its title."""
-        json_schema = super().generate(schema, mode=mode)
-        json_schema.pop('title', None)
-        return json_schema
+    def model_schema(self, schema: core_schema.ModelSchema) -> dict[str, Any]:
+        """Describe the supported type or reject unsupported models."""
+        if schema['cls'] is _CustomType:
+            return {'type': 'string'}
+        raise NotImplementedError(schema['cls'])
 
 
 @final
-class _NoTitleSchemaGenerator(PydanticSchemaGenerator):
+class _CustomSchemaGenerator(PydanticSchemaGenerator):
     json_schema_kwargs: ClassVar[JsonSchemaKwargs] = {
-        'schema_generator': _NoTitleJsonSchema,
+        'schema_generator': _CustomJsonSchema,
     }
 
 
-@final
-class _NoTitleSerializer(PydanticSerializer):
-    schema_generator = _NoTitleSchemaGenerator
-
-
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
 def test_custom_schema_generator(
     schema_generator: SchemaGenerator,
+    serializer: type[PydanticSerializer],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Ensure custom ``schema_generator`` option is respected."""
-    schema = schema_generator(_TestTypedDict, _NoTitleSerializer)
+    monkeypatch.setattr(serializer, 'schema_generator', _CustomSchemaGenerator)
+    schema = schema_generator(_CustomType, serializer)
 
-    assert isinstance(schema, Schema)  # no title means no reference
-    assert schema.title is None
-    assert schema.properties == {
-        'attr': Schema(type=OpenAPIType.INTEGER, title='Attr'),
-        'specific_field': Schema(
-            type=OpenAPIType.STRING,
-            min_length=1,
-            format=OpenAPIFormat.URI,
-            title='Specific Field',
-        ),
-    }
+    assert schema == Schema(type=OpenAPIType.STRING)
+
+
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+def test_schema_generator_fallback(
+    schema_generator: SchemaGenerator,
+    serializer: type[PydanticSerializer],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ensure types a custom generator does not support still raise."""
+    monkeypatch.setattr(serializer, 'schema_generator', _CustomSchemaGenerator)
+    with pytest.raises(
+        UnsolvableAnnotationsError,
+        match='Cannot generate OpenAPI schema',
+    ):
+        schema_generator(_OtherCustomType, serializer)
 
 
 @final
@@ -563,44 +585,56 @@ class _AliasedModel(pydantic.BaseModel):
     field_name: str = pydantic.Field(alias='fieldAlias')
 
 
-@final
-class _NoAliasSchemaGenerator(PydanticSchemaGenerator):
-    json_schema_kwargs: ClassVar[JsonSchemaKwargs] = {'by_alias': False}
-
-
-@final
-class _NoAliasSerializer(PydanticSerializer):
-    schema_generator = _NoAliasSchemaGenerator
-
-
-def test_custom_by_alias(openapi_context: OpenAPIContext) -> None:
-    """Ensure custom ``by_alias`` option is respected."""
-    default_reference = openapi_context.generators.schema(
-        _AliasedModel,
-        PydanticSerializer,
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+@pytest.mark.parametrize(
+    ('schema_kwargs', 'field_name', 'field_title'),
+    [
+        pytest.param({}, 'fieldAlias', 'Fieldalias', id='default'),
+        pytest.param(
+            {'by_alias': True},
+            'fieldAlias',
+            'Fieldalias',
+            id='alias',
+        ),
+        pytest.param(
+            {'by_alias': False},
+            'field_name',
+            'Field Name',
+            id='no-alias',
+        ),
+    ],
+)
+def test_custom_by_alias(
+    openapi_context: OpenAPIContext,
+    serializer: type[PydanticSerializer],
+    monkeypatch: pytest.MonkeyPatch,
+    schema_kwargs: JsonSchemaKwargs,
+    field_name: str,
+    field_title: str,
+) -> None:
+    """Ensure default and explicit alias options produce the full schema."""
+    monkeypatch.setattr(
+        serializer.schema_generator,
+        'json_schema_kwargs',
+        schema_kwargs,
     )
-    assert isinstance(default_reference, Reference)
-    default_schema = openapi_context.registries.schema.maybe_resolve_reference(
-        default_reference,
+    reference = openapi_context.generators.schema(_AliasedModel, serializer)
+    assert isinstance(reference, Reference)
+    schema = openapi_context.registries.schema.maybe_resolve_reference(
+        reference,
     )
-    assert default_schema.properties is not None
-    assert list(default_schema.properties) == ['fieldAlias']
 
-    # A fresh context, because schemas are registered and cached
-    # per annotation, regardless of the serializer used:
-    custom_context = OpenAPIContext(
-        OpenAPIConfig(title='custom', version='0.0.1'),
+    assert schema == Schema(
+        type=OpenAPIType.OBJECT,
+        title=_AliasedModel.__qualname__,
+        required=[field_name],
+        properties={
+            field_name: Schema(type=OpenAPIType.STRING, title=field_title),
+        },
     )
-    custom_reference = custom_context.generators.schema(
-        _AliasedModel,
-        _NoAliasSerializer,
-    )
-    assert isinstance(custom_reference, Reference)
-    custom_schema = custom_context.registries.schema.maybe_resolve_reference(
-        custom_reference,
-    )
-    assert custom_schema.properties is not None
-    assert list(custom_schema.properties) == ['field_name']
 
 
 @final
@@ -610,15 +644,21 @@ class _PrimitiveUnionSchemaGenerator(PydanticSchemaGenerator):
     }
 
 
-@final
-class _PrimitiveUnionSerializer(PydanticSerializer):
-    schema_generator = _PrimitiveUnionSchemaGenerator
-
-
-def test_custom_union_format(schema_generator: SchemaGenerator) -> None:
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+def test_custom_union_format(
+    schema_generator: SchemaGenerator,
+    serializer: type[PydanticSerializer],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Ensure custom ``union_format`` option is respected."""
-    schema = schema_generator(int | str, _PrimitiveUnionSerializer)
+    monkeypatch.setattr(
+        serializer,
+        'schema_generator',
+        _PrimitiveUnionSchemaGenerator,
+    )
+    schema = schema_generator(int | str, serializer)
 
-    assert isinstance(schema, Schema)
-    assert schema.any_of is None
-    assert schema.type == [OpenAPIType.INTEGER, OpenAPIType.STRING]
+    assert schema == Schema(type=[OpenAPIType.INTEGER, OpenAPIType.STRING])

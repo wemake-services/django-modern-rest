@@ -1,34 +1,34 @@
-from collections.abc import Callable
-from typing import Any, ClassVar, TypeAlias
+from typing import Any
 
 from msgspec.json import schema
 from typing_extensions import override
 
 from dmr.serializer import BaseSchemaGenerator, SchemaDef
 
-SchemaHook: TypeAlias = Callable[[type], dict[str, Any]]
-
 
 class MsgspecSchemaGenerator(BaseSchemaGenerator):
     """
     Generates JSON schema for msgspec objects.
 
-    Attributes:
-        schema_hook: Callable that is called for each custom type
+    Methods:
+        schema_hook: Called for each custom type
             that ``msgspec`` cannot describe natively.
             It must return a JSON schema dict for that type
             or raise ``NotImplementedError`` to use the default behavior.
 
     Schemas are registered and cached per annotation, not per serializer.
     If the same model is used by several serializers with different
-    ``schema_hook`` callables, only the hook of the serializer
+    ``schema_hook`` implementations, only the hook of the serializer
     that generates the schema first will be applied.
 
     """
 
     __slots__ = ()
 
-    schema_hook: ClassVar[SchemaHook | None] = None
+    @classmethod
+    def schema_hook(cls, type_: type[Any]) -> dict[str, Any]:
+        """Override to describe custom types; unsupported types still raise."""
+        raise NotImplementedError(type_)
 
     @override
     @classmethod

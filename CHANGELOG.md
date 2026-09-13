@@ -45,7 +45,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `json_schema_kwargs` attribute to `PydanticSchemaGenerator`
   to pass extra keyword arguments like `by_alias`, `union_format`,
   and `schema_generator` to `pydantic`'s `TypeAdapter.json_schema`, #1462
-- Added `schema_hook` attribute to `MsgspecSchemaGenerator`
+- Added `schema_hook` class method to `MsgspecSchemaGenerator`
   to customize JSON schema generation for custom types, #1462
 
 

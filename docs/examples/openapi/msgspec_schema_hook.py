@@ -1,10 +1,10 @@
-from typing import Any, ClassVar
+from typing import Any
 
 from typing_extensions import override
 
 from dmr import Controller
 from dmr.plugins.msgspec import MsgspecSerializer
-from dmr.plugins.msgspec.schema import MsgspecSchemaGenerator, SchemaHook
+from dmr.plugins.msgspec.schema import MsgspecSchemaGenerator
 
 
 class Point:  # noqa: B903
@@ -15,22 +15,21 @@ class Point:  # noqa: B903
         self.coord_y = coord_y
 
 
-def point_schema(type_: type[Any]) -> dict[str, Any]:
-    """Generate JSON schemas for custom types."""
-    if type_ is Point:
-        return {
-            'type': 'object',
-            'properties': {
-                'coord_x': {'type': 'number'},
-                'coord_y': {'type': 'number'},
-            },
-            'required': ['coord_x', 'coord_y'],
-        }
-    raise NotImplementedError(type_)
-
-
 class SchemaGenerator(MsgspecSchemaGenerator):
-    schema_hook: ClassVar[SchemaHook | None] = point_schema
+    @classmethod
+    @override
+    def schema_hook(cls, type_: type[Any]) -> dict[str, Any]:
+        """Generate JSON schemas for custom types."""
+        if type_ is Point:
+            return {
+                'type': 'object',
+                'properties': {
+                    'coord_x': {'type': 'number'},
+                    'coord_y': {'type': 'number'},
+                },
+                'required': ['coord_x', 'coord_y'],
+            }
+        raise NotImplementedError(type_)
 
 
 class PointMsgspecSerializer(MsgspecSerializer):
