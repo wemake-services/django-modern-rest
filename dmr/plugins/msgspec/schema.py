@@ -26,7 +26,7 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
 
     Attributes:
         json_schema_kwargs: Dictionary of kwargs that will be passed
-            to the :func:`msgspec.json.schema`` function.
+            to the :func:`!msgspec.json.schema` function.
 
     Schemas are registered and cached per annotation, not per serializer.
 

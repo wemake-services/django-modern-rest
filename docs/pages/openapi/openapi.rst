@@ -296,7 +296,7 @@ and create your own serializer that uses it.
   .. tab:: msgspec
 
     ``msgspec`` allows passing extra keyword arguments
-    to :meth:`msgspec.json.schema`
+    to :func:`!msgspec.json.schema`
     via :attr:`~dmr.plugins.msgspec.schema.MsgspecSchemaGenerator.json_schema_kwargs`.
     Note that ``ref_template`` and ``mode`` are always defined by us.
 
