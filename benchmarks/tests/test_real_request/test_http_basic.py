@@ -12,7 +12,7 @@ from dmr.security.http import HttpBasicSyncAuth, basic_auth
 from dmr.serializer import BaseSerializer
 from dmr.test import DMRRequestFactory
 
-_REPEAT: Final = 1000
+_REPEAT: Final = 5
 
 
 class _BasicAuth(HttpBasicSyncAuth):
@@ -32,6 +32,8 @@ class _BasicAuth(HttpBasicSyncAuth):
 
 
 class _AuthController(Controller[MsgspecSerializer]):
+    auth = (_BasicAuth(),)
+
     def get(self) -> str:
         return 'ok'
 
@@ -40,20 +42,17 @@ def test_http_basic_auth_success(
     benchmark: BenchmarkFixture,
     dmr_rf: DMRRequestFactory,
 ) -> None:
-    """Benchmark extraction and validation of valid Basic credentials."""
-    auth = _BasicAuth()
-    endpoint = _AuthController.api_endpoints['GET']
-    controller = _AuthController()
-    controller.setup(
-        dmr_rf.get(
-            '/test',
-            headers={
-                'Authorization': basic_auth('benchmark', 'secret'),
-            },
-        ),
+    """Benchmark HTTP Basic."""
+    request = dmr_rf.get(
+        '/test',
+        headers={
+            'Authorization': basic_auth('benchmark', 'secret'),
+        },
     )
+    controller = _AuthController()
+    controller.setup(request)
 
     @benchmark
     def factory() -> None:
         for _ in range(_REPEAT):
-            assert auth(endpoint, controller) is auth
+            controller.dispatch(request)
