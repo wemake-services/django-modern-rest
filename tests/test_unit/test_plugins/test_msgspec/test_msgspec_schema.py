@@ -13,7 +13,7 @@ from typing import (
 )
 
 import pytest
-from typing_extensions import TypedDict, override
+from typing_extensions import TypedDict
 
 from dmr import Controller, Cookies, Headers, Path, Query
 from dmr.exceptions import UnsolvableAnnotationsError
@@ -486,15 +486,16 @@ class _OtherCustomType:
     """Another custom type without any schema support."""
 
 
+def _schema_hook(typ: type[Any]) -> dict[str, Any]:
+    """Describe custom types for the JSON schema generation."""
+    if typ is _CustomType:
+        return {'type': 'string'}
+    raise NotImplementedError(typ)
+
+
 @final
 class _HookedSchemaGenerator(MsgspecSchemaGenerator):
-    @classmethod
-    @override
-    def schema_hook(cls, type_: type[Any]) -> dict[str, Any]:
-        """Describe custom types for the JSON schema generation."""
-        if type_ is _CustomType:
-            return {'type': 'string'}
-        raise NotImplementedError(type_)
+    json_schema_kwargs = {'schema_hook': _schema_hook}
 
 
 @final
