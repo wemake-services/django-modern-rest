@@ -101,9 +101,9 @@ class OctetStreamParser(SupportsFileParsing, Parser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
-        context: 'OpenAPIContext',
-    ) -> type['FileBodyLike']:
+        serializer: type[BaseSerializer],
+        context: OpenAPIContext,
+    ) -> type[FileBodyLike]:
         """Provide schema for the file request spec."""
         return _ByteStreamFileBody
 

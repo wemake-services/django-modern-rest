@@ -168,14 +168,14 @@ AsyncErrorHandler: TypeAlias = Callable[
 _MethodSyncHandler: TypeAlias = Callable[
     # This is not `Any`, this a `Controller[BaseSerializer]` instance,
     # but mypy can't do better:
-    ['Any', 'Endpoint', 'Controller[Any]', Exception],
+    [Any, 'Endpoint', 'Controller[Any]', Exception],
     HttpResponse,
 ]
 
 _MethodAsyncHandler: TypeAlias = Callable[
     # This is not `Any`, this a `Controller[BaseSerializer]` instance,
     # but mypy can't do better:
-    ['Any', 'Endpoint', 'Controller[Any]', Exception],
+    [Any, 'Endpoint', 'Controller[Any]', Exception],
     Awaitable[HttpResponse],
 ]
 

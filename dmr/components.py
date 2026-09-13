@@ -191,7 +191,7 @@ class ComponentParser(ResponseSpecProvider):
     @override
     def provide_response_specs(
         self,
-        metadata: 'EndpointMetadata',
+        metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
@@ -612,7 +612,7 @@ class PathComponent(ComponentParser):
     @override
     def provide_response_specs(
         self,
-        metadata: 'EndpointMetadata',
+        metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:

@@ -109,7 +109,7 @@ class _BaseCursorPaginator(Generic[_DjangoModel]):
 
     def __init__(
         self,
-        queryset: 'models.QuerySet[_DjangoModel]',
+        queryset: models.QuerySet[_DjangoModel],
         per_page: int,
         cursor_encoder: Callable[[str], str] | None = None,
         cursor_decoder: Callable[[str], str] | None = None,

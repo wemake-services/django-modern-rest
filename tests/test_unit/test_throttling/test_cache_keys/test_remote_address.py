@@ -21,8 +21,8 @@ class _FakeRemoteAddr(RemoteAddr):
     @override
     def __call__(
         self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
+        endpoint: Endpoint,
+        controller: Controller[BaseSerializer],
     ) -> str | None:
         assert controller.request.META.pop('REMOTE_ADDR', None) in {
             '127.0.0.1',

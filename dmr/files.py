@@ -59,7 +59,7 @@ class FileBodyLike:
         model: Any,
         model_meta: tuple[Any, ...],
         parser: Parser,
-        context: 'OpenAPIContext',
+        context: OpenAPIContext,
     ) -> MediaType:
         """Provides file request schema for this parser."""
         raise NotImplementedError
@@ -69,7 +69,7 @@ class FileBodyLike:
     def get_schema(
         cls,
         schema: Reference | Schema,
-        context: 'OpenAPIContext',
+        context: OpenAPIContext,
     ) -> Schema:
         """Return the OpenAPI schema for this file body."""
         raise NotImplementedError
@@ -87,7 +87,7 @@ class FileBody(FileBodyLike):
         model: Any,
         model_meta: tuple[Any, ...],
         parser: Parser,
-        context: 'OpenAPIContext',
+        context: OpenAPIContext,
     ) -> MediaType:
         """Returns the media type for the given file."""
         schema = cls.replace_schema(schema, context)
@@ -114,7 +114,7 @@ class FileBody(FileBodyLike):
     def get_schema(
         cls,
         schema: Reference | Schema,
-        context: 'OpenAPIContext',
+        context: OpenAPIContext,
     ) -> Schema:
         """Returns the openapi schema that this object represents."""
         file_schema = Schema(
@@ -133,7 +133,7 @@ class FileBody(FileBodyLike):
     def replace_schema(
         cls,
         schema: Reference | Schema,
-        context: 'OpenAPIContext',
+        context: OpenAPIContext,
     ) -> Schema:
         """
         Replaces existing generated schema with file-like schema.

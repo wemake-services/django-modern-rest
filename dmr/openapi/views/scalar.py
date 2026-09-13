@@ -27,7 +27,7 @@ class ScalarView(OpenAPIView):
     content_type: ClassVar[str] = 'text/html'
     template_name: ClassVar[str] = 'dmr/scalar.html'
 
-    def get(self, request: 'HttpRequest') -> 'HttpResponse':
+    def get(self, request: HttpRequest) -> HttpResponse:
         """Render the OpenAPI schema using Scalar template."""
         cdn_config = resolve_setting(Settings.openapi_static_cdn)
 

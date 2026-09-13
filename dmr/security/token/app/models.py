@@ -98,12 +98,12 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
         return not self.is_expired and self.revoked_at is None
 
     @override
-    def get_user(self) -> 'AbstractBaseUser':  # noqa: WPS615
+    def get_user(self) -> AbstractBaseUser:  # noqa: WPS615
         """Get user that this token belongs to."""
         return self.user
 
     @override
-    async def aget_user(self) -> 'AbstractBaseUser':
+    async def aget_user(self) -> AbstractBaseUser:
         """Async get user that this token belongs to."""
         return self.user
 
@@ -144,7 +144,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
     def issue(  # noqa: WPS211
         cls,
         *,
-        user: 'AbstractBaseUser',
+        user: AbstractBaseUser,
         name: str,
         expires_at: dt.datetime | Sentinel | None = EMPTY,
         token_size: int | None = None,
@@ -172,14 +172,14 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
     async def aissue(  # noqa: WPS211
         cls,
         *,
-        user: 'AbstractBaseUser',
+        user: AbstractBaseUser,
         name: str,
         expires_at: dt.datetime | Sentinel | None = EMPTY,
         token_size: int | None = None,
         token_secret: str | None = None,
         token_salt: str | None = None,
         token_algorithm: str | None = None,
-    ) -> 'tuple[Token, str]':
+    ) -> tuple['Token', str]:
         """Async version of :meth:`Token.issue`."""
         raw_token = secrets.token_urlsafe(token_size)
         token = await cls.objects.acreate(

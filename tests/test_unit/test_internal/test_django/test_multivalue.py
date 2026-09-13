@@ -90,7 +90,7 @@ from dmr.internal.django import convert_multi_value_dict
 )
 def test_convert_multi_value_dict(
     *,
-    to_parse: 'MultiValueDict[str, Any]',
+    to_parse: MultiValueDict[str, Any],
     force_list: frozenset[str],
     cast_null: frozenset[str],
     split_commas: frozenset[str] | None,
