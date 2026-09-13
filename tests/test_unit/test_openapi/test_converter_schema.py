@@ -3,15 +3,12 @@ from typing import Final
 import pydantic
 import pytest
 from django.urls import path, register_converter
+from inline_snapshot import snapshot
 
 from dmr import Controller
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
-
-OpenAPIValidationError = pytest.importorskip(
-    'openapi_spec_validator.validation.exceptions',
-).OpenAPIValidationError
 
 _YEAR_CONVERTER: Final = 'dmr_year'
 _INVALID_CONVERTER: Final = 'dmr_invalid'
@@ -25,11 +22,11 @@ class _YearConverter:
 
     def to_python(self, value: str) -> int:  # noqa: WPS110
         """Parse the captured path segment."""
-        return int(value)
+        raise NotImplementedError
 
     def to_url(self, value: int) -> str:  # noqa: WPS110
         """Render the year back into a URL segment."""
-        return str(value)
+        raise NotImplementedError
 
 
 class _InvalidSchemaType(pydantic.BaseModel):
@@ -48,11 +45,11 @@ class _InvalidConverter:
 
     def to_python(self, value: str) -> str:  # noqa: WPS110
         """Return the captured path segment unchanged."""
-        return value
+        raise NotImplementedError
 
     def to_url(self, value: str) -> str:  # noqa: WPS110
         """Render the segment back into a URL."""
-        return value
+        raise NotImplementedError
 
 
 class _ArticleController(Controller[PydanticSerializer]):
@@ -76,20 +73,28 @@ def test_converter_schema_valid() -> None:
     ).convert()
 
     operation = schema['paths']['/api/articles/{year}/']['get']
-    year_schema = None
-    for parameter in operation['parameters']:
-        if parameter['name'] == 'year':
-            year_schema = parameter['schema']
-            break
-    assert year_schema is not None
-    assert year_schema['type'] == 'integer'
+    assert operation['parameters'] == snapshot([
+        {
+            'deprecated': False,
+            'name': 'year',
+            'in': 'path',
+            'schema': {'type': 'integer', 'title': 'Year'},
+            'required': True,
+        },
+    ])
 
 
 def test_converter_schema_invalid() -> None:
     """Ensure an invalid ``__dmr_converter_schema__`` fails spec validation."""
+    openapi_exceptions = pytest.importorskip(
+        'openapi_spec_validator.validation.exceptions',
+    )
     register_converter(_InvalidConverter, _INVALID_CONVERTER)
 
-    with pytest.raises(OpenAPIValidationError):
+    with pytest.raises(
+        openapi_exceptions.OpenAPIValidationError,
+        match='minItems',
+    ):
         build_schema(
             Router(
                 'api/',
