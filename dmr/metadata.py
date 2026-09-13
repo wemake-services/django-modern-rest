@@ -34,6 +34,7 @@ if TYPE_CHECKING:
         Link,
         Reference,
         Response,
+        SecurityRequirement,
         Server,
     )
     from dmr.parsers import Parser
@@ -426,8 +427,10 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
             router-level ones are added during the schema generation.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
-        security: A declaration of which security mechanisms can be used
-            for this operation. List of security requirement objects.
+        security: Extra OpenAPI security requirements for this operation.
+            Merged with requirements coming from explicit ``auth=`` providers.
+            Useful for documenting external mechanisms (HTTP proxies,
+            other microservices) that are not represented by ``auth=``.
         external_docs: Additional external documentation for this operation.
         callbacks: A map of possible out-of band callbacks related to the
             parent operation. The key is a unique identifier for the Callback
@@ -485,6 +488,7 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     tags: list[str] | None
     operation_id: str | None
     deprecated: bool
+    security: list['SecurityRequirement'] | None
     external_docs: 'ExternalDocumentation | None'
     callbacks: dict[str, 'Callback | Reference'] | None
     servers: list['Server'] | None

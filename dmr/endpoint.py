@@ -43,8 +43,19 @@ from dmr.validation.payload import PayloadBuilder
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.openapi.core.context import OpenAPIContext
+    from dmr.openapi.objects import SecurityRequirement
     from dmr.routing import Router
     from dmr.validation.response import ValidatedModification
+
+
+def _merge_security(
+    user_security: list['SecurityRequirement'] | None,
+    auth_security: list['SecurityRequirement'] | None,
+) -> list['SecurityRequirement'] | None:
+    """Combine user-provided security with auth-provider requirements."""
+    if not user_security and not auth_security:
+        return None
+    return [*(user_security or []), *(auth_security or [])]
 
 
 class Endpoint:  # noqa: WPS214
@@ -304,9 +315,12 @@ class Endpoint:  # noqa: WPS214
                 else str(self.metadata.description)
             ),
             deprecated=self.metadata.deprecated or router_metadata.deprecated,
-            security=context.generators.security_scheme(
-                self.metadata.auth,
-                serializer,
+            security=_merge_security(
+                self.metadata.security,
+                context.generators.security_scheme(
+                    self.metadata.auth,
+                    serializer,
+                ),
             ),
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
