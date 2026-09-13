@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import datetime as dt
 import uuid
-from http import HTTPStatus
 from typing import Final
 
 import msgspec
-from django.http import HttpResponse, HttpResponseBase
+from django.http import HttpResponseBase
 from pytest_codspeed import BenchmarkFixture
 
 from dmr import Body, Controller
