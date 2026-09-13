@@ -2,7 +2,6 @@ import re
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Final, TypeAlias
 
-from django.contrib.admindocs.views import simplify_regex
 from django.urls import URLPattern, URLResolver
 
 from dmr.openapi.objects import PathItem
@@ -97,4 +96,7 @@ def _join_paths(base_path: str, pattern_path: str) -> str:
 
 
 def _normalize_path(path: str) -> str:
+    # Heavy import:
+    from django.contrib.admindocs.views import simplify_regex  # noqa: PLC0415
+
     return _PATH_PATTERN.sub(r'{\g<parameter>}', simplify_regex(path))

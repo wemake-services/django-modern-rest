@@ -36,8 +36,8 @@ if TYPE_CHECKING:
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True, init=False)
 class _BasePayload:
     # OpenAPI stuff:
-    summary: '_StrOrPromise | None' = None
-    description: '_StrOrPromise | None' = None
+    summary: '_StrOrPromise | Sentinel | None' = EMPTY
+    description: '_StrOrPromise | Sentinel | None' = EMPTY
     tags: list[str] | None = None
     operation_id: str | None = None
     deprecated: bool = False

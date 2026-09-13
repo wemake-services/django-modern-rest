@@ -326,7 +326,16 @@ for :class:`~dmr.openapi.objects.PathItem`:
 
   By default docstring or ``__doc__`` from the controller
   is used to generate summary and description
-  for the :class:`~dmr.openapi.objects.PathItem`.
+  for the :class:`~dmr.openapi.objects.PathItem`:
+  its first paragraph becomes the summary
+  and everything after it becomes the description.
+  Set :attr:`~dmr.controller.Controller.summary`
+  or :attr:`~dmr.controller.Controller.description`
+  to ``None`` to leave them out of the schema.
+
+.. versionchanged:: 0.16.0
+  Controller docstrings are now used as the default
+  summary and description of a path item.
 
 Customizing operation
 ~~~~~~~~~~~~~~~~~~~~~
@@ -344,7 +353,16 @@ metadata.
 
   By default docstring or ``__doc__`` from endpoint's function definition
   is used to generate summary and description
-  for the :class:`~dmr.openapi.objects.Operation`.
+  for the :class:`~dmr.openapi.objects.Operation`,
+  by the same rules that a controller uses for its path item:
+  its first paragraph becomes the summary
+  and everything after it becomes the description.
+  Pass ``summary=None`` or ``description=None``
+  to leave them out of the schema.
+
+.. versionchanged:: 0.16.0
+  ``summary`` and ``description`` are now resolved one at a time.
+  Passing only one of them used to drop the docstring entirely.
 
 Customizing router-level metadata
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -35,18 +35,46 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `OpenAPIConfig` now raises `ValueError` for `openapi_version` below `3.1.0`.
   OpenAPI `3.0.x` was never really supported: it predates JSON Schema,
   which is what `pydantic` and `msgspec` generate for our models, #1435
+- `summary` and `description` of `@modify` and `@validate` are now resolved
+  one at a time. Passing just one of them used to drop the endpoint's
+  docstring entirely, now the other one is still parsed from it.
+  They also default to `EMPTY` instead of `None`, so passing `None`
+  explicitly now means "generate nothing" instead of "use the docstring", #1446
+
+### Performance improvements
+
+- Improved checks performance, now we don't call checks
+  that are not defined for an endpoint. For example,
+  if there's no throttle, the check function won't even be called.
+  Previously, it was called and early returned from it, #1454
+- Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
 
 ### Features
 
+- `summary` and `description` of a `PathItem` are now parsed
+  from the controller's docstring, just like they are parsed
+  from the endpoint's docstring for an `Operation`.
+  Setting `Controller.summary` or `Controller.description` explicitly
+  still wins, `None` means that nothing is generated at all, #1446
 - Added `tags` controller attribute to apply OpenAPI tags
   to all endpoints of this controller. They are merged
   with router-level and endpoint-level tags, #1434
-- Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
+- Added `CursorPagination` support at `drm.pagination`, #1428
+- Url parameters of `re_path()` routes now have `pattern` in their schema,
+  it is copied from the sub-pattern of the matching named group:
+  `r'^v(?P<version>\d+)/$'` documents `version`
+  as `{'type': 'string', 'pattern': '^(?:\d+)$'}`, #1439
 - Added `json_schema_kwargs` attribute to `PydanticSchemaGenerator`
   to pass extra keyword arguments like `by_alias`, `union_format`,
   and `schema_generator` to `pydantic`'s `TypeAdapter.json_schema`, #1462
 - Added `schema_hook` class method to `MsgspecSchemaGenerator`
   to customize JSON schema generation for custom types, #1462
+
+### Bugfixes
+
+- Fixed an empty `description` being generated for the merged `requestBody`
+  in the OpenAPI schema, when a controller has several request body
+  components and none of them provides a description, #1495
 
 
 ## 0.15.0 (2026-09-11)
