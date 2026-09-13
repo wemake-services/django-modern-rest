@@ -3,6 +3,7 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING, Final, TypeAlias
 
 from django.urls import URLPattern, URLResolver
+from django.urls.resolvers import RoutePattern
 
 from dmr.openapi.objects import PathItem
 
@@ -32,6 +33,7 @@ _PATH_PATTERN: Final = re.compile(
 def controller_mapping_collector(
     urls: Iterable[_AnyPattern],
     base_path: str,
+    parent_route: str = '',
 ) -> Iterable[_PathControllerSpec]:
     """
     Collect all API controllers from a router for OpenAPI generation.
@@ -47,12 +49,18 @@ def controller_mapping_collector(
     """
     for url in urls:
         if isinstance(url, URLPattern):
-            yield _process_pattern(url, base_path)
+            yield _process_pattern(
+                url,
+                base_path,
+                parent_route,
+            )
         else:
             current_path = _join_paths(base_path, str(url.pattern))
+            current_route = f'{parent_route}{url.pattern}'
             yield from controller_mapping_collector(
                 url.url_patterns,
                 current_path,
+                current_route,
             )
 
 
@@ -78,13 +86,28 @@ def collect_normalized_paths(
 def _process_pattern(
     url_pattern: URLPattern,
     base_path: str,
+    parent_route: str = '',
 ) -> _PathControllerSpec:
     normalized = _join_paths(base_path, str(url_pattern.pattern))
+
+    if parent_route and isinstance(url_pattern.pattern, RoutePattern):
+        pattern = URLPattern(
+            RoutePattern(
+                f'{parent_route}{url_pattern.pattern}',
+                is_endpoint=True,
+            ),
+            url_pattern.callback,
+            url_pattern.default_args,
+            url_pattern.name,
+        )
+    else:
+        pattern = url_pattern
+
     try:
         # Try the external url first, it is easier to detect:
         return normalized, url_pattern.callback.__dmr_external_openapi__, None  # type: ignore[attr-defined]
     except AttributeError:
-        return normalized, url_pattern, url_pattern.callback.view_class  # type: ignore[attr-defined]
+        return normalized, pattern, url_pattern.callback.view_class  # type: ignore[attr-defined]
 
 
 def _join_paths(base_path: str, pattern_path: str) -> str:
