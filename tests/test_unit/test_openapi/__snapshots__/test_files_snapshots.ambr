@@ -10,7 +10,7 @@
     "paths": {
       "/file-attachment-response/": {
         "get": {
-          "operationId": "getAttachmentfileresponsecontrollerFileAttachmentResponse",
+          "operationId": "getAttachmentFileResponseControllerFileAttachmentResponse",
           "responses": {
             "200": {
               "description": "OK",
@@ -130,7 +130,7 @@
     "paths": {
       "/file/": {
         "post": {
-          "operationId": "postBodyandfilecontrollerFile",
+          "operationId": "postBodyAndFileControllerFile",
           "requestBody": {
             "content": {
               "multipart/form-data": {
@@ -312,7 +312,7 @@
     "paths": {
       "/conditional-files/": {
         "post": {
-          "operationId": "postConditionalfilecontrollerConditionalFiles",
+          "operationId": "postConditionalFileControllerConditionalFiles",
           "requestBody": {
             "content": {
               "multipart/form-data": {
@@ -685,7 +685,7 @@
     "paths": {
       "/file-response/": {
         "get": {
-          "operationId": "getFileresponsecontrollerFileResponse",
+          "operationId": "getFileResponseControllerFileResponse",
           "responses": {
             "200": {
               "description": "OK",
@@ -799,7 +799,7 @@
     "paths": {
       "/file-with-metadata/": {
         "get": {
-          "operationId": "getFilemetadatacontrollerFileWithMetadata",
+          "operationId": "getFileMetadataControllerFileWithMetadata",
           "requestBody": {
             "content": {
               "multipart/form-data": {
@@ -956,7 +956,7 @@
     "paths": {
       "/merged-no-description/": {
         "post": {
-          "operationId": "postBodyandfilenodocscontrollerMergedNoDescription",
+          "operationId": "postBodyAndFileNoDocsControllerMergedNoDescription",
           "requestBody": {
             "content": {
               "multipart/form-data": {
@@ -1114,7 +1114,7 @@
     "paths": {
       "/several-parsers/": {
         "put": {
-          "operationId": "putSeveralparserscontrollerSeveralParsers",
+          "operationId": "putSeveralParsersControllerSeveralParsers",
           "requestBody": {
             "content": {
               "multipart/form-data": {
@@ -1181,7 +1181,7 @@
           "deprecated": false
         },
         "post": {
-          "operationId": "postSeveralparserscontrollerSeveralParsers",
+          "operationId": "postSeveralParsersControllerSeveralParsers",
           "requestBody": {
             "content": {
               "multipart/form-data": {

@@ -13,7 +13,7 @@
           "tags": [
             "level3"
           ],
-          "operationId": "getOthercontrollerApiOther",
+          "operationId": "getOtherControllerApiOther",
           "responses": {
             "200": {
               "description": "OK",
@@ -54,7 +54,7 @@
           "tags": [
             "level3"
           ],
-          "operationId": "getUsercontrollerApiUsersUser",
+          "operationId": "getUserControllerApiUsersUser",
           "responses": {
             "200": {
               "description": "OK",
@@ -96,7 +96,7 @@
             "level3",
             "level1"
           ],
-          "operationId": "getUsercontrollerApiUsersOldUser",
+          "operationId": "getUserControllerApiUsersOldUser",
           "responses": {
             "200": {
               "description": "OK",

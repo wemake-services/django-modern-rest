@@ -10,7 +10,7 @@
     "paths": {
       "/api/items": {
         "get": {
-          "operationId": "getSimplecontrollerApiItems",
+          "operationId": "getSimpleControllerApiItems",
           "responses": {
             "200": {
               "description": "OK",

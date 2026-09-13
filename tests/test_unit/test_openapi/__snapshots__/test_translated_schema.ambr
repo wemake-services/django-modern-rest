@@ -12,7 +12,7 @@
         "get": {
           "summary": "Validate sum",
           "description": "Validated descr",
-          "operationId": "getGetusercontrollerApiV1User",
+          "operationId": "getGetUserControllerApiV1User",
           "responses": {
             "200": {
               "description": "Response descr",

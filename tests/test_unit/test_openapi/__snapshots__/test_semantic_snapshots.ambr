@@ -10,7 +10,7 @@
     "paths": {
       "/per_controller/": {
         "get": {
-          "operationId": "getPercontrollerPerController",
+          "operationId": "getPerControllerPerController",
           "responses": {
             "200": {
               "description": "OK",
@@ -31,7 +31,7 @@
           ]
         },
         "post": {
-          "operationId": "postPercontrollerPerController",
+          "operationId": "postPerControllerPerController",
           "responses": {
             "201": {
               "description": "Created",
@@ -92,7 +92,7 @@
     "paths": {
       "/per_endpoint/": {
         "get": {
-          "operationId": "getPerendpointPerEndpoint",
+          "operationId": "getPerEndpointPerEndpoint",
           "responses": {
             "200": {
               "description": "OK",
@@ -128,7 +128,7 @@
           "deprecated": false
         },
         "post": {
-          "operationId": "postPerendpointPerEndpoint",
+          "operationId": "postPerEndpointPerEndpoint",
           "responses": {
             "201": {
               "description": "Created",

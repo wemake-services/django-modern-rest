@@ -83,6 +83,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Fixed a bug that `load_schema` was not loading `anchor`,
   `comment`, and `schema_uri` fields, #1490
 
+- Default OpenAPI `operation_id` generation now preserves capitalization
+  in controller class names, #1500
 
 ## 0.15.0 (2026-09-11)
 

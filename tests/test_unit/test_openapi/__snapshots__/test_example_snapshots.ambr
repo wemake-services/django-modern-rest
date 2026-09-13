@@ -10,7 +10,7 @@
     "paths": {
       "/api/v1/point/": {
         "post": {
-          "operationId": "postExistingbodyexamplescontrollerApiV1Point",
+          "operationId": "postExistingBodyExamplesControllerApiV1Point",
           "requestBody": {
             "content": {
               "application/json": {
@@ -178,7 +178,7 @@
     "paths": {
       "/api/v1/user/": {
         "post": {
-          "operationId": "postUsercontrollerApiV1User",
+          "operationId": "postUserControllerApiV1User",
           "requestBody": {
             "content": {
               "application/json": {
@@ -381,7 +381,7 @@
     "paths": {
       "/api/v1/user/": {
         "post": {
-          "operationId": "postExistingexamplecontrollerApiV1User",
+          "operationId": "postExistingExampleControllerApiV1User",
           "responses": {
             "201": {
               "description": "Created",

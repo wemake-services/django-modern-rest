@@ -12,7 +12,7 @@
         "summary": "Summary from docstring.",
         "description": "Description from docstring.",
         "get": {
-          "operationId": "getDocstringcontrollerApiV1Users",
+          "operationId": "getDocstringControllerApiV1Users",
           "responses": {
             "200": {
               "description": "OK",

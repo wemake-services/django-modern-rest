@@ -27,7 +27,7 @@
       "/api/hidden/partially/": {
         "put": {
           "description": "Put",
-          "operationId": "putPartiallyhiddencontrollerApiHiddenPartially",
+          "operationId": "putPartiallyHiddenControllerApiHiddenPartially",
           "responses": {
             "200": {
               "description": "OK",
@@ -64,7 +64,7 @@
         },
         "patch": {
           "description": "Patch",
-          "operationId": "patchPartiallyhiddencontrollerApiHiddenPartially",
+          "operationId": "patchPartiallyHiddenControllerApiHiddenPartially",
           "responses": {
             "200": {
               "description": "OK",
@@ -169,7 +169,7 @@
     "paths": {
       "/api/hidden/endpoints/": {
         "get": {
-          "operationId": "getPartiallyhiddenendpointsApiHiddenEndpoints",
+          "operationId": "getPartiallyHiddenEndpointsApiHiddenEndpoints",
           "responses": {
             "200": {
               "description": "OK",
@@ -208,7 +208,7 @@
           "deprecated": false
         },
         "post": {
-          "operationId": "postPartiallyhiddenendpointsApiHiddenEndpoints",
+          "operationId": "postPartiallyHiddenEndpointsApiHiddenEndpoints",
           "requestBody": {
             "content": {
               "application/json": {
