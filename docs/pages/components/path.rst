@@ -55,6 +55,18 @@ use :data:`~dmr.components.Path` component with a model.
   you can use set ``__dmr_converter_schema__`` attribute
   with the specific type that you need in the schema.
 
+.. note::
+
+  With :func:`django.urls.re_path`, url parameters are always typed
+  as ``str``, because we cannot infer any better type from a regex.
+  But, we do copy the sub-pattern of each named group into the schema,
+  so ``r'^v(?P<version>\d+)/$'`` documents ``version``
+  as ``{'type': 'string', 'pattern': '^(?:\d+)$'}``.
+
+  Sub-patterns are copied as-is and only wrapped into anchors,
+  we don't translate them. JSON Schema requires ECMA-262 regexes,
+  so Python-only syntax might not be supported by all OpenAPI tools.
+
 
 Using Path component and parsing models
 ---------------------------------------

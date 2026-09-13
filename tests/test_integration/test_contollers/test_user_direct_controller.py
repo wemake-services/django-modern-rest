@@ -69,3 +69,22 @@ def test_user_update_direct_re(dmr_client: DMRClient, faker: Faker) -> None:
         'email': email,
         'age': user_id,
     }
+
+
+def test_user_update_direct_re_path_component(
+    dmr_client: DMRClient,
+    faker: Faker,
+) -> None:
+    """Ensure that `Path` component parses named groups of re_path."""
+    user_id = faker.unique.random_int(min=1)
+
+    response = dmr_client.put(
+        reverse('api:controllers:user_update_direct_re', args=(user_id,)),
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.json()
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json() == {
+        'email': 'new@email.com',
+        'age': user_id,
+    }
