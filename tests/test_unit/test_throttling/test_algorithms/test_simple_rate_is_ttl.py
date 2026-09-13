@@ -62,7 +62,7 @@ def test_ttl_skips_window_expiry() -> None:
         'is_ttl': True,
     }
     cached, _now = algorithm._process_cache(throttle, cache_object)
-    assert cached['is_ttl'] is True
+    assert cached.get('is_ttl') is True
     assert cached['history'] == [3]
     assert cached['time'] == 1
 
