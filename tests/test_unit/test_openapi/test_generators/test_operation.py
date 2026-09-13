@@ -149,12 +149,15 @@ def test_explicit_operation_id(generator: OperationIdGenerator) -> None:
     assert operation_id == 'customGetUser'
     assert 'customGetUser' in registry._operation_ids
 
+
 class _ControllerWithoutOperationId(Controller[PydanticSerializer]):
     def get(self) -> list[int]:
         raise NotImplementedError
 
 
-def test_generated_operation_id_uses_default(generator: OperationIdGenerator) -> None:
+def test_generated_operation_id_uses_default(
+    generator: OperationIdGenerator,
+) -> None:
     """Ensure that the default generator still produces camelCase ids."""
     controller = _ControllerWithoutOperationId()
     operation_id = generator(
@@ -165,7 +168,10 @@ def test_generated_operation_id_uses_default(generator: OperationIdGenerator) ->
     )
 
     assert operation_id == 'getUsersId'
-    assert operation_id in generator._context.registries.operation_id._operation_ids
+    assert (
+        operation_id
+        in generator._context.registries.operation_id._operation_ids
+    )
 
 
 def test_operation_id_callback_rewrites_generated_id() -> None:
@@ -188,7 +194,10 @@ def test_operation_id_callback_rewrites_generated_id() -> None:
     )
 
     assert operation_id == 'GETUSERSID'
-    assert operation_id in generator._context.registries.operation_id._operation_ids
+    assert (
+        operation_id
+        in generator._context.registries.operation_id._operation_ids
+    )
 
 
 def test_operation_id_callback_skips_explicit_id() -> None:
