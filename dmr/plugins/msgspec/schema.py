@@ -9,7 +9,11 @@ from dmr.serializer import BaseSchemaGenerator, SchemaDef
 
 @final
 class JsonSchemaKwargs(TypedDict, total=False, closed=True):
-    """Keyword arguments for msgspec's ``json_schema`` method."""
+    """
+    Keyword arguments for msgspec's ``json_schema`` method.
+
+    .. versionadded:: 0.16.0
+    """
 
     # `ref_template` is explicitly left out.
     # It is always computed from the OpenAPI schema registry.
@@ -20,7 +24,15 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
     """
     Generates JSON schema for msgspec objects.
 
+    Attributes:
+        json_schema_kwargs: Dictionary of kwargs that will be passed
+            to the :func:`msgspec.json.schema`` function.
+
     Schemas are registered and cached per annotation, not per serializer.
+
+    .. versionchanged:: 0.16.0
+        Added ``json_schema_kwargs``.
+
     """
 
     __slots__ = ()

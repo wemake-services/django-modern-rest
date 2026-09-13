@@ -8,7 +8,11 @@ from dmr.serializer import BaseSchemaGenerator, SchemaDef
 
 @final
 class JsonSchemaKwargs(TypedDict, total=False, closed=True):
-    """Keyword arguments for pydantic's ``json_schema`` method."""
+    """
+    Keyword arguments for pydantic's ``json_schema`` method.
+
+    .. versionadded:: 0.16.0
+    """
 
     # `ref_template` is explicitly left out.
     # It is always computed from the OpenAPI schema registry.
@@ -28,9 +32,6 @@ class PydanticSchemaGenerator(BaseSchemaGenerator):
             to the ``json_schema`` method of pydantic's ``TypeAdapter``.
 
     Schemas are registered and cached per annotation, not per serializer.
-    If the same model is used by several serializers with different
-    ``json_schema_kwargs``, only the kwargs of the serializer
-    that generates the schema first will be applied.
 
     .. versionchanged:: 0.16.0
         Added ``json_schema_kwargs``.
