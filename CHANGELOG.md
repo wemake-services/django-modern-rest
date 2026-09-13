@@ -64,6 +64,11 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   it is copied from the sub-pattern of the matching named group:
   `r'^v(?P<version>\d+)/$'` documents `version`
   as `{'type': 'string', 'pattern': '^(?:\d+)$'}`, #1439
+- Added `json_schema_kwargs` attribute to `PydanticSchemaGenerator`
+  to pass extra keyword arguments like `by_alias`, `union_format`,
+  and `schema_generator` to `pydantic`'s `TypeAdapter.json_schema`, #1462
+- Added `schema_hook` class method to `MsgspecSchemaGenerator`
+  to customize JSON schema generation for custom types, #1462
 
 ### Bugfixes
 

@@ -282,6 +282,35 @@ To customize a schema, use the native methods.
 
   By default docstring or ``__doc__`` from the model is used as a description.
 
+.. rubric:: Customizing schema generator
+
+.. versionadded:: 0.16.0
+
+You can also change the native tools schema generation behavior.
+
+To do so, subclass the plugin's schema generator
+and create your own serializer that uses it.
+
+.. tabs::
+
+  .. tab:: msgspec
+
+    ``msgspec`` allows passing extra keyword arguments
+    to :func:`!msgspec.json.schema`
+    via :attr:`~dmr.plugins.msgspec.schema.MsgspecSchemaGenerator.json_schema_kwargs`.
+    Note that ``ref_template`` and ``mode`` are always defined by us.
+
+    Docs: https://msgspec.dev/jsonschema
+
+  .. tab:: pydantic
+
+    ``pydantic`` allows passing extra keyword arguments
+    to :meth:`pydantic.TypeAdapter.json_schema`
+    via :attr:`~dmr.plugins.pydantic.schema.PydanticSchemaGenerator.json_schema_kwargs`.
+    Note that ``ref_template`` and ``mode`` are always defined by us.
+
+    Docs: https://docs.pydantic.dev/latest/concepts/json_schema
+
 Customizing path items
 ~~~~~~~~~~~~~~~~~~~~~~
 
