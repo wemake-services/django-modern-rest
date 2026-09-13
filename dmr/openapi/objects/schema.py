@@ -82,10 +82,8 @@ class Schema:
     xml: 'XML | None' = None
     external_docs: 'ExternalDocumentation | None' = None
     example: Any | None = None
-    dynamic_anchor: Annotated['str | None', Field(alias='$dynamicAnchor')] = (
-        None
-    )
-    dynamic_ref: Annotated['str | None', Field(alias='$dynamicRef')] = None
+    dynamic_anchor: Annotated[str | None, Field(alias='$dynamicAnchor')] = None
+    dynamic_ref: Annotated[str | None, Field(alias='$dynamicRef')] = None
     ref: Annotated[str | None, Field(alias='$ref')] = None
     anchor: Annotated[str | None, Field(alias='$anchor')] = None
     comment: Annotated[str | None, Field(alias='$comment')] = None

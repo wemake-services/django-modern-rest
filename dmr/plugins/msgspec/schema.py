@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Any
 
 from msgspec.json import schema
@@ -11,22 +12,18 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
     Generates JSON schema for msgspec objects.
 
     Schemas are registered and cached per annotation, not per serializer.
-    If the same model is used by several serializers with different
-    ``schema_hook`` implementations, only the hook of the serializer
-    that generates the schema first will be applied.
+
+    Attributes:
+        schema_hook: Custom callback to return schemas for unsupported types.
+            If the same model is used by several serializers with different
+            ``schema_hook`` implementations, only the hook of the serializer
+            that generates the schema first will be applied.
 
     """
 
     __slots__ = ()
 
-    @classmethod
-    def schema_hook(cls, type_: type[Any]) -> dict[str, Any]:
-        """Called for custom types that ``msgspec`` cannot describe natively.
-
-        Must return a JSON schema dict for that type
-        or raise ``NotImplementedError`` to use the default behavior.
-        """
-        raise NotImplementedError(type_)
+    schema_hook: Callable[[type[Any]], dict[str, Any]] | None = None
 
     @override
     @classmethod
@@ -35,7 +32,7 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
         model: Any,
         ref_template: str,
         *,
-        used_for_response: bool = False,
+        used_for_response: bool = False,  # not used
     ) -> SchemaDef:
         """Proxies the JSON schema generation to msgspec itself."""
         out = schema(
