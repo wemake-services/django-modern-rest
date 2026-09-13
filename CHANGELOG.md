@@ -65,6 +65,12 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   `r'^v(?P<version>\d+)/$'` documents `version`
   as `{'type': 'string', 'pattern': '^(?:\d+)$'}`, #1439
 
+### Bugfixes
+
+- Fixed an empty `description` being generated for the merged `requestBody`
+  in the OpenAPI schema, when a controller has several request body
+  components and none of them provides a description, #1495
+
 
 ## 0.15.0 (2026-09-11)
 
