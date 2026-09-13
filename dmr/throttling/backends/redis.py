@@ -94,7 +94,7 @@ class SyncRedis(BaseThrottleSyncBackend):
                 args=[
                     throttle.max_requests,
                     throttle.duration_in_seconds,
-                     _WRITE,
+                    _WRITE,
                 ],
             ),
         )
@@ -132,7 +132,7 @@ class SyncRedis(BaseThrottleSyncBackend):
                 args=[
                     throttle.max_requests,
                     throttle.duration_in_seconds,
-                     _READ,
+                    _READ,
                 ],
             ),
         )
