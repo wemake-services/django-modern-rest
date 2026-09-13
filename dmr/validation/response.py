@@ -42,7 +42,7 @@ class ResponseValidator:  # noqa: WPS214
     """
 
     # Public API:
-    metadata: 'EndpointMetadata'
+    metadata: EndpointMetadata
     serializer: type[BaseSerializer]
 
     def validate_response(

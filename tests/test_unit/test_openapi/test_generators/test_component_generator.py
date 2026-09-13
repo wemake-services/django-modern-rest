@@ -24,8 +24,8 @@ class _FakeComponent(ComponentParser, Generic[_FakeT]):
     @override
     def provide_context_data(
         self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
+        endpoint: Endpoint,
+        controller: Controller[BaseSerializer],
         *,
         field_model: Any,
     ) -> dict[str, Any]:

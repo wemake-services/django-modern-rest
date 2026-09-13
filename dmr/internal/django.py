@@ -72,7 +72,7 @@ def parse_headers(
 
 
 def convert_multi_value_dict(
-    to_parse: 'MultiValueDict[str, Any]',
+    to_parse: MultiValueDict[str, Any],
     *,
     force_list: frozenset[str],
     cast_null: frozenset[str],

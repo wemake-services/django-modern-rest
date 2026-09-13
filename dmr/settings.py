@@ -129,7 +129,7 @@ class SettingsDict(TypedDict, total=False):
     validate_events: bool | None
     responses: Sequence['ResponseSpec']
     global_error_handler: Callable[[Any, Any, Any], Any] | str
-    openapi_config: 'OpenAPIConfig'
+    openapi_config: OpenAPIConfig
     openapi_examples_seed: int | None
     openapi_static_cdn: dict[str, str]
     django_treat_as_post: Set[str]

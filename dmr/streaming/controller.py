@@ -30,8 +30,8 @@ class _StreamingEndpoint(Endpoint):
     @override
     def _build_new_response(
         self,
-        controller: 'Controller[BaseSerializer]',
-        validated: 'ValidatedModification',
+        controller: Controller[BaseSerializer],
+        validated: ValidatedModification,
     ) -> HttpResponseBase:
         # for mypy: we only use `_StreamingEndpoint` with `StreamingController`
         assert isinstance(controller, StreamingController)  # noqa: S101

@@ -203,7 +203,7 @@ class Router:
         path_spec = self.urls if app_name is None else (self.urls, app_name)
         return path(self.prefix, include(path_spec, namespace=namespace))
 
-    def metadata_for(self, pattern: str) -> 'RouterMetadata':
+    def metadata_for(self, pattern: str) -> RouterMetadata:
         """
         Returns applied nested metadata from all router layers.
 
@@ -234,7 +234,7 @@ def external_path(
     openapi: PathItem | None,
     kwargs: dict[str, Any] | None = None,
     name: str | None = None,
-) -> '_URLExternal':
+) -> _URLExternal:
     """
     Add an external path onto the DMR routing system.
 

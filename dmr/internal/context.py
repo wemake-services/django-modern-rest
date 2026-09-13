@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 
-_ComponentParserSpec: TypeAlias = dict['ComponentParser', Any]
+_ComponentParserSpec: TypeAlias = dict[ComponentParser, Any]
 _ContentTypeOverrides: TypeAlias = dict[str, dict[str, Any]]
 _TypeMapResult: TypeAlias = tuple[
     _ComponentParserSpec,
