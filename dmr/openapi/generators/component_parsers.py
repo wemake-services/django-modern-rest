@@ -196,7 +196,8 @@ class ComponentParserGenerator:
                 (schema.description or '')
                 + ' '
                 + (new_schema.description or '')
-            ).strip(),
+            ).strip()
+            or None,
             required=schema.required or new_schema.required,
         )
 
