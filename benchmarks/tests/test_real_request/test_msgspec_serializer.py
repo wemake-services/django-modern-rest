@@ -10,7 +10,6 @@ from pytest_codspeed import BenchmarkFixture
 
 from dmr import Body, Controller
 from dmr.plugins.msgspec import (
-    MsgspecJsonRenderer,
     MsgspecSerializer,
 )
 from dmr.test import DMRRequestFactory
@@ -69,12 +68,3 @@ def test_msgspec_parse_and_validate(
 
     def factory() -> HttpResponseBase:
         return controller.dispatch(request)
-
-
-def test_msgspec_render(benchmark: BenchmarkFixture) -> None:
-    """Benchmark model serialization into JSON."""
-    renderer = MsgspecJsonRenderer()
-
-    @benchmark
-    def factory() -> None:
-        MsgspecSerializer.serialize(_TO_SERIALIZE, renderer=renderer)
