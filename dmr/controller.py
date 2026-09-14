@@ -7,7 +7,6 @@ from django.urls import URLPattern
 from django.utils.functional import classproperty
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from django.views.decorators.csrf import csrf_exempt
 from typing_extensions import Sentinel, deprecated, override
 
 from dmr import throttling as dmr_throttling
@@ -247,11 +246,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 'Use a subclass with a real serializer '
                 'and at least one endpoint',
             )
-        return (
-            csrf_exempt(super().as_view(**initkwargs))
-            if cls.csrf_exempt
-            else super().as_view(**initkwargs)
-        )
+        # We don't use `csrf_exempt()` decorator here, because it is slow:
+        view = super().as_view(**initkwargs)
+        # TODO: add tests and docs for this feature.
+        if cls.csrf_exempt:  # pragma: no cover
+            view.csrf_exempt = True  # type: ignore[attr-defined]
+        return view
 
     @override
     def setup(self, request: HttpRequest, *args: Any, **kwargs: Any) -> None:
@@ -283,7 +283,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         method: str = request.method  # type: ignore[assignment]
         endpoint = self.api_endpoints.get(method)
         if endpoint is not None:
-            return endpoint(self, *args, **kwargs)
+            return endpoint.func(self, *args, **kwargs)
         # This return is very special,
         # since it does not have an attached endpoint.
         # All other responses are handled on endpoint level

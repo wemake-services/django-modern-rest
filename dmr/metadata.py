@@ -210,6 +210,13 @@ class ResponseModification:
         links: Possible links to other OpenAPI operations.
 
     We use this structure to modify the default response.
+
+    .. versionchanged:: 0.16.0
+        Removed several methods like ``actionable_headers()``,
+        ``actionable_cookies()``, ``infer_return_type()``, ``build_headers()``.
+        Added ``actionable_headers`` and ``actionable_cookies``
+        pre-computed attributes.
+
     """
 
     # Class-level API:
@@ -226,10 +233,31 @@ class ResponseModification:
     description: '_StrOrPromise | None'
     links: dict[str, 'Link | Reference'] | None
 
+    # Pre-computed fields:
+    actionable_headers: Mapping[str, str] | None = dataclasses.field(
+        init=False,
+    )
+    actionable_cookies: Mapping[str, 'NewCookie'] | None = dataclasses.field(
+        init=False,
+    )
+
+    def __post_init__(self) -> None:
+        """Create pre-computed fields."""
+        object.__setattr__(
+            self,
+            'actionable_headers',
+            self._actionable_headers(),
+        )
+        object.__setattr__(
+            self,
+            'actionable_cookies',
+            self._actionable_cookies(),
+        )
+
     def to_spec(self) -> ResponseSpec:
         """Convert response modification to response description."""
         return self.response_spec_cls(
-            return_type=self.infer_return_type(),
+            return_type=self._infer_return_type(),
             status_code=self.status_code,
             headers=(
                 None
@@ -253,7 +281,7 @@ class ResponseModification:
             links=self.links,
         )
 
-    def infer_return_type(self) -> Any:
+    def _infer_return_type(self) -> Any:
         """Infers return type if it needs some extra love."""
         from dmr.exceptions import UnsolvableAnnotationsError  # noqa: PLC0415
 
@@ -270,19 +298,19 @@ class ResponseModification:
 
         return self.return_type
 
-    def actionable_headers(self) -> Mapping[str, 'NewHeader'] | None:
+    def _actionable_headers(self) -> Mapping[str, str] | None:
         """Returns an optional mapping of headers that should be added."""
-        return (  # pyright: ignore[reportReturnType]
-            None  # pyrefly: ignore[bad-return]
+        return (  # pyright: ignore[reportUnknownVariableType]
+            None
             if self.headers is None
             else {
-                header_name: header
+                header_name: header.value  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]  # pyrefly: ignore[missing-attribute]
                 for header_name, header in self.headers.items()
                 if header.is_actionable
             }
         )
 
-    def actionable_cookies(self) -> Mapping[str, 'NewCookie'] | None:
+    def _actionable_cookies(self) -> Mapping[str, 'NewCookie'] | None:
         """Returns an optional mapping of cookies that should be added."""
         return (  # pyright: ignore[reportReturnType]
             None  # pyrefly: ignore[bad-return]
@@ -293,21 +321,6 @@ class ResponseModification:
                 if cookie.is_actionable
             }
         )
-
-    def build_headers(
-        self,
-        renderer: 'Renderer',
-    ) -> dict[str, str]:
-        """Returns headers with values for raw data endpoints."""
-        result_headers: dict[str, Any] = {'Content-Type': renderer.content_type}
-        headers = self.actionable_headers()
-        if not headers:
-            return result_headers
-        result_headers.update({
-            header_name: response_header.value
-            for header_name, response_header in headers.items()
-        })
-        return result_headers
 
 
 class ResponseSpecProvider:

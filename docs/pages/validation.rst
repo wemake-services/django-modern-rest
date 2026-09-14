@@ -141,6 +141,3 @@ Response
 
 .. autoclass:: dmr.validation.response.ResponseValidator
   :members:
-
-.. autoclass:: dmr.validation.response.ValidatedModification
-  :members:

@@ -132,9 +132,18 @@ def negotiate_renderer(
     Raises :exc:`~dmr.exceptions.NotAcceptableError` when Accept is set
     and does not match any of *renderers*.
     """
-    accept = request.headers.get('Accept')
+    # `META` is the raw environ dict, `request.headers` is a lazily built
+    # case-insensitive copy of it, it might still not exist.
+    # Let's not trigger it just yet:
+    accept = request.META.get('HTTP_ACCEPT')
     if accept is None:
         return default
+
+    # Exact match is the overwhelmingly common case for API clients
+    # (`Accept: application/json`):
+    renderer = renderers.get(accept)
+    if renderer is not None:
+        return renderer
 
     renderer_type = accepted_type(accept, renderers)
     if renderer_type is None:
