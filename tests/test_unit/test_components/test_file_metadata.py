@@ -526,7 +526,7 @@ def test_send_files_with_body_wrong_parsers(
     monkeypatch.setattr(
         type(endpoint),
         'request_negotiator',
-        lambda self, request: _WrongBodyParser(),
+        lambda _negotiator_self, request: _WrongBodyParser(),
     )
 
     response = _FilesReadyController.as_view()(request)
