@@ -100,7 +100,7 @@ class _ThrottleController(Controller[MsgspecSerializer]):
         return None
 
 
-def test_sync_throttle_allowed(
+def test_realistic_sync_endpoint(
     benchmark: BenchmarkFixture,
     dmr_rf: DMRRequestFactory,
 ) -> None:
