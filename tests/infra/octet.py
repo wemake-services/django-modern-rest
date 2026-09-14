@@ -78,7 +78,7 @@ class OctetStreamParser(SupportsFileParsing, Parser):
         model: Any,
     ) -> None:
         """Populate ``request.FILES`` from raw request body."""
-        content_disposition = request.headers.get('Content-Disposition')
+        content_disposition = request.META.get('HTTP_CONTENT_DISPOSITION')
         if content_disposition:
             _, disposition_params = parse_header_parameters(content_disposition)
         else:

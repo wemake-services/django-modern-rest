@@ -44,9 +44,12 @@ class NewHeader(_BaseResponseHeader):
 
     def to_spec(self) -> 'HeaderSpec':
         """Convert header type."""
-        namespace = dataclasses.asdict(self)
-        namespace.pop('value')
-        return HeaderSpec(**namespace, required=True)
+        return HeaderSpec(
+            description=self.description,
+            deprecated=self.deprecated,
+            example=self.example,
+            required=True,
+        )
 
 
 @final
