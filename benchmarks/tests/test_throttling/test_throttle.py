@@ -7,6 +7,7 @@ from typing_extensions import override
 
 from dmr import Controller
 from dmr.endpoint import Endpoint
+from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.security import SyncAuth
 from dmr.serializer import BaseSerializer
@@ -27,6 +28,16 @@ class _Auth(SyncAuth):
         controller: Controller[BaseSerializer],
     ) -> Self:
         return self
+
+    @property
+    @override
+    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+        return {}
+
+    @property
+    @override
+    def security_requirement(self) -> SecurityRequirement:
+        return {}
 
     @property
     @override
