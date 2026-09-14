@@ -495,7 +495,7 @@ wheels = [
 
 [[package]]
 name = "cibuildwheel"
-version = "4.2.0"
+version = "4.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "bashlex" },
@@ -508,9 +508,9 @@ dependencies = [
     { name = "packaging" },
     { name = "platformdirs" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a8/b5/68696cc0023dcde3dc5f9f94f7aa3d319fe8f47ad80ba12224f90c837fcb/cibuildwheel-4.2.0.tar.gz", hash = "sha256:a018495ace49e84422ef89c01891439ee0fd00cebd3758b9a879415ff4892d97", size = 455959, upload-time = "2026-08-05T02:25:04.579Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6e/ab/2e01b7a53e44b23b380c4bb77cc53fa96bc109864055efed9e34e375e7e0/cibuildwheel-4.2.1.tar.gz", hash = "sha256:6d67f04c0d1277a3b5301ed2ef82b115efd2ac1fe58b998bbc6ba1d59c918983", size = 456807, upload-time = "2026-09-05T14:47:49.776Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/15/ef/217ba042d73ac2d7500794993069cde78551f538a75c67626929a8587f80/cibuildwheel-4.2.0-py3-none-any.whl", hash = "sha256:4c7d6fc52cf5422c944aed86bc531f15e2279b91ff2c5e9e6fed9d6e3eefc635", size = 167818, upload-time = "2026-08-05T02:25:02.833Z" },
+    { url = "https://files.pythonhosted.org/packages/29/4b/03d8b91b86e9ca35cfed01f409564162f61e0c365dac725df54dfe35a66c/cibuildwheel-4.2.1-py3-none-any.whl", hash = "sha256:22af6eb3a601bc9efdd42ab5522839ed99c8d61cad6dbd0cec5278bfef74ae4f", size = 167680, upload-time = "2026-09-05T14:47:48.422Z" },
 ]
 
 [[package]]
@@ -972,7 +972,7 @@ provides-extras = ["pydantic", "msgspec", "attrs", "jwt", "openapi"]
 
 [package.metadata.requires-dev]
 build = [
-    { name = "cibuildwheel", specifier = "==4.2" },
+    { name = "cibuildwheel", specifier = "==4.2.1" },
     { name = "pypyp", specifier = ">=1.3,<2" },
 ]
 dev = [
@@ -1005,7 +1005,7 @@ dev = [
     { name = "pytest-xdist", specifier = ">=3.8,<4" },
     { name = "ruff", specifier = ">=0.16,<0.17" },
     { name = "schemathesis", specifier = "==4.26.1" },
-    { name = "slotscheck", specifier = ">=0.19,<0.21" },
+    { name = "slotscheck", specifier = ">=0.19,<0.22" },
     { name = "syrupy", specifier = ">=5.1,<7" },
     { name = "testcontainers", extras = ["redis"], specifier = ">=4.15,<5" },
     { name = "tracecov", specifier = ">=0.23,<0.25" },
@@ -3254,11 +3254,11 @@ wheels = [
 
 [[package]]
 name = "slotscheck"
-version = "0.20.1"
+version = "0.21.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ae/dc/46346431b07aefd028e48569b8b4a067a7604f98559a14e848d90febaea0/slotscheck-0.20.1.tar.gz", hash = "sha256:f590fddcea4b673f6ef3ee0010a545df1cad96941ef09906b28b2ee31c38c66b", size = 14747, upload-time = "2026-07-05T13:23:28.803Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/33/34/811f9588dbd55e3adee986e53cd1bcdfabc6c5b6919b9cf1ff208f2878cd/slotscheck-0.21.0.tar.gz", hash = "sha256:0a5296300c5d5d9663e597861d7b3ef16abc74c851498a648116d868960c12c2", size = 15354, upload-time = "2026-09-06T19:08:07.131Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/59/e9/232563e90b04c3ddd93af1a6ecf8ff8566ad7bb80e46843c472c36f2578c/slotscheck-0.20.1-py3-none-any.whl", hash = "sha256:e8ec875fc40e37660babb28805294615d5631bb09c51ee75db08d03d4b6c156e", size = 17634, upload-time = "2026-07-05T13:23:27.53Z" },
+    { url = "https://files.pythonhosted.org/packages/e1/51/778abe936884e73944d43267bed0eae1da0658b11c7d6eb7e10ce83a646b/slotscheck-0.21.0-py3-none-any.whl", hash = "sha256:c109206db56ee48b3862feccd8c44ca480bb4d102ec39f6cc0f8a9695ef17eb0", size = 18076, upload-time = "2026-09-06T19:08:05.937Z" },
 ]
 
 [[package]]
