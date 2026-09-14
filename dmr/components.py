@@ -872,20 +872,29 @@ class FileMetadataComponent(ComponentParser):
         """
         Validates that the component is correctly defined.
 
-        This component requires at least one
-        :class:`dmr.parsers.SupportsFileParsing` instance
-        to be present in parsers.
+        This component requires all parsers of this endpoint to be
+        :class:`dmr.parsers.SupportsFileParsing` instances.
+
+        File metadata is always required. So, a request that is negotiated
+        to a parser that cannot parse files can never be served:
+        it will always fail with
+        :exc:`~dmr.exceptions.RequestSerializationError`.
 
         Runs in import time.
+
+        .. versionchanged:: 0.16.0
+            Was requiring just a single parser that can parse files before.
+
         """
-        if not any(
-            isinstance(parser, SupportsFileParsing)
-            for parser in metadata.parsers.values()
-        ):
-            hint = list(metadata.parsers.keys())
+        unsupported = [
+            content_type
+            for content_type, parser in metadata.parsers.items()
+            if not isinstance(parser, SupportsFileParsing)
+        ]
+        if unsupported:
             raise EndpointMetadataError(
-                f'Class {controller_cls!r} requires at least one parser '
-                f'that can parse files, found: {hint}',
+                f'Class {controller_cls!r} requires all parsers to be able '
+                f'to parse files, these ones cannot: {unsupported}',
             )
 
     @override

@@ -51,6 +51,13 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   `CookieSpec.httponly` can no longer be `None`, use `False` instead, #1456
 - `Endpoint` objects are not callable anymore, use `.func` attribute
   to make the call instead, #1456
+- Endpoints with a `FileMetadata` component now require *all* their parsers
+  to support file parsing, not just one of them. File metadata is always
+  required, so a request negotiated to a parser that cannot parse files
+  could never be served: it always failed with a `400` response.
+  Such endpoints now raise `EndpointMetadataError` in import time instead.
+  Use `@modify(parsers=[...])` to narrow the parsers down
+  for the endpoints that receive files, #1493
 
 ### Performance improvements
 

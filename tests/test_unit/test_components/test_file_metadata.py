@@ -21,20 +21,17 @@ from inline_snapshot import snapshot
 from typing_extensions import override
 
 from dmr import Body, Controller, FileMetadata, modify
+from dmr.endpoint import Endpoint
 from dmr.exceptions import EndpointMetadataError
-from dmr.files import FileBodyLike
-from dmr.metadata import EndpointMetadata
-from dmr.negotiation import ContentType, conditional_type
-from dmr.openapi import OpenAPIContext
+from dmr.negotiation import ContentType, RequestNegotiator, conditional_type
 from dmr.parsers import (
     DeserializeFunc,
+    JsonParser,
     MultiPartParser,
     Parser,
     Raw,
-    SupportsFileParsing,
 )
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.serializer import BaseSerializer
 from dmr.test import DMRRequestFactory
 from tests.infra.octet import OCTET_STREAM, OctetFileModel, OctetStreamParser
 
@@ -223,7 +220,7 @@ def test_file_metadata_multiple_uploads(
 
 def test_file_metadata_missing_parser() -> None:
     """Ensures that FileMetadata needs file parsers."""
-    with pytest.raises(EndpointMetadataError, match='can parse files'):
+    with pytest.raises(EndpointMetadataError, match='parse files'):
 
         class _Controller(
             Controller[PydanticSerializer],
@@ -233,6 +230,46 @@ def test_file_metadata_missing_parser() -> None:
                 parsed_file_metadata: FileMetadata[_MultipleFiles],
             ) -> str:
                 raise NotImplementedError
+
+
+def test_file_metadata_mixed_parsers() -> None:
+    """Ensures that all parsers of the endpoint must parse files."""
+    with pytest.raises(
+        EndpointMetadataError,
+        match=r"these ones cannot: \['application/json'\]",
+    ):
+
+        class _Controller(Controller[PydanticSerializer]):
+            parsers = (JsonParser(), MultiPartParser())
+
+            def post(
+                self,
+                parsed_body: Body[dict[str, str]],
+                parsed_file_metadata: FileMetadata[_MultipleFiles],
+            ) -> str:
+                raise NotImplementedError
+
+
+def test_file_metadata_parsers_per_endpoint() -> None:
+    """Ensures that only endpoints with `FileMetadata` need file parsers."""
+
+    @final
+    class _Controller(Controller[PydanticSerializer]):
+        parsers = (JsonParser(),)
+
+        @modify(parsers=[MultiPartParser()])
+        def post(
+            self,
+            parsed_file_metadata: FileMetadata[_MultipleFiles],
+        ) -> str:
+            raise NotImplementedError
+
+        def put(self, parsed_body: Body[dict[str, str]]) -> str:
+            raise NotImplementedError
+
+    endpoints = _Controller.api_endpoints
+    assert endpoints['POST'].metadata.parsers.keys() == {'multipart/form-data'}
+    assert endpoints['PUT'].metadata.parsers.keys() == {'application/json'}
 
 
 @final
@@ -449,35 +486,33 @@ class _WrongBodyParser(Parser):
 
 
 @final
-class _FakeParser(SupportsFileParsing, Parser):
-    content_type = 'application/json'
+class _WrongParserNegotiator(RequestNegotiator):
+    """
+    Custom negotiators are free to return any parser they want.
+
+    Configured parsers are validated in import time,
+    so this is the only way to get a parser
+    that cannot parse files in runtime.
+    """
+
+    __slots__ = ()
 
     @override
-    def parse(
-        self,
-        to_deserialize: Raw,
-        deserializer_hook: DeserializeFunc | None = None,
-        *,
-        request: HttpRequest,
-        model: Any,
-    ) -> None:
-        raise NotImplementedError
-
-    @override
-    def schema_metadata(
-        self,
-        model: Any,
-        model_meta: tuple[Any, ...],
-        metadata: EndpointMetadata,
-        serializer: type[BaseSerializer],
-        context: OpenAPIContext,
-    ) -> type[FileBodyLike]:
-        raise NotImplementedError
+    def __call__(self, request: HttpRequest) -> Parser:
+        return _WrongBodyParser()
 
 
 @final
-class _ControllerWithWrongParsers(Controller[PydanticSerializer]):
-    parsers = (_FakeParser(), _WrongBodyParser())
+class _WrongParserEndpoint(Endpoint):
+    __slots__ = ()
+
+    request_negotiator_cls = _WrongParserNegotiator
+
+
+@final
+class _ControllerWithWrongNegotiator(Controller[PydanticSerializer]):
+    endpoint_cls = _WrongParserEndpoint
+    parsers = (MultiPartParser(),)
 
     def post(
         self,
@@ -486,18 +521,18 @@ class _ControllerWithWrongParsers(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def test_send_files_with_body_wrong_parsers(
+def test_file_metadata_wrong_negotiated_parser(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
 ) -> None:
-    """Ensures that when selecting non-files ready parser, it raises."""
+    """Ensures that negotiating a non-files ready parser raises."""
     request = dmr_rf.post(
         '/whatever/',
         {},
         content_type=MULTIPART_CONTENT,
     )
 
-    response = _ControllerWithWrongParsers.as_view()(request)
+    response = _ControllerWithWrongNegotiator.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content

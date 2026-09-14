@@ -37,6 +37,31 @@ Parsing files
   While file objects themselves are available as ``self.request.FILES``.
   See :attr:`django.http.HttpRequest.FILES` for more info.
 
+Every parser of an endpoint with a ``FileMetadata`` component
+must be able to parse files, like :class:`~dmr.parsers.MultiPartParser` is.
+File metadata is always required, so a request that is negotiated
+to a parser that cannot parse files can never be served.
+Such endpoints raise :exc:`~dmr.exceptions.EndpointMetadataError`
+in import time.
+
+When other endpoints of the same controller need other parsers,
+define parsers per endpoint:
+
+.. code:: python
+
+   class MyController(Controller[PydanticSerializer]):
+       parsers = (MultiPartParser(), JsonParser())
+
+       @modify(parsers=[MultiPartParser()])
+       def post(
+           self,
+           parsed_file_metadata: FileMetadata[UploadedFiles],
+       ) -> str:
+           ...
+
+       def put(self, parsed_body: Body[Payload]) -> str:
+           ...
+
 We don't provide any extra abstractions on top of Django's file uploads.
 
 .. note::

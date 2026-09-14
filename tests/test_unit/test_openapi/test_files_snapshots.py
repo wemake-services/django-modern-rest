@@ -249,9 +249,11 @@ def test_conditional_files_schema(snapshot: SnapshotAssertion) -> None:
 class _SeveralParsersController(Controller[PydanticSerializer]):
     parsers = (MultiPartParser(), JsonParser())
 
+    # `JsonParser` can't parse files, so endpoints with `FileMetadata`
+    # must narrow the parsers down to the ones that can:
+    @modify(parsers=[MultiPartParser()])
     def post(
         self,
-        # `JsonParser` can't parse files, so it must not be present:
         parsed_file_metadata: FileMetadata[_SeveralSimpleFiles],
     ) -> str:
         raise NotImplementedError
