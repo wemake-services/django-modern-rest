@@ -10,7 +10,7 @@
     "paths": {
       "/api/v1/default": {
         "get": {
-          "operationId": "getDefaultcontrollerApiV1Default",
+          "operationId": "getDefaultControllerApiV1Default",
           "responses": {
             "200": {
               "description": "OK",
@@ -88,7 +88,7 @@
       },
       "/api/v1/all": {
         "get": {
-          "operationId": "getAllheaderscontrollerApiV1All",
+          "operationId": "getAllHeadersControllerApiV1All",
           "responses": {
             "200": {
               "description": "OK",
@@ -180,7 +180,7 @@
       },
       "/api/v1/no": {
         "get": {
-          "operationId": "getNoheaderscontrollerApiV1No",
+          "operationId": "getNoHeadersControllerApiV1No",
           "responses": {
             "200": {
               "description": "OK",
@@ -295,7 +295,7 @@
     "paths": {
       "/api/v1/with-errors": {
         "get": {
-          "operationId": "getAllreportscontrollerApiV1WithErrors",
+          "operationId": "getAllReportsControllerApiV1WithErrors",
           "responses": {
             "200": {
               "description": "OK",
@@ -474,7 +474,7 @@
     "paths": {
       "/api/v1/dynamic": {
         "get": {
-          "operationId": "getDynamicdefaultcontrollerApiV1Dynamic",
+          "operationId": "getDynamicDefaultControllerApiV1Dynamic",
           "responses": {
             "200": {
               "description": "OK",

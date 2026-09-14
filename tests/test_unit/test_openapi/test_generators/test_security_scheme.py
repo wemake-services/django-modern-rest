@@ -21,8 +21,8 @@ class _NoSchemeAuth(SyncAuth):
     @override
     def __call__(
         self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
+        endpoint: Endpoint,
+        controller: Controller[BaseSerializer],
     ) -> Self | None:
         raise NotImplementedError
 
@@ -46,8 +46,8 @@ class _WithSchemeAuth(SyncAuth):
     @override
     def __call__(
         self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
+        endpoint: Endpoint,
+        controller: Controller[BaseSerializer],
     ) -> Self | None:
         raise NotImplementedError
 

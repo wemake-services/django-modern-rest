@@ -10,7 +10,7 @@
     "paths": {
       "/api/cookies/": {
         "get": {
-          "operationId": "getAuthedandcookiescontrollerApiCookies",
+          "operationId": "getAuthedAndCookiesControllerApiCookies",
           "parameters": [
             {
               "description": "Cookies metadata",
@@ -274,7 +274,7 @@
     "paths": {
       "/api/types/": {
         "post": {
-          "operationId": "postConditionaltypescontrollerApiTypes",
+          "operationId": "postConditionalTypesControllerApiTypes",
           "requestBody": {
             "content": {
               "application/json": {
@@ -512,7 +512,7 @@
     "paths": {
       "/api/types-with-example/": {
         "post": {
-          "operationId": "postConditionaltypeswithexamplecontrollerApiTypesWithExample",
+          "operationId": "postConditionalTypesWithExampleControllerApiTypesWithExample",
           "requestBody": {
             "content": {
               "application/json": {
@@ -751,7 +751,7 @@
     "paths": {
       "/api/v1/user/{user_id}/post/{post_id}/": {
         "get": {
-          "operationId": "getGetpostcontrollerApiV1UserUserIdPostPostId",
+          "operationId": "getGetPostControllerApiV1UserUserIdPostPostId",
           "parameters": [
             {
               "deprecated": false,
@@ -822,7 +822,7 @@
       },
       "/api/v1/articles/{year}/{slug}/": {
         "get": {
-          "operationId": "getGetpostcontrollerApiV1ArticlesYearSlug",
+          "operationId": "getGetPostControllerApiV1ArticlesYearSlug",
           "parameters": [
             {
               "deprecated": false,
@@ -961,7 +961,7 @@
     "paths": {
       "/api/v1/user/": {
         "get": {
-          "operationId": "getUsercontrollerApiV1User",
+          "operationId": "getUserControllerApiV1User",
           "responses": {
             "200": {
               "description": "OK",
@@ -1000,7 +1000,7 @@
           "deprecated": false
         },
         "post": {
-          "operationId": "postUsercontrollerApiV1User",
+          "operationId": "postUserControllerApiV1User",
           "requestBody": {
             "content": {
               "application/json": {
@@ -1061,7 +1061,7 @@
       },
       "/api/v1/user/{id}/": {
         "get": {
-          "operationId": "getGetusercontrollerApiV1UserId",
+          "operationId": "getGetUserControllerApiV1UserId",
           "parameters": [
             {
               "deprecated": false,

@@ -27,7 +27,7 @@ class StreamResponseModification(ResponseModification):
     we need to add default header values.
     """
 
-    headers: Mapping[str, 'NewHeader | HeaderSpec'] | None
+    headers: Mapping[str, NewHeader | HeaderSpec] | None
 
     def __post_init__(self) -> None:
         """Set header specs if it is missing."""
@@ -40,9 +40,9 @@ def streaming_response_spec(  # noqa: WPS211
     *,
     content_type: str | set[str],
     status_code: HTTPStatus = HTTPStatus.OK,
-    headers: Mapping[str, 'HeaderSpec'] | None = None,
-    cookies: Mapping[str, 'CookieSpec'] | None = None,
-    links: dict[str, 'Link | Reference'] | None = None,
+    headers: Mapping[str, HeaderSpec] | None = None,
+    cookies: Mapping[str, CookieSpec] | None = None,
+    links: dict[str, Link | Reference] | None = None,
     description: str | None = None,
 ) -> ResponseSpec:
     """

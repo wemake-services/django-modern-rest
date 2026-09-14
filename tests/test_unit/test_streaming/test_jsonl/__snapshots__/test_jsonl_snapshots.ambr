@@ -10,7 +10,7 @@
     "paths": {
       "/api/v1/complex": {
         "get": {
-          "operationId": "getComplexjsonlApiV1Complex",
+          "operationId": "getComplexJsonLApiV1Complex",
           "parameters": [
             {
               "deprecated": false,
@@ -190,7 +190,7 @@
     "paths": {
       "/api/v1/complex": {
         "get": {
-          "operationId": "getComplexjsonlApiV1Complex",
+          "operationId": "getComplexJsonLApiV1Complex",
           "parameters": [
             {
               "deprecated": false,
@@ -370,7 +370,7 @@
     "paths": {
       "/api/v1/jsonl": {
         "get": {
-          "operationId": "getClassbasedjsonlApiV1Jsonl",
+          "operationId": "getClassBasedJsonLApiV1Jsonl",
           "responses": {
             "200": {
               "description": "OK",
@@ -424,7 +424,7 @@
           "deprecated": false
         },
         "post": {
-          "operationId": "postClassbasedjsonlApiV1Jsonl",
+          "operationId": "postClassBasedJsonLApiV1Jsonl",
           "responses": {
             "200": {
               "description": "OK",

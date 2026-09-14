@@ -10,7 +10,7 @@
     "paths": {
       "/api/msgpack": {
         "post": {
-          "operationId": "postMsgpackcontrollerApiMsgpack",
+          "operationId": "postMsgpackControllerApiMsgpack",
           "requestBody": {
             "content": {
               "application/msgpack": {

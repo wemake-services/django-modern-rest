@@ -13,8 +13,8 @@ class HttpBasicAsync(HttpBasicAsyncAuth):
     @override
     async def authenticate(
         self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
+        endpoint: Endpoint,
+        controller: Controller[BaseSerializer],
         username: str,
         password: str,
     ) -> Self | None:
