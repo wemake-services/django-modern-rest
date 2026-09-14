@@ -599,8 +599,7 @@ Attributes you do not override retain their default implementations.
 Create a fresh context for each schema build, since its registries
 track operation IDs, schemas, and security schemes for that build.
 
-For example, this context generates operation IDs without controller names
-and post-processes the merged specification's title:
+For example, this context generates operation IDs without controller names:
 
 .. literalinclude:: /examples/openapi/custom_context.py
    :language: python

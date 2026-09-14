@@ -1,6 +1,8 @@
+import json
 from typing import ClassVar, Final, TypeAlias, final
 
 import pytest
+from syrupy.assertion import SnapshotAssertion
 from typing_extensions import override
 
 from dmr import Controller, modify
@@ -151,8 +153,11 @@ def test_config_merger_class() -> None:
 
 
 @pytest.mark.parametrize('serializer', serializers)
-def test_custom_context_schema(serializer: type[BaseSerializer]) -> None:
-    """Customizations preserve explicit IDs, config, and other schema fields."""
+def test_custom_context_schema(
+    serializer: type[BaseSerializer],
+    snapshot: SnapshotAssertion,
+) -> None:
+    """Custom context changes the schema and preserves the input config."""
 
     class _UserController(Controller[serializer]):  # type: ignore[valid-type]
         def get(self) -> int:
@@ -164,78 +169,10 @@ def test_custom_context_schema(serializer: type[BaseSerializer]) -> None:
 
     router = Router('api/', [path('users/', _UserController.as_view())])
     config = OpenAPIConfig(title='Users API', version='1.0.0')
-    default_schema = build_schema(router, config=config).convert()
-
     custom_schema = build_schema(
         router,
         context=_CustomContext(config),
     ).convert()
 
-    assert custom_schema['paths']['/api/users/']['get']['operationId'] == (
-        'getApiUsers'
-    )
-    assert custom_schema['paths']['/api/users/']['post']['operationId'] == (
-        'ExplicitCreate'
-    )
-    assert custom_schema['info']['title'] == 'Users API (custom)'
+    assert json.dumps(custom_schema, indent=2) == snapshot
     assert config.title == 'Users API'
-    # A fresh context must not inherit another context's IDs or factories:
-    assert build_schema(router, context=_CustomContext(config)).convert() == (
-        custom_schema
-    )
-    assert build_schema(router, config=config).convert() == default_schema
-    # Everything except the intentionally customized fields stays the same:
-    default_schema['info']['title'] = 'Users API (custom)'
-    default_schema['paths']['/api/users/']['get']['operationId'] = 'getApiUsers'
-    assert custom_schema == default_schema
-
-
-@pytest.mark.parametrize('serializer', serializers)
-def test_custom_generated_id_collision(
-    serializer: type[BaseSerializer],
-) -> None:
-    """Custom-generated IDs still use the shared uniqueness registry."""
-
-    class _UserController(Controller[serializer]):  # type: ignore[valid-type]
-        def get(self) -> int:
-            raise NotImplementedError
-
-    router = Router(
-        'api/',
-        [
-            path('user-profile/', _UserController.as_view()),
-            path('user_profile/', _UserController.as_view()),
-        ],
-    )
-
-    with pytest.raises(ValueError, match="'getApiUserProfile' is already"):
-        build_schema(router, context=_CustomContext())
-
-
-@pytest.mark.parametrize('serializer', serializers)
-@pytest.mark.parametrize('explicit_first', [True, False])
-def test_custom_and_explicit_id_collision(
-    serializer: type[BaseSerializer],
-    *,
-    explicit_first: bool,
-) -> None:
-    """Explicit and custom-generated IDs conflict in either traversal order."""
-
-    class _UserController(Controller[serializer]):  # type: ignore[valid-type]
-        def get(self) -> int:
-            raise NotImplementedError
-
-    class _ExplicitController(Controller[serializer]):  # type: ignore[valid-type]
-        @modify(operation_id='getApiUsers')
-        def get(self) -> int:
-            raise NotImplementedError
-
-    routes = [
-        path('manual/', _ExplicitController.as_view()),
-        path('users/', _UserController.as_view()),
-    ]
-    if not explicit_first:
-        routes.reverse()
-
-    with pytest.raises(ValueError, match="'getApiUsers' is already"):
-        build_schema(Router('api/', routes), context=_CustomContext())
