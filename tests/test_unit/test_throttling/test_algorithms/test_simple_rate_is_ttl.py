@@ -32,6 +32,7 @@ def test_ttl_reset_uses_ttl_directly() -> None:
         cache_object,
         now=_DUMMY_NOW,
     )
+
     assert headers['X-RateLimit-Reset'] == str(cache_object['time'])
     assert headers['X-RateLimit-Remaining'] == str(
         _MAX_REQUESTS - cache_object['history'][0],
@@ -59,6 +60,7 @@ def test_expire_at_subtracts_now() -> None:
         cache_object,
         now=_EXPIRE_AT_NOW,
     )
+
     assert headers['X-RateLimit-Reset'] == str(
         cache_object['time'] - _EXPIRE_AT_NOW,
     )
@@ -83,7 +85,8 @@ def test_ttl_skips_window_expiry() -> None:
         'is_ttl': True,
     }
     cached, _now = algorithm._process_cache(throttle, cache_object)
-    assert cached.get('is_ttl') is True
+
+    assert cached is cache_object
     assert cached['history'] == [3]
     assert cached['time'] == 1
 
@@ -102,5 +105,7 @@ def test_expire_at_resets_expired_window() -> None:
         'time': 1,
     }
     cached, now = algorithm._process_cache(throttle, cache_object)
+
     assert cached['history'] == [0]
     assert cached['time'] == now + 60
+    assert 'is_ttl' not in cached
