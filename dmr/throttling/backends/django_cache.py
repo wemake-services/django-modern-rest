@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, final
 from django.core.cache import DEFAULT_CACHE_ALIAS, BaseCache, caches
 from typing_extensions import override
 
-from dmr.settings import default_parser, default_renderer
+from dmr.internal.json import json_dumps_bytes, json_loads
 from dmr.throttling.backends.base import (
     BaseThrottleAsyncBackend,
     BaseThrottleSyncBackend,
@@ -43,22 +43,14 @@ class _DjangoCache:
         if stored_cache is None:
             return None
 
-        return controller.serializer.deserialize(  # type: ignore[no-any-return]
-            stored_cache,
-            parser=default_parser,
-            request=controller.request,
-            model=CachedRateLimit,
-        )
+        return json_loads(stored_cache)  # type: ignore[no-any-return]
 
     def _dump_cache(
         self,
         controller: 'Controller[BaseSerializer]',
         cache_object: CachedRateLimit,
     ) -> bytes:
-        return controller.serializer.serialize(
-            cache_object,
-            renderer=default_renderer,
-        )
+        return json_dumps_bytes(cache_object)
 
 
 @dataclasses.dataclass(slots=True, frozen=True)

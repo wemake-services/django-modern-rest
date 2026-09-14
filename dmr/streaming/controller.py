@@ -1,10 +1,8 @@
-# pyright: reportUnknownArgumentType=false, reportUnknownMemberType=false
 import abc
 from collections.abc import AsyncIterator, Iterable, Mapping
 from http import HTTPStatus
 from typing import Any, ClassVar, TypeVar, cast
 
-from django.http import HttpResponseBase
 from typing_extensions import override
 
 from dmr.controller import Controller
@@ -15,32 +13,20 @@ from dmr.negotiation import request_renderer
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings, default_renderer, resolve_setting
-from dmr.streaming.metadata import StreamResponseModification
+from dmr.streaming.metadata import StreamingResponseModification
 from dmr.streaming.renderer import StreamingRenderer
 from dmr.streaming.stream import StreamingResponse
-from dmr.streaming.validation import StreamingValidator
-from dmr.validation.response import ValidatedModification
+from dmr.streaming.validation import (
+    StreamingResponseValidator,
+    StreamingValidator,
+)
 
 
 class _StreamingEndpoint(Endpoint):
-    response_modification_cls = StreamResponseModification
+    response_modification_cls = StreamingResponseModification
+    response_validator_cls = StreamingResponseValidator
 
     __slots__ = ()
-
-    @override
-    def _build_new_response(
-        self,
-        controller: Controller[BaseSerializer],
-        validated: ValidatedModification,
-    ) -> HttpResponseBase:
-        # for mypy: we only use `_StreamingEndpoint` with `StreamingController`
-        assert isinstance(controller, StreamingController)  # noqa: S101
-        return controller.to_stream(
-            validated.raw_data,
-            status_code=validated.status_code,
-            headers=validated.headers,
-            cookies=validated.cookies,
-        )
 
 
 _SerializerT_co = TypeVar(
@@ -169,7 +155,8 @@ class StreamingController(Controller[_SerializerT_co]):
                 )
             ),
         )
-        set_cookies(streaming_response, cookies)
+        if cookies:
+            set_cookies(streaming_response, cookies)
         return streaming_response
 
     def ping_event(self) -> Any | None:

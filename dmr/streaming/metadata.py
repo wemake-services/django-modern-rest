@@ -4,6 +4,8 @@ from http import HTTPStatus
 from types import MappingProxyType
 from typing import Any, Final, final
 
+from typing_extensions import override
+
 from dmr.cookies import CookieSpec
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.metadata import ResponseModification, ResponseSpec
@@ -19,20 +21,26 @@ STREAMING_HEADERS_SPEC: Final = MappingProxyType({
 
 @final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
-class StreamResponseModification(ResponseModification):
+class StreamingResponseModification(ResponseModification):
     """
     Provide extra metadata for streaming responses.
 
     Since we set several headers in ``StreamingResponse``,
     we need to add default header values.
+
+    .. versionchanged:: 0.16.0
+        Renamed from ``StreamResponseModification``.
+
     """
 
     headers: Mapping[str, NewHeader | HeaderSpec] | None
 
+    @override
     def __post_init__(self) -> None:
         """Set header specs if it is missing."""
         if self.headers is None:
             object.__setattr__(self, 'headers', STREAMING_HEADERS_SPEC)
+        super(StreamingResponseModification, self).__post_init__()  # noqa: WPS608
 
 
 def streaming_response_spec(  # noqa: WPS211

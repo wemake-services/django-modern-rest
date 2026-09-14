@@ -1085,7 +1085,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> list[ResponseSpec]:
-        all_responses = self._limit_stream_responses([
+        all_responses = self._limit_streaming_responses([
             self._resolve_response_type(
                 response,
                 controller_cls=controller_cls,
@@ -1126,7 +1126,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             )
         return response
 
-    def _limit_stream_responses(
+    def _limit_streaming_responses(
         self,
         responses: list[ResponseSpec],
     ) -> list[ResponseSpec]:

@@ -28,9 +28,10 @@
 # SOFTWARE.
 
 import dataclasses
+import datetime as dt
 from collections.abc import Mapping
 from http.cookies import Morsel, SimpleCookie
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, final
+from typing import TYPE_CHECKING, Any, ClassVar, Final, Literal, final
 
 from django.http import HttpResponseBase
 
@@ -46,10 +47,10 @@ class _BaseCookie:
 
     path: '_StrOrPromise' = '/'
     max_age: int | None = None
-    expires: int | None = None
+    expires: int | dt.datetime | None = None
     domain: str | None = None
-    secure: bool | None = None
-    httponly: bool | None = None
+    secure: bool = False
+    httponly: bool = False
     samesite: Literal['lax', 'strict', 'none'] = 'lax'
 
 
@@ -89,13 +90,6 @@ class CookieSpec(_BaseCookie):
 
     """
 
-    #: This fields are not a part of the `cookie` spec:
-    _extra_fields: ClassVar[frozenset[str]] = frozenset((
-        'description',
-        'required',
-        'skip_validation',
-    ))
-
     is_actionable: ClassVar[Literal[False]] = False
 
     description: '_StrOrPromise | None' = None
@@ -109,10 +103,8 @@ class CookieSpec(_BaseCookie):
         cookie[other.key] = other.value
 
         namespace = cookie[other.key]
-        for field in dataclasses.fields(self):
-            if field.name in self._extra_fields:
-                continue
-            field_name, field_value = self._morsel_field(field.name, other)
+        for field in _COOKIE_SPEC_FIELDS:
+            field_name, field_value = self._morsel_field(field, other)
             namespace[field_name] = field_value
 
         return cookie[other.key] == other
@@ -135,6 +127,14 @@ class CookieSpec(_BaseCookie):
             # we cannot treat it as a missing one.
             return 'max-age', '' if self.max_age is None else self.max_age
         return field_name, getattr(self, field_name) or ''
+
+
+#: We use module level fields not to calculate them each time.
+_COOKIE_SPEC_FIELDS: Final = frozenset(
+    field.name
+    for field in dataclasses.fields(CookieSpec)
+    if field.name not in {'description', 'required', 'skip_validation'}
+)
 
 
 @final
@@ -183,29 +183,43 @@ class NewCookie(_BaseCookie):
         """
         return cls(
             value=value,
-            **{
-                field.name: getattr(spec, field.name)
-                for field in dataclasses.fields(spec)
-                if field.name not in spec._extra_fields  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-            },
+            path=spec.path,
+            max_age=spec.max_age,
+            expires=spec.expires,
+            domain=spec.domain,
+            secure=spec.secure,
+            httponly=spec.httponly,
+            samesite=spec.samesite,
         )
 
     def to_spec(self) -> CookieSpec:
         """Converts the modification to spec."""
-        namespace = dataclasses.asdict(self)
-        namespace.pop('value')
-        return CookieSpec(**namespace)
-
-    def as_dict(self) -> dict[str, Any]:
-        """Converts to a dictionary ."""
-        return dataclasses.asdict(self)
+        return CookieSpec(
+            path=self.path,
+            max_age=self.max_age,
+            expires=self.expires,
+            domain=self.domain,
+            secure=self.secure,
+            httponly=self.httponly,
+            samesite=self.samesite,
+        )
 
 
 def set_cookies(
     response: HttpResponseBase,
-    cookies: Mapping[str, NewCookie] | None,
+    cookies: Mapping[str, NewCookie],
 ) -> None:
     """Set cookies for the HTTP response."""
-    if cookies:
-        for cookie_key, cookie in cookies.items():
-            response.set_cookie(cookie_key, **cookie.as_dict())
+    for cookie_key, cookie in cookies.items():
+        # TODO: fix stubs for `set_cookie` in `django-stubs`
+        response.set_cookie(
+            cookie_key,
+            path=str(cookie.path),
+            max_age=cookie.max_age,
+            expires=cookie.expires,  # type: ignore[arg-type]
+            domain=cookie.domain,
+            secure=cookie.secure,
+            httponly=cookie.httponly,
+            samesite=cookie.samesite,  # type: ignore[arg-type]
+            value=cookie.value,
+        )
