@@ -84,6 +84,11 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   `comment`, and `schema_uri` fields, #1490
 - Default OpenAPI `operation_id` generation now preserves capitalization
   in controller class names, #1500
+- `FileMetadata` now requires all parsers to support file parsing and raises
+  `EndpointMetadataError` at import time otherwise. Previously a single
+  file-ready parser was enough, so a controller with
+  `parsers = (MultiPartParser(), JsonParser())` passed validation, while every
+  request that was negotiated to the non-file parser failed at runtime, #1493
 
 
 ## 0.15.0 (2026-09-11)

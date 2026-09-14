@@ -28,6 +28,7 @@ from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import OpenAPIContext
 from dmr.parsers import (
     DeserializeFunc,
+    JsonParser,
     MultiPartParser,
     Parser,
     Raw,
@@ -223,11 +224,27 @@ def test_file_metadata_multiple_uploads(
 
 def test_file_metadata_missing_parser() -> None:
     """Ensures that FileMetadata needs file parsers."""
-    with pytest.raises(EndpointMetadataError, match='can parse files'):
+    with pytest.raises(EndpointMetadataError, match='to support file parsing'):
 
         class _Controller(
             Controller[PydanticSerializer],
         ):
+            def post(
+                self,
+                parsed_file_metadata: FileMetadata[_MultipleFiles],
+            ) -> str:
+                raise NotImplementedError
+
+
+def test_file_metadata_rejects_non_file_parsers() -> None:
+    """Ensures that a single non-file parser rejects FileMetadata."""
+    with pytest.raises(EndpointMetadataError, match='to support file parsing'):
+
+        class _Controller(
+            Controller[PydanticSerializer],
+        ):
+            parsers = (MultiPartParser(), JsonParser())
+
             def post(
                 self,
                 parsed_file_metadata: FileMetadata[_MultipleFiles],
@@ -476,8 +493,8 @@ class _FakeParser(SupportsFileParsing, Parser):
 
 
 @final
-class _ControllerWithWrongParsers(Controller[PydanticSerializer]):
-    parsers = (_FakeParser(), _WrongBodyParser())
+class _FilesReadyController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(),)
 
     def post(
         self,
@@ -489,15 +506,30 @@ class _ControllerWithWrongParsers(Controller[PydanticSerializer]):
 def test_send_files_with_body_wrong_parsers(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Ensures that when selecting non-files ready parser, it raises."""
+    """
+    Ensures that when selecting non-files ready parser, it raises.
+
+    Since import time validation requires all parsers to support
+    :class:`dmr.parsers.SupportsFileParsing`, this runtime guard is
+    a defence in depth: we force the negotiator to return a parser
+    that cannot parse files.
+    """
     request = dmr_rf.post(
         '/whatever/',
         {},
         content_type=MULTIPART_CONTENT,
     )
 
-    response = _ControllerWithWrongParsers.as_view()(request)
+    endpoint = _FilesReadyController.api_endpoints['POST']
+    monkeypatch.setattr(
+        type(endpoint),
+        'request_negotiator',
+        lambda self, request: _WrongBodyParser(),
+    )
+
+    response = _FilesReadyController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
