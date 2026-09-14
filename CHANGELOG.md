@@ -109,6 +109,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   `comment`, and `schema_uri` fields, #1490
 - Default OpenAPI `operation_id` generation now preserves capitalization
   in controller class names, #1500
+- Fixes that endpoints with `auth=None` inherited document-level
+  `OpenAPIConfig.security` requirements, now they emit `security: []`, #1497
 
 
 ## 0.15.0 (2026-09-11)
