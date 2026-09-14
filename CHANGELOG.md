@@ -40,6 +40,17 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   docstring entirely, now the other one is still parsed from it.
   They also default to `EMPTY` instead of `None`, so passing `None`
   explicitly now means "generate nothing" instead of "use the docstring", #1446
+- Renamed `dmr.streaming.metadata.StreamResponseModification`
+  to `StreamingResponseModification`, #1456
+- Removed `dmr.validation.response.ValidatedModification`,
+  it is not needed anymore, #1456
+- Removed `build_headers`, `actionable_headers`, `actionable_cookies`,
+  `infer_return_type` methods from `dmr.metadata.ResponseModification`, #1456
+- Removed `NewCookie.as_dict` method, #1456
+- `NewCookie.secure`, `CookieSpec.secure`, `NewCookie.httponly`,
+  `CookieSpec.httponly` can no longer be `None`, use `False` instead, #1456
+- `Endpoint` objects are not callable anymore, use `.func` attribute
+  to make the call instead, #1456
 
 ### Performance improvements
 
@@ -48,6 +59,19 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   if there's no throttle, the check function won't even be called.
   Previously, it was called and early returned from it, #1454
 - Increased default `DMR_MAX_CACHE_SIZE` from `256` to `1024`, #1448
+- Changed how `@modify` responses are created,
+  we now return `HttpResponseBase` objects directly from `ResponseValidator`.
+  Which allows us to do less calls
+  and not to create intermediate heavy objects, #1456
+- Improved `NewCookie` creation and conversion times
+  and `CookieSpec.is_equal` execution time, #1456
+- Improved `set_cookies` execution time: we now don't call it
+  if no cookies are to be set, `response.set_cookie` call is optimized, #1456
+- Improved `NewHeader.to_spec` execution time, #1456
+- Improved the renderer selection for the common cases, #1456
+- Optimized `SyncDjangoCache` and `AsyncDjangoCache` json parsing, #1456
+- Optimized `Controller.as_view()` for cases with `csrf_except=True`,
+  which is the default, #1456
 
 ### Features
 
@@ -73,6 +97,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   A controller with an exact serializer and endpoints can be marked
   as abstract to be reused without being routed.
   Subclasses that don't declare `is_abstract` themselves are concrete, #1458
+- `NewCookie.expires` and `CookieSpec.expires` can now be `dt.datetime`, #1456
 
 ### Bugfixes
 

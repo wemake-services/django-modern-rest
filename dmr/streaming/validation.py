@@ -1,12 +1,18 @@
 import abc
+import dataclasses
 from collections.abc import Callable, Iterable
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Self, TypeVar
 
+from django.http import HttpResponseBase
+from typing_extensions import override
+
 from dmr.exceptions import EndpointMetadataError, ValidationError
-from dmr.metadata import EndpointMetadata
+from dmr.metadata import EndpointMetadata, ResponseModification
+from dmr.validation.response import ResponseValidator
 
 if TYPE_CHECKING:
+    from dmr.renderers import Renderer
     from dmr.serializer import BaseSerializer
     from dmr.streaming.controller import StreamingController
 
@@ -109,6 +115,30 @@ class StreamingValidator:
             event_model=_resolve_event_model(metadata, status_code),
             serializer=controller.serializer,
             validate_events=metadata.validate_events,
+        )
+
+
+@dataclasses.dataclass(frozen=True, slots=True)
+class StreamingResponseValidator(ResponseValidator):
+    """
+    Streaming response validator.
+
+    .. versionadded:: 0.16.0
+    """
+
+    @override
+    def _build_new_response(  # pyrefly: ignore[bad-override]  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        structured: Any,
+        modification: 'ResponseModification',
+        controller: 'StreamingController[BaseSerializer]',  # type: ignore[override]
+        renderer: 'Renderer',
+    ) -> HttpResponseBase:
+        return controller.to_stream(
+            structured,
+            status_code=modification.status_code,
+            headers=modification.actionable_headers,
+            cookies=modification.actionable_cookies,
         )
 
 
