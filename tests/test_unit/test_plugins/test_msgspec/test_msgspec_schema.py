@@ -293,6 +293,7 @@ def _assert_enum_parameter_schema(
     controller: type[Controller[MsgspecSerializer]],
     component_name: str,
     expected_values: list[str | int],
+    query_default: str | int,
 ) -> None:
     """Ensure enum parameter fields register referenced schemas."""
     schema = build_schema(
@@ -310,9 +311,14 @@ def _assert_enum_parameter_schema(
 
     for parameter_location in ('path', 'query', 'header', 'cookie'):
         parameter = parameter_specs['enum_value', parameter_location]
-        assert parameter['schema'] == {
-            '$ref': f'#/components/schemas/{component_name}',
-        }
+        assert parameter['schema']['$ref'] == (
+            f'#/components/schemas/{component_name}'
+        )
+        if parameter_location == 'query':
+            # `default` is a schema attribute, it is kept next to `$ref`:
+            assert parameter['schema']['default'] == query_default
+        else:
+            assert set(parameter['schema']) == {'$ref'}
     assert schema['components']['schemas'][component_name] == {
         'enum': expected_values,
         'title': component_name,
@@ -352,6 +358,7 @@ def test_parameter_schema_with_enum() -> None:
         controller=_EnumQueryController,
         component_name=_QueryEnum.__name__,
         expected_values=['alpha', 'beta'],
+        query_default='alpha',
     )
 
 
@@ -388,6 +395,7 @@ def test_parameter_schema_with_int_enum() -> None:
         controller=_EnumQueryController,
         component_name=_QueryEnum.__name__,
         expected_values=[1, 2],
+        query_default=1,
     )
 
 
@@ -424,6 +432,7 @@ def test_parameter_schema_with_str_enum() -> None:
         controller=_EnumQueryController,
         component_name=_QueryEnum.__name__,
         expected_values=['alpha', 'beta'],
+        query_default='alpha',
     )
 
 
