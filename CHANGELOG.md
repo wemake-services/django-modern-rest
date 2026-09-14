@@ -94,6 +94,12 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `schema_hook` class method to `MsgspecSchemaGenerator`
   to customize JSON schema generation for custom types, #1462
 - `NewCookie.expires` and `CookieSpec.expires` can now be `dt.datetime`, #1456
+- Reusable controllers now support `TypeVar` defaults from PEP 696.
+  A subclass that does not pass some of the type args
+  gets their defaults, just like type-checkers do it:
+  both for a bare `class Sub(Reusable): ...`
+  and for a partial `class Sub(Reusable[PydanticSerializer]): ...`.
+  Defaults that are type vars themselves are resolved as well, #1452
 
 ### Bugfixes
 

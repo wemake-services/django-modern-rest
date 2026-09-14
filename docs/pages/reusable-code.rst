@@ -188,6 +188,51 @@ And then - implementations:
 This way offers you more control over the response headers, cookies, etc.
 Choose the one that fits best of the job.
 
+Type variable defaults
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 0.16.0
+
+Type variables can have defaults, as described in :pep:`696`.
+We use them when a subclass does not provide some of the type args.
+
+Use ``typing_extensions.TypeVar`` to define them,
+the native ``class Reusable[_ModelT = MyModel]`` syntax
+is only available on Python 3.13 and above.
+
+.. literalinclude:: /examples/reusable_code/reusable_defaults.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+Now, both type args are optional for the subclasses:
+
+.. tabs::
+
+  .. tab:: defaults
+
+    .. literalinclude:: /examples/reusable_code/defaults_pydantic.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: exact types
+
+    .. literalinclude:: /examples/reusable_code/defaults_msgspec.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+Defaults can also point to other type variables:
+``_ResponseBodyT = TypeVar('_ResponseBodyT', default=_RequestModelT)``
+means "the response body is the request model, unless told otherwise".
+
+.. note::
+
+  A type variable without a default is still required.
+  Controllers that don't have an exact serializer
+  stay abstract, as always.
+
 
 .. _lazy-reusable-endpoints:
 
