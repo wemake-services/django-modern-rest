@@ -302,7 +302,7 @@
         'ErrorModel': dict({
           'description': '''
             Default error response schema.
-            
+
             Can be customized.
             See :ref:`customizing-error-messages` for more details.
           ''',
