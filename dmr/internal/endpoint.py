@@ -36,6 +36,7 @@ if TYPE_CHECKING:
         ExternalDocumentation,
         Link,
         Reference,
+        SecurityRequirement,
         Server,
     )
     from dmr.parsers import Parser
@@ -325,6 +326,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         servers: list[Server] | None = None,
         links: dict[str, Link | Reference] | None = None,
         response_description: str | None = None,
+        security: list[SecurityRequirement] | None = None,
         ignore_from_spec: bool | None = None,
     ) -> ModifyAnyCallable: ...
 
@@ -359,6 +361,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         servers: list[Server] | None = None,
         links: dict[str, Link | Reference] | None = None,
         response_description: str | None = None,
+        security: list[SecurityRequirement] | None = None,
         ignore_from_spec: bool | None = None,
     ) -> ModifyAsyncCallable: ...
 
@@ -393,6 +396,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         servers: list[Server] | None = None,
         links: dict[str, Link | Reference] | None = None,
         response_description: str | None = None,
+        security: list[SecurityRequirement] | None = None,
         ignore_from_spec: bool | None = None,
     ) -> ModifySyncCallable: ...
 
@@ -428,6 +432,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         servers: list[Server] | None = None,
         links: dict[str, Link | Reference] | None = None,
         response_description: str | None = None,
+        security: list[SecurityRequirement] | None = None,
         ignore_from_spec: bool | None = None,
     ) -> ModifyAsyncCallable | ModifySyncCallable | ModifyAnyCallable:
         """Adds the payload to the endpoint function."""
@@ -463,6 +468,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
                 links=links,
                 response_description=response_description,
                 ignore_from_spec=ignore_from_spec,
+                security=security,
             ),
         )
 
@@ -709,6 +715,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
         servers: list[Server] | None = None,
+        security: list[SecurityRequirement] | None = None,
         ignore_from_spec: bool | None = None,
     ) -> ValidateAnyCallable: ...
 
@@ -739,6 +746,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
         servers: list[Server] | None = None,
+        security: list[SecurityRequirement] | None = None,
         ignore_from_spec: bool | None = None,
     ) -> ValidateAsyncCallable: ...
 
@@ -769,6 +777,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
         servers: list[Server] | None = None,
+        security: list[SecurityRequirement] | None = None,
         ignore_from_spec: bool | None = None,
     ) -> ValidateSyncCallable: ...
 
@@ -800,6 +809,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
         servers: list[Server] | None = None,
+        security: list[SecurityRequirement] | None = None,
         ignore_from_spec: bool | None = None,
     ) -> ValidateAnyCallable | ValidateAsyncCallable | ValidateSyncCallable:
         """Adds the payload to the endpoint function."""
@@ -830,6 +840,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
                 callbacks=callbacks,
                 servers=servers,
                 ignore_from_spec=ignore_from_spec,
+                security=security,
             ),
         )
 

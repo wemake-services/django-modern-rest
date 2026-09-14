@@ -482,6 +482,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             callbacks=payload.callbacks,
             servers=payload.servers,
             ignore_from_spec=self._build_ignore_from_spec(),
+            security=payload.security,
         )
 
     def _from_modify(  # noqa: WPS210
@@ -546,6 +547,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             callbacks=payload.callbacks,
             servers=payload.servers,
             ignore_from_spec=self._build_ignore_from_spec(),
+            security=payload.security,
         )
 
     def _from_raw_data(  # noqa: WPS210

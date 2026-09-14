@@ -307,6 +307,7 @@ class Endpoint:  # noqa: WPS214
             security=context.generators.security_scheme(
                 self.metadata.auth,
                 serializer,
+                self.metadata.security,
             ),
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,

@@ -34,6 +34,7 @@ if TYPE_CHECKING:
         Link,
         Reference,
         Response,
+        SecurityRequirement,
         Server,
     )
     from dmr.parsers import Parser
@@ -489,6 +490,7 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     callbacks: dict[str, 'Callback | Reference'] | None
     servers: list['Server'] | None
     ignore_from_spec: bool
+    security: list['SecurityRequirement'] | None = None
 
     # Pre-computed fields:
     throttling: tuple[_ThrottlingT, ...] | None = dataclasses.field(init=False)

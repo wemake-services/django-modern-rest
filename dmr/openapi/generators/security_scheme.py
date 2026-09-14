@@ -25,6 +25,7 @@ class SecuritySchemeGenerator:
         self,
         auth_providers: Sequence['SyncAuth | AsyncAuth'] | None,
         serializer: type['BaseSerializer'],
+        security: Sequence['SecurityRequirement'] | None = None,
     ) -> list['SecurityRequirement'] | None:
         """
         Process auth providers and generate security requirements.
@@ -32,13 +33,15 @@ class SecuritySchemeGenerator:
         Iterates over the provided authentication providers, registers their
         security schemes in the global registry, and collects their security
         usage requirements.
+
+        Explicitly declared ``security`` requirements are preserved as well:
+        they are merged with the ones derived from ``auth_providers``, so
+        endpoints can document external security mechanisms (for example, one
+        enforced by a proxy or another service) next to the internal ones.
         """
-        if not auth_providers:
-            return None
+        requirements: list[SecurityRequirement] = list(security or [])
 
-        requirements: list[SecurityRequirement] = []
-
-        for auth in auth_providers:
+        for auth in auth_providers or ():
             schemes = auth.security_schemes
             if schemes:
                 for scheme_name, scheme in schemes.items():
@@ -48,4 +51,4 @@ class SecuritySchemeGenerator:
                     )
 
             requirements.append(auth.security_requirement)
-        return requirements
+        return requirements or None

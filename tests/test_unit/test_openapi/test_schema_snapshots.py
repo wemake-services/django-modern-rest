@@ -6,7 +6,7 @@ import pydantic
 from django.urls import path, re_path
 from syrupy.assertion import SnapshotAssertion
 
-from dmr import Body, Controller, Cookies, Path, Query, ResponseSpec
+from dmr import Body, Controller, Cookies, Path, Query, ResponseSpec, modify
 from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
 from dmr.openapi.objects import Example, MediaTypeMetadata, ParameterMetadata
@@ -279,6 +279,44 @@ def test_raw_path_schema(snapshot: SnapshotAssertion) -> None:
                         re_path(
                             r'^articles/(?P<year>[0-9]{4})/(?P<slug>[\w-]+)/$',
                             _GetPostController.as_view(),
+                        ),
+                    ],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+class _ProxiedSecurityController(Controller[PydanticSerializer]):
+    @modify(security=[{'proxy_key': []}])
+    def get(self) -> str:
+        raise NotImplementedError
+
+
+class _ProxiedAndInternalSecurityController(Controller[PydanticSerializer]):
+    auth = (HeaderJWTAsyncAuth(),)
+
+    @modify(security=[{'proxy_key': []}])
+    async def get(self) -> str:
+        raise NotImplementedError
+
+
+def test_security_requirements_schema(snapshot: SnapshotAssertion) -> None:
+    """Explicit ``security`` requirements are documented next to ``auth`` ones."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [
+                        path(
+                            'proxied/',
+                            _ProxiedSecurityController.as_view(),
+                        ),
+                        path(
+                            'both/',
+                            _ProxiedAndInternalSecurityController.as_view(),
                         ),
                     ],
                 ),
