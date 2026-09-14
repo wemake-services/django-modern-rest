@@ -32,9 +32,14 @@ class SecuritySchemeGenerator:
         Iterates over the provided authentication providers, registers their
         security schemes in the global registry, and collects their security
         usage requirements.
+
+        When there are no auth providers but the document defines global
+        ``security``, returns an explicit ``[]`` so the operation opts out
+        of the global requirements instead of inheriting them.
+        
         """
         if not auth_providers:
-            return None
+            return [] if self._context.config.security else None
 
         requirements: list[SecurityRequirement] = []
 
