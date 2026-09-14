@@ -13,6 +13,8 @@ from dmr.security import SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.test import DMRRequestFactory
 from dmr.throttling import Rate, SyncThrottle
+from dmr.throttling.algorithms import BaseThrottleAlgorithm
+from dmr.throttling.backends import BaseThrottleSyncBackend, CachedRateLimit
 from dmr.throttling.cache_keys import RemoteAddr
 
 _REPEAT: Final = 1000
@@ -45,13 +47,48 @@ class _Auth(SyncAuth):
         return None
 
 
+class _AllowBackend(BaseThrottleSyncBackend):
+    __slots__ = ()
+
+    @override
+    def incr(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[BaseSerializer],
+        throttle: SyncThrottle,
+        *,
+        cache_key: str,
+        algorithm: BaseThrottleAlgorithm,
+    ) -> CachedRateLimit:
+        return {
+            'history': [0],
+            'time': 0,
+        }
+
+    @override
+    def get(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[BaseSerializer],
+        throttle: SyncThrottle,
+        *,
+        cache_key: str,
+    ) -> CachedRateLimit | None:
+        return None
+
+
 class _ThrottleController(Controller[MsgspecSerializer]):
     auth = (_Auth(),)
     throttling = (
-        SyncThrottle(1_000_000_000, Rate.minute),
         SyncThrottle(
             1_000_000_000,
             Rate.minute,
+            backend=_AllowBackend(),
+        ),
+        SyncThrottle(
+            1_000_000_000,
+            Rate.minute,
+            backend=_AllowBackend(),
             cache_key=RemoteAddr(
                 runs_before_auth=False,
                 name='AfterAuth',
