@@ -288,6 +288,7 @@ def test_raw_path_schema(snapshot: SnapshotAssertion) -> None:
         == snapshot
     )
 
+
 class _ProxiedSecurityController(Controller[PydanticSerializer]):
     @modify(security=[{'proxy_key': []}])
     def get(self) -> str:
