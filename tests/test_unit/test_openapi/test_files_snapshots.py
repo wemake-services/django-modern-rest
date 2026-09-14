@@ -2,11 +2,13 @@ import json
 from typing import Annotated, ClassVar, Literal, TypeAlias
 
 import pydantic
+import pytest
 from django.http import FileResponse
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
 from dmr import Body, Controller, FileMetadata, modify, validate
+from dmr.exceptions import EndpointMetadataError
 from dmr.files import FileResponseSpec
 from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
@@ -246,39 +248,22 @@ def test_conditional_files_schema(snapshot: SnapshotAssertion) -> None:
     )
 
 
-class _SeveralParsersController(Controller[PydanticSerializer]):
-    parsers = (MultiPartParser(), JsonParser())
+def test_several_parsers_schema() -> None:
+    """Ensure non files-ready parsers are rejected at import time."""
+    with pytest.raises(EndpointMetadataError, match='to support file parsing'):
 
-    def post(
-        self,
-        # `JsonParser` can't parse files, so it must not be present:
-        parsed_file_metadata: FileMetadata[_SeveralSimpleFiles],
-    ) -> str:
-        raise NotImplementedError
+        class _SeveralParsersController(Controller[PydanticSerializer]):
+            parsers = (MultiPartParser(), JsonParser())
 
-    def put(self, parsed_body: Body[dict[str, str]]) -> str:
-        raise NotImplementedError
+            def post(
+                self,
+                # `JsonParser` can't parse files, so it must not be present:
+                parsed_file_metadata: FileMetadata[_SeveralSimpleFiles],
+            ) -> str:
+                raise NotImplementedError
 
-
-def test_several_parsers_schema(snapshot: SnapshotAssertion) -> None:
-    """Ensure that schema is correct for controller using several parsers."""
-    assert (
-        json.dumps(
-            build_schema(
-                Router(
-                    '',
-                    [
-                        path(
-                            'several-parsers/',
-                            _SeveralParsersController.as_view(),
-                        ),
-                    ],
-                ),
-            ).convert(),
-            indent=2,
-        )
-        == snapshot
-    )
+            def put(self, parsed_body: Body[dict[str, str]]) -> str:
+                raise NotImplementedError
 
 
 class _BodyAndFileNoDocsController(Controller[PydanticSerializer]):
