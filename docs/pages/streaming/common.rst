@@ -356,4 +356,8 @@ Validation
 .. autoclass:: dmr.streaming.validation.StreamingValidator
   :members:
 
+
+.. autoclass:: dmr.streaming.validation.StreamingResponseValidator
+  :members:
+
 .. autofunction:: dmr.streaming.validation.validate_event_type
