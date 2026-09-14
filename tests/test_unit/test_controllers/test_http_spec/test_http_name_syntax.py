@@ -8,7 +8,9 @@ from django.http import HttpResponse
 
 from dmr import (
     Controller,
+    CookieSpec,
     HeaderSpec,
+    NewCookie,
     NewHeader,
     ResponseSpec,
     modify,
@@ -19,12 +21,58 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.settings import HttpSpec
 
 _MATCH_PATTERN: Final = re.compile(
-    r'Header .+ is not following http spec.',
+    r'\b(Cookie|Header)\b name .+ is not following http spec',
 )
 
 
 class _UserModel(pydantic.BaseModel):
-    email: str
+    username: str
+
+
+@pytest.mark.parametrize(
+    'cookie',
+    ['user name', 'auth,token', 'cookie[test], my(cookie)'],
+)
+def test_check_cookie_name_syntax(
+    cookie: str,
+) -> None:
+    """Ensure that response cookies' names follow http spec syntax."""
+    with pytest.raises(
+        EndpointMetadataError,
+        match=_MATCH_PATTERN,
+    ):
+
+        class _Mixed(Controller[PydanticSerializer]):
+            @validate(
+                ResponseSpec(
+                    status_code=HTTPStatus.OK,
+                    cookies={cookie: CookieSpec()},
+                    return_type=None,
+                ),
+            )
+            def get(self) -> HttpResponse:
+                raise NotImplementedError
+
+
+@pytest.mark.parametrize(
+    'cookie',
+    ['user name', 'auth,token', 'cookie[test], my(cookie)'],
+)
+def test_check_new_cookie_name_syntax(
+    cookie: str,
+) -> None:
+    """Ensure that new cookies' names follow http spec syntax."""
+    with pytest.raises(
+        EndpointMetadataError,
+        match=_MATCH_PATTERN,
+    ):
+
+        class _Mixed(Controller[PydanticSerializer]):
+            @modify(
+                cookies={cookie: NewCookie(value='1')},
+            )
+            def get(self) -> _UserModel:
+                raise NotImplementedError
 
 
 @pytest.mark.parametrize(
@@ -75,13 +123,13 @@ def test_check_new_header_name_syntax(
                 raise NotImplementedError
 
 
-def test_check_header_name_syntax_controller() -> None:
+def test_check_http_name_syntax_controller() -> None:
     """Ensure that the validation can be disabled on controller level."""
 
     class _Mixed(Controller[PydanticSerializer]):
         @modify(
-            headers={'X Custom Header': NewHeader(value='1')},
-            no_validate_http_spec={HttpSpec.header_name_syntax},
+            cookies={'user name': NewCookie(value='1')},
+            no_validate_http_spec={HttpSpec.http_field_name_validation},
         )
         def get(self) -> _UserModel:
             raise NotImplementedError

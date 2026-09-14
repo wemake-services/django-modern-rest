@@ -15,6 +15,7 @@ from typing import (
     Any,
     ClassVar,
     Final,
+    Literal,
     TypeVar,
     assert_never,
 )
@@ -177,30 +178,42 @@ class _ResponseListValidator:  # noqa: WPS214
         responses: list[ResponseSpec],
     ) -> None:
         """Validate that we don't violate HTTP spec."""
-        if (
-            HttpSpec.empty_response_body
-            not in self.metadata.no_validate_http_spec
-        ):
-            self._check_empty_response_body(responses)
-        if (
-            HttpSpec.header_name_server_managed
-            not in self.metadata.no_validate_http_spec
-        ):
-            self._check_header_name_server_managed(responses)
+        self._check_http_spec_rule(
+            HttpSpec.empty_response_body,
+            self._check_empty_response_body,
+            responses=responses,
+        )
 
-        if (
-            HttpSpec.header_name_syntax
-            not in self.metadata.no_validate_http_spec
-        ):
-            self._check_header_syntax(responses)
+        self._check_http_spec_rule(
+            HttpSpec.header_name_server_managed,
+            self._check_header_name_server_managed,
+            responses=responses,
+        )
 
-        if (
-            HttpSpec.cookie_name_syntax
-            not in self.metadata.no_validate_http_spec
-        ):
-            self._check_cookie_syntax(responses)
+        self._check_http_spec_rule(
+            HttpSpec.http_field_name_validation,
+            self._check_http_syntax,
+            responses=responses,
+            field_type='cookie',
+        )
+
+        self._check_http_spec_rule(
+            HttpSpec.http_field_name_validation,
+            self._check_http_syntax,
+            responses=responses,
+            field_type='header',
+        )
 
         # TODO: add more checks
+
+    def _check_http_spec_rule(
+        self,
+        rule: HttpSpec,
+        callback: Callable[..., None],
+        **kwargs: list[ResponseSpec] | Literal['cookie', 'header'],
+    ) -> None:
+        if rule not in self.metadata.no_validate_http_spec:
+            callback(**kwargs)
 
     def _check_empty_response_body(
         self,
@@ -245,52 +258,34 @@ class _ResponseListValidator:  # noqa: WPS214
                     f'from endpoint {endpoint_name!r}.',
                 )
 
-    def _check_header_syntax(
+    def _check_http_syntax(
         self,
         responses: list[ResponseSpec],
+        field_type: Literal['cookie', 'header'],
     ) -> None:
-
-        header_names = []
+        names = []
 
         modification = self.metadata.modification
 
-        if modification and modification.headers:
-            header_names = list(modification.headers.keys())
-
-        for response in responses:
-            if not response.headers:
-                continue
-
-            header_names += list(response.headers.keys())
-
-        invalid_header = self._check_invalid_tokens(header_names)
-
-        if invalid_header:
-            raise EndpointMetadataError(
-                f'Header name {invalid_header!r} is not following http spec.',
+        if modification:
+            names = self._get_http_field_names(
+                modification,
+                field_type,
             )
 
-    def _check_cookie_syntax(
-        self,
-        responses: list[ResponseSpec],
-    ) -> None:
-        cookie_names = []
-
-        modification = self.metadata.modification
-
-        if modification and modification.cookies:
-            cookie_names = list(modification.cookies.keys())
-
         for response in responses:
-            if not response.cookies:
-                continue
+            response_names = self._get_http_field_names(
+                response,
+                field_type,
+            )
+            names.extend(response_names)
 
-            cookie_names += list(response.cookies.keys())
+        invalid_name = self._check_invalid_tokens(names)
 
-        invalid_cookie = self._check_invalid_tokens(cookie_names)
-        if invalid_cookie:
+        if invalid_name:
             raise EndpointMetadataError(
-                f'Cookie name {invalid_cookie!r} is not following http spec.',
+                f'{field_type.capitalize()} name {invalid_name!r} '
+                f'is not following http spec.',
             )
 
     def _convert_responses(
@@ -298,6 +293,18 @@ class _ResponseListValidator:  # noqa: WPS214
         all_responses: list[ResponseSpec],
     ) -> dict[HTTPStatus, ResponseSpec]:
         return {resp.status_code: resp for resp in all_responses}
+
+    def _get_http_field_names(
+        self,
+        resource: ResponseSpec | ResponseModification,
+        field_type: Literal['cookie', 'header'],
+    ) -> list[str]:
+        attribute = getattr(resource, f'{field_type}s')
+
+        if not attribute:
+            return []
+
+        return list(attribute.keys())
 
     def _check_invalid_tokens(
         self,
