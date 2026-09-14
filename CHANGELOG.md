@@ -281,6 +281,10 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   the `Reference | Schema` handling fixed in every call site at once, #1490
 - Fixed a bug that `load_schema` was not loading `anchor`,
   `comment`, and `schema_uri` fields, #1490
+- `$ref` with sibling keywords is now loaded as a `Schema`, not as
+  a `Reference`. `Reference` objects can't hold anything but
+  `$ref`, `summary` and `description`, so `default`, `title`
+  and other siblings used to be silently dropped, #1491
 - Default OpenAPI `operation_id` generation now preserves capitalization
   in controller class names, #1500
 - Fixes that endpoints with `auth=None` inherited document-level
