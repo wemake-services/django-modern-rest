@@ -13,7 +13,7 @@ class UniqueConstraintError(Exception):
 
 
 def user_create_service(user_schema: SimpleUserCreateSchema) -> User:
-    """This is a function just for the demo purpose, it is usually a class."""
+    """This is a function just for the demo's purpose, it is usually a class."""
     try:
         return User.objects.create(
             email=user_schema.email,
