@@ -36,7 +36,7 @@ class SecuritySchemeGenerator:
         When there are no auth providers but the document defines global
         ``security``, returns an explicit ``[]`` so the operation opts out
         of the global requirements instead of inheriting them.
-        
+
         """
         if not auth_providers:
             return [] if self._context.config.security else None
