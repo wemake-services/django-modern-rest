@@ -139,12 +139,17 @@ class SecuritySchemeRegistry:
         scheme: SecurityScheme | Reference,
     ) -> None:
         """Register security scheme in registry."""
-        if name in self.schemes:
-            raise ValueError(
-                f'Security scheme {name!r} is already registered in the '
-                'OpenAPI specification. Security scheme names must be unique. '
-                'Please use a different name for this security scheme.',
-            )
+        existing = self.schemes.get(name)
+        if existing is not None:
+            if existing != scheme:
+                raise ValueError(
+                    f'Security scheme {name!r} is already registered in the '
+                    'OpenAPI specification. Security scheme names must be '
+                    'unique. Re-registering the same name with a different '
+                    'scheme is not allowed.',
+                )
+            return
+
         self.schemes[name] = scheme
 
 
