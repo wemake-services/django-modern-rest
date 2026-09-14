@@ -1,11 +1,9 @@
 import dataclasses
-from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, TypeVar, final
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from django.http import FileResponse, HttpResponse, HttpResponseBase
 
-from dmr.cookies import NewCookie
 from dmr.exceptions import (
     InternalServerError,
     ResponseSchemaError,
@@ -17,7 +15,7 @@ from dmr.internal.negotiation import (
     media_by_precedence,
     negotiatiate_response_validation,
 )
-from dmr.metadata import EndpointMetadata, ResponseSpec
+from dmr.metadata import EndpointMetadata, ResponseModification, ResponseSpec
 from dmr.negotiation import get_conditional_types, request_renderer
 from dmr.serializer import BaseSerializer
 from dmr.types import EMPTY
@@ -91,9 +89,17 @@ class ResponseValidator:  # noqa: WPS214
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
         structured: Any,
-    ) -> 'ValidatedModification':
-        """Validate *structured* data before dumping it to json."""
-        if self.metadata.modification is None:
+    ) -> HttpResponseBase:
+        """
+        Validate *structured* data before dumping it to json.
+
+        .. versionchanged:: 0.16.0
+            Now returns ``HttpResponseBase`` object directly.
+            Removed ``ValidatedModification`` creation.
+
+        """
+        modification = self.metadata.modification
+        if modification is None:
             # Happens in cases when `@validate` returns raw data:
             method = self.metadata.method
             raise InternalServerError(
@@ -103,25 +109,41 @@ class ResponseValidator:  # noqa: WPS214
             )
 
         renderer = request_renderer(controller.request, strict=True)
-        all_response_data = ValidatedModification(
-            raw_data=structured,
-            status_code=self.metadata.modification.status_code,
-            headers=self.metadata.modification.build_headers(renderer),
-            cookies=self.metadata.modification.actionable_cookies(),
-            renderer=renderer,
-        )
-        if not self._should_validate_responses(
-            all_response_data.status_code,
-        ):
-            return all_response_data
-        schema = self._get_response_schema(all_response_data.status_code)
+        if not self._should_validate_responses(modification.status_code):
+            return self._build_new_response(
+                structured,
+                modification,
+                controller,
+                renderer,
+            )
+        schema = self._get_response_schema(modification.status_code)
         self._validate_body(
             structured,
             schema,
             content_type=renderer.content_type,
             strict=True,
         )
-        return all_response_data
+        return self._build_new_response(
+            structured,
+            modification,
+            controller,
+            renderer,
+        )
+
+    def _build_new_response(
+        self,
+        structured: Any,
+        modification: 'ResponseModification',
+        controller: 'Controller[BaseSerializer]',
+        renderer: 'Renderer',
+    ) -> HttpResponseBase:
+        return controller.to_response(
+            structured,
+            status_code=modification.status_code,
+            headers=modification.actionable_headers,
+            cookies=modification.actionable_cookies,
+            renderer=renderer,
+        )
 
     def _should_validate_responses(
         self,
@@ -344,15 +366,3 @@ class ResponseValidator:  # noqa: WPS214
             f'Response content type {content_type!r} is not '
             f'listed as a possible to be returned {list(media_types)!r}',
         )
-
-
-@final
-@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class ValidatedModification:
-    """Combines all validated data together."""
-
-    raw_data: Any  # not empty
-    status_code: HTTPStatus
-    headers: dict[str, str]
-    cookies: Mapping[str, NewCookie] | None
-    renderer: 'Renderer'

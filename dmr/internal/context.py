@@ -54,24 +54,27 @@ class SerializerContext:
     _conditional_combined_models: dict[str, Any]
 
     __slots__ = (
+        '_collect_plan',
         '_conditional_combined_models',
         '_default_combined_model',
         '_specs',
         'component_parsers',
     )
 
-    def __init__(
+    def __init__(  # noqa: WPS210
         self,
         func: Callable[..., Any],
         controller_cls: type['Controller[BaseSerializer]'],
         type_annotations: dict[str, Any],
     ) -> None:
         """Eagerly build context for a given controller and serializer."""
+        # Build component parsers:
         self.component_parsers = self.component_builder_cls(
             func,
             controller_cls,
         )(type_annotations)
 
+        # Build specs and conditional models:
         specs, type_map, content_mapping = self._build_type_map(func)
         self._specs = specs
         default_combined_model, conditional_combined_models = (
@@ -83,6 +86,12 @@ class SerializerContext:
         )
         self._default_combined_model = default_combined_model
         self._conditional_combined_models = conditional_combined_models
+
+        # Prepare values to collect the context from:
+        self._collect_plan = tuple(
+            (component.context_name, component, submodel)
+            for component, submodel in specs.items()
+        )
 
     def __call__(
         self,
@@ -163,13 +172,12 @@ class SerializerContext:
     ) -> dict[str, Any]:
         """Collect raw data for all components into a mapping."""
         context: dict[str, Any] = {}
-        for component, submodel in self._specs.items():
-            raw = component.provide_context_data(
+        for context_name, component, submodel in self._collect_plan:
+            context[context_name] = component.provide_context_data(
                 endpoint,
                 controller,
                 field_model=submodel,  # just the exact field for the exact key
             )
-            context[component.context_name] = raw
         return context
 
     def _validate_context(
@@ -179,15 +187,12 @@ class SerializerContext:
     ) -> dict[str, Any]:
         """Validate the combined payload using the cached TypedDict model."""
         serializer = controller.serializer
-        content_type = controller.request.headers.get('Content-Type')
-        model = (
-            self._default_combined_model
-            if content_type is None
-            else self._conditional_combined_models.get(
-                content_type,
-                self._default_combined_model,
+        model = self._default_combined_model
+        if self._conditional_combined_models:
+            model = self._conditional_combined_models.get(  # pyrefly: ignore[no-matching-overload]  # pyright: ignore[reportUnknownVariableType]
+                controller.request.content_type,  # type: ignore[arg-type]
+                model,
             )
-        )
         try:
             return serializer.from_python(  # type: ignore[no-any-return]
                 context,

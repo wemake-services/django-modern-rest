@@ -94,7 +94,7 @@ dev = [
   "pyright>=1.1,<2",
   "ruff>=0.16,<0.17",
   "schemathesis==4.26.1",
-  "slotscheck>=0.19,<0.21",
+  "slotscheck>=0.19,<0.22",
   # TODO: relax the pin after a stable `ty` release:
   "ty==0.0.78",
   "types-django-filter>=25.2,<27",
@@ -133,7 +133,7 @@ docs = [
 ]
 build = [
   # NOTE: Keep cibuildwheel in sync with action version in build-wheels.yml
-  "cibuildwheel==4.2",
+  "cibuildwheel==4.2.1",
   "pypyp>=1.3,<2",
 ]
 dev-and-docs = [

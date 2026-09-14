@@ -44,7 +44,6 @@ if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.routing import Router
-    from dmr.validation.response import ValidatedModification
 
 
 class Endpoint:  # noqa: WPS214
@@ -53,13 +52,19 @@ class Endpoint:  # noqa: WPS214
 
     Is built during the import time.
     In the runtime only does response validate, which can be disabled.
+
+    .. versionchanged:: 0.16.0
+        Endpoint no longer creates ``HttpResponseBase`` objects
+        from modifications, now ``ResponseValidator`` returns full responses.
+        ``func`` is now public, but ``__call__`` is removed.
+
     """
 
     __slots__ = (
         '_async_lock',
-        '_func',
         '_serializer_context',
         '_sync_lock',
+        'func',
         'is_async',
         'metadata',
         'request_negotiator',
@@ -68,7 +73,7 @@ class Endpoint:  # noqa: WPS214
     )
 
     # Instance API:
-    _func: Callable[..., Any]
+    func: Callable[..., HttpResponseBase]
 
     # Class API:
     serializer_context_cls: ClassVar[type[SerializerContext]] = (
@@ -175,23 +180,13 @@ class Endpoint:  # noqa: WPS214
         # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):
             self.is_async = True
-            self._func = self._async_endpoint(func)
+            # We lie about the return type here, because Django will
+            # automatically unwrap `Coroutine[HttpResponseBase]` into regular
+            # response object, so just simplify the async / sync mess.
+            self.func = self._async_endpoint(func)  # type: ignore[assignment]
         else:
             self.is_async = False
-            self._func = self._sync_endpoint(func)
-
-    def __call__(
-        self,
-        controller: 'Controller[BaseSerializer]',
-        *args: Any,
-        **kwargs: Any,
-    ) -> HttpResponseBase:
-        """Run the endpoint and return the response."""
-        return self._func(  # type: ignore[no-any-return]
-            controller,
-            *args,
-            **kwargs,
-        )
+            self.func = self._sync_endpoint(func)
 
     def handle_error(
         self,
@@ -561,24 +556,10 @@ class Endpoint:  # noqa: WPS214
                 response_data,
             )
 
-        validated = self.response_validator.validate_modification(
+        return self.response_validator.validate_modification(
             self,
             controller,
             response_data,
-        )
-        return self._build_new_response(controller, validated)
-
-    def _build_new_response(
-        self,
-        controller: 'Controller[BaseSerializer]',
-        validated: 'ValidatedModification',
-    ) -> HttpResponseBase:
-        return controller.to_response(
-            validated.raw_data,
-            status_code=validated.status_code,
-            headers=validated.headers,
-            cookies=validated.cookies,
-            renderer=validated.renderer,
         )
 
     def _global_error_handler(
