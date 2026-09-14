@@ -99,19 +99,3 @@ def test_security_scheme_generator_with_schemes(
     assert openapi_context.registries.security_scheme.schemes == snapshot({
         'testScheme': SecurityScheme(type='http', scheme='bearer'),
     })
-
-
-def test_no_auth_with_global_security() -> None:
-    """Ensure no auth overrides global security with an empty requirement."""
-    context = OpenAPIContext(
-        OpenAPIConfig(
-            title='Test API',
-            version='1.0.0',
-            security=[{'testScheme': []}],
-        ),
-    )
-    generator = context.generators.security_scheme
-
-    requirements = generator(None, PydanticSerializer)
-
-    assert requirements == []

@@ -138,7 +138,9 @@ class _AuthDisabledController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def test_auth_none_with_global_security() -> None:
+def test_auth_none_with_global_security(
+    snapshot: SnapshotAssertion,
+) -> None:
     """Ensure that endpoint auth=None overrides global security."""
     config = OpenAPIConfig(
         title='Test API',
@@ -146,20 +148,21 @@ def test_auth_none_with_global_security() -> None:
         security=[{'jwt': []}],
     )
 
-    schema = build_schema(
-        Router(
-            'api/',
-            [
-                path(
-                    'public/',
-                    _AuthDisabledController.as_view(),
-                ),
-            ],
-        ),
-        config=config,
-    ).convert()
-
-    assert schema['paths']['/api/public/']['get']['security'] == []
+    assert (
+        build_schema(
+            Router(
+                'api/',
+                [
+                    path(
+                        'public/',
+                        _AuthDisabledController.as_view(),
+                    ),
+                ],
+            ),
+            config=config,
+        ).convert()
+        == snapshot
+    )
 
 
 class _XmlModel(pydantic.BaseModel):
