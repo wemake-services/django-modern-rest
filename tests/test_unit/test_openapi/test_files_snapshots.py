@@ -249,7 +249,7 @@ def test_conditional_files_schema(snapshot: SnapshotAssertion) -> None:
 
 
 def test_several_parsers_schema() -> None:
-    """Ensure that non files-ready parsers are rejected, not silently ignored."""
+    """Non-files-ready parsers must be rejected, not silently ignored."""
     with pytest.raises(EndpointMetadataError, match='to support file parsing'):
 
         class _SeveralParsersController(Controller[PydanticSerializer]):
