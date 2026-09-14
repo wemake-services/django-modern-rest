@@ -895,6 +895,7 @@ dev = [
     { name = "types-redis" },
     { name = "types-setuptools" },
     { name = "wemake-python-styleguide", extra = ["mcp"] },
+    { name = "whitenoise" },
     { name = "xmltodict-rs" },
 ]
 dev-and-docs = [
@@ -951,6 +952,7 @@ unit-test = [
     { name = "pytest-timeout" },
     { name = "pytest-xdist" },
     { name = "syrupy" },
+    { name = "whitenoise" },
     { name = "xmltodict-rs" },
 ]
 
@@ -1017,6 +1019,7 @@ dev = [
     { name = "types-redis", specifier = ">=4.6,<5" },
     { name = "types-setuptools", specifier = ">=82,<85" },
     { name = "wemake-python-styleguide", extras = ["mcp"], specifier = ">=1.8,<2" },
+    { name = "whitenoise", specifier = ">=6.12.0,<7.0.0" },
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
 ]
 dev-and-docs = [
@@ -1071,6 +1074,7 @@ unit-test = [
     { name = "pytest-timeout", specifier = ">=2.4,<3" },
     { name = "pytest-xdist", specifier = ">=3.8,<4" },
     { name = "syrupy", specifier = ">=5.1,<7" },
+    { name = "whitenoise", specifier = ">=6.12.0,<7.0.0" },
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
 ]
 
