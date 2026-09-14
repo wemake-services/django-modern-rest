@@ -250,7 +250,7 @@ def build_response(  # noqa: WPS210, WPS211
         assert renderer is not None  # noqa: S101
 
     # This is a really hot path, so we prefer to be very stupid with the code,
-    # but do not make any unnecessery copies of dicts if possible.
+    # but do not make any unnecessary copies of dicts if possible.
     # We trade readability and complexity for a bit of speed here:
     if headers is None:
         response_headers = {'Content-Type': renderer.content_type}

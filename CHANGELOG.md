@@ -63,7 +63,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   we now return `HttpResponseBase` objects directly from `ResponseValidator`.
   Which allows us to do less calls
   and not to create intermediate heavy objects, #1456
-- Improved `NewCookie` creation and convertion times
+- Improved `NewCookie` creation and conversion times
   and `CookieSpec.is_equal` execution time, #1456
 - Improved `set_cookies` execution time: we now don't call it
   if no cookies are to be set, `response.set_cookie` call is optimized, #1456
