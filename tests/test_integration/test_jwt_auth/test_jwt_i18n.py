@@ -1,12 +1,21 @@
 from http import HTTPStatus
 
 import pytest
+from django.conf import LazySettings
 from django.urls import reverse
 from inline_snapshot import snapshot
 
 from dmr.test import DMRClient
 
 
+@pytest.mark.parametrize(
+    ('language_code', 'expected_message'),
+    [
+        ('ru', 'Не аутентифицирован'),  # noqa: RUF001
+        ('ko', '인증되지 않았습니다.'),
+        ('ko-KR', '인증되지 않았습니다.'),
+    ],
+)
 @pytest.mark.parametrize(
     'url',
     [
@@ -17,26 +26,30 @@ from dmr.test import DMRClient
 def test_missing_auth_with_accept_language(
     dmr_client: DMRClient,
     reset_language: None,
+    settings: LazySettings,
     *,
     url: str,
+    language_code: str,
+    expected_message: str,
 ) -> None:
-    """Ensures that wrong produces correct language results."""
+    """Ensure auth errors respect language preferences without leaking state."""
+    settings.LANGUAGES = (*settings.LANGUAGES, ('ko', 'Korean'))
     response = dmr_client.post(
         url,
         data='{}',
-        headers={'Accept-Language': 'ru'},
+        headers={'Accept-Language': language_code},
     )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
     assert response.headers['Content-Type'] == 'application/json'
-    assert response.json() == snapshot({
+    assert response.json() == {
         'detail': [
             {
-                'msg': 'Не аутентифицирован',  # noqa: RUF001
+                'msg': expected_message,
                 'type': 'security',
             },
         ],
-    })
+    }
 
     # Second request in the same context, it is important:
     response = dmr_client.post(
