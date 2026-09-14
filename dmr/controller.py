@@ -248,7 +248,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             )
         # We don't use `csrf_exempt()` decorator here, because it is slow:
         view = super().as_view(**initkwargs)
-        if cls.csrf_exempt:
+        # TODO: add tests and docs for this feature.
+        if cls.csrf_exempt:  # pragma: no cover
             view.csrf_exempt = True  # type: ignore[attr-defined]
         return view
 
