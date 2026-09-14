@@ -101,14 +101,14 @@ def test_security_scheme_generator_with_schemes(
     })
 
 
-def test_security_scheme_generator_no_auth_without_global_security(
+def test_no_auth_without_global_security(
     generator: SecuritySchemeGenerator,
 ) -> None:
     """Without global `security`, no auth means no `security` key."""
     assert generator(None, PydanticSerializer) is None
 
 
-def test_security_scheme_generator_no_auth_with_global_security() -> None:
+def test_no_auth_with_global_security() -> None:
     """With global `security`, no auth must produce an explicit `[]`."""
     context = OpenAPIContext(
         OpenAPIConfig(
