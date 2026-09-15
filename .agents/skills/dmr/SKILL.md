@@ -77,7 +77,7 @@ class UserController(Controller[MsgspecSerializer]):
 Because it does not use any of the validate features,
 like settings extra headers or cookies.
 
-Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/using-controller/index.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/controllers/index.html
 
 ### Prefer implicit `@modify` over the explicit one
 
@@ -259,7 +259,7 @@ class UserController(Controller[MsgspecSerializer]):
         )
 ```
 
-Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/using-controller/index.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/controllers/index.html
 
 ### Use `APIError` for error responses instead of manually building `HttpResponse`
 
@@ -418,7 +418,7 @@ def redirect_to_next(request: HttpRequest, next_url: str) -> Never:
 **Limitations:** validation is required for user-provided or otherwise
 untrusted redirect targets; hard-coded local URLs do not need this check.
 
-Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/using-controller/redirects.html
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/controllers/redirects.html
 
 
 ## Routing

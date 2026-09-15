@@ -98,8 +98,8 @@ Next up
     :padding: 0
     :gutter: 2
 
-    .. grid-item-card:: :octicon:`rocket` Using Controller
-      :link: using-controller/index
+    .. grid-item-card:: :octicon:`rocket` Controllers
+      :link: controllers/index
       :link-type: doc
 
       Learn how controllers work.

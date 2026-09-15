@@ -192,7 +192,7 @@ Here are our amazing people who made this project possible.
 
   pages/getting-started.rst
   pages/core-concepts.rst
-  pages/using-controller/index
+  pages/controllers/index
   pages/routing.rst
   pages/components/index
   pages/configuration.rst
