@@ -64,17 +64,9 @@ class MediaType:
     encoding: dict[str, 'Encoding'] | None = None
 
     # OpenAPI 3.2+ fields:
+    # NOTE: `encoding` is mutually exclusive with the two `*_encoding` ones,
+    # we let `openapi-spec-validator` report that.
     description: str | None = None
     item_schema: 'Reference | Schema | None' = None
     item_encoding: 'Encoding | None' = None
     prefix_encoding: list['Encoding'] | None = None
-
-    def __post_init__(self) -> None:
-        """Validate the object."""
-        if self.schema is None and self.item_schema is None:
-            raise ValueError('Both `schema` and `item_schema` cannot be None')
-        if self.encoding and (self.item_encoding or self.prefix_encoding):
-            raise ValueError(
-                'Both `encoding` and `item_encoding` or `prefix_encoding` '
-                'cannot be set',
-            )

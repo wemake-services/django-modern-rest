@@ -24,14 +24,8 @@ class Encoding:
     allow_reserved: bool | None = None
 
     # OpenAPI 3.2+ fields:
+    # NOTE: `encoding` is mutually exclusive with the two below,
+    # we let `openapi-spec-validator` report that.
     encoding: dict[str, 'Encoding'] | None = None
     item_encoding: 'Encoding | None' = None
     prefix_encoding: list['Encoding'] | None = None
-
-    def __post_init__(self) -> None:
-        """Validate the object."""
-        if self.encoding and (self.item_encoding or self.prefix_encoding):
-            raise ValueError(
-                'Both `encoding` and `item_encoding` or `prefix_encoding` '
-                'cannot be set',
-            )

@@ -141,7 +141,6 @@ def test_openapi_v32_components() -> None:
         },
     })
     assert components['parameters']['Filter'] == snapshot({
-        'deprecated': False,
         'name': 'filter',
         'in': 'querystring',
         'content': {

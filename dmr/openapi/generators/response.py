@@ -2,7 +2,7 @@ import dataclasses
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Final, Literal
 
-from dmr.openapi.mappers.example import set_generated_example
+from dmr.openapi.mappers.example import generate_example, set_generated_example
 from dmr.openapi.objects import (
     Header,
     MediaType,
@@ -132,12 +132,13 @@ class ResponseGenerator:
             schema = context.generators.schema(str, serializer)
             # for mypy: `str` cannot return a reference, it is a primitive
             assert isinstance(schema, Schema)  # noqa: S101
-            # `replace` copies the schema, so we don't set the cookie
-            # example on the shared `str` schema:
+            # A `Set-Cookie` value is `name=value`, so we only generate
+            # the value part. `replace` copies the schema, so the example
+            # does not land on the shared `str` one:
+            cookie_value = generate_example(str, serializer)
             schema = set_generated_example(
                 dataclasses.replace(schema),
-                f'{name}=123',
-                context,
+                None if cookie_value is None else f'{name}={cookie_value}',
             )
 
             cookies[f'Set-Cookie: {name}'] = Header(

@@ -47,17 +47,8 @@ class Parameter(ParameterMetadata):
 
     name: str
     param_in: Annotated[ParameterLocation, Field(alias='in')]
+    # NOTE: `'querystring'` parameters must use `content`, not `schema`,
+    # we let `openapi-spec-validator` report that.
     schema: 'Reference | Schema | None' = None
     content: dict[str, 'MediaType | Reference'] | None = None
-    required: bool = False
-
-    def __post_init__(self) -> None:
-        """Validate the object."""
-        if self.param_in != 'querystring':
-            return
-        # The whole query string is a single value, it cannot be described
-        # by a `schema` with the RFC6570-style serialization fields.
-        if self.content is None or self.schema is not None:
-            raise ValueError(
-                '`querystring` parameters must use `content`, not `schema`',
-            )
+    required: bool | None = None

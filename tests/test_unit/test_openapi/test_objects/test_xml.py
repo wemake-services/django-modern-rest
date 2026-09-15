@@ -1,5 +1,3 @@
-import pytest
-
 from dmr.openapi.mappers.schema_normalization import dump_schema
 from dmr.openapi.objects import XML
 
@@ -23,17 +21,3 @@ def test_deprecated_xml_fields_are_still_dumped() -> None:
         'attribute': True,
         'wrapped': False,
     }
-
-
-@pytest.mark.parametrize('deprecated_value', [True, False])
-def test_node_type_conflicts_with_attribute(*, deprecated_value: bool) -> None:
-    """Ensure that `node_type` cannot be mixed with `attribute`."""
-    with pytest.raises(ValueError, match='Both `node_type` and `attribute`'):
-        XML(node_type='element', attribute=deprecated_value)
-
-
-@pytest.mark.parametrize('deprecated_value', [True, False])
-def test_node_type_conflicts_with_wrapped(*, deprecated_value: bool) -> None:
-    """Ensure that `node_type` cannot be mixed with `wrapped`."""
-    with pytest.raises(ValueError, match='Both `node_type` and `attribute`'):
-        XML(node_type='element', wrapped=deprecated_value)

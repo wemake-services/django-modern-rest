@@ -38,40 +38,23 @@ def _referenced_schema(dumped: dict[str, Any]) -> Any:
     return dumped['components']['schemas']['ErrorModel']
 
 
+@pytest.mark.parametrize('openapi_version', ['3.1.0', '3.2.0'])
 @pytest.mark.parametrize(
     'find_schema',
     [_inline_body_schema, _referenced_schema],
 )
-def test_generated_example_before_v32(
+def test_generated_examples_keyword(
     find_schema: Any,
+    openapi_version: str,
     settings: LazySettings,
 ) -> None:
-    """Ensure that older versions still use the OAS ``example`` keyword."""
+    """Ensure that generated examples always use JSON Schema ``examples``."""
     settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
 
-    schema = find_schema(_build_schema('3.1.0'))
+    schema = find_schema(_build_schema(openapi_version))
 
-    assert schema['example']
-    assert 'examples' not in schema
-
-
-@pytest.mark.parametrize(
-    'find_schema',
-    [_inline_body_schema, _referenced_schema],
-)
-def test_generated_example_since_v32(
-    find_schema: Any,
-    settings: LazySettings,
-) -> None:
-    """Ensure that 3.2 uses JSON Schema ``examples``, not ``example``."""
-    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
-
-    schema = find_schema(_build_schema('3.2.0'))
-
+    assert schema['examples']
     assert 'example' not in schema
-    assert schema['examples'] == [
-        find_schema(_build_schema('3.1.0'))['example'],
-    ]
 
 
 def test_disabled_examples_write_nothing(settings: LazySettings) -> None:

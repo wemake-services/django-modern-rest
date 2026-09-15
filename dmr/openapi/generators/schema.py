@@ -220,7 +220,6 @@ class SchemaGenerator:
             set_generated_example(
                 schema,
                 generate_example(annotation, serializer),
-                self._context,
             )
 
     def _resolve_skipped_reference(

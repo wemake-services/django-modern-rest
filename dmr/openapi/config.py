@@ -16,9 +16,6 @@ from dmr.openapi.objects import (  # noqa: WPS235
 #: Oldest OpenAPI version we support: earlier ones are not JSON Schema based.
 _MIN_OPENAPI_VERSION: Final = (3, 1)
 
-#: First OpenAPI version with the `$self` field.
-_SELF_URI_OPENAPI_VERSION: Final = (3, 2)
-
 
 @dataclass(slots=True, frozen=True, kw_only=True)
 class OpenAPIConfig:
@@ -55,8 +52,7 @@ class OpenAPIConfig:
             keyed by name.
         self_uri: Self-assigned URI of the generated document,
             dumped as ``$self``. It also serves as the base URI
-            to resolve references against.
-            Requires ``openapi_version`` of ``'3.2.0'`` or newer.
+            to resolve references against. Added in OpenAPI ``'3.2.0'``.
 
     .. versionchanged:: 0.16.0
         ``openapi_version`` older than ``'3.1.0'`` now raises a ``ValueError``.
@@ -90,8 +86,6 @@ class OpenAPIConfig:
 
         Raises:
             ValueError: if ``openapi_version`` is older than ``'3.1.0'``.
-            ValueError: if ``self_uri`` is set for OpenAPI older
-                than ``'3.2.0'``, it does not have a ``$self`` field.
 
         """
         # NOTE: we don't limit the upper bound on purpose,
@@ -103,14 +97,6 @@ class OpenAPIConfig:
                 'OpenAPI versions before 3.1.0 are not supported, because '
                 'they are not based on JSON Schema, which is what we use '
                 f'to generate model schemas, got {self.openapi_version!r}',
-            )
-        if (
-            self.self_uri is not None
-            and self.openapi_version_info[:2] < _SELF_URI_OPENAPI_VERSION
-        ):
-            raise ValueError(
-                '`self_uri` requires OpenAPI 3.2.0 or newer, because '
-                f'`$self` was added there, got {self.openapi_version!r}',
             )
 
     @property

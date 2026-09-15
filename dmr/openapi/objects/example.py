@@ -25,25 +25,10 @@ class Example:
     external_value: str | None = None
 
     # OpenAPI 3.2+ fields:
+    # NOTE: deprecated `value` excludes all three fields below,
+    # and `serialized_value` excludes `external_value`,
+    # we let `openapi-spec-validator` report that.
     #: Example of the data structure, it must validate against the schema.
     data_value: Any | None = None
     #: Example of the serialized form, as the media type requires it.
     serialized_value: str | None = None
-
-    def __post_init__(self) -> None:
-        """Validate the object."""
-        if self.value is not None and (
-            self.data_value is not None
-            or self.serialized_value is not None
-            or self.external_value is not None
-        ):
-            raise ValueError(
-                'Both `value` and `data_value`, `serialized_value`, '
-                'or `external_value` cannot be set',
-            )
-        if self.serialized_value is not None and (
-            self.external_value is not None
-        ):
-            raise ValueError(
-                'Both `serialized_value` and `external_value` cannot be set',
-            )

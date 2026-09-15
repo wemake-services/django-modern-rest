@@ -69,16 +69,16 @@ def test_response_generator_multiple_cookies(
     assert response_created.headers is not None
     assert response_created.headers == snapshot({
         'Set-Cookie: first_cookie': Header(
-            schema=Schema(type=OpenAPIType.STRING, example='first_cookie=123'),
+            schema=Schema(type=OpenAPIType.STRING),
             description='First',
             required=True,
         ),
         'Set-Cookie: second_cookie': Header(
-            schema=Schema(type=OpenAPIType.STRING, example='second_cookie=123'),
+            schema=Schema(type=OpenAPIType.STRING),
             description='Second',
         ),
         'Set-Cookie: third_cookie': Header(
-            schema=Schema(type=OpenAPIType.STRING, example='third_cookie=123'),
+            schema=Schema(type=OpenAPIType.STRING),
             required=True,
         ),
     })

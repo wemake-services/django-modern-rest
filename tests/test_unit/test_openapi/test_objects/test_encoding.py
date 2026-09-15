@@ -1,5 +1,3 @@
-import pytest
-
 from dmr.openapi.mappers.schema_normalization import dump_schema
 from dmr.openapi.objects import Encoding
 
@@ -28,21 +26,3 @@ def test_sequential_encoding() -> None:
         'itemEncoding': {'contentType': 'text/plain'},
         'prefixEncoding': [{'contentType': 'image/png'}],
     }
-
-
-@pytest.mark.parametrize(
-    'positional_field',
-    [
-        {'item_encoding': Encoding()},
-        {'prefix_encoding': [Encoding()]},
-    ],
-)
-def test_encoding_by_name_and_position(
-    positional_field: dict[str, object],
-) -> None:
-    """Ensure that encoding by name and by position cannot be mixed."""
-    with pytest.raises(ValueError, match='Both `encoding` and `item_encoding`'):
-        Encoding(
-            encoding={'file': Encoding()},
-            **positional_field,  # type: ignore[arg-type]
-        )

@@ -38,13 +38,5 @@ class XML:
     wrapped: bool | None = None
 
     # OpenAPI 3.2+ fields:
+    #: Mutually exclusive with `attribute` and `wrapped`.
     node_type: XMLNodeType | None = None
-
-    def __post_init__(self) -> None:
-        """Validate the object."""
-        if self.node_type is not None and (
-            self.attribute is not None or self.wrapped is not None
-        ):
-            raise ValueError(
-                'Both `node_type` and `attribute` or `wrapped` cannot be set',
-            )
