@@ -148,6 +148,11 @@ integration = [
   "testcontainers[redis]>=4.15,<5",
   "tracecov>=0.23,<0.25",
 ]
+integration-drivers = [
+  "mysqlclient>=2.2.8,<3",
+  "oracledb>=26,<27",
+  "psycopg>=3.3.5,<4",
+]
 # This is a special group, it has special rules.
 # It is installed in `cibuildwheel` and must be minimal.
 unit-test = [
@@ -155,6 +160,7 @@ unit-test = [
   "dirty-equals>=0.11,<0.12",
   # Pin to Django 5.2 (LTS): it supports Python 3.11+, while Django 6.0
   # requires Python 3.12+. CI runs different django versions as separate jobs
+  "dj-database-url>=3.1.2,<4",
   "django~=5.2.0",
   "django-allauth",
   "django-csp>=4,<5",
@@ -562,7 +568,7 @@ asyncio_mode = "auto"
 DJANGO_SETTINGS_MODULE = "server.settings"
 # pytest-timeout configuration:
 # https://github.com/pytest-dev/pytest-timeout
-timeout = 5
+timeout = 20
 timeout_method = "thread"
 
 
