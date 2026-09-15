@@ -94,6 +94,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `schema_hook` class method to `MsgspecSchemaGenerator`
   to customize JSON schema generation for custom types, #1462
 - `NewCookie.expires` and `CookieSpec.expires` can now be `dt.datetime`, #1456
+- Added `json_schema_dialect` attribute to `OpenAPIConfig`.
+  `OpenAPI.json_schema_dialect` existed, but there was no way to set it,
+  so the `jsonSchemaDialect` field was never generated, #1486
 
 ### Bugfixes
 

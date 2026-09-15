@@ -25,6 +25,7 @@ class ConfigMerger:
         config = self.context.config
         return OpenAPI(
             openapi=config.openapi_version,
+            json_schema_dialect=config.json_schema_dialect,
             info=Info(
                 title=config.title,
                 version=config.version,
