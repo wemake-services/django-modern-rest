@@ -263,8 +263,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/api/v1/image-fast": {
@@ -321,8 +320,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
