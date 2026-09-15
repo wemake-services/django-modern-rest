@@ -22,6 +22,14 @@ if TYPE_CHECKING:
 
 _EnumT = TypeVar('_EnumT', bound=Enum)
 
+_REF_KEY = '$ref'
+_SUMMARY_KEY = 'summary'
+_DESCRIPTION_KEY = 'description'
+
+# Keywords that a `Reference` object can hold according to the spec.
+# Anything else makes the raw value a `Schema` with `$ref` and siblings:
+_REFERENCE_KEYS = frozenset((_REF_KEY, _SUMMARY_KEY, _DESCRIPTION_KEY))
+
 
 @overload
 def load_schema(
@@ -123,6 +131,7 @@ def load_schema(
         example=example,
         dynamic_ref=raw_data.get('$dynamicRef'),
         dynamic_anchor=raw_data.get('$dynamicAnchor'),
+        ref=raw_data.get(_REF_KEY),
         anchor=raw_data.get('$anchor'),
         comment=raw_data.get('$comment'),
         schema_uri=raw_data.get('$schema'),
@@ -145,12 +154,16 @@ def _try_optional_type(raw_value: Any) -> Reference | Schema | None:
 
 
 def _try_type(raw_value: Any) -> Reference | Schema:
-    """Load a raw_value as Reference (if it has '$ref') or Schema."""
-    if isinstance(raw_value, dict) and '$ref' in raw_value:
+    """Load a raw_value as Reference or Schema with ``$ref`` and siblings."""
+    if (
+        isinstance(raw_value, dict)
+        and _REF_KEY in raw_value
+        and set(raw_value) <= _REFERENCE_KEYS
+    ):
         return Reference(
-            ref=raw_value['$ref'],
-            summary=raw_value.get('summary'),
-            description=raw_value.get('description'),
+            ref=raw_value[_REF_KEY],
+            summary=raw_value.get(_SUMMARY_KEY),
+            description=raw_value.get(_DESCRIPTION_KEY),
         )
     return load_schema(raw_value)
 
