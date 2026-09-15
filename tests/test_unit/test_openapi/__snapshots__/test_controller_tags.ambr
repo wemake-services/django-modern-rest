@@ -46,8 +46,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "put": {
           "tags": [
@@ -87,8 +86,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "tags": [
@@ -128,8 +126,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
