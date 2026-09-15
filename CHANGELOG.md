@@ -140,6 +140,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   - `OAuthFlows.device_authorization`
     and `OAuthFlow.device_authorization_url`
   - `SecurityScheme.oauth2_metadata_url` and `SecurityScheme.deprecated`
+- Added `json_schema_dialect` attribute to `OpenAPIConfig`.
+  `OpenAPI.json_schema_dialect` existed, but there was no way to set it,
+  so the `jsonSchemaDialect` field was never generated, #1486
 - Allow all bool values in `dmr.openapi.objects` also accept `None`, #1437
 
 ### Bugfixes

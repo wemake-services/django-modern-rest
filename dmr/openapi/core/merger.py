@@ -26,6 +26,7 @@ class ConfigMerger:
         return OpenAPI(
             openapi=config.openapi_version,
             self_uri=config.self_uri,
+            json_schema_dialect=config.json_schema_dialect,
             info=Info(
                 title=config.title,
                 version=config.version,
