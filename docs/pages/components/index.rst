@@ -55,11 +55,6 @@ All components consist of two parts:
   both work as component annotations, including aliases of aliases
   and subscripted generic aliases like ``type Payload[ModelT] = Body[ModelT]``.
 
-  .. versionchanged:: 0.16.0
-
-    ``type X = Y`` aliases used to be ignored,
-    their components were silently not parsed.
-
 
 Browse components
 -----------------

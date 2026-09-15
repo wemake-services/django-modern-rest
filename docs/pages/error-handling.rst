@@ -353,6 +353,21 @@ The same rule applies when several members are annotated:
 a header is required only when every member of the union declares it
 as required. Specs of all members end up in the documentation either way.
 
+.. warning::
+
+  Do not design new APIs this way.
+
+  One response with one status code should always have the same set of
+  required headers and cookies. When it does not, every client has to
+  inspect the body first to learn which headers it is allowed to read,
+  and the OpenAPI schema cannot express that dependency at all: it only
+  says the header is optional.
+
+  We support per-member metadata for legacy code and migrations, where
+  a response already behaves like this and the behaviour cannot be changed
+  yet. For new endpoints, annotate the whole union, or split the response
+  into separate status codes.
+
 .. versionchanged:: 0.16.0
 
   Metadata of union members used to be ignored completely.

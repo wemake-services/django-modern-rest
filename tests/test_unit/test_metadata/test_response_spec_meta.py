@@ -11,7 +11,7 @@ from inline_snapshot import snapshot
 from syrupy.assertion import SnapshotAssertion
 from typing_extensions import TypeAliasType, override
 
-from dmr import Body, Controller, ResponseSpec, modify, validate
+from dmr import Body, Controller, Query, ResponseSpec, modify, validate
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.errors import ErrorModel
 from dmr.headers import HeaderSpec, NewHeader
@@ -275,23 +275,54 @@ def test_merge_of_empty_metadata() -> None:
     assert ResponseSpecMetadata.merge(None, None) is None
 
 
+class _UnionQuery(pydantic.BaseModel):
+    identified: bool = False
+
+
 class _OptionalUnionHeaderController(Controller[PydanticSerializer]):
     @validate(ResponseSpec(_AnnotatedMember | str, status_code=HTTPStatus.OK))
-    def get(self) -> HttpResponse:
+    def get(self, parsed_query: Query[_UnionQuery]) -> HttpResponse:
+        if parsed_query.identified:
+            # The annotated member, it does provide the header and the cookie:
+            return self.to_response(
+                _BodyModel(number=1),
+                headers={_UNION_HEADER: _HEADER_VALUE},
+                cookies={_UNION_COOKIE: NewCookie(value=_COOKIE_VALUE)},
+            )
+        # The plain `str` member, it provides neither:
         return self.to_response('a string without the header')
 
 
-def test_union_member_headers_are_optional(
-    dmr_rf: DMRRequestFactory,
-) -> None:
+def test_union_member_with_header(dmr_rf: DMRRequestFactory) -> None:
+    """Ensure that the annotated union member may send the header."""
+    request = dmr_rf.get('/whatever/?identified=true')
+
+    response = _OptionalUnionHeaderController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {
+        'Content-Type': 'application/json',
+        _UNION_HEADER: _HEADER_VALUE,
+    }
+    assert (
+        response.cookies.output()
+        == f'Set-Cookie: {_UNION_COOKIE}={_COOKIE_VALUE}; Path=/; SameSite=lax'
+    )
+    assert json.loads(response.content) == {'number': 1}
+
+
+def test_union_member_without_header(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that a member without metadata may skip the header."""
-    request = dmr_rf.get('/whatever/')
+    request = dmr_rf.get('/whatever/?identified=false')
 
     response = _OptionalUnionHeaderController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {'Content-Type': 'application/json'}
+    assert not response.cookies
+    assert json.loads(response.content) == 'a string without the header'
 
 
 class _RequiredUnionHeaderController(Controller[PydanticSerializer]):
