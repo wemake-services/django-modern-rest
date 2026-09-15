@@ -100,6 +100,11 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Bugfixes
 
+- `__dmr_split_commas__` now strips the optional whitespace around each
+  `','` when splitting a header value. `X-Tag: 1, 2` used to be parsed as
+  `['1', ' 2']`, which failed validation for `list[int]` and silently kept
+  a leading space for `list[str]`. RFC 9110 treats `a, b` and `a,b` as the
+  same list, #1526
 - Fixed Redis throttling reset values sometimes being 1 second above the
   configured window due to clock skew between Redis server time and Python
   time. The Redis backend now uses the `ttl` returned by Redis directly
