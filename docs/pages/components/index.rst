@@ -49,6 +49,73 @@ All components consist of two parts:
    For example, :data:`~dmr.components.Query`
 
 
+Components behind type aliases
+------------------------------
+
+Components are just :data:`typing.Annotated` aliases,
+so you can give them a name and reuse it in several endpoints:
+
+.. tabs::
+
+  .. tab:: type
+
+    Requires Python 3.12 or higher.
+
+    .. code:: python
+
+      import pydantic
+
+      from dmr import Body, Controller
+      from dmr.plugins.pydantic import PydanticSerializer
+
+
+      class User(pydantic.BaseModel):
+          username: str
+
+
+      type UserBody = Body[User]
+
+
+      class UserController(Controller[PydanticSerializer]):
+          def post(self, parsed_body: UserBody) -> str:
+              return parsed_body.username
+
+  .. tab:: TypeAlias
+
+    Works on all supported Python versions.
+
+    .. code:: python
+
+      import pydantic
+      from typing import TypeAlias
+
+      from dmr import Body, Controller
+      from dmr.plugins.pydantic import PydanticSerializer
+
+
+      class User(pydantic.BaseModel):
+          username: str
+
+
+      UserBody: TypeAlias = Body[User]
+
+
+      class UserController(Controller[PydanticSerializer]):
+          def post(self, parsed_body: UserBody) -> str:
+              return parsed_body.username
+
+Aliases of aliases and subscripted generic aliases
+like ``type Payload[ModelT] = Body[ModelT]`` are supported as well.
+
+The parameter name still has to match the component's ``context_name``,
+which is ``parsed_body`` in this example. Naming the alias does not change it.
+
+.. versionchanged:: 0.16.0
+
+  ``type X = Y`` aliases used to be ignored:
+  their components were silently not parsed.
+
+
 Browse components
 -----------------
 

@@ -307,6 +307,22 @@ to add missing ``X-Error-Id`` headers for your error responses.
 You can do the same for all responses, not just failing ones.
 For this, override :meth:`~dmr.controller.Controller.to_response`.
 
+When a single response is described by a union of several models,
+we look for :class:`~dmr.metadata.ResponseSpecMetadata`
+in every union member and merge everything we find,
+because they all describe the very same response:
+
+.. code:: python
+
+  def get(self) -> Annotated[
+      User,
+      ResponseSpecMetadata(headers={'X-Error-Id': HeaderSpec()}),
+  ] | str: ...
+
+.. versionchanged:: 0.16.0
+
+  Metadata of union members used to be ignored.
+
 This can also be used to attach ``RateLimit`` headers
 and other :doc:`throttling` information.
 

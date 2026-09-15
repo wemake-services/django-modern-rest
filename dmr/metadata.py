@@ -17,6 +17,8 @@ from typing import (  # noqa: WPS235
 
 from typing_extensions import TypeVar
 
+from dmr.types import iter_union_members, unwrap_type_alias
+
 if TYPE_CHECKING:
     from django.utils.functional import (
         _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
@@ -107,10 +109,7 @@ class ResponseSpec:
 
     def __post_init__(self) -> None:
         """If headers and cookies are not set, look for metadata and use it."""
-        metadata = get_annotated_metadata(
-            self.return_type,
-            ResponseSpecMetadata,
-        )
+        metadata = _merge_response_spec_metadata(self.return_type)
         if metadata is not None:
             object.__setattr__(
                 self,
@@ -608,9 +607,11 @@ def get_annotated_metadata(
     *model* can be :data:`typing.Annotate` object.
     Or it can be a regular model, with *model_meta*,
     which is the ``__metadata__`` field from ``Annotated``.
+    Type aliases hiding any of the above are unwrapped first.
 
     Or return ``None`` if nothing can be found.
     """
+    model = unwrap_type_alias(model)
     if get_origin(model) is Annotated and model.__metadata__:
         for metadata in model.__metadata__:
             if isinstance(metadata, metadata_type):
@@ -620,3 +621,29 @@ def get_annotated_metadata(
         if isinstance(metadata, metadata_type):
             return metadata
     return None
+
+
+def _merge_response_spec_metadata(
+    return_type: Any,
+) -> ResponseSpecMetadata | None:
+    """
+    Find ``ResponseSpecMetadata`` for the given *return_type*.
+
+    A single response can be described by a union of several models.
+    Any of them can carry headers and cookies for this response,
+    so we look into all union members and merge what we find.
+    """
+    headers: dict[str, HeaderSpec] = {}
+    cookies: dict[str, CookieSpec] = {}
+    found = False
+    for member in iter_union_members(return_type):
+        metadata = get_annotated_metadata(member, ResponseSpecMetadata)
+        if metadata is None:
+            continue
+        found = True
+        headers.update(metadata.headers or {})
+        cookies.update(metadata.cookies or {})
+
+    if not found:
+        return None
+    return ResponseSpecMetadata(headers=headers, cookies=cookies)

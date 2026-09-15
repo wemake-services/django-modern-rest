@@ -115,6 +115,18 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   in controller class names, #1500
 - Fixes that endpoints with `auth=None` inherited document-level
   `OpenAPIConfig.security` requirements, now they emit `security: []`, #1497
+- Components hidden behind a `type X = Body[User]` alias
+  (or a `TypeAliasType` object) are now parsed. Previously such parameters
+  were silently dropped from `component_parsers`, and the endpoint
+  failed with a `TypeError` about a missing argument on every request.
+  `X: TypeAlias = Body[User]` was never affected: it is a plain
+  assignment in runtime. Aliases of aliases and subscripted generic
+  aliases are unwrapped as well, #1460
+- `ResponseSpecMetadata` is now found in union members, so
+  `-> Annotated[User, ResponseSpecMetadata(...)] | str` keeps its header
+  and cookie specs. Previously they were silently dropped. When several
+  union members carry metadata, all of it is merged: they describe
+  the same response, #1460
 
 
 ## 0.15.0 (2026-09-11)

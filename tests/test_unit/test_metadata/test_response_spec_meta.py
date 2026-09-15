@@ -1,7 +1,7 @@
 import json
 from collections.abc import Mapping
 from http import HTTPMethod, HTTPStatus
-from typing import Annotated, Any, Final
+from typing import Annotated, Any, Final, TypeAlias
 
 import pydantic
 import pytest
@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django.urls import path
 from inline_snapshot import snapshot
 from syrupy.assertion import SnapshotAssertion
-from typing_extensions import override
+from typing_extensions import TypeAliasType, override
 
 from dmr import Body, Controller, ResponseSpec, modify, validate
 from dmr.cookies import CookieSpec, NewCookie
@@ -178,3 +178,90 @@ def test_error_model_with_metadata_schema(snapshot: SnapshotAssertion) -> None:
         )
         == snapshot
     )
+
+
+_UNION_HEADER: Final = 'X-Union'
+_UNION_COOKIE: Final = 'union-cookie'
+_OTHER_HEADER: Final = 'X-Other'
+
+_AnnotatedBody: TypeAlias = Annotated[
+    _BodyModel,
+    ResponseSpecMetadata(
+        headers={_UNION_HEADER: HeaderSpec()},
+        cookies={_UNION_COOKIE: CookieSpec()},
+    ),
+]
+_AnnotatedString: TypeAlias = Annotated[
+    str,
+    ResponseSpecMetadata(headers={_OTHER_HEADER: HeaderSpec()}),
+]
+_LazyAnnotatedBody = TypeAliasType('_LazyAnnotatedBody', _AnnotatedBody)
+
+
+class _UnionMetadataController(Controller[PydanticSerializer]):
+    def get(self) -> _AnnotatedBody | str:
+        raise NotImplementedError
+
+    def post(self) -> _AnnotatedBody | _AnnotatedString:
+        raise NotImplementedError
+
+    def put(self) -> _LazyAnnotatedBody | None:
+        raise NotImplementedError
+
+    @validate(ResponseSpec(_LazyAnnotatedBody, status_code=HTTPStatus.OK))
+    def patch(self) -> HttpResponse:
+        raise NotImplementedError
+
+
+@pytest.mark.parametrize(
+    ('method', 'status_code', 'expected_headers'),
+    [
+        (HTTPMethod.GET, HTTPStatus.OK, [_UNION_HEADER]),
+        (
+            HTTPMethod.POST,
+            HTTPStatus.CREATED,
+            [_UNION_HEADER, _OTHER_HEADER],
+        ),
+        (HTTPMethod.PUT, HTTPStatus.OK, [_UNION_HEADER]),
+        (HTTPMethod.PATCH, HTTPStatus.OK, [_UNION_HEADER]),
+    ],
+)
+def test_union_response_spec_metadata(
+    *,
+    method: HTTPMethod,
+    status_code: HTTPStatus,
+    expected_headers: list[str],
+) -> None:
+    """Ensure that metadata is found in union members and type aliases."""
+    endpoint = _UnionMetadataController.api_endpoints[str(method)]
+    response_spec = endpoint.metadata.responses[status_code]
+
+    assert response_spec.headers is not None
+    assert sorted(response_spec.headers) == sorted(expected_headers)
+    assert response_spec.cookies == {_UNION_COOKIE: CookieSpec()}
+
+
+class _UnionMissingHeaderController(Controller[PydanticSerializer]):
+    @validate(ResponseSpec(_AnnotatedBody | str, status_code=HTTPStatus.OK))
+    def get(self) -> HttpResponse:
+        return self.to_response('no headers at all')
+
+
+def test_union_metadata_headers_are_validated(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensure that headers from union members are required in responses."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _UnionMissingHeaderController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': "Response has missing required {'x-union'} headers",
+                'type': 'value_error',
+            },
+        ],
+    })
