@@ -196,7 +196,7 @@ Type variable defaults
 Type variables can have defaults, as described in :pep:`696`.
 We use them when a subclass does not provide some of the type args.
 
-Use ``typing_extensions.TypeVar`` to define them,
+Use ``typing_extensions.TypeVar`` on <= 3.12 to define them,
 the native ``class Reusable[_ModelT = MyModel]`` syntax
 is only available on Python 3.13 and above.
 
