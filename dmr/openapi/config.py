@@ -36,6 +36,11 @@ class OpenAPIConfig:
             Only ``'3.1.0'`` and newer versions are supported,
             because older ones are not based on JSON Schema.
             Defaults to ``'3.1.0'``.
+        json_schema_dialect: Default value of the ``$schema`` keyword
+            for all Schema Objects in the document, as a URI.
+            Schemas that set ``$schema`` themselves are not affected.
+            Defaults to ``None``: the dialect of the targeted
+            OpenAPI version is used.
         summary: Short, one-line summary of the API.
         description: Longer description of the API. May use CommonMark syntax.
         terms_of_service: URL to the terms of service for the API.
@@ -52,13 +57,15 @@ class OpenAPIConfig:
             keyed by name.
 
     .. versionchanged:: 0.16.0
-        ``openapi_version`` older than ``'3.1.0'`` now raises a ``ValueError``.
+       ``openapi_version`` older than ``'3.1.0'`` now raises a ``ValueError``.
+       Added ``json_schema_dialect`` attribute.
 
     """
 
     title: str
     version: str
     openapi_version: str = '3.1.0'
+    json_schema_dialect: str | None = None
 
     summary: str | None = None
     description: str | None = None

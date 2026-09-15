@@ -1,6 +1,7 @@
 import pytest
 
-from dmr.openapi import OpenAPIConfig
+from dmr.openapi import OpenAPIConfig, build_schema
+from dmr.routing import Router
 
 
 @pytest.mark.parametrize(
@@ -21,6 +22,7 @@ def test_supported_openapi_versions(openapi_version: str) -> None:
     )
 
     assert config.openapi_version == openapi_version
+    assert config.json_schema_dialect is None
 
 
 @pytest.mark.parametrize(
@@ -39,3 +41,18 @@ def test_unsupported_openapi_versions(openapi_version: str) -> None:
             version='1.0.0',
             openapi_version=openapi_version,
         )
+
+
+def test_json_schema_dialect() -> None:
+    """Ensures that ``json_schema_dialect`` ends up in the schema."""
+    dialect = 'https://json-schema.org/draft/2020-12/schema'
+    config = OpenAPIConfig(
+        title='my title',
+        version='1.0.0',
+        json_schema_dialect=dialect,
+    )
+
+    assert config.json_schema_dialect == dialect
+
+    schema = build_schema(Router(), config=config).convert()
+    assert schema['jsonSchemaDialect'] == dialect

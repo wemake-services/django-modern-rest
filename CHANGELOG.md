@@ -100,6 +100,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `dmr.metadata.MergeableMetadata` base class. Subclass it to define
   how your own `Annotated` metadata combines when it is placed on members
   of a union type. `ResponseSpecMetadata` is the first one to use it, #1460
+- Added `json_schema_dialect` attribute to `OpenAPIConfig`.
+  `OpenAPI.json_schema_dialect` existed, but there was no way to set it,
+  so the `jsonSchemaDialect` field was never generated, #1486
 - Allow all bool values in `dmr.openapi.objects` also accept `None`, #1437
 
 ### Bugfixes
