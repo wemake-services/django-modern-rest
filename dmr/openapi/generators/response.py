@@ -1,6 +1,6 @@
 import dataclasses
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Final, Literal
+from typing import TYPE_CHECKING, Literal
 
 from dmr.openapi.mappers.example import generate_example, set_generated_example
 from dmr.openapi.objects import (
@@ -16,9 +16,6 @@ if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata, ResponseSpec
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.serializer import BaseSerializer
-
-#: First OpenAPI version with the `Response.summary` field.
-_RESPONSE_SUMMARY_VERSION: Final = (3, 2)
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -69,7 +66,11 @@ class ResponseGenerator:
                 if response_spec.description is None
                 else str(response_spec.description)
             ),
-            summary=self._get_summary(response_spec, context),
+            summary=(
+                None
+                if response_spec.summary is None
+                else str(response_spec.summary)
+            ),
             links=response_spec.links,
             headers=headers or None,
             content=self._get_content(
@@ -81,18 +82,6 @@ class ResponseGenerator:
                 used_for_response=used_for_response,
             ),
         )
-
-    def _get_summary(
-        self,
-        response_spec: 'ResponseSpec',
-        context: 'OpenAPIContext',
-    ) -> str | None:
-        if response_spec.summary is None:
-            return None
-        if context.config.openapi_version_info[:2] < _RESPONSE_SUMMARY_VERSION:
-            # `Response.summary` only exists since OpenAPI 3.2:
-            return None
-        return str(response_spec.summary)
 
     def _get_headers(
         self,

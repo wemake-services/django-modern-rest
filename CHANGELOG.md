@@ -130,8 +130,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   - `Tag.summary`, `Tag.parent`, and `Tag.kind`
   - `'querystring'` as a `Parameter.param_in` value
   - `Components.media_types`
-  - `Response.summary` and `ResponseSpec.summary`,
-    the latter is only rendered for OpenAPI `3.2.0` and newer
+  - `Response.summary` and `ResponseSpec.summary`
   - `MediaType.description`
   - `Encoding.encoding`, `Encoding.item_encoding`,
     and `Encoding.prefix_encoding`

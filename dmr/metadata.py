@@ -72,8 +72,8 @@ class ResponseSpec:
         description: Text comment about what this response represents.
         summary: Short label for what this response represents,
             *description* is the long form of it.
-            Requires OpenAPI ``'3.2.0'`` or newer, older versions
-            don't have ``Response.summary`` and will drop it.
+            ``Response.summary`` was added in OpenAPI ``'3.2.0'``,
+            so setting it on an older version fails schema validation.
         links: Possible links to other OpenAPI operations.
 
     We use this structure to validate responses and render them in OpenAPI.

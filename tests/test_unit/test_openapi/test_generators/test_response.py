@@ -185,19 +185,9 @@ class _ControllerWithSummary(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-@pytest.mark.parametrize(
-    ('openapi_version', 'expected_summary'),
-    [
-        ('3.2.0', 'Queued'),
-        # `Response.summary` does not exist before OpenAPI 3.2:
-        ('3.1.0', None),
-    ],
-)
-def test_response_summary(
-    openapi_version: str,
-    expected_summary: str | None,
-) -> None:
-    """Ensure that `ResponseSpec.summary` is rendered for OpenAPI 3.2."""
+@pytest.mark.parametrize('openapi_version', ['3.1.0', '3.2.0'])
+def test_response_summary(openapi_version: str) -> None:
+    """Ensure that `ResponseSpec.summary` is never hidden from the schema."""
     context = OpenAPIContext(
         OpenAPIConfig(
             title='tests',
@@ -214,5 +204,5 @@ def test_response_summary(
     response_accepted = response['202']
 
     assert isinstance(response_accepted, Response)
-    assert response_accepted.summary == expected_summary
+    assert response_accepted.summary == 'Queued'
     assert response_accepted.description == 'The task was put into the queue'
