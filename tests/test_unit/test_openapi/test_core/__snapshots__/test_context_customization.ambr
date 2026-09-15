@@ -42,8 +42,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "operationId": "ExplicitCreate",
@@ -78,8 +77,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -183,8 +181,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "operationId": "ExplicitCreate",
@@ -219,8 +216,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
