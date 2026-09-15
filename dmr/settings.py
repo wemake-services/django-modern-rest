@@ -98,15 +98,18 @@ class HttpSpec(enum.StrEnum):
         header_name_server_managed: Disables validation that headers
             like ``Server``, ``Keep-Alive``, etc. can't be
             included in response headers.
-        http_field_name_validation: Disables validation that HTTP
-            field names conform to the token syntax
-            defined in RFC 9110, Section 5.6.2.
+        header_name_syntax: Disables validations that check
+            name syntax to avoid headers like X Custom Name or @@@.
+        cookie_name_syntax: Disables validation that check
+            name syntax for cookie names to avoid disallowed
+            characters.
     """
 
     empty_request_body = 'empty_request_body'
     empty_response_body = 'empty_response_body'
     header_name_server_managed = 'header_name_server_managed'
-    http_field_name_validation = 'http_field_name_validation'
+    header_name_syntax = 'header_name_syntax'
+    cookie_name_syntax = 'cookie_name_syntax'
 
 
 class SettingsDict(TypedDict, total=False):

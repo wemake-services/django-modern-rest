@@ -16,6 +16,7 @@ from typing import (
     ClassVar,
     Final,
     Literal,
+    ParamSpec,
     TypeVar,
     assert_never,
 )
@@ -94,13 +95,13 @@ _HTTP_METHODS_WITHOUT_BODY: Final = frozenset((
 
 _PluggableT = TypeVar('_PluggableT', bound=Parser | Renderer)
 _ItemT = TypeVar('_ItemT')
+_HttpSpecCallback = ParamSpec('_HttpSpecCallback')
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class _ResponseListValidator:  # noqa: WPS214
-    """Validates responses metadata."""
+class _HttpSpecValidator:  # noqa: WPS214
+    """Collects all http spec validation callbacks."""
 
-    metadata: EndpointMetadata
     #: 1xx responses, 204, 205, and 304 must not have a body. RFC 9110.
     _no_response_body_statuses: ClassVar[frozenset[HTTPStatus]] = frozenset((
         HTTPStatus.NO_CONTENT,
@@ -108,112 +109,47 @@ class _ResponseListValidator:  # noqa: WPS214
         HTTPStatus.NOT_MODIFIED,
     ))
 
-    def __call__(
-        self,
-        responses: list[ResponseSpec],
-    ) -> dict[HTTPStatus, ResponseSpec]:
-        self._validate_unique_responses(responses)
-        self._validate_header_descriptions(responses)
-        self._validate_cookie_descriptions(responses)
-        self._validate_http_spec(responses)
-        return self._convert_responses(responses)
+    metadata: EndpointMetadata
 
-    def _validate_unique_responses(
+    def validate(
         self,
         responses: list[ResponseSpec],
     ) -> None:
-        endpoint_name = self.metadata.endpoint_name
-        # Now, check if we have any conflicts in responses.
-        # For example: same status code, mismatching metadata.
-        unique: dict[HTTPStatus, ResponseSpec] = {}
-        for response in responses:
-            existing_response = unique.get(response.status_code)
-            if existing_response is not None and existing_response != response:
-                raise EndpointMetadataError(
-                    f'Endpoint {endpoint_name!r} has multiple responses '
-                    f'for {response.status_code=}, but with different '
-                    f'metadata: {response} and {existing_response}',
-                )
-            unique.setdefault(response.status_code, response)
-
-    def _validate_header_descriptions(  # noqa: WPS231
-        self,
-        responses: list[ResponseSpec],
-    ) -> None:
-        endpoint_name = self.metadata.endpoint_name
-        for response in responses:
-            if response.headers is None:
-                continue
-            for header_name, header in response.headers.items():
-                if header_name.lower() == 'set-cookie':
-                    raise EndpointMetadataError(
-                        f'Cannot use "Set-Cookie" header in {response}, use '
-                        f'`cookies=` parameter instead in {endpoint_name!r}',
-                    )
-                if isinstance(header, NewHeader):  # type: ignore[unreachable]
-                    raise EndpointMetadataError(
-                        f'Cannot use `NewHeader` in {response} , use '
-                        f'`HeaderSpec` instead in {endpoint_name!r}',
-                    )
-
-    def _validate_cookie_descriptions(
-        self,
-        responses: list[ResponseSpec],
-    ) -> None:
-        endpoint_name = self.metadata.endpoint_name
-        for response in responses:
-            if response.cookies is None:
-                continue
-            if any(
-                isinstance(cookie, NewCookie)  # pyright: ignore[reportUnnecessaryIsInstance]
-                for cookie in response.cookies.values()
-            ):
-                raise EndpointMetadataError(
-                    f'Cannot use `NewCookie` in {response} , '
-                    f'use `CookieSpec` instead in {endpoint_name!r}',
-                )
-
-    def _validate_http_spec(
-        self,
-        responses: list[ResponseSpec],
-    ) -> None:
-        """Validate that we don't violate HTTP spec."""
         self._check_http_spec_rule(
-            HttpSpec.empty_response_body,
-            self._check_empty_response_body,
-            responses=responses,
-        )
-
-        self._check_http_spec_rule(
-            HttpSpec.header_name_server_managed,
-            self._check_header_name_server_managed,
-            responses=responses,
-        )
-
-        self._check_http_spec_rule(
-            HttpSpec.http_field_name_validation,
-            self._check_http_syntax,
+            rule=HttpSpec.header_name_syntax,
+            callback=self._check_http_syntax,
             responses=responses,
             field_type='cookie',
         )
 
         self._check_http_spec_rule(
-            HttpSpec.http_field_name_validation,
-            self._check_http_syntax,
+            rule=HttpSpec.header_name_syntax,
+            callback=self._check_http_syntax,
             responses=responses,
             field_type='header',
         )
 
-        # TODO: add more checks
+        self._check_http_spec_rule(
+            rule=HttpSpec.header_name_server_managed,
+            callback=self._check_header_name_server_managed,
+            responses=responses,
+        )
+
+        self._check_http_spec_rule(
+            rule=HttpSpec.empty_response_body,
+            callback=self._check_empty_response_body,
+            responses=responses,
+        )
 
     def _check_http_spec_rule(
         self,
         rule: HttpSpec,
-        callback: Callable[..., None],
-        **kwargs: list[ResponseSpec] | Literal['cookie', 'header'],
+        callback: Callable[_HttpSpecCallback, None],
+        *args: _HttpSpecCallback.args,
+        **kwargs: _HttpSpecCallback.kwargs,
     ) -> None:
         if rule not in self.metadata.no_validate_http_spec:
-            callback(**kwargs)
+            callback(*args, **kwargs)
 
     def _check_empty_response_body(
         self,
@@ -288,12 +224,6 @@ class _ResponseListValidator:  # noqa: WPS214
                 f'is not following http spec.',
             )
 
-    def _convert_responses(
-        self,
-        all_responses: list[ResponseSpec],
-    ) -> dict[HTTPStatus, ResponseSpec]:
-        return {resp.status_code: resp for resp in all_responses}
-
     def _get_http_field_names(
         self,
         resource: ResponseSpec | ResponseModification,
@@ -328,6 +258,96 @@ class _ResponseListValidator:  # noqa: WPS214
             ):
                 return header_name
         return None
+
+
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
+class _ResponseListValidator:  # noqa: WPS214
+    """Validates responses metadata."""
+
+    metadata: EndpointMetadata
+    http_spec_validator: ClassVar[type[_HttpSpecValidator]] = _HttpSpecValidator
+
+    def __call__(
+        self,
+        responses: list[ResponseSpec],
+    ) -> dict[HTTPStatus, ResponseSpec]:
+        self._validate_unique_responses(responses)
+        self._validate_header_descriptions(responses)
+        self._validate_cookie_descriptions(responses)
+        self._validate_http_spec(responses)
+        return self._convert_responses(responses)
+
+    def _validate_unique_responses(
+        self,
+        responses: list[ResponseSpec],
+    ) -> None:
+        endpoint_name = self.metadata.endpoint_name
+        # Now, check if we have any conflicts in responses.
+        # For example: same status code, mismatching metadata.
+        unique: dict[HTTPStatus, ResponseSpec] = {}
+        for response in responses:
+            existing_response = unique.get(response.status_code)
+            if existing_response is not None and existing_response != response:
+                raise EndpointMetadataError(
+                    f'Endpoint {endpoint_name!r} has multiple responses '
+                    f'for {response.status_code=}, but with different '
+                    f'metadata: {response} and {existing_response}',
+                )
+            unique.setdefault(response.status_code, response)
+
+    def _validate_header_descriptions(  # noqa: WPS231
+        self,
+        responses: list[ResponseSpec],
+    ) -> None:
+        endpoint_name = self.metadata.endpoint_name
+        for response in responses:
+            if response.headers is None:
+                continue
+            for header_name, header in response.headers.items():
+                if header_name.lower() == 'set-cookie':
+                    raise EndpointMetadataError(
+                        f'Cannot use "Set-Cookie" header in {response}, use '
+                        f'`cookies=` parameter instead in {endpoint_name!r}',
+                    )
+                if isinstance(header, NewHeader):  # type: ignore[unreachable]
+                    raise EndpointMetadataError(
+                        f'Cannot use `NewHeader` in {response} , use '
+                        f'`HeaderSpec` instead in {endpoint_name!r}',
+                    )
+
+    def _validate_cookie_descriptions(
+        self,
+        responses: list[ResponseSpec],
+    ) -> None:
+        endpoint_name = self.metadata.endpoint_name
+        for response in responses:
+            if response.cookies is None:
+                continue
+            if any(
+                isinstance(cookie, NewCookie)  # pyright: ignore[reportUnnecessaryIsInstance]
+                for cookie in response.cookies.values()
+            ):
+                raise EndpointMetadataError(
+                    f'Cannot use `NewCookie` in {response} , '
+                    f'use `CookieSpec` instead in {endpoint_name!r}',
+                )
+
+    def _validate_http_spec(
+        self,
+        responses: list[ResponseSpec],
+    ) -> None:
+        """Validate that we don't violate HTTP spec."""
+        self.http_spec_validator(
+            metadata=self.metadata,
+        ).validate(
+            responses=responses,
+        )
+
+    def _convert_responses(
+        self,
+        all_responses: list[ResponseSpec],
+    ) -> dict[HTTPStatus, ResponseSpec]:
+        return {resp.status_code: resp for resp in all_responses}
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
