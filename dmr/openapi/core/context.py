@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, get_origin
+from typing import TYPE_CHECKING, Any, ClassVar, get_origin
 
 from dmr.openapi.core.merger import ConfigMerger
 from dmr.openapi.core.registry import (
@@ -49,6 +49,12 @@ class OpenAPIContext:
 
     Maintains shared state and generators used across the OpenAPI
     generation process. Provides access to different generators.
+
+    Subclass this context and override the ``*_cls`` attributes to customize
+    schema generation. Each class is instantiated with the current context.
+
+    .. versionchanged:: 0.16.0
+        Added class-level overrides for generators and the configuration merger.
     """
 
     __slots__ = (
@@ -58,6 +64,27 @@ class OpenAPIContext:
         'registries',
     )
 
+    #: Merges configuration with generated paths and components.
+    config_merger_cls: ClassVar[type[ConfigMerger]] = ConfigMerger
+    #: Generates and registers operation IDs.
+    operation_id_cls: ClassVar[type[OperationIdGenerator]] = (
+        OperationIdGenerator
+    )
+    #: Resolves annotations into schemas and references.
+    schema_cls: ClassVar[type[SchemaGenerator]] = SchemaGenerator
+    #: Generates request bodies and parameters from endpoint components.
+    component_parsers_cls: ClassVar[type[ComponentParserGenerator]] = (
+        ComponentParserGenerator
+    )
+    #: Generates endpoint responses.
+    response_cls: ClassVar[type[ResponseGenerator]] = ResponseGenerator
+    #: Generates security requirements and registers security schemes.
+    security_scheme_cls: ClassVar[type[SecuritySchemeGenerator]] = (
+        SecuritySchemeGenerator
+    )
+    #: Generates parameters from models.
+    parameter_cls: ClassVar[type[ParameterGenerator]] = ParameterGenerator
+
     def __init__(
         self,
         config: 'OpenAPIConfig | None' = None,
@@ -66,7 +93,7 @@ class OpenAPIContext:
         from dmr.openapi.config import default_config  # noqa: PLC0415
 
         self.config = config or default_config()
-        self.config_merger = ConfigMerger(self)
+        self.config_merger = self.config_merger_cls(self)
 
         # Initialize registries:
         self.registries = RegistryContainer(
@@ -77,12 +104,12 @@ class OpenAPIContext:
 
         # Initialize generators:
         self.generators = GeneratorContainer(
-            operation_id=OperationIdGenerator(self),
-            schema=SchemaGenerator(self),
-            component_parsers=ComponentParserGenerator(self),
-            response=ResponseGenerator(self),
-            security_scheme=SecuritySchemeGenerator(self),
-            parameter=ParameterGenerator(self),
+            operation_id=self.operation_id_cls(self),
+            schema=self.schema_cls(self),
+            component_parsers=self.component_parsers_cls(self),
+            response=self.response_cls(self),
+            security_scheme=self.security_scheme_cls(self),
+            parameter=self.parameter_cls(self),
         )
 
     def get_components(self) -> Components:
