@@ -1,8 +1,9 @@
+from dmr.plugins.pydantic import PydanticSerializer
 from examples.reusable_code.reusable_defaults import ReusableController
 
 
-class PydanticController(ReusableController):
-    """Both the serializer and the request model are taken from defaults."""
+class PydanticController(ReusableController[PydanticSerializer]):
+    """The request model is not given, so it is `DefaultRequestModel`."""
 
 
 # run: {"controller": "PydanticController", "method": "post", "body": {"first_name": "Nikita", "last_name": "Sobolev"}, "url": "/api/example/"}  # noqa: ERA001, E501

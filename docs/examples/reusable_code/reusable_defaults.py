@@ -3,7 +3,6 @@ from typing import Generic
 from typing_extensions import TypedDict, TypeVar
 
 from dmr import Body, Controller
-from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
 
 
@@ -12,11 +11,7 @@ class DefaultRequestModel(TypedDict):
     last_name: str
 
 
-_SerializerT = TypeVar(
-    '_SerializerT',
-    bound=BaseSerializer,
-    default=PydanticSerializer,
-)
+_SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
 _RequestModelT = TypeVar('_RequestModelT', default=DefaultRequestModel)
 
 

@@ -196,29 +196,31 @@ Type variable defaults
 Type variables can have defaults, as described in :pep:`696`.
 We use them when a subclass does not provide some of the type args.
 
-Use ``typing_extensions.TypeVar`` on <= 3.12 to define them,
-the native ``class Reusable[_ModelT = MyModel]`` syntax
-is only available on Python 3.13 and above.
+There are three ways to define them:
+
+- ``typing_extensions.TypeVar('_ModelT', default=MyModel)`` on any version
+- :class:`typing.TypeVar` with the same ``default=`` argument on 3.13 and above
+- the native ``class Reusable[_ModelT = MyModel]`` syntax on 3.13 and above
 
 .. literalinclude:: /examples/reusable_code/reusable_defaults.py
   :caption: views.py
   :linenos:
   :language: python
 
-Now, both type args are optional for the subclasses:
+The request model is now optional for the subclasses:
 
 .. tabs::
 
-  .. tab:: defaults
+  .. tab:: with default
 
     .. literalinclude:: /examples/reusable_code/defaults_pydantic.py
       :caption: views.py
       :linenos:
       :language: python
 
-  .. tab:: exact types
+  .. tab:: without default
 
-    .. literalinclude:: /examples/reusable_code/defaults_msgspec.py
+    .. literalinclude:: /examples/reusable_code/defaults_exact.py
       :caption: views.py
       :linenos:
       :language: python
@@ -226,6 +228,25 @@ Now, both type args are optional for the subclasses:
 Defaults can also point to other type variables:
 ``_ResponseBodyT = TypeVar('_ResponseBodyT', default=_RequestModelT)``
 means "the response body is the request model, unless told otherwise".
+
+Serializers can have defaults as well. Then a subclass
+that passes no type args at all is a concrete controller,
+because it has an exact serializer:
+
+.. literalinclude:: /examples/reusable_code/defaults_serializer.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+.. important::
+
+  A default only applies to the subclasses, never to the reusable
+  controller that declares it. ``ReusableController`` above still has
+  ``is_abstract`` set to ``True`` and cannot be routed,
+  even though every one of its type variables has a default.
+
+  This is the same rule as everywhere else: we only build endpoints
+  for concrete controllers, and a type variable is not an exact type.
 
 .. note::
 

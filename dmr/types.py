@@ -9,19 +9,21 @@ from typing import (  # noqa: WPS235
     Generic,
     TypeAlias,
     TypeVar,
-    get_args,
     get_origin,
 )
 
 from typing_extensions import (
     Format,
-    NoDefault,
     Sentinel,
     get_original_bases,
     get_type_hints,
 )
 
 from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.internal.type_inference import (
+    resolve_type_args,
+    resolve_type_var_default,
+)
 
 if TYPE_CHECKING:
     # During type checking it is a recursive alias, so we can be sure
@@ -142,7 +144,7 @@ def infer_type_args(
     return tuple(
         arg
         for base_class in infer_bases(orig_cls, given_type)
-        for arg in _resolve_type_args(base_class)
+        for arg in resolve_type_args(base_class)
     )
 
 
@@ -169,48 +171,6 @@ def infer_bases(
             and is_safe_subclass(origin, given_type)
         )
     ]
-
-
-def _resolve_type_args(base: Any) -> tuple[Any, ...]:
-    """
-    Returns type args of a base class with :pep:`696` defaults applied.
-
-    Subscripted bases already have their type var defaults
-    filled in by the runtime: ``Base[int]`` is ``Base[int, str]``
-    for ``class Base(Generic[_FirstT, _SecondT = str])``.
-
-    But, bare bases like ``class Sub(Base): ...``
-    don't have any type args in runtime at all.
-    Type-checkers do use type var defaults there, so we do the same.
-    """
-    type_args = get_args(base)
-    if type_args:
-        return type_args
-
-    type_params = getattr(base, '__parameters__', ())
-    type_defaults = tuple(map(_resolve_type_var_default, type_params))
-    if type_defaults == type_params:
-        # Without any defaults there's nothing to infer from a bare base:
-        # we don't want to treat `class Sub(Base)` as `Base[_FirstT]`.
-        return ()
-    return type_defaults
-
-
-def _resolve_type_var_default(type_var: TypeVar) -> Any:
-    """
-    Returns the :pep:`696` default of a type var or the type var itself.
-
-    Type vars only have defaults when they are created
-    with ``typing_extensions.TypeVar``
-    or with the native syntax on Python 3.13 and above.
-
-    Defaults can be type vars themselves,
-    they are not resolved any further here.
-    """
-    default = getattr(type_var, '__default__', NoDefault)
-    if default is NoDefault:
-        return type_var
-    return default
 
 
 def infer_annotation(annotation: Any, context: type[Any]) -> Any:
@@ -370,7 +330,7 @@ class TypeVarInference:
         base: type[Any],
         type_map: dict[str, Any],
     ) -> None:
-        type_args = _resolve_type_args(base)
+        type_args = resolve_type_args(base)
         if not type_args:
             # Either a regular non-generic base
             # or a bare generic one without any type var defaults.
@@ -422,5 +382,5 @@ class TypeVarInference:
         if resolved is type_var:
             # Nothing in the inheritance chain provides a real value for it,
             # its `PEP 696` default is the last resort.
-            return _resolve_type_var_default(type_var)
+            return resolve_type_var_default(type_var)
         return resolved

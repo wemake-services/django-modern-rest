@@ -44,35 +44,18 @@ class _BaseController(
         raise NotImplementedError
 
 
-class _LinkedController(
-    Controller[_SerializerT],
-    Generic[_SerializerT, _ModelT, _LinkedT],
-):
-    """``_LinkedT`` defaults to whatever ``_ModelT`` is."""
-
-    def post(
-        self,
-        parsed_body: Body[_ModelT],
-        parsed_query: Query[_LinkedT],
-    ) -> str:
-        raise NotImplementedError
-
-
-class _MixedController(
-    Controller[_AnySerializerT],
-    Generic[_AnySerializerT, _ModelT],
-):
-    """Only the request model has a default."""
-
-    def post(self, parsed_body: Body[_ModelT]) -> str:
-        raise NotImplementedError
-
-
 def _body_models(
     controller: type[Controller[Any]],
 ) -> list[Any]:
     metadata = controller.api_endpoints['POST'].metadata
     return [parser[1] for parser in metadata.component_parsers]
+
+
+def test_reusable_controller_is_still_abstract() -> None:
+    """Ensure that defaults don't make the declaring controller concrete."""
+    assert _BaseController.is_abstract
+    assert getattr(_BaseController, 'serializer', None) is None
+    assert getattr(_BaseController, 'api_endpoints', None) is None
 
 
 def test_defaults_for_bare_subclass() -> None:
@@ -125,8 +108,40 @@ def test_defaults_in_several_layers() -> None:
     assert _body_models(FinalController) == [_DefaultModel]
 
 
+def test_defaults_in_async_controller() -> None:
+    """Ensure that async controllers resolve defaults the same way."""
+
+    class _AsyncController(
+        Controller[_SerializerT],
+        Generic[_SerializerT, _ModelT],
+    ):
+        async def post(self, parsed_body: Body[_ModelT]) -> str:
+            raise NotImplementedError
+
+    class BareController(_AsyncController):
+        """Nothing is given."""
+
+    assert not BareController.is_abstract
+    assert BareController.is_async
+    assert BareController.serializer is PydanticSerializer
+    assert _body_models(BareController) == [_DefaultModel]
+
+
 def test_default_pointing_to_other_type_var() -> None:
     """Ensure that a type var default can be another type var."""
+
+    class _LinkedController(
+        Controller[_SerializerT],
+        Generic[_SerializerT, _ModelT, _LinkedT],
+    ):
+        """``_LinkedT`` defaults to whatever ``_ModelT`` is."""
+
+        def post(
+            self,
+            parsed_body: Body[_ModelT],
+            parsed_query: Query[_LinkedT],
+        ) -> str:
+            raise NotImplementedError
 
     class ExactController(_LinkedController[PydanticSerializer, _ExactModel]):
         """``_LinkedT`` must become ``_ExactModel`` as well."""
@@ -177,22 +192,26 @@ def test_still_generic_controller_uses_defaults() -> None:
     assert _body_models(ExactController) == [_ExactModel]
 
 
-def test_type_var_without_default_stays_abstract() -> None:
+def test_type_var_without_default() -> None:
     """Ensure that type vars without defaults are still required."""
+
+    class _MixedController(
+        Controller[_AnySerializerT],
+        Generic[_AnySerializerT, _ModelT],
+    ):
+        """Only the request model has a default."""
+
+        def post(self, parsed_body: Body[_ModelT]) -> str:
+            raise NotImplementedError
 
     class BareController(_MixedController):  # type: ignore[type-arg]
         """The serializer has no default, so this one stays abstract."""
 
+    class FinalController(_MixedController[PydanticSerializer]):
+        """But the model still falls back to its default."""
+
     assert BareController.is_abstract
     assert getattr(BareController, 'serializer', None) is None
-
-
-def test_type_var_without_default_can_be_given() -> None:
-    """Ensure that other type vars are still defaulted."""
-
-    class FinalController(_MixedController[PydanticSerializer]):
-        """Only the model falls back to its default."""
-
     assert not FinalController.is_abstract
     assert _body_models(FinalController) == [_DefaultModel]
 
@@ -209,20 +228,25 @@ def test_pep696_type_params() -> None:  # pragma: no cover
     exec(  # noqa: S102, WPS421
         textwrap.dedent(
             """
-            class _NativeController[
+            class NativeController[
                 _SerT: BaseSerializer = PydanticSerializer,
                 _ModT = _DefaultModel,
             ](Controller[_SerT]):
                 def post(self, parsed_body: Body[_ModT]) -> str:
                     ...
 
-            class NativeBare(_NativeController): ...
+            class NativeBare(NativeController): ...
             """,
         ),
         ns,
     )
 
-    controller = ns['NativeBare']
-    assert not controller.is_abstract
-    assert controller.serializer is PydanticSerializer
-    assert _body_models(controller) == [_DefaultModel]
+    reusable = ns['NativeController']
+    assert reusable.is_abstract
+    assert getattr(reusable, 'serializer', None) is None
+    assert getattr(reusable, 'api_endpoints', None) is None
+
+    concrete = ns['NativeBare']
+    assert not concrete.is_abstract
+    assert concrete.serializer is PydanticSerializer
+    assert _body_models(concrete) == [_DefaultModel]
