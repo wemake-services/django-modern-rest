@@ -571,6 +571,48 @@ Useful APIs for users to override:
   :class:`~dmr.openapi.objects.SecurityScheme` and requirements are generated
 
 
+Customizing the context
+~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 0.16.0
+
+To replace a generator, subclass :class:`~dmr.openapi.OpenAPIContext`
+and set the corresponding ``*_cls`` attribute to your generator subclass.
+Pass an instance of your context to :func:`~dmr.openapi.build_schema`.
+Configuration values stay in :class:`~dmr.openapi.OpenAPIConfig`;
+behavioral customizations belong in the generator or merger subclasses.
+
+The following class attributes can be overridden independently:
+
+- ``operation_id_cls``: :class:`~dmr.openapi.generators.OperationIdGenerator`
+- ``schema_cls``: :class:`~dmr.openapi.generators.SchemaGenerator`
+- ``component_parsers_cls``:
+  :class:`~dmr.openapi.generators.ComponentParserGenerator`
+- ``response_cls``: :class:`~dmr.openapi.generators.ResponseGenerator`
+- ``security_scheme_cls``:
+  :class:`~dmr.openapi.generators.SecuritySchemeGenerator`
+- ``parameter_cls``: :class:`~dmr.openapi.generators.ParameterGenerator`
+- ``config_merger_cls``: :class:`~dmr.openapi.core.merger.ConfigMerger`
+
+Each class receives the current context as its constructor argument.
+Attributes you do not override retain their default implementations.
+Create a fresh context for each schema build, since its registries
+track operation IDs, schemas, and security schemes for that build.
+
+For example, this context generates operation IDs without controller names:
+
+.. literalinclude:: /examples/openapi/custom_context.py
+   :language: python
+   :linenos:
+
+``POST /api/user/`` now has the operation ID ``postApiUser``.
+Calling the base generator with an empty controller-name argument preserves
+explicit endpoint ``operation_id`` values and duplicate detection.
+If you replace the generation logic entirely, your implementation must
+handle explicit IDs and register the final ID with
+``self._context.registries.operation_id.register()`` to retain those guarantees.
+
+
 API Reference
 -------------
 
