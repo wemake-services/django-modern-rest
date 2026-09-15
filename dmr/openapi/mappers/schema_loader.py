@@ -106,7 +106,7 @@ def load_schema(
         min_properties=raw_data.get('minProperties'),
         required=raw_data.get('required', []),
         dependent_required=raw_data.get('dependentRequired'),
-        format=_try_enum(OpenAPIFormat, raw_data.get('format')),
+        format=_try_format(raw_data.get('format')),
         content_encoding=raw_data.get('contentEncoding'),
         content_media_type=raw_data.get('contentMediaType'),
         content_schema=_try_optional_type(raw_data.get('contentSchema')),
@@ -194,9 +194,14 @@ def _try_type_field(raw_value: Any) -> OpenAPIType | list[OpenAPIType] | None:
     return None if raw_value is None else OpenAPIType(raw_value)
 
 
-def _try_enum(enum_cls: type[_EnumT], raw_value: Any) -> _EnumT | None:
-    """Load a raw_value as an enum member, or None."""
-    return None if raw_value is None else enum_cls(raw_value)
+def _try_format(raw_value: Any) -> OpenAPIFormat | str | None:
+    """Load a known format as an enum member or arbitrary string."""
+    if raw_value is None:
+        return None
+    try:
+        return OpenAPIFormat(raw_value)
+    except ValueError:
+        return str(raw_value)
 
 
 def _try_discriminator(raw_value: Any) -> Discriminator | None:

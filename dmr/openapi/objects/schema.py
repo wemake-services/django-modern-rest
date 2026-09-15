@@ -67,7 +67,7 @@ class Schema:
     min_properties: int | None = None
     required: list[str] = field(default_factory=list[str])
     dependent_required: dict[str, list[str]] | None = None
-    format: 'OpenAPIFormat | None' = None
+    format: 'OpenAPIFormat | str | None' = None
     content_encoding: str | None = None
     content_media_type: str | None = None
     content_schema: 'Reference | Schema | None' = None

@@ -4,7 +4,7 @@ from typing import Any, Generic, Optional, TypeVar
 
 import pydantic
 from django.urls import path
-from pydantic_extra_types import Color
+from pydantic_extra_types import Color, phone_numbers
 from syrupy.assertion import SnapshotAssertion
 from typing_extensions import override
 
@@ -18,6 +18,7 @@ class _UserModel(pydantic.BaseModel):
     email: pydantic.EmailStr
     password: pydantic.SecretStr
     preferred_color: Color
+    phone_number: phone_numbers.PhoneNumber
 
 
 class _UserController(Controller[PydanticSerializer]):
@@ -129,6 +130,46 @@ def test_issue990(snapshot: SnapshotAssertion) -> None:
                 Router(
                     'api/v1/',
                     [path('/issue990', _ExampleController.as_view())],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+class _ImageMeta(pydantic.BaseModel):
+    owner: pydantic.NameEmail
+    src_encoded_str: pydantic.Base64Str
+    str_encoded_bytes: pydantic.Base64Bytes
+    description: str = pydantic.Field(
+        json_schema_extra={
+            'format': 'custom-format',
+        },
+    )
+
+
+class _ImageMetaController(Controller[PydanticSerializer]):
+    def post(self, parsed_body: Body[_ImageMeta]) -> None:
+        raise NotImplementedError
+
+
+class _ImageMetaFastController(Controller[PydanticFastSerializer]):
+    def post(self, parsed_body: Body[_ImageMeta]) -> None:
+        raise NotImplementedError
+
+
+def test_image_metadata(snapshot: SnapshotAssertion) -> None:
+    """Ensure arbitrary pydantic types get expected format."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [
+                        path('/image', _ImageMetaController.as_view()),
+                        path('/image-fast', _ImageMetaFastController.as_view()),
+                    ],
                 ),
             ).convert(),
             indent=2,
