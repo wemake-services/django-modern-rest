@@ -51,21 +51,64 @@ use :data:`~dmr.components.Path` component with a model.
   we won't know your url parameter schema type in advance.
   We default to ``str`` type for all url converters.
 
-  However, if you are using a different converter schema type,
-  you can use set ``__dmr_converter_schema__`` attribute
-  with the specific type that you need in the schema.
+  However, you can describe your converter
+  with a :class:`~dmr.openapi.ConverterSchema` instance:
 
-.. note::
+  .. code-block:: python
 
-  With :func:`django.urls.re_path`, url parameters are always typed
-  as ``str``, because we cannot infer any better type from a regex.
-  But, we do copy the sub-pattern of each named group into the schema,
-  so ``r'^v(?P<version>\d+)/$'`` documents ``version``
-  as ``{'type': 'string', 'pattern': '^(?:\d+)$'}``.
+     from dmr.openapi import ConverterSchema
 
-  Sub-patterns are copied as-is and only wrapped into anchors,
-  we don't translate them. JSON Schema requires ECMA-262 regexes,
-  so Python-only syntax might not be supported by all OpenAPI tools.
+
+     class LowercaseConverter:
+         regex = '[a-z]+'
+         __dmr_converter_schema__ = ConverterSchema(
+             model=str,
+             pattern='^(?:[a-z]+)$',
+             description='Lowercase letters only',
+         )
+
+  A plain model is still supported: ``__dmr_converter_schema__ = int``.
+
+  We generate a schema from ``model`` first, and only then we apply
+  the values that you have provided, so ``pattern`` and ``description``
+  always override anything we have generated. If your ``model`` is
+  a serializer model, like a ``pydantic`` one, we generate a component
+  reference for it. Such a reference cannot be extended inline,
+  so ``pattern`` and ``description`` are ignored in this case.
+
+Built-in converters
+-------------------
+
+Built-in Django converters describe themselves,
+so you don't have to do anything for them:
+
+- ``int`` and ``uuid`` are generated from the model that we know
+- ``slug`` is documented with the ``pattern`` of its own regex
+- ``path`` is documented as being able to contain slashes
+
+Copying regexes into the schema
+-------------------------------
+
+With :func:`django.urls.re_path`, url parameters are always typed
+as ``str``, because we cannot infer any better type from a regex.
+But we do copy the sub-pattern of each named group into the schema,
+so ``r'^v(?P<version>\d+)/$'`` documents ``version``
+as ``{'type': 'string', 'pattern': '^(?:\d+)$'}``.
+
+The regex is copied as-is, we don't translate it.
+JSON Schema requires ECMA-262 regexes,
+so Python-only syntax might not be supported by all OpenAPI tools.
+
+But we do wrap the regex into anchors and a group, because:
+
+1. In JSON Schema ``pattern`` is a search, it matches anywhere inside
+   the value, while a url parameter always matches the whole value.
+   That's why we add ``^`` and ``$`` around it.
+2. Anchors bind weaker than the ``|`` operator. Adding ``^`` and ``$``
+   around ``json|xml`` would produce ``^json|xml$``, which means
+   "starts with ``json``" *or* "ends with ``xml``". Wrapping the regex
+   into a non-capturing group keeps the meaning of the original branch:
+   ``^(?:json|xml)$``.
 
 
 Using Path component and parsing models

@@ -6,12 +6,13 @@ from django.urls import path, register_converter
 from inline_snapshot import snapshot
 
 from dmr import Controller
-from dmr.openapi import build_schema
+from dmr.openapi import ConverterSchema, build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 
 _YEAR_CONVERTER: Final = 'dmr_year'
 _INVALID_CONVERTER: Final = 'dmr_invalid'
+_LOWERCASE_CONVERTER: Final = 'dmr_lowercase'
 
 
 class _YearConverter:
@@ -105,3 +106,96 @@ def test_converter_schema_invalid() -> None:
                 ],
             ),
         ).convert()
+
+
+class _LowercaseConverter:
+    """Custom converter that provides a fully prepared schema."""
+
+    regex = '[a-z]+'
+    __dmr_converter_schema__ = ConverterSchema(
+        model=str,
+        pattern='^(?:[a-z]+)$',
+        description='Lowercase letters only',
+    )
+
+    def to_python(self, value: str) -> str:  # noqa: WPS110
+        """Parse the captured path segment."""
+        raise NotImplementedError
+
+    def to_url(self, value: str) -> str:  # noqa: WPS110
+        """Render the value back into a URL segment."""
+        raise NotImplementedError
+
+
+def test_builtin_converter_schemas() -> None:
+    """Ensure built-in converters document their own constraints."""
+    schema = build_schema(
+        Router(
+            'api/',
+            [
+                path('tags/<slug:tag>/', _ArticleController.as_view()),
+                path('files/<path:file_path>/', _ArticleController.as_view()),
+            ],
+        ),
+    ).convert()
+
+    tag_params = schema['paths']['/api/tags/{tag}/']['get']['parameters']
+    assert tag_params == snapshot([
+        {
+            'name': 'tag',
+            'in': 'path',
+            'schema': {
+                'type': 'string',
+                'pattern': '^(?:[-a-zA-Z0-9_]+)$',
+                'title': 'Tag',
+            },
+            'required': True,
+        },
+    ])
+
+    file_params = schema['paths']['/api/files/{file_path}/']['get'][
+        'parameters'
+    ]
+    assert file_params == snapshot([
+        {
+            'name': 'file_path',
+            'in': 'path',
+            'schema': {
+                'type': 'string',
+                'title': 'File Path',
+                'description': 'Can contain slashes',
+            },
+            'required': True,
+        },
+    ])
+
+
+def test_custom_converter_prepared_schema() -> None:
+    """Ensure custom converters can provide a ``ConverterSchema``."""
+    register_converter(_LowercaseConverter, _LOWERCASE_CONVERTER)
+    schema = build_schema(
+        Router(
+            'api/',
+            [
+                path(
+                    f'codes/<{_LOWERCASE_CONVERTER}:code>/',
+                    _ArticleController.as_view(),
+                ),
+            ],
+        ),
+    ).convert()
+
+    code_params = schema['paths']['/api/codes/{code}/']['get']['parameters']
+    assert code_params == snapshot([
+        {
+            'name': 'code',
+            'in': 'path',
+            'schema': {
+                'type': 'string',
+                'pattern': '^(?:[a-z]+)$',
+                'title': 'Code',
+                'description': 'Lowercase letters only',
+            },
+            'required': True,
+        },
+    ])
