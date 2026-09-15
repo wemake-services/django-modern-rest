@@ -184,76 +184,129 @@ _UNION_HEADER: Final = 'X-Union'
 _UNION_COOKIE: Final = 'union-cookie'
 _OTHER_HEADER: Final = 'X-Other'
 
-_AnnotatedBody: TypeAlias = Annotated[
-    _BodyModel,
-    ResponseSpecMetadata(
-        headers={_UNION_HEADER: HeaderSpec()},
-        cookies={_UNION_COOKIE: CookieSpec()},
-    ),
-]
+_UNION_METADATA: Final = ResponseSpecMetadata(
+    headers={_UNION_HEADER: HeaderSpec()},
+    cookies={_UNION_COOKIE: CookieSpec()},
+)
+
+# Only `_BodyModel` responses carry the header and the cookie,
+# a plain `str` response does not:
+_AnnotatedMember: TypeAlias = Annotated[_BodyModel, _UNION_METADATA]
+# Here the whole union carries them, every response has them:
+_AnnotatedUnion: TypeAlias = Annotated[_BodyModel | str, _UNION_METADATA]
+# Both members carry the very same header:
 _AnnotatedString: TypeAlias = Annotated[
     str,
-    ResponseSpecMetadata(headers={_OTHER_HEADER: HeaderSpec()}),
+    ResponseSpecMetadata(headers={_UNION_HEADER: HeaderSpec()}),
 ]
-_LazyAnnotatedBody = TypeAliasType('_LazyAnnotatedBody', _AnnotatedBody)
+
+_LazyAnnotatedMember = TypeAliasType('_LazyAnnotatedMember', _AnnotatedMember)
 
 
 class _UnionMetadataController(Controller[PydanticSerializer]):
-    def get(self) -> _AnnotatedBody | str:
+    def get(self) -> _AnnotatedMember | str:
         raise NotImplementedError
 
-    def post(self) -> _AnnotatedBody | _AnnotatedString:
+    def post(self) -> _AnnotatedUnion:
         raise NotImplementedError
 
-    def put(self) -> _LazyAnnotatedBody | None:
+    def put(self) -> _AnnotatedMember | _AnnotatedString:
         raise NotImplementedError
 
-    @validate(ResponseSpec(_LazyAnnotatedBody, status_code=HTTPStatus.OK))
-    def patch(self) -> HttpResponse:
+    def patch(self) -> _LazyAnnotatedMember | None:
         raise NotImplementedError
 
 
 @pytest.mark.parametrize(
-    ('method', 'status_code', 'expected_headers'),
+    ('method', 'status_code', 'required'),
     [
-        (HTTPMethod.GET, HTTPStatus.OK, [_UNION_HEADER]),
-        (
-            HTTPMethod.POST,
-            HTTPStatus.CREATED,
-            [_UNION_HEADER, _OTHER_HEADER],
-        ),
-        (HTTPMethod.PUT, HTTPStatus.OK, [_UNION_HEADER]),
-        (HTTPMethod.PATCH, HTTPStatus.OK, [_UNION_HEADER]),
+        # One member out of two declares them, so they can be missing:
+        (HTTPMethod.GET, HTTPStatus.OK, False),
+        # The whole union declares them, so they are always there:
+        (HTTPMethod.POST, HTTPStatus.CREATED, True),
+        # Both members declare the header, so it is always there:
+        (HTTPMethod.PUT, HTTPStatus.OK, True),
+        # Same as `get`, but behind a type alias:
+        (HTTPMethod.PATCH, HTTPStatus.OK, False),
     ],
 )
 def test_union_response_spec_metadata(
     *,
     method: HTTPMethod,
     status_code: HTTPStatus,
-    expected_headers: list[str],
+    required: bool,
 ) -> None:
-    """Ensure that metadata is found in union members and type aliases."""
+    """Ensure that union members and type aliases provide their metadata."""
     endpoint = _UnionMetadataController.api_endpoints[str(method)]
     response_spec = endpoint.metadata.responses[status_code]
 
-    assert response_spec.headers is not None
-    assert sorted(response_spec.headers) == sorted(expected_headers)
-    assert response_spec.cookies == {_UNION_COOKIE: CookieSpec()}
+    assert response_spec.headers == {
+        _UNION_HEADER: HeaderSpec(required=required),
+    }
 
 
-class _UnionMissingHeaderController(Controller[PydanticSerializer]):
-    @validate(ResponseSpec(_AnnotatedBody | str, status_code=HTTPStatus.OK))
+def test_union_response_spec_cookies() -> None:
+    """Ensure that cookies of union members are merged just like headers."""
+    endpoint = _UnionMetadataController.api_endpoints['GET']
+    response_spec = endpoint.metadata.responses[HTTPStatus.OK]
+
+    assert response_spec.cookies == {
+        _UNION_COOKIE: CookieSpec(required=False),
+    }
+
+
+def test_merge_keeps_specs_of_both_members() -> None:
+    """Ensure that different specs of union members are all kept."""
+    merged = ResponseSpecMetadata.merge(
+        ResponseSpecMetadata(headers={_UNION_HEADER: HeaderSpec()}),
+        ResponseSpecMetadata(headers={_OTHER_HEADER: HeaderSpec()}),
+    )
+
+    assert merged is not None
+    assert merged.headers == {
+        _UNION_HEADER: HeaderSpec(required=False),
+        _OTHER_HEADER: HeaderSpec(required=False),
+    }
+    assert merged.cookies == {}
+
+
+def test_merge_of_empty_metadata() -> None:
+    """Ensure that members without metadata merge into nothing."""
+    assert ResponseSpecMetadata.merge(None, None) is None
+
+
+class _OptionalUnionHeaderController(Controller[PydanticSerializer]):
+    @validate(ResponseSpec(_AnnotatedMember | str, status_code=HTTPStatus.OK))
     def get(self) -> HttpResponse:
-        return self.to_response('no headers at all')
+        return self.to_response('a string without the header')
 
 
-def test_union_metadata_headers_are_validated(
+def test_union_member_headers_are_optional(
     dmr_rf: DMRRequestFactory,
 ) -> None:
-    """Ensure that headers from union members are required in responses."""
+    """Ensure that a member without metadata may skip the header."""
     request = dmr_rf.get('/whatever/')
 
-    response = _UnionMissingHeaderController.as_view()(request)
+    response = _OptionalUnionHeaderController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+
+
+class _RequiredUnionHeaderController(Controller[PydanticSerializer]):
+    @validate(ResponseSpec(_AnnotatedUnion, status_code=HTTPStatus.OK))
+    def get(self) -> HttpResponse:
+        return self.to_response('a string without the header')
+
+
+def test_whole_union_headers_are_required(
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensure that metadata of the whole union is required everywhere."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _RequiredUnionHeaderController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY

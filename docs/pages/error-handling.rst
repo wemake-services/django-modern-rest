@@ -307,24 +307,55 @@ to add missing ``X-Error-Id`` headers for your error responses.
 You can do the same for all responses, not just failing ones.
 For this, override :meth:`~dmr.controller.Controller.to_response`.
 
-When a single response is described by a union of several models,
-we look for :class:`~dmr.metadata.ResponseSpecMetadata`
-in every union member and merge everything we find,
-because they all describe the very same response:
+This can also be used to attach ``RateLimit`` headers
+and other :doc:`throttling` information.
 
-.. code:: python
+.. _union-response-metadata:
 
-  def get(self) -> Annotated[
-      User,
-      ResponseSpecMetadata(headers={'X-Error-Id': HeaderSpec()}),
-  ] | str: ...
+Headers and cookies of union responses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A single response can be a union of several models,
+and :class:`~dmr.metadata.ResponseSpecMetadata` can be placed
+on the union or on any of its members. Where you put it changes
+what you promise:
+
+.. literalinclude:: /examples/error_handling/union_response_headers.py
+  :caption: views.py
+  :language: python
+  :linenos:
+  :emphasize-lines: 23-28
+
+Here only ``User`` responses carry ``X-User-Id``,
+a ``str`` response is returned without it. Since one response
+has one set of specs, we document ``X-User-Id`` as
+``required=False``: it can be missing, so we don't validate
+that it is always there.
+
+Annotate the whole union instead when every response has the header:
+
+.. code-block:: python
+
+  >>> from typing import Annotated
+
+  >>> from dmr import HeaderSpec
+  >>> from dmr.metadata import ResponseSpecMetadata
+
+  >>> AlwaysIdentified = Annotated[
+  ...     str | int,
+  ...     ResponseSpecMetadata(headers={'X-User-Id': HeaderSpec()}),
+  ... ]
+
+Now ``X-User-Id`` is required for both ``str`` and ``int`` responses,
+and a response without it fails validation.
+
+The same rule applies when several members are annotated:
+a header is required only when every member of the union declares it
+as required. Specs of all members end up in the documentation either way.
 
 .. versionchanged:: 0.16.0
 
-  Metadata of union members used to be ignored.
-
-This can also be used to attach ``RateLimit`` headers
-and other :doc:`throttling` information.
+  Metadata of union members used to be ignored completely.
 
 
 Problem Details

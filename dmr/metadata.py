@@ -1,23 +1,27 @@
 import dataclasses
+import functools
 import typing as ty
 from abc import abstractmethod
 from collections.abc import AsyncGenerator, AsyncIterator, Mapping, Set
 from http import HTTPStatus
 from typing import (  # noqa: WPS235
     TYPE_CHECKING,
-    Annotated,
     Any,
     ClassVar,
     Final,
     Generic,
+    Self,
     TypeAlias,
     get_args,
     get_origin,
 )
 
-from typing_extensions import TypeVar
+from typing_extensions import TypeVar, override
 
-from dmr.types import iter_union_members, unwrap_type_alias
+from dmr.internal.types import (
+    find_annotated_metadata,
+    iter_union_members,
+)
 
 if TYPE_CHECKING:
     from django.utils.functional import (
@@ -46,6 +50,8 @@ if TYPE_CHECKING:
     from dmr.throttling import AsyncThrottle, SyncThrottle
 
 ComponentParserSpec: TypeAlias = tuple['ComponentParser', Any, tuple[Any, ...]]
+
+_SpecT = TypeVar('_SpecT', 'HeaderSpec', 'CookieSpec')
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -109,7 +115,10 @@ class ResponseSpec:
 
     def __post_init__(self) -> None:
         """If headers and cookies are not set, look for metadata and use it."""
-        metadata = _merge_response_spec_metadata(self.return_type)
+        metadata = get_annotated_metadata(
+            self.return_type,
+            ResponseSpecMetadata,
+        )
         if metadata is not None:
             object.__setattr__(
                 self,
@@ -151,8 +160,58 @@ class ResponseSpec:
         )
 
 
+class MergeableMetadata:
+    """
+    Base for ``Annotated`` metadata that survives union types.
+
+    A union is a single response or a single parsed model,
+    but each of its members can carry its own metadata.
+    Subclasses define what the metadata of the whole union is.
+
+    Metadata types that don't subclass this are only looked up
+    on the annotation itself, never on union members:
+    there is no meaningful way to combine them.
+
+    .. versionadded:: 0.16.0
+    """
+
+    __slots__ = ()
+
+    @classmethod
+    def merge(
+        cls,
+        first: Any,
+        second: Any,
+    ) -> 'Self | None':
+        """
+        Combine metadata of two members of the same union.
+
+        Both arguments are instances of this class or ``None``,
+        which means that this member carries no metadata at all.
+        That is still information about the union: such a member
+        is a response without whatever the other member declares.
+        Subclasses type the arguments as their own type,
+        which is why they are ``Any`` here.
+
+        Must not depend on the order of the arguments,
+        union members are merged one by one.
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def from_union(cls, annotation: Any) -> 'Self | None':
+        """Find and merge this metadata across all members of a union."""
+        return functools.reduce(
+            cls.merge,
+            [
+                find_annotated_metadata(member, cls)
+                for member in iter_union_members(annotation)
+            ],
+        )
+
+
 @dataclasses.dataclass(frozen=True, slots=True, eq=False)
-class ResponseSpecMetadata:
+class ResponseSpecMetadata(MergeableMetadata):
     """
     Special type to be used in ``Annotate`` to provide header and cookie specs.
 
@@ -165,6 +224,11 @@ class ResponseSpecMetadata:
             in the final response.
 
     .. versionadded:: 0.7.0
+
+    .. versionchanged:: 0.16.0
+        Can now be used on members of a union return type,
+        see :meth:`merge`.
+
     """
 
     headers: Mapping[str, 'HeaderSpec'] | None = dataclasses.field(
@@ -177,6 +241,65 @@ class ResponseSpecMetadata:
         default=None,
         hash=False,
     )
+
+    @classmethod
+    @override
+    def merge(
+        cls,
+        first: 'ResponseSpecMetadata | None',
+        second: 'ResponseSpecMetadata | None',
+    ) -> 'ResponseSpecMetadata | None':
+        """
+        Combine metadata of two members of the same union return type.
+
+        Annotating a member describes that member only:
+        ``Annotated[User, meta] | str`` says that ``User`` responses
+        carry the headers and cookies from *meta*, while ``str``
+        responses do not. A single response has a single set of specs,
+        so the result keeps everything both members declare, but marks
+        a spec as ``required=False`` unless every member provides it.
+
+        Annotate the whole union instead
+        - ``Annotated[User | str, meta]`` - to require it everywhere.
+        """
+        if first is None and second is None:
+            return None
+        empty = cls()
+        first = empty if first is None else first
+        second = empty if second is None else second
+        return cls(
+            headers=cls._merge_specs(first.headers, second.headers),
+            cookies=cls._merge_specs(first.cookies, second.cookies),
+        )
+
+    @classmethod
+    def _merge_specs(
+        cls,
+        first: Mapping[str, _SpecT] | None,
+        second: Mapping[str, _SpecT] | None,
+    ) -> dict[str, _SpecT]:
+        left = first or {}
+        right = second or {}
+        # The left side wins for specs that both members declare:
+        return {
+            name: dataclasses.replace(
+                spec,
+                required=cls._required_in_both(name, left, right),
+            )
+            for name, spec in {**right, **left}.items()
+        }
+
+    @classmethod
+    def _required_in_both(
+        cls,
+        name: str,
+        left: Mapping[str, _SpecT],
+        right: Mapping[str, _SpecT],
+    ) -> bool:
+        """A spec is only required when both merged members require it."""
+        return all(
+            name in specs and specs[name].required for specs in (left, right)
+        )
 
 
 _ASYNC_ITERATOR_TYPES: Final = frozenset((
@@ -604,46 +727,35 @@ def get_annotated_metadata(
     """
     Find given *metadata_type* in *model*.
 
-    *model* can be :data:`typing.Annotate` object.
+    *model* can be :data:`typing.Annotated` object.
     Or it can be a regular model, with *model_meta*,
     which is the ``__metadata__`` field from ``Annotated``.
-    Type aliases hiding any of the above are unwrapped first.
+
+    Type aliases are unwrapped on the way,
+    both ``X: TypeAlias = Annotated[...]`` and ``type X = Annotated[...]``
+    are looked through, including aliases of aliases
+    and subscripted generic aliases.
+
+    When *model* is a union and *metadata_type*
+    is a :class:`MergeableMetadata` subclass, metadata of all union members
+    is merged by that type. Other metadata types are not looked
+    for on union members at all.
 
     Or return ``None`` if nothing can be found.
-    """
-    model = unwrap_type_alias(model)
-    if get_origin(model) is Annotated and model.__metadata__:
-        for metadata in model.__metadata__:
-            if isinstance(metadata, metadata_type):
-                return metadata
 
-    for metadata in model_meta or ():
-        if isinstance(metadata, metadata_type):
-            return metadata
+    .. versionchanged:: 0.16.0
+        Type aliases and union members are now inspected.
+
+    """
+    metadata = find_annotated_metadata(model, metadata_type)
+    if metadata is not None:
+        return metadata
+
+    for model_metadata in model_meta or ():
+        if isinstance(model_metadata, metadata_type):
+            return model_metadata
+
+    if issubclass(metadata_type, MergeableMetadata):
+        # `issubclass` does not narrow `type[_MetadataT]` for all checkers:
+        return metadata_type.from_union(model)  # pyrefly: ignore[bad-return]
     return None
-
-
-def _merge_response_spec_metadata(
-    return_type: Any,
-) -> ResponseSpecMetadata | None:
-    """
-    Find ``ResponseSpecMetadata`` for the given *return_type*.
-
-    A single response can be described by a union of several models.
-    Any of them can carry headers and cookies for this response,
-    so we look into all union members and merge what we find.
-    """
-    headers: dict[str, HeaderSpec] = {}
-    cookies: dict[str, CookieSpec] = {}
-    found = False
-    for member in iter_union_members(return_type):
-        metadata = get_annotated_metadata(member, ResponseSpecMetadata)
-        if metadata is None:
-            continue
-        found = True
-        headers.update(metadata.headers or {})
-        cookies.update(metadata.cookies or {})
-
-    if not found:
-        return None
-    return ResponseSpecMetadata(headers=headers, cookies=cookies)

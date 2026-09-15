@@ -30,11 +30,11 @@ from dmr.components import (  # noqa: WPS235
 )
 from dmr.endpoint import Endpoint
 from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.internal.types import unwrap_type_alias
 from dmr.parsers import MultiPartParser
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.serializer import BaseSerializer
 from dmr.test import DMRRequestFactory
-from dmr.types import unwrap_type_alias
 
 _ComponentType: TypeAlias = tuple[str, Any, tuple[Any, ...]]
 _ComponentTypes: TypeAlias = list[_ComponentType]
@@ -245,7 +245,7 @@ _NATIVE_ALIASES: Final = textwrap.dedent(
 )
 
 
-def _exec_native_aliases() -> dict[str, Any]:
+def _exec_native_aliases() -> dict[str, Any]:  # pragma: >=3.12 cover
     namespace = globals().copy()  # noqa: WPS421
     exec(_NATIVE_ALIASES, namespace)  # noqa: S102, WPS421
     return namespace
@@ -255,7 +255,7 @@ def _exec_native_aliases() -> dict[str, Any]:
     sys.version_info < (3, 12),
     reason='`type X = Y` syntax requires Python 3.12 or higher',
 )
-def test_native_aliased_components() -> None:
+def test_native_aliased_components() -> None:  # pragma: >=3.12 cover
     """Ensures that `type X = Y` aliases work for all components."""
     controller = _exec_native_aliases()['_NativeAliasController']
     endpoint = controller.api_endpoints['POST']
@@ -267,7 +267,7 @@ def test_native_aliased_components() -> None:
     sys.version_info < (3, 12),
     reason='`type X[T] = Y` syntax requires Python 3.12 or higher',
 )
-def test_native_generic_alias_component() -> None:
+def test_native_generic_alias_component() -> None:  # pragma: >=3.12 cover
     """Ensures that subscripted generic aliases are unwrapped."""
     controller = _exec_native_aliases()['_NativeGenericController']
     endpoint = controller.api_endpoints['POST']

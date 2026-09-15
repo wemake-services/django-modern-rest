@@ -1,7 +1,5 @@
 import inspect
 import sys
-import types as builtin_types
-import typing as ty
 from collections.abc import Callable, Iterator, Mapping
 from typing import (  # noqa: WPS235
     TYPE_CHECKING,
@@ -18,26 +16,12 @@ from typing import (  # noqa: WPS235
 from typing_extensions import (
     Format,
     Sentinel,
-    TypeAliasType,
     get_original_bases,
     get_type_hints,
 )
 
 from dmr.exceptions import UnsolvableAnnotationsError
-
-#: `TypeAliasType` is a different object in `typing` and `typing_extensions`,
-#: and `typing` only has it since Python 3.12. We need to know them all.
-_TYPE_ALIAS_TYPES: Final = (
-    TypeAliasType,
-    getattr(ty, 'TypeAliasType', TypeAliasType),
-)
-
-#: `X | Y` and `Union[X, Y]` are different objects on older Python versions.
-_UNION_TYPES: Final = frozenset((ty.Union, builtin_types.UnionType))
-
-#: How many nested type aliases we are willing to unwrap.
-#: Type aliases can be mutually recursive, we don't want to hang on them.
-_MAX_ALIAS_DEPTH: Final = 15
+from dmr.internal.types import unwrap_type_alias
 
 if TYPE_CHECKING:
     # During type checking it is a recursive alias, so we can be sure
@@ -179,70 +163,6 @@ def infer_annotation(annotation: Any, context: type[Any]) -> Any:
         return annotation  # It is already inferred
 
     return TypeVarInference(annotation, context)()[annotation]
-
-
-def unwrap_type_alias(annotation: Any) -> Any:
-    """
-    Replaces a type alias with the type it points to.
-
-    Type aliases created with the ``type X = Y`` syntax
-    or with :class:`typing.TypeAliasType` directly are lazy objects.
-    They hide the real type behind them, so things
-    like :data:`typing.Annotated` metadata are not visible:
-
-    .. code:: python
-
-        >>> from typing import Annotated, get_origin
-        >>> from typing_extensions import TypeAliasType
-
-        >>> MyAlias = TypeAliasType('MyAlias', Annotated[int, 'meta'])
-
-        >>> assert get_origin(MyAlias) is not Annotated
-        >>> assert get_origin(unwrap_type_alias(MyAlias)) is Annotated
-
-    Aliases of aliases and subscripted generic aliases
-    are unwrapped as well. Anything that is not a type alias
-    is returned unchanged.
-
-    Raises:
-        UnsolvableAnnotationsError: when there are too many nested aliases,
-            which also happens for mutually recursive ones.
-
-    .. versionadded:: 0.16.0
-    """
-    for _ in range(_MAX_ALIAS_DEPTH):
-        origin = get_origin(annotation)
-        if isinstance(annotation, _TYPE_ALIAS_TYPES):
-            annotation = annotation.__value__
-        elif isinstance(origin, _TYPE_ALIAS_TYPES):
-            # Generic aliases keep their args outside of `__value__`,
-            # we apply them back to get the real type:
-            annotation = origin.__value__[get_args(annotation)]
-        else:
-            return annotation
-    raise UnsolvableAnnotationsError(
-        f'Cannot unwrap {annotation!r}, too many nested type aliases',
-    )
-
-
-def iter_union_members(annotation: Any) -> Iterator[Any]:
-    """
-    Yield union members of *annotation*, unwrapping type aliases.
-
-    When *annotation* is not a union, it is yielded as is:
-
-    .. code:: python
-
-        >>> assert list(iter_union_members(int | str)) == [int, str]
-        >>> assert list(iter_union_members(int)) == [int]
-
-    .. versionadded:: 0.16.0
-    """
-    annotation = unwrap_type_alias(annotation)
-    if get_origin(annotation) in _UNION_TYPES:
-        yield from get_args(annotation)
-    else:
-        yield annotation
 
 
 def is_safe_subclass(annotation: Any, base_class: type[Any]) -> bool:
