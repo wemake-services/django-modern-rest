@@ -75,7 +75,6 @@ def test_converter_schema_valid() -> None:
     operation = schema['paths']['/api/articles/{year}/']['get']
     assert operation['parameters'] == snapshot([
         {
-            'deprecated': False,
             'name': 'year',
             'in': 'path',
             'schema': {'type': 'integer', 'title': 'Year'},

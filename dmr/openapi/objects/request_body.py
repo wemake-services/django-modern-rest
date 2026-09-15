@@ -18,4 +18,4 @@ class RequestBody:
 
     content: dict[str, 'MediaType | Reference']
     description: str | None = None
-    required: bool = True
+    required: bool | None = True

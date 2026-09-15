@@ -97,6 +97,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Features
 
+- Added class-level overrides for `OpenAPIContext` generators and
+  `ConfigMerger`, allowing custom operation ID generation and schema
+  customization through context subclasses, #1461, #1487
 - `summary` and `description` of a `PathItem` are now parsed
   from the controller's docstring, just like they are parsed
   from the endpoint's docstring for an `Operation`.
@@ -135,9 +138,15 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   - `OAuthFlows.device_authorization`
     and `OAuthFlow.device_authorization_url`
   - `SecurityScheme.oauth2_metadata_url` and `SecurityScheme.deprecated`
+- Allow all bool values in `dmr.openapi.objects` also accept `None`, #1437
 
 ### Bugfixes
 
+- `__dmr_split_commas__` now strips the optional whitespace around each
+  `','` when splitting a header value. `X-Tag: 1, 2` used to be parsed as
+  `['1', ' 2']`, which failed validation for `list[int]` and silently kept
+  a leading space for `list[str]`. RFC 9110 treats `a, b` and `a,b` as the
+  same list, #1526
 - Fixed Redis throttling reset values sometimes being 1 second above the
   configured window due to clock skew between Redis server time and Python
   time. The Redis backend now uses the `ttl` returned by Redis directly

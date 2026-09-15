@@ -449,6 +449,9 @@ OpenAPI Generators
 .. autoclass:: dmr.openapi.generators.OperationIdGenerator
    :members:
 
+.. autoclass:: dmr.openapi.generators.ParameterGenerator
+   :members:
+
 
 Existing OpenAPI views
 ~~~~~~~~~~~~~~~~~~~~~~

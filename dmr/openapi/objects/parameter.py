@@ -25,7 +25,7 @@ class ParameterMetadata:
     """Describes metadata for a single operation parameter."""
 
     description: str | None = None
-    deprecated: bool = False
+    deprecated: bool | None = None
     allow_empty_value: bool | None = None
     style: str | None = None
     explode: bool | None = None
