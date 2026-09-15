@@ -47,6 +47,13 @@ test: lint type-check example benchmarks-type-check package (smoke 'jwt' 'allaut
 [group('dev')]
 [env('TEST_DATABASE_URL', 'mysql://root:dmr_test@127.0.0.1:10000/root')]
 test_mysql: (integration_db_start 'mysql')
+  just install-integration
+  just test
+
+# Run full test suite with PostgreSQL database
+[group('dev')]
+[env('TEST_DATABASE_URL', 'postgres://dmr_test:dmr_test@localhost:10001/dmr_test')]
+test_postgres: (integration_db_start 'postgres')
   # We need to execute commands explicitly, because
   # just doesn't export environment variables to dependent recipes,
   # so `uv` doesn't see `TEST_DATABASE_URL`.
@@ -55,8 +62,8 @@ test_mysql: (integration_db_start 'mysql')
 
 # Run full test suite with PostgreSQL database
 [group('dev')]
-[env('TEST_DATABASE_URL', 'postgres://dmr_test:dmr_test@localhost:10001/dmr_test')]
-test_postgres: (integration_db_start 'postgres')
+[env('TEST_DATABASE_URL', 'oracle://SYSTEM:DMR_TEST@/localhost:1521/DMR_TEST')]
+test_oracle: (integration_db_start 'oracle')
   # We need to execute commands explicitly, because
   # just doesn't export environment variables to dependent recipes,
   # so `uv` doesn't see `TEST_DATABASE_URL`.
