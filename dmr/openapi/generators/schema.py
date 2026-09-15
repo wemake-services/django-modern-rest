@@ -2,7 +2,10 @@ import dataclasses
 from typing import TYPE_CHECKING, Any, Literal, get_args, get_origin, overload
 
 from dmr.exceptions import UnsolvableAnnotationsError
-from dmr.openapi.mappers.example import generate_example
+from dmr.openapi.mappers.example import (
+    generate_example,
+    set_generated_example,
+)
 from dmr.openapi.mappers.schema_loader import load_schema
 from dmr.openapi.objects import Reference, Schema
 
@@ -163,7 +166,12 @@ class SchemaGenerator:
                 )
             # If we got a reference from the start,
             # it might still miss the examples:
-            self._maybe_generate_example(reference_obj, annotation, serializer)
+            registry = self._context.registries.schema
+            self._maybe_generate_example(
+                registry.maybe_resolve_reference(reference_obj),
+                annotation,
+                serializer,
+            )
             return reference_obj
         return self._resolve_generated_schema(
             annotation,
@@ -192,12 +200,8 @@ class SchemaGenerator:
                 )
 
         # Register the final schema:
-        schema_obj = load_schema(
-            schema,
-            should_generate_example=True,
-            annotation=annotation,
-            serializer=serializer,
-        )
+        schema_obj = load_schema(schema)
+        self._maybe_generate_example(schema_obj, annotation, serializer)
         if not skip_registration and schema_obj.title:
             return self._context.registries.schema.register(
                 schema_name=schema_obj.title,
@@ -208,15 +212,16 @@ class SchemaGenerator:
 
     def _maybe_generate_example(
         self,
-        reference: Reference,
+        schema: Schema,
         annotation: Any,
         serializer: type['BaseSerializer'],
     ) -> None:
-        schema = self._context.registries.schema.maybe_resolve_reference(
-            reference,
-        )
         if not schema.example and not schema.examples:  # pragma: no branch
-            schema.example = generate_example(annotation, serializer)
+            set_generated_example(
+                schema,
+                generate_example(annotation, serializer),
+                self._context,
+            )
 
     def _resolve_skipped_reference(
         self,

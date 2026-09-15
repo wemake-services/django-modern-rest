@@ -1,10 +1,41 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
-from dmr.openapi.objects import Example
+from dmr.openapi.objects import Example, Schema
 from dmr.types import EMPTY
 
 if TYPE_CHECKING:
+    from dmr.openapi.core.context import OpenAPIContext
     from dmr.serializer import BaseSerializer
+
+#: First OpenAPI version that deprecates `example` inside Schema Objects.
+_JSON_SCHEMA_EXAMPLES_VERSION: Final = (3, 2)
+
+
+def set_generated_example(
+    schema: Schema,
+    example: Any,
+    context: 'OpenAPIContext',
+) -> Schema:
+    """
+    Sets a generated *example* on the given *schema*, returns that *schema*.
+
+    OpenAPI 3.2 deprecates the OAS ``example`` keyword inside Schema Objects
+    in favour of the JSON Schema ``examples`` list. So, we only write
+    ``example`` when targeting older OpenAPI versions.
+
+    Generating examples can be disabled in settings, in that case *example*
+    is ``None`` and we don't write anything at all.
+
+    .. versionadded:: 0.16.0
+    """
+    if example is None:
+        return schema
+    if context.config.openapi_version_info[:2] < _JSON_SCHEMA_EXAMPLES_VERSION:
+        schema.example = example
+    else:
+        schema.examples = [example]
+    return schema
+
 
 try:
     from polyfactory.factories import DataclassFactory

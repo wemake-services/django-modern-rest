@@ -1,11 +1,8 @@
 # pyright: reportUnknownVariableType=false, reportUnknownArgumentType=false, reportUnknownMemberType=false
 
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
+from typing import Any, TypeVar
 
-from typing_extensions import Sentinel
-
-from dmr.openapi.mappers.example import generate_example
 from dmr.openapi.objects import (
     XML,
     Discriminator,
@@ -15,39 +12,11 @@ from dmr.openapi.objects import (
     Reference,
     Schema,
 )
-from dmr.types import EMPTY
-
-if TYPE_CHECKING:
-    from dmr.serializer import BaseSerializer
 
 _EnumT = TypeVar('_EnumT', bound=Enum)
 
 
-@overload
-def load_schema(
-    raw_data: dict[str, Any],
-    *,
-    should_generate_example: Literal[False] = False,
-) -> Schema: ...
-
-
-@overload
-def load_schema(
-    raw_data: dict[str, Any],
-    *,
-    should_generate_example: Literal[True],
-    annotation: Any,
-    serializer: type['BaseSerializer'],
-) -> Schema: ...
-
-
-def load_schema(
-    raw_data: dict[str, Any],
-    *,
-    should_generate_example: bool = False,
-    annotation: Any | Sentinel = EMPTY,
-    serializer: type['BaseSerializer'] | None = None,
-) -> Schema:
+def load_schema(raw_data: dict[str, Any]) -> Schema:
     """
     Load schema from Python's dict into a dataclass.
 
@@ -56,14 +25,14 @@ def load_schema(
     https://github.com/msgspec/msgspec/issues/982
 
     After that we will just use the serializer and remove this code.
+
+    .. versionchanged:: 0.16.0
+        Does not generate examples anymore, because which keyword
+        they land on depends on the target OpenAPI version.
+        :func:`dmr.openapi.mappers.example.set_generated_example`
+        does that now.
+
     """
-    examples = raw_data.get('examples')
-    example = raw_data.get('example')
-
-    if should_generate_example and not example and not examples:
-        assert serializer is not None, 'serializer instance is required'  # noqa: S101
-        example = generate_example(annotation, serializer)
-
     return Schema(
         all_of=_try_sequence(raw_data.get('allOf')),
         any_of=_sort_null_last(_try_sequence(raw_data.get('anyOf'))),
@@ -119,8 +88,8 @@ def load_schema(
         discriminator=_try_discriminator(raw_data.get('discriminator')),
         xml=_try_xml(raw_data.get('xml')),
         external_docs=_try_external_documentation(raw_data.get('externalDocs')),
-        examples=examples,
-        example=example,
+        examples=raw_data.get('examples'),
+        example=raw_data.get('example'),
         dynamic_ref=raw_data.get('$dynamicRef'),
         dynamic_anchor=raw_data.get('$dynamicAnchor'),
         anchor=raw_data.get('$anchor'),
@@ -206,6 +175,7 @@ def _try_discriminator(raw_value: Any) -> Discriminator | None:
         else Discriminator(
             property_name=raw_value['propertyName'],
             mapping=raw_value.get('mapping'),
+            default_mapping=raw_value.get('defaultMapping'),
         )
     )
 
@@ -229,8 +199,9 @@ def _try_xml(raw_value: Any) -> XML | None:
             name=raw_value.get('name'),
             namespace=raw_value.get('namespace'),
             prefix=raw_value.get('prefix'),
-            attribute=raw_value.get('attribute', False),
-            wrapped=raw_value.get('wrapped', False),
+            attribute=raw_value.get('attribute'),
+            wrapped=raw_value.get('wrapped'),
+            node_type=raw_value.get('nodeType'),
         )
     )
 

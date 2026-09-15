@@ -70,9 +70,17 @@ class ResponseSpec:
             only for given content types. By default, when equals to ``None``,
             all responses can happen for all content types.
         description: Text comment about what this response represents.
+        summary: Short label for what this response represents,
+            *description* is the long form of it.
+            Requires OpenAPI ``'3.2.0'`` or newer, older versions
+            don't have ``Response.summary`` and will drop it.
         links: Possible links to other OpenAPI operations.
 
     We use this structure to validate responses and render them in OpenAPI.
+
+    .. versionchanged:: 0.16.0
+        Added ``summary``.
+
     """
 
     # `type[T]` limits some type annotations, like `Literal[1]`:
@@ -97,6 +105,10 @@ class ResponseSpec:
 
     # Metadata:
     description: '_StrOrPromise | None' = dataclasses.field(
+        kw_only=True,
+        default=None,
+    )
+    summary: '_StrOrPromise | None' = dataclasses.field(
         kw_only=True,
         default=None,
     )

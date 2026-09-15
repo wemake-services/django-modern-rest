@@ -25,6 +25,7 @@ class ConfigMerger:
         config = self.context.config
         return OpenAPI(
             openapi=config.openapi_version,
+            self_uri=config.self_uri,
             info=Info(
                 title=config.title,
                 version=config.version,
@@ -76,6 +77,10 @@ class ConfigMerger:
             links=_merge_unique(existing.links, to_merge.links),
             callbacks=_merge_unique(existing.callbacks, to_merge.callbacks),
             path_items=_merge_unique(existing.path_items, to_merge.path_items),
+            media_types=_merge_unique(
+                existing.media_types,
+                to_merge.media_types,
+            ),
         )
 
 

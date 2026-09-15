@@ -8,6 +8,8 @@ from dmr.controller import Controller
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.endpoint import modify
 from dmr.headers import HeaderSpec, NewHeader
+from dmr.metadata import ResponseSpec
+from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.response import ResponseGenerator
 from dmr.openapi.objects import Header, MediaType, OpenAPIType, Response, Schema
@@ -167,3 +169,50 @@ def test_response_multiple_content_types(
         'application/json': MediaType(schema=Schema(type=OpenAPIType.STRING)),
         'application/pdf': MediaType(schema=Schema(type=OpenAPIType.STRING)),
     })
+
+
+class _ControllerWithSummary(Controller[PydanticSerializer]):
+    responses = (
+        ResponseSpec(
+            str,
+            status_code=HTTPStatus.ACCEPTED,
+            summary='Queued',
+            description='The task was put into the queue',
+        ),
+    )
+
+    def get(self) -> str:
+        raise NotImplementedError
+
+
+@pytest.mark.parametrize(
+    ('openapi_version', 'expected_summary'),
+    [
+        ('3.2.0', 'Queued'),
+        # `Response.summary` does not exist before OpenAPI 3.2:
+        ('3.1.0', None),
+    ],
+)
+def test_response_summary(
+    openapi_version: str,
+    expected_summary: str | None,
+) -> None:
+    """Ensure that `ResponseSpec.summary` is rendered for OpenAPI 3.2."""
+    context = OpenAPIContext(
+        OpenAPIConfig(
+            title='tests',
+            version='0.0.1',
+            openapi_version=openapi_version,
+        ),
+    )
+    controller = _ControllerWithSummary()
+
+    response = context.generators.response(
+        controller.api_endpoints[HTTPMethod.GET].metadata,
+        PydanticSerializer,
+    )
+    response_accepted = response['202']
+
+    assert isinstance(response_accepted, Response)
+    assert response_accepted.summary == expected_summary
+    assert response_accepted.description == 'The task was put into the queue'

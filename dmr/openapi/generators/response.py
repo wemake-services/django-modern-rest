@@ -1,7 +1,8 @@
 import dataclasses
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Final, Literal
 
+from dmr.openapi.mappers.example import set_generated_example
 from dmr.openapi.objects import (
     Header,
     MediaType,
@@ -15,6 +16,9 @@ if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata, ResponseSpec
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.serializer import BaseSerializer
+
+#: First OpenAPI version with the `Response.summary` field.
+_RESPONSE_SUMMARY_VERSION: Final = (3, 2)
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -65,6 +69,7 @@ class ResponseGenerator:
                 if response_spec.description is None
                 else str(response_spec.description)
             ),
+            summary=self._get_summary(response_spec, context),
             links=response_spec.links,
             headers=headers or None,
             content=self._get_content(
@@ -76,6 +81,18 @@ class ResponseGenerator:
                 used_for_response=used_for_response,
             ),
         )
+
+    def _get_summary(
+        self,
+        response_spec: 'ResponseSpec',
+        context: 'OpenAPIContext',
+    ) -> str | None:
+        if response_spec.summary is None:
+            return None
+        if context.config.openapi_version_info[:2] < _RESPONSE_SUMMARY_VERSION:
+            # `Response.summary` only exists since OpenAPI 3.2:
+            return None
+        return str(response_spec.summary)
 
     def _get_headers(
         self,
@@ -115,7 +132,13 @@ class ResponseGenerator:
             schema = context.generators.schema(str, serializer)
             # for mypy: `str` cannot return a reference, it is a primitive
             assert isinstance(schema, Schema)  # noqa: S101
-            schema = dataclasses.replace(schema, example=f'{name}=123')
+            # `replace` copies the schema, so we don't set the cookie
+            # example on the shared `str` schema:
+            schema = set_generated_example(
+                dataclasses.replace(schema),
+                f'{name}=123',
+                context,
+            )
 
             cookies[f'Set-Cookie: {name}'] = Header(
                 description=(
@@ -137,7 +160,7 @@ class ResponseGenerator:
         *,
         schema_field_name: str,
         used_for_response: bool,
-    ) -> dict[str, MediaType]:
+    ) -> dict[str, MediaType | Reference]:
         # Import cycle:
         from dmr.internal.negotiation import (  # noqa: PLC0415
             get_conditional_types,

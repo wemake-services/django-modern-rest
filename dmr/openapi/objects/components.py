@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from dmr.openapi.objects.example import Example
     from dmr.openapi.objects.header import Header
     from dmr.openapi.objects.link import Link
+    from dmr.openapi.objects.media_type import MediaType
     from dmr.openapi.objects.parameter import Parameter
     from dmr.openapi.objects.path_item import PathItem
     from dmr.openapi.objects.reference import Reference
@@ -23,6 +24,10 @@ class Components:
     All objects defined within the components object will have no effect
     on the API unless they are explicitly referenced from properties
     outside the components object.
+
+    .. versionchanged:: 0.16.0
+        Added ``media_types`` from OpenAPI 3.2.
+
     """
 
     schemas: dict[str, 'Schema'] | None = None
@@ -35,3 +40,6 @@ class Components:
     links: dict[str, 'Link | Reference'] | None = None
     callbacks: dict[str, 'Callback | Reference'] | None = None
     path_items: dict[str, 'PathItem | Reference'] | None = None
+
+    # OpenAPI 3.2+ fields:
+    media_types: dict[str, 'MediaType | Reference'] | None = None

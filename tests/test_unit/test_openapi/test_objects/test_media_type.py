@@ -13,4 +13,8 @@ def test_media_type_validation() -> None:
     with pytest.raises(ValueError, match='Both `encoding` and `item_encoding`'):
         MediaType(schema=schema, encoding=encoding, item_encoding=Encoding())
     with pytest.raises(ValueError, match='Both `encoding` and `item_encoding`'):
-        MediaType(schema=schema, encoding=encoding, prefix_encoding=Encoding())
+        MediaType(
+            schema=schema,
+            encoding=encoding,
+            prefix_encoding=[Encoding()],
+        )
