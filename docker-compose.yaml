@@ -1,0 +1,30 @@
+services:
+  mysql:
+    image: mysql:26
+    ports:
+      - 10000:3306
+    environment:
+      MYSQL_USER: "dmr_test"
+      MYSQL_PASSWORD: "dmr_test"
+      MYSQL_DATABASE: "dmr_test"
+      MYSQL_ROOT_PASSWORD: "dmr_test"
+      MYSQL_HOST: "0.0.0.0"
+    healthcheck:
+      test: mysqladmin ping --user=dmr_test --password=dmr_test
+      interval: 10s
+      timeout: 5s
+      retries: 40
+
+  postgres:
+    image: postgres:18-trixie
+    ports:
+      - 10001:5432
+    environment:
+      POSTGRES_PASSWORD: "dmr_test"
+      POSTGRES_USER: "dmr_test"
+      POSTGRES_DB: "dmr_test"
+    healthcheck:
+      test: pg_isready -U "dmr_test"
+      interval: 2s
+      timeout: 3s
+      retries: 40
