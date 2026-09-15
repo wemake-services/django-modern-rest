@@ -20,6 +20,16 @@ router = Router(
             name='token_obtain_async',
         ),
         path(
+            'token-concrete-obtain-sync/',
+            obtain.ConcreteObtainTokenSyncController.as_view(),
+            name='token_concrete_obtain_sync',
+        ),
+        path(
+            'token-concrete-obtain-async/',
+            obtain.ConcreteObtainTokenAsyncController.as_view(),
+            name='token_concrete_obtain_async',
+        ),
+        path(
             'token-custom-sync-auth/',
             obtain.ControllerCustomTokenSync.as_view(),
             name='token_custom_sync_auth',

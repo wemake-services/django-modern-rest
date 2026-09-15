@@ -15,6 +15,16 @@ router = Router(
             name='django_session_async',
         ),
         path(
+            'django-session-concrete-sync/',
+            views.ConcreteSessionSyncController.as_view(),
+            name='django_session_concrete_sync',
+        ),
+        path(
+            'django-session-concrete-async/',
+            views.ConcreteSessionAsyncController.as_view(),
+            name='django_session_concrete_async',
+        ),
+        path(
             'user-sync/',
             views.UserSyncController.as_view(),
             name='user_session_sync',

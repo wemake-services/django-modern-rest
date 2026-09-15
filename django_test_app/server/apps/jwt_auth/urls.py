@@ -89,6 +89,56 @@ router = Router(
             views.CookieLogoutAsyncView.as_view(),
             name='jwt_cookie_logout_async',
         ),
+        path(
+            'jwt-concrete-obtain-sync/',
+            views.ConcreteObtainSyncController.as_view(),
+            name='jwt_concrete_obtain_sync',
+        ),
+        path(
+            'jwt-concrete-obtain-async/',
+            views.ConcreteObtainAsyncController.as_view(),
+            name='jwt_concrete_obtain_async',
+        ),
+        path(
+            'jwt-concrete-refresh-sync/',
+            views.ConcreteRefreshSyncController.as_view(),
+            name='jwt_concrete_refresh_sync',
+        ),
+        path(
+            'jwt-concrete-refresh-async/',
+            views.ConcreteRefreshAsyncController.as_view(),
+            name='jwt_concrete_refresh_async',
+        ),
+        path(
+            'jwt-concrete-verify-sync/',
+            views.ConcreteVerifySyncController.as_view(),
+            name='jwt_concrete_verify_sync',
+        ),
+        path(
+            'jwt-concrete-verify-async/',
+            views.ConcreteVerifyAsyncController.as_view(),
+            name='jwt_concrete_verify_async',
+        ),
+        path(
+            'jwt-concrete-cookie-obtain-sync/',
+            views.ConcreteCookieObtainSyncController.as_view(),
+            name='jwt_concrete_cookie_obtain_sync',
+        ),
+        path(
+            'jwt-concrete-cookie-obtain-async/',
+            views.ConcreteCookieObtainAsyncController.as_view(),
+            name='jwt_concrete_cookie_obtain_async',
+        ),
+        path(
+            'jwt-concrete-cookie-refresh-sync/',
+            views.ConcreteCookieRefreshSyncController.as_view(),
+            name='jwt_concrete_cookie_refresh_sync',
+        ),
+        path(
+            'jwt-concrete-cookie-logout-sync/',
+            views.ConcreteCookieLogoutSyncController.as_view(),
+            name='jwt_concrete_cookie_logout_sync',
+        ),
     ],
     tags=['jwt_auth'],
 )
