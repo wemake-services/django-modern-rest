@@ -28,3 +28,16 @@ services:
       interval: 2s
       timeout: 3s
       retries: 40
+
+  oracle:
+    image: gvenzl/oracle-free:23-faststart
+    ports:
+      - 1521:1521
+    environment:
+      ORACLE_PASSWORD: "DMR_TEST"
+      ORACLE_DATABASE: "DMR_TEST"
+    healthcheck:
+      test: healthcheck.sh
+      interval: 10s
+      timeout: 5s
+      retries: 10
