@@ -96,6 +96,6 @@ We also benchmark several our features that can be used independently.
 We run tests in `./tests/` using https://github.com/CodSpeedHQ/pytest-codspeed
 and upload results to https://app.codspeed.io/wemake-services/django-modern-rest
 
-See [`codspeed.yml`](https://github.com/wemake-services/django-modern-rest/blob/master/.github/workflows/codspeed.yml) workflow.
+See the [`codspeed.yml`](https://github.com/wemake-services/django-modern-rest/blob/master/.github/workflows/codspeed.yml) workflow.
 
 Run `just benchmarks` from the root dir to run them.

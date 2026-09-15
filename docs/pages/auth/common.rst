@@ -1,20 +1,18 @@
 How authentication works
 ========================
 
-``django-modern-rest`` supports different auth workflows.
+``django-modern-rest`` supports different authentication workflows:
 
-We support both:
-
-1. Checking that user requests contain required auth credentials
-2. Boilerplate code for views that provide credentials for users
+1. Checking that user requests contain the required authentication credentials
+2. Boilerplate code for views that provide authentication credentials for users
 
 
-Enabling auth
--------------
+Enabling authentication
+-----------------------
 
-Let's start with how auth can be enabled and how it works.
+Let's start with how authentication can be enabled and how it works.
 
-There are two main base classes for auth:
+There are two main base classes for authentication:
 
 1. :class:`~dmr.security.SyncAuth` for sync controllers
 2. :class:`~dmr.security.AsyncAuth` for async controllers
@@ -24,23 +22,23 @@ There are two main base classes for auth:
   Sync controllers can't directly use async auth.
   And async controllers can't directly use sync auth.
 
-All auth - that we are going to use - will be instances of these two classes
+All auth classes (that we are going to use) will be instances of these two classes
 (and their subclasses).
 
-All of them have unified API:
+All of them have a unified API:
 
-- ``__init__`` method contains configuration that can be changed per instance
+- the ``__init__`` method contains configuration that can be changed per instance
 - :meth:`~dmr.security.SyncAuth.__call__` does all
   the heavy lifting. If ``__call__`` returns anything but ``None``,
-  then we consider auth instance to succeed. If it returns ``None``,
+  then we consider auth to be a success. If it returns ``None``,
   we try the next one in the chain (if any).
-  If it raises :exc:`~dmr.exceptions.NotAuthenticatedError`
+  If it raises a :exc:`~dmr.exceptions.NotAuthenticatedError`
   then we immediately stop and return the error response.
-  Async auth has async ``__call__``, sync auth has sync one.
+  Async auth has an async ``__call__``, sync auth has a sync one.
 - :meth:`~dmr.security.SyncAuth.security_schemes`
-  provides OpenAPI spec to define this auth method in the spec.
+  provides the OpenAPI spec to define this auth method in the spec.
 - :meth:`~dmr.security.SyncAuth.security_requirement`
-  provides OpenAPI spec to indicate what kind of auth will
+  provides the OpenAPI spec to indicate what kind of auth will
   be required for each endpoint using this auth.
 
 Some classes provide configuration to be adjusted when creating instances.
@@ -67,7 +65,7 @@ There are 4 ways to provide auth classes for an endpoint:
 
   .. tab:: per settings
 
-    Set :data:`~dmr.settings.Settings.auth` setting
+    Set the :data:`~dmr.settings.Settings.auth` setting
     to enable auth for all controllers.
 
     .. code-block:: python
@@ -80,7 +78,7 @@ There are 4 ways to provide auth classes for an endpoint:
       >>> DMR_SETTINGS = {Settings.auth: [DjangoSessionSyncAuth()]}
 
     When your project mixes sync and async endpoints,
-    use :class:`~dmr.security.SyncOrAsyncAuth` in settings:
+    use :class:`~dmr.security.SyncOrAsyncAuth` in the settings:
 
     .. code-block:: python
       :caption: settings.py
@@ -179,7 +177,7 @@ allows a challenge list:
 
   Both auth params and challenges are comma-separated, so such a list
   is ambiguous to parse on its own. Clients resolve it by looking for
-  a token with no ``=`` in it - ``Bearer`` above starts a new challenge,
+  a token with no ``=`` in it. ``Bearer`` above starts a new challenge,
   while ``charset="UTF-8"`` is another param of ``Basic``.
 
 
@@ -301,8 +299,8 @@ it also documents the header in the OpenAPI schema:
 
 .. note::
 
-  Only the successful response gets this header,
-  because only it carries credentials.
+  Only a successful response gets this header,
+  because only this response carries credentials.
   Error responses of auth views are not affected.
 
 
@@ -364,7 +362,7 @@ Permissions
 -----------
 
 Many similar frameworks also include different abstractions
-for defining permissions classes, like:
+for defining permission classes, like:
 ``guards=[UserHasPermissions('delete')]`` or ``IsSuperUser()``, etc.
 
 We don't do that on purpose.
@@ -380,13 +378,13 @@ Making proper abstractions inside your own code base will allow you to:
 Yes, these permissions can look cool in a framework on paper,
 but they do not serve a good purpose in large codebases in reality.
 
-Focus on your **domain**, not on framework.
+Focus on your **domain**, not on the framework.
 
 
 Next up
 -------
 
-Select auth backend that fits your needs:
+Select the auth backend that fits your needs:
 
 .. grid:: 1 1 2 2
     :class-row: surface
@@ -409,7 +407,7 @@ Select auth backend that fits your needs:
       :link: jwt
       :link-type: doc
 
-      Support for JWT tokens based auth.
+      Support for JWT-based auth.
 
     .. grid-item-card:: Opaque Tokens
       :link: token

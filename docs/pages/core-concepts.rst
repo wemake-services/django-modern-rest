@@ -8,8 +8,8 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
   Endpoint
     :class:`~dmr.endpoint.Endpoint`
     is a single API route. It is defined
-    by its name – HTTP method – and its :term:`Metadata`, what response schema
-    it returns, what status codes it can return, etc.
+    by its name, HTTP method, and its :term:`Metadata` (e.g., what response schema
+    it returns, what status codes it can return, etc.).
     Each endpoint might have different :term:`Component` types
     for parsing the inputs.
 
@@ -28,18 +28,18 @@ To learn ``django-modern-rest`` you have to learn just a couple of things:
 
   Metadata
     A collection of all the things each :term:`Endpoint` accepts and returns.
-    It is used for request parsing, response validation, and OpenAPI schema.
+    It is used for request parsing, response validation, and the OpenAPI schema definition.
 
   Serializer
     :class:`~dmr.serializer.BaseSerializer` subclass
     that knows how to load and dump raw data into models.
-    We have 2 bundled serializers in :doc:`plugins <plugins>`\ :
-    for ``pydantic`` and ``msgspec``, you can write your
+    We have two bundled serializers in :doc:`plugins <plugins>`\ :
+    ``pydantic`` and ``msgspec``. You can write your
     own serializers for other libraries.
 
   Routing
     Routing is a mapping of URLs to controllers.
-    We use default Django's URL routing.
+    We use Django's default URL routing.
     Controllers might have many URLs, for example:
     ``/api/v1/users/`` and ``/api/v2/users/``
 
@@ -71,13 +71,13 @@ from `django-cors-headers <https://pypi.org/project/django-cors-headers>`_
 up to `django-ratelimit <https://pypi.org/project/django-ratelimit>`_.
 
 We also provide :doc:`middleware` wrapper tools to convert any middleware
-response to the required API schema and set needed ``Content-Type``, etc.
+response to the required API schema and set the needed ``Content-Type``, etc.
 
-We support all existing mixins: because
+We support all existing mixins because
 :class:`~dmr.controller.Controller` is a subclass
 of Django's :class:`django.views.generic.base.View` class.
 
-We support all existing decorators: because we have
+We support all existing decorators because we have
 :func:`~dmr.decorators.endpoint_decorator`
 and :func:`~dmr.decorators.dispatch_decorator` utilities
 that can decorate endpoints and controllers.
@@ -85,7 +85,8 @@ that can decorate endpoints and controllers.
 We even support all existing API :class:`~django.views.generic.base.View`
 objects from other frameworks. See :doc:`external-views`.
 
-Works best with `django-stubs <https://github.com/typeddjango/django-stubs>`_.
+``django-modern-rest`` works best with `django-stubs <https://github.com/typeddjango/django-stubs>`_.
+
 Read next: our :doc:`integrations` guide.
 
 

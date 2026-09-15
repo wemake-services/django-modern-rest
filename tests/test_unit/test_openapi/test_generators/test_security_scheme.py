@@ -99,3 +99,25 @@ def test_security_scheme_generator_with_schemes(
     assert openapi_context.registries.security_scheme.schemes == snapshot({
         'testScheme': SecurityScheme(type='http', scheme='bearer'),
     })
+
+
+def test_no_auth_without_global_security(
+    generator: SecuritySchemeGenerator,
+) -> None:
+    """Without global `security`, no auth means no `security` key."""
+    assert generator(None, PydanticSerializer) is None
+
+
+def test_no_auth_with_global_security() -> None:
+    """With global `security`, no auth must produce an explicit `[]`."""
+    context = OpenAPIContext(
+        OpenAPIConfig(
+            title='Test API',
+            version='1.0.0',
+            security=[{'testScheme': []}],
+        ),
+    )
+    generator = context.generators.security_scheme
+
+    assert generator(None, PydanticSerializer) == []
+    assert generator([], PydanticSerializer) == []
