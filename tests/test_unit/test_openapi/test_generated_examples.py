@@ -44,9 +44,10 @@ def _referenced_schema(dumped: dict[str, Any]) -> Any:
     [_inline_body_schema, _referenced_schema],
 )
 def test_generated_examples_keyword(
-    find_schema: Any,
-    openapi_version: str,
     settings: LazySettings,
+    *,
+    find_schema: Callable[[dict[str, Any]], Schema | Reference],
+    openapi_version: str,
 ) -> None:
     """Ensure that generated examples always use JSON Schema ``examples``."""
     settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
