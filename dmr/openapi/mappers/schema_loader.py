@@ -234,8 +234,8 @@ def _try_xml(raw_value: Any) -> XML | None:
             name=raw_value.get('name'),
             namespace=raw_value.get('namespace'),
             prefix=raw_value.get('prefix'),
-            attribute=raw_value.get('attribute', False),
-            wrapped=raw_value.get('wrapped', False),
+            attribute=raw_value.get('attribute'),
+            wrapped=raw_value.get('wrapped'),
         )
     )
 

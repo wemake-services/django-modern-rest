@@ -62,8 +62,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -479,8 +478,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -648,8 +646,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/api/v1/user-fast": {
@@ -706,8 +703,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
