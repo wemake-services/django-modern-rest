@@ -25,7 +25,7 @@ from dmr.routing import Router
 # Makes sure that the spec we build is validated against the real 3.2 schema:
 pytest.importorskip('openapi_spec_validator')
 
-_REUSABLE_MEDIA_TYPE = '#/components/mediaTypes/Reusable'
+_REUSABLE_MEDIA_TYPE: Final = '#/components/mediaTypes/Reusable'
 
 
 def _config() -> OpenAPIConfig:
