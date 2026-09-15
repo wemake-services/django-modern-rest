@@ -43,18 +43,6 @@ def test_unsupported_openapi_versions(openapi_version: str) -> None:
         )
 
 
-def test_self_uri() -> None:
-    """Ensures that ``$self`` is stored on the config."""
-    config = OpenAPIConfig(
-        title='my title',
-        version='1.0.0',
-        openapi_version='3.2.0',
-        self_uri='https://example.com/openapi.json',
-    )
-
-    assert config.self_uri == 'https://example.com/openapi.json'
-
-
 def test_json_schema_dialect() -> None:
     """Ensures that ``json_schema_dialect`` ends up in the schema."""
     dialect = 'https://json-schema.org/draft/2020-12/schema'

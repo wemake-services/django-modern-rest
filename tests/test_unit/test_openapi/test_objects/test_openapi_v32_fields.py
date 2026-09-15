@@ -1,3 +1,5 @@
+from typing import Final
+
 import pytest
 from inline_snapshot import snapshot
 
@@ -111,73 +113,83 @@ def test_openapi_v32_document_is_valid() -> None:
     # `convert` validates the result, it raises when something is off:
     dumped = build_schema(Router('api/v1/'), config=_config()).convert()
 
-    assert dumped['$self'] == 'https://example.com/openapi.json'
-    assert dumped['servers'] == snapshot([
-        {'url': 'https://example.com', 'name': 'production'},
-    ])
-    assert dumped['tags'] == snapshot([
-        {'name': 'external', 'summary': 'External', 'kind': 'audience'},
-        {'name': 'partner', 'parent': 'external', 'kind': 'audience'},
-    ])
-
-
-def test_openapi_v32_components() -> None:
-    """Ensure that 3.2 component objects are dumped with their new fields."""
-    components = build_schema(
-        Router('api/v1/'),
-        config=_config(),
-    ).convert()['components']
-
-    assert components['mediaTypes'] == snapshot({
-        'Reusable': {
-            'schema': {'type': 'string'},
-            'examples': {
-                'both-forms': {
-                    'dataValue': {'key': 'value'},
-                    'serializedValue': 'key=value',
+    assert dumped == snapshot({
+        'info': {'title': 'OpenAPI 3.2 features', 'version': '1.0.0'},
+        'openapi': '3.2.0',
+        '$self': 'https://example.com/openapi.json',
+        'servers': [{'url': 'https://example.com', 'name': 'production'}],
+        'paths': {},
+        'components': {
+            'schemas': {
+                'Pet': {
+                    'type': 'object',
+                    'discriminator': {
+                        'propertyName': 'petType',
+                        'mapping': {'cat': 'Cat'},
+                        'defaultMapping': 'OtherPet',
+                    },
+                    'xml': {'name': 'pet', 'nodeType': 'element'},
                 },
             },
-            'description': 'Reused by several operations',
-        },
-    })
-    assert components['parameters']['Filter'] == snapshot({
-        'name': 'filter',
-        'in': 'querystring',
-        'content': {
-            'application/x-www-form-urlencoded': {
-                'schema': {'type': 'object'},
-                'itemEncoding': {
-                    'contentType': 'text/plain',
-                    'prefixEncoding': [{'contentType': 'image/png'}],
+            'responses': {
+                'Ok': {
+                    'description': 'Everything is fine',
+                    'content': {
+                        'text/plain': {
+                            '$ref': '#/components/mediaTypes/Reusable',
+                        },
+                    },
+                    'summary': 'Ok',
+                },
+            },
+            'parameters': {
+                'Filter': {
+                    'name': 'filter',
+                    'in': 'querystring',
+                    'content': {
+                        'application/x-www-form-urlencoded': {
+                            'schema': {'type': 'object'},
+                            'itemEncoding': {
+                                'contentType': 'text/plain',
+                                'prefixEncoding': [
+                                    {'contentType': 'image/png'},
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+            'securitySchemes': {
+                'device': {
+                    'type': 'oauth2',
+                    'flows': {
+                        'deviceAuthorization': {
+                            'tokenUrl': 'https://example.com/token',
+                            'scopes': {'read': 'Read everything'},
+                            'deviceAuthorizationUrl': 'https://example.com/dev',
+                        },
+                    },
+                    'oauth2MetadataUrl': 'https://example.com/.well-known/oauth',
+                    'deprecated': True,
+                },
+            },
+            'mediaTypes': {
+                'Reusable': {
+                    'schema': {'type': 'string'},
+                    'examples': {
+                        'both-forms': {
+                            'dataValue': {'key': 'value'},
+                            'serializedValue': 'key=value',
+                        },
+                    },
+                    'description': 'Reused by several operations',
                 },
             },
         },
-    })
-    assert components['responses']['Ok'] == snapshot({
-        'description': 'Everything is fine',
-        'content': {'text/plain': {'$ref': _REUSABLE_MEDIA_TYPE}},
-        'summary': 'Ok',
-    })
-    assert components['schemas']['Pet'] == snapshot({
-        'type': 'object',
-        'discriminator': {
-            'propertyName': 'petType',
-            'mapping': {'cat': 'Cat'},
-            'defaultMapping': 'OtherPet',
-        },
-        'xml': {'name': 'pet', 'nodeType': 'element'},
-    })
-    assert components['securitySchemes']['device'] == snapshot({
-        'type': 'oauth2',
-        'flows': {
-            'deviceAuthorization': {
-                'tokenUrl': 'https://example.com/token',
-                'scopes': {'read': 'Read everything'},
-                'deviceAuthorizationUrl': 'https://example.com/dev',
-            },
-        },
-        'oauth2MetadataUrl': 'https://example.com/.well-known/oauth',
-        'deprecated': True,
+        'tags': [
+            {'name': 'external', 'summary': 'External', 'kind': 'audience'},
+            {'name': 'partner', 'parent': 'external', 'kind': 'audience'},
+        ],
     })
 
 

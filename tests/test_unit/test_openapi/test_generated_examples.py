@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Any
 
 import pytest
@@ -46,7 +47,7 @@ def _referenced_schema(dumped: dict[str, Any]) -> Any:
 def test_generated_examples_keyword(
     settings: LazySettings,
     *,
-    find_schema: Callable[[dict[str, Any]], Schema | Reference],
+    find_schema: Callable[[dict[str, Any]], Any],
     openapi_version: str,
 ) -> None:
     """Ensure that generated examples always use JSON Schema ``examples``."""
