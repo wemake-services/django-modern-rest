@@ -141,7 +141,8 @@ def test_builtin_converter_schemas() -> None:
 
     tag_params = schema['paths']['/api/tags/{tag}/']['get']['parameters']
     assert tag_params == snapshot([
-        {'name': 'tag',
+        {
+            'name': 'tag',
             'in': 'path',
             'schema': {
                 'type': 'string',
@@ -156,7 +157,8 @@ def test_builtin_converter_schemas() -> None:
         'parameters'
     ]
     assert file_params == snapshot([
-        {'name': 'file_path',
+        {
+            'name': 'file_path',
             'in': 'path',
             'schema': {
                 'type': 'string',
@@ -185,7 +187,8 @@ def test_custom_converter_prepared_schema() -> None:
 
     code_params = schema['paths']['/api/codes/{code}/']['get']['parameters']
     assert code_params == snapshot([
-        {'name': 'code',
+        {
+            'name': 'code',
             'in': 'path',
             'schema': {
                 'type': 'string',
