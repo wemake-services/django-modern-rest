@@ -97,6 +97,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `schema_hook` class method to `MsgspecSchemaGenerator`
   to customize JSON schema generation for custom types, #1462
 - `NewCookie.expires` and `CookieSpec.expires` can now be `dt.datetime`, #1456
+- Added `dmr.metadata.MergeableMetadata` base class. Subclass it to define
+  how your own `Annotated` metadata combines when it is placed on members
+  of a union type. `ResponseSpecMetadata` is the first one to use it, #1460
 - Added `json_schema_dialect` attribute to `OpenAPIConfig`.
   `OpenAPI.json_schema_dialect` existed, but there was no way to set it,
   so the `jsonSchemaDialect` field was never generated, #1486
@@ -127,6 +130,23 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   in controller class names, #1500
 - Fixes that endpoints with `auth=None` inherited document-level
   `OpenAPIConfig.security` requirements, now they emit `security: []`, #1497
+- `get_annotated_metadata` now unwraps type aliases, which fixes every
+  metadata lookup we do: component parsers, `ResponseSpecMetadata`,
+  `ParameterMetadata`, `MediaTypeMetadata`, and conditional types.
+  Most visibly, a component hidden behind a `type X = Body[User]` alias
+  (or a `TypeAliasType` object) used to be silently dropped
+  from `component_parsers`, and the endpoint then failed with a `TypeError`
+  about a missing argument on every request.
+  `X: TypeAlias = Body[User]` was never affected: it is a plain
+  assignment in runtime. Aliases of aliases and subscripted generic
+  aliases are unwrapped as well, #1460
+- `ResponseSpecMetadata` on a member of a union return type is no longer
+  ignored: `-> Annotated[User, ResponseSpecMetadata(...)] | str` now
+  documents the headers and cookies that `User` responses carry.
+  They are documented as `required=False`, because a `str` response
+  is returned without them. Annotate the whole union
+  (`Annotated[User | str, ResponseSpecMetadata(...)]`) to require them
+  everywhere, that behaviour is unchanged, #1460
 
 
 ## 0.15.0 (2026-09-11)
