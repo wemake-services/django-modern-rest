@@ -12,12 +12,16 @@ from dmr.endpoint import Endpoint
 from dmr.metadata import EndpointMetadata, ResponseSpecProvider
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.django_session import DjangoSessionSyncAuth
+from dmr.serializer import BaseSerializer
 from dmr.test import DMRRequestFactory
 
 
 class _NoExtrasMetadata(EndpointMetadata):
     @override
-    def response_spec_providers(self) -> list[ResponseSpecProvider]:
+    def response_spec_providers(
+        self,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> list[ResponseSpecProvider]:
         return []  # do not add any extra specs
 
 

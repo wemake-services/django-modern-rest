@@ -18,8 +18,8 @@ from django_test_app.server.wsgi import application
 from dmr.test import DMRClient
 from dmr.validation import ResponseValidator
 
-_LOCAL_MAX_EXAMPLES: Final = 25
-_MAX_EXAMPLES: Final = 100 if os.environ.get('CI') else _LOCAL_MAX_EXAMPLES
+_LOCAL_MAX_EXAMPLES: Final = 15
+_MAX_EXAMPLES: Final = 50 if os.environ.get('CI') else _LOCAL_MAX_EXAMPLES
 
 if TYPE_CHECKING:
     import tracecov

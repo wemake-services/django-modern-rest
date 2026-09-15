@@ -526,7 +526,7 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     ) -> list[ResponseSpec]:
         """Collect unique responses for all possible response providers."""
         all_responses: list[ResponseSpec] = []
-        for provider in self.response_spec_providers():
+        for provider in self.response_spec_providers(controller_cls):
             responses = provider.provide_response_specs(
                 self,  # type: ignore[arg-type]
                 controller_cls,
@@ -564,7 +564,10 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
             for response in all_responses
         ]
 
-    def response_spec_providers(self) -> list[ResponseSpecProvider]:
+    def response_spec_providers(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> list[ResponseSpecProvider]:
         """
         Determine: from where we should collect response schemas.
 
@@ -580,6 +583,8 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
         Define ``semantic_responses`` to ``False`` on settings
         or controller level to disable semantic responses collection.
         """
+        from dmr.security.csrf import CsrfResponseSpecProvider  # noqa: PLC0415
+
         if not self.semantic_responses:
             return []
 
@@ -590,6 +595,10 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
             *(self.auth or []),
             *(self.throttling_before_auth or []),
             *(self.throttling_after_auth or []),
+            # Default providers, must be last:
+            # TODO: move default `ResponseSchemaError.status_code` response
+            # to the default providers section.
+            CsrfResponseSpecProvider(),
         ]
 
 

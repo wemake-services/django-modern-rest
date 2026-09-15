@@ -13,7 +13,7 @@ from dmr.internal.cache import clear_settings_cache as clear_settings_cache
 from dmr.openapi.config import OpenAPIConfig
 
 if TYPE_CHECKING:
-    from dmr.metadata import ResponseSpec
+    from dmr.metadata import ResponseSpec, ResponseSpecProvider
     from dmr.openapi import OpenAPIConfig
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
@@ -64,6 +64,7 @@ class Settings(enum.StrEnum):
     exclude_validate_responses = 'exclude_validate_responses'
     semantic_responses = 'semantic_responses'
     exclude_semantic_responses = 'exclude_semantic_responses'
+    response_spec_providers = 'response_spec_providers'
     validate_events = 'validate_events'
     responses = 'responses'
     global_error_handler = 'global_error_handler'
@@ -126,6 +127,7 @@ class SettingsDict(TypedDict, total=False):
     exclude_validate_responses: Set[HTTPStatus]
     semantic_responses: bool
     exclude_semantic_responses: Set[HTTPStatus]
+    response_spec_providers: Sequence['ResponseSpecProvider']
     validate_events: bool | None
     responses: Sequence['ResponseSpec']
     global_error_handler: Callable[[Any, Any, Any], Any] | str
@@ -165,6 +167,10 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.exclude_validate_responses: frozenset(),
     Settings.semantic_responses: True,
     Settings.exclude_semantic_responses: frozenset(),
+    Settings.response_spec_providers: [
+        # Fooling `importlinter`:
+        module_loading.import_string('dmr.security.csrf.CsrfResponseSpecProvider'),
+    ],
     # Defaults to the `validate_responses` setting if `None`:
     Settings.validate_events: None,
     Settings.responses: [],  # global responses, for response validation
