@@ -298,7 +298,9 @@ class Endpoint:  # noqa: WPS214
                 if self.metadata.description is None
                 else str(self.metadata.description)
             ),
-            deprecated=self.metadata.deprecated or router_metadata.deprecated or None,
+            deprecated=(
+                self.metadata.deprecated or router_metadata.deprecated or None
+            ),
             security=context.generators.security_scheme(
                 self.metadata.auth,
                 serializer,
