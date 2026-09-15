@@ -56,7 +56,7 @@ class OpenAPIConfig:
         webhooks: Webhook definitions that may be initiated by the API,
             keyed by name.
 
-   .. versionchanged:: 0.16.0
+    .. versionchanged:: 0.16.0
        ``openapi_version`` older than ``'3.1.0'`` now raises a ``ValueError``.
        Added ``json_schema_dialect`` attribute.
 
