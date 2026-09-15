@@ -53,6 +53,8 @@ def test_self_uri() -> None:
     )
 
     assert config.self_uri == 'https://example.com/openapi.json'
+
+
 def test_json_schema_dialect() -> None:
     """Ensures that ``json_schema_dialect`` ends up in the schema."""
     dialect = 'https://json-schema.org/draft/2020-12/schema'
