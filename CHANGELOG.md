@@ -51,6 +51,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   `CookieSpec.httponly` can no longer be `None`, use `False` instead, #1456
 - `Endpoint` objects are not callable anymore, use `.func` attribute
   to make the call instead, #1456
+- Removed `PHONE`, `COLOR`, and `STYLE` members from `OpenAPIFormat`,
+  such formats are now loaded as plain strings, #1489
 
 ### Performance improvements
 
@@ -104,6 +106,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   `OpenAPI.json_schema_dialect` existed, but there was no way to set it,
   so the `jsonSchemaDialect` field was never generated, #1486
 - Allow all bool values in `dmr.openapi.objects` also accept `None`, #1437
+- Added all formats from the OpenAPI Format Registry to `OpenAPIFormat`, #1489
 
 ### Bugfixes
 
@@ -147,6 +150,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   is returned without them. Annotate the whole union
   (`Annotated[User | str, ResponseSpecMetadata(...)]`) to require them
   everywhere, that behaviour is unchanged, #1460
+- Fixed a bug that custom `format` values, like `name-email`
+  from `pydantic.NameEmail`, were raising `ValueError`
+  during schema generation, #1489
 
 
 ## 0.15.0 (2026-09-11)
