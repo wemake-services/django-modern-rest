@@ -14,5 +14,5 @@ class XML:
     name: str | None = None
     namespace: str | None = None
     prefix: str | None = None
-    attribute: bool = False
-    wrapped: bool = False
+    attribute: bool | None = None
+    wrapped: bool | None = None

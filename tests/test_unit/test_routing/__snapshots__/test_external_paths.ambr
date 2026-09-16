@@ -24,8 +24,7 @@
             "200": {
               "$ref": "#/components/responses/Configuration"
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/api/v1/async": {
@@ -68,8 +67,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/api/v1/allauth/{client}/auth/login": {
@@ -137,8 +135,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -2373,7 +2370,6 @@
       "parameters": {
         "Client": {
           "description": "The type of client accessing the API.",
-          "deprecated": false,
           "name": "client",
           "in": "path",
           "schema": {
@@ -2387,7 +2383,6 @@
         },
         "EmailVerificationKey": {
           "description": "The email verification key",
-          "deprecated": false,
           "name": "X-Email-Verification-Key",
           "in": "header",
           "schema": {
@@ -2397,7 +2392,6 @@
         },
         "PasswordResetKey": {
           "description": "The password reset key",
-          "deprecated": false,
           "name": "X-Password-Reset-Key",
           "in": "header",
           "schema": {
@@ -2407,7 +2401,6 @@
         },
         "SessionToken": {
           "description": "Session token. Only needed when `client` is equal to `app`.\n",
-          "deprecated": false,
           "name": "X-Session-Token",
           "in": "header",
           "schema": {
@@ -2416,7 +2409,6 @@
         },
         "PasswordLess": {
           "description": "When present (regardless of its value), enables passwordless sign-in via a WebAuthn credential (Passkey),\nbut may enforce additional multi-factor authentication (MFA) requirements. Omit the parameter to disable.\n",
-          "deprecated": false,
           "allowEmptyValue": true,
           "name": "passwordless",
           "in": "query",
