@@ -104,6 +104,14 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Bugfixes
 
+- Fixed the merged `requestBody` of an endpoint with several body
+  components depending on the order they are declared in.
+  With `Body[]` and `FileMetadata[]` on one endpoint, whichever came last
+  decided the documented content types, and the other one silently lost
+  both the types only it supported and its `encoding` metadata.
+  Now we document the content types that all body components support,
+  which is also what the endpoint really accepts: a request is parsed
+  by all of them at once, #1537
 - `__dmr_split_commas__` now strips the optional whitespace around each
   `','` when splitting a header value. `X-Tag: 1, 2` used to be parsed as
   `['1', ' 2']`, which failed validation for `list[int]` and silently kept

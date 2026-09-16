@@ -313,3 +313,59 @@ def test_merged_body_without_description_schema(
         )
         == snapshot
     )
+
+
+class _FileFirstController(Controller[PydanticSerializer]):
+    # `JsonParser` cannot parse files, so `Body[]` alone would document
+    # `application/json`, while `FileMetadata[]` would not:
+    parsers = (MultiPartParser(), JsonParser())
+
+    async def post(
+        self,
+        parsed_file_metadata: FileMetadata[_SeveralSimpleFiles],
+        parsed_body: Body[dict[str, str]],
+    ) -> str:
+        raise NotImplementedError
+
+
+class _BodyFirstController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(), JsonParser())
+
+    async def post(
+        self,
+        parsed_body: Body[dict[str, str]],
+        parsed_file_metadata: FileMetadata[_SeveralSimpleFiles],
+    ) -> str:
+        raise NotImplementedError
+
+
+def _merged_body_content(
+    controller: type[Controller[PydanticSerializer]],
+) -> dict[str, object]:
+    schema = build_schema(
+        Router('', [path('merged/', controller.as_view())]),
+    ).convert()
+    operation = schema['paths']['/merged/']['post']
+    return operation['requestBody']['content']  # type: ignore[no-any-return]
+
+
+def test_merged_body_content_types_ignore_order() -> None:
+    """Ensure that component order does not change the documented types."""
+    file_first = _merged_body_content(_FileFirstController)
+    body_first = _merged_body_content(_BodyFirstController)
+
+    # `application/json` is dropped: `FileMetadata[]` rejects `JsonParser`
+    # at runtime, so such a request could never succeed.
+    assert list(file_first) == [str(ContentType.multipart_form_data)]
+    assert list(body_first) == list(file_first)
+
+
+def test_merged_body_keeps_encoding_in_any_order() -> None:
+    """Ensure that no component loses its metadata to the merge."""
+    multipart = str(ContentType.multipart_form_data)
+    file_first = _merged_body_content(_FileFirstController)[multipart]
+    body_first = _merged_body_content(_BodyFirstController)[multipart]
+
+    # `encoding` is only set by `FileMetadata[]`, it used to be lost
+    # when `Body[]` was the one declared last:
+    assert file_first['encoding'] == body_first['encoding']  # type: ignore[index]

@@ -1,7 +1,7 @@
 import dataclasses
 import uuid
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar
 
 from django.urls import URLPattern, converters
 from typing_extensions import TypedDict
@@ -208,18 +208,45 @@ class ComponentParserGenerator:
         new_schema: RequestBody,
         schema: RequestBody,
     ) -> dict[str, MediaType]:
+        # A single request is parsed by every body component at once,
+        # so it can only use a content type that all of them support.
+        # We keep the intersection, which also makes the set of documented
+        # content types independent of the order components are declared in.
         new_content: dict[str, MediaType] = {}
         for media_name, media_type in new_schema.content.items():
-            media_items: list[Reference | Schema] = []
-            if media_type.schema:  # pragma: no cover:
-                media_items.append(media_type.schema)
             existing_content = schema.content.get(media_name)
-            # TODO: remove pragma after implementing conditional types
-            # for `FileMetadata[]` component
-            if existing_content and existing_content.schema:  # pragma: no cover
-                media_items.append(existing_content.schema)
+            if existing_content is None:
+                continue
+            # Body components always describe themselves with `schema`,
+            # `item_schema` is only used for streaming responses:
+            assert media_type.schema is not None  # noqa: S101
+            assert existing_content.schema is not None  # noqa: S101
             new_content[media_name] = dataclasses.replace(
                 media_type,
-                schema=Schema(all_of=media_items),
+                schema=Schema(
+                    # Declaration order, the existing body came first:
+                    all_of=[existing_content.schema, media_type.schema],
+                ),
+                # Both are keyed by property name and describe
+                # different parts of the same body, so neither may be lost:
+                encoding=_merge_optional(
+                    existing_content.encoding,
+                    media_type.encoding,
+                ),
+                examples=_merge_optional(
+                    existing_content.examples,
+                    media_type.examples,
+                ),
             )
         return new_content
+
+
+_MergedT = TypeVar('_MergedT')
+
+
+def _merge_optional(
+    existing: dict[str, _MergedT] | None,
+    to_merge: dict[str, _MergedT] | None,
+) -> dict[str, _MergedT] | None:
+    """Merge two optional mappings, ``None`` when nothing is left."""
+    return {**(existing or {}), **(to_merge or {})} or None
