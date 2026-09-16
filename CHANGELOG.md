@@ -97,6 +97,15 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `schema_hook` class method to `MsgspecSchemaGenerator`
   to customize JSON schema generation for custom types, #1462
 - `NewCookie.expires` and `CookieSpec.expires` can now be `dt.datetime`, #1456
+- Added `concrete_views` next to `views` for every auth flow:
+  `dmr.security.jwt.concrete_views`, `dmr.security.token.concrete_views`,
+  and `dmr.security.django_session.concrete_views`.
+  They are the same controllers as the ones in `views`,
+  with the default request and response bodies already plugged in,
+  so a login endpoint is a subclass with a serializer type and nothing else.
+  `token_cls` of the opaque token views and `jwt_refresh_cookie_path`
+  of the jwt cookie views are still required, everything else has a default,
+  #1457
 - Added `json_schema_dialect` attribute to `OpenAPIConfig`.
   `OpenAPI.json_schema_dialect` existed, but there was no way to set it,
   so the `jsonSchemaDialect` field was never generated, #1486

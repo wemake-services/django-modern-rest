@@ -15,6 +15,7 @@ from dmr.security.jwt import (
     CookieJWTSyncAuth,
     HeaderJWTAsyncAuth,
     HeaderJWTSyncAuth,
+    concrete_views,
 )
 from dmr.security.jwt.views import (  # noqa: WPS235
     CookieLogoutAsyncController,
@@ -357,3 +358,91 @@ class CookieLogoutSyncView(CookieLogoutSyncController[PydanticSerializer]):
 @final
 class CookieLogoutAsyncView(CookieLogoutAsyncController[PydanticSerializer]):
     jwt_refresh_cookie_path = _REFRESH_COOKIE_PATH
+
+
+# Concrete views, they are used as-is, without any customizations at all:
+
+
+@final
+class ConcreteObtainSyncController(
+    concrete_views.ObtainTokensSyncController[PydanticSerializer],
+):
+    """Concrete view to obtain both tokens in the body."""
+
+
+@final
+class ConcreteObtainAsyncController(
+    concrete_views.ObtainTokensAsyncController[PydanticSerializer],
+):
+    """Concrete view to obtain both tokens in the body."""
+
+
+@final
+class ConcreteRefreshSyncController(
+    concrete_views.RefreshTokenSyncController[PydanticSerializer],
+):
+    """Concrete view to refresh both tokens in the body."""
+
+
+@final
+class ConcreteRefreshAsyncController(
+    concrete_views.RefreshTokenAsyncController[PydanticSerializer],
+):
+    """Concrete view to refresh both tokens in the body."""
+
+
+@final
+class ConcreteVerifySyncController(
+    concrete_views.VerifyTokenSyncController[PydanticSerializer],
+):
+    """Concrete view to verify an access token."""
+
+
+@final
+class ConcreteVerifyAsyncController(
+    concrete_views.VerifyTokenAsyncController[PydanticSerializer],
+):
+    """Concrete view to verify an access token."""
+
+
+#: Concrete cookie views are scoped to the sync refresh endpoint,
+#: just like the customized ones above.
+_CONCRETE_REFRESH_COOKIE_PATH: Final = reverse_lazy(
+    'api:jwt_auth:jwt_concrete_cookie_refresh_sync',
+)
+
+
+@final
+class ConcreteCookieObtainSyncController(
+    concrete_views.CookieObtainTokensSyncController[PydanticSerializer],
+):
+    """Concrete view to obtain both tokens as cookies."""
+
+    jwt_refresh_cookie_path = _CONCRETE_REFRESH_COOKIE_PATH
+
+
+@final
+class ConcreteCookieObtainAsyncController(
+    concrete_views.CookieObtainTokensAsyncController[PydanticSerializer],
+):
+    """Concrete view to obtain both tokens as cookies."""
+
+    jwt_refresh_cookie_path = _CONCRETE_REFRESH_COOKIE_PATH
+
+
+@final
+class ConcreteCookieRefreshSyncController(
+    concrete_views.CookieRefreshTokensSyncController[PydanticSerializer],
+):
+    """Concrete view to rotate both token cookies."""
+
+    jwt_refresh_cookie_path = _CONCRETE_REFRESH_COOKIE_PATH
+
+
+@final
+class ConcreteCookieLogoutSyncController(
+    concrete_views.CookieLogoutSyncController[PydanticSerializer],
+):
+    """Concrete view to drop both token cookies."""
+
+    jwt_refresh_cookie_path = _CONCRETE_REFRESH_COOKIE_PATH

@@ -162,11 +162,53 @@ having ``msgspec`` installed makes
   and verified by different installs.
 
 
+.. _jwt-concrete-views:
+
+Ready-to-use views
+------------------
+
+Most APIs need exactly the same auth endpoints: take a username
+and a password, give back a pair of tokens, rotate them on demand.
+``dmr.security.jwt.concrete_views`` has all of that already written.
+Pass your serializer type, route it, and you are done:
+
+.. literalinclude:: /examples/auth/jwt/jwt_concrete_views.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+These are the very same controllers
+as the ones in ``dmr.security.jwt.views``,
+with :class:`~dmr.security.jwt.views.ObtainTokensPayload`,
+:class:`~dmr.security.jwt.views.RefreshTokenPayload`,
+:class:`~dmr.security.jwt.views.VerifyTokenPayload`, and
+:class:`~dmr.security.jwt.views.ObtainTokensResponse`
+already plugged in as the request and response bodies.
+Every jwt setting and every hook still works the same way.
+
+The cookie flow works the same, only ``jwt_refresh_cookie_path`` is left
+to you, see :ref:`issuing-tokens-as-cookies` on why it has no default:
+
+.. literalinclude:: /examples/auth/jwt/jwt_concrete_cookies.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+.. tip::
+
+  Start here. Move to the reusable controllers below
+  only when you need a different request or response body,
+  they are the same classes with the bodies left open.
+
+
 Reusing pre-existing views
 --------------------------
 
 We provide several pre-existing views to get auth tokens.
 So, users won't have to write tons of boilerplate code.
+
+Reach for them when the bodies of :ref:`jwt-concrete-views`
+do not match your API.
 
 
 JWT with access and refresh tokens
@@ -601,6 +643,43 @@ Helpers
 .. autofunction:: dmr.security.jwt.auth.request_jwt
 
 .. autofunction:: dmr.security.jwt.auth.set_request_attrs
+
+Ready-to-use views
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: dmr.security.jwt.concrete_views.ObtainTokensSyncController
+  :members: convert_auth_payload, make_api_response
+
+.. autoclass:: dmr.security.jwt.concrete_views.ObtainTokensAsyncController
+  :members: convert_auth_payload, make_api_response
+
+.. autoclass:: dmr.security.jwt.concrete_views.RefreshTokenSyncController
+  :members: convert_refresh_payload, make_api_response
+
+.. autoclass:: dmr.security.jwt.concrete_views.RefreshTokenAsyncController
+  :members: convert_refresh_payload, make_api_response
+
+.. autoclass:: dmr.security.jwt.concrete_views.VerifyTokenSyncController
+  :members: convert_verify_payload
+
+.. autoclass:: dmr.security.jwt.concrete_views.VerifyTokenAsyncController
+  :members: convert_verify_payload
+
+.. autoclass:: dmr.security.jwt.concrete_views.CookieObtainTokensSyncController
+  :members: convert_auth_payload
+
+.. autoclass:: dmr.security.jwt.concrete_views.CookieObtainTokensAsyncController
+  :members: convert_auth_payload
+
+.. note::
+
+  ``CookieRefreshTokensSyncController``, ``CookieRefreshTokensAsyncController``,
+  ``CookieLogoutSyncController``, and ``CookieLogoutAsyncController``
+  need no default bodies at all, so
+  ``dmr.security.jwt.concrete_views`` re-exports them as-is:
+  those names are the very same objects
+  as in ``dmr.security.jwt.views``. They are there
+  so that a whole cookie flow can be imported from a single module.
 
 Pre-defined views to fetch JWT tokens
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
