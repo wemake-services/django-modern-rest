@@ -1,3 +1,5 @@
+import contextlib
+import inspect
 import pathlib
 from collections.abc import Callable, Iterator
 
@@ -54,3 +56,33 @@ def named_text_fixture() -> Callable[[str], str]:
         ).read_text()
 
     return factory
+
+
+@pytest.fixture(autouse=True)
+def _close_async_db_connections(
+    request: pytest.FixtureRequest,
+) -> Iterator[None]:
+    """
+    Close database connections left behind by async tests.
+
+    Django's async ORM executes queries via ``sync_to_async``,
+    which runs them on a process-wide worker thread
+    (``asgiref.sync.SyncToAsync.single_thread_executor``).
+    That thread keeps its own copy of ``django.db.connections``,
+    which pytest-django never closes,
+    because its teardown only sees the main thread's connections.
+    The leftover session locks the test database,
+    so the worker cannot drop it during session teardown
+    (``ObjectInUse``: database is being accessed by other users).
+    """
+    yield
+
+    func = getattr(request.node, 'function', None)
+    if func is None or not inspect.iscoroutinefunction(func):
+        return
+    from asgiref.sync import SyncToAsync  # noqa: PLC0415
+    from django.db import connections  # noqa: PLC0415
+
+    future = SyncToAsync.single_thread_executor.submit(connections.close_all)
+    with contextlib.suppress(Exception):
+        future.result()

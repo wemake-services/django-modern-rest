@@ -75,6 +75,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Features
 
+- Added class-level overrides for `OpenAPIContext` generators and
+  `ConfigMerger`, allowing custom operation ID generation and schema
+  customization through context subclasses, #1461, #1487
 - `summary` and `description` of a `PathItem` are now parsed
   from the controller's docstring, just like they are parsed
   from the endpoint's docstring for an `Operation`.
@@ -94,9 +97,25 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `schema_hook` class method to `MsgspecSchemaGenerator`
   to customize JSON schema generation for custom types, #1462
 - `NewCookie.expires` and `CookieSpec.expires` can now be `dt.datetime`, #1456
+- Added `dmr.metadata.MergeableMetadata` base class. Subclass it to define
+  how your own `Annotated` metadata combines when it is placed on members
+  of a union type. `ResponseSpecMetadata` is the first one to use it, #1460
+- Added `json_schema_dialect` attribute to `OpenAPIConfig`.
+  `OpenAPI.json_schema_dialect` existed, but there was no way to set it,
+  so the `jsonSchemaDialect` field was never generated, #1486
+- Allow all bool values in `dmr.openapi.objects` also accept `None`, #1437
 
 ### Bugfixes
 
+- `__dmr_split_commas__` now strips the optional whitespace around each
+  `','` when splitting a header value. `X-Tag: 1, 2` used to be parsed as
+  `['1', ' 2']`, which failed validation for `list[int]` and silently kept
+  a leading space for `list[str]`. RFC 9110 treats `a, b` and `a,b` as the
+  same list, #1526
+- Fixed Redis throttling reset values sometimes being 1 second above the
+  configured window due to clock skew between Redis server time and Python
+  time. The Redis backend now uses the `ttl` returned by Redis directly
+  instead of computing an absolute timestamp, #1308
 - Fixed an empty `description` being generated for the merged `requestBody`
   in the OpenAPI schema, when a controller has several request body
   components and none of them provides a description, #1495
@@ -109,6 +128,25 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   `comment`, and `schema_uri` fields, #1490
 - Default OpenAPI `operation_id` generation now preserves capitalization
   in controller class names, #1500
+- Fixes that endpoints with `auth=None` inherited document-level
+  `OpenAPIConfig.security` requirements, now they emit `security: []`, #1497
+- `get_annotated_metadata` now unwraps type aliases, which fixes every
+  metadata lookup we do: component parsers, `ResponseSpecMetadata`,
+  `ParameterMetadata`, `MediaTypeMetadata`, and conditional types.
+  Most visibly, a component hidden behind a `type X = Body[User]` alias
+  (or a `TypeAliasType` object) used to be silently dropped
+  from `component_parsers`, and the endpoint then failed with a `TypeError`
+  about a missing argument on every request.
+  `X: TypeAlias = Body[User]` was never affected: it is a plain
+  assignment in runtime. Aliases of aliases and subscripted generic
+  aliases are unwrapped as well, #1460
+- `ResponseSpecMetadata` on a member of a union return type is no longer
+  ignored: `-> Annotated[User, ResponseSpecMetadata(...)] | str` now
+  documents the headers and cookies that `User` responses carry.
+  They are documented as `required=False`, because a `str` response
+  is returned without them. Annotate the whole union
+  (`Annotated[User | str, ResponseSpecMetadata(...)]`) to require them
+  everywhere, that behaviour is unchanged, #1460
 
 
 ## 0.15.0 (2026-09-11)

@@ -82,8 +82,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/api/v1/all": {
@@ -174,8 +173,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/api/v1/no": {
@@ -222,8 +220,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -401,8 +398,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -506,8 +502,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },

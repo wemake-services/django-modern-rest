@@ -64,6 +64,9 @@ Response, headers and cookies
 .. autoclass:: dmr.metadata.ResponseSpecMetadata
   :members:
 
+.. autoclass:: dmr.metadata.MergeableMetadata
+  :members:
+
 .. autoclass:: dmr.metadata.ResponseModification
   :members:
 
@@ -443,6 +446,9 @@ OpenAPI Generators
    :members:
 
 .. autoclass:: dmr.openapi.generators.OperationIdGenerator
+   :members:
+
+.. autoclass:: dmr.openapi.generators.ParameterGenerator
    :members:
 
 

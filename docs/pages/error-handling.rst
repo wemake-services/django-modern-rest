@@ -310,6 +310,68 @@ For this, override :meth:`~dmr.controller.Controller.to_response`.
 This can also be used to attach ``RateLimit`` headers
 and other :doc:`throttling` information.
 
+.. _union-response-metadata:
+
+Headers and cookies of union responses
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A single response can be a union of several models,
+and :class:`~dmr.metadata.ResponseSpecMetadata` can be placed
+on the union or on any of its members. Where you put it changes
+what you promise:
+
+.. literalinclude:: /examples/error_handling/union_response_headers.py
+  :caption: views.py
+  :language: python
+  :linenos:
+  :emphasize-lines: 23-28
+
+Here only ``User`` responses carry ``X-User-Id``,
+a ``str`` response is returned without it. Since one response
+has one set of specs, we document ``X-User-Id`` as
+``required=False``: it can be missing, so we don't validate
+that it is always there.
+
+Annotate the whole union instead when every response has the header:
+
+.. code-block:: python
+
+  >>> from typing import Annotated
+
+  >>> from dmr import HeaderSpec
+  >>> from dmr.metadata import ResponseSpecMetadata
+
+  >>> AlwaysIdentified = Annotated[
+  ...     str | int,
+  ...     ResponseSpecMetadata(headers={'X-User-Id': HeaderSpec()}),
+  ... ]
+
+Now ``X-User-Id`` is required for both ``str`` and ``int`` responses,
+and a response without it fails validation.
+
+The same rule applies when several members are annotated:
+a header is required only when every member of the union declares it
+as required. Specs of all members end up in the documentation either way.
+
+.. warning::
+
+  Do not design new APIs this way.
+
+  One response with one status code should always have the same set of
+  required headers and cookies. When it does not, every client has to
+  inspect the body first to learn which headers it is allowed to read,
+  and the OpenAPI schema cannot express that dependency at all: it only
+  says the header is optional.
+
+  We support per-member metadata for legacy code and migrations, where
+  a response already behaves like this and the behaviour cannot be changed
+  yet. For new endpoints, annotate the whole union, or split the response
+  into separate status codes.
+
+.. versionchanged:: 0.16.0
+
+  Metadata of union members used to be ignored completely.
+
 
 Problem Details
 ---------------

@@ -17,6 +17,11 @@ mod _docs 'docs/justfile'
 # Install dependencies
 [group('dev')]
 install:
+    uv sync --all-groups --all-extras --no-group integration-drivers
+
+# Install dependencies
+[group('dev')]
+install-integration:
     uv sync --all-groups --all-extras
 
 # Format code with ruff
@@ -34,9 +39,29 @@ lint:
     uv run python -m slotscheck -v -m dmr
     uv run import-linter lint
 
-# Run all checks
+# Run all checks (with sqlite as db)
 [group('dev')]
-test: lint type-check example benchmarks-type-check package (smoke 'jwt' 'allauth' 'msgspec' 'pydantic') translations unit
+test *args='': lint type-check example benchmarks-type-check package (smoke 'jwt' 'allauth' 'msgspec' 'pydantic') translations (unit args)
+
+# Run full test suite with MySQL database
+[group('dev')]
+[env('TEST_DATABASE_URL', 'mysql://root:dmr_test@127.0.0.1:10000/root')]
+test_mysql *args='': (integration_db_start 'mysql')
+  # We need to execute commands explicitly, because
+  # just doesn't export environment variables to dependent recipes,
+  # so `uv` doesn't see `TEST_DATABASE_URL`.
+  just install-integration
+  just test {{args}}
+
+# Run full test suite with PostgreSQL database
+[group('dev')]
+[env('TEST_DATABASE_URL', 'postgres://dmr_test:dmr_test@localhost:10001/dmr_test')]
+test_postgres *args='': (integration_db_start 'postgres')
+  # We need to execute commands explicitly, because
+  # just doesn't export environment variables to dependent recipes,
+  # so `uv` doesn't see `TEST_DATABASE_URL`.
+  just install-integration
+  just test {{args}}
 
 # Run all type checkers
 [group('type-check')]
@@ -120,9 +145,13 @@ package:
     # Validates the environment against `uv.lock`.
     # TODO: remove `-` once we can support `orjson` in `pyproject.toml`,
     # until then we install it on top of the lock and this always differs.
-    -uv sync --all-groups --all-extras --locked --check
+    -uv sync --all-groups --all-extras --locked --check --no-group integration-drivers
     uv pip check
     uv --preview-features audit audit
+
+[group('testing')]
+integration_db_start *containers:
+  docker compose up --wait {{containers}}
 
 # Type-check benchmark code
 [group('benchmarks')]
@@ -151,7 +180,7 @@ docs +targets='clean html': (_docs::build targets)
 
 # Add new translation strings
 [group('i18n')]
-[working-directory: 'dmr']
+[working-directory('dmr')]
 makemessages:
     #!/usr/bin/env bash
     for target in $(find locale -mindepth 1 -maxdepth 1 -type d); do
