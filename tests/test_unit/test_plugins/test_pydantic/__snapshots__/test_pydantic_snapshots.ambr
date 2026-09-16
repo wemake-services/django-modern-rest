@@ -773,19 +773,13 @@
               "type": "string",
               "format": "color",
               "title": "Preferred Color"
-            },
-            "phone_number": {
-              "type": "string",
-              "format": "phone",
-              "title": "Phone Number"
             }
           },
           "type": "object",
           "required": [
             "email",
             "password",
-            "preferred_color",
-            "phone_number"
+            "preferred_color"
           ],
           "title": "_UserModel"
         }

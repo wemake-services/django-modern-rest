@@ -4,7 +4,7 @@ from typing import Any, Generic, Optional, TypeVar
 
 import pydantic
 from django.urls import path
-from pydantic_extra_types import Color, phone_numbers
+from pydantic_extra_types import Color
 from syrupy.assertion import SnapshotAssertion
 from typing_extensions import override
 
@@ -18,7 +18,6 @@ class _UserModel(pydantic.BaseModel):
     email: pydantic.EmailStr
     password: pydantic.SecretStr
     preferred_color: Color
-    phone_number: phone_numbers.PhoneNumber
 
 
 class _UserController(Controller[PydanticSerializer]):
