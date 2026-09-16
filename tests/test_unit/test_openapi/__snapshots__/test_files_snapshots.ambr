@@ -136,6 +136,9 @@
                 "schema": {
                   "allOf": [
                     {
+                      "$ref": "#/components/schemas/_DescriptionModel"
+                    },
+                    {
                       "properties": {
                         "attachments": {
                           "items": {
@@ -156,9 +159,6 @@
                       ],
                       "title": "_SeveralFiles",
                       "description": "Model docs."
-                    },
-                    {
-                      "$ref": "#/components/schemas/_DescriptionModel"
                     }
                   ]
                 },
@@ -958,6 +958,12 @@
                 "schema": {
                   "allOf": [
                     {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    {
                       "properties": {
                         "first_file": {
                           "type": "string",
@@ -974,12 +980,6 @@
                         "second_file"
                       ],
                       "title": "_SeveralSimpleFiles"
-                    },
-                    {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "type": "object"
                     }
                   ]
                 },
