@@ -566,10 +566,15 @@ Environment variables
   - To create json encoders and decoders only once
   - To create type validation objects
     in :class:`~dmr.serializer.BaseEndpointOptimizer`
+  - To remember which parser and renderer were negotiated
+    for a given ``Content-Type`` / ``Accept`` header value
+    in :class:`~dmr.negotiation.RequestNegotiator`
+    and :class:`~dmr.negotiation.ResponseNegotiator`
 
   You can control the size / memory usage with this setting.
 
-  Increase if you have a lot of different return types.
+  Increase if you have a lot of different return types
+  or if your clients send a lot of distinct ``Accept`` headers.
 
 .. envvar:: DMR_USE_COMPILED
 

@@ -1,27 +1,29 @@
 import enum
 from collections.abc import Mapping
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Final, Literal, final, overload
 
 from django.http.request import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
-from dmr.exceptions import (
-    EndpointMetadataError,
-    NotAcceptableError,
-    RequestSerializationError,
-)
+from dmr.envs import MAX_CACHE_SIZE
+from dmr.exceptions import EndpointMetadataError, RequestSerializationError
 from dmr.internal.media_compat import media_match
 from dmr.internal.negotiation import ConditionalType as _ConditionalType
+from dmr.internal.negotiation import find_renderer as _find_renderer
 from dmr.internal.negotiation import (
     get_conditional_types as get_conditional_types,
 )
-from dmr.internal.negotiation import media_by_precedence
-from dmr.internal.negotiation import negotiate_renderer as _negotiate_renderer
+from dmr.internal.negotiation import media_by_precedence, not_acceptable_error
 from dmr.metadata import EndpointMetadata
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 
 if TYPE_CHECKING:
+    from functools import (
+        _lru_cache_wrapper,  # pyright: ignore[reportPrivateUsage]
+    )
+
     from dmr.serializer import BaseSerializer
 
 _CANNOT_PARSE_MSG: Final = _(
@@ -38,9 +40,13 @@ class RequestNegotiator:
         '_default',
         '_exact_parsers',
         '_media_by_precedence',
+        '_negotiate',
         '_parsers',
         '_serializer',
     )
+
+    #: Memoized ``Content-Type`` header value to parser lookup.
+    _negotiate: '_lru_cache_wrapper[Parser | None]'
 
     def __init__(
         self,
@@ -59,6 +65,9 @@ class RequestNegotiator:
         self._media_by_precedence = media_by_precedence(self._parsers.keys())
         # The last configured parser is the most specific one:
         self._default = next(iter(self._parsers.values()))
+        # Almost every client sends the very same `Content-Type` header
+        # over and over, so we only decide once per header value:
+        self._negotiate = lru_cache(maxsize=MAX_CACHE_SIZE)(self._decide)
 
     def __call__(self, request: HttpRequest) -> Parser:
         """
@@ -84,16 +93,27 @@ class RequestNegotiator:
         if parser is not None:
             return parser
 
-        parser = self._decide(request)
+        # `request.content_type` is already stripped of its params
+        # by django, so it makes a good cache key.
+        parser = self._negotiate(request.content_type)
+        if parser is None:
+            # We only memoize the decision, never the error itself,
+            # because exceptions keep their tracebacks alive:
+            raise RequestSerializationError(
+                _CANNOT_PARSE_MSG.format(
+                    content_type=repr(request.content_type),
+                    expected=repr(list(self._parsers)),
+                ),
+            )
         request.__dmr_parser__ = parser  # type: ignore[attr-defined]
         return parser
 
-    def _decide(self, request: HttpRequest) -> Parser:
+    def _decide(self, content_type: str | None) -> Parser | None:
         # TODO: compile this code
-        if request.content_type is None:
+        if content_type is None:
             return self._default
         # Try the exact match first, since it is faster, O(1):
-        parser_type = self._exact_parsers.get(request.content_type)
+        parser_type = self._exact_parsers.get(content_type)
         if parser_type is not None:
             # Do not allow invalid content types to be matched exactly.
             return parser_type
@@ -101,17 +121,11 @@ class RequestNegotiator:
         # Now, try to find parser types based on `*/*` patterns, O(n):
         for media in self._media_by_precedence:
             # TODO: replace this with a compiled implementation:
-            if media_match(media, request.content_type):
+            if media_match(media, content_type):
                 return self._parsers[str(media)]
 
-        # No parsers found, raise an error:
-        expected = list(self._parsers.keys())
-        raise RequestSerializationError(
-            _CANNOT_PARSE_MSG.format(
-                content_type=repr(request.content_type),
-                expected=repr(expected),
-            ),
-        )
+        # No parsers found, the caller raises the error:
+        return None
 
 
 class ResponseNegotiator:
@@ -127,6 +141,8 @@ class ResponseNegotiator:
 
     __slots__ = (
         '_default',
+        '_negotiate',
+        '_negotiate_non_streaming',
         '_non_streaming_default',
         '_non_streaming_renderers',
         '_renderer_keys',
@@ -134,6 +150,10 @@ class ResponseNegotiator:
         '_serializer',
         '_streaming',
     )
+
+    #: Memoized ``Accept`` header value to renderer lookups.
+    _negotiate: '_lru_cache_wrapper[Renderer | None]'
+    _negotiate_non_streaming: '_lru_cache_wrapper[Renderer | None]'
 
     def __init__(
         self,
@@ -166,6 +186,13 @@ class ResponseNegotiator:
             iter(self._non_streaming_renderers.values()),
         )
 
+        # Almost every client sends the very same `Accept` header
+        # over and over, so we only negotiate once per header value:
+        self._negotiate = lru_cache(maxsize=MAX_CACHE_SIZE)(self._decide)
+        self._negotiate_non_streaming = lru_cache(maxsize=MAX_CACHE_SIZE)(
+            self._decide_non_streaming,
+        )
+
     def __call__(self, request: HttpRequest) -> Renderer:
         """
         Negotiates which renderer to use for rendering this response.
@@ -190,20 +217,20 @@ class ResponseNegotiator:
             NotAcceptableError: when ``Accept`` request header is not supported.
 
         """
-        renderer = _negotiate_renderer(
-            request,
-            self._renderers,
-            default=self._default,
-        )
+        # `META` is the raw environ dict, `request.headers` is a lazily built
+        # case-insensitive copy of it, it might still not exist.
+        # Let's not trigger it just yet:
+        accept = request.META.get('HTTP_ACCEPT')
+
+        renderer = self._negotiate(accept)
+        if renderer is None:
+            # We only memoize the decision, never the error itself:
+            # its message quotes the accepted types of this exact request.
+            raise not_acceptable_error(request, self._renderers)
         request.__dmr_renderer__ = renderer  # type: ignore[attr-defined]
         if self._streaming:
-            try:
-                non_streaming = _negotiate_renderer(
-                    request,
-                    self._non_streaming_renderers,
-                    default=self._non_streaming_default,
-                )
-            except NotAcceptableError:
+            non_streaming = self._negotiate_non_streaming(accept)
+            if non_streaming is None:
                 # Main (streaming) negotiation already succeeded.
                 # A non-streaming renderer is only needed for 4xx/5xx
                 # error bodies and response validation — fall back to
@@ -213,6 +240,16 @@ class ResponseNegotiator:
                 non_streaming = self._non_streaming_default
             request.__dmr_nonstreaming_renderer__ = non_streaming  # type: ignore[attr-defined]
         return renderer
+
+    def _decide(self, accept: str | None) -> Renderer | None:
+        return _find_renderer(accept, self._renderers, self._default)
+
+    def _decide_non_streaming(self, accept: str | None) -> Renderer | None:
+        return _find_renderer(
+            accept,
+            self._non_streaming_renderers,
+            self._non_streaming_default,
+        )
 
 
 @overload

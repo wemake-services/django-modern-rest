@@ -119,6 +119,50 @@ def media_by_precedence(content_types: Iterable[str]) -> list[MediaType]:
     )
 
 
+def find_renderer(
+    accept: str | None,
+    renderers: Mapping[str, 'Renderer'],
+    default: 'Renderer',
+) -> 'Renderer | None':
+    """
+    Choose a renderer by the raw ``Accept`` header value.
+
+    When *accept* is missing, returns *default* (or the first renderer).
+    Returns ``None`` when *accept* is set
+    and does not match any of *renderers*.
+
+    The result only depends on *accept*, because *renderers* and *default*
+    are fixed at import time. That's why callers are free
+    to cache it by the header value.
+    """
+    if accept is None:
+        return default
+
+    # Exact match is the overwhelmingly common case for API clients
+    # (`Accept: application/json`):
+    renderer = renderers.get(accept)
+    if renderer is not None:
+        return renderer
+
+    renderer_type = accepted_type(accept, renderers)
+    if renderer_type is None:
+        return None
+    return renderers[renderer_type]
+
+
+def not_acceptable_error(
+    request: HttpRequest,
+    renderers: Mapping[str, 'Renderer'],
+) -> NotAcceptableError:
+    """Build an error for an ``Accept`` header that we cannot satisfy."""
+    return NotAcceptableError(
+        _CANNOT_SERIALIZE_MSG.format(
+            accepted_types=repr(request.accepted_types),
+            supported=repr(list(renderers)),
+        ),
+    )
+
+
 def negotiate_renderer(
     request: HttpRequest,
     renderers: Mapping[str, 'Renderer'],
@@ -135,22 +179,11 @@ def negotiate_renderer(
     # `META` is the raw environ dict, `request.headers` is a lazily built
     # case-insensitive copy of it, it might still not exist.
     # Let's not trigger it just yet:
-    accept = request.META.get('HTTP_ACCEPT')
-    if accept is None:
-        return default
-
-    # Exact match is the overwhelmingly common case for API clients
-    # (`Accept: application/json`):
-    renderer = renderers.get(accept)
-    if renderer is not None:
-        return renderer
-
-    renderer_type = accepted_type(accept, renderers)
-    if renderer_type is None:
-        raise NotAcceptableError(
-            _CANNOT_SERIALIZE_MSG.format(
-                accepted_types=repr(request.accepted_types),
-                supported=repr(list(renderers)),
-            ),
-        )
-    return renderers[renderer_type]
+    renderer = find_renderer(
+        request.META.get('HTTP_ACCEPT'),
+        renderers,
+        default,
+    )
+    if renderer is None:
+        raise not_acceptable_error(request, renderers)
+    return renderer
