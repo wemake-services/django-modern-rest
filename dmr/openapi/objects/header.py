@@ -17,6 +17,10 @@ class Header:
     with the following changes:
     All traits that are affected by the location MUST be applicable to
     a location of header (for example, style).
+
+    .. versionchanged:: 0.16.0
+        ``content`` values can now be references.
+
     """
 
     schema: 'Reference | Schema | None' = None
@@ -27,4 +31,4 @@ class Header:
     explode: bool | None = None
     example: Any | None = None
     examples: dict[str, 'Example | Reference'] | None = None
-    content: dict[str, 'MediaType'] | None = None
+    content: dict[str, 'MediaType | Reference'] | None = None

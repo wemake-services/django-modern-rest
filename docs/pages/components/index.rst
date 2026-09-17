@@ -48,6 +48,13 @@ All components consist of two parts:
    These annotations will be used by the end users.
    For example, :data:`~dmr.components.Query`
 
+.. note::
+
+  Type aliases have first-class support:
+  ``UserBody: TypeAlias = Body[User]`` and ``type UserBody = Body[User]``
+  both work as component annotations, including aliases of aliases
+  and subscripted generic aliases like ``type Payload[ModelT] = Body[ModelT]``.
+
 
 Browse components
 -----------------
