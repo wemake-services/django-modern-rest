@@ -8,13 +8,14 @@ from django.utils.translation import gettext_lazy as _
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.exceptions import EndpointMetadataError, RequestSerializationError
+from dmr.internal.media_compat import media_by_precedence
 from dmr.internal.negotiation import ConditionalType as _ConditionalType
 from dmr.internal.negotiation import find_parser as _find_parser
 from dmr.internal.negotiation import find_renderer as _find_renderer
 from dmr.internal.negotiation import (
     get_conditional_types as get_conditional_types,
 )
-from dmr.internal.negotiation import media_by_precedence, not_acceptable_error
+from dmr.internal.negotiation import not_acceptable_error
 from dmr.metadata import EndpointMetadata
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
@@ -34,7 +35,25 @@ _CANNOT_PARSE_MSG: Final = _(
 
 
 class RequestNegotiator:
-    """Selects a correct parser type for a request."""
+    """
+    Selects a correct parser type for a request.
+
+    Which parser fits only depends on the ``Content-Type`` header value,
+    because parsers are fixed for an endpoint in import time.
+    That's why we memoize the decision per header value: almost every
+    client keeps sending the very same ``Content-Type: application/json``
+    and there's no point in negotiating it over and over again.
+
+    The cache is not shared between endpoints, it holds at most
+    :envvar:`DMR_MAX_CACHE_SIZE` header values and can be dropped with
+    :meth:`~dmr.negotiation.RequestNegotiator.clear_cache`.
+    Only the decision is memoized, never the error:
+    unsupported headers still raise for every single request.
+
+    .. versionchanged:: 0.16.0
+        Parser selection is now memoized per ``Content-Type`` header value.
+
+    """
 
     __slots__ = (
         '_default',
@@ -126,7 +145,9 @@ class RequestNegotiator:
         Parsers are fixed for an endpoint in import time,
         so this is only needed when they are modified in place:
         in tests or in some very dynamic setups.
+
         .. versionadded:: 0.16.0
+
         """
         self._negotiate.cache_clear()
 
@@ -135,10 +156,25 @@ class ResponseNegotiator:
     """
     Selects a correct renderer for a response body.
 
+    Which renderer fits only depends on the ``Accept`` header value,
+    because renderers are fixed for an endpoint in import time.
+    That's why we memoize the decision per header value: almost every
+    client keeps sending the very same ``Accept: application/json``
+    and there's no point in negotiating it over and over again.
+
+    The cache is not shared between endpoints, it holds at most
+    :envvar:`DMR_MAX_CACHE_SIZE` header values and can be dropped with
+    :meth:`~dmr.negotiation.ResponseNegotiator.clear_cache`.
+    Only the decision is memoized, never the error:
+    unsupported headers still raise for every single request.
+
     .. versionchanged:: 0.5.0
         Now it uses a custom algorithm that is x30 times faster
         (when compiled with :ref:`mypyc`) then the original
         :meth:`django.http.HttpRequest.get_preferred_type` way we used before.
+
+    .. versionchanged:: 0.16.0
+        Renderer selection is now memoized per ``Accept`` header value.
 
     """
 
@@ -264,7 +300,9 @@ class ResponseNegotiator:
         Renderers are fixed for an endpoint in import time,
         so this is only needed when they are modified in place:
         in tests or in some very dynamic setups.
+
         .. versionadded:: 0.16.0
+
         """
         self._negotiate.cache_clear()
         self._negotiate_non_streaming.cache_clear()

@@ -6,7 +6,6 @@ from pytest_codspeed import BenchmarkFixture
 
 from dmr import Controller
 from dmr.plugins.msgspec import MsgspecSerializer
-from dmr.renderers import Renderer
 from dmr.test import DMRRequestFactory
 
 #: What almost every API client sends.
@@ -18,6 +17,9 @@ _BROWSER_ACCEPT: Final = (
     'image/avif,image/webp,image/apng,*/*;q=0.8,'
     'application/signed-exchange;v=b3;q=0.7'
 )
+
+#: A single negotiation is way too fast to be timed on its own.
+_REPEAT: Final = 1000
 
 
 class _NegotiatedController(Controller[MsgspecSerializer]):
@@ -33,10 +35,12 @@ def test_response_negotiation_api_client(
     negotiator = _NegotiatedController.api_endpoints['GET'].response_negotiator
     request = dmr_rf.get('/test', headers={'Accept': _API_CLIENT_ACCEPT})
 
-    def factory() -> Renderer:
-        return negotiator(request)
+    assert negotiator(request).content_type == _API_CLIENT_ACCEPT
 
-    assert benchmark(factory).content_type == _API_CLIENT_ACCEPT
+    @benchmark
+    def factory() -> None:
+        for _ in range(_REPEAT):
+            negotiator(request)
 
 
 def test_response_negotiation_browser(
@@ -47,7 +51,9 @@ def test_response_negotiation_browser(
     negotiator = _NegotiatedController.api_endpoints['GET'].response_negotiator
     request = dmr_rf.get('/test', headers={'Accept': _BROWSER_ACCEPT})
 
-    def factory() -> Renderer:
-        return negotiator(request)
+    assert negotiator(request).content_type == _API_CLIENT_ACCEPT
 
-    assert benchmark(factory).content_type == _API_CLIENT_ACCEPT
+    @benchmark
+    def factory() -> None:
+        for _ in range(_REPEAT):
+            negotiator(request)

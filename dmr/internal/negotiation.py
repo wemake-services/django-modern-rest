@@ -1,5 +1,5 @@
 import dataclasses
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any, Final, final
 
 from django.http.request import HttpRequest, MediaType
@@ -8,11 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from dmr.compiled import accepted_type
 from dmr.exceptions import NotAcceptableError, ResponseSchemaError
-from dmr.internal.media_compat import (
-    media_match,
-    media_quality,
-    media_specificity,
-)
+from dmr.internal.media_compat import media_match
 from dmr.metadata import get_annotated_metadata
 
 if TYPE_CHECKING:
@@ -107,19 +103,6 @@ def negotiatiate_response_validation(
         content_type,  # type: ignore[arg-type]
         # If nothing works, fallback to the default parser:
         next(iter(metadata.parsers.values())),
-    )
-
-
-def media_by_precedence(content_types: Iterable[str]) -> list[MediaType]:
-    """Return sorted content types based on specificity and quality."""
-    return sorted(
-        (
-            media_type
-            for content_type in content_types
-            if media_quality((media_type := MediaType(content_type))) != 0
-        ),
-        key=lambda media: (media_specificity(media), media_quality(media)),
-        reverse=True,
     )
 
 
