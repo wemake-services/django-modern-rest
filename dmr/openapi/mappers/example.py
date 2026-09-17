@@ -1,10 +1,29 @@
 from typing import TYPE_CHECKING, Any
 
-from dmr.openapi.objects import Example
+from dmr.openapi.objects import Example, Schema
 from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
+
+
+def set_generated_example(schema: Schema, example: Any) -> Schema:
+    """
+    Sets a generated *example* on the given *schema*, returns that *schema*.
+
+    We always use the JSON Schema ``examples`` list, never the OAS ``example``
+    keyword: ``examples`` is valid in every OpenAPI version we support,
+    while OpenAPI 3.2 deprecates ``example`` inside Schema Objects.
+
+    Generating examples can be disabled in settings, in that case *example*
+    is ``None`` and we don't write anything at all.
+
+    .. versionadded:: 0.16.0
+    """
+    if example is not None:
+        schema.examples = [example]
+    return schema
+
 
 try:
     from polyfactory.factories import DataclassFactory

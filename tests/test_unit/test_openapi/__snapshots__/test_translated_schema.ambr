@@ -26,8 +26,7 @@
                 },
                 "Set-Cookie: translated-cookie": {
                   "schema": {
-                    "type": "string",
-                    "example": "translated-cookie=123"
+                    "type": "string"
                   },
                   "description": "Cookie descr",
                   "required": true

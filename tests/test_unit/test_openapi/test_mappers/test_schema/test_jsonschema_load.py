@@ -1,5 +1,11 @@
 from dmr.openapi.mappers.schema_loader import load_schema
-from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Schema
+from dmr.openapi.objects import (
+    XML,
+    Discriminator,
+    OpenAPIFormat,
+    OpenAPIType,
+    Schema,
+)
 
 
 def test_load_schema_issue1490() -> None:
@@ -30,6 +36,34 @@ def test_load_schema() -> None:
     assert loaded.anchor is None
     assert loaded.comment is None
     assert loaded.schema_uri is None
+
+
+def test_load_schema_openapi_v32_fields() -> None:
+    """Keep the OpenAPI 3.2 additions of ``xml`` and ``discriminator``."""
+    loaded = load_schema(
+        {
+            'type': 'object',
+            'xml': {'name': 'pet', 'nodeType': 'element'},
+            'discriminator': {
+                'propertyName': 'petType',
+                'defaultMapping': 'OtherPet',
+            },
+        },
+    )
+
+    assert loaded.xml == XML(name='pet', node_type='element')
+    assert loaded.discriminator == Discriminator(
+        property_name='petType',
+        default_mapping='OtherPet',
+    )
+
+
+def test_load_schema_without_xml_node_type() -> None:
+    """Deprecated ``attribute`` and ``wrapped`` are not defaulted anymore."""
+    loaded = load_schema({'type': 'string', 'xml': {'attribute': True}})
+
+    # `wrapped` stays unset, it used to be loaded as `False`:
+    assert loaded.xml == XML(attribute=True, wrapped=None)
 
 
 def test_load_schema_format_preserve_type() -> None:

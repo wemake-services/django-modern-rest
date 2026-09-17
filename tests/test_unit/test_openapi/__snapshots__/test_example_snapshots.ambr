@@ -38,7 +38,9 @@
                 "application/json": {
                   "schema": {
                     "type": "integer",
-                    "example": 2569
+                    "examples": [
+                      2569
+                    ]
                   }
                 }
               }
@@ -127,16 +129,18 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
-          "example": {
-            "detail": [
-              {
-                "msg": "fymCDaloVNiPhGgaTklZ",
-                "loc": [
-                  "TpXCJkWJYUpsihdpFaJr"
-                ]
-              }
-            ]
-          }
+          "examples": [
+            {
+              "detail": [
+                {
+                  "msg": "fymCDaloVNiPhGgaTklZ",
+                  "loc": [
+                    "TpXCJkWJYUpsihdpFaJr"
+                  ]
+                }
+              ]
+            }
+          ]
         },
         "_RegularBody": {
           "properties": {
@@ -155,10 +159,12 @@
             "coord_y"
           ],
           "title": "_RegularBody",
-          "example": {
-            "coord_x": -97227.2276503845,
-            "coord_y": -3.7299936760405
-          }
+          "examples": [
+            {
+              "coord_x": -97227.2276503845,
+              "coord_y": -3.7299936760405
+            }
+          ]
         }
       },
       "securitySchemes": {}
@@ -184,9 +190,11 @@
                 "schema": {
                   "additionalProperties": true,
                   "type": "object",
-                  "example": {
-                    "GMPXMVbyXHUfymCDaloV": "39d864419"
-                  }
+                  "examples": [
+                    {
+                      "GMPXMVbyXHUfymCDaloV": "39d864419"
+                    }
+                  ]
                 }
               }
             },
@@ -287,16 +295,18 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
-          "example": {
-            "detail": [
-              {
-                "msg": "hVGiBXJqoyUfQBjWTjzA",
-                "loc": [
-                  8980
-                ]
-              }
-            ]
-          }
+          "examples": [
+            {
+              "detail": [
+                {
+                  "msg": "hVGiBXJqoyUfQBjWTjzA",
+                  "loc": [
+                    8980
+                  ]
+                }
+              ]
+            }
+          ]
         },
         "_Status": {
           "type": "string",
@@ -465,16 +475,18 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
-          "example": {
-            "detail": [
-              {
-                "msg": "GMPXMVbyXHUfymCDaloV",
-                "loc": [
-                  "NiPhGgaTklZTpXCJkWJY"
-                ]
-              }
-            ]
-          }
+          "examples": [
+            {
+              "detail": [
+                {
+                  "msg": "GMPXMVbyXHUfymCDaloV",
+                  "loc": [
+                    "NiPhGgaTklZTpXCJkWJY"
+                  ]
+                }
+              ]
+            }
+          ]
         },
         "_WithExistingExampleModel": {
           "properties": {

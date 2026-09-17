@@ -33,11 +33,12 @@ def test_examples_of_the_same_type_differ(settings: LazySettings) -> None:
     """Ensure that examples come from one stream, not from one seed."""
     settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
 
-    example = _build_schemas()['_SeveralStrings']['example']
+    examples = _build_schemas()['_SeveralStrings']['examples']
 
-    assert len(example) == 3
+    # One generated example, holding a value per model field:
+    assert len(examples) == 1
     # All three fields are `str`, they used to get the same value:
-    assert len(set(example.values())) == 3
+    assert len(set(examples[0].values())) == 3
 
 
 def test_examples_do_not_depend_on_previous_ones(
@@ -58,4 +59,4 @@ def test_examples_are_disabled_by_default(settings: LazySettings) -> None:
     """Ensure that we generate nothing when there is no seed."""
     settings.DMR_SETTINGS = {Settings.openapi_examples_seed: None}
 
-    assert 'example' not in _build_schemas()['_SeveralStrings']
+    assert 'examples' not in _build_schemas()['_SeveralStrings']

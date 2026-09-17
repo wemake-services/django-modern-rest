@@ -39,8 +39,7 @@
                 },
                 "Set-Cookie: x-test": {
                   "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
+                    "type": "string"
                   },
                   "required": true
                 }
@@ -64,8 +63,7 @@
                 },
                 "Set-Cookie: x-test": {
                   "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
+                    "type": "string"
                   },
                   "required": true
                 }
@@ -89,8 +87,7 @@
                 },
                 "Set-Cookie: x-test": {
                   "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
+                    "type": "string"
                   },
                   "required": true
                 }
@@ -114,8 +111,7 @@
                 },
                 "Set-Cookie: x-test": {
                   "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
+                    "type": "string"
                   },
                   "required": true
                 }
@@ -160,8 +156,7 @@
                 },
                 "Set-Cookie: x-test": {
                   "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
+                    "type": "string"
                   },
                   "required": true
                 }
@@ -185,8 +180,7 @@
                 },
                 "Set-Cookie: x-test": {
                   "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
+                    "type": "string"
                   },
                   "required": true
                 }
@@ -210,8 +204,7 @@
                 },
                 "Set-Cookie: x-test": {
                   "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
+                    "type": "string"
                   },
                   "required": true
                 }
@@ -235,8 +228,7 @@
                 },
                 "Set-Cookie: x-test": {
                   "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
+                    "type": "string"
                   },
                   "required": true
                 }

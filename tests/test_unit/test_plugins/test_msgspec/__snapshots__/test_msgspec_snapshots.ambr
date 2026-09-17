@@ -401,16 +401,18 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
-          "example": {
-            "detail": [
-              {
-                "msg": "bMrnHhYHPrkZDgUvitdv",
-                "loc": [
-                  2313
-                ]
-              }
-            ]
-          }
+          "examples": [
+            {
+              "detail": [
+                {
+                  "msg": "bMrnHhYHPrkZDgUvitdv",
+                  "loc": [
+                    2313
+                  ]
+                }
+              ]
+            }
+          ]
         },
         "_ExampleModel": {
           "properties": {
@@ -455,19 +457,21 @@
             "metadata"
           ],
           "title": "_ExampleModel",
-          "example": {
-            "age": 8,
-            "username": "GMPXMVbyXHUfymCDaloV",
-            "status": "active",
-            "email": "NiPhGgaTklZTpXCJkWJY",
-            "salary": -2895104.6059761,
-            "tags": [
-              "vWnrQEEKdspKjyjnWXsv"
-            ],
-            "metadata": {
-              "CvtRxKGXgmQyAUnyEOtp": "wYkAshoKeJpPGLqzLeFW"
+          "examples": [
+            {
+              "age": 8,
+              "username": "GMPXMVbyXHUfymCDaloV",
+              "status": "active",
+              "email": "NiPhGgaTklZTpXCJkWJY",
+              "salary": -2895104.6059761,
+              "tags": [
+                "vWnrQEEKdspKjyjnWXsv"
+              ],
+              "metadata": {
+                "CvtRxKGXgmQyAUnyEOtp": "wYkAshoKeJpPGLqzLeFW"
+              }
             }
-          }
+          ]
         },
         "_Status": {
           "enum": [

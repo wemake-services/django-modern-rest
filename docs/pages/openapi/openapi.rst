@@ -1,7 +1,8 @@
 OpenAPI
 =======
 
-We support OpenAPI versions from ``3.1.0`` through ``3.2.0``.
+We support OpenAPI versions from ``3.1.0`` through ``3.2.0``,
+including every object and field that these specifications define.
 
 .. note::
 
@@ -502,6 +503,13 @@ but sometimes it is better than nothing.
 .. important::
 
   However, we recommend adding semantic named examples by hand.
+
+.. note::
+
+  Generated examples are written to the JSON Schema ``examples`` list,
+  not to the OAS ``example`` keyword, which OpenAPI 3.2 deprecates
+  inside Schema Objects. Examples that you write by hand
+  are never rewritten.
 
 .. note::
 
