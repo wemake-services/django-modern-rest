@@ -141,6 +141,12 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   It builds the subclass you would have written, so every other type
   variable still has to resolve. Passing it to a controller that already
   has an exact serializer raises `EndpointMetadataError`, #1457
+- Added the `serializer` setting, the project-wide serializer that
+  `as_view` falls back to when it is not given one. With it set,
+  routing a reusable controller is an import and a `path()` call:
+  `path('login/', concrete_views.DjangoSessionSyncController.as_view())`.
+  It has no default and changes nothing for controllers that name
+  their own serializer, #1457
 - Added the missing OpenAPI 3.2 fields to our spec objects, #1485:
   - `OpenAPIConfig.self_uri` and `OpenAPI.self_uri` for `$self`
   - `Server.name`

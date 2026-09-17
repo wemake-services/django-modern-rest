@@ -26,6 +26,7 @@ class _SettingsModel(SettingsDict, total=False):
     We redefine all unsupported fields with ``Any`` types here.
     """
 
+    serializer: Any
     parsers: Sequence[Any]
     renderers: Sequence[Any]
     auth: Sequence[Any]
@@ -148,6 +149,16 @@ class SettingsValidator:
         self,
         settings: _SettingsModel,
     ) -> None:
+        project_serializer = settings.get('serializer')
+        if project_serializer is not None and not (
+            isinstance(project_serializer, type)
+            and issubclass(project_serializer, BaseSerializer)
+            and project_serializer is not BaseSerializer
+        ):
+            raise EndpointMetadataError(
+                'Settings.serializer must be a BaseSerializer subclass',
+            )
+
         openapi_config = settings.get('openapi_config', EMPTY)
         if openapi_config is not EMPTY and not isinstance(
             openapi_config,

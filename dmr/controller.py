@@ -34,7 +34,7 @@ from dmr.renderers import Renderer
 from dmr.response import build_response
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
-from dmr.settings import HttpSpec
+from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.types import EMPTY, AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
@@ -56,6 +56,9 @@ _SerializerT_co = TypeVar(
 )
 
 _ResponseT = TypeVar('_ResponseT', bound=HttpResponse)
+
+#: Name of the attribute that holds the resolved serializer type.
+_SERIALIZER_ATTR: Final = 'serializer'
 
 
 class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
@@ -250,6 +253,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 serializer=PydanticSerializer,
             ))
 
+        When it is omitted, the ``'serializer'`` setting is used,
+        so a project that always uses the same one can name it once
+        in ``DMR_SETTINGS`` and route reusable controllers
+        with a bare ``as_view()``, see :ref:`project-serializer`.
+
         This builds the subclass that you would have written by hand,
         so everything else works as always: every remaining type variable
         must either be given a :pep:`696` default or not be used
@@ -268,9 +276,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             instead of silently returning a broken view.
 
         .. versionchanged:: 0.16.0
-            Added the ``serializer`` argument.
+            Added the ``serializer`` argument
+            and the ``'serializer'`` setting it falls back to.
 
         """
+        if serializer is None and getattr(cls, _SERIALIZER_ATTR, None) is None:
+            serializer = resolve_setting(Settings.serializer)
         if serializer is not None:
             return cls._with_serializer(serializer).as_view(**initkwargs)
         if cls.is_abstract:
@@ -279,8 +290,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 'Controllers are abstract when they do not have '
                 'an exact serializer type or any endpoints. '
                 'Use a subclass with a real serializer '
-                'and at least one endpoint, '
-                'or pass `serializer=` to this method',
+                'and at least one endpoint, pass `serializer=` '
+                'to this method, or set the `serializer` setting',
             )
         # We don't use `csrf_exempt()` decorator here, because it is slow:
         view = super().as_view(**initkwargs)
@@ -655,7 +666,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 contradict the controller's own type arguments.
 
         """
-        existing_serializer = getattr(cls, 'serializer', None)
+        existing_serializer = getattr(cls, _SERIALIZER_ATTR, None)
         if existing_serializer is not None:
             raise EndpointMetadataError(
                 f'{cls!r} already has {existing_serializer!r} '
@@ -670,7 +681,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 cls.__name__,
                 (cls,),
                 {
-                    'serializer': serializer,
+                    _SERIALIZER_ATTR: serializer,
                     '__doc__': cls.__doc__,
                     '__module__': cls.__module__,
                     '__qualname__': cls.__qualname__,
@@ -682,7 +693,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     def _infer_serializer(cls) -> type[_SerializerT_co] | None:
         existing_serializer: type[_SerializerT_co] | None = getattr(
             cls,
-            'serializer',
+            _SERIALIZER_ATTR,
             None,
         )
         if existing_serializer is not None:

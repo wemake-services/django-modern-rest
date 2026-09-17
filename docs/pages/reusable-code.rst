@@ -277,14 +277,34 @@ This builds the subclass that you would have written by hand,
 so the rest of the rules are unchanged: every other type variable
 has to resolve, through a default or by not being used at all.
 
+Most projects use one serializer everywhere. Name it once
+in :data:`~dmr.settings.Settings.serializer` and you don't have
+to repeat it on every route:
+
+.. code-block:: python
+  :caption: settings.py
+
+  >>> from dmr.plugins.pydantic import PydanticSerializer
+  >>> DMR_SETTINGS = {Settings.serializer: PydanticSerializer}
+
+.. code-block:: python
+  :caption: urls.py
+
+  >>> from dmr.security.django_session import concrete_views
+  >>> path('login/', concrete_views.DjangoSessionSyncController.as_view())
+
+An explicit ``serializer=`` still wins over the setting,
+so one route can differ from the rest.
+
 .. note::
 
-  ``serializer=`` only works on controllers
+  ``serializer=`` and the setting only apply to controllers
   that don't have an exact serializer yet.
-  Passing it to a concrete controller raises
+  Passing the argument to a concrete controller raises
   :class:`~dmr.exceptions.EndpointMetadataError`,
   since the argument and the type arguments would disagree
   about what the controller serializes.
+  The setting is simply not consulted for such controllers.
 
 Write the subclass when you have anything else to say: a setting
 to change, a hook to redefine, or a name to route several times.
