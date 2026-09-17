@@ -37,6 +37,7 @@ if TYPE_CHECKING:
         Link,
         Reference,
         Response,
+        SecurityRequirement,
         Server,
     )
     from dmr.parsers import Parser
@@ -576,6 +577,12 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
         deprecated: Declares this operation to be deprecated.
         security: A declaration of which security mechanisms can be used
             for this operation. List of security requirement objects.
+            Already merged from the endpoint, the controller,
+            and the settings, in that order. They are added
+            after the requirements from ``auth``
+            during the schema generation.
+            When set to ``None`` it means that no user provided
+            security is used for this endpoint.
         external_docs: Additional external documentation for this operation.
         callbacks: A map of possible out-of band callbacks related to the
             parent operation. The key is a unique identifier for the Callback
@@ -633,6 +640,7 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     tags: list[str] | None
     operation_id: str | None
     deprecated: bool
+    security: list['SecurityRequirement'] | None
     external_docs: 'ExternalDocumentation | None'
     callbacks: dict[str, 'Callback | Reference'] | None
     servers: list['Server'] | None

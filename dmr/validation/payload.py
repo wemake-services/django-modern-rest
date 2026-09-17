@@ -38,7 +38,7 @@ class _BasePayload:
     tags: Sequence[str] | None = None
     operation_id: str | None = None
     deprecated: bool = False
-    security: Sequence['SecurityRequirement'] | None = None
+    security: Sequence['SecurityRequirement'] | None = ()
     external_docs: 'ExternalDocumentation | None' = None
     callbacks: dict[str, 'Callback | Reference'] | None = None
     servers: Sequence['Server'] | None = None

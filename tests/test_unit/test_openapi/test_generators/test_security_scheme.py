@@ -4,8 +4,10 @@ import pytest
 from inline_snapshot import snapshot
 from typing_extensions import override
 
+from dmr import modify
 from dmr.controller import Controller
 from dmr.endpoint import Endpoint
+from dmr.exceptions import EndpointMetadataError
 from dmr.metadata import EndpointMetadata
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
@@ -126,6 +128,27 @@ def test_security_scheme_generator_with_schemes(
     assert openapi_context.registries.security_scheme.schemes == snapshot({
         'testScheme': SecurityScheme(type='http', scheme='bearer'),
     })
+
+
+def test_user_security_reuses_requirement(
+    generator: SecuritySchemeGenerator,
+) -> None:
+    """Names that auth only uses in its requirement cannot be reused."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        auth = (_NoSchemeAuth(),)
+
+        @modify(security=[{'noScheme': []}])
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _Controller.api_endpoints['GET'].metadata
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match=r"Security schemes \['noScheme'\] are already generated",
+    ):
+        generator(metadata, _Controller)
 
 
 def test_no_auth_without_global_security(

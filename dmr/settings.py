@@ -15,6 +15,7 @@ from dmr.openapi.config import OpenAPIConfig
 if TYPE_CHECKING:
     from dmr.metadata import ResponseSpec, ResponseSpecProvider
     from dmr.openapi import OpenAPIConfig
+    from dmr.openapi.objects import SecurityRequirement
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
     from dmr.security import AsyncAuth, SyncAuth, SyncOrAsyncAuth
@@ -58,6 +59,7 @@ class Settings(enum.StrEnum):
     renderers = 'renderers'
     validate_negotiation = 'validate_negotiation'
     auth = 'auth'
+    security = 'security'
     throttling = 'throttling'
     throttling_allow_unsafe_cache = 'throttling_allow_unsafe_cache'
     no_validate_http_spec = 'no_validate_http_spec'
@@ -138,6 +140,7 @@ class SettingsDict(TypedDict, total=False):
     validate_events: bool | None
     responses: Sequence['ResponseSpec']
     global_error_handler: Callable[[Any, Any, Any], Any] | str
+    security: Sequence['SecurityRequirement']
     openapi_config: OpenAPIConfig
     openapi_examples_seed: int | None
     openapi_static_cdn: dict[str, str]
@@ -159,6 +162,7 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.throttling: [],
     Settings.throttling_allow_unsafe_cache: True,
     # OpenAPI settings:
+    Settings.security: [],
     Settings.openapi_config: OpenAPIConfig(
         title='Your Awesome Project',
         version='0.1.0',

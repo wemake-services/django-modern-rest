@@ -1,6 +1,9 @@
 import dataclasses
 import itertools
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
+
+from dmr.exceptions import EndpointMetadataError
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -23,6 +26,10 @@ class SecuritySchemeGenerator:
     Responsible for processing authentication providers, extracting their
     security schemes, registering them in the context, and returning
     the corresponding security requirements for the operation.
+
+    User provided requirements from ``metadata.security`` are passed
+    through as-is, their schemes are never registered. We only validate
+    that they do not reuse the scheme names that ``auth`` generates.
     """
 
     _context: 'OpenAPIContext'
@@ -39,12 +46,19 @@ class SecuritySchemeGenerator:
         security schemes in the global registry, and collects their security
         usage requirements.
 
-        When there are no auth providers but the document defines global
+        User provided ``security`` requirements are added after the auth ones.
+        Their security schemes are not registered,
+        users must declare them in the OpenAPI config.
+        They also must not reuse the scheme names that ``auth`` generates,
+        :class:`~dmr.exceptions.EndpointMetadataError` is raised when they do.
+
+        When there are no requirements but the document defines global
         ``security``, returns an explicit ``[]`` so the operation opts out
         of the global requirements instead of inheriting them.
 
         .. versionchanged:: 0.16.0
             Now accepts *metadata* and *controller_cls* parameters.
+            User provided ``security`` requirements are added as well.
 
         """
         # How it works?
@@ -64,13 +78,17 @@ class SecuritySchemeGenerator:
         #
         # Security requirements
         # ---------------------
-        # Can be provided via: `metadata.auth`, `OpenAPIConfig.security`,
-        # semantic schema providers.
+        # Can be provided via: `metadata.auth`, `metadata.security`,
+        # `OpenAPIConfig.security`, semantic schema providers.
         # We always use  `metadata.auth` as-is.
         # `OpenAPIConfig.security` is applied in config merger.
         # We process all existing `metadata.auth` security requirements
         # to possibly inject extra ones from semantic schemas.
-        self._register_security_schemes(metadata, controller_cls)
+        # User provided `metadata.security` is added last.
+        auth_schemes = self._register_security_schemes(
+            metadata,
+            controller_cls,
+        )
         requirements = self._prepare_requirements(metadata, controller_cls)
         requirements, semantic_schemes = self._inject_semantic_schema(
             metadata,
@@ -82,6 +100,16 @@ class SecuritySchemeGenerator:
                 scheme_name,
                 scheme,
             )
+
+        self._validate_no_auth_scheme_overlap(
+            metadata,
+            auth_schemes
+            | semantic_schemes.keys()
+            | _scheme_names(
+                requirements,
+            ),
+        )
+        requirements.extend(metadata.security or ())
 
         # Finally, return the result:
         if not requirements:
@@ -95,7 +123,8 @@ class SecuritySchemeGenerator:
         self,
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
-    ) -> None:
+    ) -> set[str]:
+        registered: set[str] = set()
         for auth in metadata.auth or []:
             for scheme_name, scheme in auth.security_schemes(
                 metadata,
@@ -105,6 +134,27 @@ class SecuritySchemeGenerator:
                     scheme_name,
                     scheme,
                 )
+                registered.add(scheme_name)
+        return registered
+
+    def _validate_no_auth_scheme_overlap(
+        self,
+        metadata: 'EndpointMetadata',
+        auth_schemes: set[str],
+    ) -> None:
+        if not metadata.security:
+            return
+
+        intersection = sorted(
+            _scheme_names(metadata.security) & auth_schemes,
+        )
+        if intersection:
+            raise EndpointMetadataError(
+                f'Security schemes {intersection} are already generated '
+                f'by auth providers for {metadata.endpoint_name=}, '
+                'check `security` in settings, on the controller, '
+                'and on the endpoint',
+            )
 
     def _prepare_requirements(
         self,
@@ -159,9 +209,7 @@ class SecuritySchemeGenerator:
         semantic_providers: list['AuthProvider'],
         requirements: list['SecurityRequirement'],
     ) -> dict[str, 'SecurityScheme | Reference']:
-        used_requirements = frozenset(
-            itertools.chain.from_iterable(req.keys() for req in requirements),
-        )
+        used_requirements = _scheme_names(requirements)
         schemes = [
             provider.security_schemes(metadata, controller_cls)
             for provider in semantic_providers
@@ -188,3 +236,13 @@ class SecuritySchemeGenerator:
             for provider in resolve_setting(Settings.semantic_schema_providers)
             if isinstance(provider, AuthProvider)
         ]
+
+
+def _scheme_names(
+    requirements: 'Sequence[SecurityRequirement]',
+) -> frozenset[str]:
+    return frozenset(
+        itertools.chain.from_iterable(
+            requirement.keys() for requirement in requirements
+        ),
+    )

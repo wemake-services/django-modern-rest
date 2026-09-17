@@ -33,6 +33,7 @@ if TYPE_CHECKING:
         ExternalDocumentation,
         Link,
         Reference,
+        SecurityRequirement,
         Server,
     )
     from dmr.parsers import Parser
@@ -264,6 +265,16 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             These are merged with controller-level and router-level tags.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
+        security: A sequence of security requirement objects
+            for this operation.
+            They are merged with controller-level and settings-level ones,
+            and then added after the requirements from ``auth``.
+            Useful to document external security mechanisms,
+            for example, the ones enforced by an HTTP proxy.
+            Used security schemes must be declared in ``components``
+            of :class:`dmr.openapi.OpenAPIConfig`.
+            Set it to ``None`` to drop all inherited requirements
+            for this endpoint, it never affects the runtime auth.
         external_docs: Additional external documentation for this operation.
         callbacks: A map of possible out-of band callbacks related to the
             parent operation. The key is a unique identifier
@@ -317,6 +328,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | None = (),
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
         servers: Sequence[Server] | None = None,
@@ -351,6 +363,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | None = (),
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
         servers: Sequence[Server] | None = None,
@@ -385,6 +398,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | None = (),
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
         servers: Sequence[Server] | None = None,
@@ -420,6 +434,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | None = (),
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
         servers: Sequence[Server] | None = None,
@@ -454,6 +469,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
                 tags=tags,
                 operation_id=operation_id,
                 deprecated=deprecated,
+                security=security,
                 external_docs=external_docs,
                 callbacks=callbacks,
                 servers=servers,
@@ -656,6 +672,16 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
             These are merged with controller-level and router-level tags.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
+        security: A sequence of security requirement objects
+            for this operation.
+            They are merged with controller-level and settings-level ones,
+            and then added after the requirements from ``auth``.
+            Useful to document external security mechanisms,
+            for example, the ones enforced by an HTTP proxy.
+            Used security schemes must be declared in ``components``
+            of :class:`dmr.openapi.OpenAPIConfig`.
+            Set it to ``None`` to drop all inherited requirements
+            for this endpoint, it never affects the runtime auth.
         external_docs: Additional external documentation for this operation.
         callbacks: A map of possible out-of band callbacks related to the
             parent operation. The key is a unique identifier for the Callback
@@ -703,6 +729,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | None = (),
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
         servers: Sequence[Server] | None = None,
@@ -733,6 +760,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | None = (),
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
         servers: Sequence[Server] | None = None,
@@ -763,6 +791,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | None = (),
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
         servers: Sequence[Server] | None = None,
@@ -794,6 +823,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | None = (),
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
         servers: Sequence[Server] | None = None,
@@ -823,6 +853,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
                 tags=tags,
                 operation_id=operation_id,
                 deprecated=deprecated,
+                security=security,
                 external_docs=external_docs,
                 callbacks=callbacks,
                 servers=servers,
