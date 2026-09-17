@@ -52,7 +52,7 @@ class AuthProvider:
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class ResponseValidationSpecProvier(ResponseSpecProvider):
+class ResponseValidationSpecProvider(ResponseSpecProvider):
     """
     Provide response specs for response schema validation.
 

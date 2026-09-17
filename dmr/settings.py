@@ -171,7 +171,7 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.semantic_schema_providers: [  # Fooling `importlinter`:
         # Optional response validation:
         module_loading.import_string(
-            'dmr.semantic_schema.ResponseValidationSpecProvier',
+            'dmr.semantic_schema.ResponseValidationSpecProvider',
         )(),
         # CSRF:
         module_loading.import_string(

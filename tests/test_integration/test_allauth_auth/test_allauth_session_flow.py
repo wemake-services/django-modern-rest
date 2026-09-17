@@ -63,11 +63,11 @@ def test_allauth_session_flow(
     response = dmr_client.get(url, headers={'X-Session-Token': session_token})
 
     assert response.status_code == HTTPStatus.OK, response.content
-    assert response.json() == snapshot({
+    assert response.json() == {
         'username': user.username,
         'email': user.email,
         'is_active': True,
-    })
+    }
 
 
 @pytest.mark.django_db

@@ -275,10 +275,10 @@ Response handling
 
 .. data:: dmr.settings.Settings.semantic_schema_providers
 
-  Default: ``[ResponseValidationSpecProvier(), CsrfResponseSpecProvider()]``
+  Default: ``[ResponseValidationSpecProvider(), CsrfResponseSpecProvider()]``
 
   Sequence of default system-wide response spec providers.
-  By default we use :class:`~dmr.semantic_schema.ResponseValidationSpecProvier`
+  By default we use :class:`~dmr.semantic_schema.ResponseValidationSpecProvider`
   and :class:`~dmr.security.csrf.CsrfResponseSpecProvider` to provide common
   responses that can happen with all endpoints.
   Each endpoint will have these response specs, if their conditions are met.

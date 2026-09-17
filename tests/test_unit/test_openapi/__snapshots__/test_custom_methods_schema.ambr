@@ -23,8 +23,8 @@
                   }
                 }
               },
-              "422": {
-                "description": "Raised when returned response does not match the response schema",
+              "406": {
+                "description": "Raised when provided `Accept` header cannot be satisfied",
                 "content": {
                   "application/json": {
                     "schema": {
@@ -33,8 +33,8 @@
                   }
                 }
               },
-              "406": {
-                "description": "Raised when provided `Accept` header cannot be satisfied",
+              "422": {
+                "description": "Raised when returned response does not match the response schema",
                 "content": {
                   "application/json": {
                     "schema": {
@@ -134,8 +134,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -144,8 +144,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -172,8 +172,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -182,8 +182,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -215,8 +215,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -225,8 +225,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -259,8 +259,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -269,8 +269,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {

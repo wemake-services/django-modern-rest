@@ -10,6 +10,7 @@ from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 from dmr.settings import Settings
+from dmr.security.jwt import HeaderJWTSyncAuth
 
 
 def test_csrf_schema(snapshot: SnapshotAssertion) -> None:
@@ -17,6 +18,38 @@ def test_csrf_schema(snapshot: SnapshotAssertion) -> None:
 
     class _UserController(Controller[PydanticSerializer]):
         csrf_exempt = False
+
+        def post(self) -> str:
+            raise NotImplementedError
+
+        def get(self) -> int:
+            raise NotImplementedError
+
+    metadata = _UserController.api_endpoints['GET'].metadata
+
+    assert HTTPStatus.FORBIDDEN not in metadata.responses
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [
+                        path('user/', _UserController.as_view()),
+                    ],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+def test_csrf_schema_and_auth(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema is correct for controller with csrf and auth."""
+
+    class _UserController(Controller[PydanticSerializer]):
+        csrf_exempt = False
+        auth = (HeaderJWTSyncAuth(),)
 
         def post(self) -> str:
             raise NotImplementedError
