@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
     from dmr.security import AsyncAuth, SyncAuth
+    from dmr.semantic_schema import AuthProvider
     from dmr.throttling import AsyncThrottle, SyncThrottle
 
 try:
@@ -64,7 +65,7 @@ class Settings(enum.StrEnum):
     exclude_validate_responses = 'exclude_validate_responses'
     semantic_responses = 'semantic_responses'
     exclude_semantic_responses = 'exclude_semantic_responses'
-    response_spec_providers = 'response_spec_providers'
+    semantic_schema_providers = 'semantic_schema_providers'
     validate_events = 'validate_events'
     responses = 'responses'
     global_error_handler = 'global_error_handler'
@@ -127,7 +128,7 @@ class SettingsDict(TypedDict, total=False):
     exclude_validate_responses: Set[HTTPStatus]
     semantic_responses: bool
     exclude_semantic_responses: Set[HTTPStatus]
-    response_spec_providers: Sequence['ResponseSpecProvider']
+    semantic_schema_providers: Sequence['ResponseSpecProvider | AuthProvider']
     validate_events: bool | None
     responses: Sequence['ResponseSpec']
     global_error_handler: Callable[[Any, Any, Any], Any] | str
@@ -167,9 +168,15 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.exclude_validate_responses: frozenset(),
     Settings.semantic_responses: True,
     Settings.exclude_semantic_responses: frozenset(),
-    Settings.response_spec_providers: [
-        # Fooling `importlinter`:
-        module_loading.import_string('dmr.security.csrf.CsrfResponseSpecProvider'),
+    Settings.semantic_schema_providers: [  # Fooling `importlinter`:
+        # Optional response validation:
+        module_loading.import_string(
+            'dmr.semantic_schema.ResponseValidationSpecProvier',
+        )(),
+        # CSRF:
+        module_loading.import_string(
+            'dmr.security.csrf.CsrfResponseSpecProvider',
+        )(),
     ],
     # Defaults to the `validate_responses` setting if `None`:
     Settings.validate_events: None,

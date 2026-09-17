@@ -33,6 +33,7 @@ from dmr.exceptions import EndpointMetadataError, NotAuthenticatedError
 from dmr.headers import HeaderSpec
 from dmr.internal.csrf import ensure_csrf
 from dmr.security.base import NO_STORE_HEADERS
+from dmr.security.csrf import csrf_response_spec
 from dmr.security.jwt.auth.base import USER_LOOKUP_ERRORS, set_request_attrs
 from dmr.security.jwt.auth.cookie import (
     DEFAULT_ACCESS_COOKIE,
@@ -225,13 +226,7 @@ class _BaseCookieTokensController(  # noqa: WPS214
         """Describes the response of a failed CSRF check."""
         if not cls.jwt_ensure_csrf:
             return ()
-        return (
-            ResponseSpec(
-                return_type=cls.error_model,
-                status_code=HTTPStatus.FORBIDDEN,
-                description='Raised when CSRF check failed',
-            ),
-        )
+        return (csrf_response_spec(controller_cls=cls),)
 
     def check_csrf(self) -> None:
         """

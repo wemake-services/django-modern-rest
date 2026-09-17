@@ -90,6 +90,7 @@ smoke *extras='':
     uv run python -c 'from dmr.security.django_session import *'
     uv run python -c 'from dmr.security.token import *'
     uv run python -c 'from dmr.security.csrf import *'
+    uv run python -c 'from dmr.semantic_schema import *'
     uv run python -c 'from dmr.throttling import *'
     uv run python -c 'from dmr.throttling.backends import *'
     uv run python -c 'from dmr.throttling.algorithms import *'

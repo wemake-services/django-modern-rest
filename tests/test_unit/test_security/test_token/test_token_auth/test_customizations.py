@@ -5,7 +5,9 @@ import pytest
 from django.contrib.auth.models import User
 from django.http import HttpRequest
 
+from dmr import Controller
 from dmr.exceptions import NotAuthenticatedError
+from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.token import (
     CookieTokenAsyncAuth,
     CookieTokenSyncAuth,
@@ -26,6 +28,11 @@ _AsyncAuthType: TypeAlias = (
 )
 
 
+class _Controller(Controller[PydanticSerializer]):
+    def get(self) -> str:
+        raise NotImplementedError
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'auth_type',
@@ -36,6 +43,7 @@ def test_sync_auth_custom_hashing(
     admin_user: User,
 ) -> None:
     """Ensures each sync auth class forwards its token customizations."""
+    metadata = _Controller.api_endpoints['GET'].metadata
     token, raw_token = Token.issue(
         user=admin_user,
         name='sync-custom',
@@ -59,7 +67,9 @@ def test_sync_auth_custom_hashing(
     assert request.user == admin_user
     assert request_token(request) == token
     assert isinstance(token.last_used_at, dt.datetime)
-    assert auth.security_requirement == {_SCHEME_NAME: []}
+    assert auth.security_requirements(metadata, _Controller) == [
+        {_SCHEME_NAME: []},
+    ]
 
 
 @pytest.mark.django_db
@@ -116,6 +126,7 @@ async def test_async_auth_custom_hashing(
     admin_user: User,
 ) -> None:
     """Ensures each async auth class forwards its token customizations."""
+    metadata = _Controller.api_endpoints['GET'].metadata
     token, raw_token = await Token.aissue(
         user=admin_user,
         name='async-custom',
@@ -139,7 +150,9 @@ async def test_async_auth_custom_hashing(
     assert await request.auser() == admin_user
     assert request_token(request) == token
     assert isinstance(token.last_used_at, dt.datetime)
-    assert auth.security_requirement == {_SCHEME_NAME: []}
+    assert auth.security_requirements(metadata, _Controller) == [
+        {_SCHEME_NAME: []},
+    ]
 
 
 @pytest.mark.asyncio

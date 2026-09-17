@@ -219,6 +219,29 @@ Decorators
 .. autofunction:: dmr.decorators.wrap_middleware
 
 
+Security
+--------
+
+CSRF
+~~~~
+
+.. autoclass:: dmr.security.csrf.CsrfResponseSpecProvider
+  :members:
+
+.. autofunction:: dmr.security.csrf.build_csrf_handler
+
+.. autofunction:: dmr.security.csrf.csrf_message
+
+.. autofunction:: dmr.security.csrf.csrf_response_spec
+
+
+Semantic schema
+---------------
+
+.. autoclass:: dmr.semantic_schema.ResponseValidationSpecProvier
+  :members:
+
+
 Testing
 -------
 

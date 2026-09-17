@@ -575,8 +575,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             operations[method.lower()] = endpoint.get_schema(
                 path,
                 pattern,
-                cls.__qualname__,
-                cls.serializer,
+                cls,
                 context,
                 router,
             )

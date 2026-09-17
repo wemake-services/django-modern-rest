@@ -1,12 +1,19 @@
 import pytest
 
+from dmr.controller import Controller
 from dmr.openapi.objects import SecurityScheme
+from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.token import (
     CookieTokenAsyncAuth,
     CookieTokenSyncAuth,
     HeaderTokenAsyncAuth,
     HeaderTokenSyncAuth,
 )
+
+
+class _Controller(Controller[PydanticSerializer]):
+    def get(self) -> str:
+        raise NotImplementedError
 
 
 @pytest.mark.parametrize('typ', [HeaderTokenSyncAuth, HeaderTokenAsyncAuth])
@@ -21,13 +28,14 @@ def test_custom_header_schema(
     prefix: str,
 ) -> None:
     """Ensures that a custom header is reflected in the schema."""
+    metadata = _Controller.api_endpoints['GET'].metadata
     instance = typ(
         header_name=header_name,
         security_scheme_name=security_scheme_name,
         prefix=prefix,  # it does not matter
     )
 
-    assert instance.security_schemes == {
+    assert instance.security_schemes(metadata, _Controller) == {
         security_scheme_name: SecurityScheme(
             type='apiKey',
             name=header_name,
@@ -35,7 +43,9 @@ def test_custom_header_schema(
             description='Opaque token authentication',
         ),
     }
-    assert instance.security_requirement == {security_scheme_name: []}
+    assert instance.security_requirements(metadata, _Controller) == [
+        {security_scheme_name: []},
+    ]
 
 
 @pytest.mark.parametrize('typ', [HeaderTokenSyncAuth, HeaderTokenAsyncAuth])
@@ -48,20 +58,23 @@ def test_header_schema_for_authorization(
     prefix: str,
 ) -> None:
     """Ensures that a custom header is reflected in the schema."""
+    metadata = _Controller.api_endpoints['GET'].metadata
     instance = typ(
         header_name='Authorization',
         security_scheme_name=security_scheme_name,
         prefix=prefix,  # it does not matter
     )
 
-    assert instance.security_schemes == {
+    assert instance.security_schemes(metadata, _Controller) == {
         security_scheme_name: SecurityScheme(
             type='http',
             scheme='bearer',
             description='Opaque token authentication',
         ),
     }
-    assert instance.security_requirement == {security_scheme_name: []}
+    assert instance.security_requirements(metadata, _Controller) == [
+        {security_scheme_name: []},
+    ]
 
 
 @pytest.mark.parametrize('typ', [CookieTokenSyncAuth, CookieTokenAsyncAuth])
@@ -74,12 +87,13 @@ def test_cookie_token_schema(
     security_scheme_name: str,
 ) -> None:
     """Ensures CookieToken auth emits an apiKey cookie security scheme."""
+    metadata = _Controller.api_endpoints['GET'].metadata
     instance = typ(
         cookie_name=cookie_name,
         security_scheme_name=security_scheme_name,
     )
 
-    assert instance.security_schemes == {
+    assert instance.security_schemes(metadata, _Controller) == {
         security_scheme_name: SecurityScheme(
             type='apiKey',
             name=cookie_name,
@@ -87,4 +101,6 @@ def test_cookie_token_schema(
             description='Opaque token authentication via cookie',
         ),
     }
-    assert instance.security_requirement == {security_scheme_name: []}
+    assert instance.security_requirements(metadata, _Controller) == [
+        {security_scheme_name: []},
+    ]

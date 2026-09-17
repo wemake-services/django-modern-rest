@@ -51,6 +51,19 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   `CookieSpec.httponly` can no longer be `None`, use `False` instead, #1456
 - `Endpoint` objects are not callable anymore, use `.func` attribute
   to make the call instead, #1456
+- `security_schemes` API for auth classes was changed,
+  accepts `metadata` and `controller_cls`, and now it is a method,
+  not a property, #1521
+- `security_requirement` API for auth classes was changed, now it is now
+  named `security_requirements`, returns a list of `SecurityRequirement`,
+  accepts `metadata` and `controller_cls`, and now it is a method,
+  not a property, #1521
+- `SecuritySchemeGenerator.__call__` API was changed,
+  now it accepts `metadata` and `controller_cls` as parameters, #1521 
+- `ResponseGenerator.__call__` API was changed, now it accepts
+  `metadata` and `controller_cls` as parameters, #1521 
+- `ResponseSpec.get_schema` API was changed, now it accepts
+  `controller_cls` as parameter instead of `serializer`, #1521 
 
 ### Performance improvements
 
@@ -75,6 +88,19 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Features
 
+- Added `Settings.semantic_schema_providers` with the ability to add custom
+  default response spec providers. For example, if all controller return
+  some specific status code and schema, now it can be configured properly.
+  We configure response validation and CSRF response codes there, #1521
+- Added better CSRF support, now controllers with `csrf_exempt = False`
+  get the correct response specs and `build_csrf_handler` allows customizing
+  `CSRF_FAILURE_VIEW` Django setting to return actual REST responses,
+  instead of HTML ones, #1521
+- Added `semantic_schema` module with `AuthProvider` interface, #1521
+- Now `security_requirements` can return both
+  `AND` and `OR` auth strategies, previously
+  it was only possible to represent `OR` strategy, #1521
+- Added `CursorPagination` support to `drm.pagination`, #1428
 - Added class-level overrides for `OpenAPIContext` generators and
   `ConfigMerger`, allowing custom operation ID generation and schema
   customization through context subclasses, #1461, #1487
@@ -86,8 +112,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `tags` controller attribute to apply OpenAPI tags
   to all endpoints of this controller. They are merged
   with router-level and endpoint-level tags, #1434
-- Added `CursorPagination` support at `drm.pagination`, #1428
-- Url parameters of `re_path()` routes now have `pattern` in their schema,
+- URL parameters of `re_path()` routes now have `pattern` in their schema,
   it is copied from the sub-pattern of the matching named group:
   `r'^v(?P<version>\d+)/$'` documents `version`
   as `{'type': 'string', 'pattern': '^(?:\d+)$'}`, #1439

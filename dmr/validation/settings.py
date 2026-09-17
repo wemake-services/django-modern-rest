@@ -4,7 +4,7 @@ from typing import Any, ClassVar, cast
 
 from dmr.exceptions import EndpointMetadataError
 from dmr.internal.enums import stringify
-from dmr.metadata import ResponseSpec
+from dmr.metadata import ResponseSpec, ResponseSpecProvider
 from dmr.openapi import OpenAPIConfig
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
@@ -31,6 +31,7 @@ class _SettingsModel(SettingsDict, total=False):
     auth: Sequence[Any]
     throttling: Sequence[Any]
     responses: Sequence[Any]
+    semantic_schema_providers: Sequence[Any]
     openapi_config: Any
     global_error_handler: Any
 
@@ -89,10 +90,12 @@ class SettingsValidator:
         self._validate_sequence_types(settings)
         self._validate_scalar_types(settings)
 
-    def _validate_sequence_types(  # noqa: WPS231, WPS238
+    # TODO: refactor and simplify this check:
+    def _validate_sequence_types(  # noqa: WPS231, WPS238, C901
         self,
         settings: _SettingsModel,
     ) -> None:
+        # Parsers:
         if not all(
             isinstance(parser, Parser) for parser in settings.get('parsers', [])
         ):
@@ -142,6 +145,19 @@ class SettingsValidator:
         ):
             raise EndpointMetadataError(
                 'Settings.responses must all be ResponseSpec instances',
+            )
+
+        # Response providers:
+        if not all(
+            isinstance(response_spec_provider, ResponseSpecProvider)
+            for response_spec_provider in settings.get(
+                'semantic_schema_providers',
+                [],
+            )
+        ):
+            raise EndpointMetadataError(
+                'Settings.semantic_schema_providers must all '
+                'be ResponseSpecProvider instances',
             )
 
     def _validate_scalar_types(

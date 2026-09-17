@@ -1,10 +1,15 @@
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from django.http import HttpRequest
 
+from dmr.metadata import EndpointMetadata
 from dmr.openapi.objects import Reference, SecurityScheme
 from dmr.security.token.auth.base import BaseTokenAsyncAuth, BaseTokenSyncAuth
 from dmr.security.token.token import DEFAULT_TOKEN_ALGORITHM, DEFAULT_TOKEN_SALT
+
+if TYPE_CHECKING:
+    from dmr.controller import Controller
+    from dmr.serializer import BaseSerializer
 
 _AUTH_DESCRIPTION: Final = 'Opaque token authentication'
 
@@ -31,8 +36,11 @@ class _BaseHeaderTokenAuth:
             return None
         return self.prefix or None
 
-    @property
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> dict[str, 'SecurityScheme | Reference']:
         """Provides a security schema definition."""
         if self.header_name == 'Authorization':
             return {

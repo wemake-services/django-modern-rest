@@ -6,6 +6,7 @@ from django.http import HttpRequest
 from typing_extensions import TypeVar, override
 
 from dmr.exceptions import NotAuthenticatedError
+from dmr.metadata import EndpointMetadata
 from dmr.openapi.objects import SecurityRequirement
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.security.token.request import set_request_attrs
@@ -97,10 +98,13 @@ class _BaseTokenAuth(Generic[_TokenLikeT]):
         """Returns the Token model. Override to use a custom model."""
         raise NotImplementedError
 
-    @property
-    def security_requirement(self) -> SecurityRequirement:
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> list[SecurityRequirement]:
         """Provides a security schema usage requirement."""
-        return {self.security_scheme_name: []}
+        return [{self.security_scheme_name: []}]
 
 
 class BaseTokenSyncAuth(_BaseTokenAuth[TokenLikeSync[Any]], SyncAuth):  # noqa: WPS214

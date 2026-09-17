@@ -13,6 +13,7 @@ from dmr.components import ComponentParser, Path
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorModel, ErrorType
+from dmr.metadata import EndpointMetadata
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AsyncAuth, SyncAuth
@@ -240,14 +241,20 @@ class _TestSyncAuth(SyncAuth):
     ) -> Self | None:
         raise APIError(self.error_message, status_code=HTTPStatus.IM_A_TEAPOT)
 
-    @property
     @override
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> dict[str, SecurityScheme | Reference]:
         raise NotImplementedError
 
-    @property
     @override
-    def security_requirement(self) -> SecurityRequirement:
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> list[SecurityRequirement]:
         raise NotImplementedError
 
     @property
@@ -267,14 +274,20 @@ class _TestAsyncAuth(AsyncAuth):
     ) -> Self | None:
         raise APIError(self.error_message, status_code=HTTPStatus.IM_A_TEAPOT)
 
-    @property
     @override
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> dict[str, SecurityScheme | Reference]:
         raise NotImplementedError
 
-    @property
     @override
-    def security_requirement(self) -> SecurityRequirement:
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> list[SecurityRequirement]:
         raise NotImplementedError
 
     @property

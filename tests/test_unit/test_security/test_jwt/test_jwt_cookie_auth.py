@@ -35,6 +35,11 @@ if TYPE_CHECKING:
 _LEEWAY: Final = 30  # seconds
 
 
+class _Controller(Controller[PydanticFastSerializer]):
+    def get(self) -> str:
+        raise NotImplementedError
+
+
 def _encode(user: User, secret: str) -> str:
     return JWToken(
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),
@@ -50,8 +55,9 @@ def test_cookie_jwt_schema(
 ) -> None:
     """Ensures that security scheme is correct for cookie jwt auth."""
     instance = typ()
+    metadata = _Controller.api_endpoints['GET'].metadata
 
-    assert instance.security_schemes == snapshot({
+    assert instance.security_schemes(metadata, _Controller) == snapshot({
         'jwt': SecurityScheme(
             type='apiKey',
             description='JWT token auth via cookie',
@@ -59,7 +65,9 @@ def test_cookie_jwt_schema(
             security_scheme_in='cookie',
         ),
     })
-    assert instance.security_requirement == snapshot({'jwt': []})
+    assert instance.security_requirements(metadata, _Controller) == snapshot([
+        {'jwt': []},
+    ])
 
 
 @pytest.mark.parametrize('typ', [CookieJWTSyncAuth, CookieJWTAsyncAuth])
@@ -68,9 +76,10 @@ def test_cookie_jwt_custom_schema(
     typ: type[CookieJWTSyncAuth] | type[CookieJWTAsyncAuth],
 ) -> None:
     """Ensures that cookie and scheme names are customizable."""
+    metadata = _Controller.api_endpoints['GET'].metadata
     instance = typ(cookie_name='my-jwt', security_scheme_name='my-scheme')
 
-    assert instance.security_schemes == snapshot({
+    assert instance.security_schemes(metadata, _Controller) == snapshot({
         'my-scheme': SecurityScheme(
             type='apiKey',
             description='JWT token auth via cookie',
@@ -78,7 +87,9 @@ def test_cookie_jwt_custom_schema(
             security_scheme_in='cookie',
         ),
     })
-    assert instance.security_requirement == snapshot({'my-scheme': []})
+    assert instance.security_requirements(metadata, _Controller) == snapshot([
+        {'my-scheme': []},
+    ])
 
 
 @pytest.mark.django_db

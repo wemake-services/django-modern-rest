@@ -1,8 +1,8 @@
 Integrations
 ============
 
-Big list of Django integrations: https://github.com/wsvincent/awesome-django
-Big list of ``django-modern-rest`` awesome things: https://github.com/kondratevdev/awesome-django-modern-rest
+- Big list of Django integrations: https://github.com/wsvincent/awesome-django
+- Big list of ``django-modern-rest`` awesome things: https://github.com/kondratevdev/awesome-django-modern-rest
 
 .. warning::
 
@@ -59,8 +59,10 @@ Here's an example of how you can re-enable CSRF for a specific controller:
 
 Next: see `CSRF_FAILURE_VIEW <https://docs.djangoproject.com/en/latest/ref/settings/#csrf-failure-view>`_
 Django setting value to configure how CSRF failure view will work.
+To do so, we use :func:`~dmr.security.csrf.build_csrf_handler` function:
 
 .. code-block:: python
+  :caption: settings.py
 
   >>> from dmr.security.csrf import build_csrf_handler
   >>> from dmr.plugins.pydantic import PydanticSerializer
@@ -74,6 +76,12 @@ to :func:`~dmr.routing.build_404_handler`:
   we will negotiate the renderer and return
   the expected error in the default format
 - If not, it will return the regular Django HTML page
+
+We automatically inject CSRF response specs in endpoints for controllers
+with ``csrf_exempt = False`` and unsafe HTTP methods like ``POST``, etc.
+We do so with the help
+of :data:`~dmr.settings.Settings.semantic_schema_providers` setting
+and :class:`~dmr.security.csrf.CsrfResponseSpecProvider` response spec provider.
 
 
 .. _bring-your-own-di:

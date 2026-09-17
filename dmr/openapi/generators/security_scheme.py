@@ -1,11 +1,12 @@
 import dataclasses
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from dmr.controller import Controller
+    from dmr.metadata import EndpointMetadata
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.openapi.objects import SecurityRequirement
-    from dmr.security import AsyncAuth, SyncAuth
+    from dmr.semantic_schema import AuthProvider
     from dmr.serializer import BaseSerializer
 
 
@@ -23,8 +24,8 @@ class SecuritySchemeGenerator:
 
     def __call__(
         self,
-        auth_providers: Sequence['SyncAuth | AsyncAuth'] | None,
-        serializer: type['BaseSerializer'],
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> list['SecurityRequirement'] | None:
         """
         Process auth providers and generate security requirements.
@@ -37,20 +38,35 @@ class SecuritySchemeGenerator:
         ``security``, returns an explicit ``[]`` so the operation opts out
         of the global requirements instead of inheriting them.
 
+        .. versionchanged:: 0.16.0
+            Now accepts *metadata* and *controller_cls* parameters.
+
         """
+        auth_providers = metadata.auth
         if not auth_providers:
             return [] if self._context.config.security else None
 
         requirements: list[SecurityRequirement] = []
 
         for auth in auth_providers:
-            schemes = auth.security_schemes
-            if schemes:
-                for scheme_name, scheme in schemes.items():
-                    self._context.registries.security_scheme.register(
-                        scheme_name,
-                        scheme,
-                    )
+            self._register_security_schemes(auth, metadata, controller_cls)
 
-            requirements.append(auth.security_requirement)
+            requirements.extend(
+                auth.security_requirements(metadata, controller_cls),
+            )
         return requirements
+
+    def _register_security_schemes(
+        self,
+        auth: 'AuthProvider',
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> None:
+        for scheme_name, scheme in auth.security_schemes(
+            metadata,
+            controller_cls,
+        ).items():
+            self._context.registries.security_scheme.register(
+                scheme_name,
+                scheme,
+            )
