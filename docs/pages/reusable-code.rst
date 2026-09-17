@@ -218,7 +218,7 @@ The request model is now optional for the subclasses:
       :linenos:
       :language: python
 
-  .. tab:: without default
+  .. tab:: substituting default
 
     .. literalinclude:: /examples/reusable_code/defaults_exact.py
       :caption: views.py
