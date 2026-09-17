@@ -24,6 +24,7 @@ from dmr.internal.type_inference import (
     resolve_type_args,
     resolve_type_var_default,
 )
+from dmr.internal.types import unwrap_type_alias
 
 if TYPE_CHECKING:
     # During type checking it is a recursive alias, so we can be sure
@@ -231,6 +232,8 @@ class AnnotationsContext:
 
         Returns:
             Function's parsed and solved return type.
+            Type aliases are unwrapped, so all the callers
+            can work with real types and their metadata.
 
         Raises:
             UnsolvableAnnotationsError: when annotation can't be solved
@@ -247,11 +250,16 @@ class AnnotationsContext:
             type_hints_params['format'] = self._format
 
         try:
-            return get_type_hints(endpoint_func, **type_hints_params)
+            type_hints = get_type_hints(endpoint_func, **type_hints_params)
         except Exception as exc:
             raise UnsolvableAnnotationsError(
                 f'Annotations of {endpoint_func!r} cannot be solved',
             ) from exc
+
+        return {
+            context_name: unwrap_type_alias(annotation)
+            for context_name, annotation in type_hints.items()
+        }
 
     def _global_namespace(
         self,
