@@ -427,6 +427,9 @@ extend-exclude = [
   "dmr/locale",
   "*.lock",
   "benchmarks/*.json",
+  # Snapshots are generated, and they contain generated random strings.
+  # A typo in real prose is caught in the source it is copied from.
+  "*.ambr",
 ]
 
 
