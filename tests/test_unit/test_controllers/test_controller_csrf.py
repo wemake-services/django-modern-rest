@@ -31,10 +31,10 @@ urlpatterns = [
     path('api/no-csrf/', _NoCsrfController.as_view(), name='no-csrf'),
 ]
 
-csrf_hander = build_csrf_handler('api/', serializer=PydanticFastSerializer)
+csrf_handler = build_csrf_handler('api/', serializer=PydanticFastSerializer)
 
 
-@override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_hander)
+@override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_handler)
 def test_csrf_controller() -> None:
     """Ensure that `csrf_exempt=False` on controller is supported."""
     dmr_client = DMRClient(enforce_csrf_checks=True)
@@ -47,7 +47,7 @@ def test_csrf_controller() -> None:
     assert response.json() == snapshot({'detail': [{'msg': 'CSRF Failed.'}]})
 
 
-@override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_hander)
+@override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_handler)
 def test_csrf_controller_valid(
     fill_csrf: Callable[[HttpRequest], HttpRequest],
 ) -> None:
@@ -69,7 +69,7 @@ def test_csrf_controller_valid(
     assert response.json() == snapshot('ok')
 
 
-@override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_hander)
+@override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_handler)
 def test_csrf_controller_exempt() -> None:
     """Ensure that `csrf_exempt=True` on controller is supported."""
     dmr_client = DMRClient(enforce_csrf_checks=True)
