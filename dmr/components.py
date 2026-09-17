@@ -449,7 +449,7 @@ class BodyComponent(ComponentParser):
             )
             for content_type, conditional_model in conditional_types.items()
         }
-        media_types: dict[str, MediaType] = {}
+        media_types: dict[str, MediaType | Reference] = {}
         for parser in metadata.parsers.values():
             media_type_meta = (
                 get_annotated_metadata(
@@ -461,6 +461,7 @@ class BodyComponent(ComponentParser):
             )
             media_types[parser.content_type] = MediaType(
                 schema=conditional_schemas.get(parser.content_type, schema),
+                description=media_type_meta.description,
                 example=media_type_meta.example,
                 examples=media_type_meta.examples,
                 encoding=media_type_meta.encoding,

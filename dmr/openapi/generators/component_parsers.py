@@ -207,13 +207,17 @@ class ComponentParserGenerator:
         self,
         new_schema: RequestBody,
         schema: RequestBody,
-    ) -> dict[str, MediaType]:
-        new_content: dict[str, MediaType] = {}
+    ) -> dict[str, MediaType | Reference]:
+        new_content: dict[str, MediaType | Reference] = {}
         for media_name, media_type in new_schema.content.items():
+            # We've just built these bodies from component parsers,
+            # so all of them have inline media types, never references:
+            assert isinstance(media_type, MediaType)  # noqa: S101
             media_items: list[Reference | Schema] = []
             if media_type.schema:  # pragma: no cover:
                 media_items.append(media_type.schema)
             existing_content = schema.content.get(media_name)
+            assert not isinstance(existing_content, Reference)  # noqa: S101
             # TODO: remove pragma after implementing conditional types
             # for `FileMetadata[]` component
             if existing_content and existing_content.schema:  # pragma: no cover

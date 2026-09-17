@@ -374,6 +374,8 @@ Parts:
    :show-inheritance:
    :members:
 
+.. autodata:: dmr.openapi.objects.ParameterLocation
+
 .. autoclass:: dmr.openapi.objects.PathItem
    :members:
 
@@ -412,6 +414,8 @@ Parts:
 
 .. autoclass:: dmr.openapi.objects.XML
    :members:
+
+.. autodata:: dmr.openapi.objects.XMLNodeType
 
 
 OpenAPI Core
