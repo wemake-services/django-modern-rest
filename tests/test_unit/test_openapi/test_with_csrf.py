@@ -9,8 +9,8 @@ from dmr import Controller
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
-from dmr.settings import Settings
 from dmr.security.jwt import HeaderJWTSyncAuth
+from dmr.settings import Settings
 
 
 def test_csrf_schema(snapshot: SnapshotAssertion) -> None:

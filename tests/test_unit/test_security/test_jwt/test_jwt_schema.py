@@ -6,8 +6,6 @@ from dmr.openapi.objects import SecurityScheme
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.jwt import HeaderJWTAsyncAuth, HeaderJWTSyncAuth
 
-from inline_snapshot import HasRepr
-
 
 class _Controller(Controller[PydanticFastSerializer]):
     def get(self) -> str:
@@ -31,7 +29,9 @@ def test_schema(
             bearer_format='JWT',
         ),
     })
-    assert instance.security_requirements(metadata, _Controller) == snapshot([{"jwt": []}])
+    assert instance.security_requirements(metadata, _Controller) == snapshot([
+        {'jwt': []}
+    ])
 
 
 @pytest.mark.parametrize('typ', [HeaderJWTSyncAuth, HeaderJWTAsyncAuth])

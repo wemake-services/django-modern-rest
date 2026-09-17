@@ -5,7 +5,6 @@ import pytest
 from django.contrib.auth.models import User
 from django.urls import reverse
 from faker import Faker
-from inline_snapshot import snapshot
 
 from dmr.test import DMRClient
 
