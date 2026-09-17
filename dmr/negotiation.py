@@ -263,6 +263,7 @@ class ResponseNegotiator:
         Renderers are fixed for an endpoint in import time,
         so this is only needed when they are modified in place:
         in tests or in some very dynamic setups.
+        .. versionadded:: 0.16.0
         """
         self._negotiate.cache_clear()
         self._negotiate_non_streaming.cache_clear()
