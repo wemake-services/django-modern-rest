@@ -2,6 +2,7 @@ from http import HTTPMethod, HTTPStatus
 from typing import Final
 
 import pytest
+from django.conf import LazySettings
 from inline_snapshot import snapshot
 
 from dmr.controller import Controller
@@ -13,6 +14,7 @@ from dmr.openapi.generators.response import ResponseGenerator
 from dmr.openapi.objects import Header, MediaType, OpenAPIType, Response, Schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer, JsonRenderer
+from dmr.settings import Settings
 
 _SCHEMA_ONLY_HEADER: Final = HeaderSpec(
     description='Test Header',
@@ -65,16 +67,16 @@ def test_response_generator_multiple_cookies(
     assert response_created.headers is not None
     assert response_created.headers == snapshot({
         'Set-Cookie: first_cookie': Header(
-            schema=Schema(type=OpenAPIType.STRING, example='first_cookie=123'),
+            schema=Schema(type=OpenAPIType.STRING),
             description='First',
             required=True,
         ),
         'Set-Cookie: second_cookie': Header(
-            schema=Schema(type=OpenAPIType.STRING, example='second_cookie=123'),
+            schema=Schema(type=OpenAPIType.STRING),
             description='Second',
         ),
         'Set-Cookie: third_cookie': Header(
-            schema=Schema(type=OpenAPIType.STRING, example='third_cookie=123'),
+            schema=Schema(type=OpenAPIType.STRING),
             required=True,
         ),
     })
@@ -162,4 +164,46 @@ def test_response_multiple_content_types(
     assert response_created.content == snapshot({
         'application/json': MediaType(schema=Schema(type=OpenAPIType.STRING)),
         'application/pdf': MediaType(schema=Schema(type=OpenAPIType.STRING)),
+    })
+
+
+def test_response_generator_cookie_examples(
+    generator: ResponseGenerator,
+    settings: LazySettings,
+) -> None:
+    """Ensure that cookie examples come from the example generation."""
+    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
+    controller = _ControllerWithCookies()
+
+    response = generator(
+        controller.api_endpoints[HTTPMethod.POST].metadata,
+        PydanticSerializer,
+    )
+    response_created = response['201']
+
+    assert isinstance(response_created, Response)
+    assert response_created.headers is not None
+    assert response_created.headers == snapshot({
+        'Set-Cookie: first_cookie': Header(
+            schema=Schema(
+                type=OpenAPIType.STRING,
+                examples=['first_cookie=GMPXMVbyXHUfymCDaloV'],
+            ),
+            description='First',
+            required=True,
+        ),
+        'Set-Cookie: second_cookie': Header(
+            schema=Schema(
+                type=OpenAPIType.STRING,
+                examples=['second_cookie=GMPXMVbyXHUfymCDaloV'],
+            ),
+            description='Second',
+        ),
+        'Set-Cookie: third_cookie': Header(
+            schema=Schema(
+                type=OpenAPIType.STRING,
+                examples=['third_cookie=GMPXMVbyXHUfymCDaloV'],
+            ),
+            required=True,
+        ),
     })

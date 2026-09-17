@@ -55,10 +55,16 @@ class OpenAPIConfig:
         tags: Metadata tags used to group operations in the documentation.
         webhooks: Webhook definitions that may be initiated by the API,
             keyed by name.
+        self_uri: Self-assigned URI of the generated document,
+            dumped as ``$self``. It also serves as the base URI
+            to resolve references against. Added in OpenAPI ``'3.2.0'``.
 
     .. versionchanged:: 0.16.0
        ``openapi_version`` older than ``'3.1.0'`` now raises a ``ValueError``.
        Added ``json_schema_dialect`` attribute.
+
+    .. versionchanged:: 0.16.0
+        Added ``self_uri``.
 
     """
 
@@ -79,6 +85,7 @@ class OpenAPIConfig:
     servers: list[Server] | None = None
     tags: list[Tag] | None = None
     webhooks: dict[str, PathItem | Reference] | None = None
+    self_uri: str | None = None
 
     def __post_init__(self) -> None:
         """

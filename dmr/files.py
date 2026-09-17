@@ -103,6 +103,7 @@ class FileBody(FileBodyLike):
         )
         return MediaType(
             schema=schema,
+            description=media_type_meta.description,
             encoding=media_type_meta.encoding or cls._encoding(model, schema),
             example=media_type_meta.example,
             examples=media_type_meta.examples,
@@ -236,7 +237,9 @@ class FileResponseSpec(ResponseSpec):
         )
         # We know that we return files:
         for media in (response.content or {}).values():
-            # for mypy: it can't be `None` here
+            # for mypy: we've just built this response ourselves,
+            # so its media types are inline and their schemas are set
+            assert isinstance(media, MediaType)  # noqa: S101
             assert media.schema  # noqa: S101
             media.schema = self.return_type.get_schema(Schema(), context)
         # We know that `FileBody` was a fake model, remove it:
