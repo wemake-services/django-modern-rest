@@ -5,8 +5,7 @@ from typing_extensions import TypedDict, TypeVar
 
 from dmr import Body, Controller
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
-from dmr.plugins.msgspec import MsgspecSerializer
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.serializer import BaseSerializer
 
 
@@ -70,12 +69,12 @@ def test_as_view_serializer_keeps_base() -> None:
 
 def test_as_view_with_different_serializers() -> None:
     """Ensures that one reusable controller serves several serializers."""
-    pydantic_view = _Reusable.as_view(serializer=PydanticSerializer)
-    msgspec_view = _Reusable.as_view(serializer=MsgspecSerializer)
+    regular_view = _Reusable.as_view(serializer=PydanticSerializer)
+    fast_view = _Reusable.as_view(serializer=PydanticFastSerializer)
 
-    assert pydantic_view.view_class.serializer is PydanticSerializer  # type: ignore[attr-defined]
-    assert msgspec_view.view_class.serializer is MsgspecSerializer  # type: ignore[attr-defined]
-    assert pydantic_view.view_class is not msgspec_view.view_class  # type: ignore[attr-defined]
+    assert regular_view.view_class.serializer is PydanticSerializer  # type: ignore[attr-defined]
+    assert fast_view.view_class.serializer is PydanticFastSerializer  # type: ignore[attr-defined]
+    assert regular_view.view_class is not fast_view.view_class  # type: ignore[attr-defined]
 
 
 def test_as_view_serializer_on_concrete() -> None:
@@ -86,7 +85,7 @@ def test_as_view_serializer_on_concrete() -> None:
             raise NotImplementedError
 
     with pytest.raises(EndpointMetadataError, match='already has'):
-        _Concrete.as_view(serializer=MsgspecSerializer)
+        _Concrete.as_view(serializer=PydanticFastSerializer)
 
 
 def test_as_view_abstract_error_hint() -> None:
