@@ -16,6 +16,7 @@ from dmr.openapi.generators import (
     SchemaGenerator,
     SecuritySchemeGenerator,
 )
+from dmr.openapi.mappers.example import seed_examples
 from dmr.openapi.objects import Components, Reference, Schema
 
 if TYPE_CHECKING:
@@ -91,6 +92,10 @@ class OpenAPIContext:
     ) -> None:
         """Initialize the OpenAPI context."""
         from dmr.openapi.config import default_config  # noqa: PLC0415
+
+        # One context builds one schema, so this seeds the examples
+        # of that schema exactly once:
+        seed_examples()
 
         self.config = config or default_config()
         self.config_merger = self.config_merger_cls(self)

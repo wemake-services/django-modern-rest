@@ -38,7 +38,7 @@
                 "application/json": {
                   "schema": {
                     "type": "integer",
-                    "example": 4185
+                    "example": 2569
                   }
                 }
               }
@@ -130,9 +130,9 @@
           "example": {
             "detail": [
               {
-                "msg": "GMPXMVbyXHUfymCDaloV",
+                "msg": "fymCDaloVNiPhGgaTklZ",
                 "loc": [
-                  "NiPhGgaTklZTpXCJkWJY"
+                  "TpXCJkWJYUpsihdpFaJr"
                 ]
               }
             ]
@@ -290,9 +290,9 @@
           "example": {
             "detail": [
               {
-                "msg": "GMPXMVbyXHUfymCDaloV",
+                "msg": "hVGiBXJqoyUfQBjWTjzA",
                 "loc": [
-                  "NiPhGgaTklZTpXCJkWJY"
+                  8980
                 ]
               }
             ]
