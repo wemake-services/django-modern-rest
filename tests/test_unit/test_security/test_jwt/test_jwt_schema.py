@@ -30,7 +30,7 @@ def test_schema(
         ),
     })
     assert instance.security_requirements(metadata, _Controller) == snapshot([
-        {'jwt': []}
+        {'jwt': []},
     ])
 
 

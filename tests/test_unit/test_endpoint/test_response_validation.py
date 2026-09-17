@@ -128,7 +128,8 @@ def test_validate_status_code(
         'detail': [
             {
                 'msg': (
-                    'Returned status code 200 is not specified in the list of allowed status codes: [201, 406, 422]'
+                    'Returned status code 200 is not specified in the list '
+                    'of allowed status codes: [201, 406, 422]'
                 ),
                 'type': 'value_error',
             },
