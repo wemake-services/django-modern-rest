@@ -1,5 +1,11 @@
 from dmr.openapi.mappers.schema_loader import load_schema
-from dmr.openapi.objects import XML, Discriminator, OpenAPIFormat, OpenAPIType, Schema
+from dmr.openapi.objects import (
+    XML,
+    Discriminator,
+    OpenAPIFormat,
+    OpenAPIType,
+    Schema,
+)
 
 
 def test_load_schema_issue1490() -> None:
