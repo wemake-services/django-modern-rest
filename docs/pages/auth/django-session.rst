@@ -77,7 +77,7 @@ Every hook still works the same way.
   they are the same classes with the bodies left open.
 
 
-Reusing pre-existing views
+Customizing pre-existing views
 --------------------------
 
 We provide several pre-existing views to get Django session cookie.
