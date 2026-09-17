@@ -200,8 +200,8 @@ def test_response_generator_cookie_examples(settings: LazySettings) -> None:
     context = OpenAPIContext(OpenAPIConfig(title='tests', version='0.0.1'))
 
     response = context.generators.response(
-        _ControllerWithCookies().api_endpoints[HTTPMethod.POST].metadata,
-        PydanticSerializer,
+        _ControllerWithCookies.api_endpoints[HTTPMethod.POST].metadata,
+        _ControllerWithCookies,
     )['201']
 
     assert isinstance(response, Response)

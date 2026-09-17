@@ -39,11 +39,11 @@ class _Controller(Controller[PydanticSerializer]):
     [HeaderTokenSyncAuth, CookieTokenSyncAuth],
 )
 def test_sync_auth_custom_hashing(
-    auth_type: _SyncAuthType,
     admin_user: User,
+    *,
+    auth_type: _SyncAuthType,
 ) -> None:
     """Ensures each sync auth class forwards its token customizations."""
-    metadata = _Controller.api_endpoints['GET'].metadata
     token, raw_token = Token.issue(
         user=admin_user,
         name='sync-custom',
@@ -67,7 +67,10 @@ def test_sync_auth_custom_hashing(
     assert request.user == admin_user
     assert request_token(request) == token
     assert isinstance(token.last_used_at, dt.datetime)
-    assert auth.security_requirements(metadata, _Controller) == [
+    assert auth.security_requirements(
+        _Controller.api_endpoints['GET'].metadata,
+        _Controller,
+    ) == [
         {_SCHEME_NAME: []},
     ]
 
@@ -85,10 +88,10 @@ def test_sync_auth_custom_hashing(
     ],
 )
 def test_sync_auth_rejects_wrong_hashing(
-    auth_type: _SyncAuthType,
     admin_user: User,
     *,
     customize_issue: bool,
+    auth_type: _SyncAuthType,
 ) -> None:
     """Ensures mismatched sync issue and auth settings are rejected."""
     if customize_issue:
@@ -126,7 +129,6 @@ async def test_async_auth_custom_hashing(
     admin_user: User,
 ) -> None:
     """Ensures each async auth class forwards its token customizations."""
-    metadata = _Controller.api_endpoints['GET'].metadata
     token, raw_token = await Token.aissue(
         user=admin_user,
         name='async-custom',
@@ -150,7 +152,10 @@ async def test_async_auth_custom_hashing(
     assert await request.auser() == admin_user
     assert request_token(request) == token
     assert isinstance(token.last_used_at, dt.datetime)
-    assert auth.security_requirements(metadata, _Controller) == [
+    assert auth.security_requirements(
+        _Controller.api_endpoints['GET'].metadata,
+        _Controller,
+    ) == [
         {_SCHEME_NAME: []},
     ]
 

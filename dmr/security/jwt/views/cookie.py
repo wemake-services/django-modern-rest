@@ -305,7 +305,7 @@ class _BaseCookieTokensSyncController(
         """Mark the user of this request as authenticated."""
         set_request_attrs(request, user)
 
-    def make_api_response(self) -> _CookieResponseT:
+    def make_api_response(self) -> _CookieResponseT:  # type: ignore[empty-body]
         """
         Build the response body that is sent next to the cookies.
 
@@ -315,8 +315,7 @@ class _BaseCookieTokensSyncController(
 
         Change the response status code from ``204`` when you return a body.
         """
-        # Tokens live in the cookies, so there is nothing to send here:
-        return None  # type: ignore[return-value]
+        # Tokens live in the cookies, so there is nothing to send here.
 
 
 class _BaseCookieTokensAsyncController(
@@ -332,7 +331,7 @@ class _BaseCookieTokensAsyncController(
         """Mark the user of this request as authenticated."""
         set_request_attrs(request, user)
 
-    async def make_api_response(self) -> _CookieResponseT:
+    async def make_api_response(self) -> _CookieResponseT:  # type: ignore[empty-body]
         """
         Build the response body that is sent next to the cookies.
 
@@ -342,8 +341,7 @@ class _BaseCookieTokensAsyncController(
 
         Change the response status code from ``204`` when you return a body.
         """
-        # Tokens live in the cookies, so there is nothing to send here:
-        return None  # type: ignore[return-value]
+        # Tokens live in the cookies, so there is nothing to send here.
 
 
 class CookieObtainTokensSyncController(
