@@ -194,6 +194,10 @@ def test_clear_cache(
     assert _cache_stats(response_negotiator) == (0, 0)
 
 
+@pytest.mark.skipif(
+    not hasattr(sys, 'getrefcount'),
+    reason='Only refcounted implementations can leak this way, PyPy cannot',
+)
 def test_negotiators_are_not_self_referencing() -> None:
     """Ensures that memoization does not leak the negotiators themselves.
 
