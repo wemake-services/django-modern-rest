@@ -1,5 +1,5 @@
 from dmr.openapi.mappers.schema_loader import load_schema
-from dmr.openapi.objects import XML, Discriminator, OpenAPIType, Schema
+from dmr.openapi.objects import XML, Discriminator, OpenAPIFormat, OpenAPIType, Schema
 
 
 def test_load_schema_issue1490() -> None:
@@ -58,3 +58,15 @@ def test_load_schema_without_xml_node_type() -> None:
 
     # `wrapped` stays unset, it used to be loaded as `False`:
     assert loaded.xml == XML(attribute=True, wrapped=None)
+
+
+def test_load_schema_format_preserve_type() -> None:
+    """Known formats load as enum members, custom ones stay strings."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1489
+    known = load_schema({'type': 'string', 'format': 'date'})
+    assert known.format is OpenAPIFormat.DATE
+
+    custom = load_schema({'type': 'string', 'format': 'cool-format'})
+    assert custom.format == 'cool-format'
+    assert not isinstance(custom.format, OpenAPIFormat)

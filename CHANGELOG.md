@@ -78,6 +78,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `dmr.openapi.mappers.schema_loader.load_schema` does not take
   `should_generate_example`, `annotation`, and `serializer` anymore.
   Example generation moved to the schema generator, #1485
+- Removed `PHONE`, `COLOR`, and `STYLE` members from `OpenAPIFormat`,
+  such formats are now loaded as plain strings, #1489
 
 ### Performance improvements
 
@@ -140,6 +142,14 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   - `OAuthFlows.device_authorization`
     and `OAuthFlow.device_authorization_url`
   - `SecurityScheme.oauth2_metadata_url` and `SecurityScheme.deprecated`
+- Reusable controllers now support `TypeVar` defaults from PEP 696.
+  A subclass that does not pass some of the type args
+  gets their defaults, just like type-checkers do it:
+  both for a bare `class Sub(Reusable): ...`
+  and for a partial `class Sub(Reusable[PydanticSerializer]): ...`.
+  Defaults that are type vars themselves are resolved as well.
+  The controller that declares the defaults is not affected:
+  it stays abstract, because its own type vars are not exact types, #1452
 - Added `dmr.metadata.MergeableMetadata` base class. Subclass it to define
   how your own `Annotated` metadata combines when it is placed on members
   of a union type. `ResponseSpecMetadata` is the first one to use it, #1460
@@ -147,6 +157,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   `OpenAPI.json_schema_dialect` existed, but there was no way to set it,
   so the `jsonSchemaDialect` field was never generated, #1486
 - Allow all bool values in `dmr.openapi.objects` also accept `None`, #1437
+- Added all formats from the OpenAPI Format Registry to `OpenAPIFormat`, #1489
 
 ### Bugfixes
 
@@ -190,6 +201,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   is returned without them. Annotate the whole union
   (`Annotated[User | str, ResponseSpecMetadata(...)]`) to require them
   everywhere, that behaviour is unchanged, #1460
+- Fixed a bug that custom `format` values, like `name-email`
+  from `pydantic.NameEmail`, were raising `ValueError`
+  during schema generation, #1489
 
 
 ## 0.15.0 (2026-09-11)

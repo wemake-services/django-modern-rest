@@ -9,7 +9,6 @@ from typing import (  # noqa: WPS235
     Generic,
     TypeAlias,
     TypeVar,
-    get_args,
     get_origin,
 )
 
@@ -21,6 +20,10 @@ from typing_extensions import (
 )
 
 from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.internal.type_inference import (
+    resolve_type_args,
+    resolve_type_var_default,
+)
 from dmr.internal.types import unwrap_type_alias
 
 if TYPE_CHECKING:
@@ -132,11 +135,17 @@ def infer_type_args(
         ... )
 
     Will return ``(MyModel, )`` for ``Query`` as *given_type*.
+
+    .. versionchanged:: 0.16.0
+
+        Bases without explicit type args now contribute
+        :pep:`696` type var defaults, if they have any.
+
     """
     return tuple(
         arg
         for base_class in infer_bases(orig_cls, given_type)
-        for arg in get_args(base_class)
+        for arg in resolve_type_args(base_class)
     )
 
 
@@ -146,12 +155,20 @@ def infer_bases(
     *,
     use_origin: bool = True,
 ) -> list[Any]:
-    """Infers ``__origin_bases__`` from the given type."""
+    """
+    Infers ``__origin_bases__`` from the given type.
+
+    .. versionchanged:: 0.16.0
+
+        Bases without explicit type args are now returned as well,
+        because they can still provide :pep:`696` type var defaults.
+
+    """
     return [
         base
         for base in get_original_bases(orig_cls)
         if (
-            (origin := get_origin(base) if use_origin else base)  # noqa: WPS509
+            (origin := (get_origin(base) or base) if use_origin else base)  # noqa: WPS509
             and is_safe_subclass(origin, given_type)
         )
     ]
@@ -254,7 +271,15 @@ class AnnotationsContext:
 
 
 class TypeVarInference:
-    """Inferences type variables to the applied real type values."""
+    """
+    Inferences type variables to the applied real type values.
+
+    .. versionchanged:: 0.16.0
+
+        :pep:`696` type var defaults are now used
+        when the inheritance chain does not provide a real type value.
+
+    """
 
     __slots__ = ('_context', '_to_infer')
 
@@ -313,25 +338,26 @@ class TypeVarInference:
         base: type[Any],
         type_map: dict[str, Any],
     ) -> None:
-        origin = get_origin(base)
+        type_args = resolve_type_args(base)
+        if not type_args:
+            # Either a regular non-generic base
+            # or a bare generic one without any type var defaults.
+            return
+
+        origin = get_origin(base) or base
         for type_param, type_arg in zip(
             getattr(origin, '__parameters__', []),
-            get_args(base),
+            type_args,
             strict=True,
         ):
             # TODO: this might be something else, like `TypeVarTuple`
             # or `ParamSpec`. But, they are not supported. Yet?
             assert isinstance(type_param, TypeVar), type_param  # noqa: S101
 
-            is_needed = type_map.get(type_param.__name__)
-            if is_needed:
-                # TODO: most likely this will require
-                # some extra work to support
-                # type var defaults. Right now defaults
-                # are ignored in the resolution.
-                type_map.update({type_param.__name__: type_arg})
-                if isinstance(type_arg, TypeVar):
-                    type_map.update({type_arg.__name__: type_arg})
+            # We record all type params, not just the ones we need right now:
+            # a type arg can be a type var that this very base also provides
+            # a value for. Which is what `PEP 696` defaults do.
+            type_map.update({type_param.__name__: type_arg})
 
     def _infer(
         self,
@@ -345,7 +371,7 @@ class TypeVarInference:
             iterations = 0
             while isinstance(type_param, TypeVar):
                 iterations += 1
-                type_param = type_map[type_param.__name__]
+                type_param = self._resolve_type_var(type_param, type_map)
                 if iterations >= self._max_depth:
                     raise UnsolvableAnnotationsError(
                         f'Cannot solve type annotations for {type_param!r}. '
@@ -354,3 +380,15 @@ class TypeVarInference:
                     )
             inferenced.update({orig_type_param: type_param})
         return inferenced
+
+    def _resolve_type_var(
+        self,
+        type_var: TypeVar,
+        type_map: dict[str, Any],
+    ) -> Any:
+        resolved = type_map.get(type_var.__name__, type_var)
+        if resolved is type_var:
+            # Nothing in the inheritance chain provides a real value for it,
+            # its `PEP 696` default is the last resort.
+            return resolve_type_var_default(type_var)
+        return resolved
