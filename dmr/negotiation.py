@@ -1,6 +1,6 @@
 import enum
 from collections.abc import Mapping
-from functools import lru_cache
+from functools import lru_cache, partial
 from typing import TYPE_CHECKING, Any, Final, Literal, final, overload
 
 from django.http.request import HttpRequest
@@ -8,8 +8,8 @@ from django.utils.translation import gettext_lazy as _
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.exceptions import EndpointMetadataError, RequestSerializationError
-from dmr.internal.media_compat import media_match
 from dmr.internal.negotiation import ConditionalType as _ConditionalType
+from dmr.internal.negotiation import find_parser as _find_parser
 from dmr.internal.negotiation import find_renderer as _find_renderer
 from dmr.internal.negotiation import (
     get_conditional_types as get_conditional_types,
@@ -66,8 +66,19 @@ class RequestNegotiator:
         # The last configured parser is the most specific one:
         self._default = next(iter(self._parsers.values()))
         # Almost every client sends the very same `Content-Type` header
-        # over and over, so we only decide once per header value:
-        self._negotiate = lru_cache(maxsize=MAX_CACHE_SIZE)(self._decide)
+        # over and over, so we only decide once per header value.
+        # We bind the state, not `self`: caching a bound method would
+        # store `self` in the cache that `self` owns, which is a reference
+        # cycle. The negotiator would then only ever be freed by the `gc`.
+        self._negotiate = lru_cache(maxsize=MAX_CACHE_SIZE)(
+            partial(
+                _find_parser,
+                parsers=self._parsers,
+                exact_parsers=self._exact_parsers,
+                media_by_precedence=self._media_by_precedence,
+                default=self._default,
+            ),
+        )
 
     def __call__(self, request: HttpRequest) -> Parser:
         """
@@ -108,24 +119,15 @@ class RequestNegotiator:
         request.__dmr_parser__ = parser  # type: ignore[attr-defined]
         return parser
 
-    def _decide(self, content_type: str | None) -> Parser | None:
-        # TODO: compile this code
-        if content_type is None:
-            return self._default
-        # Try the exact match first, since it is faster, O(1):
-        parser_type = self._exact_parsers.get(content_type)
-        if parser_type is not None:
-            # Do not allow invalid content types to be matched exactly.
-            return parser_type
+    def clear_cache(self) -> None:
+        """
+        Drop everything this negotiator has memoized so far.
 
-        # Now, try to find parser types based on `*/*` patterns, O(n):
-        for media in self._media_by_precedence:
-            # TODO: replace this with a compiled implementation:
-            if media_match(media, content_type):
-                return self._parsers[str(media)]
-
-        # No parsers found, the caller raises the error:
-        return None
+        Parsers are fixed for an endpoint in import time,
+        so this is only needed when they are modified in place:
+        in tests or in some very dynamic setups.
+        """
+        self._negotiate.cache_clear()
 
 
 class ResponseNegotiator:
@@ -187,10 +189,23 @@ class ResponseNegotiator:
         )
 
         # Almost every client sends the very same `Accept` header
-        # over and over, so we only negotiate once per header value:
-        self._negotiate = lru_cache(maxsize=MAX_CACHE_SIZE)(self._decide)
+        # over and over, so we only negotiate once per header value.
+        # We bind the state, not `self`: caching a bound method would
+        # store `self` in the cache that `self` owns, which is a reference
+        # cycle. The negotiator would then only ever be freed by the `gc`.
+        self._negotiate = lru_cache(maxsize=MAX_CACHE_SIZE)(
+            partial(
+                _find_renderer,
+                renderers=self._renderers,
+                default=self._default,
+            ),
+        )
         self._negotiate_non_streaming = lru_cache(maxsize=MAX_CACHE_SIZE)(
-            self._decide_non_streaming,
+            partial(
+                _find_renderer,
+                renderers=self._non_streaming_renderers,
+                default=self._non_streaming_default,
+            ),
         )
 
     def __call__(self, request: HttpRequest) -> Renderer:
@@ -241,15 +256,16 @@ class ResponseNegotiator:
             request.__dmr_nonstreaming_renderer__ = non_streaming  # type: ignore[attr-defined]
         return renderer
 
-    def _decide(self, accept: str | None) -> Renderer | None:
-        return _find_renderer(accept, self._renderers, self._default)
+    def clear_cache(self) -> None:
+        """
+        Drop everything this negotiator has memoized so far.
 
-    def _decide_non_streaming(self, accept: str | None) -> Renderer | None:
-        return _find_renderer(
-            accept,
-            self._non_streaming_renderers,
-            self._non_streaming_default,
-        )
+        Renderers are fixed for an endpoint in import time,
+        so this is only needed when they are modified in place:
+        in tests or in some very dynamic setups.
+        """
+        self._negotiate.cache_clear()
+        self._negotiate_non_streaming.cache_clear()
 
 
 @overload

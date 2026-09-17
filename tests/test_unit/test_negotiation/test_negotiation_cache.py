@@ -1,3 +1,4 @@
+import sys
 from typing import Final
 
 import pytest
@@ -36,7 +37,7 @@ class _JsonOnlyController(Controller[PydanticSerializer]):
 def request_negotiator() -> RequestNegotiator:
     """Return a request negotiator that has not memoized anything yet."""
     negotiator = _MultiTypeController.api_endpoints['POST'].request_negotiator
-    negotiator._negotiate.cache_clear()
+    negotiator.clear_cache()
     return negotiator
 
 
@@ -44,7 +45,7 @@ def request_negotiator() -> RequestNegotiator:
 def response_negotiator() -> ResponseNegotiator:
     """Return a response negotiator that has not memoized anything yet."""
     negotiator = _MultiTypeController.api_endpoints['POST'].response_negotiator
-    negotiator._negotiate.cache_clear()
+    negotiator.clear_cache()
     return negotiator
 
 
@@ -170,3 +171,49 @@ def test_caches_are_not_shared_between_endpoints(
     # even though it is already memoized as `application/xml` here:
     with pytest.raises(NotAcceptableError, match=_XML):
         json_only(dmr_rf.get('/whatever/', headers={'Accept': _XML}))
+
+
+def test_clear_cache(
+    dmr_rf: DMRRequestFactory,
+    request_negotiator: RequestNegotiator,
+    response_negotiator: ResponseNegotiator,
+) -> None:
+    """Ensures that negotiators can be told to forget what they decided."""
+    request_negotiator(
+        dmr_rf.get('/whatever/', headers={'Content-Type': _JSON}),
+    )
+    response_negotiator(dmr_rf.get('/whatever/', headers={'Accept': _JSON}))
+
+    assert _cache_stats(request_negotiator) == (0, 1)
+    assert _cache_stats(response_negotiator) == (0, 1)
+
+    request_negotiator.clear_cache()
+    response_negotiator.clear_cache()
+
+    assert _cache_stats(request_negotiator) == (0, 0)
+    assert _cache_stats(response_negotiator) == (0, 0)
+
+
+def test_negotiators_are_not_self_referencing() -> None:
+    """Ensures that memoization does not leak the negotiators themselves.
+
+    Caching a bound method stores ``self`` inside the cache that ``self``
+    owns. That is a reference cycle: the negotiator would only ever be
+    freed by the ``gc``, never by its own refcount dropping to zero.
+    """
+    metadata = _JsonOnlyController.api_endpoints['POST'].metadata
+
+    request_negotiator = RequestNegotiator(metadata, PydanticSerializer)
+    response_negotiator = ResponseNegotiator(
+        metadata,
+        PydanticSerializer,
+        streaming=False,
+    )
+
+    # How many references a local variable alone is worth
+    # is up to the interpreter, so we compare with an object
+    # that is only referenced by its own local variable:
+    baseline = object()
+
+    assert sys.getrefcount(request_negotiator) == sys.getrefcount(baseline)
+    assert sys.getrefcount(response_negotiator) == sys.getrefcount(baseline)

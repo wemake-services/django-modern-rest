@@ -90,7 +90,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   Headers that hit the exact match are around x1.2 faster,
   headers that have to go through the full negotiation
   (like the `Accept` header that any browser sends)
-  are up to x69 faster for renderers and x15 faster for parsers.
+  are up to x65 faster for renderers and x15 faster for parsers.
   The cache is bound by `DMR_MAX_CACHE_SIZE`
   and is not shared between endpoints, #1455
 - Improved checks performance, now we don't call checks
@@ -114,6 +114,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Features
 
+- Added `clear_cache` method to `RequestNegotiator` and `ResponseNegotiator`
+  to drop the memoized negotiation results. Needed when parsers
+  or renderers of an endpoint are modified in place, #1455
 - Added class-level overrides for `OpenAPIContext` generators and
   `ConfigMerger`, allowing custom operation ID generation and schema
   customization through context subclasses, #1461, #1487

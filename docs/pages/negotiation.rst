@@ -126,6 +126,10 @@ Here's how we select a renderer:
 
   The number of remembered header values is limited
   by :envvar:`DMR_MAX_CACHE_SIZE`.
+  If you modify parsers or renderers of an endpoint in place,
+  call :meth:`~dmr.negotiation.RequestNegotiator.clear_cache`
+  or :meth:`~dmr.negotiation.ResponseNegotiator.clear_cache`
+  to make the negotiators forget what they have already decided.
 
 
 .. _alternative-json:

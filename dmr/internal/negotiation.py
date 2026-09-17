@@ -1,5 +1,5 @@
 import dataclasses
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, Final, final
 
 from django.http.request import HttpRequest, MediaType
@@ -8,7 +8,11 @@ from django.utils.translation import gettext_lazy as _
 
 from dmr.compiled import accepted_type
 from dmr.exceptions import NotAcceptableError, ResponseSchemaError
-from dmr.internal.media_compat import media_quality, media_specificity
+from dmr.internal.media_compat import (
+    media_match,
+    media_quality,
+    media_specificity,
+)
 from dmr.metadata import get_annotated_metadata
 
 if TYPE_CHECKING:
@@ -119,8 +123,52 @@ def media_by_precedence(content_types: Iterable[str]) -> list[MediaType]:
     )
 
 
+def find_parser(
+    content_type: str | None,
+    *,
+    parsers: Mapping[str, 'Parser'],
+    exact_parsers: Mapping[str, 'Parser'],
+    media_by_precedence: Sequence[MediaType],
+    default: 'Parser',
+) -> 'Parser | None':
+    """
+    Choose a parser by the raw ``Content-Type`` header value.
+
+    When *content_type* is missing, returns *default* (or the first parser).
+    Returns ``None`` when *content_type* is set
+    and does not match any of *parsers*.
+
+    The result only depends on *content_type*, everything else is fixed
+    for an endpoint in import time. That's why callers are free
+    to cache it by the header value.
+
+    All the state is passed explicitly, so this function can be bound
+    with :func:`functools.partial` without keeping
+    the negotiator object itself alive.
+    """
+    # TODO: compile this code
+    if content_type is None:
+        return default
+
+    # Try the exact match first, since it is faster, O(1):
+    parser = exact_parsers.get(content_type)
+    if parser is not None:
+        # Do not allow invalid content types to be matched exactly.
+        return parser
+
+    # Now, try to find parser types based on `*/*` patterns, O(n):
+    for media in media_by_precedence:
+        # TODO: replace this with a compiled implementation:
+        if media_match(media, content_type):
+            return parsers[str(media)]
+
+    # No parsers found, the caller raises the error:
+    return None
+
+
 def find_renderer(
     accept: str | None,
+    *,
     renderers: Mapping[str, 'Renderer'],
     default: 'Renderer',
 ) -> 'Renderer | None':
@@ -132,8 +180,12 @@ def find_renderer(
     and does not match any of *renderers*.
 
     The result only depends on *accept*, because *renderers* and *default*
-    are fixed at import time. That's why callers are free
+    are fixed for an endpoint in import time. That's why callers are free
     to cache it by the header value.
+
+    All the state is passed explicitly, so this function can be bound
+    with :func:`functools.partial` without keeping
+    the negotiator object itself alive.
     """
     if accept is None:
         return default
@@ -181,8 +233,8 @@ def negotiate_renderer(
     # Let's not trigger it just yet:
     renderer = find_renderer(
         request.META.get('HTTP_ACCEPT'),
-        renderers,
-        default,
+        renderers=renderers,
+        default=default,
     )
     if renderer is None:
         raise not_acceptable_error(request, renderers)
