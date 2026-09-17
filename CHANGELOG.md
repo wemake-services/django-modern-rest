@@ -139,6 +139,27 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `schema_hook` class method to `MsgspecSchemaGenerator`
   to customize JSON schema generation for custom types, #1462
 - `NewCookie.expires` and `CookieSpec.expires` can now be `dt.datetime`, #1456
+- Added `concrete_views` next to `views` for every auth flow:
+  `dmr.security.jwt.concrete_views`, `dmr.security.token.concrete_views`,
+  and `dmr.security.django_session.concrete_views`.
+  They are the same controllers as the ones in `views`,
+  with the default request and response bodies already plugged in.
+  Nothing else is required: `token_cls` defaults to the `Token` model
+  of `dmr.security.token.app`, and `jwt_refresh_cookie_path` defaults
+  to `'/'`. Route one with `as_view(serializer=...)`
+  and there is no view code at all, #1457
+- `Controller.as_view` now takes a `serializer` argument, so a reusable
+  controller can be routed without writing an empty subclass for it:
+  `path('login/', ReusableController.as_view(serializer=PydanticSerializer))`.
+  It builds the subclass you would have written, so every other type
+  variable still has to resolve. Passing it to a controller that already
+  has an exact serializer raises `EndpointMetadataError`, #1457
+- Added the `serializer` setting, the project-wide serializer that
+  `as_view` falls back to when it is not given one. With it set,
+  routing a reusable controller is an import and a `path()` call:
+  `path('login/', concrete_views.DjangoSessionSyncController.as_view())`.
+  It has no default and changes nothing for controllers that name
+  their own serializer, #1457
 - Added the missing OpenAPI 3.2 fields to our spec objects, #1485:
   - `OpenAPIConfig.self_uri` and `OpenAPI.self_uri` for `$self`
   - `Server.name`

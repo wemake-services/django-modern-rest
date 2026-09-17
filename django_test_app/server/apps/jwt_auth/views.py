@@ -15,6 +15,7 @@ from dmr.security.jwt import (
     CookieJWTSyncAuth,
     HeaderJWTAsyncAuth,
     HeaderJWTSyncAuth,
+    concrete_views,
 )
 from dmr.security.jwt.views import (  # noqa: WPS235
     CookieLogoutAsyncController,
@@ -357,3 +358,80 @@ class CookieLogoutSyncView(CookieLogoutSyncController[PydanticSerializer]):
 @final
 class CookieLogoutAsyncView(CookieLogoutAsyncController[PydanticSerializer]):
     jwt_refresh_cookie_path = _REFRESH_COOKIE_PATH
+
+
+# Concrete views, they are used as-is, without any customizations at all:
+
+
+@final
+class ConcreteObtainSyncController(
+    concrete_views.ObtainTokensSyncController[PydanticSerializer],
+):
+    """Concrete view to obtain both tokens in the body."""
+
+
+@final
+class ConcreteObtainAsyncController(
+    concrete_views.ObtainTokensAsyncController[PydanticSerializer],
+):
+    """Concrete view to obtain both tokens in the body."""
+
+
+@final
+class ConcreteRefreshSyncController(
+    concrete_views.RefreshTokenSyncController[PydanticSerializer],
+):
+    """Concrete view to refresh both tokens in the body."""
+
+
+@final
+class ConcreteRefreshAsyncController(
+    concrete_views.RefreshTokenAsyncController[PydanticSerializer],
+):
+    """Concrete view to refresh both tokens in the body."""
+
+
+@final
+class ConcreteVerifySyncController(
+    concrete_views.VerifyTokenSyncController[PydanticSerializer],
+):
+    """Concrete view to verify an access token."""
+
+
+@final
+class ConcreteVerifyAsyncController(
+    concrete_views.VerifyTokenAsyncController[PydanticSerializer],
+):
+    """Concrete view to verify an access token."""
+
+
+# Concrete cookie views leave `jwt_refresh_cookie_path` at its default,
+# so the refresh cookie is scoped to `'/'` for all of them:
+
+
+@final
+class ConcreteCookieObtainSyncController(
+    concrete_views.CookieObtainTokensSyncController[PydanticSerializer],
+):
+    """Concrete view to obtain both tokens as cookies."""
+
+
+@final
+class ConcreteCookieObtainAsyncController(
+    concrete_views.CookieObtainTokensAsyncController[PydanticSerializer],
+):
+    """Concrete view to obtain both tokens as cookies."""
+
+
+@final
+class ConcreteCookieRefreshSyncController(
+    concrete_views.CookieRefreshTokensSyncController[PydanticSerializer],
+):
+    """Concrete view to rotate both token cookies."""
+
+
+@final
+class ConcreteCookieLogoutSyncController(
+    concrete_views.CookieLogoutSyncController[PydanticSerializer],
+):
+    """Concrete view to drop both token cookies."""

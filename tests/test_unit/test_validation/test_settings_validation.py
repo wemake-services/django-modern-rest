@@ -43,6 +43,9 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
         {'responses': [{}]},
         {'openapi_config': []},
         {'global_error_handler': None},
+        {'serializer': BaseSerializer},  # the base one is not enough
+        {'serializer': int},
+        {'serializer': 'dmr.plugins.pydantic.PydanticSerializer'},
         {'exclude_semantic_responses': 1},
         {'exclude_validate_responses': 1},
     ],

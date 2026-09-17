@@ -61,6 +61,32 @@ Class with all possible setting keys as enum:
     >>> DMR_SETTINGS = {Settings.responses: []}
 
 
+.. _project-serializer:
+
+Serializer
+----------
+
+.. data:: dmr.settings.Settings.serializer
+
+  Default: ``None``.
+
+  The serializer type that :meth:`~dmr.controller.Controller.as_view`
+  falls back to for controllers that don't name one themselves.
+  It is what lets a reusable controller be routed
+  without a subclass, see :ref:`routing-without-a-subclass`:
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> from dmr.plugins.pydantic import PydanticSerializer
+    >>> DMR_SETTINGS = {Settings.serializer: PydanticSerializer}
+
+  It changes nothing for a controller that has an exact serializer
+  of its own, which is every controller written the usual way.
+  There is no default, because we cannot guess
+  which serializer plugin a project uses.
+
+
 Content negotiation
 -------------------
 

@@ -48,11 +48,46 @@ Example, how to use the auth class and how to get ``self.request.user``:
 Custom user models are automatically supported.
 
 
-Reusing pre-existing views
---------------------------
+.. _django-session-concrete-views:
+
+Ready-to-use views
+------------------
+
+A login endpoint that takes a username and a password
+and starts a session is already written for you
+in ``dmr.security.django_session.concrete_views``.
+Name your serializer in the urls and you are done,
+there is no view code at all:
+
+.. literalinclude:: /examples/auth/django_session/django_session_concrete.py
+  :caption: urls.py
+  :linenos:
+  :language: python
+
+These are the very same controllers
+as the ones in ``dmr.security.django_session.views``, with
+:class:`~dmr.security.django_session.views.DjangoSessionPayload` and
+:class:`~dmr.security.django_session.views.DjangoSessionResponse`
+already plugged in as the request and response bodies.
+Every hook still works the same way,
+subclass one as usual when you need to change something.
+See :ref:`routing-without-a-subclass` for how ``serializer=`` works.
+
+.. tip::
+
+  Start here. Move to the reusable controllers below
+  only when you need a different request or response body,
+  they are the same classes with the bodies left open.
+
+
+Customizing pre-existing views
+------------------------------
 
 We provide several pre-existing views to get Django session cookie.
 So, users won't have to write tons of boilerplate code.
+
+Reach for them when the bodies of :ref:`django-session-concrete-views`
+do not match your API.
 
 We provide two :ref:`reusable-controllers` to obtain
 Django session cookie:
@@ -113,6 +148,15 @@ API Reference
 .. autoclass:: dmr.security.django_session.auth.DjangoSessionAsyncAuth
   :members:
   :inherited-members:
+
+Ready-to-use views to get Django session cookie
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: dmr.security.django_session.concrete_views.DjangoSessionSyncController
+  :members: convert_auth_payload, make_api_response
+
+.. autoclass:: dmr.security.django_session.concrete_views.DjangoSessionAsyncController
+  :members: convert_auth_payload, make_api_response
 
 Pre-defined views to get Django session cookie
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -162,11 +162,72 @@ having ``msgspec`` installed makes
   and verified by different installs.
 
 
-Reusing pre-existing views
---------------------------
+.. _jwt-concrete-views:
+
+Ready-to-use views
+------------------
+
+Most APIs need exactly the same auth endpoints: take a username
+and a password, give back a pair of tokens, rotate them on demand.
+``dmr.security.jwt.concrete_views`` has all of that already written.
+Name your serializer in the urls and you are done,
+there is no view code at all:
+
+.. literalinclude:: /examples/auth/jwt/jwt_concrete_views.py
+  :caption: urls.py
+  :linenos:
+  :language: python
+
+These are the very same controllers
+as the ones in ``dmr.security.jwt.views``,
+with :class:`~dmr.security.jwt.views.ObtainTokensPayload`,
+:class:`~dmr.security.jwt.views.RefreshTokenPayload`,
+:class:`~dmr.security.jwt.views.VerifyTokenPayload`, and
+:class:`~dmr.security.jwt.views.ObtainTokensResponse`
+already plugged in as the request and response bodies.
+Every jwt setting and every hook still works the same way,
+subclass one as usual when you need to change something.
+See :ref:`routing-without-a-subclass` for how ``serializer=`` works.
+
+The cookie flow is routed the same way:
+
+.. literalinclude:: /examples/auth/jwt/jwt_concrete_cookies.py
+  :caption: urls.py
+  :linenos:
+  :language: python
+
+.. warning::
+
+  ``jwt_refresh_cookie_path`` defaults to ``'/'`` in these controllers,
+  which sends the refresh token with every request to your site.
+  The reusable controllers below have no default on purpose,
+  see :ref:`issuing-tokens-as-cookies`, but a ready-to-use one
+  cannot know the url of your refresh endpoint.
+
+  Point it there once you have one, on every controller
+  that shares the cookies, and the refresh token stops being sent
+  with anything else:
+
+  .. literalinclude:: /examples/auth/jwt/jwt_concrete_cookies_scoped.py
+    :caption: views.py
+    :linenos:
+    :language: python
+
+.. tip::
+
+  Start here. Move to the reusable controllers below
+  only when you need a different request or response body,
+  they are the same classes with the bodies left open.
+
+
+Customizing pre-existing views
+------------------------------
 
 We provide several pre-existing views to get auth tokens.
 So, users won't have to write tons of boilerplate code.
+
+Reach for them when the bodies of :ref:`jwt-concrete-views`
+do not match your API.
 
 
 JWT with access and refresh tokens
@@ -601,6 +662,43 @@ Helpers
 .. autofunction:: dmr.security.jwt.auth.request_jwt
 
 .. autofunction:: dmr.security.jwt.auth.set_request_attrs
+
+Ready-to-use views
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: dmr.security.jwt.concrete_views.ObtainTokensSyncController
+  :members: convert_auth_payload, make_api_response
+
+.. autoclass:: dmr.security.jwt.concrete_views.ObtainTokensAsyncController
+  :members: convert_auth_payload, make_api_response
+
+.. autoclass:: dmr.security.jwt.concrete_views.RefreshTokenSyncController
+  :members: convert_refresh_payload, make_api_response
+
+.. autoclass:: dmr.security.jwt.concrete_views.RefreshTokenAsyncController
+  :members: convert_refresh_payload, make_api_response
+
+.. autoclass:: dmr.security.jwt.concrete_views.VerifyTokenSyncController
+  :members: convert_verify_payload
+
+.. autoclass:: dmr.security.jwt.concrete_views.VerifyTokenAsyncController
+  :members: convert_verify_payload
+
+.. autoclass:: dmr.security.jwt.concrete_views.CookieObtainTokensSyncController
+  :members: convert_auth_payload
+
+.. autoclass:: dmr.security.jwt.concrete_views.CookieObtainTokensAsyncController
+  :members: convert_auth_payload
+
+.. autoclass:: dmr.security.jwt.concrete_views.CookieRefreshTokensSyncController
+
+.. autoclass:: dmr.security.jwt.concrete_views.CookieRefreshTokensAsyncController
+
+.. autoclass:: dmr.security.jwt.concrete_views.CookieLogoutSyncController
+
+.. autoclass:: dmr.security.jwt.concrete_views.CookieLogoutAsyncController
+
+.. autodata:: dmr.security.jwt.concrete_views.DEFAULT_REFRESH_COOKIE_PATH
 
 Pre-defined views to fetch JWT tokens
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
