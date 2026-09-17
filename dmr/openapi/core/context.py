@@ -16,6 +16,7 @@ from dmr.openapi.generators import (
     SchemaGenerator,
     SecuritySchemeGenerator,
 )
+from dmr.openapi.mappers.example import seed_example_factory
 from dmr.openapi.objects import Components, Reference, Schema
 
 if TYPE_CHECKING:
@@ -55,6 +56,10 @@ class OpenAPIContext:
 
     .. versionchanged:: 0.16.0
         Added class-level overrides for generators and the configuration merger.
+
+    .. versionchanged:: 0.16.0
+        Added the :meth:`seed_examples` hook.
+
     """
 
     __slots__ = (
@@ -111,6 +116,25 @@ class OpenAPIContext:
             security_scheme=self.security_scheme_cls(self),
             parameter=self.parameter_cls(self),
         )
+
+        # Last, so that overrides of this method see a ready context:
+        self.seed_examples()
+
+    def seed_examples(self) -> None:
+        """
+        Seed the generation of examples for this schema.
+
+        One context builds one schema, so this runs exactly once per schema.
+        All its examples then come from a single random stream, which is
+        what makes them differ from each other.
+
+        Override it to seed from something other than
+        :data:`~dmr.settings.Settings.openapi_examples_seed`,
+        or to leave the factory alone entirely.
+
+        .. versionadded:: 0.16.0
+        """
+        seed_example_factory()
 
     def get_components(self) -> Components:
         """
