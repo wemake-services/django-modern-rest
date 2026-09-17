@@ -8,7 +8,6 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
-    concrete_views,
 )
 from dmr.security.django_session.views import (
     DjangoSessionAsyncController,
@@ -62,23 +61,6 @@ class SessionAsyncController(
     @override
     async def make_api_response(self) -> DjangoSessionResponse:
         return {_USER_ID: str((await self.request.auser()).pk)}
-
-
-# Concrete views, they are used as-is, without any customizations at all:
-
-
-@final
-class ConcreteSessionSyncController(
-    concrete_views.DjangoSessionSyncController[PydanticSerializer],
-):
-    """Concrete view to log in with a django session."""
-
-
-@final
-class ConcreteSessionAsyncController(
-    concrete_views.DjangoSessionAsyncController[PydanticSerializer],
-):
-    """Concrete view to log in with a django session."""
 
 
 @final

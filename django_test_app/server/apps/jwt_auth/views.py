@@ -405,11 +405,8 @@ class ConcreteVerifyAsyncController(
     """Concrete view to verify an access token."""
 
 
-#: Concrete cookie views are scoped to the sync refresh endpoint,
-#: just like the customized ones above.
-_CONCRETE_REFRESH_COOKIE_PATH: Final = reverse_lazy(
-    'api:jwt_auth:jwt_concrete_cookie_refresh_sync',
-)
+# Concrete cookie views leave `jwt_refresh_cookie_path` at its default,
+# so the refresh cookie is scoped to `'/'` for all of them:
 
 
 @final
@@ -418,16 +415,12 @@ class ConcreteCookieObtainSyncController(
 ):
     """Concrete view to obtain both tokens as cookies."""
 
-    jwt_refresh_cookie_path = _CONCRETE_REFRESH_COOKIE_PATH
-
 
 @final
 class ConcreteCookieObtainAsyncController(
     concrete_views.CookieObtainTokensAsyncController[PydanticSerializer],
 ):
     """Concrete view to obtain both tokens as cookies."""
-
-    jwt_refresh_cookie_path = _CONCRETE_REFRESH_COOKIE_PATH
 
 
 @final
@@ -436,13 +429,9 @@ class ConcreteCookieRefreshSyncController(
 ):
     """Concrete view to rotate both token cookies."""
 
-    jwt_refresh_cookie_path = _CONCRETE_REFRESH_COOKIE_PATH
-
 
 @final
 class ConcreteCookieLogoutSyncController(
     concrete_views.CookieLogoutSyncController[PydanticSerializer],
 ):
     """Concrete view to drop both token cookies."""
-
-    jwt_refresh_cookie_path = _CONCRETE_REFRESH_COOKIE_PATH

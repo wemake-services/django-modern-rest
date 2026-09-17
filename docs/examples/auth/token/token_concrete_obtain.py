@@ -1,15 +1,31 @@
+from dmr.openapi import build_schema
+from dmr.openapi.views import OpenAPIJsonView
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security.token.app.models import Token
-from dmr.security.token.concrete_views import ObtainTokenSyncController
+from dmr.routing import Router, path
+from dmr.security.token import concrete_views
 
+router = Router(
+    'api/',
+    [
+        # You can also use `ObtainTokenAsyncController` if needed:
+        path(
+            'auth/',
+            concrete_views.ObtainTokenSyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='obtain_token',
+        ),
+    ],
+)
 
-# You can also use `ObtainTokenAsyncController` if needed:
-class ObtainTokenController(ObtainTokenSyncController[PydanticSerializer]):
-    """Authenticates a user and issues a new opaque token."""
+urlpatterns = [
+    router.to_urlpatterns(namespace='api'),
+    path(
+        'docs/openapi.json/',
+        OpenAPIJsonView.as_view(build_schema(router)),
+        name='openapi_json',
+    ),
+]
 
-    # Specifying `token_cls` is the only thing left to do:
-    token_cls = Token
-
-
-# run: {"controller": "ObtainTokenController", "method": "post", "url": "/api/auth/", "body": {"username": "test_user", "password": "password"}, "populate_db": true}  # noqa: ERA001, E501
-# openapi: {"controller": "ObtainTokenController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
+# run: {"method": "post", "url": "/api/auth/", "body": {"username": "test_user", "password": "password"}, "populate_db": true, "use_urlpatterns": true}  # noqa: ERA001, E501
+# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001

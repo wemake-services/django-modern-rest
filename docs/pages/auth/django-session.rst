@@ -56,10 +56,11 @@ Ready-to-use views
 A login endpoint that takes a username and a password
 and starts a session is already written for you
 in ``dmr.security.django_session.concrete_views``.
-Pass your serializer type, route it, and you are done:
+Name your serializer in the urls and you are done,
+there is no view code at all:
 
 .. literalinclude:: /examples/auth/django_session/django_session_concrete.py
-  :caption: views.py
+  :caption: urls.py
   :linenos:
   :language: python
 
@@ -68,7 +69,9 @@ as the ones in ``dmr.security.django_session.views``, with
 :class:`~dmr.security.django_session.views.DjangoSessionPayload` and
 :class:`~dmr.security.django_session.views.DjangoSessionResponse`
 already plugged in as the request and response bodies.
-Every hook still works the same way.
+Every hook still works the same way,
+subclass one as usual when you need to change something.
+See :ref:`routing-without-a-subclass` for how ``serializer=`` works.
 
 .. tip::
 
@@ -78,7 +81,7 @@ Every hook still works the same way.
 
 
 Customizing pre-existing views
---------------------------
+------------------------------
 
 We provide several pre-existing views to get Django session cookie.
 So, users won't have to write tons of boilerplate code.

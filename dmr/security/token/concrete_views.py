@@ -3,12 +3,12 @@ Ready-to-use versions of everything in ``dmr.security.token.views``.
 
 Every controller here is the same controller as the one
 with the same name in ``dmr.security.token.views``,
-with the default request and response bodies already plugged in.
-Only ``token_cls`` is left to you, there is no way to guess
-which model holds your tokens.
+with the default request and response bodies already plugged in
+and ``token_cls`` defaulting to the model of the bundled token app.
 """
 
-from typing import Generic, cast
+import importlib
+from typing import Any, Generic, cast
 
 from django.contrib.auth.base_user import AbstractBaseUser
 from typing_extensions import TypeVar, override
@@ -23,6 +23,25 @@ _SerializerT = TypeVar(
 _UserT = TypeVar('_UserT', bound=AbstractBaseUser, default=AbstractBaseUser)
 
 
+def _load_default_model() -> Any:
+    # This is needed, so we can trick the `import-linter`
+    # that these two modules are independent. This is the only
+    # place where they can really interact.
+    return importlib.import_module('dmr.security.token.app.models').Token
+
+
+def _set_default_token_cls(controller: type[Any]) -> None:
+    """
+    Fill ``token_cls`` of a subclass that did not set one.
+
+    The import happens here and not at module level on purpose:
+    ``'dmr.security.token.app'`` is optional, and projects that swap
+    the token model must be able to import this module without it.
+    """
+    if getattr(controller, 'token_cls', None) is None:
+        controller.token_cls = _load_default_model()
+
+
 class ObtainTokenSyncController(
     views.ObtainTokenSyncController[
         _SerializerT,
@@ -33,18 +52,24 @@ class ObtainTokenSyncController(
     Generic[_SerializerT, _UserT],
 ):
     """
-    Sync controller to issue an opaque token, almost ready to be routed.
+    Sync controller to issue an opaque token, ready to be routed.
 
     Takes :class:`~dmr.security.token.views.ObtainTokenPayload`
     and returns :class:`~dmr.security.token.views.ObtainTokenResponse`.
-
-    ``token_cls`` is still required, it is the model
-    that stores your tokens:
+    ``token_cls`` defaults to
+    :class:`~dmr.security.token.app.models.Token`, so the only thing
+    it needs is a serializer type:
 
     .. code:: python
 
-        class ObtainToken(ObtainTokenSyncController[PydanticSerializer]):
-            token_cls = Token
+        path('login/', ObtainTokenSyncController.as_view(
+            serializer=PydanticSerializer,
+        ))
+
+    Set ``token_cls`` when you swap the token model,
+    see :ref:`swapping-token-model`. The default is imported the first time
+    a subclass is built, so projects with their own model
+    do not need ``'dmr.security.token.app'`` installed.
 
     See :class:`~dmr.security.token.views.ObtainTokenSyncController`
     for all the token settings and hooks it inherits,
@@ -52,6 +77,12 @@ class ObtainTokenSyncController(
 
     .. versionadded:: 0.16.0
     """
+
+    @override
+    def __init_subclass__(cls) -> None:
+        """Fall back to the token model of the bundled app."""
+        _set_default_token_cls(cls)
+        super().__init_subclass__()
 
     @override
     def convert_auth_payload(
@@ -81,13 +112,19 @@ class ObtainTokenAsyncController(
     Generic[_SerializerT, _UserT],
 ):
     """
-    Async controller to issue an opaque token, almost ready to be routed.
+    Async controller to issue an opaque token, ready to be routed.
 
     Async version of
     :class:`~dmr.security.token.concrete_views.ObtainTokenSyncController`.
 
     .. versionadded:: 0.16.0
     """
+
+    @override
+    def __init_subclass__(cls) -> None:
+        """Fall back to the token model of the bundled app."""
+        _set_default_token_cls(cls)
+        super().__init_subclass__()
 
     @override
     async def convert_auth_payload(

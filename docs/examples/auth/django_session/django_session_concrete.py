@@ -1,13 +1,31 @@
+from dmr.openapi import build_schema
+from dmr.openapi.views import OpenAPIJsonView
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.security.django_session.concrete_views import (
-    DjangoSessionSyncController,
+from dmr.routing import Router, path
+from dmr.security.django_session import concrete_views
+
+router = Router(
+    'api/',
+    [
+        # You can also use `DjangoSessionAsyncController` if needed:
+        path(
+            'auth/',
+            concrete_views.DjangoSessionSyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='session_login',
+        ),
+    ],
 )
 
+urlpatterns = [
+    router.to_urlpatterns(namespace='api'),
+    path(
+        'docs/openapi.json/',
+        OpenAPIJsonView.as_view(build_schema(router)),
+        name='openapi_json',
+    ),
+]
 
-# You can also use `DjangoSessionAsyncController` if needed:
-class SessionController(DjangoSessionSyncController[PydanticSerializer]):
-    """Authenticates a user and starts a django session."""
-
-
-# run: {"controller": "SessionController", "method": "post", "url": "/api/auth/", "body" :{"username": "test_user", "password": "password"}, "curl_args": ["-D", "-"], "populate_db": true}  # noqa: ERA001, E501
-# openapi: {"controller": "SessionController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
+# run: {"method": "post", "url": "/api/auth/", "body" :{"username": "test_user", "password": "password"}, "curl_args": ["-D", "-"], "populate_db": true, "use_urlpatterns": true}  # noqa: ERA001, E501
+# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001

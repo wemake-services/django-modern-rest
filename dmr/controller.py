@@ -1,6 +1,15 @@
 from collections.abc import Callable, Mapping, Sequence, Set
 from http import HTTPMethod, HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, Final, Generic, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Final,
+    Generic,
+    Self,
+    TypeVar,
+    cast,
+)
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import URLPattern
@@ -219,7 +228,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
     @override
     @classmethod
-    def as_view(cls, **initkwargs: Any) -> Callable[..., HttpResponseBase]:
+    def as_view(
+        cls,
+        *,
+        serializer: type[BaseSerializer] | None = None,
+        **initkwargs: Any,
+    ) -> Callable[..., HttpResponseBase]:
         """
         Returns a view function for the class-based view.
 
@@ -227,9 +241,25 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         authentication will still be explicitly validated for CSRF,
         while all other authentication methods will be CSRF-exempt.
 
+        Pass *serializer* to route a reusable controller
+        without writing a subclass for it:
+
+        .. code:: python
+
+            path('login/', ReusableController.as_view(
+                serializer=PydanticSerializer,
+            ))
+
+        This builds the subclass that you would have written by hand,
+        so everything else works as always: every remaining type variable
+        must either be given a :pep:`696` default or not be used
+        by any endpoint, see :ref:`type-variable-defaults`.
+
         Raises:
             EndpointMetadataError: When called on an abstract controller,
-                because it has nothing to serve.
+                because it has nothing to serve. Also when *serializer*
+                is passed to a controller that already has an exact one,
+                because the two would disagree.
 
         .. versionchanged:: 0.16.0
 
@@ -237,14 +267,20 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             :class:`~dmr.exceptions.EndpointMetadataError`
             instead of silently returning a broken view.
 
+        .. versionchanged:: 0.16.0
+            Added the ``serializer`` argument.
+
         """
+        if serializer is not None:
+            return cls._with_serializer(serializer).as_view(**initkwargs)
         if cls.is_abstract:
             raise EndpointMetadataError(
                 f'{cls!r} is abstract, it cannot be used as a view. '
                 'Controllers are abstract when they do not have '
                 'an exact serializer type or any endpoints. '
                 'Use a subclass with a real serializer '
-                'and at least one endpoint',
+                'and at least one endpoint, '
+                'or pass `serializer=` to this method',
             )
         # We don't use `csrf_exempt()` decorator here, because it is slow:
         view = super().as_view(**initkwargs)
@@ -607,6 +643,40 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         return cls.is_async is True
 
     # Protected API:
+
+    @classmethod
+    def _with_serializer(cls, serializer: type[BaseSerializer]) -> type[Self]:
+        """
+        Builds the subclass that ``as_view(serializer=...)`` would need.
+
+        Raises:
+            EndpointMetadataError: When this controller already has
+                an exact serializer, since overriding it here would
+                contradict the controller's own type arguments.
+
+        """
+        existing_serializer = getattr(cls, 'serializer', None)
+        if existing_serializer is not None:
+            raise EndpointMetadataError(
+                f'{cls!r} already has {existing_serializer!r} '
+                'as its serializer, passing `serializer=` would contradict '
+                'the type arguments of this controller. '
+                'Drop the argument, or pass it '
+                'to the reusable controller instead',
+            )
+        return cast(
+            'type[Self]',
+            type(
+                cls.__name__,
+                (cls,),
+                {
+                    'serializer': serializer,
+                    '__doc__': cls.__doc__,
+                    '__module__': cls.__module__,
+                    '__qualname__': cls.__qualname__,
+                },
+            ),
+        )
 
     @classmethod
     def _infer_serializer(cls) -> type[_SerializerT_co] | None:

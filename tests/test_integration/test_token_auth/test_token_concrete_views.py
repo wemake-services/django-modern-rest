@@ -42,14 +42,17 @@ def _get_custom_token_model() -> type[TokenLikeSync]:
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize('url', _OBTAIN_URLS)
 def test_concrete_obtain_default_model(
     dmr_client: DMRClient,
     user: User,
     password: str,
+    *,
+    url: str,
 ) -> None:
-    """Ensures that the concrete view issues a token of the default model."""
+    """Ensures that `token_cls` defaults to the model of the bundled app."""
     response = dmr_client.post(
-        _OBTAIN_URLS[1],
+        url,
         data={'username': user.username, 'password': password},
     )
 
@@ -60,47 +63,31 @@ def test_concrete_obtain_default_model(
     issued = Token.find_raw(raw_token)
     assert issued is not None
     assert issued.get_user() == user
+    assert _get_custom_token_model().find_raw(raw_token) is None
 
 
 @pytest.mark.django_db
-def test_concrete_obtain_custom_model(
-    dmr_client: DMRClient,
-    user: User,
-    password: str,
-) -> None:
-    """Ensures that the concrete view respects a custom ``token_cls``."""
-    response = dmr_client.post(
-        _OBTAIN_URLS[0],
-        data={'username': user.username, 'password': password},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.content
-    raw_token = response.json()['token']
-    assert raw_token
-    assert Token.find_raw(raw_token) is None
-    assert _get_custom_token_model().find_raw(raw_token)
-
-
-@pytest.mark.django_db
+@pytest.mark.parametrize('url', _OBTAIN_URLS)
 def test_concrete_obtain_roundtrips_to_auth(
     dmr_client: DMRClient,
     user: User,
     password: str,
+    *,
+    url: str,
 ) -> None:
     """Ensures that the issued token authenticates the next request."""
     response = dmr_client.post(
-        _OBTAIN_URLS[0],
+        url,
         data={'username': user.username, 'password': password},
     )
     assert response.status_code == HTTPStatus.OK, response.content
 
-    response = dmr_client.post(
-        reverse('api:token_auth:token_sync_auth'),
-        data='{}',
+    response = dmr_client.get(
+        reverse('api:token_auth:token_default_sync_auth'),
         headers={'X-API-Token': response.json()['token']},
     )
 
-    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.status_code == HTTPStatus.OK, response.content
     assert response.json() == {
         'username': user.username,
         'email': user.email,

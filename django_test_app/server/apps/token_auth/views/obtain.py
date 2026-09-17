@@ -72,16 +72,15 @@ class CustomObtainTokenAsyncController(
         return {'token': await self.issue_token(user=self.request.user)}
 
 
-# Concrete views, `token_cls` is the only thing they need:
+# Concrete views, every single setting is left at its default,
+# including `token_cls`, which falls back to the bundled `Token` model:
 
 
 @final
 class ConcreteObtainTokenSyncController(
-    concrete_views.ObtainTokenSyncController[PydanticFastSerializer, User],
+    concrete_views.ObtainTokenSyncController[PydanticFastSerializer],
 ):
     """Concrete view to issue an opaque token."""
-
-    token_cls = CustomToken
 
 
 @final
@@ -89,8 +88,6 @@ class ConcreteObtainTokenAsyncController(
     concrete_views.ObtainTokenAsyncController[PydanticFastSerializer],
 ):
     """Concrete view to issue an opaque token."""
-
-    token_cls = Token
 
 
 @final

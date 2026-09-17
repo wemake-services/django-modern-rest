@@ -188,6 +188,8 @@ And then - implementations:
 This way offers you more control over the response headers, cookies, etc.
 Choose the one that fits best of the job.
 
+.. _type-variable-defaults:
+
 Type variable defaults
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -253,6 +255,39 @@ because it has an exact serializer:
   A type variable without a default is still required.
   Controllers that don't have an exact serializer
   stay abstract, as always.
+
+.. _routing-without-a-subclass:
+
+Routing without a subclass
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 0.16.0
+
+Sometimes the subclass would be empty: the reusable controller
+already does everything you need, and the only thing missing
+is the serializer. Pass it to
+:meth:`~dmr.controller.Controller.as_view` instead:
+
+.. literalinclude:: /examples/reusable_code/as_view_serializer.py
+  :caption: urls.py
+  :linenos:
+  :language: python
+
+This builds the subclass that you would have written by hand,
+so the rest of the rules are unchanged: every other type variable
+has to resolve, through a default or by not being used at all.
+
+.. note::
+
+  ``serializer=`` only works on controllers
+  that don't have an exact serializer yet.
+  Passing it to a concrete controller raises
+  :class:`~dmr.exceptions.EndpointMetadataError`,
+  since the argument and the type arguments would disagree
+  about what the controller serializes.
+
+Write the subclass when you have anything else to say: a setting
+to change, a hook to redefine, or a name to route several times.
 
 
 .. _lazy-reusable-endpoints:

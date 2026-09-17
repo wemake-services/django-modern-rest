@@ -133,11 +133,11 @@ Ready-to-use obtain views
 An endpoint that takes a username and a password and gives back a token
 is already written for you
 in ``dmr.security.token.concrete_views``.
-Pass your serializer type, say which model stores your tokens,
-route it, and you are done:
+Name your serializer in the urls and you are done,
+there is no view code at all:
 
 .. literalinclude:: /examples/auth/token/token_concrete_obtain.py
-  :caption: views.py
+  :caption: urls.py
   :linenos:
   :language: python
 
@@ -145,11 +145,19 @@ These are the very same controllers
 as the ones in ``dmr.security.token.views``, with
 :class:`~dmr.security.token.views.ObtainTokenPayload` and
 :class:`~dmr.security.token.views.ObtainTokenResponse`
-already plugged in as the request and response bodies.
-Every token setting and every hook still works the same way.
+already plugged in as the request and response bodies,
+and ``token_cls`` defaulting to
+:class:`~dmr.security.token.app.models.Token`.
+Every token setting and every hook still works the same way,
+subclass one as usual when you need to change something.
+See :ref:`routing-without-a-subclass` for how ``serializer=`` works.
 
-``token_cls`` is the only thing left to you: there is no way
-to guess which model holds your tokens, see :ref:`swapping-token-model`.
+.. note::
+
+  Set ``token_cls`` on a subclass when you swap the token model,
+  see :ref:`swapping-token-model`. The default is imported the first time
+  a subclass is built, so projects with their own model
+  never need ``'dmr.security.token.app'`` installed.
 
 .. tip::
 

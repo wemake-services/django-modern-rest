@@ -32,6 +32,8 @@ _COOKIE_OBTAIN_URLS: Final = (
 _COOKIE_REFRESH_URL: Final = reverse(
     'api:jwt_auth:jwt_concrete_cookie_refresh_sync',
 )
+#: Concrete cookie views leave `jwt_refresh_cookie_path` at its default.
+_DEFAULT_REFRESH_COOKIE_PATH: Final = '/'
 _COOKIE_LOGOUT_URL: Final = reverse(
     'api:jwt_auth:jwt_concrete_cookie_logout_sync',
 )
@@ -312,7 +314,7 @@ def test_concrete_cookie_obtain(
     assert _decode(refresh.value) == _claims(user, 'refresh')
     assert refresh['httponly']
     assert refresh['secure']
-    assert refresh['path'] == _COOKIE_REFRESH_URL
+    assert refresh['path'] == _DEFAULT_REFRESH_COOKIE_PATH
     assert refresh['max-age'] == int(dt.timedelta(days=10).total_seconds())
 
 
