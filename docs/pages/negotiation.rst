@@ -115,6 +115,22 @@ Here's how we select a renderer:
   because utils like :func:`dmr.response.build_response`
   fallbacks to settings-defined renderers in some error cases.
 
+.. note::
+
+  Both selections only depend on the header value,
+  because parsers and renderers are fixed for an endpoint in import time.
+  That's why every endpoint remembers what it has already selected
+  for a given ``Content-Type`` and ``Accept`` header value:
+  a client that keeps sending ``Accept: application/json``
+  only pays for the negotiation once.
+
+  The number of remembered header values is limited
+  by :envvar:`DMR_MAX_CACHE_SIZE`.
+  If you modify parsers or renderers of an endpoint in place,
+  call :meth:`~dmr.negotiation.RequestNegotiator.clear_cache`
+  or :meth:`~dmr.negotiation.ResponseNegotiator.clear_cache`
+  to make the negotiators forget what they have already decided.
+
 
 .. _alternative-json:
 
