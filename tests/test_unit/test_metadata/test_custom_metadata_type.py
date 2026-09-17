@@ -18,10 +18,7 @@ from dmr.test import DMRRequestFactory
 
 class _NoExtrasMetadata(EndpointMetadata):
     @override
-    def semantic_schema_providers(
-        self,
-        controller_cls: type[Controller[BaseSerializer]],
-    ) -> list[ResponseSpecProvider]:
+    def response_spec_providers(self) -> list[ResponseSpecProvider]:
         return []  # do not add any extra specs
 
 
