@@ -284,14 +284,20 @@ to repeat it on every route:
 .. code-block:: python
   :caption: settings.py
 
-  >>> from dmr.plugins.pydantic import PydanticSerializer
-  >>> DMR_SETTINGS = {Settings.serializer: PydanticSerializer}
+  from dmr.plugins.pydantic import PydanticSerializer
+  from dmr.settings import Settings
+
+  DMR_SETTINGS = {Settings.serializer: PydanticSerializer}
 
 .. code-block:: python
   :caption: urls.py
 
-  >>> from dmr.security.django_session import concrete_views
-  >>> path('login/', concrete_views.DjangoSessionSyncController.as_view())
+  from dmr.routing import path
+  from dmr.security.django_session import concrete_views
+
+  urlpatterns = [
+      path('login/', concrete_views.DjangoSessionSyncController.as_view()),
+  ]
 
 An explicit ``serializer=`` still wins over the setting,
 so one route can differ from the rest.
