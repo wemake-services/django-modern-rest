@@ -29,7 +29,7 @@ try:
     from polyfactory.factories import DataclassFactory
 except ImportError:  # pragma: no cover
 
-    def seed_examples() -> None:
+    def seed_example_factory() -> None:
         """Does nothing, since polyfactory is not installed."""
 
     def generate_example(
@@ -51,9 +51,12 @@ else:
         __model__ = Example
         __check_model__ = True
 
-    def seed_examples() -> None:
+    def seed_example_factory() -> None:
         """
-        Seed the example factory, once per OpenAPI schema build.
+        Seed the example factory from settings.
+
+        Call it once per OpenAPI schema build, which is what
+        :meth:`dmr.openapi.OpenAPIContext.seed_examples` does.
 
         All examples of a single schema come from one seeded random stream,
         which is what makes them differ from each other. Seeding again
