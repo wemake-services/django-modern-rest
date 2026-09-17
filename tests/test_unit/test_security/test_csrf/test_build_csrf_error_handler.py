@@ -33,10 +33,10 @@ urlpatterns = [
     path('api/other-csrf/', _CsrfController.as_view(), name='other-csrf'),
     path('other/existing/', _simple_view, name='not-api'),
 ]
-csrf_hander = build_csrf_handler('api/', serializer=PydanticSerializer)
+csrf_handler = build_csrf_handler('api/', serializer=PydanticSerializer)
 
 
-@override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_hander)
+@override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_handler)
 def test_accept_json_returns() -> None:
     """Ensure that Accept: application/json returns JSON 403."""
     dmr_client = DMRClient(enforce_csrf_checks=True)
@@ -51,7 +51,7 @@ def test_accept_json_returns() -> None:
     assert response.json() == snapshot({'detail': [{'msg': 'CSRF Failed.'}]})
 
 
-@override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_hander)
+@override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_handler)
 def test_fallback_html_forbidden() -> None:
     """Ensure that falls back to default Django 403 for non-API paths."""
     dmr_client = DMRClient(enforce_csrf_checks=True)
@@ -65,7 +65,7 @@ def test_fallback_html_forbidden() -> None:
     assert response['Content-Type'].startswith('text/html')
 
 
-@override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_hander)
+@override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_handler)
 def test_unsupported_accept_header(dmr_client: DMRClient) -> None:
     """Ensure that unsupported ``Accept`` returns correct error message."""
     dmr_client = DMRClient(enforce_csrf_checks=True)
