@@ -11,10 +11,8 @@ from dmr.exceptions import (
 )
 from dmr.files import FileBody
 from dmr.internal.enums import stringify
-from dmr.internal.negotiation import (
-    media_by_precedence,
-    negotiatiate_response_validation,
-)
+from dmr.internal.media_compat import media_by_precedence
+from dmr.internal.negotiation import negotiatiate_response_validation
 from dmr.metadata import EndpointMetadata, ResponseModification, ResponseSpec
 from dmr.negotiation import get_conditional_types, request_renderer
 from dmr.serializer import BaseSerializer

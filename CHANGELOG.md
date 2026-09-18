@@ -85,6 +85,16 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Performance improvements
 
+- `RequestNegotiator` and `ResponseNegotiator` now memoize their decisions
+  per header value. Almost every client sends the very same
+  `Content-Type: application/json` and `Accept: application/json` headers,
+  so there's no point in running the negotiation over and over again.
+  Headers that hit the exact match are around x1.2 faster,
+  headers that have to go through the full negotiation
+  (like the `Accept` header that any browser sends)
+  are up to x65 faster for renderers and x15 faster for parsers.
+  The cache is bound by `DMR_MAX_CACHE_SIZE`
+  and is not shared between endpoints, #1455
 - Improved checks performance, now we don't call checks
   that are not defined for an endpoint. For example,
   if there's no throttle, the check function won't even be called.
@@ -101,7 +111,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Improved `NewHeader.to_spec` execution time, #1456
 - Improved the renderer selection for the common cases, #1456
 - Optimized `SyncDjangoCache` and `AsyncDjangoCache` json parsing, #1456
-- Optimized `Controller.as_view()` for cases with `csrf_except=True`,
+- Optimized `Controller.as_view()` for cases with `csrf_exempt=True`,
   which is the default, #1456
 
 ### Features
@@ -110,7 +120,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   default response spec providers. For example, if all controller return
   some specific status code and schema, now it can be configured properly.
   We configure response validation and CSRF response codes there, #1521
-- Added better CSRF support, now controllers with `csrf_exempt = False`
+- Added better CSRF support, now controllers with `csrf_exempt=False`
   get the correct response specs and `build_csrf_handler` allows customizing
   `CSRF_FAILURE_VIEW` Django setting to return actual REST responses,
   instead of HTML ones, #1521
@@ -119,6 +129,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   `AND` and `OR` auth strategies, previously
   it was only possible to represent `OR` strategy, #1521
 - Added `CursorPagination` support to `drm.pagination`, #1428
+- Added `clear_cache` method to `RequestNegotiator` and `ResponseNegotiator`
+  to drop the memoized negotiation results. Needed when parsers
+  or renderers of an endpoint are modified in place, #1455
 - Added class-level overrides for `OpenAPIContext` generators and
   `ConfigMerger`, allowing custom operation ID generation and schema
   customization through context subclasses, #1461, #1487

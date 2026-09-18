@@ -40,11 +40,12 @@ By default we exempt all controllers from CSRF checks, unless:
 1. :attr:`~dmr.controller.Controller.csrf_exempt`
    is set to ``False`` for a specific controller
 2. Endpoints protected by
-   :class:`~dmr.security.django_session.auth.DjangoSessionSyncAuth`
-   or
+   :class:`~dmr.security.django_session.auth.DjangoSessionSyncAuth`,
    :class:`~dmr.security.django_session.auth.DjangoSessionAsyncAuth`
-   will require CSRF as well. Because using Django sessions
-   without CSRF is not secure
+   or :class:`~dmr.security.jwt.auth.CookieJWTSyncAuth`,
+   :class:`~dmr.security.jwt.auth.CookieJWTAsyncAuth`
+   will require CSRF as well. Because using cookies
+   for auth with explicit CSRF is not secure
 
 .. note::
    Detailed CSRF failure reason on response content
@@ -80,11 +81,19 @@ to :func:`~dmr.routing.build_404_handler`:
   the expected error in the default format
 - If not, it will return the regular Django HTML page
 
-We automatically inject CSRF response specs in endpoints for controllers
-with ``csrf_exempt = False`` and unsafe HTTP methods like ``POST``, etc.
+We automatically inject CSRF response specs and security schemes
+in endpoints for controllers with ``csrf_exempt = False``
+and unsafe HTTP methods like ``POST``, etc.
 We do so with the help
 of :data:`~dmr.settings.Settings.semantic_schema_providers` setting
-and :class:`~dmr.security.csrf.CSRFSemanticSchemaProvider` response spec provider.
+and :class:`~dmr.security.csrf.CSRFSemanticSchemaProvider`
+response spec provider.
+
+.. note::
+
+  ``csrf`` security requirement spec is injected with ``AND`` logic.
+  So, if you have existing auth instances, you will have to satisfy
+  both this auth and ``csrf`` requirements. Just like in the runtime.
 
 
 .. _bring-your-own-di:

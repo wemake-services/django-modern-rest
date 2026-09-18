@@ -277,11 +277,18 @@ Response handling
 
   Default: ``[ResponseValidationSpecProvider(), CSRFSemanticSchemaProvider()]``
 
-  Sequence of default system-wide response spec providers.
+  Sequence of default system-wide semantic schema providers.
   By default we use :class:`~dmr.semantic_schema.ResponseValidationSpecProvider`
   and :class:`~dmr.security.csrf.CSRFSemanticSchemaProvider` to provide common
-  responses that can happen with all endpoints.
-  Each endpoint will have these response specs, if their conditions are met.
+  responses and auth specs that can happen with all endpoints.
+  Each endpoint will have these parts of the semantic schema,
+  if their conditions are met.
+
+  For example, ``CSRFSemanticSchemaProvider`` will inject
+  for controller that have ``csrf_exempt=False``:
+  - ``403`` status code response spec
+  - ``csrf`` security requirement to all auth instances
+  - Global ``csrf`` security scheme component
 
   :data:`~dmr.settings.Settings.exclude_semantic_responses` is also respected.
 
@@ -596,10 +603,15 @@ Environment variables
   - To create json encoders and decoders only once
   - To create type validation objects
     in :class:`~dmr.serializer.BaseEndpointOptimizer`
+  - To remember which parser and renderer were negotiated
+    for a given ``Content-Type`` / ``Accept`` header value
+    in :class:`~dmr.negotiation.RequestNegotiator`
+    and :class:`~dmr.negotiation.ResponseNegotiator`
 
   You can control the size / memory usage with this setting.
 
-  Increase if you have a lot of different return types.
+  Increase if you have a lot of different return types
+  or if your clients send a lot of distinct ``Accept`` headers.
 
 .. envvar:: DMR_USE_COMPILED
 

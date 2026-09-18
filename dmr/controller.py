@@ -129,6 +129,9 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         csrf_exempt: Should this controller be exempted from the CSRF check?
             Is ``True`` by default. See :ref:`controller-csrf`
             to configure the CSRF correctly to support REST responses.
+            It is only supported on the controller level, because
+            it has its own per-method logic
+            inside the original Django's CSRF middleware.
         summary: A short summary of what this path item does.
             Defaults to the first paragraph of the controller's docstring.
             Set it to ``None`` to have no summary at all.
