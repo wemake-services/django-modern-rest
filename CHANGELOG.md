@@ -132,9 +132,11 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `clear_cache` method to `RequestNegotiator` and `ResponseNegotiator`
   to drop the memoized negotiation results. Needed when parsers
   or renderers of an endpoint are modified in place, #1455
-- Added class-level overrides for `OpenAPIContext` generators and
+- Added class-level overrides for `OpenAPIContext` generators, registries, and
   `ConfigMerger`, allowing custom operation ID generation and schema
-  customization through context subclasses, #1461, #1487
+  customization through context subclasses, #1461, #1487, #1556
+- Added class-level overrides for `ProblemDetailsModel`
+  in `ProblemDetailsError`, #1556
 - `summary` and `description` of a `PathItem` are now parsed
   from the controller's docstring, just like they are parsed
   from the endpoint's docstring for an `Operation`.

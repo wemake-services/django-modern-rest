@@ -95,7 +95,7 @@ _HTTP_METHODS_WITHOUT_BODY: Final = frozenset((
 
 _PluggableT = TypeVar('_PluggableT', bound=Parser | Renderer)
 _ItemT = TypeVar('_ItemT')
-_HttpSpecCallback = ParamSpec('_HttpSpecCallback')
+_ParamT = ParamSpec('_ParamT')
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -144,9 +144,9 @@ class _HttpSpecValidator:  # noqa: WPS214
     def _check_http_spec_rule(
         self,
         rule: HttpSpec,
-        callback: Callable[_HttpSpecCallback, None],
-        *args: _HttpSpecCallback.args,
-        **kwargs: _HttpSpecCallback.kwargs,
+        callback: Callable[_ParamT, None],
+        *args: _ParamT.args,
+        **kwargs: _ParamT.kwargs,
     ) -> None:
         if rule not in self.metadata.no_validate_http_spec:
             callback(*args, **kwargs)
