@@ -9,6 +9,7 @@ from dmr import Controller
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
+from dmr.security.csrf import CSRFSemanticSchemaProvider
 from dmr.security.jwt import HeaderJWTSyncAuth
 from dmr.settings import Settings
 
@@ -135,6 +136,66 @@ def test_disabled_csrf_no_provider(
                     'api/v1/',
                     [
                         path('custom/', _CustomController.as_view()),
+                    ],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+def test_csrf_schema_custom_error(snapshot: SnapshotAssertion) -> None:
+    """Ensure that schema is correct for controller with custom error type."""
+
+    class _UserController(Controller[PydanticSerializer]):
+        csrf_exempt = False
+        error_model = list[int]
+
+        def post(self) -> str:
+            raise NotImplementedError
+
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [
+                        path('user/', _UserController.as_view()),
+                    ],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+def test_csrf_schema_full_error(
+    snapshot: SnapshotAssertion,
+    settings: LazySettings,
+) -> None:
+    """Ensure that schema is correct for controller with custom error type."""
+    settings.DMR_SETTINGS = {
+        Settings.semantic_schema_providers: [
+            CSRFSemanticSchemaProvider(error_model=list[int]),
+        ],
+    }
+
+    class _UserController(Controller[PydanticSerializer]):
+        csrf_exempt = False
+        error_model = list[int]
+
+        def post(self) -> str:
+            raise NotImplementedError
+
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [
+                        path('user/', _UserController.as_view()),
                     ],
                 ),
             ).convert(),

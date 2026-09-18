@@ -35,6 +35,11 @@ Django supports
 `Cross Site Request Forgery <https://docs.djangoproject.com/en/stable/ref/csrf/>`_
 protection.
 
+We support both ways of enforcing CSRF checks:
+
+- Via :class:`django.middleware.csrf.CsrfViewMiddleware` middleware
+- Via :func:`django.views.decorators.csrf.csrf_protect` decorator
+
 By default we exempt all controllers from CSRF checks, unless:
 
 1. :attr:`~dmr.controller.Controller.csrf_exempt`
@@ -48,6 +53,7 @@ By default we exempt all controllers from CSRF checks, unless:
    for auth with explicit CSRF is not secure
 
 .. note::
+
    Detailed CSRF failure reason on response content
    will be exposed only in debug mode for security reasons.
 
@@ -58,7 +64,7 @@ Here's an example of how you can re-enable CSRF for a specific controller:
   :language: python
   :linenos:
 
-Next: see `CSRF_FAILURE_VIEW <https://docs.djangoproject.com/en/latest/ref/settings/#csrf-failure-view>`_
+Next: see `CSRF_FAILURE_VIEW <https://docs.djangoproject.com/en/stable/ref/settings/#csrf-failure-view>`_
 Django setting value to configure how CSRF failure view will work.
 To do so, we use :func:`~dmr.security.csrf.build_csrf_handler` function:
 
@@ -94,6 +100,24 @@ response spec provider.
   ``csrf`` security requirement spec is injected with ``AND`` logic.
   So, if you have existing auth instances, you will have to satisfy
   both this auth and ``csrf`` requirements. Just like in the runtime.
+
+Customizing error model
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Since we support full :ref:`error customization <customizing-error-messages>`
+we also support this feature for CSRF responses.
+
+To change the error message format you will need:
+
+- Pass needed *format_error* callback parameter
+  to :func:`~dmr.security.csrf.build_csrf_handler`
+- Customize ``error_model`` parameter
+  to :class:`~dmr.security.csrf.CSRFSemanticSchemaProvider`
+  in :data:`~dmr.settings.Settings.semantic_schema_providers` setting
+
+.. seealso:
+
+  https://docs.djangoproject.com/en/6.1/howto/csrf
 
 
 .. _bring-your-own-di:

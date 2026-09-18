@@ -8,6 +8,7 @@ from django.urls import reverse
 from inline_snapshot import snapshot
 
 from dmr import Controller
+from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import path
 from dmr.security.csrf import build_csrf_handler
@@ -26,12 +27,26 @@ class _NoCsrfController(Controller[PydanticFastSerializer]):
         return 'ok'
 
 
+def _errors_as_list(
+    error: str | Exception,
+    *,
+    loc: str | list[str | int] | None = None,
+    error_type: str | ErrorType | None = None,
+) -> list[str]:
+    return [str(error)]
+
+
 urlpatterns = [
     path('api/csrf/', _CsrfController.as_view(), name='csrf'),
     path('api/no-csrf/', _NoCsrfController.as_view(), name='no-csrf'),
 ]
 
 csrf_handler = build_csrf_handler('api/', serializer=PydanticFastSerializer)
+csrf_handler_custom_error = build_csrf_handler(
+    'api/',
+    serializer=PydanticFastSerializer,
+    format_error=_errors_as_list,
+)
 
 
 @override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_handler)
@@ -80,3 +95,19 @@ def test_csrf_controller_exempt() -> None:
     assert response.status_code == HTTPStatus.CREATED, response.content
     assert response.headers['Content-Type'] == 'application/json'
     assert response.json() == snapshot('ok')
+
+
+@override_settings(
+    ROOT_URLCONF=__name__,
+    CSRF_FAILURE_VIEW=csrf_handler_custom_error,
+)
+def test_csrf_controller_custom_error() -> None:
+    """Ensure that custom errors can be returned."""
+    dmr_client = DMRClient(enforce_csrf_checks=True)
+
+    response = dmr_client.post(reverse('csrf'), data={})
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json() == snapshot(['CSRF Failed.'])

@@ -188,7 +188,14 @@ class CSRFSemanticSchemaProvider(ResponseSpecProvider, AuthProvider):
 
         return self._add_new_response(
             csrf_response_spec(
-                controller_cls=None,  # we don't have one at this point yet :(
+                # We can't use `controller_cls` here, because
+                # the error will be returned not from a controller,
+                # but from a `CSRF_FAILURE_VIEW` view.
+                # So, to customize this, you would need to customize
+                # two things: `format_error` in `build_csrf_handler`
+                # and `error_model` parameter to `CSRFSemanticSchemaProvider`
+                # in `semantic_schema_providers`.
+                return_type=self.error_model,
                 status_code=self.status_code,
                 description=self.description,
             ),
@@ -241,6 +248,8 @@ class CSRFSemanticSchemaProvider(ResponseSpecProvider, AuthProvider):
     ) -> list[SecurityRequirement]:
         # We join the security requirements with `AND` logic for this type.
         # It needs both auth and CSRF checks to pass to be able to login.
+        if not own_requirements:
+            return auth_requirements
         if not auth_requirements:
             return own_requirements
         return [
@@ -267,7 +276,7 @@ class CSRFSemanticSchemaProvider(ResponseSpecProvider, AuthProvider):
 
 def csrf_response_spec(
     *,
-    controller_cls: type['Controller[BaseSerializer]'] | None,
+    return_type: Any,
     status_code: HTTPStatus | None = None,
     description: '_StrOrPromise | None' = None,
 ) -> ResponseSpec:
@@ -277,7 +286,7 @@ def csrf_response_spec(
     .. versionadded:: 0.16.0
     """
     return ResponseSpec(
-        ErrorModel if controller_cls is None else controller_cls.error_model,
+        return_type=return_type,
         status_code=(
             HTTPStatus.FORBIDDEN if status_code is None else status_code
         ),

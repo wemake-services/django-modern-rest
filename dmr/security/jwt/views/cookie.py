@@ -222,11 +222,11 @@ class _BaseCookieTokensController(  # noqa: WPS214
         }
 
     @classmethod
-    def csrf_response_specs(cls) -> tuple[ResponseSpec, ...]:
+    def csrf_response_specs(cls) -> list[ResponseSpec]:
         """Describes the response of a failed CSRF check."""
         if not cls.jwt_ensure_csrf:
-            return ()
-        return (csrf_response_spec(controller_cls=cls),)
+            return []
+        return [csrf_response_spec(return_type=cls.error_model)]
 
     def check_csrf(self) -> None:
         """

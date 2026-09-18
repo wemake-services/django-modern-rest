@@ -63,9 +63,11 @@ class AuthProvider:
 
         This method is only called by semantic schema providers
         when generating auth requirements.
-        By default just returns the original auth requirements.
+        By default just raises an error.
         """
-        return auth_requirements
+        raise NotImplementedError(
+            'Must be implemented by semantic auth providers only',
+        )
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)

@@ -72,7 +72,7 @@ class _BaseCookieJWTAuth(ResponseSpecProvider):
                 existing_responses,
             ),
             *self._add_new_response(
-                csrf_response_spec(controller_cls=controller_cls),
+                csrf_response_spec(return_type=controller_cls.error_model),
                 existing_responses,
             ),
         ]
