@@ -2,7 +2,7 @@ import base64
 import dataclasses
 from collections.abc import Callable, Sequence
 from http import HTTPStatus
-from typing import Any, ClassVar, Generic, TypeVar, final
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, final
 
 from django.db import models
 from django.utils.functional import Promise
@@ -266,13 +266,16 @@ class _BaseCursorPaginator(Generic[_DjangoModel]):
         self._queryset = self._queryset.order_by(*self._order_by_fields)
 
 
+_CursorPageType: TypeAlias = type[CursorPage[Any]]
+
+
 class CursorPaginator(
     _BaseCursorPaginator[_DjangoModel],
     Generic[_DjangoModel],
 ):
     """Cursor paginator."""
 
-    page_cls: ClassVar[type[CursorPage[Any]]] = CursorPage
+    page_cls: ClassVar[_CursorPageType] = CursorPage
 
     __slots__ = ()
 
