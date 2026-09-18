@@ -245,8 +245,8 @@ class AnnotationsContext:
             'localns': self._localns,
             'include_extras': self._include_extras,
         }
-        # No cover, because it is only available in 3.14+
-        if self._format is not None:  # pragma: no cover
+        # `format` is only available in 3.14+
+        if self._format is not None:  # pragma: >=3.14 cover
             type_hints_params['format'] = self._format
 
         try:
