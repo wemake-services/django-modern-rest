@@ -144,8 +144,8 @@ class OpenAPIContext:
         """
         return Components(
             # TODO: support other components, not just `schema`:
-            schemas=self.registries.schema.schemas,
-            security_schemes=self.registries.security_scheme.schemes,
+            schemas=self.registries.schema.schemas or None,
+            security_schemes=self.registries.security_scheme.schemes or None,
         )
 
     def register_schema(

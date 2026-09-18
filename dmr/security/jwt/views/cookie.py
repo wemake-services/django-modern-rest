@@ -33,6 +33,7 @@ from dmr.exceptions import EndpointMetadataError, NotAuthenticatedError
 from dmr.headers import HeaderSpec
 from dmr.internal.csrf import ensure_csrf
 from dmr.security.base import NO_STORE_HEADERS
+from dmr.security.csrf import csrf_response_spec
 from dmr.security.jwt.auth.base import USER_LOOKUP_ERRORS, set_request_attrs
 from dmr.security.jwt.auth.cookie import (
     DEFAULT_ACCESS_COOKIE,
@@ -221,17 +222,11 @@ class _BaseCookieTokensController(  # noqa: WPS214
         }
 
     @classmethod
-    def csrf_response_specs(cls) -> tuple[ResponseSpec, ...]:
+    def csrf_response_specs(cls) -> list[ResponseSpec]:
         """Describes the response of a failed CSRF check."""
         if not cls.jwt_ensure_csrf:
-            return ()
-        return (
-            ResponseSpec(
-                return_type=cls.error_model,
-                status_code=HTTPStatus.FORBIDDEN,
-                description='Raised when CSRF check failed',
-            ),
-        )
+            return []
+        return [csrf_response_spec(return_type=cls.error_model)]
 
     def check_csrf(self) -> None:
         """
@@ -310,7 +305,7 @@ class _BaseCookieTokensSyncController(
         """Mark the user of this request as authenticated."""
         set_request_attrs(request, user)
 
-    def make_api_response(self) -> _CookieResponseT:
+    def make_api_response(self) -> _CookieResponseT:  # type: ignore[empty-body]
         """
         Build the response body that is sent next to the cookies.
 
@@ -320,8 +315,7 @@ class _BaseCookieTokensSyncController(
 
         Change the response status code from ``204`` when you return a body.
         """
-        # Tokens live in the cookies, so there is nothing to send here:
-        return None  # type: ignore[return-value]
+        # Tokens live in the cookies, so there is nothing to send here.
 
 
 class _BaseCookieTokensAsyncController(
@@ -337,7 +331,7 @@ class _BaseCookieTokensAsyncController(
         """Mark the user of this request as authenticated."""
         set_request_attrs(request, user)
 
-    async def make_api_response(self) -> _CookieResponseT:
+    async def make_api_response(self) -> _CookieResponseT:  # type: ignore[empty-body]
         """
         Build the response body that is sent next to the cookies.
 
@@ -347,8 +341,7 @@ class _BaseCookieTokensAsyncController(
 
         Change the response status code from ``204`` when you return a body.
         """
-        # Tokens live in the cookies, so there is nothing to send here:
-        return None  # type: ignore[return-value]
+        # Tokens live in the cookies, so there is nothing to send here.
 
 
 class CookieObtainTokensSyncController(

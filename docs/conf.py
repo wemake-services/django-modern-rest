@@ -166,6 +166,7 @@ nitpick_ignore = [
     (_PY_CLASS, 'dmr.security.token.views._ObtainTokenT'),
     (_PY_CLASS, 'dmr.security.token.views._TokenResponseT'),
     (_PY_CLASS, 'dmr.security.token.views._UserT'),
+    (_PY_CLASS, 'dmr.security.csrf._CSRFViewProtocol'),
     (_PY_OBJ, 'dmr.components._HeadersT'),
     (_PY_OBJ, 'dmr.components._QueryT'),
     (_PY_OBJ, 'dmr.components._PathT'),

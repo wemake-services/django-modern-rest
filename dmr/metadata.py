@@ -146,7 +146,7 @@ class ResponseSpec:
     def get_schema(
         self,
         metadata: 'EndpointMetadata',
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> 'Response':
         """
@@ -156,6 +156,10 @@ class ResponseSpec:
         Be careful when overriding the schema generation.
         We don't provide any validations for the returned schema.
         Ensure that it is in sync with the actual response.
+
+        .. versionchanged:: 0.16.0
+            Now accepts *controller_cls* parameter instead of *serializer*.
+
         """
         item_schema = (
             self.streaming and context.config.openapi_version_info >= (3, 2)
@@ -163,7 +167,7 @@ class ResponseSpec:
         return context.generators.response.get_schema(
             self,
             metadata,
-            serializer,
+            controller_cls,
             context,
             schema_field_name='item_schema' if item_schema else 'schema',
             # Despite the fact that it looks like a response,
@@ -714,6 +718,8 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
         Define ``semantic_responses`` to ``False`` on settings
         or controller level to disable semantic responses collection.
         """
+        from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
+
         if not self.semantic_responses:
             return []
 
@@ -724,6 +730,8 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
             *(self.auth or []),
             *(self.throttling_before_auth or []),
             *(self.throttling_after_auth or []),
+            # Default providers, must be last:
+            *resolve_setting(Settings.semantic_schema_providers),
         ]
 
 

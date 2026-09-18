@@ -76,8 +76,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "headers": {
                 "X-Reply": {
                   "schema": {
@@ -100,8 +100,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "headers": {
                 "X-Reply": {
                   "schema": {
@@ -193,8 +193,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "headers": {
                 "X-Reply": {
                   "schema": {
@@ -217,8 +217,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "headers": {
                 "X-Reply": {
                   "schema": {
@@ -309,8 +309,7 @@
           ],
           "title": "_BodyModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

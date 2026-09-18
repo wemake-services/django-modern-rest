@@ -7,6 +7,7 @@ from typing_extensions import override
 
 from dmr import Controller, modify
 from dmr.endpoint import Endpoint
+from dmr.metadata import EndpointMetadata
 from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.openapi.objects import (
     Components,
@@ -34,9 +35,12 @@ class _WrongAuth(SyncAuth):
     ) -> None:
         raise NotImplementedError
 
-    @property
     @override
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> dict[str, SecurityScheme | Reference]:
         return {
             'wrong': SecurityScheme(
                 type='http',
@@ -44,10 +48,13 @@ class _WrongAuth(SyncAuth):
             ),
         }
 
-    @property
     @override
-    def security_requirement(self) -> SecurityRequirement:
-        return SecurityRequirement()
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> list[SecurityRequirement]:
+        return []
 
     @property
     @override

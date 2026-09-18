@@ -9,6 +9,7 @@ from typing_extensions import override
 from dmr import Controller
 from dmr.endpoint import Endpoint
 from dmr.exceptions import NotAuthenticatedError
+from dmr.metadata import EndpointMetadata
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.security import SyncAuth
 from dmr.serializer import BaseSerializer
@@ -31,8 +32,12 @@ class BaseProxyHeaderAuth:
         self.header_name = header_name
         self.security_scheme_name = security_scheme_name
 
-    @property
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> dict[str, SecurityScheme | Reference]:
+        """Provides a security schema definition."""
         return {
             self.security_scheme_name: SecurityScheme(
                 type='apiKey',
@@ -42,9 +47,12 @@ class BaseProxyHeaderAuth:
             ),
         }
 
-    @property
-    def security_requirement(self) -> SecurityRequirement:
-        return {self.security_scheme_name: []}
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> list[SecurityRequirement]:
+        return [{self.security_scheme_name: []}]
 
     @property
     def www_authenticate_challenge(self) -> str | None:

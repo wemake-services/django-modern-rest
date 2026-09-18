@@ -13,6 +13,7 @@ from dmr.openapi.objects import (
 )
 
 if TYPE_CHECKING:
+    from dmr.controller import Controller
     from dmr.metadata import EndpointMetadata, ResponseSpec
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.serializer import BaseSerializer
@@ -27,15 +28,21 @@ class ResponseGenerator:
     def __call__(
         self,
         metadata: 'EndpointMetadata',
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> Responses:
-        """Generate responses from response specs."""
+        """
+        Generate responses from response specs.
+
+        .. versionchanged:: 0.16.0
+            Now accepts *controller_cls* parameter instead of *serializer*.
+
+        """
         return {
             # Delegate call to `ResponseSpec`, so it can change
             # how the spec is generated.
             str(status_code.value): response_spec.get_schema(
                 metadata,
-                serializer,
+                controller_cls,
                 self._context,
             )
             for status_code, response_spec in metadata.responses.items()
@@ -45,7 +52,7 @@ class ResponseGenerator:
         self,
         response_spec: 'ResponseSpec',
         metadata: 'EndpointMetadata',
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
         *,
         schema_field_name: Literal['schema', 'item_schema'] = 'schema',
@@ -57,8 +64,20 @@ class ResponseGenerator:
         Can be customized in ``ResponseSpec`` subclasses.
         """
         headers: dict[str, Header | Reference] = {}
-        headers.update(self._get_headers(response_spec, serializer, context))
-        headers.update(self._get_cookies(response_spec, serializer, context))
+        headers.update(
+            self._get_headers(
+                response_spec,
+                controller_cls.serializer,
+                context,
+            ),
+        )
+        headers.update(
+            self._get_cookies(
+                response_spec,
+                controller_cls.serializer,
+                context,
+            ),
+        )
 
         return Response(
             description=(
@@ -75,7 +94,7 @@ class ResponseGenerator:
             headers=headers or None,
             content=self._get_content(
                 response_spec,
-                serializer,
+                controller_cls.serializer,
                 context,
                 metadata,
                 schema_field_name=schema_field_name,

@@ -298,8 +298,6 @@ def build_404_handler(
         https://docs.djangoproject.com/en/stable/ref/views/#the-404-page-not-found-view
 
     """
-    from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
-    from dmr.response import build_response  # noqa: PLC0415
     from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
     combined = (prefix, *prefixes)
@@ -318,6 +316,9 @@ def build_404_handler(
         request: HttpRequest,
         exception: Exception,
     ) -> HttpResponse:
+        from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
+        from dmr.response import build_response  # noqa: PLC0415
+
         if not request.path.startswith(all_prefixes):
             return defaults.page_not_found(request, exception)
 
@@ -380,8 +381,6 @@ def build_500_handler(
         https://docs.djangoproject.com/en/stable/ref/views/#the-500-server-error-view
 
     """
-    from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
-    from dmr.response import build_response  # noqa: PLC0415
     from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
     combined = (prefix, *prefixes)
@@ -397,6 +396,9 @@ def build_500_handler(
     default_renderer = next(iter(renderer_by_type.values()))
 
     def factory(request: HttpRequest) -> HttpResponse:
+        from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
+        from dmr.response import build_response  # noqa: PLC0415
+
         if not request.path.startswith(all_prefixes):
             return defaults.server_error(request)
 

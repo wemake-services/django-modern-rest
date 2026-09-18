@@ -5,7 +5,9 @@ import pytest
 from django.contrib.auth.models import User
 from django.http import HttpRequest
 
+from dmr import Controller
 from dmr.exceptions import NotAuthenticatedError
+from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.token import (
     CookieTokenAsyncAuth,
     CookieTokenSyncAuth,
@@ -26,14 +28,20 @@ _AsyncAuthType: TypeAlias = (
 )
 
 
+class _Controller(Controller[PydanticSerializer]):
+    def get(self) -> str:
+        raise NotImplementedError
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'auth_type',
     [HeaderTokenSyncAuth, CookieTokenSyncAuth],
 )
 def test_sync_auth_custom_hashing(
-    auth_type: _SyncAuthType,
     admin_user: User,
+    *,
+    auth_type: _SyncAuthType,
 ) -> None:
     """Ensures each sync auth class forwards its token customizations."""
     token, raw_token = Token.issue(
@@ -59,7 +67,12 @@ def test_sync_auth_custom_hashing(
     assert request.user == admin_user
     assert request_token(request) == token
     assert isinstance(token.last_used_at, dt.datetime)
-    assert auth.security_requirement == {_SCHEME_NAME: []}
+    assert auth.security_requirements(
+        _Controller.api_endpoints['GET'].metadata,
+        _Controller,
+    ) == [
+        {_SCHEME_NAME: []},
+    ]
 
 
 @pytest.mark.django_db
@@ -75,10 +88,10 @@ def test_sync_auth_custom_hashing(
     ],
 )
 def test_sync_auth_rejects_wrong_hashing(
-    auth_type: _SyncAuthType,
     admin_user: User,
     *,
     customize_issue: bool,
+    auth_type: _SyncAuthType,
 ) -> None:
     """Ensures mismatched sync issue and auth settings are rejected."""
     if customize_issue:
@@ -139,7 +152,12 @@ async def test_async_auth_custom_hashing(
     assert await request.auser() == admin_user
     assert request_token(request) == token
     assert isinstance(token.last_used_at, dt.datetime)
-    assert auth.security_requirement == {_SCHEME_NAME: []}
+    assert auth.security_requirements(
+        _Controller.api_endpoints['GET'].metadata,
+        _Controller,
+    ) == [
+        {_SCHEME_NAME: []},
+    ]
 
 
 @pytest.mark.asyncio

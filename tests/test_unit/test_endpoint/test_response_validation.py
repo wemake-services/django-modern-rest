@@ -129,7 +129,7 @@ def test_validate_status_code(
             {
                 'msg': (
                     'Returned status code 200 is not specified in the list '
-                    'of allowed status codes: [201, 422, 406]'
+                    'of allowed status codes: [201, 406, 422]'
                 ),
                 'type': 'value_error',
             },

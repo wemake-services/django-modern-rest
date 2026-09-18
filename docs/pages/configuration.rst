@@ -273,6 +273,41 @@ Response handling
   will cancel all controller and settings level values
   and enable all responses back again.
 
+.. data:: dmr.settings.Settings.semantic_schema_providers
+
+  Default: ``[ResponseValidationSpecProvider(), CSRFSemanticSchemaProvider()]``
+
+  Sequence of default system-wide semantic schema providers.
+  By default we use :class:`~dmr.semantic_schema.ResponseValidationSpecProvider`
+  and :class:`~dmr.security.csrf.CSRFSemanticSchemaProvider` to provide common
+  responses and auth specs that can happen with all endpoints.
+  Each endpoint will have these parts of the semantic schema,
+  if their conditions are met.
+
+  For example, ``CSRFSemanticSchemaProvider`` will inject
+  for controller that have ``csrf_exempt=False``:
+  - ``403`` status code response spec
+  - ``csrf`` security requirement to all auth instances
+  - Global ``csrf`` security scheme component
+
+  :data:`~dmr.settings.Settings.exclude_semantic_responses` is also respected.
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> from http import HTTPStatus
+    >>> from dmr.security.csrf import CSRFSemanticSchemaProvider
+
+    >> DMR_SETTINGS = {
+    ...    Settings.semantic_schema_providers: [
+    ...        CSRFSemanticSchemaProvider(description='CSRF error'),
+    ...    ],
+    ... }
+
+  You can customize instances of the response spec providers or add new ones.
+
+  .. versionadded:: 0.16.0
+
 
 Error handling
 --------------
@@ -436,6 +471,8 @@ Streaming
     >>> DMR_SETTINGS = {
     ...     Settings.validate_events: False,
     ... }
+
+  We recommend setting this value to ``not DEBUG``.
 
 
 OpenAPI

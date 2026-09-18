@@ -35,7 +35,7 @@ def test_json_view(dmr_rf: DMRRequestFactory) -> None:
         'openapi': '3.1.0',
         'info': {'title': 'Your Awesome Project', 'version': '0.1.0'},
         'paths': {},
-        'components': {'schemas': {}, 'securitySchemes': {}},
+        'components': {},
     })
 
 
@@ -50,7 +50,7 @@ def test_yaml_view(dmr_rf: DMRRequestFactory) -> None:
     assert response.status_code == HTTPStatus.OK
     assert response['Content-Type'] == 'application/yaml'
     assert yaml.safe_load(response.content) == snapshot({
-        'components': {'schemas': {}, 'securitySchemes': {}},
+        'components': {},
         'info': {'title': 'Your Awesome Project', 'version': '0.1.0'},
         'openapi': '3.1.0',
         'paths': {},

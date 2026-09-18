@@ -11,7 +11,7 @@ from typing_extensions import override
 from dmr.exceptions import NotAuthenticatedError
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
-from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
+from dmr.semantic_schema import AuthProvider
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -105,7 +105,7 @@ def _combined_www_authenticate(
     return ', '.join(challenges) or None
 
 
-class _BaseAuth(ResponseSpecProvider):
+class _BaseAuth(ResponseSpecProvider, AuthProvider):
     """
     Base class for all auth instances.
 
@@ -119,18 +119,6 @@ class _BaseAuth(ResponseSpecProvider):
     """
 
     __slots__ = ()
-
-    @property
-    @abstractmethod
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
-        """Provides a security schema definition."""
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def security_requirement(self) -> SecurityRequirement:
-        """Provides a security schema usage requirement."""
-        raise NotImplementedError
 
     @property
     @abstractmethod

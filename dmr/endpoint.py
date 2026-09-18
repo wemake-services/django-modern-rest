@@ -261,23 +261,29 @@ class Endpoint:  # noqa: WPS214
         self,
         path: str,
         pattern: URLPattern,
-        controller_name: str,
-        serializer: type[BaseSerializer],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
         router: 'Router',
     ) -> Operation:
-        """Build an OpenAPI Operation from an endpoint."""
+        """
+        Build an OpenAPI Operation from an endpoint.
+
+        .. versionchanged:: 0.16.0
+            Now accepts *controller_cls* parameter instead
+            of *controller_name* and *serializer*.
+
+        """
         operation_id = self.get_operation_id(
             path,
-            controller_name,
-            serializer,
+            controller_cls.__qualname__,
+            controller_cls.serializer,
             context,
         )
         request_body, params_list = context.generators.component_parsers(
             operation_id,
             pattern,
             self.metadata,
-            serializer,
+            controller_cls.serializer,
         )
 
         router_metadata = router.metadata_for(path)
@@ -302,15 +308,18 @@ class Endpoint:  # noqa: WPS214
                 self.metadata.deprecated or router_metadata.deprecated or None
             ),
             security=context.generators.security_scheme(
-                self.metadata.auth,
-                serializer,
+                self.metadata,
+                controller_cls,
             ),
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
             callbacks=self.metadata.callbacks,
             operation_id=operation_id,
             request_body=request_body,
-            responses=context.generators.response(self.metadata, serializer),
+            responses=context.generators.response(
+                self.metadata,
+                controller_cls,
+            ),
             parameters=params_list,
         )
 

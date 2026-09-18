@@ -66,6 +66,7 @@ from typing_extensions import override
 from dmr.openapi import OpenAPIConfig
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import build_404_handler, build_500_handler
+from dmr.security.csrf import build_csrf_handler
 from dmr.settings import Settings, clear_settings_cache
 
 if TYPE_CHECKING:
@@ -352,6 +353,11 @@ class _BaseBuilder:  # noqa: WPS214
             # Needed for HTTP Basic auth example:
             HTTP_BASIC_USERNAME='admin',
             HTTP_BASIC_PASSWORD='pass',  # noqa: S106
+            # Needed for CSRF integration example:
+            CSRF_FAILURE_VIEW=build_csrf_handler(
+                'api/',
+                serializer=PydanticSerializer,
+            ),
         )
         django.setup()
 

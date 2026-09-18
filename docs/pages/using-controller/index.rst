@@ -179,7 +179,8 @@ If you need granular control, you can change anything.
   to support custom HTTP methods like ``QUERY``
   or your custom DSLs on top of HTTP
 - :attr:`~dmr.controller.Controller.csrf_exempt`
-  to customize whether or not this controller is exempted from CSRF
+  to customize whether or not this controller is exempted from CSRF.
+  See :ref:`controller-csrf` for more info
 - :attr:`~dmr.controller.Controller.controller_validator_cls`
   to customize how this controller is validated at import time
 - :attr:`~dmr.controller.Controller.annotations_context`

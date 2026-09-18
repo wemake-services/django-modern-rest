@@ -56,8 +56,8 @@ def test_wrong_global_response(dmr_rf: DMRRequestFactory) -> None:
         'detail': [
             {
                 'msg': (
-                    'Returned status code 401 is not specified '
-                    'in the list of allowed status codes: [201, 422, 406]'
+                    'Returned status code 401 is not specified in the list '
+                    'of allowed status codes: [201, 406, 422]'
                 ),
                 'type': 'value_error',
             },
