@@ -151,7 +151,11 @@ class Router:
                 continue  # It can be private for a reason.
             paths_items[path] = path_item
 
-        return context.config_merger(paths_items, context.get_components())
+        # Sort paths, so the schema does not depend on the url order:
+        return context.config_merger(
+            dict(sorted(paths_items.items())),
+            context.get_components(),
+        )
 
     def include(
         self,

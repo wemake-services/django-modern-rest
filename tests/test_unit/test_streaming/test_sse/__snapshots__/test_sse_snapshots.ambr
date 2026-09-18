@@ -32,13 +32,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -237,13 +237,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -373,13 +373,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -428,13 +428,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },

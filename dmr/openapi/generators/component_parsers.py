@@ -209,7 +209,8 @@ class ComponentParserGenerator:
         schema: RequestBody,
     ) -> dict[str, MediaType | Reference]:
         new_content: dict[str, MediaType | Reference] = {}
-        for media_name, media_type in new_schema.content.items():
+        # Sorted by content type, custom components can return any order:
+        for media_name, media_type in sorted(new_schema.content.items()):
             # We've just built these bodies from component parsers,
             # so all of them have inline media types, never references:
             assert isinstance(media_type, MediaType)  # noqa: S101

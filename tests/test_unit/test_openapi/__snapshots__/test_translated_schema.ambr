@@ -17,18 +17,18 @@
             "200": {
               "description": "Response descr",
               "headers": {
-                "X-Translated": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "Header descr",
-                  "required": true
-                },
                 "Set-Cookie: translated-cookie": {
                   "schema": {
                     "type": "string"
                   },
                   "description": "Cookie descr",
+                  "required": true
+                },
+                "X-Translated": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "Header descr",
                   "required": true
                 }
               },

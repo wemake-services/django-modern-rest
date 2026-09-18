@@ -1,5 +1,6 @@
 import dataclasses
 from http import HTTPStatus
+from operator import attrgetter
 from typing import TYPE_CHECKING, Literal
 
 from dmr.openapi.mappers.example import generate_example, set_generated_example
@@ -45,7 +46,10 @@ class ResponseGenerator:
                 controller_cls,
                 self._context,
             )
-            for status_code, response_spec in metadata.responses.items()
+            # Sorted by status code, not by the definition order:
+            for status_code, response_spec in sorted(
+                metadata.responses.items(),
+            )
         }
 
     def get_schema(
@@ -91,7 +95,8 @@ class ResponseGenerator:
                 else str(response_spec.summary)
             ),
             links=response_spec.links,
-            headers=headers or None,
+            # Sorted by header name, not by the definition order:
+            headers=dict(sorted(headers.items())) or None,
             content=self._get_content(
                 response_spec,
                 controller_cls.serializer,
@@ -179,6 +184,7 @@ class ResponseGenerator:
             get_conditional_types(response_spec.return_type, ()) or {}
         )
         return {
+            # Sorted by content type, not by the renderers order:
             renderer.content_type: MediaType(
                 **{  # type: ignore[arg-type]
                     schema_field_name: context.generators.schema(
@@ -191,7 +197,10 @@ class ResponseGenerator:
                     ),
                 },
             )
-            for renderer in metadata.renderers.values()
+            for renderer in sorted(
+                metadata.renderers.values(),
+                key=attrgetter('content_type'),
+            )
             if (
                 not response_spec.limit_to_content_types
                 or renderer.content_type in response_spec.limit_to_content_types

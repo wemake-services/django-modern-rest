@@ -113,87 +113,6 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/v1/standard/": {
-        "get": {
-          "operationId": "getStandardControllerApiV1Standard",
-          "responses": {
-            "200": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "items": {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
-                }
-              }
-            },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "post": {
-          "operationId": "postStandardControllerApiV1Standard",
-          "responses": {
-            "201": {
-              "description": "Created",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  }
-                }
-              }
-            },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
       "/api/v1/meta/": {
         "get": {
           "operationId": "getMetaControllerApiV1Meta",
@@ -254,6 +173,87 @@
                 "application/json": {
                   "schema": {
                     "type": "null"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/standard/": {
+        "get": {
+          "operationId": "getStandardControllerApiV1Standard",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "items": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "post": {
+          "operationId": "postStandardControllerApiV1Standard",
+          "responses": {
+            "201": {
+              "description": "Created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
                   }
                 }
               }

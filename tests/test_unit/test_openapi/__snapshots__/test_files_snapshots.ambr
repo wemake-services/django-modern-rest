@@ -15,13 +15,13 @@
             "200": {
               "description": "OK",
               "headers": {
-                "Content-Length": {
+                "Content-Disposition": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Content-Disposition": {
+                "Content-Length": {
                   "schema": {
                     "type": "string"
                   },
@@ -311,6 +311,12 @@
           "operationId": "postConditionalFileControllerConditionalFiles",
           "requestBody": {
             "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
               "multipart/form-data": {
                 "schema": {
                   "properties": {
@@ -329,12 +335,6 @@
                     "second_file"
                   ],
                   "title": "_SeveralSimpleFiles"
-                }
-              },
-              "application/octet-stream": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
                 }
               }
             },
@@ -1104,7 +1104,7 @@
           "operationId": "putSeveralParsersControllerSeveralParsers",
           "requestBody": {
             "content": {
-              "multipart/form-data": {
+              "application/json": {
                 "schema": {
                   "additionalProperties": {
                     "type": "string"
@@ -1112,7 +1112,7 @@
                   "type": "object"
                 }
               },
-              "application/json": {
+              "multipart/form-data": {
                 "schema": {
                   "additionalProperties": {
                     "type": "string"

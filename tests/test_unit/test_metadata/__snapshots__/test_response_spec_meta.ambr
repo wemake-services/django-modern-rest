@@ -25,6 +25,12 @@
             "200": {
               "description": "OK",
               "headers": {
+                "Set-Cookie: x-test": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
                 "X-Reply": {
                   "schema": {
                     "type": "string"
@@ -32,12 +38,6 @@
                   "required": true
                 },
                 "X-Success": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "required": true
-                },
-                "Set-Cookie: x-test": {
                   "schema": {
                     "type": "string"
                   },
@@ -55,13 +55,13 @@
             "400": {
               "description": "Raised when request components cannot be parsed",
               "headers": {
-                "X-Reply": {
+                "Set-Cookie: x-test": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Set-Cookie: x-test": {
+                "X-Reply": {
                   "schema": {
                     "type": "string"
                   },
@@ -79,13 +79,13 @@
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "headers": {
-                "X-Reply": {
+                "Set-Cookie: x-test": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Set-Cookie: x-test": {
+                "X-Reply": {
                   "schema": {
                     "type": "string"
                   },
@@ -103,13 +103,13 @@
             "422": {
               "description": "Raised when returned response does not match the response schema",
               "headers": {
-                "X-Reply": {
+                "Set-Cookie: x-test": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Set-Cookie: x-test": {
+                "X-Reply": {
                   "schema": {
                     "type": "string"
                   },
@@ -142,6 +142,12 @@
             "200": {
               "description": "OK",
               "headers": {
+                "Set-Cookie: x-test": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
                 "X-Reply": {
                   "schema": {
                     "type": "string"
@@ -149,12 +155,6 @@
                   "required": true
                 },
                 "X-Success": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "required": true
-                },
-                "Set-Cookie: x-test": {
                   "schema": {
                     "type": "string"
                   },
@@ -172,13 +172,13 @@
             "400": {
               "description": "Raised when request components cannot be parsed",
               "headers": {
-                "X-Reply": {
+                "Set-Cookie: x-test": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Set-Cookie: x-test": {
+                "X-Reply": {
                   "schema": {
                     "type": "string"
                   },
@@ -196,13 +196,13 @@
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "headers": {
-                "X-Reply": {
+                "Set-Cookie: x-test": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Set-Cookie: x-test": {
+                "X-Reply": {
                   "schema": {
                     "type": "string"
                   },
@@ -220,13 +220,13 @@
             "422": {
               "description": "Raised when returned response does not match the response schema",
               "headers": {
-                "X-Reply": {
+                "Set-Cookie: x-test": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Set-Cookie: x-test": {
+                "X-Reply": {
                   "schema": {
                     "type": "string"
                   },
