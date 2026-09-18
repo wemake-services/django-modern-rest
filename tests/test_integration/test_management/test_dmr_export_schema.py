@@ -106,6 +106,7 @@ def test_export_schema_yaml(
     ],
 )
 def test_export_schema_invalid_input(
+    *,
     schema_path: str,
     expected_exception: type[Exception],
 ) -> None:

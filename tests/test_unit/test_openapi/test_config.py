@@ -13,7 +13,10 @@ from dmr.routing import Router
         '4.0.0',
     ],
 )
-def test_supported_openapi_versions(openapi_version: str) -> None:
+def test_supported_openapi_versions(
+    *,
+    openapi_version: str,
+) -> None:
     """Ensures that ``3.1.0`` and newer versions are allowed."""
     config = OpenAPIConfig(
         title='my title',
@@ -33,7 +36,10 @@ def test_supported_openapi_versions(openapi_version: str) -> None:
         '2.0.0',
     ],
 )
-def test_unsupported_openapi_versions(openapi_version: str) -> None:
+def test_unsupported_openapi_versions(
+    *,
+    openapi_version: str,
+) -> None:
     """Ensures that versions older than ``3.1.0`` are rejected."""
     with pytest.raises(ValueError, match=r'versions before 3\.1\.0'):
         OpenAPIConfig(

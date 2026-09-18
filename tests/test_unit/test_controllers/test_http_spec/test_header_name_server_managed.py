@@ -36,6 +36,7 @@ class _BodyModel(pydantic.BaseModel):
     ],
 )
 def test_header_name_server_managed(
+    *,
     header: str,
 ) -> None:
     """Ensure that responses must not have server managed headers."""

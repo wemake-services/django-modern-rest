@@ -125,8 +125,9 @@ def test_sync_auth_rejects_wrong_hashing(
     [HeaderTokenAsyncAuth, CookieTokenAsyncAuth],
 )
 async def test_async_auth_custom_hashing(
-    auth_type: _AsyncAuthType,
     admin_user: User,
+    *,
+    auth_type: _AsyncAuthType,
 ) -> None:
     """Ensures each async auth class forwards its token customizations."""
     token, raw_token = await Token.aissue(
@@ -174,9 +175,9 @@ async def test_async_auth_custom_hashing(
     ],
 )
 async def test_async_auth_rejects_wrong_hashing(
-    auth_type: _AsyncAuthType,
     admin_user: User,
     *,
+    auth_type: _AsyncAuthType,
     customize_issue: bool,
 ) -> None:
     """Ensures mismatched async issue and auth settings are rejected."""

@@ -13,7 +13,10 @@ def _encode(paginator: CursorPaginator[Entry], *to_encode: str) -> str:
 
 
 @pytest.mark.parametrize('per_page', [0, -1])
-def test_invalid_per_page_raises_value_error(per_page: int) -> None:
+def test_invalid_per_page_raises_value_error(
+    *,
+    per_page: int,
+) -> None:
     """`per_page` must be a positive integer."""
     with pytest.raises(ValueError, match='per_page'):
         CursorPaginator(
@@ -29,7 +32,10 @@ def test_invalid_per_page_raises_value_error(per_page: int) -> None:
         pytest.param('////', id='invalid-utf-8'),
     ],
 )
-def test_undecodable_cursor_raises(cursor: str) -> None:
+def test_undecodable_cursor_raises(
+    *,
+    cursor: str,
+) -> None:
     """Cursors that cannot be decoded are rejected."""
     paginator = CursorPaginator(
         Entry.objects.none().order_by('rank'),

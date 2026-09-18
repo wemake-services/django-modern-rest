@@ -116,6 +116,7 @@ def generator(openapi_context: OpenAPIContext) -> OperationIdGenerator:
 )
 def test_tokenize_path(
     generator: OperationIdGenerator,
+    *,
     input_path: str,
     expected_tokens: list[str],
 ) -> None:

@@ -408,6 +408,7 @@ async def test_blocklist_async_add_no_jti(admin_user: User) -> None:
     ],
 )
 def test_blocklist_requires_jti_claim(
+    *,
     auth_class: type[MyJWTSyncAuth] | type[MyJWTAsyncAuth],
     require_claims: Sequence[str] | None,
     expected: list[str],
