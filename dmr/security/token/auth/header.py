@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Final
 
 from django.http import HttpRequest
+from django.views.decorators.debug import sensitive_variables
 
 from dmr.metadata import EndpointMetadata
 from dmr.openapi.objects import Reference, SecurityScheme
@@ -59,6 +60,7 @@ class _BaseHeaderTokenAuth:
             ),
         }
 
+    @sensitive_variables()
     def get_raw_token(self, request: HttpRequest) -> str | None:
         """Read the raw token from the request header, stripping any prefix."""
         header_value = request.headers.get(self.header_name)

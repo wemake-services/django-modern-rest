@@ -3,6 +3,7 @@ import importlib
 from typing import TYPE_CHECKING, Any, Generic, Self
 
 from django.http import HttpRequest
+from django.views.decorators.debug import sensitive_variables
 from typing_extensions import TypeVar, override
 
 from dmr.exceptions import NotAuthenticatedError
@@ -113,6 +114,7 @@ class BaseTokenSyncAuth(_BaseTokenAuth[TokenLikeSync[Any]], SyncAuth):  # noqa: 
     __slots__ = ()
 
     @override
+    @sensitive_variables()
     def __call__(
         self,
         endpoint: 'Endpoint',
@@ -125,6 +127,7 @@ class BaseTokenSyncAuth(_BaseTokenAuth[TokenLikeSync[Any]], SyncAuth):  # noqa: 
         self.authenticate(controller.request, raw_token)
         return self
 
+    @sensitive_variables()
     def authenticate(
         self,
         request: HttpRequest,
@@ -152,6 +155,7 @@ class BaseTokenSyncAuth(_BaseTokenAuth[TokenLikeSync[Any]], SyncAuth):  # noqa: 
         assert self._token_model  # noqa: S101
         return self._token_model
 
+    @sensitive_variables()
     def get_token(self, raw_token: str) -> TokenLikeSync:
         """Look up and validate the token from the DB."""
         token = self.token_model.find_raw(
@@ -191,6 +195,7 @@ class BaseTokenAsyncAuth(_BaseTokenAuth[TokenLikeAsync[Any]], AsyncAuth):  # noq
     __slots__ = ()
 
     @override
+    @sensitive_variables()
     async def __call__(
         self,
         endpoint: 'Endpoint',
@@ -203,6 +208,7 @@ class BaseTokenAsyncAuth(_BaseTokenAuth[TokenLikeAsync[Any]], AsyncAuth):  # noq
         await self.authenticate(controller.request, raw_token)
         return self
 
+    @sensitive_variables()
     async def authenticate(  # noqa: WPS217
         self,
         request: HttpRequest,
@@ -230,6 +236,7 @@ class BaseTokenAsyncAuth(_BaseTokenAuth[TokenLikeAsync[Any]], AsyncAuth):  # noq
         assert self._token_model  # noqa: S101
         return self._token_model
 
+    @sensitive_variables()
     async def get_token(self, raw_token: str) -> TokenLikeAsync:
         """Look up and validate the token from the DB."""
         token = await self.token_model.afind_raw(
