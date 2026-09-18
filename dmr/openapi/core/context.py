@@ -59,6 +59,8 @@ class OpenAPIContext:
 
     .. versionchanged:: 0.16.0
         Added the :meth:`seed_examples` hook.
+        Now all used classes can be customized
+        via subclassing and overriding class-level variables.
 
     """
 
@@ -89,6 +91,16 @@ class OpenAPIContext:
     )
     #: Generates parameters from models.
     parameter_cls: ClassVar[type[ParameterGenerator]] = ParameterGenerator
+    #: Operation ID registry.
+    operation_id_registry_cls: ClassVar[type[OperationIdRegistry]] = (
+        OperationIdRegistry
+    )
+    #: Schema registry.
+    schema_registry_cls: ClassVar[type[SchemaRegistry]] = SchemaRegistry
+    #: Security schemes registry.
+    security_scheme_registry_cls: ClassVar[type[SecuritySchemeRegistry]] = (
+        SecuritySchemeRegistry
+    )
 
     def __init__(
         self,
@@ -102,9 +114,9 @@ class OpenAPIContext:
 
         # Initialize registries:
         self.registries = RegistryContainer(
-            operation_id=OperationIdRegistry(),
-            schema=SchemaRegistry(),
-            security_scheme=SecuritySchemeRegistry(),
+            operation_id=self.operation_id_registry_cls(),
+            schema=self.schema_registry_cls(),
+            security_scheme=self.security_scheme_registry_cls(),
         )
 
         # Initialize generators:

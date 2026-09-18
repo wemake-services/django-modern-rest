@@ -272,6 +272,8 @@ class CursorPaginator(
 ):
     """Cursor paginator."""
 
+    page_cls: ClassVar[type[CursorPage]] = CursorPage
+
     __slots__ = ()
 
     def page(self, cursor: str | None = None) -> CursorPage[_DjangoModel]:
@@ -295,7 +297,7 @@ class CursorPaginator(
             )
             next_cursor = self.encode_cursor(cursor_attrs)
 
-        return CursorPage(
+        return self.page_cls(
             next_cursor=next_cursor,
             objects_list=objects_list,
         )
@@ -331,7 +333,7 @@ class CursorPaginator(
             )
             next_cursor = self.encode_cursor(cursor_attrs)
 
-        return CursorPage(
+        return self.page_cls(
             next_cursor=next_cursor,
             objects_list=objects_list,
         )
