@@ -63,7 +63,7 @@ def test_throttle_replace_empty(
     reason='`copy.replace` is added in Python 3.13',
 )
 @pytest.mark.parametrize('throttle_cls', [SyncThrottle, AsyncThrottle])
-def test_throttle_copy_replace(
+def test_throttle_copy_replace(  # pragma: no cover
     *,
     throttle_cls: type[SyncThrottle | AsyncThrottle],
 ) -> None:
