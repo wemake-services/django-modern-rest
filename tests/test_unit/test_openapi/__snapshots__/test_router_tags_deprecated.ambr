@@ -159,8 +159,7 @@
           ],
           "title": "_SimpleModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

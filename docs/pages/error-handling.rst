@@ -287,7 +287,7 @@ for different content types.
 But, there are more places that can have their own error schemas:
 
 1. :func:`~dmr.security.csrf.build_csrf_handler`
-   and :class:`~dmr.security.csrf.CsrfResponseSpecProvider`
+   and :class:`~dmr.security.csrf.CSRFSemanticSchemaProvider`
    if you are using CSRF controllers
 2. :func:`~dmr.routing.build_404_handler` for default ``404`` responses
 3. :func:`~dmr.routing.build_500_handler` for default ``500`` responses

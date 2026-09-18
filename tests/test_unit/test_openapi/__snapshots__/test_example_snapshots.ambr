@@ -166,8 +166,7 @@
             }
           ]
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -372,8 +371,7 @@
           ],
           "title": "_UserModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -504,8 +502,7 @@
             "field": "example@email.com"
           }
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

@@ -117,8 +117,7 @@
           ],
           "title": "_SimpleModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

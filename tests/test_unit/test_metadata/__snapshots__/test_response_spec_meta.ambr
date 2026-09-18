@@ -309,8 +309,7 @@
           ],
           "title": "_BodyModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

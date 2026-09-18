@@ -177,8 +177,7 @@
           ],
           "title": "_UserStatus"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

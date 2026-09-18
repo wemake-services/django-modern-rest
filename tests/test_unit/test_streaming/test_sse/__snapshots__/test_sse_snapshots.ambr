@@ -210,8 +210,7 @@
           ],
           "title": "_UserEvent"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -347,8 +346,7 @@
             "value": "data: test"
           }
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -587,8 +585,7 @@
           "title": "SSEvent",
           "description": "Server sent event payload."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

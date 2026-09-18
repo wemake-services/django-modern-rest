@@ -275,11 +275,11 @@ Response handling
 
 .. data:: dmr.settings.Settings.semantic_schema_providers
 
-  Default: ``[ResponseValidationSpecProvider(), CsrfResponseSpecProvider()]``
+  Default: ``[ResponseValidationSpecProvider(), CSRFSemanticSchemaProvider()]``
 
   Sequence of default system-wide response spec providers.
   By default we use :class:`~dmr.semantic_schema.ResponseValidationSpecProvider`
-  and :class:`~dmr.security.csrf.CsrfResponseSpecProvider` to provide common
+  and :class:`~dmr.security.csrf.CSRFSemanticSchemaProvider` to provide common
   responses that can happen with all endpoints.
   Each endpoint will have these response specs, if their conditions are met.
 
@@ -289,11 +289,11 @@ Response handling
     :caption: settings.py
 
     >>> from http import HTTPStatus
-    >>> from dmr.security.csrf import CsrfResponseSpecProvider
+    >>> from dmr.security.csrf import CSRFSemanticSchemaProvider
 
     >> DMR_SETTINGS = {
     ...    Settings.semantic_schema_providers: [
-    ...        CsrfResponseSpecProvider(description='CSRF error'),
+    ...        CSRFSemanticSchemaProvider(description='CSRF error'),
     ...    ],
     ... }
 

@@ -184,12 +184,7 @@
                 }
               }
             }
-          },
-          "security": [
-            {
-              "jwt": []
-            }
-          ]
+          }
         }
       }
     },
@@ -488,8 +483,7 @@
           ],
           "title": "_XmlResponseModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -726,8 +720,7 @@
           ],
           "title": "_XmlResponseModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -930,8 +923,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -1215,8 +1207,7 @@
           ],
           "title": "CustomUserModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

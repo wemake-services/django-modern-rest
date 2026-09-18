@@ -50,6 +50,23 @@ class AuthProvider:
         """Provides a security schema usage requirement."""
         raise NotImplementedError
 
+    def inject_requirements(
+        self,
+        own_requirements: list['SecurityRequirement'],
+        auth_requirements: list['SecurityRequirement'],
+    ) -> list['SecurityRequirement']:
+        """
+        Inject semantic scheme requirements into regular auth requirements.
+
+        This can implement both `OR` and `AND` logic
+        dependending on the auth logic.
+
+        This method is only called by semantic schema providers
+        when generating auth requirements.
+        By default just returns the original auth requirements.
+        """
+        return auth_requirements
+
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class ResponseValidationSpecProvider(ResponseSpecProvider):

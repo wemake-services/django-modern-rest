@@ -112,8 +112,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -293,8 +292,7 @@
           "title": "_DescriptionModel",
           "description": "Description from doc."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -512,8 +510,7 @@
           ],
           "title": "_SeveralSimpleFiles"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -665,8 +662,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -778,8 +774,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -934,8 +929,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -1091,8 +1085,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -1304,8 +1297,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

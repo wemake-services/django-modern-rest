@@ -175,7 +175,7 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
         )(),
         # CSRF:
         module_loading.import_string(
-            'dmr.security.csrf.CsrfResponseSpecProvider',
+            'dmr.security.csrf.CSRFSemanticSchemaProvider',
         )(),
     ],
     # Defaults to the `validate_responses` setting if `None`:

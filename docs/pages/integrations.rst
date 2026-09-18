@@ -67,7 +67,10 @@ To do so, we use :func:`~dmr.security.csrf.build_csrf_handler` function:
   >>> from dmr.security.csrf import build_csrf_handler
   >>> from dmr.plugins.pydantic import PydanticSerializer
 
-  >>> CSRF_FAILURE_VIEW = build_csrf_handler('api/', PydanticSerializer)
+  >>> CSRF_FAILURE_VIEW = build_csrf_handler(
+  ...     'api/',
+  ...     serializer=PydanticSerializer,
+  ... )
 
 This configuration will work similarly
 to :func:`~dmr.routing.build_404_handler`:
@@ -81,7 +84,7 @@ We automatically inject CSRF response specs in endpoints for controllers
 with ``csrf_exempt = False`` and unsafe HTTP methods like ``POST``, etc.
 We do so with the help
 of :data:`~dmr.settings.Settings.semantic_schema_providers` setting
-and :class:`~dmr.security.csrf.CsrfResponseSpecProvider` response spec provider.
+and :class:`~dmr.security.csrf.CSRFSemanticSchemaProvider` response spec provider.
 
 
 .. _bring-your-own-di:

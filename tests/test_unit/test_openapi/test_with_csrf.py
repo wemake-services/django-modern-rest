@@ -13,7 +13,7 @@ from dmr.security.jwt import HeaderJWTSyncAuth
 from dmr.settings import Settings
 
 
-def test_csrf_schema(snapshot: SnapshotAssertion) -> None:
+def test_csrf_schema_regular(snapshot: SnapshotAssertion) -> None:
     """Ensure that schema is correct for controller with csrf."""
 
     class _UserController(Controller[PydanticSerializer]):
@@ -91,6 +91,9 @@ def test_disabled_csrf_schema(
         def post(self) -> str:
             raise NotImplementedError
 
+    metadata = _CustomController.api_endpoints['POST'].metadata
+
+    assert HTTPStatus.FORBIDDEN not in metadata.responses
     assert (
         json.dumps(
             build_schema(
@@ -122,6 +125,9 @@ def test_disabled_csrf_no_provider(
         def post(self) -> str:
             raise NotImplementedError
 
+    metadata = _CustomController.api_endpoints['POST'].metadata
+
+    assert HTTPStatus.FORBIDDEN not in metadata.responses
     assert (
         json.dumps(
             build_schema(

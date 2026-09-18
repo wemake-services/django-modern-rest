@@ -8,10 +8,7 @@
     },
     "openapi": "3.1.0",
     "paths": {},
-    "components": {
-      "schemas": {},
-      "securitySchemes": {}
-    }
+    "components": {}
   }
   '''
 # ---
@@ -150,8 +147,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -328,8 +324,7 @@
           ],
           "title": "_UserModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

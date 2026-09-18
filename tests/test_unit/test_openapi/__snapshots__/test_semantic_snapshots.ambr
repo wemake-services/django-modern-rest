@@ -22,12 +22,7 @@
                 }
               }
             }
-          },
-          "security": [
-            {
-              "jwt": []
-            }
-          ]
+          }
         },
         "post": {
           "operationId": "postPerControllerPerController",
@@ -42,12 +37,7 @@
                 }
               }
             }
-          },
-          "security": [
-            {
-              "jwt": []
-            }
-          ]
+          }
         }
       }
     },
@@ -205,8 +195,7 @@
           ],
           "title": "_UserModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

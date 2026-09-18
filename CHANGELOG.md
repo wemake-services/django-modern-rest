@@ -231,6 +231,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Fixed a bug that custom `format` values, like `name-email`
   from `pydantic.NameEmail`, were raising `ValueError`
   during schema generation, #1489
+- Fixed a bug that empty `schemas` and `securitySchemes` component containers
+  were rendered in the OpenAPI, #1521
 
 
 ## 0.15.0 (2026-09-11)

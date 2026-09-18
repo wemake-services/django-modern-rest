@@ -128,13 +128,7 @@
                 }
               }
             }
-          },
-          "security": [
-            {
-              "django_session": [],
-              "csrf": []
-            }
-          ]
+          }
         }
       },
       "/api/v1/default": {

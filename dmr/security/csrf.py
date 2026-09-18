@@ -1,7 +1,7 @@
 import dataclasses
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, Sequence, Set
 from http import HTTPMethod, HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, Final, Protocol
+from typing import TYPE_CHECKING, Any, Final, Protocol
 
 from django.http import HttpRequest, HttpResponse
 from django.utils.encoding import force_str
@@ -138,7 +138,7 @@ def build_csrf_handler(
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class CsrfResponseSpecProvider(ResponseSpecProvider, AuthProvider):
+class CSRFSemanticSchemaProvider(ResponseSpecProvider, AuthProvider):
     """
     Provide response specs for controllers that have ``csrf_exempt = False``.
 
@@ -156,6 +156,8 @@ class CsrfResponseSpecProvider(ResponseSpecProvider, AuthProvider):
             to be configured separately.
         status_code: Status code that should be set for failed CSRF responses.
         description: Human readable description, what the response is for.
+        security_scheme_name: Security scheme name for CSRF auth.
+        safe_http_methods: Set of secure HTTP method names.
 
     .. versionadded:: 0.16.0
     """
@@ -164,10 +166,9 @@ class CsrfResponseSpecProvider(ResponseSpecProvider, AuthProvider):
     error_model: Any = ErrorModel
     status_code: HTTPStatus | None = None
     description: '_StrOrPromise | None' = None
-
-    # Class-level API:
+    security_scheme_name: str = 'csrf'
     # Matches Django's definition in `CsrfViewMiddleware`
-    _safe_http_methods: ClassVar[frozenset[HTTPMethod]] = frozenset((
+    safe_http_methods: Set[HTTPMethod] = frozenset((
         HTTPMethod.GET,
         HTTPMethod.HEAD,
         HTTPMethod.OPTIONS,
@@ -201,9 +202,22 @@ class CsrfResponseSpecProvider(ResponseSpecProvider, AuthProvider):
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
-        if self._is_csrf_disabled(metadata, controller_cls):
+        from django.conf import settings  # noqa: PLC0415
+
+        if (
+            self._is_csrf_disabled(metadata, controller_cls)
+            or not self._uses_csrf_cookie()
+        ):
+            # TODO: think about representing Django sessions as `auth` as well.
             return {}
-        return {}
+        return {
+            self.security_scheme_name: SecurityScheme(
+                type='apiKey',
+                name=settings.CSRF_COOKIE_NAME,
+                security_scheme_in='cookie',
+                description='CSRF protection',
+            ),
+        }
 
     @override
     def security_requirements(
@@ -212,9 +226,33 @@ class CsrfResponseSpecProvider(ResponseSpecProvider, AuthProvider):
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> list[SecurityRequirement]:
         """Provides a security schema usage requirement."""
-        if self._is_csrf_disabled(metadata, controller_cls):
+        if (
+            self._is_csrf_disabled(metadata, controller_cls)
+            or not self._uses_csrf_cookie()
+        ):
             return []
-        return [{'csrf': []}]
+        return [{self.security_scheme_name: []}]
+
+    @override
+    def inject_requirements(
+        self,
+        own_requirements: list[SecurityRequirement],
+        auth_requirements: list[SecurityRequirement],
+    ) -> list[SecurityRequirement]:
+        # We join the security requirements with `AND` logic for this type.
+        # It needs both auth and CSRF checks to pass to be able to login.
+        if not auth_requirements:
+            return own_requirements
+        return [
+            {**auth, **own}
+            for own in own_requirements
+            for auth in auth_requirements
+        ]
+
+    def _uses_csrf_cookie(self) -> bool:
+        from django.conf import settings  # noqa: PLC0415
+
+        return not settings.CSRF_USE_SESSIONS
 
     def _is_csrf_disabled(
         self,
@@ -223,7 +261,7 @@ class CsrfResponseSpecProvider(ResponseSpecProvider, AuthProvider):
     ) -> bool:
         return (
             controller_cls.csrf_exempt
-            or metadata.method.upper() in self._safe_http_methods
+            or metadata.method.upper() in self.safe_http_methods
         )
 
 

@@ -92,12 +92,7 @@
                 }
               }
             }
-          },
-          "security": [
-            {
-              "jwt": []
-            }
-          ]
+          }
         }
       }
     },
@@ -302,8 +297,7 @@
           ],
           "title": "_DynamicRefsModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -480,8 +474,7 @@
           ],
           "title": "_Status"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -626,8 +619,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -788,8 +780,7 @@
           "type": "object",
           "title": "_UserCreateModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -935,8 +926,7 @@
           ],
           "title": "_UserModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

@@ -9,6 +9,7 @@ from dmr.openapi import OpenAPIConfig
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.security import AsyncAuth, SyncAuth, SyncOrAsyncAuth
+from dmr.semantic_schema import AuthProvider
 from dmr.serializer import BaseSerializer
 from dmr.settings import (
     Settings,
@@ -149,7 +150,10 @@ class SettingsValidator:
 
         # Response providers:
         if not all(
-            isinstance(response_spec_provider, ResponseSpecProvider)
+            isinstance(
+                response_spec_provider,
+                (ResponseSpecProvider, AuthProvider),
+            )
             for response_spec_provider in settings.get(
                 'semantic_schema_providers',
                 [],
@@ -157,7 +161,7 @@ class SettingsValidator:
         ):
             raise EndpointMetadataError(
                 'Settings.semantic_schema_providers must all '
-                'be ResponseSpecProvider instances',
+                'be ResponseSpecProvider or AuthProvider instances',
             )
 
     def _validate_scalar_types(

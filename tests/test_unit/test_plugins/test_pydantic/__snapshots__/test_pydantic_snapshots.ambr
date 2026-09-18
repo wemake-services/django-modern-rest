@@ -194,8 +194,7 @@
           ],
           "title": "_UserProfile"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -407,8 +406,7 @@
           ],
           "title": "_ImageMeta"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -575,8 +573,7 @@
           "type": "object",
           "title": "_UserCreateModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -783,8 +780,7 @@
           ],
           "title": "_UserModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

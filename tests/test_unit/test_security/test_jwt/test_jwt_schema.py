@@ -54,9 +54,9 @@ def test_custom_header_schema(
             security_scheme_in='header',
         ),
     })
-    assert instance.security_requirements(metadata, _Controller) == snapshot({
-        'jwt': [],
-    })
+    assert instance.security_requirements(metadata, _Controller) == snapshot([
+        {'jwt': []},
+    ])
 
 
 @pytest.mark.parametrize('typ', [HeaderJWTSyncAuth, HeaderJWTAsyncAuth])
@@ -79,6 +79,6 @@ def test_custom_scheme_schema(
             security_scheme_in='header',
         ),
     })
-    assert instance.security_requirements(metadata, _Controller) == snapshot({
-        'jwt': [],
-    })
+    assert instance.security_requirements(metadata, _Controller) == snapshot([
+        {'jwt': []},
+    ])

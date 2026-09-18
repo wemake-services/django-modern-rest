@@ -225,7 +225,7 @@ Security
 CSRF
 ~~~~
 
-.. autoclass:: dmr.security.csrf.CsrfResponseSpecProvider
+.. autoclass:: dmr.security.csrf.CSRFSemanticSchemaProvider
   :members:
 
 .. autofunction:: dmr.security.csrf.build_csrf_handler

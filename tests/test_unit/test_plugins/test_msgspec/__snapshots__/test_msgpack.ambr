@@ -160,8 +160,7 @@
           ],
           "title": "_ResponseModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
