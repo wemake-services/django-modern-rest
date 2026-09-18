@@ -272,7 +272,7 @@ class CursorPaginator(
 ):
     """Cursor paginator."""
 
-    page_cls: ClassVar[type[CursorPage]] = CursorPage
+    page_cls: ClassVar[type[CursorPage[Any]]] = CursorPage
 
     __slots__ = ()
 
