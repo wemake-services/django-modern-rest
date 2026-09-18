@@ -22,7 +22,12 @@
                 }
               }
             }
-          }
+          },
+          "security": [
+            {
+              "jwt": []
+            }
+          ]
         },
         "post": {
           "operationId": "postPerControllerPerController",
@@ -37,7 +42,12 @@
                 }
               }
             }
-          }
+          },
+          "security": [
+            {
+              "jwt": []
+            }
+          ]
         }
       }
     },
