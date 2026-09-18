@@ -76,7 +76,7 @@ def test_check_new_cookie_name_syntax(
 
 
 def test_check_cookie_name_syntax_controller() -> None:
-    """Ensure that the validation can be disabled on controller level."""
+    """Ensure that the validation can be disabled on endpoint level."""
 
     class _Mixed(Controller[PydanticSerializer]):
         @modify(

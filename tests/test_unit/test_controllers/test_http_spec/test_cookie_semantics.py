@@ -17,14 +17,12 @@ from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.settings import HttpSpec
 
-_SECURE_WHEN_SAMESITE_NONE: Final[str] = (
-    "Cookie with samesite='none' requires secure to be True"
-)
-_COOKIE_AGE_NOT_NEGATIVE: Final[str] = 'Cookie max age must not be negative'
-_SECURE_PREFIX_REQUIREMENTS: Final[str] = (
+_SECURE_WHEN_SAMESITE_NONE: Final = "samesite='none'"
+_COOKIE_AGE_NOT_NEGATIVE: Final = 'Cookie max age must not be negative'
+_SECURE_PREFIX_REQUIREMENTS: Final = (
     '__Secure- cookie prefix requires secure to be True'
 )
-_HOST_PREFIX_REQUIREMENTS: Final[str] = (
+_HOST_PREFIX_REQUIREMENTS: Final = (
     '__Host- cookie prefix requires secure to be True, '
     'path set to / and domain to be None'
 )
