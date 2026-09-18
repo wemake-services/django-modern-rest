@@ -105,7 +105,7 @@ def test_secure_prefix_requirements() -> None:
     'cookie_spec',
     [
         CookieSpec(secure=False, path='/', domain=None),
-        CookieSpec(secure=True, path='/somwhere', domain=None),
+        CookieSpec(secure=True, path='/somewhere', domain=None),
         CookieSpec(secure=True, path='/', domain='user'),
     ],
 )
