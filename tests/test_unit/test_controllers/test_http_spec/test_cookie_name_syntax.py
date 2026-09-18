@@ -31,6 +31,7 @@ class _UserModel(pydantic.BaseModel):
     ['user name', 'auth,token', 'cookie[test], my(cookie)'],
 )
 def test_check_cookie_name_syntax(
+    *,
     cookie: str,
 ) -> None:
     """Ensure that response cookies' names follow http spec syntax."""
@@ -56,6 +57,7 @@ def test_check_cookie_name_syntax(
     ['user name', 'auth,token', 'cookie[test], my(cookie)'],
 )
 def test_check_new_cookie_name_syntax(
+    *,
     cookie: str,
 ) -> None:
     """Ensure that new cookies' names follow http spec syntax."""

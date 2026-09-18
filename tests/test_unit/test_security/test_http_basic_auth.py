@@ -75,6 +75,7 @@ def test_schema(
 
 @pytest.mark.parametrize('typ', [HttpBasicSyncAuth, HttpBasicAsyncAuth])
 def test_custom_header_schema(
+    *,
     typ: type[HttpBasicSyncAuth] | type[HttpBasicAsyncAuth],
 ) -> None:
     """Ensures that custom basic auth is documented with the real header."""
@@ -227,8 +228,8 @@ async def test_async_percent_credentials(
     ],
 )
 def test_custom_auth_scheme_schema(
-    typ: type[HttpBasicSyncAuth] | type[HttpBasicAsyncAuth],
     *,
+    typ: type[HttpBasicSyncAuth] | type[HttpBasicAsyncAuth],
     auth_scheme: str,
     description: str,
 ) -> None:

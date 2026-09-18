@@ -548,7 +548,10 @@ def test_validate_async_endpoint_error_for_sync() -> None:
         'SET-COOKIE',
     ],
 )
-def test_validate_with_set_cookie_header(header_name: str) -> None:
+def test_validate_with_set_cookie_header(
+    *,
+    header_name: str,
+) -> None:
     """@validate with Set-Cookie in ResponseSpec.headers should raise error."""
     with pytest.raises(EndpointMetadataError, match='Set-Cookie'):
 

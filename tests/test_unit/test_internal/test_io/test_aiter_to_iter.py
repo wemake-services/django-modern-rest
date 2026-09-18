@@ -26,7 +26,10 @@ async def _complex_events() -> AsyncIterator[str]:
         _complex_events(),
     ],
 )
-def test_aiter_to_iter(aiterator: AsyncIterator[str]) -> None:
+def test_aiter_to_iter(
+    *,
+    aiterator: AsyncIterator[str],
+) -> None:
     """Ensure that iterator converter works."""
     sync = aiter_to_iter(aiterator)
     assert list(sync) == ['first', 'second']

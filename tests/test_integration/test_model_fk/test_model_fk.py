@@ -62,6 +62,7 @@ def test_user_create_models_example(
 def test_user_create_name_too_long_rejected(
     dmr_client: DMRClient,
     faker: Faker,
+    *,
     over_long_field: str,
 ) -> None:
     """Names longer than ``Tag``/``Role`` ``max_length=100`` are rejected.

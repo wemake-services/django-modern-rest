@@ -13,6 +13,7 @@ from dmr.throttling.headers import RateLimitIETFDraft
 
 @pytest.mark.parametrize('throttle_cls', [SyncThrottle, AsyncThrottle])
 def test_throttle_replace(
+    *,
     throttle_cls: type[SyncThrottle | AsyncThrottle],
 ) -> None:
     """`replace` overrides the given fields and keeps the rest."""
@@ -42,6 +43,7 @@ def test_throttle_replace(
 
 @pytest.mark.parametrize('throttle_cls', [SyncThrottle, AsyncThrottle])
 def test_throttle_replace_empty(
+    *,
     throttle_cls: type[SyncThrottle | AsyncThrottle],
 ) -> None:
     """`replace` overrides the given fields and keeps the rest."""
@@ -62,6 +64,7 @@ def test_throttle_replace_empty(
 )
 @pytest.mark.parametrize('throttle_cls', [SyncThrottle, AsyncThrottle])
 def test_throttle_copy_replace(  # pragma: no cover
+    *,
     throttle_cls: type[SyncThrottle | AsyncThrottle],
 ) -> None:
     """`copy.replace` works through the `__replace__` alias."""
