@@ -2,6 +2,7 @@ from abc import abstractmethod
 from base64 import b64decode, b64encode
 from typing import TYPE_CHECKING, Final, Self
 
+from django.views.decorators.debug import sensitive_variables
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
@@ -120,6 +121,7 @@ class _HttpBasicAuth:  # noqa: WPS214
         """Provides a security schema usage requirement."""
         return [{self.security_scheme_name: []}]
 
+    @sensitive_variables()
     def _get_username_and_password(
         self,
         controller: 'Controller[BaseSerializer]',
@@ -202,6 +204,7 @@ class HttpBasicSyncAuth(_HttpBasicAuth, SyncAuth):
     __slots__ = ()
 
     @override
+    @sensitive_variables()
     def __call__(
         self,
         endpoint: 'Endpoint',
@@ -256,6 +259,7 @@ class HttpBasicAsyncAuth(_HttpBasicAuth, AsyncAuth):
     __slots__ = ()
 
     @override
+    @sensitive_variables()
     async def __call__(
         self,
         endpoint: 'Endpoint',

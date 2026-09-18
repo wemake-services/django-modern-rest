@@ -278,6 +278,7 @@ class _BaseCookieTokensController(  # noqa: WPS214
         """
         rotate_token(self.request)
 
+    @sensitive_variables()
     def get_cookie_token(self, cookie_name: str) -> str:
         """
         Read a raw jwt token from the given cookie.
@@ -404,6 +405,7 @@ class CookieObtainTokensSyncController(
         """By default cookies are acquired on post."""
         return self.login(parsed_body)
 
+    @sensitive_variables()
     def login(self, parsed_body: _ObtainTokensT) -> HttpResponse:
         """Perform the sync login routine and set the token cookies."""
         user = authenticate(
@@ -579,6 +581,7 @@ class CookieRefreshTokensSyncController(
         """Rotate both cookies on post."""
         return self.refresh()
 
+    @sensitive_variables()
     def refresh(self) -> HttpResponse:
         """Validate the refresh cookie, load user, and set new cookies."""
         self.check_csrf()

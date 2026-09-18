@@ -246,6 +246,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   during schema generation, #1489
 - Fixed a bug that empty `schemas` and `securitySchemes` component containers
   were rendered in the OpenAPI, #1521
+- Fixed missing `@sensitive_variables()` decorator on critical security parts
+  in `auth` and tokens' methods, #1552
 
 
 ## 0.15.0 (2026-09-11)

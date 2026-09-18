@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Final, Literal, Self, cast, overload
 
 from asgiref.sync import sync_to_async
 from django.http import HttpRequest
+from django.views.decorators.debug import sensitive_variables
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
@@ -93,6 +94,7 @@ class _BaseXSessionTokenAuth:
         return request.headers.get(self.header_name)
 
 
+@sensitive_variables()
 def _authenticate(token: str) -> tuple['AbstractBaseUser', 'SessionBase']:
     # Imported lazily, so this module stays importable
     # without calling `django.setup()` first.
@@ -125,6 +127,7 @@ class XSessionTokenSyncAuth(_BaseXSessionTokenAuth, SyncAuth):
     __slots__ = ()
 
     @override
+    @sensitive_variables()
     def __call__(
         self,
         endpoint: 'Endpoint',
@@ -139,6 +142,7 @@ class XSessionTokenSyncAuth(_BaseXSessionTokenAuth, SyncAuth):
         self.authenticate(controller.request, token)
         return self
 
+    @sensitive_variables()
     def authenticate(
         self,
         request: HttpRequest,
@@ -176,6 +180,7 @@ class XSessionTokenAsyncAuth(_BaseXSessionTokenAuth, AsyncAuth):
     __slots__ = ()
 
     @override
+    @sensitive_variables()
     async def __call__(
         self,
         endpoint: 'Endpoint',
@@ -190,6 +195,7 @@ class XSessionTokenAsyncAuth(_BaseXSessionTokenAuth, AsyncAuth):
         await self.authenticate(controller.request, token)
         return self
 
+    @sensitive_variables()
     async def authenticate(
         self,
         request: HttpRequest,
