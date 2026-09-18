@@ -22,16 +22,6 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "401": {
               "description": "Raised when auth was not successful",
               "headers": {
@@ -43,6 +33,16 @@
                   "required": true
                 }
               },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -81,16 +81,6 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "401": {
               "description": "Raised when auth was not successful",
               "headers": {
@@ -110,8 +100,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "403": {
+              "description": "Raised when CSRF check failed",
               "content": {
                 "application/json": {
                   "schema": {
@@ -120,8 +110,18 @@
                 }
               }
             },
-            "403": {
-              "description": "Raised when CSRF check failed",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -193,17 +193,17 @@
         }
       },
       "securitySchemes": {
-        "jwt": {
-          "type": "http",
-          "description": "JWT token auth",
-          "scheme": "Bearer",
-          "bearerFormat": "JWT"
-        },
         "csrf": {
           "type": "apiKey",
           "description": "CSRF protection",
           "name": "csrftoken",
           "in": "cookie"
+        },
+        "jwt": {
+          "type": "http",
+          "description": "JWT token auth",
+          "scheme": "Bearer",
+          "bearerFormat": "JWT"
         }
       }
     }
@@ -233,6 +233,16 @@
                 }
               }
             },
+            "403": {
+              "description": "Raised when CSRF check failed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -255,16 +265,6 @@
                       "type": "integer"
                     },
                     "type": "array"
-                  }
-                }
-              }
-            },
-            "403": {
-              "description": "Raised when CSRF check failed",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
                   }
                 }
               }
@@ -365,8 +365,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "403": {
+              "description": "Raised when CSRF check failed",
               "content": {
                 "application/json": {
                   "schema": {
@@ -378,8 +378,8 @@
                 }
               }
             },
-            "403": {
-              "description": "Raised when CSRF check failed",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -471,6 +471,16 @@
                 }
               }
             },
+            "403": {
+              "description": "Raised when CSRF check failed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -483,16 +493,6 @@
             },
             "422": {
               "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "403": {
-              "description": "Raised when CSRF check failed",
               "content": {
                 "application/json": {
                   "schema": {

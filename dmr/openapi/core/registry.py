@@ -125,13 +125,28 @@ class SchemaRegistry:
 
 
 class SecuritySchemeRegistry:
-    """Registry for ``SecuritySchemes``."""
+    """
+    Registry for ``SecuritySchemes``.
 
-    __slots__ = ('schemes',)
+    .. versionchanged:: 0.16.0
+        ``schemes`` is now a property that returns
+        security schemes sorted by name.
+
+    """
+
+    __slots__ = ('_schemes',)
 
     def __init__(self) -> None:
         """Initialize empty security schemes registry."""
-        self.schemes: dict[str, SecurityScheme | Reference] = {}
+        self._schemes: dict[str, SecurityScheme | Reference] = {}
+
+    @property
+    def schemes(self) -> dict[str, SecurityScheme | Reference]:
+        """Return security schemes by name."""
+        return {
+            scheme_name: self._schemes[scheme_name]
+            for scheme_name in sorted(self._schemes)
+        }
 
     def register(
         self,
@@ -139,7 +154,7 @@ class SecuritySchemeRegistry:
         scheme: SecurityScheme | Reference,
     ) -> None:
         """Register security scheme in registry."""
-        self.schemes[name] = scheme
+        self._schemes[name] = scheme
 
 
 def _check_hashes(

@@ -1,6 +1,7 @@
 import abc
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
+from operator import attrgetter
 from typing import (
     TYPE_CHECKING,
     Annotated,
@@ -450,7 +451,11 @@ class BodyComponent(ComponentParser):
             for content_type, conditional_model in conditional_types.items()
         }
         media_types: dict[str, MediaType | Reference] = {}
-        for parser in metadata.parsers.values():
+        # Sorted by content type, not by the parsers order:
+        for parser in sorted(
+            metadata.parsers.values(),
+            key=attrgetter('content_type'),
+        ):
             media_type_meta = (
                 get_annotated_metadata(
                     conditional_types.get(parser.content_type, model),
@@ -931,6 +936,7 @@ class FileMetadataComponent(ComponentParser):
         }
         return RequestBody(
             content={
+                # Sorted by content type, not by the parsers order:
                 parser.content_type: parser.schema_metadata(
                     model,
                     model_meta,
@@ -944,7 +950,10 @@ class FileMetadataComponent(ComponentParser):
                     parser,
                     context,
                 )
-                for parser in metadata.parsers.values()
+                for parser in sorted(
+                    metadata.parsers.values(),
+                    key=attrgetter('content_type'),
+                )
                 if isinstance(parser, SupportsFileParsing)
             },
             required=True,

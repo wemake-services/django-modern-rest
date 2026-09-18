@@ -145,16 +145,6 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "401": {
               "description": "Raised when auth was not successful",
               "headers": {
@@ -166,6 +156,16 @@
                   "required": true
                 }
               },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -285,16 +285,6 @@
             "required": true
           },
           "responses": {
-            "409": {
-              "description": "Conflict",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              }
-            },
             "201": {
               "description": "Created",
               "content": {
@@ -336,6 +326,16 @@
                 "application/xml": {
                   "schema": {
                     "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Conflict",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
                   }
                 }
               }
@@ -522,16 +522,6 @@
             "required": true
           },
           "responses": {
-            "409": {
-              "description": "Conflict",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              }
-            },
             "201": {
               "description": "Created",
               "content": {
@@ -573,6 +563,16 @@
                 "application/xml": {
                   "schema": {
                     "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "409": {
+              "description": "Conflict",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
                   }
                 }
               }
@@ -739,47 +739,48 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/v1/user/{user_id}/post/{post_id}/": {
+      "/api/v1/articles/{year}/{slug}/": {
         "get": {
-          "operationId": "getGetPostControllerApiV1UserUserIdPostPostId",
+          "operationId": "getGetPostControllerApiV1ArticlesYearSlug",
           "parameters": [
             {
-              "name": "user_id",
+              "name": "year",
               "in": "path",
               "schema": {
-                "type": "integer",
-                "title": "User Id"
+                "type": "string",
+                "pattern": "^(?:[0-9]{4})$",
+                "title": "Year"
               },
               "required": true
             },
             {
-              "name": "post_id",
+              "name": "slug",
               "in": "path",
               "schema": {
                 "type": "string",
-                "format": "uuid",
-                "title": "Post Id"
+                "pattern": "^(?:[\\w-]+)$",
+                "title": "Slug"
               },
               "required": true
             }
           ],
           "responses": {
-            "404": {
-              "description": "Not Found",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "200": {
               "description": "OK",
               "content": {
                 "application/json": {
                   "schema": {
                     "type": "string"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
                   }
                 }
               }
@@ -807,48 +808,47 @@
           }
         }
       },
-      "/api/v1/articles/{year}/{slug}/": {
+      "/api/v1/user/{user_id}/post/{post_id}/": {
         "get": {
-          "operationId": "getGetPostControllerApiV1ArticlesYearSlug",
+          "operationId": "getGetPostControllerApiV1UserUserIdPostPostId",
           "parameters": [
             {
-              "name": "year",
+              "name": "user_id",
               "in": "path",
               "schema": {
-                "type": "string",
-                "pattern": "^(?:[0-9]{4})$",
-                "title": "Year"
+                "type": "integer",
+                "title": "User Id"
               },
               "required": true
             },
             {
-              "name": "slug",
+              "name": "post_id",
               "in": "path",
               "schema": {
                 "type": "string",
-                "pattern": "^(?:[\\w-]+)$",
-                "title": "Slug"
+                "format": "uuid",
+                "title": "Post Id"
               },
               "required": true
             }
           ],
           "responses": {
-            "404": {
-              "description": "Not Found",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "200": {
               "description": "OK",
               "content": {
                 "application/json": {
                   "schema": {
                     "type": "string"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
                   }
                 }
               }

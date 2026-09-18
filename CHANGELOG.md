@@ -82,6 +82,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   Example generation moved to the schema generator, #1485
 - Removed `PHONE`, `COLOR`, and `STYLE` members from `OpenAPIFormat`,
   such formats are now loaded as plain strings, #1489
+- `SecuritySchemeRegistry.schemes` is now a read-only property
+  that returns registered security schemes sorted by name, #1557
 
 ### Performance improvements
 
@@ -250,6 +252,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   were rendered in the OpenAPI, #1521
 - Fixed missing `@sensitive_variables()` decorator on critical security parts
   in `auth` and tokens' methods, #1552
+- OpenAPI schema generation is now deterministic: every generated mapping
+  is sorted by a stable key instead of the definition order, #1557
 
 
 ## 0.15.0 (2026-09-11)

@@ -16,8 +16,8 @@ mod _docs 'docs/justfile'
 
 # Install dependencies
 [group('dev')]
-install:
-    uv sync --all-groups --all-extras --no-group integration-drivers
+install *args='':
+    uv sync --all-groups --all-extras --no-group integration-drivers {{args}}
 
 # Install dependencies
 [group('dev')]

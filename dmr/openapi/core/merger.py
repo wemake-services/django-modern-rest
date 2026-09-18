@@ -93,13 +93,22 @@ def _merge_unique(
     to_merge: dict[str, _ThingT] | None,
 ) -> dict[str, _ThingT] | None:
     if existing is None:
-        return to_merge or None
+        return _sorted_or_none(to_merge)
     if to_merge is None:
-        return existing or None
+        return _sorted_or_none(existing)
 
     shared_keys = existing.keys() & to_merge.keys()
     if shared_keys:
         raise ValueError(
             f'Trying to merge components with shared keys: {shared_keys}',
         )
-    return {**existing, **to_merge} or None
+    return _sorted_or_none({**existing, **to_merge})
+
+
+def _sorted_or_none(
+    components: dict[str, _ThingT] | None,
+) -> dict[str, _ThingT] | None:
+    if not components:
+        return None
+    # Sorted by name, so the schema does not depend on the definition order:
+    return dict(sorted(components.items()))
