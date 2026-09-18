@@ -59,7 +59,7 @@ class AuthProvider:
         Inject semantic scheme requirements into regular auth requirements.
 
         This can implement both `OR` and `AND` logic
-        dependending on the auth logic.
+        depending on the auth logic.
 
         This method is only called by semantic schema providers
         when generating auth requirements.
