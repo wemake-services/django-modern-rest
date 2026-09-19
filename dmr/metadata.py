@@ -615,12 +615,12 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     parsers: dict[str, 'Parser']
     renderers: dict[str, 'Renderer']
     validate_negotiation: bool
-    auth: tuple[_AuthT, ...] | None
+    auth: list[_AuthT] | None
 
     # First line of throttling:
-    throttling_before_auth: tuple[_ThrottlingT, ...] | None
+    throttling_before_auth: list[_ThrottlingT] | None
     # Second line of throttling:
-    throttling_after_auth: tuple[_ThrottlingT, ...] | None
+    throttling_after_auth: list[_ThrottlingT] | None
     throttling_allow_unsafe_cache: bool | None
 
     exclude_validate_responses: frozenset[HTTPStatus]
@@ -642,7 +642,7 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     ignore_from_spec: bool
 
     # Pre-computed fields:
-    throttling: tuple[_ThrottlingT, ...] | None = dataclasses.field(init=False)
+    throttling: list[_ThrottlingT] | None = dataclasses.field(init=False)
 
     def __post_init__(self) -> None:
         """Set pre-computed fields."""
@@ -651,8 +651,8 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
             self,
             'throttling',
             (
-                (self.throttling_before_auth or ())
-                + (self.throttling_after_auth or ())
+                (self.throttling_before_auth or [])
+                + (self.throttling_after_auth or [])
             )
             or None,
         )

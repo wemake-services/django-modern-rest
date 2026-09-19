@@ -668,7 +668,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_auth(  # noqa: WPS231
         self,
-    ) -> tuple[SyncAuth | AsyncAuth] | None:
+    ) -> list[SyncAuth | AsyncAuth] | None:
         payload_auth = () if self.payload is None else (self.payload.auth or ())
         settings_auth: Sequence[
             SyncAuth | AsyncAuth | SyncOrAsyncAuth[Any, Any]
@@ -716,13 +716,13 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             or not auth
         ):
             return None
-        return tuple(auth)
+        return auth
 
     def _build_throttling(  # noqa: WPS210, WPS231
         self,
     ) -> tuple[
-        tuple[SyncThrottle | AsyncThrottle, ...] | None,
-        tuple[SyncThrottle | AsyncThrottle, ...] | None,
+        list[SyncThrottle | AsyncThrottle] | None,
+        list[SyncThrottle | AsyncThrottle] | None,
         bool | None,
     ]:
         payload_throttling = (
@@ -788,19 +788,19 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             return (None, None, allow_cache)
         return (
             (
-                tuple(
+                [
                     throttling
                     for throttling in throttling
                     if throttling.cache_key.runs_before_auth
-                )
+                ]
                 or None
             ),
             (
-                tuple(
+                [
                     throttling
                     for throttling in throttling
                     if not throttling.cache_key.runs_before_auth
-                )
+                ]
                 or None
             ),
             allow_cache,
