@@ -615,7 +615,7 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     parsers: dict[str, 'Parser']
     renderers: dict[str, 'Renderer']
     validate_negotiation: bool
-    auth: list[_AuthT] | None
+    auth: tuple[_AuthT, ...] | None
 
     # First line of throttling:
     throttling_before_auth: tuple[_ThrottlingT, ...] | None

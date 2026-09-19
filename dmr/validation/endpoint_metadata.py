@@ -668,7 +668,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_auth(  # noqa: WPS231
         self,
-    ) -> list[SyncAuth | AsyncAuth] | None:
+    ) -> tuple[SyncAuth | AsyncAuth] | None:
         payload_auth = () if self.payload is None else (self.payload.auth or ())
         settings_auth: Sequence[
             SyncAuth | AsyncAuth | SyncOrAsyncAuth[Any, Any]
@@ -716,7 +716,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             or not auth
         ):
             return None
-        return auth
+        return tuple(auth)
 
     def _build_throttling(  # noqa: WPS210, WPS231
         self,

@@ -458,7 +458,7 @@ class Endpoint:  # noqa: WPS214
     def _run_auth(
         self,
         controller: 'Controller[BaseSerializer]',
-        auths: list[SyncAuth],
+        auths: tuple[SyncAuth, ...],
     ) -> None:
         for auth in auths:
             authed_by = auth(self, controller)
@@ -514,7 +514,7 @@ class Endpoint:  # noqa: WPS214
     async def _run_async_auth(
         self,
         controller: 'Controller[BaseSerializer]',
-        auths: list[AsyncAuth],
+        auths: tuple[AsyncAuth, ...],
     ) -> None:
         for auth in auths:
             authed_by = await auth(self, controller)  # noqa: WPS476
