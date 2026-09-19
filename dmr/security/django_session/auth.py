@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Self, TypeGuard
 
 from django.conf import settings
 from typing_extensions import override
@@ -98,7 +98,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):  # noqa: WPS214
     def _is_user_present(
         self,
         user: 'AbstractBaseUser | AnonymousUser | None',
-    ) -> bool:
+    ) -> TypeGuard['AbstractBaseUser']:
         return user is not None and user.is_authenticated and user.is_active
 
     def _ensure_csrf(self, controller: 'Controller[BaseSerializer]') -> None:

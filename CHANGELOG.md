@@ -84,6 +84,12 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   such formats are now loaded as plain strings, #1489
 - `SecuritySchemeRegistry.schemes` is now a read-only property
   that returns registered security schemes sorted by name, #1557
+- `OpenAPIContext.register_schema` is removed, just like all custom
+  override features. Instead, one must use native serializer tools
+  for custom JSON schema generation, #1558
+- `SyncOrAsyncAuth` and `SyncOrAsyncThrottle` changed `.resolve` parameter
+  from *auth_cls* and *throttle_cls* respectively
+  to *is_async* kw-parameter, #1562
 
 ### Performance improvements
 
@@ -118,6 +124,10 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Features
 
+- Now we can change the error type / instance that
+  we are handling from layer to layer,
+  for example: endpoint-level handler can raise a new error
+  and controller-level error handler will receive this new error, #1561
 - Added `Settings.semantic_schema_providers` with the ability to add custom
   default response spec providers. For example, if all controller return
   some specific status code and schema, now it can be configured properly.
@@ -260,6 +270,10 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   in `auth` and tokens' methods, #1552
 - OpenAPI schema generation is now deterministic: every generated mapping
   is sorted by a stable key instead of the definition order, #1557
+- Fixed that `pydantic` serializer was not dumping `@dataclass`
+  instances correctly without `msgspec` installed, #1560
+- Fixed `@modify` and `@validate` types: now `tags`, `servers`,
+  and `extra_responses` are types as `Sequence`, not as `list`, #1563
 
 
 ## 0.15.0 (2026-09-11)

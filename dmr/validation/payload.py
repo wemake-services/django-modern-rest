@@ -8,6 +8,7 @@ from typing_extensions import Sentinel
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.errors import AsyncErrorHandler, SyncErrorHandler
 from dmr.headers import HeaderSpec, NewHeader
+from dmr.internal.types import StrOrPromise
 from dmr.metadata import ResponseSpec
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
@@ -15,10 +16,6 @@ from dmr.settings import HttpSpec
 from dmr.types import EMPTY
 
 if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
-
     from dmr.controller import Controller
     from dmr.openapi.objects import (
         Callback,
@@ -36,15 +33,15 @@ if TYPE_CHECKING:
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True, init=False)
 class _BasePayload:
     # OpenAPI stuff:
-    summary: '_StrOrPromise | Sentinel | None' = EMPTY
-    description: '_StrOrPromise | Sentinel | None' = EMPTY
-    tags: list[str] | None = None
+    summary: StrOrPromise | Sentinel | None = EMPTY
+    description: StrOrPromise | Sentinel | None = EMPTY
+    tags: Sequence[str] | None = None
     operation_id: str | None = None
     deprecated: bool = False
-    security: list['SecurityRequirement'] | None = None
+    security: Sequence['SecurityRequirement'] | None = None
     external_docs: 'ExternalDocumentation | None' = None
-    callbacks: 'dict[str, Callback | Reference] | None' = None
-    servers: list['Server'] | None = None
+    callbacks: dict[str, 'Callback | Reference'] | None = None
+    servers: Sequence['Server'] | None = None
     ignore_from_spec: bool | None = None
 
     # Common fields:
@@ -76,7 +73,7 @@ class ValidateEndpointPayload(_BasePayload):
 class ModifyEndpointPayload(_BasePayload):
     """Payload created by ``@modify``."""
 
-    responses: list[ResponseSpec] | None
+    responses: Sequence[ResponseSpec] | None
     status_code: HTTPStatus | None
     # Headers and cookies can be set via a middleware
     # after a response itself is formed. We need a way to describe this.

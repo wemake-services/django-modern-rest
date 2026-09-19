@@ -50,14 +50,13 @@ class OperationIdRegistry:
 class SchemaRegistry:
     """Registry for ``Schemas``."""
 
-    __slots__ = ('_schemas', 'overrides')
+    __slots__ = ('_schemas',)
 
     schema_prefix: ClassVar[str] = '#/components/schemas/'
 
     def __init__(self) -> None:
         """Initialize empty schema and type registers."""
         self._schemas: dict[str, tuple[Schema, int | None]] = {}
-        self.overrides: dict[Any, Reference | Schema | SchemaCallback] = {}
 
     @property
     def schemas(self) -> dict[str, Schema]:

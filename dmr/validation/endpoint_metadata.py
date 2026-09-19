@@ -469,7 +469,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             deprecated=payload.deprecated,
             external_docs=payload.external_docs,
             callbacks=payload.callbacks,
-            servers=payload.servers,
+            servers=None if payload.servers is None else list(payload.servers),
             ignore_from_spec=self._build_ignore_from_spec(),
         )
 
@@ -533,7 +533,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             deprecated=payload.deprecated,
             external_docs=payload.external_docs,
             callbacks=payload.callbacks,
-            servers=payload.servers,
+            servers=None if payload.servers is None else list(payload.servers),
             ignore_from_spec=self._build_ignore_from_spec(),
         )
 
@@ -670,9 +670,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         self,
     ) -> list[SyncAuth | AsyncAuth] | None:
         payload_auth = () if self.payload is None else (self.payload.auth or ())
-        settings_auth: Sequence[SyncAuth | AsyncAuth | SyncOrAsyncAuth] = (
-            resolve_setting(Settings.auth)
-        )
+        settings_auth: Sequence[
+            SyncAuth | AsyncAuth | SyncOrAsyncAuth[Any, Any]
+        ] = resolve_setting(Settings.auth)
         # SyncOrAsyncAuth is settings-only — reject controller/endpoint usage:
         for candidate_auth in (
             *payload_auth,
@@ -691,7 +691,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             *payload_auth,
             *(self.controller_cls.auth or ()),
             *(
-                setting_auth.resolve(base_type)
+                setting_auth.resolve(is_async=base_type is AsyncAuth)
                 if isinstance(setting_auth, SyncOrAsyncAuth)
                 else setting_auth
                 for setting_auth in settings_auth
@@ -721,15 +721,15 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     def _build_throttling(  # noqa: WPS210, WPS231
         self,
     ) -> tuple[
-        tuple[SyncThrottle | AsyncThrottle, ...] | None,
-        tuple[SyncThrottle | AsyncThrottle, ...] | None,
+        list[SyncThrottle | AsyncThrottle] | None,
+        list[SyncThrottle | AsyncThrottle] | None,
         bool | None,
     ]:
         payload_throttling = (
             () if self.payload is None else (self.payload.throttling or ())
         )
         settings_throttling: Sequence[
-            SyncThrottle | AsyncThrottle | SyncOrAsyncThrottle
+            SyncThrottle | AsyncThrottle | SyncOrAsyncThrottle[Any, Any]
         ] = resolve_setting(Settings.throttling)
 
         # Validate that throttling matches the sync / async endpoints:
@@ -760,7 +760,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             *payload_throttling,
             *(self.controller_cls.throttling or ()),
             *(
-                setting_throttle.resolve(base_type)
+                setting_throttle.resolve(is_async=base_type is AsyncThrottle)
                 if isinstance(setting_throttle, SyncOrAsyncThrottle)
                 else setting_throttle
                 for setting_throttle in settings_throttling
@@ -788,19 +788,19 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             return (None, None, allow_cache)
         return (
             (
-                tuple(
+                [
                     throttling
                     for throttling in throttling
                     if throttling.cache_key.runs_before_auth
-                )
+                ]
                 or None
             ),
             (
-                tuple(
+                [
                     throttling
                     for throttling in throttling
                     if not throttling.cache_key.runs_before_auth
-                )
+                ]
                 or None
             ),
             allow_cache,
@@ -882,7 +882,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             return self.payload.ignore_from_spec
         return self.controller_cls.ignore_from_spec
 
-    def _build_tags(self, payload_tags: list[str] | None) -> list[str] | None:
+    def _build_tags(
+        self,
+        payload_tags: Sequence[str] | None,
+    ) -> list[str] | None:
         # Controller tags are prepended to the endpoint ones,
         # the same way router tags are prepended to these later on.
         tags = [

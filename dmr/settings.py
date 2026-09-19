@@ -17,9 +17,9 @@ if TYPE_CHECKING:
     from dmr.openapi import OpenAPIConfig
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
-    from dmr.security import AsyncAuth, SyncAuth
+    from dmr.security import AsyncAuth, SyncAuth, SyncOrAsyncAuth
     from dmr.semantic_schema import AuthProvider
-    from dmr.throttling import AsyncThrottle, SyncThrottle
+    from dmr.throttling import AsyncThrottle, SyncOrAsyncThrottle, SyncThrottle
 
 try:
     import msgspec  # noqa: F401  # pyright: ignore[reportUnusedImport]
@@ -120,8 +120,14 @@ class SettingsDict(TypedDict, total=False):
     parsers: Sequence['Parser']
     renderers: Sequence['Renderer']
     validate_negotiation: bool | None
-    auth: Sequence['AsyncAuth | SyncAuth']
-    throttling: Sequence['AsyncThrottle | SyncThrottle']
+    auth: (
+        Sequence['AsyncAuth | SyncOrAsyncAuth[Any, Any]']
+        | Sequence['SyncAuth | SyncOrAsyncAuth[Any, Any]']
+    )
+    throttling: (
+        Sequence['AsyncThrottle | SyncOrAsyncThrottle[Any, Any]']
+        | Sequence['SyncThrottle | SyncOrAsyncThrottle[Any, Any]']
+    )
     throttling_allow_unsafe_cache: bool | None
     no_validate_http_spec: Set[HttpSpec]
     validate_responses: bool

@@ -196,7 +196,12 @@ class Endpoint:  # noqa: WPS214
         """
         Return error response if possible.
 
-        Override this method to add custom error handling.
+        Override this method to change the endpoint error handling logic.
+
+        .. versionchanged:: 0.16.0
+            Now you can raise different errors from layers above.
+            Which would be handled by lower layers.
+
         """
         # NOTE: if you change something here,
         # also change in `handle_async_error`
@@ -208,9 +213,8 @@ class Endpoint:  # noqa: WPS214
                     controller,
                     exc,
                 )
-            except Exception:  # noqa: S110
-                # We don't use `suppress` here for speed.
-                pass  # noqa: WPS420
+            except Exception as new_exc:
+                exc = new_exc
         # Per-endpoint error handler didn't work.
         # Now, try the per-controller one.
         try:
@@ -219,9 +223,9 @@ class Endpoint:  # noqa: WPS214
                 controller,
                 exc,
             )
-        except Exception:
+        except Exception as new_exc:
             # And the last option is to handle error globally:
-            return self._global_error_handler(controller, exc)
+            return self._global_error_handler(controller, new_exc)
 
     async def handle_async_error(
         self,
@@ -231,7 +235,12 @@ class Endpoint:  # noqa: WPS214
         """
         Return error response if possible.
 
-        Override this method to add custom async error handling.
+        Override this method to change the endpoint error handling logic.
+
+        .. versionchanged:: 0.16.0
+            Now you can raise different errors from layers above.
+            Which would be handled by lower layers.
+
         """
         # NOTE: if you change something here, also change in `handle_error`
         if self.metadata.error_handler is not None:
@@ -242,9 +251,8 @@ class Endpoint:  # noqa: WPS214
                     controller,
                     exc,
                 )
-            except Exception:  # noqa: S110
-                # We don't use `suppress` here for speed.
-                pass  # noqa: WPS420
+            except Exception as new_exc:
+                exc = new_exc
         # Per-endpoint error handler didn't work.
         # Now, try the per-controller one.
         try:
@@ -253,9 +261,9 @@ class Endpoint:  # noqa: WPS214
                 controller,
                 exc,
             )
-        except Exception:
+        except Exception as new_exc:
             # And the last option is to handle error globally:
-            return self._global_error_handler(controller, exc)
+            return self._global_error_handler(controller, new_exc)
 
     def get_schema(
         self,
@@ -442,7 +450,7 @@ class Endpoint:  # noqa: WPS214
     def _run_throttle_before(
         self,
         controller: 'Controller[BaseSerializer]',
-        throttling: tuple[SyncThrottle, ...],
+        throttling: list[SyncThrottle],
     ) -> None:
         for throttle in throttling:
             throttle(self, controller, self._sync_lock)
@@ -462,7 +470,7 @@ class Endpoint:  # noqa: WPS214
     def _run_throttle_after(
         self,
         controller: 'Controller[BaseSerializer]',
-        throttling: tuple[SyncThrottle, ...],
+        throttling: list[SyncThrottle],
     ) -> None:
         for throttle in throttling:
             throttle(self, controller, self._sync_lock)
@@ -497,7 +505,7 @@ class Endpoint:  # noqa: WPS214
     async def _run_async_throttle_before(
         self,
         controller: 'Controller[BaseSerializer]',
-        throttling: tuple[AsyncThrottle, ...],
+        throttling: list[AsyncThrottle],
     ) -> None:
         for throttle in throttling:
             # We have to check them in sync one by one :(
@@ -518,7 +526,7 @@ class Endpoint:  # noqa: WPS214
     async def _run_async_throttle_after(
         self,
         controller: 'Controller[BaseSerializer]',
-        throttling: tuple[AsyncThrottle, ...],
+        throttling: list[AsyncThrottle],
     ) -> None:
         for throttle in throttling:
             # We have to check them in sync one by one :(

@@ -231,13 +231,13 @@ def assert_throttled(
 
 
 def _swap(
-    throttles: tuple[SyncThrottle | AsyncThrottle, ...] | None,
+    throttles: list[SyncThrottle | AsyncThrottle] | None,
     old: SyncThrottle | AsyncThrottle,
     new: SyncThrottle | AsyncThrottle,
-) -> tuple[SyncThrottle | AsyncThrottle, ...] | None:
+) -> list[SyncThrottle | AsyncThrottle] | None:
     if not throttles:
         return throttles
-    return tuple(new if throttle is old else throttle for throttle in throttles)
+    return [new if throttle is old else throttle for throttle in throttles]
 
 
 def _assert_reported_headers(

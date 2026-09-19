@@ -19,15 +19,12 @@ from typing import (  # noqa: WPS235
 from typing_extensions import TypeVar, override
 
 from dmr.internal.types import (
+    StrOrPromise,
     find_annotated_metadata,
     iter_union_members,
 )
 
 if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
-
     from dmr.components import ComponentParser
     from dmr.controller import Controller
     from dmr.cookies import CookieSpec, NewCookie
@@ -112,11 +109,11 @@ class ResponseSpec:
     )
 
     # Metadata:
-    description: '_StrOrPromise | None' = dataclasses.field(
+    description: StrOrPromise | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
-    summary: '_StrOrPromise | None' = dataclasses.field(
+    summary: StrOrPromise | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
@@ -368,7 +365,7 @@ class ResponseModification:
     streaming: bool
 
     # Metadata:
-    description: '_StrOrPromise | None'
+    description: StrOrPromise | None
     links: dict[str, 'Link | Reference'] | None
 
     # Pre-computed fields:
@@ -618,9 +615,9 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     auth: list[_AuthT] | None
 
     # First line of throttling:
-    throttling_before_auth: tuple[_ThrottlingT, ...] | None
+    throttling_before_auth: list[_ThrottlingT] | None
     # Second line of throttling:
-    throttling_after_auth: tuple[_ThrottlingT, ...] | None
+    throttling_after_auth: list[_ThrottlingT] | None
     throttling_allow_unsafe_cache: bool | None
 
     exclude_validate_responses: frozenset[HTTPStatus]
@@ -631,8 +628,8 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     validate_events: bool
 
     # OpenAPI documentation fields:
-    summary: '_StrOrPromise | None'
-    description: '_StrOrPromise | None'
+    summary: StrOrPromise | None
+    description: StrOrPromise | None
     tags: list[str] | None
     operation_id: str | None
     deprecated: bool
@@ -642,7 +639,7 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     ignore_from_spec: bool
 
     # Pre-computed fields:
-    throttling: tuple[_ThrottlingT, ...] | None = dataclasses.field(init=False)
+    throttling: list[_ThrottlingT] | None = dataclasses.field(init=False)
 
     def __post_init__(self) -> None:
         """Set pre-computed fields."""
@@ -651,8 +648,8 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
             self,
             'throttling',
             (
-                (self.throttling_before_auth or ())
-                + (self.throttling_after_auth or ())
+                (self.throttling_before_auth or [])
+                + (self.throttling_after_auth or [])
             )
             or None,
         )
