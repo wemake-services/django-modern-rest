@@ -1,10 +1,9 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, get_origin
+from typing import TYPE_CHECKING, ClassVar
 
 from dmr.openapi.core.merger import ConfigMerger
 from dmr.openapi.core.registry import (
     OperationIdRegistry,
-    SchemaCallback,
     SchemaRegistry,
     SecuritySchemeRegistry,
 )
@@ -17,7 +16,7 @@ from dmr.openapi.generators import (
     SecuritySchemeGenerator,
 )
 from dmr.openapi.mappers.example import seed_example_factory
-from dmr.openapi.objects import Components, Reference, Schema
+from dmr.openapi.objects import Components
 
 if TYPE_CHECKING:
     from dmr.openapi.config import OpenAPIConfig
