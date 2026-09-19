@@ -121,10 +121,10 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Features
 
-- Now we change the error type / instance that
+- Now we can change the error type / instance that 
   we are handling from layer to layer,
-  for example: endpoint-level handler can raise a new error type
-  and controller-level error handler will handle it, if possible, #1561
+  for example: endpoint-level handler can raise a new error
+  and controller-level error handler will receive this new error, #1561
 - Added `Settings.semantic_schema_providers` with the ability to add custom
   default response spec providers. For example, if all controller return
   some specific status code and schema, now it can be configured properly.
