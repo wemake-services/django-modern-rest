@@ -561,7 +561,7 @@ This is how OpenAPI spec is generated, top level overview:
       Controller -->|for each endpoint| Endpoint[Endpoint.get_schema];
       Endpoint -->|for each component| ComponentParser[ComponentParser.get_schema]
       Endpoint -->|for each response| ResponseSpec[ResponseSpec.get_schema];
-      Endpoint -->|for each used auth| SecurityRequirement[Auth.security_requirement];
+      Endpoint -->|for each used auth| SecurityRequirements[Auth.security_requirements];
       ComponentParser -->|for each schema| Schema[serializer.schema_generator.get_schema];
       ResponseSpec -->|for each schema| Schema[serializer.schema_generator.get_schema];
 
