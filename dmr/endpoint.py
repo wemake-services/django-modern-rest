@@ -196,7 +196,12 @@ class Endpoint:  # noqa: WPS214
         """
         Return error response if possible.
 
-        Override this method to add custom error handling.
+        Override this method to change the endpoint error handling logic.
+
+        .. versionchanged:: 0.16.0
+            Now you can raise different errors from layers above.
+            Which would be handled by lower layers.
+
         """
         # NOTE: if you change something here,
         # also change in `handle_async_error`
@@ -208,9 +213,8 @@ class Endpoint:  # noqa: WPS214
                     controller,
                     exc,
                 )
-            except Exception:  # noqa: S110
-                # We don't use `suppress` here for speed.
-                pass  # noqa: WPS420
+            except Exception as new_exc:
+                exc = new_exc
         # Per-endpoint error handler didn't work.
         # Now, try the per-controller one.
         try:
@@ -219,9 +223,9 @@ class Endpoint:  # noqa: WPS214
                 controller,
                 exc,
             )
-        except Exception:
+        except Exception as new_exc:
             # And the last option is to handle error globally:
-            return self._global_error_handler(controller, exc)
+            return self._global_error_handler(controller, new_exc)
 
     async def handle_async_error(
         self,
@@ -231,7 +235,12 @@ class Endpoint:  # noqa: WPS214
         """
         Return error response if possible.
 
-        Override this method to add custom async error handling.
+        Override this method to change the endpoint error handling logic.
+
+        .. versionchanged:: 0.16.0
+            Now you can raise different errors from layers above.
+            Which would be handled by lower layers.
+
         """
         # NOTE: if you change something here, also change in `handle_error`
         if self.metadata.error_handler is not None:
@@ -242,9 +251,8 @@ class Endpoint:  # noqa: WPS214
                     controller,
                     exc,
                 )
-            except Exception:  # noqa: S110
-                # We don't use `suppress` here for speed.
-                pass  # noqa: WPS420
+            except Exception as new_exc:
+                exc = new_exc
         # Per-endpoint error handler didn't work.
         # Now, try the per-controller one.
         try:
@@ -253,9 +261,9 @@ class Endpoint:  # noqa: WPS214
                 controller,
                 exc,
             )
-        except Exception:
+        except Exception as new_exc:
             # And the last option is to handle error globally:
-            return self._global_error_handler(controller, exc)
+            return self._global_error_handler(controller, new_exc)
 
     def get_schema(
         self,
