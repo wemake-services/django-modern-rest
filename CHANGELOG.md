@@ -86,7 +86,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   that returns registered security schemes sorted by name, #1557
 - `OpenAPIContext.register_schema` is removed, just like all custom
   override features. Instead, one must use native serializer tools
-  for custom JSON schema generation,
+  for custom JSON schema generation, #1558
 
 ### Performance improvements
 
