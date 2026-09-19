@@ -88,12 +88,14 @@ dev = [
   "dennis>=1.2,<2",
   "django-stubs[compatible-mypy]>=6.1,<6.2",
   "import-linter>=2.5,<3",
+  "libcst>=1.9,<2",
   "phonenumbers>=9,<10",
   "pyrefly>=1,<2",
   # TODO: update after `mypy` and `pyrefly` will support `EMPTY` as a type:
   "pyright>=1.1,<2",
   "ruff>=0.16,<0.17",
   "schemathesis==4.26.1",
+  "skills-ref>=0.1,<0.2",
   "slotscheck>=0.19,<0.22",
   # TODO: relax the pin after a stable `ty` release:
   "ty==0.0.80",
@@ -122,6 +124,7 @@ docs = [
   "sphinx-design>=0.7,<0.8",
   "sphinx-iconify>=0.3,<0.4",
   "sphinx-llms-txt>=0.7,<0.8",
+  "sphinx-markdown-builder>=0.6,<0.7",
   "sphinx-tabs>=3.5,<4",
   "sphinxcontrib-mermaid>=2,<3",
   # Needed for our extension:

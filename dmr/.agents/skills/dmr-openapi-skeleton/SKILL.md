@@ -1,6 +1,6 @@
 ---
 name: dmr-openapi-skeleton
-description: Generate django-modern-rest transport-layer skeletons from OpenAPI 3.1+ specs. Use when Codex needs to turn an OpenAPI file, URL, or pasted document into typed DTOs, controllers, routers, Django URL wiring, and minimal tests for this repository or similar projects built on dmr. Trigger on requests to scaffold APIs, bootstrap apps, or map OpenAPI operations to Controller, Router, and OpenAPI view constructs without implementing business logic.
+description: Generate django-modern-rest transport-layer skeletons from OpenAPI 3.1+ specs. Use when asked to turn an OpenAPI file, URL, or pasted document into typed DTOs, controllers, routers, Django URL wiring, and minimal tests for this repository or similar projects built on dmr. Trigger on requests to scaffold APIs, bootstrap apps, or map OpenAPI operations to Controller, Router, and OpenAPI view constructs without implementing business logic.
 ---
 
 # DMR OpenAPI Skeleton
