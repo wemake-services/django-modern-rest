@@ -5,6 +5,7 @@ import pytest
 from django.urls import URLPattern, URLResolver, include, path
 
 from dmr import Controller
+from dmr.openapi import build_schema
 from dmr.openapi.collector import (
     _join_paths,
     _normalize_path,
@@ -181,4 +182,28 @@ def test_controller_mapping_collector_with_router() -> None:
     assert {path for path, _, _ in mappings} == {
         '/api/direct/',
         '/api/nested/inner/',
+    }
+
+
+def test_nested_url_patterns_produce_correct_parameters() -> None:
+    """Ensure that nested URL patterns produce all path parameters."""
+    patterns: Sequence[URLPattern | URLResolver] = [
+        path(
+            'tenants/<int:tenant_id>/',
+            include([
+                path('users/<int:pk>/', _GetController.as_view()),
+            ]),
+        ),
+    ]
+    router = Router('api/', patterns)
+
+    schema = build_schema(router).convert()
+
+    parameters = schema['paths']['/api/tenants/{tenant_id}/users/{pk}/']['get'][
+        'parameters'
+    ]
+
+    assert {parameter['name'] for parameter in parameters} == {
+        'tenant_id',
+        'pk',
     }
