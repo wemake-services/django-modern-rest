@@ -55,13 +55,13 @@ Here's how it works:
 You can change the error instance that is handled during
 the error handling pipeline. For example:
 
-- :exc:`ValueError` happens originally
-- It is handeled in a custom endpoint-level handler,
-  which raises :exc:`RuntimeError` instead
+- Some ``YourCustomError`` happens in your endpoint
+- It is handled in a custom endpoint-level handler,
+  which raises ``YourIntermediateError`` instead
 - Custom controller-level handler catches it and raises
   :exc:`~dmr.exceptions.ValidationError` instead
-- It is handled by the default :func:`~dmr.errors.global_error_handler`
-  and returns an expected response
+- ``ValidationError`` is handled by the default
+  :func:`~dmr.errors.global_error_handler` and returns an expected response
 
 
 Customizing endpoint error handler
