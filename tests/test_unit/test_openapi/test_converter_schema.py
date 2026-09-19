@@ -115,13 +115,15 @@ def test_builtin_converter_schemas() -> None:
         Router(
             'api/',
             [
-                path('tags/<slug:tag>/', _ArticleController.as_view()),
-                path('files/<path:file_path>/', _ArticleController.as_view()),
+                path(
+                    'tags/<slug:tag>/<path:file>/',
+                    _ArticleController.as_view(),
+                ),
             ],
         ),
     ).convert()
 
-    tag_params = schema['paths']['/api/tags/{tag}/']['get']['parameters']
+    tag_params = schema['paths']['/api/tags/{tag}/{file}/']['get']['parameters']
     assert tag_params == snapshot([
         {
             'name': 'tag',
@@ -133,18 +135,12 @@ def test_builtin_converter_schemas() -> None:
             },
             'required': True,
         },
-    ])
-
-    file_params = schema['paths']['/api/files/{file_path}/']['get'][
-        'parameters'
-    ]
-    assert file_params == snapshot([
         {
-            'name': 'file_path',
+            'name': 'file',
             'in': 'path',
             'schema': {
                 'type': 'string',
-                'title': 'File Path',
+                'title': 'File',
                 'description': 'Can contain slashes',
             },
             'required': True,
@@ -162,12 +158,12 @@ class _LowercaseConverter:
         description='Lowercase letters only',
     )
 
-    def to_python(self, raw_value: str) -> str:
-        """Parse the captured path segment."""
+    def to_python(self, value: str) -> str:  # noqa: WPS110
+        """Return the captured path segment unchanged."""
         raise NotImplementedError
 
-    def to_url(self, raw_value: str) -> str:
-        """Render the value back into a URL segment."""
+    def to_url(self, value: str) -> str:  # noqa: WPS110
+        """Render the segment back into a URL."""
         raise NotImplementedError
 
 
@@ -179,14 +175,14 @@ def test_custom_converter_prepared_schema() -> None:
             'api/',
             [
                 path(
-                    f'codes/<{_LOWERCASE_CONVERTER}:code>/',
+                    f'<{_LOWERCASE_CONVERTER}:code>/<int:fix>/',
                     _ArticleController.as_view(),
                 ),
             ],
         ),
     ).convert()
 
-    code_params = schema['paths']['/api/codes/{code}/']['get']['parameters']
+    code_params = schema['paths']['/api/{code}/{fix}/']['get']['parameters']
     assert code_params == snapshot([
         {
             'name': 'code',
@@ -197,6 +193,12 @@ def test_custom_converter_prepared_schema() -> None:
                 'title': 'Code',
                 'description': 'Lowercase letters only',
             },
+            'required': True,
+        },
+        {
+            'name': 'fix',
+            'in': 'path',
+            'schema': {'type': 'integer', 'title': 'Fix'},
             'required': True,
         },
     ])
