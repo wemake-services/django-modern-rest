@@ -261,7 +261,7 @@ class SyncOrAsyncAuth(Generic[_SyncAuthT, _AsyncAuthT]):
         Return the auth instance matching *is_async* requirement.
 
         .. versionchanged:: 0.16.0
-            Replaced *auth_cls* parameter with simplier *is_async*.
+            Replaced *auth_cls* parameter with simpler *is_async*.
 
         """
         if is_async:

@@ -429,7 +429,7 @@ class SyncOrAsyncThrottle(Generic[_SyncThrottleT, _AsyncThrottleT]):
         Return the throttle instance matching *is_async* requirement.
 
         .. versionchanged:: 0.16.0
-            Replaced *throttle_cls* parameter with simplier *is_async*.
+            Replaced *throttle_cls* parameter with simpler *is_async*.
 
         """
         if is_async:
