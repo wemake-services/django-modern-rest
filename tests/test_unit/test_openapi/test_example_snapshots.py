@@ -12,7 +12,7 @@ from syrupy.assertion import SnapshotAssertion
 from dmr import Body, Controller
 from dmr.openapi import build_schema
 from dmr.openapi.objects import Example, MediaTypeMetadata
-from dmr.plugins.pydantic import PydanticSerializer, PydanticFastSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.routing import Router
 from dmr.settings import Settings
 
