@@ -48,8 +48,8 @@ def controller_mapping_collector(
     direct URL patterns and nested URL resolvers, to build a comprehensive
     list of all available API controllers.
     """
-    if not parent_patterns:
-        parent_patterns = _prefix_patterns(base_path)
+    if not parent_patterns and _PATH_PATTERN.search(base_path):
+        parent_patterns = (RoutePattern(base_path),)
 
     for url in urls:
         if isinstance(url, URLPattern):
@@ -111,52 +111,39 @@ def _merge_parent_patterns(
     if not parent_patterns:
         return url_pattern
 
-    all_route = all(
+    if all(  # noqa: WPS337
         isinstance(pat, RoutePattern) for pat in parent_patterns
-    )
-
-    if all_route and isinstance(url_pattern.pattern, RoutePattern):
+    ) and isinstance(url_pattern.pattern, RoutePattern):
         parts = [
             pat._route  # noqa: SLF001, WPS437
             for pat in parent_patterns
             if isinstance(pat, RoutePattern)
         ]
         parts.append(url_pattern.pattern._route)  # noqa: SLF001, WPS437
-        combined_route = _join_raw_routes(*parts)
-        return URLPattern(RoutePattern(combined_route), url_pattern.callback)
+        return URLPattern(
+            RoutePattern(_join_raw_routes(parts)),
+            url_pattern.callback,
+        )
 
     # Mixed or regex-only: combine everything as regex.
     regex_parts = [
-        pat.regex.pattern.lstrip('^').rstrip('\\Z')
-        for pat in parent_patterns
+        pat.regex.pattern.lstrip('^').rstrip(r'\Z') for pat in parent_patterns
     ]
-    child_regex = url_pattern.pattern.regex.pattern.lstrip('^')
-    regex_parts.append(child_regex)
-    combined_regex = _join_raw_routes(*regex_parts)
+    regex_parts.append(url_pattern.pattern.regex.pattern.lstrip('^'))
     return URLPattern(
-        RegexPattern(f'^{combined_regex}'),
+        RegexPattern(f'^{_join_raw_routes(regex_parts)}'),
         url_pattern.callback,
     )
 
 
-def _prefix_patterns(base_path: str) -> tuple[_BasePattern, ...]:
-    """Create parent patterns from a Router prefix if it has converters."""
-    if _PATH_PATTERN.search(base_path):
-        return (RoutePattern(base_path),)
-    return ()
-
-
-def _join_raw_routes(*parts: str) -> str:
+def _join_raw_routes(parts: list[str]) -> str:
     """Join raw Django route strings preserving converter syntax."""
-    result = ''
+    joined = ''
     for part in parts:
         if not part:
             continue
-        if not result:
-            result = part
-        else:
-            result = f'{result.rstrip("/")}/{part.lstrip("/")}'
-    return result
+        joined = f'{joined.rstrip("/")}/{part.lstrip("/")}' if joined else part
+    return joined
 
 
 def _join_paths(base_path: str, pattern_path: str) -> str:
