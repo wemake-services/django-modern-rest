@@ -18,7 +18,7 @@ Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
 All migration prompts for breaking releases live in the
-[`dmr-upgrade`](dmr/.agents/skills/dmr-upgrade) agent skill,
+[`dmr-upgrade`](https://github.com/wemake-services/django-modern-rest/tree/master/dmr/.agents/skills/dmr-upgrade) agent skill,
 one file per release in its `references/` directory,
 together with codemods for the mechanical parts of each upgrade.
 Ask your coding agent to use `$dmr-upgrade` to upgrade a project.
@@ -706,7 +706,7 @@ for both sync and async controllers at the same time.
   `FileResponse(..., as_attachment=True)`, #1020
 
 Migration prompt: see the `dmr-upgrade` agent skill,
-[`references/0.9-to-0.10.md`](dmr/.agents/skills/dmr-upgrade/references/0.9-to-0.10.md).
+[`references/0.9-to-0.10.md`](https://github.com/wemake-services/django-modern-rest/blob/master/dmr/.agents/skills/dmr-upgrade/references/0.9-to-0.10.md).
 
 ### Features
 
@@ -757,7 +757,7 @@ Migration prompt: see the `dmr-upgrade` agent skill,
   This will help to make throttling more atomic, #942
 
 Migration prompt: see the `dmr-upgrade` agent skill,
-[`references/0.7-to-0.8.md`](dmr/.agents/skills/dmr-upgrade/references/0.7-to-0.8.md).
+[`references/0.7-to-0.8.md`](https://github.com/wemake-services/django-modern-rest/blob/master/dmr/.agents/skills/dmr-upgrade/references/0.7-to-0.8.md).
 
 ### Features
 
@@ -815,7 +815,7 @@ Migration prompt: see the `dmr-upgrade` agent skill,
    to `Endpoint.get_schema` and `Controller.get_path_item`, #879
 
 Migration prompt: see the `dmr-upgrade` agent skill,
-[`references/0.6-to-0.7.md`](dmr/.agents/skills/dmr-upgrade/references/0.6-to-0.7.md).
+[`references/0.6-to-0.7.md`](https://github.com/wemake-services/django-modern-rest/blob/master/dmr/.agents/skills/dmr-upgrade/references/0.6-to-0.7.md).
 
 ### Features
 
@@ -955,7 +955,7 @@ AKA "The first version that I enjoy".
    `dmr.sse` package was moved to `dmr.streaming.sse`
 
 Migration prompt: see the `dmr-upgrade` agent skill,
-[`references/0.3-to-0.4.md`](dmr/.agents/skills/dmr-upgrade/references/0.3-to-0.4.md).
+[`references/0.3-to-0.4.md`](https://github.com/wemake-services/django-modern-rest/blob/master/dmr/.agents/skills/dmr-upgrade/references/0.3-to-0.4.md).
 
 ### Features
 

@@ -478,6 +478,16 @@ ignore_missing_imports = true
 module = [ "allauth.*" ]
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+# Docs extensions without a `py.typed` marker,
+# only used in `docs/tools/sphinx_ext/markdown.py`:
+module = [
+  "sphinx_iconify.*",
+  "sphinx_markdown_builder.*",
+  "sphinxcontrib.mermaid"
+]
+ignore_missing_imports = true
+
 
 [tool.pyrefly]
 # Docs: https://pyrefly.org
