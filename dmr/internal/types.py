@@ -22,12 +22,12 @@ if TYPE_CHECKING:
 
     from dmr.errors import ErrorType
 
-    #: Re-export of `django-stubs` internal value, without `django-stubs-ext`.
+    #: Re-export of ``django-stubs`` internal value.
     StrOrPromise: TypeAlias = '_StrOrPromise'
 else:
     from django.utils.functional import Promise
 
-    #: Re-export of `django-stubs` internal value, without `django-stubs-ext`.
+    #: Re-export of ``django-stubs`` internal value.
     StrOrPromise: TypeAlias = str | Promise
 
 _MetadataT = TypeVar('_MetadataT')

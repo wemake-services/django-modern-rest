@@ -222,7 +222,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
             will be a streaming response that supports event validation.
-        extra_responses: List of extra responses
+        extra_responses: Sequence of extra responses
             that this endpoint can return.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this endpoint.
@@ -259,7 +259,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             Defaults to everything that goes after the first paragraph
             of the endpoint's docstring.
             Set it to ``None`` to have no description at all.
-        tags: A list of tags for API documentation control.
+        tags: A sequence of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
             These are merged with controller-level and router-level tags.
         operation_id: Unique string used to identify the operation.
@@ -271,7 +271,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             is a Callback Object that describes
             a request that may be initiated by the API provider and the
             expected responses.
-        servers: An alternative servers array to service this operation.
+        servers: An alternative servers sequence to service this operation.
         links: Possible links to other OpenAPI operations.
         response_description: Description for the generated response object.
         ignore_from_spec: If set to ``True``, this endpoint
@@ -651,7 +651,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
             Defaults to everything that goes after the first paragraph
             of the endpoint's docstring.
             Set it to ``None`` to have no description at all.
-        tags: A list of tags for API documentation control.
+        tags: A sequence of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
             These are merged with controller-level and router-level tags.
         operation_id: Unique string used to identify the operation.
@@ -662,7 +662,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
             Object. Each value in the map is a Callback Object that describes
             a request that may be initiated by the API provider and the
             expected responses.
-        servers: An alternative servers array to service this operation.
+        servers: An alternative servers sequence to service this operation.
         ignore_from_spec: If set to ``True``, this endpoint
             would not be added to the final OpenAPI spec.
 
