@@ -10,15 +10,12 @@ from typing_extensions import override
 
 from dmr.errors import ErrorModel, format_error
 from dmr.exceptions import NotAcceptableError
+from dmr.internal.types import StrOrPromise
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.semantic_schema import AuthProvider
 
 if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
-
     from dmr.controller import Controller
     from dmr.internal.types import FormatError
     from dmr.renderers import Renderer
@@ -165,7 +162,7 @@ class CSRFSemanticSchemaProvider(ResponseSpecProvider, AuthProvider):
     # Instance API:
     error_model: Any = ErrorModel
     status_code: HTTPStatus | None = None
-    description: '_StrOrPromise | None' = None
+    description: StrOrPromise | None = None
     security_scheme_name: str = 'csrf'
     # Matches Django's definition in `CsrfViewMiddleware`
     safe_http_methods: Set[HTTPMethod] = frozenset((
@@ -278,7 +275,7 @@ def csrf_response_spec(
     *,
     return_type: Any,
     status_code: HTTPStatus | None = None,
-    description: '_StrOrPromise | None' = None,
+    description: StrOrPromise | None = None,
 ) -> ResponseSpec:
     """
     Response spec for CSRF error.

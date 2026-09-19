@@ -19,15 +19,12 @@ from typing import (  # noqa: WPS235
 from typing_extensions import TypeVar, override
 
 from dmr.internal.types import (
+    StrOrPromise,
     find_annotated_metadata,
     iter_union_members,
 )
 
 if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
-
     from dmr.components import ComponentParser
     from dmr.controller import Controller
     from dmr.cookies import CookieSpec, NewCookie
@@ -112,11 +109,11 @@ class ResponseSpec:
     )
 
     # Metadata:
-    description: '_StrOrPromise | None' = dataclasses.field(
+    description: StrOrPromise | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
-    summary: '_StrOrPromise | None' = dataclasses.field(
+    summary: StrOrPromise | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
@@ -368,7 +365,7 @@ class ResponseModification:
     streaming: bool
 
     # Metadata:
-    description: '_StrOrPromise | None'
+    description: StrOrPromise | None
     links: dict[str, 'Link | Reference'] | None
 
     # Pre-computed fields:
@@ -631,8 +628,8 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     validate_events: bool
 
     # OpenAPI documentation fields:
-    summary: '_StrOrPromise | None'
-    description: '_StrOrPromise | None'
+    summary: StrOrPromise | None
+    description: StrOrPromise | None
     tags: list[str] | None
     operation_id: str | None
     deprecated: bool

@@ -266,6 +266,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   is sorted by a stable key instead of the definition order, #1557
 - Fixed that `pydantic` serializer was not dumping `@dataclass`
   instances correctly without `msgspec` installed, #1560
+- Fixed `@modify` and `@validate` types: now `tags`, `servers`,
+  and `extra_responses` are types as `Sequence`, not as `list`, #1563
 
 
 ## 0.15.0 (2026-09-11)

@@ -469,7 +469,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             deprecated=payload.deprecated,
             external_docs=payload.external_docs,
             callbacks=payload.callbacks,
-            servers=payload.servers,
+            servers=None if payload.servers is None else list(payload.servers),
             ignore_from_spec=self._build_ignore_from_spec(),
         )
 
@@ -533,7 +533,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             deprecated=payload.deprecated,
             external_docs=payload.external_docs,
             callbacks=payload.callbacks,
-            servers=payload.servers,
+            servers=None if payload.servers is None else list(payload.servers),
             ignore_from_spec=self._build_ignore_from_spec(),
         )
 
@@ -882,7 +882,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             return self.payload.ignore_from_spec
         return self.controller_cls.ignore_from_spec
 
-    def _build_tags(self, payload_tags: list[str] | None) -> list[str] | None:
+    def _build_tags(
+        self,
+        payload_tags: Sequence[str] | None,
+    ) -> list[str] | None:
         # Controller tags are prepended to the endpoint ones,
         # the same way router tags are prepended to these later on.
         tags = [

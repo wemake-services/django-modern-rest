@@ -1,18 +1,13 @@
-from typing import TYPE_CHECKING
-
 from django.contrib.admindocs.utils import parse_docstring
 from typing_extensions import Sentinel
 
-if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
+from dmr.internal.types import StrOrPromise
 
 
 def resolve_summary_and_description(
     docstring: str | None,
-    summary: '_StrOrPromise | Sentinel | None',
-    description: '_StrOrPromise | Sentinel | None',
+    summary: StrOrPromise | Sentinel | None,
+    description: StrOrPromise | Sentinel | None,
 ) -> tuple[str | None, str | None]:
     """
     Resolve OpenAPI ``summary`` and ``description`` against a docstring.
@@ -33,7 +28,7 @@ def resolve_summary_and_description(
 
 
 def _resolve_doc_field(
-    explicit: '_StrOrPromise | Sentinel | None',
+    explicit: StrOrPromise | Sentinel | None,
     parsed: str | None,
 ) -> str | None:
     if isinstance(explicit, Sentinel):
