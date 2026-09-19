@@ -197,6 +197,7 @@ class _ModifySyncCustomHandler(Controller[PydanticSerializer]):
         exc: Exception,
     ) -> HttpResponse:
         assert self is controller
+        assert isinstance(exc, ValueError), exc
         raise RuntimeError('Runtime') from None
 
     @modify(
@@ -214,6 +215,7 @@ class _ModifySyncCustomHandler(Controller[PydanticSerializer]):
         exc: Exception,
     ) -> HttpResponse:
         assert self is controller
+        assert isinstance(exc, RuntimeError), exc
         raise ZeroDivisionError('Zero') from None
 
 
@@ -343,6 +345,7 @@ class _ModifyAsyncCustomHandler(Controller[PydanticSerializer]):
         exc: Exception,
     ) -> HttpResponse:
         assert self is controller
+        assert isinstance(exc, ValueError), exc
         raise RuntimeError('Runtime') from None
 
     @modify(
@@ -360,6 +363,7 @@ class _ModifyAsyncCustomHandler(Controller[PydanticSerializer]):
         exc: Exception,
     ) -> HttpResponse:
         assert self is controller
+        assert isinstance(exc, RuntimeError), exc
         raise ZeroDivisionError('Zero') from None
 
 
