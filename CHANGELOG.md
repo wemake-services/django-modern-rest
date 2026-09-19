@@ -121,7 +121,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Features
 
-- Now we can change the error type / instance that 
+- Now we can change the error type / instance that
   we are handling from layer to layer,
   for example: endpoint-level handler can raise a new error
   and controller-level error handler will receive this new error, #1561
