@@ -206,6 +206,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   so the `jsonSchemaDialect` field was never generated, #1486
 - Allow all bool values in `dmr.openapi.objects` also accept `None`, #1437
 - Added all formats from the OpenAPI Format Registry to `OpenAPIFormat`, #1489
+- `slug` and `path` url converters now describe themselves in the schema:
+  `slug` adds the `pattern` of its own regex,
+  `path` adds a `description` about slashes, #1441
 
 ### Bugfixes
 

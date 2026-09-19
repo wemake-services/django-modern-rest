@@ -34,6 +34,9 @@ What happens here?
 Django supports multiple pre-defined path converter types:
 ``int``, ``uuid``, ``str``, ``slug``, ``path``.
 
+We have first-class support for all of them, showing all
+the possible metadata we possibly can for these converters.
+
 .. seealso::
 
   - https://docs.djangoproject.com/en/stable/topics/http/urls/
@@ -56,6 +59,10 @@ use :data:`~dmr.components.Path` component with a model.
   with the specific type that you need in the schema.
   It can be any annotation that is supported by the controller's serializer
   that is using this URL.
+
+  Setting ``__dmr_converter_schema__``
+  to :class:`dmr.openapi.generators.component_parsers.ConverterSchema`
+  will allow you to add ``pattern`` or ``description`` metadata to the schema.
 
 .. note::
 
