@@ -118,8 +118,16 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         is_abstract: Whether or not this controller is abstract.
             We consider controller "abstract" when it does not have
             exact serializer type or exact ``api_endpoints`` instances.
+            You can also set it to ``True`` explicitly to make
+            a controller with a serializer and endpoints reusable
+            without routing it. Subclasses that don't declare
+            ``is_abstract`` themselves become concrete again.
             Abstract controllers cannot be routed, ``as_view`` raises
             :class:`~dmr.exceptions.EndpointMetadataError` for them.
+
+            .. versionchanged:: 0.16.0
+
+                Explicit ``is_abstract`` definitions are now respected.
         is_async: Whether or not this controller is async.
         streaming: Does this controller work with streaming responses like SSE?
         controller_validator_cls: Runs full controller validation on definition.
@@ -218,7 +226,14 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             )
             for canonical, meth in cls._find_existing_http_methods().items()
         }
-        cls.is_abstract = not bool(cls.api_endpoints)
+        # Explicit `is_abstract` definition always wins: this way people
+        # can opt-out of routing a controller that has a serializer
+        # and endpoints. We don't use `getattr`, because subclasses
+        # of explicitly abstract controllers must become concrete again:
+        cls.is_abstract = cls.__dict__.get(
+            'is_abstract',
+            not bool(cls.api_endpoints),
+        )
         cls.is_async = cls.controller_validator_cls()(cls)
 
     @override

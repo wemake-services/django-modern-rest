@@ -82,6 +82,25 @@ But, this is just the first step. We can do much more!
     :linenos:
     :language: python
 
+Explicitly abstract controllers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A controller can have an exact serializer and endpoints,
+but you might still not want to route it: you only want to reuse it.
+Declare ``is_abstract = True`` explicitly for this:
+
+.. literalinclude:: /examples/reusable_code/explicit_abstract.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+Subclasses that don't declare ``is_abstract`` themselves
+are concrete again, even when their base controller is explicitly abstract.
+So, ``MyController`` from the example above does the same
+``GET`` request as its base, but it can be routed.
+
+.. versionadded:: 0.16.0
+
 
 Generic parsing and response models
 -----------------------------------
