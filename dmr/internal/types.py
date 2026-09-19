@@ -7,6 +7,7 @@ from typing import (  # noqa: WPS235
     Any,
     Final,
     Protocol,
+    TypeAlias,
     TypeVar,
     get_args,
     get_origin,
@@ -14,10 +15,20 @@ from typing import (  # noqa: WPS235
 
 from typing_extensions import TypeAliasType
 
-from dmr.exceptions import UnsolvableAnnotationsError
-
 if TYPE_CHECKING:
+    from django.utils.functional import (
+        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
+    )
+
     from dmr.errors import ErrorType
+
+    #: Re-export of `django-stubs` internal value, without `django-stubs-ext`.
+    StrOrPromise: TypeAlias = '_StrOrPromise'
+else:
+    from django.utils.functional import Promise
+
+    #: Re-export of `django-stubs` internal value, without `django-stubs-ext`.
+    StrOrPromise: TypeAlias = str | Promise
 
 _MetadataT = TypeVar('_MetadataT')
 
@@ -54,6 +65,8 @@ def unwrap_type_alias(annotation: Any) -> Any:
             which also happens for mutually recursive ones.
 
     """
+    from dmr.exceptions import UnsolvableAnnotationsError  # noqa: PLC0415
+
     for _ in range(_MAX_ALIAS_DEPTH):
         origin = get_origin(annotation)
         if isinstance(annotation, _TYPE_ALIAS_TYPES):

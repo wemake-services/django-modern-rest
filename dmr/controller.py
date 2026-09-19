@@ -16,6 +16,7 @@ from dmr.errors import ErrorModel, ErrorType, format_error
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.internal.docstrings import resolve_summary_and_description
 from dmr.internal.io import identity
+from dmr.internal.types import StrOrPromise
 from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.core.context import OpenAPIContext
@@ -30,10 +31,6 @@ from dmr.types import EMPTY, AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
 if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
-
     from dmr.routing import Router
 
 _METHOD_NOT_ALLOWED_MSG: Final = _(
@@ -190,8 +187,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     annotations_context: ClassVar[AnnotationsContext] = AnnotationsContext()
 
     # OpenAPI:
-    summary: ClassVar['_StrOrPromise | Sentinel | None'] = EMPTY
-    description: ClassVar['_StrOrPromise | Sentinel | None'] = EMPTY
+    summary: ClassVar[StrOrPromise | Sentinel | None] = EMPTY
+    description: ClassVar[StrOrPromise | Sentinel | None] = EMPTY
     tags: ClassVar[Sequence[str] | None] = None
     servers: ClassVar[Sequence[Server] | None] = None
     ignore_from_spec: ClassVar[bool] = False

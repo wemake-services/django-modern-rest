@@ -143,7 +143,6 @@ nitpick_ignore = [
     (_PY_CLASS, 'dmr.throttling.base._AsyncThrottleT'),
     (_PY_CLASS, 'redis.Redis'),
     (_PY_CLASS, 'aioredis.Redis'),
-    (_PY_CLASS, '_StrOrPromise'),
     (_PY_CLASS, 'dmr.validation.endpoint_metadata._ResponseListValidator'),
     (_PY_CLASS, 'dmr.validation.response._ResponseT'),
     (_PY_CLASS, 'dmr.decorators._ReturnT'),

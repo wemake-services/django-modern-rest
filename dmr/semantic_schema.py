@@ -7,13 +7,10 @@ from typing import TYPE_CHECKING
 from typing_extensions import override
 
 from dmr.exceptions import ResponseSchemaError
+from dmr.internal.types import StrOrPromise
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 
 if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
-
     from dmr.controller import Controller
     from dmr.openapi.objects import (
         Reference,
@@ -89,7 +86,7 @@ class ResponseValidationSpecProvider(ResponseSpecProvider):
     """
 
     status_code: HTTPStatus = ResponseSchemaError.status_code
-    description: '_StrOrPromise | None' = (
+    description: StrOrPromise | None = (
         'Raised when returned response does not match the response schema'
     )
 

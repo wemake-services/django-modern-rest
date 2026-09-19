@@ -5,10 +5,10 @@ from http import HTTPStatus
 from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, final
 
 from django.db import models
-from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
 from dmr.internal.django import get_model_pks
+from dmr.internal.types import StrOrPromise
 
 _ModelT = TypeVar('_ModelT')
 _DjangoModel = TypeVar('_DjangoModel', bound=models.Model)
@@ -23,12 +23,12 @@ class InvalidCursorError(Exception):
     so a malformed one is a client error.
     """
 
-    default_message: ClassVar[str | Promise] = _('Invalid cursor')
+    default_message: ClassVar[StrOrPromise] = _('Invalid cursor')
     status_code: ClassVar[HTTPStatus] = HTTPStatus.BAD_REQUEST
 
     def __init__(
         self,
-        msg: str | Promise | None = None,
+        msg: StrOrPromise | None = None,
     ) -> None:
         """Provides default error message."""
         super().__init__(msg or self.default_message)

@@ -5,13 +5,10 @@ from collections.abc import Mapping, Sequence
 from http import HTTPStatus
 from types import MappingProxyType
 from typing import (
-    TYPE_CHECKING,
     Any,
     ClassVar,
     Final,
     Generic,
-    Literal,
-    TypeAlias,
 )
 
 from django.conf import settings
@@ -26,12 +23,14 @@ from django.views.decorators.debug import (
 from typing_extensions import TypeVar
 
 from dmr import Body, CookieSpec, NewCookie, ResponseSpec, validate
+from dmr.cookies import SameSite
 from dmr.decorators import endpoint_decorator
 from dmr.endpoint import ValidateAnyCallable
 from dmr.errors import ErrorModel
 from dmr.exceptions import EndpointMetadataError, NotAuthenticatedError
 from dmr.headers import HeaderSpec
 from dmr.internal.csrf import ensure_csrf
+from dmr.internal.types import StrOrPromise
 from dmr.security.base import NO_STORE_HEADERS
 from dmr.security.csrf import csrf_response_spec
 from dmr.security.jwt.auth.base import USER_LOOKUP_ERRORS, set_request_attrs
@@ -48,11 +47,6 @@ from dmr.security.jwt.views.base import (
 from dmr.serializer import BaseSerializer
 from dmr.types import safe_typevar
 
-if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
-
 #: Request body of all the controllers that authenticate a user.
 _ObtainTokensT = TypeVar('_ObtainTokensT', bound=Mapping[str, Any])
 _SerializerT = TypeVar(
@@ -62,8 +56,6 @@ _SerializerT = TypeVar(
 
 #: Cookie views send their tokens in cookies, the body is empty by default.
 _CookieResponseT = TypeVar('_CookieResponseT', default=None)
-
-_SameSite: TypeAlias = Literal['lax', 'strict', 'none']
 
 # `_CookieResponseT` as a value, so it can be passed to `ResponseSpec`.
 # It is resolved to the real type of each final controller later on:
@@ -111,6 +103,7 @@ class _BaseCookieTokensController(  # noqa: WPS214
         jwt_cookie_samesite: ``samesite`` policy of both cookies.
             Do not weaken it to ``'none'`` unless your frontend
             really is on another site.
+        jwt_cookie_description: Description of the cookie in the spec.
         jwt_ensure_csrf: Run the CSRF check on endpoints that act
             on cookies alone, without any credentials in the body.
 
@@ -119,12 +112,15 @@ class _BaseCookieTokensController(  # noqa: WPS214
 
     jwt_access_cookie: ClassVar[str] = DEFAULT_ACCESS_COOKIE
     jwt_refresh_cookie: ClassVar[str] = DEFAULT_REFRESH_COOKIE
-    jwt_access_cookie_path: ClassVar['_StrOrPromise'] = '/'
-    jwt_refresh_cookie_path: ClassVar['_StrOrPromise | None'] = None
+    jwt_access_cookie_path: ClassVar[StrOrPromise] = '/'
+    jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = None
     jwt_cookie_domain: ClassVar[str | None] = None
     jwt_cookie_secure: ClassVar[bool] = True
     jwt_cookie_httponly: ClassVar[bool] = True
-    jwt_cookie_samesite: ClassVar[_SameSite] = 'lax'
+    jwt_cookie_samesite: ClassVar[SameSite] = 'lax'
+    jwt_cookie_description: ClassVar[StrOrPromise] = (
+        'Refresh token, only sent to the refresh endpoint.'
+    )
     jwt_ensure_csrf: ClassVar[bool] = True
 
     @classmethod
@@ -165,7 +161,7 @@ class _BaseCookieTokensController(  # noqa: WPS214
             secure=cls.jwt_cookie_secure,
             httponly=cls.jwt_cookie_httponly,
             samesite=cls.jwt_cookie_samesite,
-            description='Refresh token, only sent to the refresh endpoint.',
+            description=cls.jwt_cookie_description,
         )
 
     @classmethod
