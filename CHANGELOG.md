@@ -89,7 +89,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   for custom JSON schema generation, #1558
 - `SyncOrAsyncAuth` and `SyncOrAsyncThrottle` changed `.resolve` parameter
   from *auth_cls* and *throttle_cls* respectively
-  to *is_async* kw-parameter, #
+  to *is_async* kw-parameter, #1562
 
 ### Performance improvements
 
