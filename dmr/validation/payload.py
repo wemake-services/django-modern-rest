@@ -73,7 +73,7 @@ class ValidateEndpointPayload(_BasePayload):
 class ModifyEndpointPayload(_BasePayload):
     """Payload created by ``@modify``."""
 
-    responses: list[ResponseSpec] | None
+    responses: Sequence[ResponseSpec] | None
     status_code: HTTPStatus | None
     # Headers and cookies can be set via a middleware
     # after a response itself is formed. We need a way to describe this.

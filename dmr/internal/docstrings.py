@@ -1,4 +1,3 @@
-
 from django.contrib.admindocs.utils import parse_docstring
 from typing_extensions import Sentinel
 
