@@ -257,6 +257,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   in `auth` and tokens' methods, #1552
 - OpenAPI schema generation is now deterministic: every generated mapping
   is sorted by a stable key instead of the definition order, #1557
+- Fixed that `pydantic` serializer was not dumping `@dataclass`
+  instances correctly without `msgspec` installed, #
 
 
 ## 0.15.0 (2026-09-11)
