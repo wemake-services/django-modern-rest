@@ -111,9 +111,7 @@ def _merge_parent_patterns(
     if not parent_patterns:
         return url_pattern
 
-    all_route = all(
-        isinstance(pat, RoutePattern) for pat in parent_patterns
-    )
+    all_route = all(isinstance(pat, RoutePattern) for pat in parent_patterns)
 
     if all_route and isinstance(url_pattern.pattern, RoutePattern):
         parts = [
@@ -127,8 +125,7 @@ def _merge_parent_patterns(
 
     # Mixed or regex-only: combine everything as regex.
     regex_parts = [
-        pat.regex.pattern.lstrip('^').rstrip('\\Z')
-        for pat in parent_patterns
+        pat.regex.pattern.lstrip('^').rstrip('\\Z') for pat in parent_patterns
     ]
     child_regex = url_pattern.pattern.regex.pattern.lstrip('^')
     regex_parts.append(child_regex)
