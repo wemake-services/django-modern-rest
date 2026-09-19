@@ -116,21 +116,22 @@ so we return ``None``. A header with an unknown username means
 Describing it in OpenAPI
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-The two ``security_*`` properties work together:
+The two ``security_*`` methods work together:
 
 - ``security_schemes`` returns the named definitions to publish in
   ``components.securitySchemes``. A name maps to a
   :class:`~dmr.openapi.objects.SecurityScheme`
-- ``security_requirement`` returns the names an endpoint requires,
-  which lands in the operation's ``security`` field
+- ``security_requirements`` returns the combinations of scheme names
+  an endpoint accepts, which land in the operation's ``security`` field
 
 Pick the ``type`` that matches your transport. Our example reads its own
 header, so it is ``apiKey``. Had it read ``Authorization``, it would be
 ``type='http'`` with a ``scheme``, and OpenAPI clients would render
 a proper login box for it.
 
-Both are properties, not class attributes, because they usually depend
-on the instance configuration, like the header name above.
+Both receive the endpoint metadata and controller class because their results
+can vary per endpoint. They can also depend on instance configuration,
+like the header name above.
 
 
 Setting the request attributes
