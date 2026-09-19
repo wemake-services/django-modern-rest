@@ -666,4 +666,7 @@ def test_custom_union_format(
     )
     schema = schema_generator(int | str, serializer)
 
+    assert isinstance(schema, Schema)
+    assert isinstance(schema.type, list)
+    schema.type = sorted(schema.type)
     assert schema == Schema(type=[OpenAPIType.INTEGER, OpenAPIType.STRING])
