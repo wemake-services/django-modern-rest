@@ -1,6 +1,6 @@
 {
   "name": "django-modern-rest",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Modern REST framework for Django with types and async support",
   "owner": {
     "name": "wemake-services",
@@ -9,45 +9,98 @@
   "plugins": [
     {
       "name": "dmr",
-      "source": "./.agents/skills/dmr",
+      "source": "./dmr/.agents/skills/dmr",
       "description": "Write the best DMR code possible with all the recommended best practices, avoiding common mistakes",
       "category": "development",
-      "keywords": ["django", "rest", "api", "django-modern-rest"],
+      "keywords": [
+        "django",
+        "rest",
+        "api",
+        "django-modern-rest"
+      ],
       "license": "MIT",
       "homepage": "https://github.com/wemake-services/django-modern-rest",
       "repository": "https://github.com/wemake-services/django-modern-rest"
     },
     {
       "name": "dmr-from-drf",
-      "source": "./.agents/skills/dmr-from-drf",
+      "source": "./dmr/.agents/skills/dmr-from-drf",
       "description": "Migrate Django REST Framework APIs to django-modern-rest",
       "category": "development",
-      "keywords": ["django", "rest", "api", "djangorestframework", "migration"],
+      "keywords": [
+        "django",
+        "rest",
+        "api",
+        "djangorestframework",
+        "migration"
+      ],
       "license": "MIT",
       "homepage": "https://github.com/wemake-services/django-modern-rest",
       "repository": "https://github.com/wemake-services/django-modern-rest"
     },
     {
       "name": "dmr-from-django-ninja",
-      "source": "./.agents/skills/dmr-from-django-ninja",
+      "source": "./dmr/.agents/skills/dmr-from-django-ninja",
       "description": "Migrate Django Ninja APIs to django-modern-rest",
       "category": "development",
-      "keywords": ["django", "rest", "api", "django-ninja", "migration"],
+      "keywords": [
+        "django",
+        "rest",
+        "api",
+        "django-ninja",
+        "migration"
+      ],
       "license": "MIT",
       "homepage": "https://github.com/wemake-services/django-modern-rest",
       "repository": "https://github.com/wemake-services/django-modern-rest"
     },
     {
       "name": "dmr-from-dj-rest-auth",
-      "source": "./dmr-from-dj-rest-auth",
-      "description": "Migrate dj-rest-auth APIs to django-modern-rest and django-allauth headless"
+      "source": "./dmr/.agents/skills/dmr-from-dj-rest-auth",
+      "description": "Migrate dj-rest-auth APIs to django-modern-rest and django-allauth headless",
+      "category": "development",
+      "keywords": [
+        "django",
+        "rest",
+        "api",
+        "dj-rest-auth",
+        "django-allauth",
+        "migration"
+      ],
+      "license": "MIT",
+      "homepage": "https://github.com/wemake-services/django-modern-rest",
+      "repository": "https://github.com/wemake-services/django-modern-rest"
     },
     {
       "name": "dmr-openapi-skeleton",
-      "source": "./.agents/skills/dmr-openapi-skeleton",
+      "source": "./dmr/.agents/skills/dmr-openapi-skeleton",
       "description": "Scaffold OpenAPI-compliant Django REST APIs with dmr",
       "category": "development",
-      "keywords": ["django", "rest", "api", "openapi", "scaffolding"],
+      "keywords": [
+        "django",
+        "rest",
+        "api",
+        "openapi",
+        "scaffolding"
+      ],
+      "license": "MIT",
+      "homepage": "https://github.com/wemake-services/django-modern-rest",
+      "repository": "https://github.com/wemake-services/django-modern-rest"
+    },
+    {
+      "name": "dmr-upgrade",
+      "source": "./dmr/.agents/skills/dmr-upgrade",
+      "description": "Upgrade a project to a newer django-modern-rest release using the official migration prompts and codemods",
+      "category": "development",
+      "keywords": [
+        "django",
+        "rest",
+        "api",
+        "django-modern-rest",
+        "upgrade",
+        "migration",
+        "codemod"
+      ],
       "license": "MIT",
       "homepage": "https://github.com/wemake-services/django-modern-rest",
       "repository": "https://github.com/wemake-services/django-modern-rest"

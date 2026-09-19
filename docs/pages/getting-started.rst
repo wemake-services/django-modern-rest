@@ -76,6 +76,9 @@ knows our framework:
   for indexes with links to different pages and topics
 - https://django-modern-rest.readthedocs.io/llms-full.txt
   for complete docs
+- Every documentation page is also served as Markdown,
+  replace ``.html`` with ``.md`` in its URL,
+  or press "Copy page" on any page
 
 We also support
 `Context7 <https://context7.com/wemake-services/django-modern-rest>`_
@@ -86,13 +89,21 @@ Use cases we officially support:
 - Learning ``django-modern-rest`` with the help
   of `DeepWiki <https://deepwiki.com/wemake-services/django-modern-rest>`_
 - AI-guided migrations for any API changes.
-  Did we break something? We provide a prompt for you, so you can automatically
-  upgrade to a newer version using an AI tool of your choice
+  Did we break something? Every breaking release ships a migration prompt
+  and codemods, so you can upgrade to a newer version
+  using an AI tool of your choice
 
-We support several custom agent skills:
+We ship several :doc:`agent skills <ai/agent-skills>` inside the package,
+install them into your project with a single command:
+
+.. code-block:: bash
+
+  uvx library-skills
 
 - ``$dmr`` to enforce ``django-modern-rest`` best practices
   with fast and secure approaches
+- ``$dmr-upgrade`` to :doc:`upgrade to a newer release <ai/dmr-upgrade>`
+  with the official migration prompts and codemods
 - ``$dmr-openapi-skeleton`` to generate
   a :doc:`working project boilerplate <ai/spec-first>`
   from a single ``openapi.json`` file (the "Spec First" approach)

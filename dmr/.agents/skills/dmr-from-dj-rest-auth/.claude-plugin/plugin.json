@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "dmr-from-dj-rest-auth",
+  "version": "1.0.0",
+  "description": "Migrate dj-rest-auth APIs to django-modern-rest and django-allauth headless",
+  "author": {
+    "name": "wemake-services",
+    "url": "https://github.com/wemake-services"
+  },
+  "homepage": "https://github.com/wemake-services/django-modern-rest",
+  "repository": "https://github.com/wemake-services/django-modern-rest",
+  "license": "MIT",
+  "keywords": ["django", "rest", "api", "dj-rest-auth", "django-allauth", "migration"],
+  "skills": ["./"],
+  "agents": []
+}

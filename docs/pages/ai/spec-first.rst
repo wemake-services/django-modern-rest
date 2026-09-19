@@ -2,7 +2,7 @@ Spec-first generation
 =====================
 
 By example, you can use agent skill
-`dmr-openapi-skeleton <https://github.com/wemake-services/django-modern-rest/tree/master/.agents/skills/dmr-openapi-skeleton>`_
+`dmr-openapi-skeleton <https://github.com/wemake-services/django-modern-rest/tree/master/dmr/.agents/skills/dmr-openapi-skeleton>`_
 when you already have an OpenAPI contract and want a runnable
 ``django-modern-rest`` skeleton.
 
@@ -59,6 +59,8 @@ How to use in Claude Code
    /dmr-openapi-skeleton
 
 4. Then provide the OpenAPI source (file path, URL, or pasted spec) and generation constraints.
+
+See :doc:`agent-skills` for other agents.
 
 
 What is generated

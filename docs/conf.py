@@ -10,6 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
+import os
 import sys
 import tomllib
 from collections.abc import Iterable
@@ -73,6 +74,7 @@ extensions = [
     'sphinx_iconify',
     'sphinxcontrib.mermaid',
     'sphinx_llms_txt',
+    'sphinx_markdown_builder',
     # custom extensions
     'docs.tools.sphinx_ext',
 ]
@@ -290,6 +292,14 @@ html_theme_options = {
         },
     ],
     'accent_color': 'green',
+    # "Copy page" button and "Open in ..." links for LLM chats,
+    # see `_templates/components/copy-page-button.html`:
+    'show_ai_links': True,
+    'ai_prompt_template': (
+        'Read {url} and answer my questions about django-modern-rest. '
+        'The full documentation index is at '
+        'https://django-modern-rest.readthedocs.io/en/latest/llms.txt'
+    ),
     'light_logo': '_static/images/logo-light.svg',
     'dark_logo': '_static/images/logo-dark.svg',
     'og_image_url': 'https://repository-images.githubusercontent.com/1072817092/f0ab70e3-c165-485b-b591-e860c16f7c4f',
@@ -314,7 +324,30 @@ html_js_files = [
 
 html_show_sourcelink = False
 html_sourcelink_suffix = ''
+
+# LLM-friendly outputs:
+# - `llms.txt` and `llms-full.txt` from `sphinx_llms_txt`,
+# - a Markdown twin of every page from `sphinx_markdown_builder`,
+#   built by `just docs` and by `.readthedocs.yml` next to the HTML,
+#   so `pages/routing.md` sits next to `pages/routing.html`.
+# Read the Docs exports the canonical URL of the version being built,
+# it makes `pageurl` available to templates and absolute links in `llms.txt`:
+html_baseurl = os.environ.get(
+    'READTHEDOCS_CANONICAL_URL',
+    'https://django-modern-rest.readthedocs.io/en/latest/',
+)
 llms_txt_uri_template = '{base_url}{docname}.html'
+llms_txt_title = f'django-modern-rest {release}'
+llms_txt_summary = (
+    f'Documentation for django-modern-rest version {release}. '
+    'Every page listed below is also available as Markdown: '
+    'replace `.html` with `.md` in its URL. '
+    'The complete documentation in one file is `llms-full.txt` '
+    'next to this file.'
+)
+markdown_anchor_sections = True
+markdown_http_base = html_baseurl.rstrip('/')
+markdown_uri_doc_suffix = '.html'
 
 
 def resolve_canonical_names(app: Sphinx, doctree: Node) -> None:

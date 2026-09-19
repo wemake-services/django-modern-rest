@@ -4,6 +4,13 @@ build:
   os: ubuntu-lts-latest
   tools:
     python: "3.12"
+  jobs:
+    post_build:
+      # Markdown twin of every page for LLMs and agents, served next
+      # to the HTML page: `pages/routing.md` for `pages/routing.html`.
+      # Reuses the doctrees of the HTML build, so examples are not re-run.
+      - cd docs && uv run python -m sphinx -M markdown . _build -W
+      - cp -r docs/_build/markdown/. "$READTHEDOCS_OUTPUT/html/"
 
 python:
   install:

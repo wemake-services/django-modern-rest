@@ -38,6 +38,15 @@ lint:
     uv run python -m flake8 .
     uv run python -m slotscheck -v -m dmr
     uv run import-linter lint
+    just skills
+
+# Validate agent skills against https://agentskills.io/specification
+[group('dev')]
+skills:
+    #!/usr/bin/env bash
+    for skill in dmr/.agents/skills/*/; do
+      uv run agentskills validate "$skill"
+    done
 
 # Run all checks (with sqlite as db)
 [group('dev')]
@@ -175,9 +184,9 @@ clean:
     rm -rf build/ dist/
     find dmr/_compiled -type f -name '*.so' | xargs rm -rf
 
-# Build docs
+# Build docs, including the Markdown twins of every page for LLMs
 [group('docs')]
-docs +targets='clean html': (_docs::build targets)
+docs +targets='clean html': (_docs::build targets) _docs::markdown
 
 # Add new translation strings
 [group('i18n')]
