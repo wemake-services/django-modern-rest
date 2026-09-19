@@ -2,7 +2,7 @@ import dataclasses
 import json
 import uuid
 from http import HTTPStatus
-from typing import Annotated, Any, final
+from typing import Annotated, Any, TypeAlias, final
 
 import pydantic
 import pytest
@@ -17,7 +17,7 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import JsonRenderer
 from dmr.test import DMRRequestFactory
 
-FancyInt = Annotated[
+FancyInt: TypeAlias = Annotated[
     int,
     PlainSerializer(
         lambda to_dump: f'{to_dump:,}',
