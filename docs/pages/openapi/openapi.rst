@@ -236,6 +236,32 @@ from some other source, like pre-existing schemas.
 To learn more, see :doc:`../external-views` guide.
 
 
+Customizing OpenAPI context
+---------------------------
+
+.. versionadded:: 0.16.0
+
+To replace some internal logic, subclass :class:`~dmr.openapi.OpenAPIContext`
+and set the corresponding ``*_cls`` attribute to your subclass.
+Pass an instance of your context to :func:`~dmr.openapi.build_schema`.
+Configuration values stay in :class:`~dmr.openapi.OpenAPIConfig`;
+behavioral customizations belong in the generator, registries,
+or merger subclasses.
+
+For example, this context generates operation IDs without controller names:
+
+.. literalinclude:: /examples/openapi/custom_context.py
+   :language: python
+   :linenos:
+
+``POST /api/user/`` now has the operation ID ``postApiUser``.
+Calling the base generator with an empty controller-name argument preserves
+explicit endpoint ``operation_id`` values and duplicate detection.
+If you replace the generation logic entirely, your implementation must
+handle explicit IDs and register the final ID with
+``self._context.registries.operation_id.register()`` to retain those guarantees.
+
+
 Customizing OpenAPI generation
 ------------------------------
 
@@ -387,7 +413,6 @@ if either the router or endpoint has it enabled.
 You can also set ``tags`` and ``deprecated`` at the individual endpoint level
 via :deco:`~dmr.endpoint.modify` to override or extend router-level settings.
 
-
 .. _customizing_tags_openapi:
 
 Customizing tags
@@ -413,7 +438,6 @@ none of them replaces the others:
 .. versionadded:: 0.16.0
   Controller-level ``tags``.
 
-
 .. _customizing_parameter_openapi:
 
 Customizing parameter
@@ -431,7 +455,6 @@ of :class:`dmr.openapi.objects.ParameterMetadata` annotation:
   :caption: views.py
   :language: python
   :linenos:
-
 
 .. _customizing_body_openapi:
 
@@ -530,13 +553,15 @@ This is how OpenAPI spec is generated, top level overview:
   :config: {"theme": "forest"}
 
   graph
+      Start[build_schema] --> OpenAPIContext[OpenAPIContext];
       Start[build_schema] --> Router[Router];
+      OpenAPIContext --> OpenAPIConfig[OpenAPIConfig];
       Router -->|for each controller| Controller[Controller.get_schema];
       Router -->|for each defined auth| SecurityScheme[Auth.security_scheme];
       Controller -->|for each endpoint| Endpoint[Endpoint.get_schema];
       Endpoint -->|for each component| ComponentParser[ComponentParser.get_schema]
       Endpoint -->|for each response| ResponseSpec[ResponseSpec.get_schema];
-      Endpoint -->|for each used auth| SecurityRequirement[Auth.security_requirement];
+      Endpoint -->|for each used auth| SecurityRequirements[Auth.security_requirements];
       ComponentParser -->|for each schema| Schema[serializer.schema_generator.get_schema];
       ResponseSpec -->|for each schema| Schema[serializer.schema_generator.get_schema];
 
@@ -577,48 +602,6 @@ Useful APIs for users to override:
 - :meth:`dmr.security.SyncAuth.security_schemes`
   and :class:`dmr.security.SyncAuth.security_requirements` to change how
   :class:`~dmr.openapi.objects.SecurityScheme` and requirements are generated
-
-
-Customizing the context
-~~~~~~~~~~~~~~~~~~~~~~~
-
-.. versionadded:: 0.16.0
-
-To replace a generator, subclass :class:`~dmr.openapi.OpenAPIContext`
-and set the corresponding ``*_cls`` attribute to your generator subclass.
-Pass an instance of your context to :func:`~dmr.openapi.build_schema`.
-Configuration values stay in :class:`~dmr.openapi.OpenAPIConfig`;
-behavioral customizations belong in the generator or merger subclasses.
-
-The following class attributes can be overridden independently:
-
-- ``operation_id_cls``: :class:`~dmr.openapi.generators.OperationIdGenerator`
-- ``schema_cls``: :class:`~dmr.openapi.generators.SchemaGenerator`
-- ``component_parsers_cls``:
-  :class:`~dmr.openapi.generators.ComponentParserGenerator`
-- ``response_cls``: :class:`~dmr.openapi.generators.ResponseGenerator`
-- ``security_scheme_cls``:
-  :class:`~dmr.openapi.generators.SecuritySchemeGenerator`
-- ``parameter_cls``: :class:`~dmr.openapi.generators.ParameterGenerator`
-- ``config_merger_cls``: :class:`~dmr.openapi.core.merger.ConfigMerger`
-
-Each class receives the current context as its constructor argument.
-Attributes you do not override retain their default implementations.
-Create a fresh context for each schema build, since its registries
-track operation IDs, schemas, and security schemes for that build.
-
-For example, this context generates operation IDs without controller names:
-
-.. literalinclude:: /examples/openapi/custom_context.py
-   :language: python
-   :linenos:
-
-``POST /api/user/`` now has the operation ID ``postApiUser``.
-Calling the base generator with an empty controller-name argument preserves
-explicit endpoint ``operation_id`` values and duplicate detection.
-If you replace the generation logic entirely, your implementation must
-handle explicit IDs and register the final ID with
-``self._context.registries.operation_id.register()`` to retain those guarantees.
 
 
 API Reference

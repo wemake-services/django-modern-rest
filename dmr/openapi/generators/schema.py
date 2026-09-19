@@ -1,5 +1,5 @@
 import dataclasses
-from typing import TYPE_CHECKING, Any, Literal, get_args, get_origin, overload
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi.mappers.example import (
@@ -57,27 +57,17 @@ class SchemaGenerator:
 
         Here's the algorithm we use:
 
-        1. First, we try to find manually defined overrides for the annotation
-        2. If nothing is found, we try to find any existing schema references
-        3. Next, we try to get a model schema from a serializer.
+        1. First, we try to find any existing schema references from cache
+        2. Next, we try to get a model schema from a serializer.
            If it exists, we create an internal reference and return it.
            The next time it will be returned as a reference, cached.
-        4. If nothing worked, we raise an error
+        3. If nothing worked, we raise an error
 
         Raises:
             UnsolvableAnnotationsError: when we can't generate
                 an OpenAPI schema from an existing annotation.
 
         """
-        explicit_override = self._resolve_schema_override(
-            annotation,
-            serializer,
-            used_for_response=used_for_response,
-            skip_registration=skip_registration,
-        )
-        if explicit_override:
-            return explicit_override
-
         existing_reference = self._context.registries.schema.get_reference(
             (
                 serializer.schema_generator.schema_name(annotation)
@@ -107,31 +97,6 @@ class SchemaGenerator:
             register_referenced_components=register_referenced_components,
         )
 
-    def _resolve_schema_override(
-        self,
-        annotation: Any,
-        serializer: type['BaseSerializer'],
-        *,
-        used_for_response: bool = False,
-        skip_registration: bool = False,
-    ) -> Reference | Schema | None:
-        origin = get_origin(annotation) or annotation
-        type_args = get_args(annotation)
-
-        registry = self._context.registries.schema
-        schema = registry.overrides.get(origin)
-        if callable(schema):
-            return schema(
-                annotation,
-                origin,
-                type_args,
-                used_for_response=used_for_response,
-                skip_registration=skip_registration,
-            )
-        if schema is not None:
-            return schema
-        return None
-
     def _maybe_generate_reference(
         self,
         annotation: Any,
@@ -144,6 +109,7 @@ class SchemaGenerator:
     ) -> Reference | Schema:
         if not skip_registration:
             for component_name, component in components.items():
+                # FIXME: generate examples for nested schemas
                 self._context.registries.schema.register(
                     schema_name=component_name,
                     schema=load_schema(component),

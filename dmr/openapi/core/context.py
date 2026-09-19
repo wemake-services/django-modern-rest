@@ -1,10 +1,9 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, get_origin
+from typing import TYPE_CHECKING, ClassVar
 
 from dmr.openapi.core.merger import ConfigMerger
 from dmr.openapi.core.registry import (
     OperationIdRegistry,
-    SchemaCallback,
     SchemaRegistry,
     SecuritySchemeRegistry,
 )
@@ -17,7 +16,7 @@ from dmr.openapi.generators import (
     SecuritySchemeGenerator,
 )
 from dmr.openapi.mappers.example import seed_example_factory
-from dmr.openapi.objects import Components, Reference, Schema
+from dmr.openapi.objects import Components
 
 if TYPE_CHECKING:
     from dmr.openapi.config import OpenAPIConfig
@@ -159,31 +158,3 @@ class OpenAPIContext:
             schemas=self.registries.schema.schemas or None,
             security_schemes=self.registries.security_scheme.schemes or None,
         )
-
-    def register_schema(
-        self,
-        annotation: Any,
-        schema: Reference | Schema | SchemaCallback,
-        *,
-        override: bool = False,
-    ) -> None:
-        """
-        Register top-level annotation resolution into an OpenAPI schema.
-
-        You can pass either a schema object itself, a reference, or a callback
-        that returns schema, reference, or ``None`` to fallback
-        to the default schema resolution process.
-
-        .. warning::
-
-            This only works for the top-level annotations with direct matches.
-            For example: when you register ``User`` to have a specific schema,
-            it will take effect only in cases where ``User`` is used directly.
-            ``list[User]`` will use the default serializer
-            schema resolution strategy.
-
-        """
-        real_type = get_origin(annotation) or annotation
-        if not override and real_type in self.registries.schema.overrides:
-            raise ValueError(f'{real_type} is already registered')
-        self.registries.schema.overrides[real_type] = schema
