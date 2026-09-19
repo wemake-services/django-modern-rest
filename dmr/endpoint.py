@@ -450,7 +450,7 @@ class Endpoint:  # noqa: WPS214
     def _run_throttle_before(
         self,
         controller: 'Controller[BaseSerializer]',
-        throttling: tuple[SyncThrottle, ...],
+        throttling: list[SyncThrottle],
     ) -> None:
         for throttle in throttling:
             throttle(self, controller, self._sync_lock)
@@ -470,7 +470,7 @@ class Endpoint:  # noqa: WPS214
     def _run_throttle_after(
         self,
         controller: 'Controller[BaseSerializer]',
-        throttling: tuple[SyncThrottle, ...],
+        throttling: list[SyncThrottle],
     ) -> None:
         for throttle in throttling:
             throttle(self, controller, self._sync_lock)
@@ -505,7 +505,7 @@ class Endpoint:  # noqa: WPS214
     async def _run_async_throttle_before(
         self,
         controller: 'Controller[BaseSerializer]',
-        throttling: tuple[AsyncThrottle, ...],
+        throttling: list[AsyncThrottle],
     ) -> None:
         for throttle in throttling:
             # We have to check them in sync one by one :(
@@ -526,7 +526,7 @@ class Endpoint:  # noqa: WPS214
     async def _run_async_throttle_after(
         self,
         controller: 'Controller[BaseSerializer]',
-        throttling: tuple[AsyncThrottle, ...],
+        throttling: list[AsyncThrottle],
     ) -> None:
         for throttle in throttling:
             # We have to check them in sync one by one :(

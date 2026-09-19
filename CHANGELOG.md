@@ -87,6 +87,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `OpenAPIContext.register_schema` is removed, just like all custom
   override features. Instead, one must use native serializer tools
   for custom JSON schema generation, #1558
+- `SyncOrAsyncAuth` and `SyncOrAsyncThrottle` changed `.resolve` parameter
+  from *auth_cls* and *throttle_cls* respectively
+  to *is_async* kw-parameter, #1562
 
 ### Performance improvements
 

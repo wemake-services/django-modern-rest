@@ -3,7 +3,16 @@ from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from http import HTTPStatus
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Final, Literal, Self, final, overload
+from typing import (
+    TYPE_CHECKING,
+    Final,
+    Generic,
+    Literal,
+    Self,
+    TypeVar,
+    final,
+    overload,
+)
 
 from django.http import HttpRequest
 from typing_extensions import override
@@ -212,9 +221,13 @@ class AsyncAuth(_BaseAuth):
         """
 
 
+_SyncAuthT = TypeVar('_SyncAuthT', bound='SyncAuth')
+_AsyncAuthT = TypeVar('_AsyncAuthT', bound='AsyncAuth')
+
+
 @final
 @dataclasses.dataclass(slots=True, frozen=True)
-class SyncOrAsyncAuth:
+class SyncOrAsyncAuth(Generic[_SyncAuthT, _AsyncAuthT]):
     """
     Auth that selects between a sync and async instance.
 
@@ -222,19 +235,38 @@ class SyncOrAsyncAuth:
     sync and async endpoints. Not allowed on controller or endpoint level.
 
     .. versionadded:: 0.11.0
+    .. versionchanged:: 0.16.0
+        Now it is generic.
+
     """
 
-    _sync_auth: SyncAuth
-    _async_auth: AsyncAuth
+    _sync_auth: _SyncAuthT
+    _async_auth: _AsyncAuthT
+
+    @overload
+    def resolve(self, *, is_async: Literal[True]) -> _AsyncAuthT: ...
+
+    @overload
+    def resolve(self, *, is_async: Literal[False]) -> _SyncAuthT: ...
+
+    @overload
+    def resolve(self, *, is_async: bool) -> _AsyncAuthT | _SyncAuthT: ...
 
     def resolve(
         self,
-        auth_cls: type[SyncAuth] | type[AsyncAuth],
-    ) -> SyncAuth | AsyncAuth:
-        """Return the auth instance matching *auth_cls*."""
-        if issubclass(auth_cls, SyncAuth):
-            return self._sync_auth
-        return self._async_auth
+        *,
+        is_async: bool,
+    ) -> _AsyncAuthT | _SyncAuthT:
+        """
+        Return the auth instance matching *is_async* requirement.
+
+        .. versionchanged:: 0.16.0
+            Replaced *auth_cls* parameter with simpler *is_async*.
+
+        """
+        if is_async:
+            return self._async_auth
+        return self._sync_auth
 
 
 @overload
