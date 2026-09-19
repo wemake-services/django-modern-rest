@@ -99,6 +99,7 @@ class _PostController(Controller[PydanticSerializer]):
     ],
 )
 def test_normalize_path(
+    *,
     input_path: str,
     expected_output: str,
 ) -> None:
@@ -138,6 +139,7 @@ def test_normalize_path(
     ],
 )
 def test_join_paths(
+    *,
     base_path: str,
     pattern_path: str,
     expected: str,
@@ -155,6 +157,7 @@ def test_join_paths(
     ],
 )
 def test_process_pattern_with_different_views(
+    *,
     path_str: str,
     view_class: type[Controller[BaseSerializer]],
 ) -> None:

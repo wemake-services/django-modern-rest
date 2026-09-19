@@ -14,7 +14,7 @@
             "v1",
             "users"
           ],
-          "operationId": "getTaggedcontrollerApiV1Users",
+          "operationId": "getTaggedControllerApiV1Users",
           "responses": {
             "200": {
               "description": "OK",
@@ -22,16 +22,6 @@
                 "application/json": {
                   "schema": {
                     "$ref": "#/components/schemas/_SimpleModel"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
                   }
                 }
               }
@@ -45,9 +35,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         },
         "put": {
           "tags": [
@@ -55,7 +54,7 @@
             "users",
             "admin"
           ],
-          "operationId": "putTaggedcontrollerApiV1Users",
+          "operationId": "putTaggedControllerApiV1Users",
           "responses": {
             "200": {
               "description": "OK",
@@ -63,16 +62,6 @@
                 "application/json": {
                   "schema": {
                     "$ref": "#/components/schemas/_SimpleModel"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
                   }
                 }
               }
@@ -86,9 +75,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
           "tags": [
@@ -96,7 +94,7 @@
             "users",
             "admin"
           ],
-          "operationId": "postTaggedcontrollerApiV1Users",
+          "operationId": "postTaggedControllerApiV1Users",
           "responses": {
             "201": {
               "description": "Created",
@@ -108,16 +106,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -127,9 +115,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -202,8 +199,7 @@
           ],
           "title": "_SimpleModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

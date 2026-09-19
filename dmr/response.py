@@ -9,6 +9,7 @@ from django.utils.encoding import iri_to_uri
 from typing_extensions import TypeVar
 
 from dmr.cookies import NewCookie, set_cookies
+from dmr.internal.types import StrOrPromise
 from dmr.settings import Settings, resolve_setting
 
 try:
@@ -20,10 +21,6 @@ except ImportError:  # pragma: no cover
     MAX_URL_REDIRECT_LENGTH = 16384  # pyright: ignore[reportConstantRedefinition]
 
 if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
-
     from dmr.renderers import Renderer
     from dmr.serializer import BaseSerializer
 
@@ -148,7 +145,7 @@ class RedirectTo(Exception):  # noqa: N818
 
     def __init__(
         self,
-        redirect_to: '_StrOrPromise',
+        redirect_to: StrOrPromise,
         *,
         status_code: HTTPStatus = HTTPStatus.FOUND,
         headers: dict[str, str] | None = None,
@@ -249,10 +246,16 @@ def build_response(  # noqa: WPS210, WPS211
         # Needed for type checking:
         assert renderer is not None  # noqa: S101
 
-    response_headers = {
-        **({} if headers is None else headers),
-        'Content-Type': renderer.content_type,
-    }
+    # This is a really hot path, so we prefer to be very stupid with the code,
+    # but do not make any unnecessary copies of dicts if possible.
+    # We trade readability and complexity for a bit of speed here:
+    if headers is None:
+        response_headers = {'Content-Type': renderer.content_type}
+    else:
+        response_headers = {
+            **headers,
+            'Content-Type': renderer.content_type,
+        }
 
     response = HttpResponse(
         content=(
@@ -265,7 +268,8 @@ def build_response(  # noqa: WPS210, WPS211
         status=status,
         headers=response_headers,
     )
-    set_cookies(response, cookies)
+    if cookies:
+        set_cookies(response, cookies)
     return response
 
 

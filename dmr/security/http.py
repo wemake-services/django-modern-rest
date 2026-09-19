@@ -2,9 +2,11 @@ from abc import abstractmethod
 from base64 import b64decode, b64encode
 from typing import TYPE_CHECKING, Final, Self
 
+from django.views.decorators.debug import sensitive_variables
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
+from dmr.metadata import EndpointMetadata
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.security.base import AsyncAuth, SyncAuth
 
@@ -87,8 +89,11 @@ class _HttpBasicAuth:  # noqa: WPS214
         # in `_get_username_and_password`.
         return f'Basic realm={_quote_auth_param(self.realm)}, charset="UTF-8"'
 
-    @property
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> dict[str, 'SecurityScheme | Reference']:
         """Provides a security schema definition."""
         if self._uses_standard_http_basic_auth():
             return {
@@ -108,11 +113,15 @@ class _HttpBasicAuth:  # noqa: WPS214
             ),
         }
 
-    @property
-    def security_requirement(self) -> SecurityRequirement:
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> list[SecurityRequirement]:
         """Provides a security schema usage requirement."""
-        return {self.security_scheme_name: []}
+        return [{self.security_scheme_name: []}]
 
+    @sensitive_variables()
     def _get_username_and_password(
         self,
         controller: 'Controller[BaseSerializer]',
@@ -195,6 +204,7 @@ class HttpBasicSyncAuth(_HttpBasicAuth, SyncAuth):
     __slots__ = ()
 
     @override
+    @sensitive_variables()
     def __call__(
         self,
         endpoint: 'Endpoint',
@@ -249,6 +259,7 @@ class HttpBasicAsyncAuth(_HttpBasicAuth, AsyncAuth):
     __slots__ = ()
 
     @override
+    @sensitive_variables()
     async def __call__(
         self,
         endpoint: 'Endpoint',

@@ -1,11 +1,16 @@
 from collections.abc import Sequence
-from typing import Final, TypeAlias
+from typing import TYPE_CHECKING, Final, TypeAlias
 
 from django.http import HttpRequest
 
+from dmr.metadata import EndpointMetadata
 from dmr.openapi.objects import Reference, SecurityScheme
 from dmr.security.jwt.auth.base import BaseJWTAsyncAuth, BaseJWTSyncAuth
 from dmr.security.jwt.token import JWToken
+
+if TYPE_CHECKING:
+    from dmr.controller import Controller
+    from dmr.serializer import BaseSerializer
 
 # The only header that a `WWW-Authenticate` challenge can ask the client for,
 # and the only one that OpenAPI can describe as `type: http`:
@@ -42,8 +47,11 @@ class _HeaderJWTAuth:
             return None
         return self.auth_scheme
 
-    @property
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> dict[str, 'SecurityScheme | Reference']:
         """Provides a security schema definition."""
         if self._uses_standard_http_bearer_auth():
             return {

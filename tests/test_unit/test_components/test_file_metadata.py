@@ -469,9 +469,9 @@ class _FakeParser(SupportsFileParsing, Parser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
-        context: 'OpenAPIContext',
-    ) -> type['FileBodyLike']:
+        serializer: type[BaseSerializer],
+        context: OpenAPIContext,
+    ) -> type[FileBodyLike]:
         raise NotImplementedError
 
 

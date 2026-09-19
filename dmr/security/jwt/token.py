@@ -33,6 +33,7 @@ from dataclasses import asdict, dataclass, field, fields
 from typing import Any, Final, Self, final
 
 import jwt
+from django.views.decorators.debug import sensitive_variables
 from jwt.types import Options
 
 from dmr.exceptions import NotAuthenticatedError
@@ -131,6 +132,7 @@ class JWToken:  # noqa: WPS214
         if self.iat.timestamp() > now:
             raise JWTokenError('iat must be a current or past time')
 
+    @sensitive_variables()
     def encode(
         self,
         secret: str | bytes,
@@ -180,6 +182,7 @@ class JWToken:  # noqa: WPS214
             raise JWTokenError('Failed to encode token') from exc
 
     @classmethod
+    @sensitive_variables()
     def decode_payload(  # noqa: WPS211
         cls,
         encoded_token: str,
@@ -203,6 +206,7 @@ class JWToken:  # noqa: WPS214
         )
 
     @classmethod
+    @sensitive_variables()
     def decode(  # noqa: WPS211
         cls,
         encoded_token: str,

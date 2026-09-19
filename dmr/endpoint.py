@@ -44,7 +44,6 @@ if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.routing import Router
-    from dmr.validation.response import ValidatedModification
 
 
 class Endpoint:  # noqa: WPS214
@@ -53,13 +52,19 @@ class Endpoint:  # noqa: WPS214
 
     Is built during the import time.
     In the runtime only does response validate, which can be disabled.
+
+    .. versionchanged:: 0.16.0
+        Endpoint no longer creates ``HttpResponseBase`` objects
+        from modifications, now ``ResponseValidator`` returns full responses.
+        ``func`` is now public, but ``__call__`` is removed.
+
     """
 
     __slots__ = (
         '_async_lock',
-        '_func',
         '_serializer_context',
         '_sync_lock',
+        'func',
         'is_async',
         'metadata',
         'request_negotiator',
@@ -68,7 +73,7 @@ class Endpoint:  # noqa: WPS214
     )
 
     # Instance API:
-    _func: Callable[..., Any]
+    func: Callable[..., HttpResponseBase]
 
     # Class API:
     serializer_context_cls: ClassVar[type[SerializerContext]] = (
@@ -175,23 +180,13 @@ class Endpoint:  # noqa: WPS214
         # Now we can add wrappers:
         if inspect.iscoroutinefunction(func):
             self.is_async = True
-            self._func = self._async_endpoint(func)
+            # We lie about the return type here, because Django will
+            # automatically unwrap `Coroutine[HttpResponseBase]` into regular
+            # response object, so just simplify the async / sync mess.
+            self.func = self._async_endpoint(func)  # type: ignore[assignment]
         else:
             self.is_async = False
-            self._func = self._sync_endpoint(func)
-
-    def __call__(
-        self,
-        controller: 'Controller[BaseSerializer]',
-        *args: Any,
-        **kwargs: Any,
-    ) -> HttpResponseBase:
-        """Run the endpoint and return the response."""
-        return self._func(  # type: ignore[no-any-return]
-            controller,
-            *args,
-            **kwargs,
-        )
+            self.func = self._sync_endpoint(func)
 
     def handle_error(
         self,
@@ -201,7 +196,12 @@ class Endpoint:  # noqa: WPS214
         """
         Return error response if possible.
 
-        Override this method to add custom error handling.
+        Override this method to change the endpoint error handling logic.
+
+        .. versionchanged:: 0.16.0
+            Now you can raise different errors from layers above.
+            Which would be handled by lower layers.
+
         """
         # NOTE: if you change something here,
         # also change in `handle_async_error`
@@ -213,9 +213,8 @@ class Endpoint:  # noqa: WPS214
                     controller,
                     exc,
                 )
-            except Exception:  # noqa: S110
-                # We don't use `suppress` here for speed.
-                pass  # noqa: WPS420
+            except Exception as new_exc:
+                exc = new_exc
         # Per-endpoint error handler didn't work.
         # Now, try the per-controller one.
         try:
@@ -224,9 +223,9 @@ class Endpoint:  # noqa: WPS214
                 controller,
                 exc,
             )
-        except Exception:
+        except Exception as new_exc:
             # And the last option is to handle error globally:
-            return self._global_error_handler(controller, exc)
+            return self._global_error_handler(controller, new_exc)
 
     async def handle_async_error(
         self,
@@ -236,7 +235,12 @@ class Endpoint:  # noqa: WPS214
         """
         Return error response if possible.
 
-        Override this method to add custom async error handling.
+        Override this method to change the endpoint error handling logic.
+
+        .. versionchanged:: 0.16.0
+            Now you can raise different errors from layers above.
+            Which would be handled by lower layers.
+
         """
         # NOTE: if you change something here, also change in `handle_error`
         if self.metadata.error_handler is not None:
@@ -247,9 +251,8 @@ class Endpoint:  # noqa: WPS214
                     controller,
                     exc,
                 )
-            except Exception:  # noqa: S110
-                # We don't use `suppress` here for speed.
-                pass  # noqa: WPS420
+            except Exception as new_exc:
+                exc = new_exc
         # Per-endpoint error handler didn't work.
         # Now, try the per-controller one.
         try:
@@ -258,31 +261,37 @@ class Endpoint:  # noqa: WPS214
                 controller,
                 exc,
             )
-        except Exception:
+        except Exception as new_exc:
             # And the last option is to handle error globally:
-            return self._global_error_handler(controller, exc)
+            return self._global_error_handler(controller, new_exc)
 
     def get_schema(
         self,
         path: str,
         pattern: URLPattern,
-        controller_name: str,
-        serializer: type[BaseSerializer],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
         router: 'Router',
     ) -> Operation:
-        """Build an OpenAPI Operation from an endpoint."""
+        """
+        Build an OpenAPI Operation from an endpoint.
+
+        .. versionchanged:: 0.16.0
+            Now accepts *controller_cls* parameter instead
+            of *controller_name* and *serializer*.
+
+        """
         operation_id = self.get_operation_id(
             path,
-            controller_name,
-            serializer,
+            controller_cls.__qualname__,
+            controller_cls.serializer,
             context,
         )
         request_body, params_list = context.generators.component_parsers(
             operation_id,
             pattern,
             self.metadata,
-            serializer,
+            controller_cls.serializer,
         )
 
         router_metadata = router.metadata_for(path)
@@ -303,17 +312,22 @@ class Endpoint:  # noqa: WPS214
                 if self.metadata.description is None
                 else str(self.metadata.description)
             ),
-            deprecated=self.metadata.deprecated or router_metadata.deprecated,
+            deprecated=(
+                self.metadata.deprecated or router_metadata.deprecated or None
+            ),
             security=context.generators.security_scheme(
-                self.metadata.auth,
-                serializer,
+                self.metadata,
+                controller_cls,
             ),
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
             callbacks=self.metadata.callbacks,
             operation_id=operation_id,
             request_body=request_body,
-            responses=context.generators.response(self.metadata, serializer),
+            responses=context.generators.response(
+                self.metadata,
+                controller_cls,
+            ),
             parameters=params_list,
         )
 
@@ -436,7 +450,7 @@ class Endpoint:  # noqa: WPS214
     def _run_throttle_before(
         self,
         controller: 'Controller[BaseSerializer]',
-        throttling: tuple[SyncThrottle, ...],
+        throttling: list[SyncThrottle],
     ) -> None:
         for throttle in throttling:
             throttle(self, controller, self._sync_lock)
@@ -456,7 +470,7 @@ class Endpoint:  # noqa: WPS214
     def _run_throttle_after(
         self,
         controller: 'Controller[BaseSerializer]',
-        throttling: tuple[SyncThrottle, ...],
+        throttling: list[SyncThrottle],
     ) -> None:
         for throttle in throttling:
             throttle(self, controller, self._sync_lock)
@@ -491,7 +505,7 @@ class Endpoint:  # noqa: WPS214
     async def _run_async_throttle_before(
         self,
         controller: 'Controller[BaseSerializer]',
-        throttling: tuple[AsyncThrottle, ...],
+        throttling: list[AsyncThrottle],
     ) -> None:
         for throttle in throttling:
             # We have to check them in sync one by one :(
@@ -512,7 +526,7 @@ class Endpoint:  # noqa: WPS214
     async def _run_async_throttle_after(
         self,
         controller: 'Controller[BaseSerializer]',
-        throttling: tuple[AsyncThrottle, ...],
+        throttling: list[AsyncThrottle],
     ) -> None:
         for throttle in throttling:
             # We have to check them in sync one by one :(
@@ -561,24 +575,10 @@ class Endpoint:  # noqa: WPS214
                 response_data,
             )
 
-        validated = self.response_validator.validate_modification(
+        return self.response_validator.validate_modification(
             self,
             controller,
             response_data,
-        )
-        return self._build_new_response(controller, validated)
-
-    def _build_new_response(
-        self,
-        controller: 'Controller[BaseSerializer]',
-        validated: 'ValidatedModification',
-    ) -> HttpResponseBase:
-        return controller.to_response(
-            validated.raw_data,
-            status_code=validated.status_code,
-            headers=validated.headers,
-            cookies=validated.cookies,
-            renderer=validated.renderer,
         )
 
     def _global_error_handler(

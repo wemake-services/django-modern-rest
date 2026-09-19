@@ -9,6 +9,7 @@ from dmr.internal.csrf import ensure_csrf
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityScheme
 from dmr.security.base import unauth_response_spec
+from dmr.security.csrf import csrf_response_spec
 from dmr.security.jwt.auth.base import BaseJWTAsyncAuth, BaseJWTSyncAuth
 from dmr.security.jwt.token import JWToken
 
@@ -42,8 +43,11 @@ class _BaseCookieJWTAuth(ResponseSpecProvider):
         and this auth reads a cookie instead.
         """
 
-    @property
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> dict[str, 'SecurityScheme | Reference']:
         """Provides a security schema definition."""
         return {
             self.security_scheme_name: SecurityScheme(
@@ -68,11 +72,7 @@ class _BaseCookieJWTAuth(ResponseSpecProvider):
                 existing_responses,
             ),
             *self._add_new_response(
-                ResponseSpec(
-                    controller_cls.error_model,
-                    status_code=HTTPStatus.FORBIDDEN,
-                    description='Raised when CSRF check failed',
-                ),
+                csrf_response_spec(return_type=controller_cls.error_model),
                 existing_responses,
             ),
         ]

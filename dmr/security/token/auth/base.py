@@ -3,9 +3,11 @@ import importlib
 from typing import TYPE_CHECKING, Any, Generic, Self
 
 from django.http import HttpRequest
+from django.views.decorators.debug import sensitive_variables
 from typing_extensions import TypeVar, override
 
 from dmr.exceptions import NotAuthenticatedError
+from dmr.metadata import EndpointMetadata
 from dmr.openapi.objects import SecurityRequirement
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.security.token.request import set_request_attrs
@@ -97,10 +99,13 @@ class _BaseTokenAuth(Generic[_TokenLikeT]):
         """Returns the Token model. Override to use a custom model."""
         raise NotImplementedError
 
-    @property
-    def security_requirement(self) -> SecurityRequirement:
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> list[SecurityRequirement]:
         """Provides a security schema usage requirement."""
-        return {self.security_scheme_name: []}
+        return [{self.security_scheme_name: []}]
 
 
 class BaseTokenSyncAuth(_BaseTokenAuth[TokenLikeSync[Any]], SyncAuth):  # noqa: WPS214
@@ -109,6 +114,7 @@ class BaseTokenSyncAuth(_BaseTokenAuth[TokenLikeSync[Any]], SyncAuth):  # noqa: 
     __slots__ = ()
 
     @override
+    @sensitive_variables()
     def __call__(
         self,
         endpoint: 'Endpoint',
@@ -121,6 +127,7 @@ class BaseTokenSyncAuth(_BaseTokenAuth[TokenLikeSync[Any]], SyncAuth):  # noqa: 
         self.authenticate(controller.request, raw_token)
         return self
 
+    @sensitive_variables()
     def authenticate(
         self,
         request: HttpRequest,
@@ -148,6 +155,7 @@ class BaseTokenSyncAuth(_BaseTokenAuth[TokenLikeSync[Any]], SyncAuth):  # noqa: 
         assert self._token_model  # noqa: S101
         return self._token_model
 
+    @sensitive_variables()
     def get_token(self, raw_token: str) -> TokenLikeSync:
         """Look up and validate the token from the DB."""
         token = self.token_model.find_raw(
@@ -187,6 +195,7 @@ class BaseTokenAsyncAuth(_BaseTokenAuth[TokenLikeAsync[Any]], AsyncAuth):  # noq
     __slots__ = ()
 
     @override
+    @sensitive_variables()
     async def __call__(
         self,
         endpoint: 'Endpoint',
@@ -199,6 +208,7 @@ class BaseTokenAsyncAuth(_BaseTokenAuth[TokenLikeAsync[Any]], AsyncAuth):  # noq
         await self.authenticate(controller.request, raw_token)
         return self
 
+    @sensitive_variables()
     async def authenticate(  # noqa: WPS217
         self,
         request: HttpRequest,
@@ -226,6 +236,7 @@ class BaseTokenAsyncAuth(_BaseTokenAuth[TokenLikeAsync[Any]], AsyncAuth):  # noq
         assert self._token_model  # noqa: S101
         return self._token_model
 
+    @sensitive_variables()
     async def get_token(self, raw_token: str) -> TokenLikeAsync:
         """Look up and validate the token from the DB."""
         token = await self.token_model.afind_raw(

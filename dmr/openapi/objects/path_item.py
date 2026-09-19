@@ -63,7 +63,8 @@ class PathItem:
         """Split operations into standard HTTP methods and custom ones."""
         standard: dict[str, Operation] = {}
         additional: dict[str, Operation] = {}
-        for method_name, operation in operations.items():
+        # Sorted, so the schema does not depend on the definition order:
+        for method_name, operation in sorted(operations.items()):
             if method_name in _STANDARD_HTTP_METHODS:
                 standard[method_name] = operation
             else:

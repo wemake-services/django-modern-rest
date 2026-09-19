@@ -10,10 +10,9 @@
     "paths": {
       "/api/v1/complex": {
         "get": {
-          "operationId": "getComplexjsonlApiV1Complex",
+          "operationId": "getComplexJsonLApiV1Complex",
           "parameters": [
             {
-              "deprecated": false,
               "name": "X-Header",
               "in": "header",
               "schema": {
@@ -33,13 +32,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -71,16 +70,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -90,9 +79,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -173,8 +171,7 @@
           ],
           "title": "_UserEvent"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -190,10 +187,9 @@
     "paths": {
       "/api/v1/complex": {
         "get": {
-          "operationId": "getComplexjsonlApiV1Complex",
+          "operationId": "getComplexJsonLApiV1Complex",
           "parameters": [
             {
-              "deprecated": false,
               "name": "X-Header",
               "in": "header",
               "schema": {
@@ -213,13 +209,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -251,16 +247,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -270,9 +256,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -353,8 +348,7 @@
           ],
           "title": "_UserEvent"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -370,7 +364,7 @@
     "paths": {
       "/api/v1/jsonl": {
         "get": {
-          "operationId": "getClassbasedjsonlApiV1Jsonl",
+          "operationId": "getClassBasedJsonLApiV1Jsonl",
           "responses": {
             "200": {
               "description": "OK",
@@ -381,13 +375,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -400,16 +394,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -419,12 +403,21 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
-          "operationId": "postClassbasedjsonlApiV1Jsonl",
+          "operationId": "postClassBasedJsonLApiV1Jsonl",
           "responses": {
             "200": {
               "description": "OK",
@@ -435,13 +428,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -454,16 +447,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -473,9 +456,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -530,8 +522,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

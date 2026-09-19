@@ -25,6 +25,6 @@ class Operation:
     request_body: 'RequestBody | Reference | None' = None
     responses: 'Responses | None' = None
     callbacks: dict[str, 'Callback | Reference'] | None = None
-    deprecated: bool = False
+    deprecated: bool | None = None
     security: list['SecurityRequirement'] | None = None
     servers: list['Server'] | None = None

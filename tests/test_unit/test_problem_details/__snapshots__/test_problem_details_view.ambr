@@ -8,12 +8,11 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/v1/with-negotiation": {
+      "/api/v1/default": {
         "get": {
-          "operationId": "getProblemdetailscontrollerApiV1WithNegotiation",
+          "operationId": "getProblemDetailsDefaultControllerApiV1Default",
           "parameters": [
             {
-              "deprecated": false,
               "name": "number",
               "in": "query",
               "schema": {
@@ -24,6 +23,94 @@
             }
           ],
           "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            },
+            "402": {
+              "description": "Payment Required",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/regular": {
+        "get": {
+          "operationId": "getProblemDetailsValidationControllerApiV1Regular",
+          "parameters": [
+            {
+              "name": "number",
+              "in": "query",
+              "schema": {
+                "type": "integer",
+                "title": "Number",
+                "default": 0
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
             "402": {
               "description": "Payment Required",
               "content": {
@@ -31,14 +118,47 @@
                   "schema": {
                     "$ref": "#/components/schemas/ErrorModel"
                   }
-                },
-                "application/problem+json": {
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
                   "schema": {
-                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                    "$ref": "#/components/schemas/ErrorModel"
                   }
                 }
               }
             },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/with-negotiation": {
+        "get": {
+          "operationId": "getProblemDetailsControllerApiV1WithNegotiation",
+          "parameters": [
+            {
+              "name": "number",
+              "in": "query",
+              "schema": {
+                "type": "integer",
+                "title": "Number",
+                "default": 0
+              }
+            }
+          ],
+          "responses": {
             "200": {
               "description": "OK",
               "content": {
@@ -56,36 +176,6 @@
             },
             "400": {
               "description": "Raised when request components cannot be parsed",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                },
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ProblemDetailsModel"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                },
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ProblemDetailsModel"
-                  }
-                }
-              }
-            },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -114,6 +204,21 @@
                 }
               }
             },
+            "402": {
+              "description": "Payment Required",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                },
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            },
             "403": {
               "description": "Raised when CSRF check failed",
               "content": {
@@ -128,155 +233,44 @@
                   }
                 }
               }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                },
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                },
+                "application/problem+json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ProblemDetailsModel"
+                  }
+                }
+              }
             }
           },
-          "deprecated": false,
           "security": [
             {
               "django_session": [],
               "csrf": []
             }
           ]
-        }
-      },
-      "/api/v1/default": {
-        "get": {
-          "operationId": "getProblemdetailsdefaultcontrollerApiV1Default",
-          "parameters": [
-            {
-              "deprecated": false,
-              "name": "number",
-              "in": "query",
-              "schema": {
-                "type": "integer",
-                "title": "Number",
-                "default": 0
-              }
-            }
-          ],
-          "responses": {
-            "402": {
-              "description": "Payment Required",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ProblemDetailsModel"
-                  }
-                }
-              }
-            },
-            "200": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              }
-            },
-            "400": {
-              "description": "Raised when request components cannot be parsed",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ProblemDetailsModel"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ProblemDetailsModel"
-                  }
-                }
-              }
-            },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ProblemDetailsModel"
-                  }
-                }
-              }
-            }
-          },
-          "deprecated": false
-        }
-      },
-      "/api/v1/regular": {
-        "get": {
-          "operationId": "getProblemdetailsvalidationcontrollerApiV1Regular",
-          "parameters": [
-            {
-              "deprecated": false,
-              "name": "number",
-              "in": "query",
-              "schema": {
-                "type": "integer",
-                "title": "Number",
-                "default": 0
-              }
-            }
-          ],
-          "responses": {
-            "402": {
-              "description": "Payment Required",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "200": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              }
-            },
-            "400": {
-              "description": "Raised when request components cannot be parsed",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            }
-          },
-          "deprecated": false
         }
       }
     },
@@ -360,16 +354,16 @@
         }
       },
       "securitySchemes": {
-        "django_session": {
-          "type": "apiKey",
-          "description": "Reusing standard Django auth flow for API",
-          "name": "sessionid",
-          "in": "cookie"
-        },
         "csrf": {
           "type": "apiKey",
           "description": "CSRF protection",
           "name": "csrftoken",
+          "in": "cookie"
+        },
+        "django_session": {
+          "type": "apiKey",
+          "description": "Reusing standard Django auth flow for API",
+          "name": "sessionid",
           "in": "cookie"
         }
       }

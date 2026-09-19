@@ -1,7 +1,7 @@
 Request body
 ============
 
-Body can be anything: json, xml,
+The body can be anything: JSON, XML,
 ``application/x-www-form-urlencoded``,
 or ``multipart/form-data``.
 
@@ -10,7 +10,7 @@ that is being used for the endpoint.
 
 .. note::
 
-  Parsed ``Body`` parameter must be named ``parsed_body``.
+  The parsed ``Body`` parameter must be named ``parsed_body``.
 
 
 Parsing JSON
@@ -79,12 +79,12 @@ What happens in this example?
    :class:`pydantic.BaseModel`,
    :func:`attrs.define`,
    :class:`typing.TypedDict`, or :func:`dataclasses.dataclass`.
-   Basically, model definition is only limited
+   Basically, the model definition is only limited
    by the :class:`~dmr.serializer.BaseSerializer` support
-2. Next, we use :data:`~dmr.components.Body` component,
+2. Next, we use the :data:`~dmr.components.Body` component,
    provide the model as a type parameter,
-   and subclass it when defining :class:`~dmr.controller.Controller` type
-3. Then we use ``self.parsed_body`` that will have the correct model type
+   and subclass it when defining the :class:`~dmr.controller.Controller` type
+3. Then we use ``self.parsed_body`` which will have the correct model type
 
 
 Parsing MsgPack
@@ -99,7 +99,7 @@ Docs: https://msgpack.org
 
 Bodies can be parsed using different :class:`dmr.parsers.Parser` types.
 See our :doc:`../negotiation` guide on more information
-about content negotiations.
+about content negotiation.
 
 Here's how ``msgpack`` will represent ``{"username": "example", "age": 22}``
 (since it is a binary format, it will show some random unicode symbols:
@@ -116,8 +116,8 @@ The only visible difference from parsing JSON is specifying a different
   :linenos:
 
 
-Customizing OpenAPI metadata for Body
--------------------------------------
+Customizing the OpenAPI metadata for Body
+-----------------------------------------
 
 See :ref:`customizing_body_openapi`.
 
@@ -128,10 +128,10 @@ Parsing forms
 .. note::
 
   We don't recommend using forms. If you can avoid using this feature
-  and switch to json – you totally should.
+  and switch to JSON, you totally should.
 
-  Forms are only needed for compatibility with older APIs, strange libs,
-  existing workflows.
+  Forms are only needed for compatibility with older APIs, strange libraries,
+  or existing workflows.
 
 Here's an example how one can send ``application/x-www-form-urlencoded``
 form data to an API endpoint with the help
@@ -144,10 +144,10 @@ of :class:`~dmr.parsers.FormUrlEncodedParser`:
 
 .. tip::
 
-  If you are using Django 6.1+ and a lot of form requests,
-  you can swap :attr:`django.http.HttpRequest.multipart_parser_class`
-  attribute of requests objects for a faster parsing. We recommend using
-  `multipart <https://github.com/defnull/multipart>`_ package for that.
+  If you are using Django 6.1+ and have a lot of form requests,
+  you can swap the :attr:`django.http.HttpRequest.multipart_parser_class`
+  attribute of request objects for faster parsing. We recommend using
+  the `multipart <https://github.com/defnull/multipart>`_ package for that.
   It works twice as fast.
 
 
@@ -158,7 +158,7 @@ Forcing lists and casting nulls in forms
 
   All of the features below only work for
   ``application/x-www-form-urlencoded`` and ``multipart/form-data``
-  parsers. Json and other "modern" formats are not affected.
+  parsers. JSON and other "modern" formats are not affected.
 
 Django's form parsing algorithm is 20+ years old
 at the moment of writing this doc.
@@ -169,7 +169,7 @@ Forcing lists
 ~~~~~~~~~~~~~
 
 Django uses :class:`django.utils.datastructures.MultiValueDict`
-to store body data, when parsing forms. Due to its API,
+to store body data when parsing forms. Due to its API,
 it does not give ``list`` objects back easily.
 So, when we need a list for a field, we need to force it like this:
 
@@ -192,17 +192,17 @@ To solve this, one can use a different magic attribute:
 
 .. warning::
 
-  We split all data by ``','``, if your data contains ``','`` as a regular
+  We split all data by ``','``. If your data contains ``','`` as a regular
   value, it might be corrupted.
 
-  Be careful to use this with fields which do not contain ``','``.
-  Like list of ints, uuids, or slugs.
+  Be careful when you use this with fields which do not contain ``','``,
+  like list of ints, UUIDs, or slugs.
 
 Casting nulls
 ~~~~~~~~~~~~~
 
 It is hard to pass ``None`` as a value in a form.
-To solve the need for ``None`` many places offer to pass ``'null'`` as a string.
+To solve the need for ``None``, many places offer to pass ``'null'`` as a string.
 We can cast ``'null'`` back to ``None`` if ``__dmr_cast_null__`` is specified.
 
 .. literalinclude:: /examples/components/body_cast_null.py
@@ -217,7 +217,7 @@ both ``__dmr_split_commas__`` and ``__dmr_force_list__`` as well.
 Conditional models
 ------------------
 
-``django-modern-rest`` support using different request models
+``django-modern-rest`` supports using different request models
 for different request content types.
 
 See :ref:`conditional-types` to learn more.

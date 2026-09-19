@@ -32,6 +32,7 @@ class _UserModel(pydantic.BaseModel):
     ['X Custom Header', '@@@'],
 )
 def test_check_header_name_syntax(
+    *,
     header: str,
 ) -> None:
     """Ensure that response headers' names follow http spec syntax."""
@@ -59,6 +60,7 @@ def test_check_header_name_syntax(
     ['X Custom Header', '@@@'],
 )
 def test_check_new_header_name_syntax(
+    *,
     header: str,
 ) -> None:
     """Ensure that new headers' names follow http spec syntax."""

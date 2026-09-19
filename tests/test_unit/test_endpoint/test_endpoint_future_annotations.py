@@ -117,7 +117,7 @@ def test_multiple_decorated_endpoint_annotations() -> None:
 
 
 @pytest.mark.skipif(sys.version_info < (3, 14), reason='format added in 3.14')
-def test_annotation_inference_context314() -> None:  # pragma: no cover
+def test_annotation_inference_context314() -> None:  # pragma: >=3.14 cover
     """Ensure that AnnotationsContext works correctly with format."""
 
     def some_function() -> 'Undefined': ...  # type: ignore[name-defined]  # noqa: F821, UP037

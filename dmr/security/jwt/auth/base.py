@@ -9,9 +9,11 @@ from typing import TYPE_CHECKING, Final, Literal, Self, overload
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import HttpRequest
+from django.views.decorators.debug import sensitive_variables
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
+from dmr.metadata import EndpointMetadata
 from dmr.openapi.objects import SecurityRequirement
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.security.jwt.token import JWToken
@@ -124,11 +126,15 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         self.strict_audience = strict_audience
         self.enforce_minimum_key_length = enforce_minimum_key_length
 
-    @property
-    def security_requirement(self) -> SecurityRequirement:
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> list[SecurityRequirement]:
         """Provides a security schema usage requirement."""
-        return {self.security_scheme_name: []}
+        return [{self.security_scheme_name: []}]
 
+    @sensitive_variables()
     def prepare_token(self, request: HttpRequest) -> JWToken | None:
         """Fetches JWToken instance from the request."""
         # We return `None` here, because it might be some other auth.
@@ -153,6 +159,7 @@ class _BaseJWTAuth:  # noqa: WPS214, WPS230
         """Extracts the encoded token from a raw value. Must be overridden."""
         raise NotImplementedError
 
+    @sensitive_variables()
     def decode_token(self, encoded_token: str) -> JWToken:
         """Decodes token object from the encoded string."""
         token = self.token_cls.decode(
@@ -201,6 +208,7 @@ class BaseJWTSyncAuth(_BaseJWTAuth, SyncAuth):
     __slots__ = ()
 
     @override
+    @sensitive_variables()
     def __call__(
         self,
         endpoint: 'Endpoint',
@@ -213,6 +221,7 @@ class BaseJWTSyncAuth(_BaseJWTAuth, SyncAuth):
         self.authenticate(controller.request, token)
         return self
 
+    @sensitive_variables()
     def authenticate(
         self,
         request: HttpRequest,
@@ -264,6 +273,7 @@ class BaseJWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
     __slots__ = ()
 
     @override
+    @sensitive_variables()
     async def __call__(
         self,
         endpoint: 'Endpoint',
@@ -276,6 +286,7 @@ class BaseJWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
         await self.authenticate(controller.request, token)
         return self
 
+    @sensitive_variables()
     async def authenticate(
         self,
         request: HttpRequest,
@@ -287,6 +298,7 @@ class BaseJWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
         await self.set_request_attrs(request, user, token)
         return user
 
+    @sensitive_variables()
     async def get_user(self, token: JWToken) -> 'AbstractBaseUser':
         """Get application user from token."""
         # We import user here, because we need this file to be importable
@@ -300,6 +312,7 @@ class BaseJWTAsyncAuth(_BaseJWTAuth, AsyncAuth):
         except USER_LOOKUP_ERRORS:
             raise NotAuthenticatedError from None
 
+    @sensitive_variables()
     async def check_auth(
         self,
         user: 'AbstractBaseUser',

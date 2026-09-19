@@ -81,6 +81,10 @@ def generator(openapi_context: OpenAPIContext) -> OperationIdGenerator:
         ('/file-123.txt', ['File123Txt']),
         # Complex real-world examples
         (
+            '/_AuthedAndCookiesController/api/cookies',
+            ['AuthedAndCookiesController', 'Api', 'Cookies'],
+        ),
+        (
             '/api/v1/users/{user_id}/posts/{post_id}/comments',
             ['Api', 'V1', 'Users', 'UserId', 'Posts', 'PostId', 'Comments'],
         ),
@@ -112,6 +116,7 @@ def generator(openapi_context: OpenAPIContext) -> OperationIdGenerator:
 )
 def test_tokenize_path(
     generator: OperationIdGenerator,
+    *,
     input_path: str,
     expected_tokens: list[str],
 ) -> None:

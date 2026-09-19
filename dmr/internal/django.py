@@ -59,20 +59,26 @@ def parse_headers(
     """
     Split headers specified in *split_commas* on ``','`` char.
 
+    Each part is stripped of surrounding whitespace,
+    because it is a part of the list header grammar and not a part
+    of the values, see RFC 9110, section 5.6.1.
+
     Make sure that all headers in *split_commas* have lower-case names.
     Do not pass empty *split_commas* parameter.
     """
     parsed_headers: dict[str, str | list[str]] = {}
     for header_key, header_value in headers.items():
         if header_key.lower() in split_commas:
-            parsed_headers[header_key] = header_value.split(',')
+            parsed_headers[header_key] = [
+                header_part.strip() for header_part in header_value.split(',')
+            ]
         else:
             parsed_headers[header_key] = header_value
     return CaseInsensitiveMapping(parsed_headers)
 
 
 def convert_multi_value_dict(
-    to_parse: 'MultiValueDict[str, Any]',
+    to_parse: MultiValueDict[str, Any],
     *,
     force_list: frozenset[str],
     cast_null: frozenset[str],

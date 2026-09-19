@@ -64,6 +64,9 @@ Response, headers and cookies
 .. autoclass:: dmr.metadata.ResponseSpecMetadata
   :members:
 
+.. autoclass:: dmr.metadata.MergeableMetadata
+  :members:
+
 .. autoclass:: dmr.metadata.ResponseModification
   :members:
 
@@ -216,6 +219,32 @@ Decorators
 .. autofunction:: dmr.decorators.wrap_middleware
 
 
+Security
+--------
+
+CSRF
+~~~~
+
+.. autoclass:: dmr.security.csrf.CSRFSemanticSchemaProvider
+  :members:
+
+.. autofunction:: dmr.security.csrf.build_csrf_handler
+
+.. autofunction:: dmr.security.csrf.csrf_message
+
+.. autofunction:: dmr.security.csrf.csrf_response_spec
+
+
+Semantic schema
+---------------
+
+.. autoclass:: dmr.semantic_schema.AuthProvider
+  :members:
+
+.. autoclass:: dmr.semantic_schema.ResponseValidationSpecProvider
+  :members:
+
+
 Testing
 -------
 
@@ -266,6 +295,9 @@ Pydantic
 .. autoclass:: dmr.plugins.pydantic.schema.PydanticSchemaGenerator
   :members:
 
+.. autoclass:: dmr.plugins.pydantic.schema.JsonSchemaKwargs
+  :members:
+
 .. autoclass:: dmr.plugins.pydantic.serializer.ToJsonKwargs
   :members:
 
@@ -279,6 +311,9 @@ Msgspec
   :members:
 
 .. autoclass:: dmr.plugins.msgspec.serializer.MsgspecEndpointOptimizer
+  :members:
+
+.. autoclass:: dmr.plugins.msgspec.schema.JsonSchemaKwargs
   :members:
 
 .. autoclass:: dmr.plugins.msgspec.schema.MsgspecSchemaGenerator
@@ -365,6 +400,8 @@ Parts:
    :show-inheritance:
    :members:
 
+.. autodata:: dmr.openapi.objects.ParameterLocation
+
 .. autoclass:: dmr.openapi.objects.PathItem
    :members:
 
@@ -404,6 +441,8 @@ Parts:
 .. autoclass:: dmr.openapi.objects.XML
    :members:
 
+.. autodata:: dmr.openapi.objects.XMLNodeType
+
 
 OpenAPI Core
 ~~~~~~~~~~~~
@@ -420,11 +459,17 @@ OpenAPI Core
 .. autoclass:: dmr.openapi.core.registry.SchemaCallback
   :members:
 
+.. autoclass:: dmr.openapi.core.registry.SecuritySchemeRegistry
+  :members:
+
 
 OpenAPI Generators
 ~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: dmr.openapi.generators.ComponentParserGenerator
+   :members:
+
+.. autoclass:: dmr.openapi.generators.component_parsers.ConverterSchema
    :members:
 
 .. autoclass:: dmr.openapi.generators.ResponseGenerator
@@ -437,6 +482,9 @@ OpenAPI Generators
    :members:
 
 .. autoclass:: dmr.openapi.generators.OperationIdGenerator
+   :members:
+
+.. autoclass:: dmr.openapi.generators.ParameterGenerator
    :members:
 
 

@@ -1,6 +1,7 @@
 import abc
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
+from operator import attrgetter
 from typing import (
     TYPE_CHECKING,
     Annotated,
@@ -191,7 +192,7 @@ class ComponentParser(ResponseSpecProvider):
     @override
     def provide_response_specs(
         self,
-        metadata: 'EndpointMetadata',
+        metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
@@ -449,8 +450,12 @@ class BodyComponent(ComponentParser):
             )
             for content_type, conditional_model in conditional_types.items()
         }
-        media_types: dict[str, MediaType] = {}
-        for parser in metadata.parsers.values():
+        media_types: dict[str, MediaType | Reference] = {}
+        # Sorted by content type, not by the parsers order:
+        for parser in sorted(
+            metadata.parsers.values(),
+            key=attrgetter('content_type'),
+        ):
             media_type_meta = (
                 get_annotated_metadata(
                     conditional_types.get(parser.content_type, model),
@@ -461,6 +466,7 @@ class BodyComponent(ComponentParser):
             )
             media_types[parser.content_type] = MediaType(
                 schema=conditional_schemas.get(parser.content_type, schema),
+                description=media_type_meta.description,
                 example=media_type_meta.example,
                 examples=media_type_meta.examples,
                 encoding=media_type_meta.encoding,
@@ -612,7 +618,7 @@ class PathComponent(ComponentParser):
     @override
     def provide_response_specs(
         self,
-        metadata: 'EndpointMetadata',
+        metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
@@ -930,6 +936,7 @@ class FileMetadataComponent(ComponentParser):
         }
         return RequestBody(
             content={
+                # Sorted by content type, not by the parsers order:
                 parser.content_type: parser.schema_metadata(
                     model,
                     model_meta,
@@ -943,7 +950,10 @@ class FileMetadataComponent(ComponentParser):
                     parser,
                     context,
                 )
-                for parser in metadata.parsers.values()
+                for parser in sorted(
+                    metadata.parsers.values(),
+                    key=attrgetter('content_type'),
+                )
                 if isinstance(parser, SupportsFileParsing)
             },
             required=True,

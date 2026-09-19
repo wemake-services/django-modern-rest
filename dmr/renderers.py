@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from typing_extensions import override
 
-from dmr.exceptions import NotAcceptableError, ResponseSchemaError
+from dmr.exceptions import NotAcceptableError
 from dmr.internal.json import JsonModule, NativeJson
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.parsers import (
@@ -80,38 +80,17 @@ class Renderer(ResponseSpecProvider):
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
         """Provides responses that can happen when data can't be rendered."""
-        # This is technically not renderer's response, but it is the closest.
-        response_validation = (
-            self._add_new_response(
-                ResponseSpec(
-                    return_type=controller_cls.error_model,
-                    status_code=ResponseSchemaError.status_code,
-                    description=(
-                        'Raised when returned response does not '
-                        'match the response schema'
-                    ),
+        return self._add_new_response(
+            # When we face wrong `Accept` header, we raise 406 error:
+            ResponseSpec(
+                return_type=controller_cls.error_model,
+                status_code=NotAcceptableError.status_code,
+                description=(
+                    'Raised when provided `Accept` header cannot be satisfied'
                 ),
-                existing_responses,
-            )
-            # When validation is disabled, `ResponseSchemaError` can't happen.
-            if metadata.validate_responses
-            else []
-        )
-        return [
-            *response_validation,
-            *self._add_new_response(
-                # When we face wrong `Accept` header, we raise 406 error:
-                ResponseSpec(
-                    return_type=controller_cls.error_model,
-                    status_code=NotAcceptableError.status_code,
-                    description=(
-                        'Raised when provided `Accept` header '
-                        'cannot be satisfied'
-                    ),
-                ),
-                existing_responses,
             ),
-        ]
+            existing_responses,
+        )
 
 
 class JsonRenderer(Renderer):

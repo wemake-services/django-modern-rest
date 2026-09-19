@@ -22,12 +22,20 @@ jobs:
       matrix:
         python-version: ['3.11', '3.12', '3.13', '3.14']
         redis-image: ['redis:8-alpine']
+        just-recipy: ['test']
         include:
           - python-version: '3.14t'
-            force-free-gil: true
             redis-image: 'redis:7-alpine'
+            force-free-gil: true
           - python-version: '3.13'
             redis-image: 'valkey/valkey:9-alpine'
+          # Integration tests with different databases.
+          - python-version: '3.13'
+            redis-image: redis:8-alpine
+            just-recipy: test_postgres
+          - python-version: '3.13'
+            redis-image: redis:8-alpine
+            just-recipy: test_mysql
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -40,7 +48,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: Install uv
-      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+      uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
 
     - name: Install just
       run: uv tool install rust-just
@@ -48,21 +56,21 @@ jobs:
     - name: Install dependencies
       run: |
         # System deps:
-        sudo apt update && sudo apt install -y gettext
+        sudo apt update && sudo apt install -y gettext default-libmysqlclient-dev gcc libpq-dev
 
         # Python deps:
-        just install
+        just install-integration
         # We don't install `orjson` in `pyproject.toml`,
         # because we run `3.14t` as well and it cannot be installed there :(
         # No way to exclude the platform on a file level.
         uv pip install orjson || true
 
-    - name: Prefetch the image
+    - name: Prefetch redis image
       if: ${{ matrix.redis-image }}
       run: docker pull "${{ matrix.redis-image }}"
 
     - name: Run checks
-      run: just test
+      run: just ${{ matrix.just-recipy || 'test' }}
       env:
         PYTHON_GIL: ${{ matrix.force-free-gil && '0' || '1' }}
         REDIS_IMAGE: ${{ matrix.redis-image }}

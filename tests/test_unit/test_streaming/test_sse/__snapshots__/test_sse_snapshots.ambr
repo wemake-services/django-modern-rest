@@ -10,10 +10,9 @@
     "paths": {
       "/api/v1/complex": {
         "get": {
-          "operationId": "getComplexsseApiV1Complex",
+          "operationId": "getComplexSSEApiV1Complex",
           "parameters": [
             {
-              "deprecated": false,
               "name": "X-Header",
               "in": "header",
               "schema": {
@@ -33,13 +32,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -71,16 +70,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -90,9 +79,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -212,8 +210,7 @@
           ],
           "title": "_UserEvent"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -229,7 +226,7 @@
     "paths": {
       "/api/v1/overridden": {
         "get": {
-          "operationId": "getOverriddensseApiV1Overridden",
+          "operationId": "getOverriddenSSEApiV1Overridden",
           "responses": {
             "200": {
               "description": "OK",
@@ -240,13 +237,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -261,16 +258,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -280,9 +267,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -350,8 +346,7 @@
             "value": "data: test"
           }
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -367,7 +362,7 @@
     "paths": {
       "/api/v1/sse": {
         "get": {
-          "operationId": "getClassbasedsseApiV1Sse",
+          "operationId": "getClassBasedSSEApiV1Sse",
           "responses": {
             "200": {
               "description": "OK",
@@ -378,13 +373,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -399,16 +394,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -418,12 +403,21 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
-          "operationId": "postClassbasedsseApiV1Sse",
+          "operationId": "postClassBasedSSEApiV1Sse",
           "responses": {
             "200": {
               "description": "OK",
@@ -434,13 +428,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -455,16 +449,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -474,9 +458,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -592,8 +585,7 @@
           "title": "SSEvent",
           "description": "Server sent event payload."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

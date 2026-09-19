@@ -1,7 +1,13 @@
 import dataclasses
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
-from dmr.openapi.objects import Parameter, ParameterMetadata, Reference, Schema
+from dmr.openapi.objects import (
+    Parameter,
+    ParameterLocation,
+    ParameterMetadata,
+    Reference,
+    Schema,
+)
 
 if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext
@@ -21,7 +27,7 @@ class ParameterGenerator:
         serializer: type['BaseSerializer'],
         context: 'OpenAPIContext',
         *,
-        param_in: Literal['query', 'path', 'cookie', 'header'],
+        param_in: ParameterLocation,
     ) -> list[Parameter | Reference]:
         """Generate parameter spec for the OpenAPI."""
         # Import cycle:
@@ -45,7 +51,7 @@ class ParameterGenerator:
                 name=property_name,
                 param_in=param_in,
                 schema=property_schema,
-                required=property_name in schema.required,
+                required=(property_name in schema.required) or None,
                 **self._compute_metadata(
                     metadata,
                     property_name,
@@ -89,6 +95,6 @@ class ParameterGenerator:
                 property_schema.deprecated
                 or metadata_params.get('deprecated')
                 or schema.deprecated
-                or False
+                or None
             ),
         }

@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.debug import sensitive_variables
 from typing_extensions import Sentinel, override
 
 from dmr.internal.model_fields import (
@@ -98,12 +99,12 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
         return not self.is_expired and self.revoked_at is None
 
     @override
-    def get_user(self) -> 'AbstractBaseUser':  # noqa: WPS615
+    def get_user(self) -> AbstractBaseUser:  # noqa: WPS615
         """Get user that this token belongs to."""
         return self.user
 
     @override
-    async def aget_user(self) -> 'AbstractBaseUser':
+    async def aget_user(self) -> AbstractBaseUser:
         """Async get user that this token belongs to."""
         return self.user
 
@@ -141,10 +142,11 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
+    @sensitive_variables()
     def issue(  # noqa: WPS211
         cls,
         *,
-        user: 'AbstractBaseUser',
+        user: AbstractBaseUser,
         name: str,
         expires_at: dt.datetime | Sentinel | None = EMPTY,
         token_size: int | None = None,
@@ -169,17 +171,18 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
+    @sensitive_variables()
     async def aissue(  # noqa: WPS211
         cls,
         *,
-        user: 'AbstractBaseUser',
+        user: AbstractBaseUser,
         name: str,
         expires_at: dt.datetime | Sentinel | None = EMPTY,
         token_size: int | None = None,
         token_secret: str | None = None,
         token_salt: str | None = None,
         token_algorithm: str | None = None,
-    ) -> 'tuple[Token, str]':
+    ) -> tuple['Token', str]:
         """Async version of :meth:`Token.issue`."""
         raw_token = secrets.token_urlsafe(token_size)
         token = await cls.objects.acreate(
@@ -197,6 +200,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
+    @sensitive_variables()
     def find_raw(
         cls,
         raw_token: str,
@@ -221,6 +225,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
+    @sensitive_variables()
     async def afind_raw(
         cls,
         raw_token: str,

@@ -43,6 +43,22 @@ def test_tags_split_commas(dmr_rf: DMRRequestFactory) -> None:
     })
 
 
+def test_tags_split_commas_whitespace(dmr_rf: DMRRequestFactory) -> None:
+    """Ensures whitespace after ``','`` is not a part of the values."""
+    request = dmr_rf.get(
+        '/whatever/',
+        headers={'x-tag': 'first, second'},
+    )
+
+    response = _SplitCommasController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert json.loads(response.content) == snapshot({
+        'X-tag': ['first', 'second'],
+    })
+
+
 @final
 class _RegularModel(pydantic.BaseModel):
     # This is here on purpose to test empty sets:

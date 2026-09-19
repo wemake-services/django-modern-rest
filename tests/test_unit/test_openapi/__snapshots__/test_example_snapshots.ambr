@@ -1,4 +1,180 @@
 # serializer version: 1
+# name: test_nested_schemas_with_examples
+  '''
+  {
+    "info": {
+      "title": "Your Awesome Project",
+      "version": "0.1.0"
+    },
+    "openapi": "3.1.0",
+    "paths": {
+      "/api/v1/nested/": {
+        "post": {
+          "operationId": "postNestedModelControllerApiV1Nested",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_NestedModel"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "201": {
+              "description": "Created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string",
+                    "examples": [
+                      "iPhGgaTklZTpXCJkWJYU"
+                    ]
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "ErrorDetail": {
+          "properties": {
+            "msg": {
+              "type": "string",
+              "title": "Msg"
+            },
+            "type": {
+              "type": "string",
+              "title": "Type"
+            },
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Loc"
+            }
+          },
+          "type": "object",
+          "required": [
+            "msg"
+          ],
+          "title": "ErrorDetail",
+          "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
+          "examples": [
+            {
+              "detail": [
+                {
+                  "msg": "psihdpFaJrqQyqzKcYbM",
+                  "loc": [
+                    "RaOtEacjXkNWWrsBOfMP"
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "_NestedModel": {
+          "properties": {
+            "username": {
+              "type": "string",
+              "title": "Username"
+            },
+            "profile": {
+              "$ref": "#/components/schemas/_Profile"
+            }
+          },
+          "type": "object",
+          "required": [
+            "username",
+            "profile"
+          ],
+          "title": "_NestedModel",
+          "examples": [
+            {
+              "username": "GMPXMVbyXHUfymCDaloV",
+              "profile": {
+                "setting": 6380
+              }
+            }
+          ]
+        },
+        "_Profile": {
+          "properties": {
+            "setting": {
+              "type": "integer",
+              "title": "Setting"
+            }
+          },
+          "type": "object",
+          "required": [
+            "setting"
+          ],
+          "title": "_Profile"
+        }
+      }
+    }
+  }
+  '''
+# ---
 # name: test_schema_with_body_existing_examples
   '''
   {
@@ -10,7 +186,7 @@
     "paths": {
       "/api/v1/point/": {
         "post": {
-          "operationId": "postExistingbodyexamplescontrollerApiV1Point",
+          "operationId": "postExistingBodyExamplesControllerApiV1Point",
           "requestBody": {
             "content": {
               "application/json": {
@@ -38,23 +214,15 @@
                 "application/json": {
                   "schema": {
                     "type": "integer",
-                    "example": 4185
+                    "examples": [
+                      2569
+                    ]
                   }
                 }
               }
             },
             "400": {
               "description": "Raised when request components cannot be parsed",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -72,9 +240,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -128,16 +305,18 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
-          "example": {
-            "detail": [
-              {
-                "msg": "GMPXMVbyXHUfymCDaloV",
-                "loc": [
-                  "NiPhGgaTklZTpXCJkWJY"
-                ]
-              }
-            ]
-          }
+          "examples": [
+            {
+              "detail": [
+                {
+                  "msg": "fymCDaloVNiPhGgaTklZ",
+                  "loc": [
+                    "TpXCJkWJYUpsihdpFaJr"
+                  ]
+                }
+              ]
+            }
+          ]
         },
         "_RegularBody": {
           "properties": {
@@ -156,13 +335,14 @@
             "coord_y"
           ],
           "title": "_RegularBody",
-          "example": {
-            "coord_x": -97227.2276503845,
-            "coord_y": -3.7299936760405
-          }
+          "examples": [
+            {
+              "coord_x": -97227.2276503845,
+              "coord_y": -3.7299936760405
+            }
+          ]
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -178,16 +358,18 @@
     "paths": {
       "/api/v1/user/": {
         "post": {
-          "operationId": "postUsercontrollerApiV1User",
+          "operationId": "postUserControllerApiV1User",
           "requestBody": {
             "content": {
               "application/json": {
                 "schema": {
                   "additionalProperties": true,
                   "type": "object",
-                  "example": {
-                    "GMPXMVbyXHUfymCDaloV": "39d864419"
-                  }
+                  "examples": [
+                    {
+                      "GMPXMVbyXHUfymCDaloV": "39d864419"
+                    }
+                  ]
                 }
               }
             },
@@ -214,16 +396,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -233,9 +405,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -289,16 +470,18 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
-          "example": {
-            "detail": [
-              {
-                "msg": "GMPXMVbyXHUfymCDaloV",
-                "loc": [
-                  "NiPhGgaTklZTpXCJkWJY"
-                ]
-              }
-            ]
-          }
+          "examples": [
+            {
+              "detail": [
+                {
+                  "msg": "hVGiBXJqoyUfQBjWTjzA",
+                  "loc": [
+                    8980
+                  ]
+                }
+              ]
+            }
+          ]
         },
         "_Status": {
           "type": "string",
@@ -364,8 +547,7 @@
           ],
           "title": "_UserModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -381,7 +563,7 @@
     "paths": {
       "/api/v1/user/": {
         "post": {
-          "operationId": "postExistingexamplecontrollerApiV1User",
+          "operationId": "postExistingExampleControllerApiV1User",
           "responses": {
             "201": {
               "description": "Created",
@@ -389,16 +571,6 @@
                 "application/json": {
                   "schema": {
                     "$ref": "#/components/schemas/_WithExistingExampleModel"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
                   }
                 }
               }
@@ -412,9 +584,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -468,16 +649,18 @@
           ],
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details.",
-          "example": {
-            "detail": [
-              {
-                "msg": "GMPXMVbyXHUfymCDaloV",
-                "loc": [
-                  "NiPhGgaTklZTpXCJkWJY"
-                ]
-              }
-            ]
-          }
+          "examples": [
+            {
+              "detail": [
+                {
+                  "msg": "GMPXMVbyXHUfymCDaloV",
+                  "loc": [
+                    "NiPhGgaTklZTpXCJkWJY"
+                  ]
+                }
+              ]
+            }
+          ]
         },
         "_WithExistingExampleModel": {
           "properties": {
@@ -495,8 +678,7 @@
             "field": "example@email.com"
           }
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

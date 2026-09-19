@@ -10,7 +10,7 @@
     "paths": {
       "/per_controller/": {
         "get": {
-          "operationId": "getPercontrollerPerController",
+          "operationId": "getPerControllerPerController",
           "responses": {
             "200": {
               "description": "OK",
@@ -23,7 +23,6 @@
               }
             }
           },
-          "deprecated": false,
           "security": [
             {
               "jwt": []
@@ -31,7 +30,7 @@
           ]
         },
         "post": {
-          "operationId": "postPercontrollerPerController",
+          "operationId": "postPerControllerPerController",
           "responses": {
             "201": {
               "description": "Created",
@@ -44,7 +43,6 @@
               }
             }
           },
-          "deprecated": false,
           "security": [
             {
               "jwt": []
@@ -92,7 +90,7 @@
     "paths": {
       "/per_endpoint/": {
         "get": {
-          "operationId": "getPerendpointPerEndpoint",
+          "operationId": "getPerEndpointPerEndpoint",
           "responses": {
             "200": {
               "description": "OK",
@@ -100,16 +98,6 @@
                 "application/json": {
                   "schema": {
                     "$ref": "#/components/schemas/_UserModel"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
                   }
                 }
               }
@@ -123,12 +111,21 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
-          "operationId": "postPerendpointPerEndpoint",
+          "operationId": "postPerEndpointPerEndpoint",
           "responses": {
             "201": {
               "description": "Created",
@@ -140,8 +137,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -209,8 +205,7 @@
           ],
           "title": "_UserModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

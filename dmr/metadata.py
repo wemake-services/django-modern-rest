@@ -1,27 +1,30 @@
 import dataclasses
+import functools
 import typing as ty
 from abc import abstractmethod
 from collections.abc import AsyncGenerator, AsyncIterator, Mapping, Set
 from http import HTTPStatus
 from typing import (  # noqa: WPS235
     TYPE_CHECKING,
-    Annotated,
     Any,
     ClassVar,
     Final,
     Generic,
+    Self,
     TypeAlias,
     get_args,
     get_origin,
 )
 
-from typing_extensions import TypeVar
+from typing_extensions import TypeVar, override
+
+from dmr.internal.types import (
+    StrOrPromise,
+    find_annotated_metadata,
+    iter_union_members,
+)
 
 if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
-
     from dmr.components import ComponentParser
     from dmr.controller import Controller
     from dmr.cookies import CookieSpec, NewCookie
@@ -44,6 +47,8 @@ if TYPE_CHECKING:
     from dmr.throttling import AsyncThrottle, SyncThrottle
 
 ComponentParserSpec: TypeAlias = tuple['ComponentParser', Any, tuple[Any, ...]]
+
+_SpecT = TypeVar('_SpecT', 'HeaderSpec', 'CookieSpec')
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -70,9 +75,17 @@ class ResponseSpec:
             only for given content types. By default, when equals to ``None``,
             all responses can happen for all content types.
         description: Text comment about what this response represents.
+        summary: Short label for what this response represents,
+            *description* is the long form of it.
+            ``Response.summary`` was added in OpenAPI ``'3.2.0'``,
+            so setting it on an older version fails schema validation.
         links: Possible links to other OpenAPI operations.
 
     We use this structure to validate responses and render them in OpenAPI.
+
+    .. versionchanged:: 0.16.0
+        Added ``summary``.
+
     """
 
     # `type[T]` limits some type annotations, like `Literal[1]`:
@@ -96,7 +109,11 @@ class ResponseSpec:
     )
 
     # Metadata:
-    description: '_StrOrPromise | None' = dataclasses.field(
+    description: StrOrPromise | None = dataclasses.field(
+        kw_only=True,
+        default=None,
+    )
+    summary: StrOrPromise | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
@@ -126,7 +143,7 @@ class ResponseSpec:
     def get_schema(
         self,
         metadata: 'EndpointMetadata',
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> 'Response':
         """
@@ -136,6 +153,10 @@ class ResponseSpec:
         Be careful when overriding the schema generation.
         We don't provide any validations for the returned schema.
         Ensure that it is in sync with the actual response.
+
+        .. versionchanged:: 0.16.0
+            Now accepts *controller_cls* parameter instead of *serializer*.
+
         """
         item_schema = (
             self.streaming and context.config.openapi_version_info >= (3, 2)
@@ -143,7 +164,7 @@ class ResponseSpec:
         return context.generators.response.get_schema(
             self,
             metadata,
-            serializer,
+            controller_cls,
             context,
             schema_field_name='item_schema' if item_schema else 'schema',
             # Despite the fact that it looks like a response,
@@ -152,8 +173,58 @@ class ResponseSpec:
         )
 
 
+class MergeableMetadata:
+    """
+    Base for ``Annotated`` metadata that survives union types.
+
+    A union is a single response or a single parsed model,
+    but each of its members can carry its own metadata.
+    Subclasses define what the metadata of the whole union is.
+
+    Metadata types that don't subclass this are only looked up
+    on the annotation itself, never on union members:
+    there is no meaningful way to combine them.
+
+    .. versionadded:: 0.16.0
+    """
+
+    __slots__ = ()
+
+    @classmethod
+    def merge(
+        cls,
+        first: Any,
+        second: Any,
+    ) -> 'Self | None':
+        """
+        Combine metadata of two members of the same union.
+
+        Both arguments are instances of this class or ``None``,
+        which means that this member carries no metadata at all.
+        That is still information about the union: such a member
+        is a response without whatever the other member declares.
+        Subclasses type the arguments as their own type,
+        which is why they are ``Any`` here.
+
+        Must not depend on the order of the arguments,
+        union members are merged one by one.
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def from_union(cls, annotation: Any) -> 'Self | None':
+        """Find and merge this metadata across all members of a union."""
+        return functools.reduce(
+            cls.merge,
+            [
+                find_annotated_metadata(member, cls)
+                for member in iter_union_members(annotation)
+            ],
+        )
+
+
 @dataclasses.dataclass(frozen=True, slots=True, eq=False)
-class ResponseSpecMetadata:
+class ResponseSpecMetadata(MergeableMetadata):
     """
     Special type to be used in ``Annotate`` to provide header and cookie specs.
 
@@ -166,6 +237,11 @@ class ResponseSpecMetadata:
             in the final response.
 
     .. versionadded:: 0.7.0
+
+    .. versionchanged:: 0.16.0
+        Can now be used on members of a union return type,
+        see :meth:`merge`.
+
     """
 
     headers: Mapping[str, 'HeaderSpec'] | None = dataclasses.field(
@@ -178,6 +254,65 @@ class ResponseSpecMetadata:
         default=None,
         hash=False,
     )
+
+    @classmethod
+    @override
+    def merge(
+        cls,
+        first: 'ResponseSpecMetadata | None',
+        second: 'ResponseSpecMetadata | None',
+    ) -> 'ResponseSpecMetadata | None':
+        """
+        Combine metadata of two members of the same union return type.
+
+        Annotating a member describes that member only:
+        ``Annotated[User, meta] | str`` says that ``User`` responses
+        carry the headers and cookies from *meta*, while ``str``
+        responses do not. A single response has a single set of specs,
+        so the result keeps everything both members declare, but marks
+        a spec as ``required=False`` unless every member provides it.
+
+        Annotate the whole union instead
+        - ``Annotated[User | str, meta]`` - to require it everywhere.
+        """
+        if first is None and second is None:
+            return None
+        empty = cls()
+        first = empty if first is None else first
+        second = empty if second is None else second
+        return cls(
+            headers=cls._merge_specs(first.headers, second.headers),
+            cookies=cls._merge_specs(first.cookies, second.cookies),
+        )
+
+    @classmethod
+    def _merge_specs(
+        cls,
+        first: Mapping[str, _SpecT] | None,
+        second: Mapping[str, _SpecT] | None,
+    ) -> dict[str, _SpecT]:
+        left = first or {}
+        right = second or {}
+        # The left side wins for specs that both members declare:
+        return {
+            name: dataclasses.replace(
+                spec,
+                required=cls._required_in_both(name, left, right),
+            )
+            for name, spec in {**right, **left}.items()
+        }
+
+    @classmethod
+    def _required_in_both(
+        cls,
+        name: str,
+        left: Mapping[str, _SpecT],
+        right: Mapping[str, _SpecT],
+    ) -> bool:
+        """A spec is only required when both merged members require it."""
+        return all(
+            name in specs and specs[name].required for specs in (left, right)
+        )
 
 
 _ASYNC_ITERATOR_TYPES: Final = frozenset((
@@ -210,6 +345,13 @@ class ResponseModification:
         links: Possible links to other OpenAPI operations.
 
     We use this structure to modify the default response.
+
+    .. versionchanged:: 0.16.0
+        Removed several methods like ``actionable_headers()``,
+        ``actionable_cookies()``, ``infer_return_type()``, ``build_headers()``.
+        Added ``actionable_headers`` and ``actionable_cookies``
+        pre-computed attributes.
+
     """
 
     # Class-level API:
@@ -223,13 +365,34 @@ class ResponseModification:
     streaming: bool
 
     # Metadata:
-    description: '_StrOrPromise | None'
+    description: StrOrPromise | None
     links: dict[str, 'Link | Reference'] | None
+
+    # Pre-computed fields:
+    actionable_headers: Mapping[str, str] | None = dataclasses.field(
+        init=False,
+    )
+    actionable_cookies: Mapping[str, 'NewCookie'] | None = dataclasses.field(
+        init=False,
+    )
+
+    def __post_init__(self) -> None:
+        """Create pre-computed fields."""
+        object.__setattr__(
+            self,
+            'actionable_headers',
+            self._actionable_headers(),
+        )
+        object.__setattr__(
+            self,
+            'actionable_cookies',
+            self._actionable_cookies(),
+        )
 
     def to_spec(self) -> ResponseSpec:
         """Convert response modification to response description."""
         return self.response_spec_cls(
-            return_type=self.infer_return_type(),
+            return_type=self._infer_return_type(),
             status_code=self.status_code,
             headers=(
                 None
@@ -253,7 +416,7 @@ class ResponseModification:
             links=self.links,
         )
 
-    def infer_return_type(self) -> Any:
+    def _infer_return_type(self) -> Any:
         """Infers return type if it needs some extra love."""
         from dmr.exceptions import UnsolvableAnnotationsError  # noqa: PLC0415
 
@@ -270,19 +433,19 @@ class ResponseModification:
 
         return self.return_type
 
-    def actionable_headers(self) -> Mapping[str, 'NewHeader'] | None:
+    def _actionable_headers(self) -> Mapping[str, str] | None:
         """Returns an optional mapping of headers that should be added."""
-        return (  # pyright: ignore[reportReturnType]
-            None  # pyrefly: ignore[bad-return]
+        return (  # pyright: ignore[reportUnknownVariableType]
+            None
             if self.headers is None
             else {
-                header_name: header
+                header_name: header.value  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]  # pyrefly: ignore[missing-attribute]
                 for header_name, header in self.headers.items()
                 if header.is_actionable
             }
         )
 
-    def actionable_cookies(self) -> Mapping[str, 'NewCookie'] | None:
+    def _actionable_cookies(self) -> Mapping[str, 'NewCookie'] | None:
         """Returns an optional mapping of cookies that should be added."""
         return (  # pyright: ignore[reportReturnType]
             None  # pyrefly: ignore[bad-return]
@@ -293,21 +456,6 @@ class ResponseModification:
                 if cookie.is_actionable
             }
         )
-
-    def build_headers(
-        self,
-        renderer: 'Renderer',
-    ) -> dict[str, str]:
-        """Returns headers with values for raw data endpoints."""
-        result_headers: dict[str, Any] = {'Content-Type': renderer.content_type}
-        headers = self.actionable_headers()
-        if not headers:
-            return result_headers
-        result_headers.update({
-            header_name: response_header.value
-            for header_name, response_header in headers.items()
-        })
-        return result_headers
 
 
 class ResponseSpecProvider:
@@ -467,9 +615,9 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     auth: list[_AuthT] | None
 
     # First line of throttling:
-    throttling_before_auth: tuple[_ThrottlingT, ...] | None
+    throttling_before_auth: list[_ThrottlingT] | None
     # Second line of throttling:
-    throttling_after_auth: tuple[_ThrottlingT, ...] | None
+    throttling_after_auth: list[_ThrottlingT] | None
     throttling_allow_unsafe_cache: bool | None
 
     exclude_validate_responses: frozenset[HTTPStatus]
@@ -480,8 +628,8 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     validate_events: bool
 
     # OpenAPI documentation fields:
-    summary: '_StrOrPromise | None'
-    description: '_StrOrPromise | None'
+    summary: StrOrPromise | None
+    description: StrOrPromise | None
     tags: list[str] | None
     operation_id: str | None
     deprecated: bool
@@ -491,7 +639,7 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     ignore_from_spec: bool
 
     # Pre-computed fields:
-    throttling: tuple[_ThrottlingT, ...] | None = dataclasses.field(init=False)
+    throttling: list[_ThrottlingT] | None = dataclasses.field(init=False)
 
     def __post_init__(self) -> None:
         """Set pre-computed fields."""
@@ -500,8 +648,8 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
             self,
             'throttling',
             (
-                (self.throttling_before_auth or ())
-                + (self.throttling_after_auth or ())
+                (self.throttling_before_auth or [])
+                + (self.throttling_after_auth or [])
             )
             or None,
         )
@@ -567,6 +715,8 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
         Define ``semantic_responses`` to ``False`` on settings
         or controller level to disable semantic responses collection.
         """
+        from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
+
         if not self.semantic_responses:
             return []
 
@@ -577,6 +727,8 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
             *(self.auth or []),
             *(self.throttling_before_auth or []),
             *(self.throttling_after_auth or []),
+            # Default providers, must be last:
+            *resolve_setting(Settings.semantic_schema_providers),
         ]
 
 
@@ -592,18 +744,35 @@ def get_annotated_metadata(
     """
     Find given *metadata_type* in *model*.
 
-    *model* can be :data:`typing.Annotate` object.
+    *model* can be :data:`typing.Annotated` object.
     Or it can be a regular model, with *model_meta*,
     which is the ``__metadata__`` field from ``Annotated``.
 
-    Or return ``None`` if nothing can be found.
-    """
-    if get_origin(model) is Annotated and model.__metadata__:
-        for metadata in model.__metadata__:
-            if isinstance(metadata, metadata_type):
-                return metadata
+    Type aliases are unwrapped on the way,
+    both ``X: TypeAlias = Annotated[...]`` and ``type X = Annotated[...]``
+    are looked through, including aliases of aliases
+    and subscripted generic aliases.
 
-    for metadata in model_meta or ():
-        if isinstance(metadata, metadata_type):
-            return metadata
+    When *model* is a union and *metadata_type*
+    is a :class:`MergeableMetadata` subclass, metadata of all union members
+    is merged by that type. Other metadata types are not looked
+    for on union members at all.
+
+    Or return ``None`` if nothing can be found.
+
+    .. versionchanged:: 0.16.0
+        Type aliases and union members are now inspected.
+
+    """
+    metadata = find_annotated_metadata(model, metadata_type)
+    if metadata is not None:
+        return metadata
+
+    for model_metadata in model_meta or ():
+        if isinstance(model_metadata, metadata_type):
+            return model_metadata
+
+    if issubclass(metadata_type, MergeableMetadata):
+        # `issubclass` does not narrow `type[_MetadataT]` for all checkers:
+        return metadata_type.from_union(model)  # pyrefly: ignore[bad-return]
     return None

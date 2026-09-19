@@ -12,11 +12,11 @@ Serializing models and Querysets
    -- `Nikita Sobolev <https://github.com/sobolevn>`_, CPython core developer
 
 Django is built around its :class:`~django.db.models.query.QuerySet` type.
-Of course, we have to make sure that it is supported.
+Of course, we make sure that it is supported.
 
 Prepare yourself for a wild ride!
 This section will not only be about queryset,
-but also about architecture of Django applications.
+but also about the architecture of Django applications.
 
 .. important::
 
@@ -29,7 +29,7 @@ but also about architecture of Django applications.
 
   1. Simplicity
   2. Database table independence from the serialization schema
-  3. Customizability: you can change anything at anytime
+  3. Customizability: you can change anything at any time
   4. Performance: no extra fields, no extra queries, fast serialization
   5. Everything must be typed at all times
 
@@ -37,7 +37,7 @@ but also about architecture of Django applications.
 Oversimplied example
 --------------------
 
-Let's start with the very simple definition of a regular model,
+Let's start with the very simple definition of a regular model
 with no foreign keys or many-to-many fields.
 
 Our approach is to always move all the business logic away from the view.
@@ -69,10 +69,10 @@ Serializer schemas
 Next, let's define serializer schemas
 to get the incoming data and return the response.
 
-You can use any schema type, including :class:`pydantic.BaseModel`,
+You can use any schema type, such as :class:`msgspec.Struct`, :class:`pydantic.BaseModel`,
 :func:`attrs.define`, :class:`typing.TypedDict`, etc.
-For this example we will use ``pydantic``, because
-it is the most familiar tools for the most programmers:
+We will use ``pydantic`` for this example, because
+it is the most familiar concept among them for most developers:
 
 .. literalinclude:: ../../django_test_app/server/apps/model_simple/serializers.py
   :caption: serializers.py
@@ -81,7 +81,7 @@ it is the most familiar tools for the most programmers:
 
 .. important::
 
-  This step is really important! Because we **have to** separate database
+  This step is really important! We **have to** separate database
   models and serializer schemas from each other. Why?
 
   1. Because it gives us more control over the serialization process both ways
@@ -101,8 +101,8 @@ Now, let's define our business logic.
   that you like for your projects: DDD, Clean or Hexagonal Architecture,
   Functional Core and Imperative Shell, whatever you like.
 
-  But, you business logic must be separated from views
-  for better testing and better composition.
+  However, we **strongly** recommend that you separate your business logic
+  from views for better testing and better composition.
 
 For this example, we will use the simplest ``services.py``
 layer for our business logic:
@@ -117,7 +117,7 @@ There's nothing fancy about it. Just creating a model from the typed input data.
 Views
 ~~~~~
 
-Now, we can define views that will use everything from the above.
+Now, we can define views that will use everything defined above.
 
 .. tabs::
 
@@ -151,13 +151,13 @@ Now, we can define views that will use everything from the above.
   .. tab:: Detailed
 
     Convert models to schemas manually. It might seem like a lot of code,
-    but actually, it is pretty simple to do with
-    (especially with the help of LLM).
+    but actually, it is pretty simple to do
+    (especially with the help of an LLM).
 
     - The main reason to use this approach is correctness.
-      For example, removing ``customer_service_uid`` model field
+      For example, removing the ``customer_service_uid`` model field
       will now trigger an early type-checking error,
-      unlike the "Minimalistic" version, which will only fail in runtime:
+      unlike the "Minimalistic" version, which will only fail at runtime:
 
       .. code-block::
 
@@ -189,7 +189,7 @@ Now, let's see how a more realistic layout may look like. It will include:
 Models
 ~~~~~~
 
-We start with models definitions.
+We start with model definitions.
 
 .. literalinclude:: ../../django_test_app/server/apps/model_fk/models.py
   :caption: models.py
@@ -198,8 +198,8 @@ We start with models definitions.
 
 We added two models:
 
-- ``Role`` for foreign key relation
-- ``Tag`` for many-to-many relation
+- ``Role`` for a foreign key relation
+- ``Tag`` for a many-to-many relation
 
 Serializer schemas
 ~~~~~~~~~~~~~~~~~~
@@ -214,14 +214,14 @@ Next, let's see how serializer schemas are defined.
 Note that we model foreign key and many-to-many relations
 here as nested schemas or list of nested schemas.
 However, you can also model the same thing
-as ``role_id: int`` and ``tags: list[int]`` to support ids for linking.
-That's the beautify of this extremely simple approach:
+as ``role_id: int`` and ``tags: list[int]`` to support IDs for linking.
+That's the beauty of this extremely simple approach:
 it is customizable to the core.
 
 Views
 ~~~~~
 
-In this example, it would be easier to start with ``views.py``:
+In this example, it is easier to start with ``views.py``:
 
 .. literalinclude:: ../../django_test_app/server/apps/model_fk/views.py
   :caption: views.py
@@ -272,7 +272,7 @@ Services
 
 Again, this is just an example. You are not forced
 to create this specific service-based architecture.
-Use whatever layers separation practice as you want.
+Use whatever layer separation practice you want.
 Our big example uses `usecases <https://github.com/wemake-services/wemake-django-template/tree/master/%7B%7Bcookiecutter.project_name%7D%7D/server/apps/main/logic/usecases>`_
 as the main logic entities and entry points.
 
@@ -288,7 +288,7 @@ What happens here?
 
 1. We define three services: one per create operation
 2. Some of them have dependencies defined as dataclass fields,
-   like ``_mapper: UserMap``, these fields will be resolved by our DI
+   like ``_mapper: UserMap``. These fields will be resolved by our DI.
 3. Each service does just a single thing, it would be easy to compose them
 
 Now we are ready for the final layer: mapping of the created database models.
@@ -306,8 +306,8 @@ Mappers just map database models into serialization schemas.
 
   It will allow you to compose mappers freely.
   For example, it allows you to create compatibility layers,
-  when some model have some database fields removed,
-  but still need a way to send users the same API schema.
+  when some model has some database fields removed,
+  but you still need a way to send users the same API schema.
 
   Or it can do some small representation logic, like combining
   ``first_name`` and ``last_name`` of users into ``full_name``.

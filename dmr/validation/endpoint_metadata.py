@@ -5,7 +5,6 @@ import warnings
 from collections.abc import (
     Callable,
     ItemsView,
-    KeysView,
     Sequence,
     Set,
 )
@@ -16,6 +15,8 @@ from typing import (
     Any,
     ClassVar,
     Final,
+    Literal,
+    ParamSpec,
     TypeVar,
     assert_never,
 )
@@ -94,6 +95,169 @@ _HTTP_METHODS_WITHOUT_BODY: Final = frozenset((
 
 _PluggableT = TypeVar('_PluggableT', bound=Parser | Renderer)
 _ItemT = TypeVar('_ItemT')
+_ParamT = ParamSpec('_ParamT')
+
+
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
+class _HttpSpecValidator:  # noqa: WPS214
+    """Collects all http spec validation callbacks."""
+
+    #: 1xx responses, 204, 205, and 304 must not have a body. RFC 9110.
+    _no_response_body_statuses: ClassVar[frozenset[HTTPStatus]] = frozenset((
+        HTTPStatus.NO_CONTENT,
+        HTTPStatus.RESET_CONTENT,
+        HTTPStatus.NOT_MODIFIED,
+    ))
+
+    metadata: EndpointMetadata
+
+    def validate(
+        self,
+        responses: list[ResponseSpec],
+    ) -> None:
+        self._check_http_spec_rule(
+            rule=HttpSpec.header_name_syntax,
+            callback=self._check_http_syntax,
+            responses=responses,
+            field_type='cookie',
+        )
+
+        self._check_http_spec_rule(
+            rule=HttpSpec.header_name_syntax,
+            callback=self._check_http_syntax,
+            responses=responses,
+            field_type='header',
+        )
+
+        self._check_http_spec_rule(
+            rule=HttpSpec.header_name_server_managed,
+            callback=self._check_header_name_server_managed,
+            responses=responses,
+        )
+
+        self._check_http_spec_rule(
+            rule=HttpSpec.empty_response_body,
+            callback=self._check_empty_response_body,
+            responses=responses,
+        )
+
+    def _check_http_spec_rule(
+        self,
+        rule: HttpSpec,
+        callback: Callable[_ParamT, None],
+        *args: _ParamT.args,
+        **kwargs: _ParamT.kwargs,
+    ) -> None:
+        if rule not in self.metadata.no_validate_http_spec:
+            callback(*args, **kwargs)
+
+    def _check_empty_response_body(
+        self,
+        responses: list[ResponseSpec],
+    ) -> None:
+        endpoint_name = self.metadata.endpoint_name
+        # For several http status codes and successful HEAD responses,
+        # no response body is allowed.
+        # If you specify a return annotation other than None,
+        # an EndpointMetadataError will be raised.
+        for response in responses:
+            if not is_safe_subclass(response.return_type, NoneType) and (
+                response.status_code < HTTPStatus.OK
+                or response.status_code in self._no_response_body_statuses
+                or (
+                    stringify(self.metadata.method).upper() == HTTPMethod.HEAD
+                    and response.status_code < HTTPStatus.BAD_REQUEST
+                )
+            ):
+                raise EndpointMetadataError(
+                    f'Can only return `None` not {response.return_type} '
+                    f'from an endpoint {endpoint_name!r} '
+                    f'with status code {response.status_code}',
+                )
+
+    def _check_header_name_server_managed(
+        self,
+        responses: list[ResponseSpec],
+    ) -> None:
+        endpoint_name = self.metadata.endpoint_name
+        for response in responses:
+            if not response.headers:
+                continue
+
+            forbidden_header = self._get_forbidden_header(
+                response.headers.items(),
+            )
+
+            if forbidden_header:
+                raise EndpointMetadataError(
+                    f'Header {forbidden_header!r} is not allowed in responses '
+                    f'from endpoint {endpoint_name!r}.',
+                )
+
+    def _check_http_syntax(
+        self,
+        responses: list[ResponseSpec],
+        field_type: Literal['cookie', 'header'],
+    ) -> None:
+        names = []
+
+        modification = self.metadata.modification
+
+        if modification:
+            names = self._get_http_field_names(
+                modification,
+                field_type,
+            )
+
+        for response in responses:
+            response_names = self._get_http_field_names(
+                response,
+                field_type,
+            )
+            names.extend(response_names)
+
+        invalid_name = self._check_invalid_tokens(names)
+
+        if invalid_name:
+            raise EndpointMetadataError(
+                f'{field_type.capitalize()} name {invalid_name!r} '
+                f'is not following http spec.',
+            )
+
+    def _get_http_field_names(
+        self,
+        resource: ResponseSpec | ResponseModification,
+        field_type: Literal['cookie', 'header'],
+    ) -> list[str]:
+        attribute = getattr(resource, f'{field_type}s')
+
+        if not attribute:
+            return []
+
+        return list(attribute.keys())
+
+    def _check_invalid_tokens(
+        self,
+        names: list[str],
+    ) -> str | None:
+        for name in names:
+            if not _ALLOWED_TOKENS_PATTERN.match(name):
+                return name
+
+        return None
+
+    def _get_forbidden_header(
+        self,
+        response_headers: ItemsView[str, HeaderSpec],
+    ) -> str | None:
+
+        for header_name, header in response_headers:
+            if (
+                header_name.lower() in _FORBIDDEN_RESPONSE_HEADERS
+                and not header.skip_validation
+            ):
+                return header_name
+        return None
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -101,12 +265,7 @@ class _ResponseListValidator:  # noqa: WPS214
     """Validates responses metadata."""
 
     metadata: EndpointMetadata
-    #: 1xx responses, 204, 205, and 304 must not have a body. RFC 9110.
-    _no_response_body_statuses: ClassVar[frozenset[HTTPStatus]] = frozenset((
-        HTTPStatus.NO_CONTENT,
-        HTTPStatus.RESET_CONTENT,
-        HTTPStatus.NOT_MODIFIED,
-    ))
+    http_spec_validator: ClassVar[type[_HttpSpecValidator]] = _HttpSpecValidator
 
     def __call__(
         self,
@@ -178,187 +337,17 @@ class _ResponseListValidator:  # noqa: WPS214
         responses: list[ResponseSpec],
     ) -> None:
         """Validate that we don't violate HTTP spec."""
-        if (
-            HttpSpec.empty_response_body
-            not in self.metadata.no_validate_http_spec
-        ):
-            self._check_empty_response_body(responses)
-        if (
-            HttpSpec.header_name_server_managed
-            not in self.metadata.no_validate_http_spec
-        ):
-            self._check_header_name_server_managed(responses)
-
-        if (
-            HttpSpec.header_name_syntax
-            not in self.metadata.no_validate_http_spec
-        ):
-            self._check_modification_header_syntax()
-            self._check_responses_header_syntax(responses)
-
-        if (
-            HttpSpec.cookie_name_syntax
-            not in self.metadata.no_validate_http_spec
-        ):
-            self._check_modification_cookie_syntax()
-            self._check_response_cookie_syntax(responses)
-
-        # TODO: add more checks
-
-    def _check_empty_response_body(
-        self,
-        responses: list[ResponseSpec],
-    ) -> None:
-        endpoint_name = self.metadata.endpoint_name
-        # For several http status codes and successful HEAD responses,
-        # no response body is allowed.
-        # If you specify a return annotation other than None,
-        # an EndpointMetadataError will be raised.
-        for response in responses:
-            if not is_safe_subclass(response.return_type, NoneType) and (
-                response.status_code < HTTPStatus.OK
-                or response.status_code in self._no_response_body_statuses
-                or (
-                    stringify(self.metadata.method).upper() == HTTPMethod.HEAD
-                    and response.status_code < HTTPStatus.BAD_REQUEST
-                )
-            ):
-                raise EndpointMetadataError(
-                    f'Can only return `None` not {response.return_type} '
-                    f'from an endpoint {endpoint_name!r} '
-                    f'with status code {response.status_code}',
-                )
-
-    # TODO: refactor all the name checks to be less verbose and complex
-    def _check_header_name_server_managed(
-        self,
-        responses: list[ResponseSpec],
-    ) -> None:
-        endpoint_name = self.metadata.endpoint_name
-        for response in responses:
-            if not response.headers:
-                continue
-
-            forbidden_header = self._get_forbidden_header(
-                response.headers.items(),
-            )
-
-            if forbidden_header:
-                raise EndpointMetadataError(
-                    f'Header {forbidden_header!r} is not allowed in responses '
-                    f'from endpoint {endpoint_name!r}.',
-                )
-
-    def _check_responses_header_syntax(
-        self,
-        responses: list[ResponseSpec],
-    ) -> None:
-
-        for response in responses:
-            if not response.headers:
-                continue
-
-            invalid_header = self._get_invalid_header(
-                response.headers.keys(),
-            )
-
-            if invalid_header:
-                raise EndpointMetadataError(
-                    f'Header name {invalid_header!r} is not '
-                    f'following http spec.',
-                )
-
-    def _check_modification_header_syntax(
-        self,
-    ) -> None:
-        modification = self.metadata.modification
-
-        if not modification or not modification.headers:
-            return
-
-        invalid_header = self._get_invalid_header(
-            modification.headers.keys(),
+        self.http_spec_validator(
+            metadata=self.metadata,
+        ).validate(
+            responses=responses,
         )
-
-        if invalid_header:
-            raise EndpointMetadataError(
-                f'Header name {invalid_header!r} is not following http spec.',
-            )
-
-    def _check_modification_cookie_syntax(
-        self,
-    ) -> None:
-
-        modification = self.metadata.modification
-
-        if not modification or not modification.cookies:
-            return
-
-        invalid_cookie = self._get_invalid_cookie(
-            modification.cookies.keys(),
-        )
-
-        if invalid_cookie:
-            raise EndpointMetadataError(
-                f'Cookie name {invalid_cookie!r} is not following http spec.',
-            )
-
-    def _check_response_cookie_syntax(
-        self,
-        responses: list[ResponseSpec],
-    ) -> None:
-        for response in responses:
-            if not response.cookies:
-                continue
-
-            invalid_cookie = self._get_invalid_cookie(
-                response.cookies.keys(),
-            )
-
-            if invalid_cookie:
-                raise EndpointMetadataError(
-                    f'Cookie name {invalid_cookie!r} is '
-                    f'not following http spec.',
-                )
 
     def _convert_responses(
         self,
         all_responses: list[ResponseSpec],
     ) -> dict[HTTPStatus, ResponseSpec]:
         return {resp.status_code: resp for resp in all_responses}
-
-    def _get_invalid_header(
-        self,
-        header_names: KeysView[str],
-    ) -> str | None:
-        for header_name in header_names:
-            if not _ALLOWED_TOKENS_PATTERN.match(header_name):
-                return header_name
-
-        return None
-
-    def _get_invalid_cookie(
-        self,
-        cookie_names: KeysView[str],
-    ) -> str | None:
-        for cookie_name in cookie_names:
-            if not _ALLOWED_TOKENS_PATTERN.match(cookie_name):
-                return cookie_name
-
-        return None
-
-    def _get_forbidden_header(
-        self,
-        response_headers: ItemsView[str, HeaderSpec],
-    ) -> str | None:
-
-        for header_name, header in response_headers:
-            if (
-                header_name.lower() in _FORBIDDEN_RESPONSE_HEADERS
-                and not header.skip_validation
-            ):
-                return header_name
-        return None
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -480,7 +469,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             deprecated=payload.deprecated,
             external_docs=payload.external_docs,
             callbacks=payload.callbacks,
-            servers=payload.servers,
+            servers=None if payload.servers is None else list(payload.servers),
             ignore_from_spec=self._build_ignore_from_spec(),
         )
 
@@ -544,7 +533,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             deprecated=payload.deprecated,
             external_docs=payload.external_docs,
             callbacks=payload.callbacks,
-            servers=payload.servers,
+            servers=None if payload.servers is None else list(payload.servers),
             ignore_from_spec=self._build_ignore_from_spec(),
         )
 
@@ -681,9 +670,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         self,
     ) -> list[SyncAuth | AsyncAuth] | None:
         payload_auth = () if self.payload is None else (self.payload.auth or ())
-        settings_auth: Sequence[SyncAuth | AsyncAuth | SyncOrAsyncAuth] = (
-            resolve_setting(Settings.auth)
-        )
+        settings_auth: Sequence[
+            SyncAuth | AsyncAuth | SyncOrAsyncAuth[Any, Any]
+        ] = resolve_setting(Settings.auth)
         # SyncOrAsyncAuth is settings-only — reject controller/endpoint usage:
         for candidate_auth in (
             *payload_auth,
@@ -702,7 +691,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             *payload_auth,
             *(self.controller_cls.auth or ()),
             *(
-                setting_auth.resolve(base_type)
+                setting_auth.resolve(is_async=base_type is AsyncAuth)
                 if isinstance(setting_auth, SyncOrAsyncAuth)
                 else setting_auth
                 for setting_auth in settings_auth
@@ -732,15 +721,15 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     def _build_throttling(  # noqa: WPS210, WPS231
         self,
     ) -> tuple[
-        tuple[SyncThrottle | AsyncThrottle, ...] | None,
-        tuple[SyncThrottle | AsyncThrottle, ...] | None,
+        list[SyncThrottle | AsyncThrottle] | None,
+        list[SyncThrottle | AsyncThrottle] | None,
         bool | None,
     ]:
         payload_throttling = (
             () if self.payload is None else (self.payload.throttling or ())
         )
         settings_throttling: Sequence[
-            SyncThrottle | AsyncThrottle | SyncOrAsyncThrottle
+            SyncThrottle | AsyncThrottle | SyncOrAsyncThrottle[Any, Any]
         ] = resolve_setting(Settings.throttling)
 
         # Validate that throttling matches the sync / async endpoints:
@@ -771,7 +760,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             *payload_throttling,
             *(self.controller_cls.throttling or ()),
             *(
-                setting_throttle.resolve(base_type)
+                setting_throttle.resolve(is_async=base_type is AsyncThrottle)
                 if isinstance(setting_throttle, SyncOrAsyncThrottle)
                 else setting_throttle
                 for setting_throttle in settings_throttling
@@ -799,19 +788,19 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             return (None, None, allow_cache)
         return (
             (
-                tuple(
+                [
                     throttling
                     for throttling in throttling
                     if throttling.cache_key.runs_before_auth
-                )
+                ]
                 or None
             ),
             (
-                tuple(
+                [
                     throttling
                     for throttling in throttling
                     if not throttling.cache_key.runs_before_auth
-                )
+                ]
                 or None
             ),
             allow_cache,
@@ -893,7 +882,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             return self.payload.ignore_from_spec
         return self.controller_cls.ignore_from_spec
 
-    def _build_tags(self, payload_tags: list[str] | None) -> list[str] | None:
+    def _build_tags(
+        self,
+        payload_tags: Sequence[str] | None,
+    ) -> list[str] | None:
         # Controller tags are prepended to the endpoint ones,
         # the same way router tags are prepended to these later on.
         tags = [
@@ -1085,7 +1077,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
         *,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> list[ResponseSpec]:
-        all_responses = self._limit_stream_responses([
+        all_responses = self._limit_streaming_responses([
             self._resolve_response_type(
                 response,
                 controller_cls=controller_cls,
@@ -1126,7 +1118,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
             )
         return response
 
-    def _limit_stream_responses(
+    def _limit_streaming_responses(
         self,
         responses: list[ResponseSpec],
     ) -> list[ResponseSpec]:

@@ -5,10 +5,10 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
+    Final,
     Literal,
     TypeAlias,
     TypeVar,
-    Union,
     final,
 )
 
@@ -29,14 +29,16 @@ from dmr.serializer import BaseEndpointOptimizer, BaseSerializer
 if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata
 
+#: Mode that we use for default serialization.
+_JSON_MODE: Final = 'json'
 
 # pydantic does not allow to import this,
 # so we have to duplicate this type.
 _IncEx: TypeAlias = (
     set[int]
     | set[str]
-    | Mapping[int, Union['_IncEx', bool]]
-    | Mapping[str, Union['_IncEx', bool]]
+    | Mapping[int, '_IncEx | bool']
+    | Mapping[str, '_IncEx | bool']
 )
 
 
@@ -146,7 +148,7 @@ class PydanticSerializer(BaseSerializer):
         """Customize how some objects are serialized into simple objects."""
         if isinstance(to_serialize, pydantic.BaseModel):
             return to_serialize.model_dump(
-                mode='json',
+                mode=_JSON_MODE,
                 **cls.to_json_kwargs,
             )
         # We support dataclasses here, because raw `JsonRenderer`
@@ -156,6 +158,8 @@ class PydanticSerializer(BaseSerializer):
                 type(to_serialize),  # type: ignore[arg-type]
             ).dump_python(
                 to_serialize,
+                mode=_JSON_MODE,
+                **cls.to_json_kwargs,
             )
         # This is a pydantic field inside a `TypedDict`, `@dataclass`, etc:
         if hasattr(to_serialize, '__get_pydantic_core_schema__'):
@@ -163,7 +167,7 @@ class PydanticSerializer(BaseSerializer):
                 type(to_serialize),  # type: ignore[arg-type]
             ).dump_python(
                 to_serialize,
-                mode='json',
+                mode=_JSON_MODE,
                 **cls.to_json_kwargs,
             )
         return super().serialize_hook(to_serialize)
@@ -252,7 +256,7 @@ class PydanticSerializer(BaseSerializer):
         """
         return _get_cached_type_adapter(Any).dump_python(
             structured,
-            mode='json',
+            mode=_JSON_MODE,
             **cls.to_json_kwargs,
         )
 
@@ -344,7 +348,7 @@ class PydanticFastSerializer(PydanticSerializer):
             # just like `JsonParser` treats it. Happens for `204` responses.
             # We do this here, because we don't want
             # a penalty for all positive cases.
-            if not buffer:
+            if buffer == b'':
                 return None
             raise DataParsingError(exc.errors()[0]['msg']) from exc
 

@@ -82,7 +82,9 @@ class OperationIdGenerator:
 
             # Split to preserve word boundaries
             parts = re.split(r'[-_.~]+', cleaned_token)
-            normalized_parts = [part.capitalize() for part in parts if part]
+            normalized_parts = [
+                part[0].upper() + part[1:] for part in parts if part
+            ]
 
             if normalized_parts:
                 normalized_tokens.append(''.join(normalized_parts))

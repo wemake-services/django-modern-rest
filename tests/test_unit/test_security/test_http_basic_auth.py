@@ -16,6 +16,11 @@ from dmr.serializer import BaseSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
+class _Controller(Controller[PydanticSerializer]):
+    def get(self) -> str:
+        raise NotImplementedError
+
+
 class _SyncAuth(HttpBasicSyncAuth):
     @override
     def authenticate(
@@ -53,26 +58,31 @@ def test_schema(
     typ: type[HttpBasicSyncAuth] | type[HttpBasicAsyncAuth],
 ) -> None:
     """Ensures that security scheme is correct for http basic auth."""
+    metadata = _Controller.api_endpoints['GET'].metadata
     instance = typ()
 
-    assert instance.security_schemes == snapshot({
+    assert instance.security_schemes(metadata, _Controller) == snapshot({
         'http_basic': SecurityScheme(
             type='http',
             description='Http Basic auth',
             scheme='basic',
         ),
     })
-    assert instance.security_requirement == snapshot({'http_basic': []})
+    assert instance.security_requirements(metadata, _Controller) == snapshot([
+        {'http_basic': []},
+    ])
 
 
 @pytest.mark.parametrize('typ', [HttpBasicSyncAuth, HttpBasicAsyncAuth])
 def test_custom_header_schema(
+    *,
     typ: type[HttpBasicSyncAuth] | type[HttpBasicAsyncAuth],
 ) -> None:
     """Ensures that custom basic auth is documented with the real header."""
+    metadata = _Controller.api_endpoints['GET'].metadata
     instance = typ(header='X-Api-Auth')
 
-    assert instance.security_schemes == snapshot({
+    assert instance.security_schemes(metadata, _Controller) == snapshot({
         'http_basic': SecurityScheme(
             type='apiKey',
             description=(
@@ -83,7 +93,9 @@ def test_custom_header_schema(
             security_scheme_in='header',
         ),
     })
-    assert instance.security_requirement == snapshot({'http_basic': []})
+    assert instance.security_requirements(metadata, _Controller) == snapshot([
+        {'http_basic': []},
+    ])
 
 
 _USERNAME: Final = 'user%40name'
@@ -216,15 +228,16 @@ async def test_async_percent_credentials(
     ],
 )
 def test_custom_auth_scheme_schema(
-    typ: type[HttpBasicSyncAuth] | type[HttpBasicAsyncAuth],
     *,
+    typ: type[HttpBasicSyncAuth] | type[HttpBasicAsyncAuth],
     auth_scheme: str,
     description: str,
 ) -> None:
     """Ensures that a non-standard scheme is documented with its real value."""
+    metadata = _Controller.api_endpoints['GET'].metadata
     instance = typ(auth_scheme=auth_scheme)
 
-    assert instance.security_schemes == {
+    assert instance.security_schemes(metadata, _Controller) == {
         'http_basic': SecurityScheme(
             type='apiKey',
             description=description,
@@ -232,7 +245,9 @@ def test_custom_auth_scheme_schema(
             security_scheme_in='header',
         ),
     }
-    assert instance.security_requirement == {'http_basic': []}
+    assert instance.security_requirements(metadata, _Controller) == snapshot([
+        {'http_basic': []},
+    ])
 
 
 # Default `Basic` scheme:

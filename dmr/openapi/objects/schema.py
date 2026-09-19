@@ -67,7 +67,7 @@ class Schema:
     min_properties: int | None = None
     required: list[str] = field(default_factory=list[str])
     dependent_required: dict[str, list[str]] | None = None
-    format: 'OpenAPIFormat | None' = None
+    format: 'OpenAPIFormat | str | None' = None
     content_encoding: str | None = None
     content_media_type: str | None = None
     content_schema: 'Reference | Schema | None' = None
@@ -82,10 +82,8 @@ class Schema:
     xml: 'XML | None' = None
     external_docs: 'ExternalDocumentation | None' = None
     example: Any | None = None
-    dynamic_anchor: Annotated['str | None', Field(alias='$dynamicAnchor')] = (
-        None
-    )
-    dynamic_ref: Annotated['str | None', Field(alias='$dynamicRef')] = None
+    dynamic_anchor: Annotated[str | None, Field(alias='$dynamicAnchor')] = None
+    dynamic_ref: Annotated[str | None, Field(alias='$dynamicRef')] = None
     ref: Annotated[str | None, Field(alias='$ref')] = None
     anchor: Annotated[str | None, Field(alias='$anchor')] = None
     comment: Annotated[str | None, Field(alias='$comment')] = None

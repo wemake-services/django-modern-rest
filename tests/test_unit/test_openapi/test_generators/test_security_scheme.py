@@ -6,6 +6,7 @@ from typing_extensions import override
 
 from dmr.controller import Controller
 from dmr.endpoint import Endpoint
+from dmr.metadata import EndpointMetadata
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.security_scheme import SecuritySchemeGenerator
@@ -21,20 +22,26 @@ class _NoSchemeAuth(SyncAuth):
     @override
     def __call__(
         self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
+        endpoint: Endpoint,
+        controller: Controller[BaseSerializer],
     ) -> Self | None:
         raise NotImplementedError
 
-    @property
     @override
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> dict[str, SecurityScheme | Reference]:
         return {}
 
-    @property
     @override
-    def security_requirement(self) -> SecurityRequirement:
-        return {'noScheme': []}
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> list[SecurityRequirement]:
+        return [{'noScheme': []}]
 
     @property
     @override
@@ -46,22 +53,28 @@ class _WithSchemeAuth(SyncAuth):
     @override
     def __call__(
         self,
-        endpoint: 'Endpoint',
-        controller: 'Controller[BaseSerializer]',
+        endpoint: Endpoint,
+        controller: Controller[BaseSerializer],
     ) -> Self | None:
         raise NotImplementedError
 
-    @property
     @override
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> dict[str, SecurityScheme | Reference]:
         return {
             'testScheme': SecurityScheme(type='http', scheme='bearer'),
         }
 
-    @property
     @override
-    def security_requirement(self) -> SecurityRequirement:
-        return {'testScheme': []}
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> list[SecurityRequirement]:
+        return [{'testScheme': []}]
 
     @property
     @override
@@ -80,8 +93,15 @@ def test_security_scheme_generator_no_schemes(
     openapi_context: OpenAPIContext,
 ) -> None:
     """Ensure that auth providers without schemes are handled."""
-    auth = _NoSchemeAuth()
-    requirements = generator([auth], PydanticSerializer)
+
+    class _Controller(Controller[PydanticSerializer]):
+        auth = (_NoSchemeAuth(),)
+
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _Controller.api_endpoints['GET'].metadata
+    requirements = generator(metadata, _Controller)
 
     assert requirements == [{'noScheme': []}]
     assert len(openapi_context.registries.security_scheme.schemes) == 0
@@ -92,10 +112,53 @@ def test_security_scheme_generator_with_schemes(
     openapi_context: OpenAPIContext,
 ) -> None:
     """Ensure that auth providers with schemes are handled."""
-    auth = _WithSchemeAuth()
-    requirements = generator([auth], PydanticSerializer)
+
+    class _Controller(Controller[PydanticSerializer]):
+        auth = (_WithSchemeAuth(),)
+
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _Controller.api_endpoints['GET'].metadata
+    requirements = generator(metadata, _Controller)
 
     assert requirements == [{'testScheme': []}]
     assert openapi_context.registries.security_scheme.schemes == snapshot({
         'testScheme': SecurityScheme(type='http', scheme='bearer'),
     })
+
+
+def test_no_auth_without_global_security(
+    generator: SecuritySchemeGenerator,
+) -> None:
+    """Without global `security`, no auth means no `security` key."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _Controller.api_endpoints['GET'].metadata
+
+    assert generator(metadata, _Controller) is None
+
+
+def test_no_auth_with_global_security() -> None:
+    """With global `security`, no auth must produce an explicit `[]`."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        auth = None
+
+        def get(self) -> str:
+            raise NotImplementedError
+
+    context = OpenAPIContext(
+        OpenAPIConfig(
+            title='Test API',
+            version='1.0.0',
+            security=[{'testScheme': []}],
+        ),
+    )
+    generator = context.generators.security_scheme
+    metadata = _Controller.api_endpoints['GET'].metadata
+
+    assert generator(metadata, _Controller) == []
