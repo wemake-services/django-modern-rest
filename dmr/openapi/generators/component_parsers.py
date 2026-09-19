@@ -54,7 +54,7 @@ _ConvertersMapping: TypeAlias = Mapping[type[Any], ConverterSchema]
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class ComponentParserGenerator:
+class ComponentParserGenerator:  # noqa: WPS214
     """Generator for OpenAPI ``Parameter`` objects."""
 
     _context: 'OpenAPIContext'
@@ -142,8 +142,6 @@ class ComponentParserGenerator:
             # We already have some `Path` component, so move on.
             return None
 
-        params_list: list[Parameter | Reference] = []
-
         # `path()` and `RoutePattern`:
         converter_params = self._parse_converters(
             operation_id,
@@ -151,8 +149,7 @@ class ComponentParserGenerator:
             serializer,
         )
         if converter_params is not None:
-            params_list.extend(converter_params)
-            return params_list
+            return converter_params
 
         # `re_path()` and `RegexPattern`:
         regex = pattern.pattern.regex
@@ -161,19 +158,17 @@ class ComponentParserGenerator:
             str,
         )
         if schema:
-            params_list.extend(
-                self._add_group_patterns(
-                    self._context.generators.parameter(
-                        TypedDict(f'{operation_id}_RePath', schema),  # type: ignore[operator]
-                        (),
-                        serializer,
-                        self._context,
-                        param_in='path',
-                    ),
-                    regex.pattern,
+            return self._add_group_patterns(
+                self._context.generators.parameter(
+                    TypedDict(f'{operation_id}_RePath', schema),  # type: ignore[operator]
+                    (),
+                    serializer,
+                    self._context,
+                    param_in='path',
                 ),
+                regex.pattern,
             )
-        return params_list or None
+        return None
 
     def _add_group_patterns(
         self,
@@ -213,7 +208,7 @@ class ComponentParserGenerator:
         }
         if not prepared:
             return None
-        return _add_converter_schemas(
+        return self._add_converter_schemas(
             self._context.generators.parameter(
                 TypedDict(  # type: ignore[operator]
                     f'{operation_id}_Path',
@@ -226,6 +221,28 @@ class ComponentParserGenerator:
             ),
             prepared,
         )
+
+    def _add_converter_schemas(
+        self,
+        params_list: list[Parameter | Reference],
+        prepared: Mapping[str, ConverterSchema],
+    ) -> list[Parameter | Reference]:
+        for param_spec in params_list:
+            # We've just built these parameters, one per converter:
+            assert isinstance(param_spec, Parameter)  # noqa: S101
+            if not isinstance(param_spec.schema, Schema):
+                # A custom converter can declare a model, and such a model
+                # is generated as a component reference. There is no inline
+                # schema to override, so we keep the reference as it is:
+                continue
+            converter_schema = prepared[param_spec.name]
+            param_spec.schema.pattern = (
+                converter_schema.pattern or param_spec.schema.pattern
+            )
+            param_spec.schema.description = (
+                converter_schema.description or param_spec.schema.description
+            )
+        return params_list
 
     def _merge_bodies(
         self,
@@ -298,25 +315,3 @@ def _converter_schema(
     if isinstance(provided, ConverterSchema):
         return provided
     return ConverterSchema(model=provided or str)
-
-
-def _add_converter_schemas(
-    params_list: list[Parameter | Reference],
-    prepared: Mapping[str, ConverterSchema],
-) -> list[Parameter | Reference]:
-    for param_spec in params_list:
-        # We've just built these parameters, one per converter:
-        assert isinstance(param_spec, Parameter)  # noqa: S101
-        if not isinstance(param_spec.schema, Schema):
-            # A custom converter can declare a model, and such a model
-            # is generated as a component reference. There is no inline
-            # schema to override, so we keep the reference as it is:
-            continue
-        converter_schema = prepared[param_spec.name]
-        param_spec.schema.pattern = (
-            converter_schema.pattern or param_spec.schema.pattern
-        )
-        param_spec.schema.description = (
-            converter_schema.description or param_spec.schema.description
-        )
-    return params_list

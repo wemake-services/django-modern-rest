@@ -469,6 +469,9 @@ OpenAPI Generators
 .. autoclass:: dmr.openapi.generators.ComponentParserGenerator
    :members:
 
+.. autoclass:: dmr.openapi.generators.component_parsers.ConverterSchema
+   :members:
+
 .. autoclass:: dmr.openapi.generators.ResponseGenerator
    :members:
 

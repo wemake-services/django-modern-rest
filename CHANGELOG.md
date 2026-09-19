@@ -209,9 +209,6 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `slug` and `path` url converters now describe themselves in the schema:
   `slug` adds the `pattern` of its own regex,
   `path` adds a `description` about slashes, #1441
-- Added public `ConverterSchema` at `dmr.openapi` to describe
-  custom url converters: it accepts a `model` and optional `pattern`
-  and `description` that override the generated values, #1441
 
 ### Bugfixes
 

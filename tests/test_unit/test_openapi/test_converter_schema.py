@@ -6,7 +6,8 @@ from django.urls import path, register_converter
 from inline_snapshot import snapshot
 
 from dmr import Controller
-from dmr.openapi import ConverterSchema, build_schema
+from dmr.openapi import build_schema
+from dmr.openapi.generators.component_parsers import ConverterSchema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 
@@ -108,25 +109,6 @@ def test_converter_schema_invalid() -> None:
         ).convert()
 
 
-class _LowercaseConverter:
-    """Custom converter that provides a fully prepared schema."""
-
-    regex = '[a-z]+'
-    __dmr_converter_schema__ = ConverterSchema(
-        model=str,
-        pattern='^(?:[a-z]+)$',
-        description='Lowercase letters only',
-    )
-
-    def to_python(self, value: str) -> str:  # noqa: WPS110
-        """Parse the captured path segment."""
-        raise NotImplementedError
-
-    def to_url(self, value: str) -> str:  # noqa: WPS110
-        """Render the value back into a URL segment."""
-        raise NotImplementedError
-
-
 def test_builtin_converter_schemas() -> None:
     """Ensure built-in converters document their own constraints."""
     schema = build_schema(
@@ -168,6 +150,25 @@ def test_builtin_converter_schemas() -> None:
             'required': True,
         },
     ])
+
+
+class _LowercaseConverter:
+    """Custom converter that provides a fully prepared schema."""
+
+    regex = '[a-z]+'
+    __dmr_converter_schema__ = ConverterSchema(
+        model=str,
+        pattern=rf'^(?:{regex})$',
+        description='Lowercase letters only',
+    )
+
+    def to_python(self, raw_value: str) -> str:
+        """Parse the captured path segment."""
+        raise NotImplementedError
+
+    def to_url(self, raw_value: str) -> str:
+        """Render the value back into a URL segment."""
+        raise NotImplementedError
 
 
 def test_custom_converter_prepared_schema() -> None:
