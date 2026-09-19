@@ -348,7 +348,7 @@ class PydanticFastSerializer(PydanticSerializer):
             # just like `JsonParser` treats it. Happens for `204` responses.
             # We do this here, because we don't want
             # a penalty for all positive cases.
-            if not buffer:
+            if buffer == b'':
                 return None
             raise DataParsingError(exc.errors()[0]['msg']) from exc
 

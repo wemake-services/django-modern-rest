@@ -4,6 +4,7 @@ from typing import final
 
 import pydantic
 import pytest
+from django.conf import LazySettings
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import override
@@ -12,6 +13,7 @@ from dmr import Controller, ResponseSpec, modify, validate
 from dmr.endpoint import Endpoint
 from dmr.errors import wrap_handler
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.settings import Settings
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
 
@@ -185,6 +187,63 @@ def test_modify_complex_handler(
     assert json.loads(response.content) == expected
 
 
+class _ModifySyncCustomHandler(Controller[PydanticSerializer]):
+    responses = (ResponseSpec(str, status_code=HTTPStatus.PAYMENT_REQUIRED),)
+
+    def endpoint_error(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
+        exc: Exception,
+    ) -> HttpResponse:
+        assert self is controller
+        raise RuntimeError('Runtime') from None
+
+    @modify(
+        status_code=HTTPStatus.OK,
+        error_handler=wrap_handler(endpoint_error),
+    )
+    def get(self) -> int:
+        raise ValueError
+
+    @override
+    def handle_error(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
+        exc: Exception,
+    ) -> HttpResponse:
+        assert self is controller
+        raise ZeroDivisionError('Zero') from None
+
+
+def test_modify_sync_changing_error(
+    dmr_rf: DMRRequestFactory,
+    settings: LazySettings,
+) -> None:
+    """Ensure that you can change the error type in each layer."""
+
+    def global_handler(
+        endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
+        exc: Exception,
+    ) -> HttpResponse:
+        return controller.to_error(
+            str(exc),
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+        )
+
+    settings.DMR_SETTINGS = {Settings.global_error_handler: global_handler}
+    request = dmr_rf.get('/whatever/')
+
+    response = _ModifySyncCustomHandler.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.PAYMENT_REQUIRED
+    assert response.headers['Content-Type'] == 'application/json'
+    assert json.loads(response.content) == snapshot('Zero')
+
+
 def test_modify_global_handler(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that error handling is layered."""
     request = dmr_rf.put('/whatever/', data=None)
@@ -272,6 +331,66 @@ async def test_modify_async_complex_handler(
     assert response.status_code == HTTPStatus.PAYMENT_REQUIRED
     assert response.headers['Content-Type'] == 'application/json'
     assert json.loads(response.content) == expected
+
+
+class _ModifyAsyncCustomHandler(Controller[PydanticSerializer]):
+    responses = (ResponseSpec(str, status_code=HTTPStatus.PAYMENT_REQUIRED),)
+
+    async def endpoint_error(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
+        exc: Exception,
+    ) -> HttpResponse:
+        assert self is controller
+        raise RuntimeError('Runtime') from None
+
+    @modify(
+        status_code=HTTPStatus.OK,
+        error_handler=wrap_handler(endpoint_error),
+    )
+    async def get(self) -> int:
+        raise ValueError
+
+    @override
+    async def handle_async_error(
+        self,
+        endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
+        exc: Exception,
+    ) -> HttpResponse:
+        assert self is controller
+        raise ZeroDivisionError('Zero') from None
+
+
+@pytest.mark.asyncio
+async def test_modify_async_changing_error(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    settings: LazySettings,
+) -> None:
+    """Ensure that you can change the error type in each layer."""
+
+    def global_handler(
+        endpoint: Endpoint,
+        controller: Controller[PydanticSerializer],
+        exc: Exception,
+    ) -> HttpResponse:
+        return controller.to_error(
+            str(exc),
+            status_code=HTTPStatus.PAYMENT_REQUIRED,
+        )
+
+    settings.DMR_SETTINGS = {Settings.global_error_handler: global_handler}
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(
+        _ModifyAsyncCustomHandler.as_view()(request),
+    )
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.PAYMENT_REQUIRED
+    assert response.headers['Content-Type'] == 'application/json'
+    assert json.loads(response.content) == snapshot('Zero')
 
 
 @pytest.mark.asyncio

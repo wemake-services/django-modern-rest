@@ -19,16 +19,16 @@ Here's how it works:
    definition via :func:`~dmr.endpoint.modify`
    or :func:`~dmr.endpoint.validate`
 2. If it returns :class:`django.http.HttpResponse`, return it to the user
-3. If it raises, call
+3. If it raises an error, call
    :meth:`~dmr.controller.Controller.handle_error` for sync
    controllers
    and :meth:`~dmr.controller.Controller.handle_async_error`
-   for async controllers
+   for async controllers with this raised error
 4. If controller's handler returns :class:`~django.http.HttpResponse`,
    return it to the user
-5. If it raises, call configured global error handler, by default
-   it is :func:`~dmr.errors.global_error_handler`
-   (it is always sync)
+5. If it raises an error, call configured global error handler
+   with this raised error, by default
+   it is :func:`~dmr.errors.global_error_handler` (it is always sync)
 
 .. warning::
 
@@ -51,6 +51,17 @@ Here's how it works:
 
   You don't need to catch ``APIError`` in any way,
   unless you know what you are doing.
+
+You can change the error instance that is handled during
+the error handling pipeline. For example:
+
+- :exc:`ValueError` happens originally
+- It is handeled in a custom endpoint-level handler,
+  which raises :exc:`RuntimeError` instead
+- Custom controller-level handler catches it and raises
+  :exc:`~dmr.exceptions.ValidationError` instead
+- It is handled by the default :func:`~dmr.errors.global_error_handler`
+  and returns an expected response
 
 
 Customizing endpoint error handler
@@ -145,6 +156,7 @@ The same error handling logic can be represented as a diagram:
 
   If :ref:`handler500` is configured, it will catch all unhandled errors
   in the provided scope and return ``500`` errors with the correct payload.
+
 
 .. _error-responses-validation:
 
