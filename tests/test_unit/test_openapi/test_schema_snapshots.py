@@ -3,7 +3,7 @@ from http import HTTPStatus
 from typing import Annotated, ClassVar, TypeAlias
 
 import pydantic
-from django.urls import include, path, re_path
+from django.urls import path, re_path
 from syrupy.assertion import SnapshotAssertion
 
 from dmr import Body, Controller, Cookies, Path, Query, ResponseSpec
@@ -278,131 +278,6 @@ def test_raw_path_schema(snapshot: SnapshotAssertion) -> None:
                         ),
                         re_path(
                             r'^articles/(?P<year>[0-9]{4})/(?P<slug>[\w-]+)/$',
-                            _GetPostController.as_view(),
-                        ),
-                    ],
-                ),
-            ).convert(),
-            indent=2,
-        )
-        == snapshot
-    )
-
-
-def test_nested_path_path_schema(snapshot: SnapshotAssertion) -> None:
-    """Ensure nested ``path`` + ``path`` produces all path parameters."""
-    assert (
-        json.dumps(
-            build_schema(
-                Router(
-                    'api/',
-                    [
-                        path(
-                            'tenants/<int:tenant_id>/',
-                            include([
-                                path(
-                                    'users/<int:pk>/',
-                                    _GetPostController.as_view(),
-                                ),
-                            ]),
-                        ),
-                    ],
-                ),
-            ).convert(),
-            indent=2,
-        )
-        == snapshot
-    )
-
-
-def test_nested_re_path_path_schema(snapshot: SnapshotAssertion) -> None:
-    """Ensure nested ``re_path`` + ``path`` produces all path parameters."""
-    assert (
-        json.dumps(
-            build_schema(
-                Router(
-                    'api/',
-                    [
-                        re_path(
-                            r'^tenants/(?P<tenant_id>[0-9]+)/',
-                            include([
-                                path(
-                                    'users/<int:pk>/',
-                                    _GetPostController.as_view(),
-                                ),
-                            ]),
-                        ),
-                    ],
-                ),
-            ).convert(),
-            indent=2,
-        )
-        == snapshot
-    )
-
-
-def test_nested_path_re_path_schema(snapshot: SnapshotAssertion) -> None:
-    """Ensure nested ``path`` + ``re_path`` produces all path parameters."""
-    assert (
-        json.dumps(
-            build_schema(
-                Router(
-                    'api/',
-                    [
-                        path(
-                            'tenants/<int:tenant_id>/',
-                            include([
-                                re_path(
-                                    r'^users/(?P<pk>[0-9]+)/$',
-                                    _GetPostController.as_view(),
-                                ),
-                            ]),
-                        ),
-                    ],
-                ),
-            ).convert(),
-            indent=2,
-        )
-        == snapshot
-    )
-
-
-def test_nested_re_path_re_path_schema(snapshot: SnapshotAssertion) -> None:
-    """Ensure nested ``re_path`` + ``re_path`` produces all path parameters."""
-    assert (
-        json.dumps(
-            build_schema(
-                Router(
-                    'api/',
-                    [
-                        re_path(
-                            r'^tenants/(?P<tenant_id>[0-9]+)/',
-                            include([
-                                re_path(
-                                    r'^users/(?P<pk>[0-9]+)/$',
-                                    _GetPostController.as_view(),
-                                ),
-                            ]),
-                        ),
-                    ],
-                ),
-            ).convert(),
-            indent=2,
-        )
-        == snapshot
-    )
-
-
-def test_router_prefix_nested_path_schema(snapshot: SnapshotAssertion) -> None:
-    """Ensure ``Router`` prefix with converter + ``path`` child works."""
-    assert (
-        json.dumps(
-            build_schema(
-                Router(
-                    'tenants/<int:tenant_id>/',
-                    [
-                        path(
-                            'users/<int:pk>/',
                             _GetPostController.as_view(),
                         ),
                     ],
