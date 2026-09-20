@@ -13,13 +13,14 @@ from dmr.internal.cache import clear_settings_cache as clear_settings_cache
 from dmr.openapi.config import OpenAPIConfig
 
 if TYPE_CHECKING:
-    from dmr.metadata import ResponseSpec
+    from dmr.metadata import ResponseSpec, ResponseSpecProvider
     from dmr.openapi import OpenAPIConfig
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
-    from dmr.security import AsyncAuth, SyncAuth
+    from dmr.security import AsyncAuth, SyncAuth, SyncOrAsyncAuth
+    from dmr.semantic_schema import AuthProvider
     from dmr.serializer import BaseSerializer
-    from dmr.throttling import AsyncThrottle, SyncThrottle
+    from dmr.throttling import AsyncThrottle, SyncOrAsyncThrottle, SyncThrottle
 
 try:
     import msgspec  # noqa: F401  # pyright: ignore[reportUnusedImport]
@@ -66,6 +67,7 @@ class Settings(enum.StrEnum):
     exclude_validate_responses = 'exclude_validate_responses'
     semantic_responses = 'semantic_responses'
     exclude_semantic_responses = 'exclude_semantic_responses'
+    semantic_schema_providers = 'semantic_schema_providers'
     validate_events = 'validate_events'
     responses = 'responses'
     global_error_handler = 'global_error_handler'
@@ -121,14 +123,21 @@ class SettingsDict(TypedDict, total=False):
     parsers: Sequence['Parser']
     renderers: Sequence['Renderer']
     validate_negotiation: bool | None
-    auth: Sequence['AsyncAuth | SyncAuth']
-    throttling: Sequence['AsyncThrottle | SyncThrottle']
+    auth: (
+        Sequence['AsyncAuth | SyncOrAsyncAuth[Any, Any]']
+        | Sequence['SyncAuth | SyncOrAsyncAuth[Any, Any]']
+    )
+    throttling: (
+        Sequence['AsyncThrottle | SyncOrAsyncThrottle[Any, Any]']
+        | Sequence['SyncThrottle | SyncOrAsyncThrottle[Any, Any]']
+    )
     throttling_allow_unsafe_cache: bool | None
     no_validate_http_spec: Set[HttpSpec]
     validate_responses: bool
     exclude_validate_responses: Set[HTTPStatus]
     semantic_responses: bool
     exclude_semantic_responses: Set[HTTPStatus]
+    semantic_schema_providers: Sequence['ResponseSpecProvider | AuthProvider']
     validate_events: bool | None
     responses: Sequence['ResponseSpec']
     global_error_handler: Callable[[Any, Any, Any], Any] | str
@@ -171,6 +180,16 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.exclude_validate_responses: frozenset(),
     Settings.semantic_responses: True,
     Settings.exclude_semantic_responses: frozenset(),
+    Settings.semantic_schema_providers: [  # Fooling `importlinter`:
+        # Optional response validation:
+        module_loading.import_string(
+            'dmr.semantic_schema.ResponseValidationSpecProvider',
+        )(),
+        # CSRF:
+        module_loading.import_string(
+            'dmr.security.csrf.CSRFSemanticSchemaProvider',
+        )(),
+    ],
     # Defaults to the `validate_responses` setting if `None`:
     Settings.validate_events: None,
     Settings.responses: [],  # global responses, for response validation

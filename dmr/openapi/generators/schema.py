@@ -1,5 +1,5 @@
 import dataclasses
-from typing import TYPE_CHECKING, Any, Literal, get_args, get_origin, overload
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi.mappers.example import (
@@ -57,27 +57,32 @@ class SchemaGenerator:
 
         Here's the algorithm we use:
 
-        1. First, we try to find manually defined overrides for the annotation
-        2. If nothing is found, we try to find any existing schema references
-        3. Next, we try to get a model schema from a serializer.
+        1. First, we try to find any existing schema references from cache
+        2. Next, we try to get a model schema from a serializer.
            If it exists, we create an internal reference and return it.
            The next time it will be returned as a reference, cached.
-        4. If nothing worked, we raise an error
+        3. If nothing worked, we raise an error
+
+        Args:
+            annotation: Type annotation to generate the schema for.
+            serializer: Serializer that knows how to build
+                a raw JSON schema from the annotation.
+            used_for_response: Whether this schema describes a response,
+                since some serializers generate different
+                schemas for inputs and outputs.
+            skip_registration: Do not register the resulting schema
+                in the registry, return an inlined ``Schema``
+                instead of a ``Reference``.
+            register_referenced_components: Still register
+                the nested components the schema refers to,
+                even when ``skip_registration`` is set.
+                Only makes sense together with ``skip_registration``.
 
         Raises:
             UnsolvableAnnotationsError: when we can't generate
                 an OpenAPI schema from an existing annotation.
 
         """
-        explicit_override = self._resolve_schema_override(
-            annotation,
-            serializer,
-            used_for_response=used_for_response,
-            skip_registration=skip_registration,
-        )
-        if explicit_override:
-            return explicit_override
-
         existing_reference = self._context.registries.schema.get_reference(
             (
                 serializer.schema_generator.schema_name(annotation)
@@ -107,82 +112,7 @@ class SchemaGenerator:
             register_referenced_components=register_referenced_components,
         )
 
-    def _resolve_schema_override(
-        self,
-        annotation: Any,
-        serializer: type['BaseSerializer'],
-        *,
-        used_for_response: bool = False,
-        skip_registration: bool = False,
-    ) -> Reference | Schema | None:
-        origin = get_origin(annotation) or annotation
-        type_args = get_args(annotation)
-
-        registry = self._context.registries.schema
-        schema = registry.overrides.get(origin)
-        if callable(schema):
-            return schema(
-                annotation,
-                origin,
-                type_args,
-                used_for_response=used_for_response,
-                skip_registration=skip_registration,
-            )
-        if schema is not None:
-            return schema
-        return None
-
     def _maybe_generate_reference(
-        self,
-        annotation: Any,
-        schema: dict[str, Any],
-        components: dict[str, Any],
-        serializer: type['BaseSerializer'],
-        *,
-        skip_registration: bool = False,
-        register_referenced_components: bool = False,
-    ) -> Reference | Schema:
-        if not skip_registration:
-            for component_name, component in components.items():
-                self._context.registries.schema.register(
-                    schema_name=component_name,
-                    schema=load_schema(component),
-                )
-
-        reference = schema.get('$ref')
-        if reference:
-            reference_obj = Reference(
-                ref=reference,
-                summary=schema.get('summary'),
-                description=schema.get('description'),
-            )
-            if skip_registration:
-                return self._resolve_skipped_reference(
-                    reference_obj,
-                    components,
-                    register_referenced_components=(
-                        register_referenced_components
-                    ),
-                )
-            # If we got a reference from the start,
-            # it might still miss the examples:
-            registry = self._context.registries.schema
-            self._maybe_generate_example(
-                registry.maybe_resolve_reference(reference_obj),
-                annotation,
-                serializer,
-            )
-            return reference_obj
-        return self._resolve_generated_schema(
-            annotation,
-            schema,
-            components,
-            serializer,
-            skip_registration=skip_registration,
-            register_referenced_components=register_referenced_components,
-        )
-
-    def _resolve_generated_schema(
         self,
         annotation: Any,
         schema: dict[str, Any],
@@ -192,14 +122,31 @@ class SchemaGenerator:
         skip_registration: bool,
         register_referenced_components: bool,
     ) -> Reference | Schema:
-        if skip_registration and register_referenced_components:
-            for component_name, component in components.items():
-                self._context.registries.schema.register(
-                    schema_name=component_name,
-                    schema=load_schema(component),
-                )
+        reference = schema.get('$ref')  # FIXME: this can be a schema with $ref
+        loaded_components = {
+            component_name: load_schema(component)
+            for component_name, component in components.items()
+        }
+        self._register_components(
+            loaded_components,
+            reference,
+            skip_registration=skip_registration,
+            register_referenced_components=register_referenced_components,
+        )
 
-        # Register the final schema:
+        if reference:
+            return self._resolve_reference(
+                annotation,
+                Reference(
+                    ref=reference,
+                    summary=schema.get('summary'),
+                    description=schema.get('description'),
+                ),
+                loaded_components,
+                serializer,
+                skip_registration=skip_registration,
+            )
+
         schema_obj = load_schema(schema)
         self._maybe_generate_example(schema_obj, annotation, serializer)
         if not skip_registration and schema_obj.title:
@@ -209,6 +156,61 @@ class SchemaGenerator:
                 annotation=annotation,
             )
         return schema_obj
+
+    def _register_components(
+        self,
+        components: dict[str, Schema],
+        reference: str | None,
+        *,
+        skip_registration: bool,
+        register_referenced_components: bool,
+    ) -> None:
+        """
+        Register nested components of a schema.
+
+        Components are registered when the schema itself is registered,
+        or when explicitly asked for with ``register_referenced_components``.
+
+        When the schema is a reference and its registration is skipped,
+        the referenced component is inlined instead of being registered,
+        while all other nested components are still registered.
+        """
+        if skip_registration and not register_referenced_components:
+            return
+
+        registry = self._context.registries.schema
+        inlined_component = (
+            reference.removeprefix(registry.schema_prefix)
+            if skip_registration and reference
+            else None
+        )
+        for component_name, component in components.items():
+            if component_name != inlined_component:
+                registry.register(component_name, component)
+
+    def _resolve_reference(
+        self,
+        annotation: Any,
+        reference: Reference,
+        components: dict[str, Schema],
+        serializer: type['BaseSerializer'],
+        *,
+        skip_registration: bool,
+    ) -> Reference | Schema:
+        registry = self._context.registries.schema
+        if skip_registration:
+            return registry.maybe_resolve_reference(
+                reference,
+                resolution_context=components,
+            )
+        # If we got a reference from the start,
+        # it might still miss the examples:
+        self._maybe_generate_example(
+            registry.maybe_resolve_reference(reference),
+            annotation,
+            serializer,
+        )
+        return reference
 
     def _maybe_generate_example(
         self,
@@ -221,45 +223,3 @@ class SchemaGenerator:
                 schema,
                 generate_example(annotation, serializer),
             )
-
-    def _resolve_skipped_reference(
-        self,
-        reference: Reference,
-        components: dict[str, Any],
-        *,
-        register_referenced_components: bool,
-    ) -> Schema:
-        resolution_context = _build_resolution_context(components)
-        if register_referenced_components:
-            self._register_nested_components(
-                reference,
-                resolution_context,
-            )
-        return self._context.registries.schema.maybe_resolve_reference(
-            reference,
-            resolution_context=resolution_context,
-        )
-
-    def _register_nested_components(
-        self,
-        reference: Reference,
-        components: dict[str, Schema],
-    ) -> None:
-        skipped_component = reference.ref.removeprefix(
-            self._context.registries.schema.schema_prefix,
-        )
-        for component_name, component in components.items():
-            if component_name != skipped_component:
-                self._context.registries.schema.register(
-                    component_name,
-                    component,
-                )
-
-
-def _build_resolution_context(
-    components: dict[str, Any],
-) -> dict[str, Schema]:
-    return {
-        component_name: load_schema(component)
-        for component_name, component in components.items()
-    }

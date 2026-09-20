@@ -8,83 +8,6 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/v1/default": {
-        "get": {
-          "operationId": "getDefaultControllerApiV1Default",
-          "responses": {
-            "200": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "429": {
-              "description": "Raised when throttling rate was hit",
-              "headers": {
-                "X-RateLimit-Limit": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "The maximum number of requests permitted in the current time window",
-                  "required": true
-                },
-                "X-RateLimit-Remaining": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "The number of requests remaining in the current time window",
-                  "required": true
-                },
-                "X-RateLimit-Reset": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "The number of seconds until the current rate limit window resets",
-                  "required": true
-                },
-                "Retry-After": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "Indicates how long the user agent should wait before making a follow-up request",
-                  "required": true
-                }
-              },
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
       "/api/v1/all": {
         "get": {
           "operationId": "getAllHeadersControllerApiV1All",
@@ -99,8 +22,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -109,8 +32,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -122,6 +45,27 @@
             "429": {
               "description": "Raised when throttling rate was hit",
               "headers": {
+                "RateLimit": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "Current rate limiting state",
+                  "required": true
+                },
+                "RateLimit-Policy": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "Description of all rate limiting policies for this endpoint",
+                  "required": true
+                },
+                "Retry-After": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "Indicates how long the user agent should wait before making a follow-up request",
+                  "required": true
+                },
                 "X-RateLimit-Limit": {
                   "schema": {
                     "type": "string"
@@ -142,26 +86,82 @@
                   },
                   "description": "The number of seconds until the current rate limit window resets",
                   "required": true
-                },
-                "RateLimit-Policy": {
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/default": {
+        "get": {
+          "operationId": "getDefaultControllerApiV1Default",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
                   "schema": {
                     "type": "string"
-                  },
-                  "description": "Description of all rate limiting policies for this endpoint",
-                  "required": true
-                },
-                "RateLimit": {
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
                   "schema": {
-                    "type": "string"
-                  },
-                  "description": "Current rate limiting state",
-                  "required": true
-                },
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "429": {
+              "description": "Raised when throttling rate was hit",
+              "headers": {
                 "Retry-After": {
                   "schema": {
                     "type": "string"
                   },
                   "description": "Indicates how long the user agent should wait before making a follow-up request",
+                  "required": true
+                },
+                "X-RateLimit-Limit": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "The maximum number of requests permitted in the current time window",
+                  "required": true
+                },
+                "X-RateLimit-Remaining": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "The number of requests remaining in the current time window",
+                  "required": true
+                },
+                "X-RateLimit-Reset": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "The number of seconds until the current rate limit window resets",
                   "required": true
                 }
               },
@@ -190,8 +190,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -200,8 +200,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -275,8 +275,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -297,18 +296,18 @@
             "200": {
               "description": "OK",
               "headers": {
-                "RateLimit-Policy": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "Description of all rate limiting policies for this endpoint",
-                  "required": true
-                },
                 "RateLimit": {
                   "schema": {
                     "type": "string"
                   },
                   "description": "Current rate limiting state",
+                  "required": true
+                },
+                "RateLimit-Policy": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "Description of all rate limiting policies for this endpoint",
                   "required": true
                 }
               },
@@ -320,21 +319,21 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "headers": {
-                "RateLimit-Policy": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "Description of all rate limiting policies for this endpoint",
-                  "required": true
-                },
                 "RateLimit": {
                   "schema": {
                     "type": "string"
                   },
                   "description": "Current rate limiting state",
+                  "required": true
+                },
+                "RateLimit-Policy": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "Description of all rate limiting policies for this endpoint",
                   "required": true
                 }
               },
@@ -346,21 +345,21 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "headers": {
-                "RateLimit-Policy": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "Description of all rate limiting policies for this endpoint",
-                  "required": true
-                },
                 "RateLimit": {
                   "schema": {
                     "type": "string"
                   },
                   "description": "Current rate limiting state",
+                  "required": true
+                },
+                "RateLimit-Policy": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "Description of all rate limiting policies for this endpoint",
                   "required": true
                 }
               },
@@ -375,18 +374,18 @@
             "429": {
               "description": "Raised when throttling rate was hit",
               "headers": {
-                "RateLimit-Policy": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "Description of all rate limiting policies for this endpoint",
-                  "required": true
-                },
                 "RateLimit": {
                   "schema": {
                     "type": "string"
                   },
                   "description": "Current rate limiting state",
+                  "required": true
+                },
+                "RateLimit-Policy": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "Description of all rate limiting policies for this endpoint",
                   "required": true
                 }
               },
@@ -453,8 +452,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -482,8 +480,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -492,8 +490,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -557,8 +555,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

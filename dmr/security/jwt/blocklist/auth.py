@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, Final, Protocol
 
+from django.views.decorators.debug import sensitive_variables
+
 from dmr.exceptions import NotAuthenticatedError
 from dmr.security.jwt.token import JWToken
 from dmr.types import EMPTY
@@ -109,6 +111,7 @@ class _BaseBlocklistMixin:  # noqa: WPS338
 class JWTokenBlocklistSyncMixin(_BaseBlocklistMixin):
     """Sync mixin for working with tokens blocklist."""
 
+    @sensitive_variables()
     def check_auth(
         self: _JWTSyncAuth,
         user: 'AbstractBaseUser',
@@ -120,6 +123,7 @@ class JWTokenBlocklistSyncMixin(_BaseBlocklistMixin):
         if self.blocklist_model().objects.filter(jti=jti).exists():
             raise NotAuthenticatedError
 
+    @sensitive_variables()
     def blocklist(
         self: _JWTSyncAuth,
         token: JWToken,
@@ -137,6 +141,7 @@ class JWTokenBlocklistSyncMixin(_BaseBlocklistMixin):
 class JWTokenBlocklistAsyncMixin(_BaseBlocklistMixin):
     """Async mixin for working with tokens blocklist."""
 
+    @sensitive_variables()
     async def check_auth(
         self: _JWTAsyncAuth,
         user: 'AbstractBaseUser',
@@ -148,6 +153,7 @@ class JWTokenBlocklistAsyncMixin(_BaseBlocklistMixin):
         if await self.blocklist_model().objects.filter(jti=jti).aexists():
             raise NotAuthenticatedError
 
+    @sensitive_variables()
     async def blocklist(
         self: _JWTAsyncAuth,
         token: JWToken,

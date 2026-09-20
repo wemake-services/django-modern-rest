@@ -53,8 +53,17 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "401": {
+              "description": "Raised when auth was not successful",
+              "headers": {
+                "WWW-Authenticate": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "Challenges that the client can use to authenticate this request",
+                  "required": true
+                }
+              },
               "content": {
                 "application/json": {
                   "schema": {
@@ -73,17 +82,8 @@
                 }
               }
             },
-            "401": {
-              "description": "Raised when auth was not successful",
-              "headers": {
-                "WWW-Authenticate": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "Challenges that the client can use to authenticate this request",
-                  "required": true
-                }
-              },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -204,8 +204,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -214,8 +214,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -302,8 +302,7 @@
           ],
           "title": "_DynamicRefsModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -331,8 +330,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -341,8 +340,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -480,8 +479,7 @@
           ],
           "title": "_Status"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -555,8 +553,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -565,8 +563,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -626,8 +624,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -675,8 +672,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -685,8 +682,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -788,8 +785,7 @@
           "type": "object",
           "title": "_UserCreateModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -841,8 +837,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -851,8 +847,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -935,8 +931,7 @@
           ],
           "title": "_UserModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

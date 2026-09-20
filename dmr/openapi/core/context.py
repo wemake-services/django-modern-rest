@@ -1,10 +1,9 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, ClassVar, get_origin
+from typing import TYPE_CHECKING, ClassVar
 
 from dmr.openapi.core.merger import ConfigMerger
 from dmr.openapi.core.registry import (
     OperationIdRegistry,
-    SchemaCallback,
     SchemaRegistry,
     SecuritySchemeRegistry,
 )
@@ -17,7 +16,7 @@ from dmr.openapi.generators import (
     SecuritySchemeGenerator,
 )
 from dmr.openapi.mappers.example import seed_example_factory
-from dmr.openapi.objects import Components, Reference, Schema
+from dmr.openapi.objects import Components
 
 if TYPE_CHECKING:
     from dmr.openapi.config import OpenAPIConfig
@@ -59,6 +58,8 @@ class OpenAPIContext:
 
     .. versionchanged:: 0.16.0
         Added the :meth:`seed_examples` hook.
+        Now all used classes can be customized
+        via subclassing and overriding class-level variables.
 
     """
 
@@ -89,6 +90,16 @@ class OpenAPIContext:
     )
     #: Generates parameters from models.
     parameter_cls: ClassVar[type[ParameterGenerator]] = ParameterGenerator
+    #: Operation ID registry.
+    operation_id_registry_cls: ClassVar[type[OperationIdRegistry]] = (
+        OperationIdRegistry
+    )
+    #: Schema registry.
+    schema_registry_cls: ClassVar[type[SchemaRegistry]] = SchemaRegistry
+    #: Security schemes registry.
+    security_scheme_registry_cls: ClassVar[type[SecuritySchemeRegistry]] = (
+        SecuritySchemeRegistry
+    )
 
     def __init__(
         self,
@@ -102,9 +113,9 @@ class OpenAPIContext:
 
         # Initialize registries:
         self.registries = RegistryContainer(
-            operation_id=OperationIdRegistry(),
-            schema=SchemaRegistry(),
-            security_scheme=SecuritySchemeRegistry(),
+            operation_id=self.operation_id_registry_cls(),
+            schema=self.schema_registry_cls(),
+            security_scheme=self.security_scheme_registry_cls(),
         )
 
         # Initialize generators:
@@ -144,34 +155,6 @@ class OpenAPIContext:
         """
         return Components(
             # TODO: support other components, not just `schema`:
-            schemas=self.registries.schema.schemas,
-            security_schemes=self.registries.security_scheme.schemes,
+            schemas=self.registries.schema.schemas or None,
+            security_schemes=self.registries.security_scheme.schemes or None,
         )
-
-    def register_schema(
-        self,
-        annotation: Any,
-        schema: Reference | Schema | SchemaCallback,
-        *,
-        override: bool = False,
-    ) -> None:
-        """
-        Register top-level annotation resolution into an OpenAPI schema.
-
-        You can pass either a schema object itself, a reference, or a callback
-        that returns schema, reference, or ``None`` to fallback
-        to the default schema resolution process.
-
-        .. warning::
-
-            This only works for the top-level annotations with direct matches.
-            For example: when you register ``User`` to have a specific schema,
-            it will take effect only in cases where ``User`` is used directly.
-            ``list[User]`` will use the default serializer
-            schema resolution strategy.
-
-        """
-        real_type = get_origin(annotation) or annotation
-        if not override and real_type in self.registries.schema.overrides:
-            raise ValueError(f'{real_type} is already registered')
-        self.registries.schema.overrides[real_type] = schema

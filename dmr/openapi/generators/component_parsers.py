@@ -1,7 +1,7 @@
 import dataclasses
 import uuid
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, final
 
 from django.urls import URLPattern, converters
 from typing_extensions import TypedDict
@@ -24,21 +24,51 @@ if TYPE_CHECKING:
 
 _RequestBody: TypeAlias = RequestBody | Reference | None
 _RequestParameters: TypeAlias = list[Parameter | Reference] | None
-_ConvertersMapping: TypeAlias = Mapping[type[Any], Any]
+
+_SLUG_REGEX: Final = converters.SlugConverter.regex
+
+# In json schema `pattern` is a search, but a url converter always matches
+# the whole value, so we anchor the regex on both sides.
+# It is also wrapped into a group, because anchors bind weaker than `|`:
+# `^json|xml$` means "starts with `json`" or "ends with `xml`".
+_SLUG_PATTERN: Final = f'^(?:{_SLUG_REGEX})$'
+
+
+@final
+@dataclasses.dataclass(frozen=True, slots=True)
+class ConverterSchema:
+    """
+    Prepared OpenAPI schema of a single Django path converter.
+
+    Built-in converters use it to document themselves, and custom ones can
+    provide their own instance through the ``__dmr_converter_schema__``
+    attribute. Explicit values always override the generated ones.
+    """
+
+    model: Any = str
+    pattern: str | None = None
+    description: str | None = None
+
+
+_ConvertersMapping: TypeAlias = Mapping[type[Any], ConverterSchema]
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
-class ComponentParserGenerator:
+class ComponentParserGenerator:  # noqa: WPS214
     """Generator for OpenAPI ``Parameter`` objects."""
 
     _context: 'OpenAPIContext'
 
     # Class API:
     _converters: ClassVar[_ConvertersMapping] = {
-        converters.IntConverter: int,
-        converters.UUIDConverter: uuid.UUID,
-        # Any custom registered converter can have `__dmr_converter_schema__`
-        # attribute to resolve our schema.
+        converters.IntConverter: ConverterSchema(model=int),
+        converters.UUIDConverter: ConverterSchema(model=uuid.UUID),
+        converters.SlugConverter: ConverterSchema(pattern=_SLUG_PATTERN),
+        converters.PathConverter: ConverterSchema(
+            description='Can contain slashes',
+        ),
+        # Any custom registered converter can have a `__dmr_converter_schema__`
+        # attribute with either a model or a `ConverterSchema` instance.
     }
 
     def __call__(
@@ -112,27 +142,14 @@ class ComponentParserGenerator:
             # We already have some `Path` component, so move on.
             return None
 
-        params_list: list[Parameter | Reference] = []
-
         # `path()` and `RoutePattern`:
-        schema = {
-            converter_name: self._converters.get(
-                type(converter),  # pyright: ignore[reportUnknownArgumentType]
-                getattr(converter, '__dmr_converter_schema__', str),
-            )
-            for converter_name, converter in pattern.pattern.converters.items()
-        }
-        if schema:
-            params_list.extend(
-                self._context.generators.parameter(
-                    TypedDict(f'{operation_id}_Path', schema),  # type: ignore[operator]
-                    (),
-                    serializer,
-                    self._context,
-                    param_in='path',
-                ),
-            )
-            return params_list
+        converter_params = self._parse_converters(
+            operation_id,
+            pattern,
+            serializer,
+        )
+        if converter_params is not None:
+            return converter_params
 
         # `re_path()` and `RegexPattern`:
         regex = pattern.pattern.regex
@@ -141,19 +158,17 @@ class ComponentParserGenerator:
             str,
         )
         if schema:
-            params_list.extend(
-                self._add_group_patterns(
-                    self._context.generators.parameter(
-                        TypedDict(f'{operation_id}_RePath', schema),  # type: ignore[operator]
-                        (),
-                        serializer,
-                        self._context,
-                        param_in='path',
-                    ),
-                    regex.pattern,
+            return self._add_group_patterns(
+                self._context.generators.parameter(
+                    TypedDict(f'{operation_id}_RePath', schema),  # type: ignore[operator]
+                    (),
+                    serializer,
+                    self._context,
+                    param_in='path',
                 ),
+                regex.pattern,
             )
-        return params_list or None
+        return None
 
     def _add_group_patterns(
         self,
@@ -179,6 +194,54 @@ class ComponentParserGenerator:
             assert isinstance(param_spec, Parameter)  # noqa: S101
             assert isinstance(param_spec.schema, Schema)  # noqa: S101
             param_spec.schema.pattern = named_groups.get(param_spec.name)
+        return params_list
+
+    def _parse_converters(
+        self,
+        operation_id: str,
+        pattern: URLPattern,
+        serializer: type['BaseSerializer'],
+    ) -> list[Parameter | Reference] | None:
+        prepared = {
+            converter_name: _converter_schema(converter, self._converters)
+            for converter_name, converter in pattern.pattern.converters.items()
+        }
+        if not prepared:
+            return None
+        return self._add_converter_schemas(
+            self._context.generators.parameter(
+                TypedDict(  # type: ignore[operator]
+                    f'{operation_id}_Path',
+                    _converter_models(prepared),
+                ),
+                (),
+                serializer,
+                self._context,
+                param_in='path',
+            ),
+            prepared,
+        )
+
+    def _add_converter_schemas(
+        self,
+        params_list: list[Parameter | Reference],
+        prepared: Mapping[str, ConverterSchema],
+    ) -> list[Parameter | Reference]:
+        for param_spec in params_list:
+            # We've just built these parameters, one per converter:
+            assert isinstance(param_spec, Parameter)  # noqa: S101
+            if not isinstance(param_spec.schema, Schema):
+                # A custom converter can declare a model, and such a model
+                # is generated as a component reference. There is no inline
+                # schema to override, so we keep the reference as it is:
+                continue
+            converter_schema = prepared[param_spec.name]
+            param_spec.schema.pattern = (
+                converter_schema.pattern or param_spec.schema.pattern
+            )
+            param_spec.schema.description = (
+                converter_schema.description or param_spec.schema.description
+            )
         return params_list
 
     def _merge_bodies(
@@ -209,7 +272,8 @@ class ComponentParserGenerator:
         schema: RequestBody,
     ) -> dict[str, MediaType | Reference]:
         new_content: dict[str, MediaType | Reference] = {}
-        for media_name, media_type in new_schema.content.items():
+        # Sorted by content type, custom components can return any order:
+        for media_name, media_type in sorted(new_schema.content.items()):
             # We've just built these bodies from component parsers,
             # so all of them have inline media types, never references:
             assert isinstance(media_type, MediaType)  # noqa: S101
@@ -227,3 +291,27 @@ class ComponentParserGenerator:
                 schema=Schema(all_of=media_items),
             )
         return new_content
+
+
+def _converter_models(
+    prepared: Mapping[str, ConverterSchema],
+) -> dict[str, Any]:
+    return {
+        converter_name: converter_schema.model
+        for converter_name, converter_schema in prepared.items()
+    }
+
+
+def _converter_schema(
+    converter: Any,
+    known_converters: Mapping[type[Any], ConverterSchema],
+) -> ConverterSchema:
+    known = known_converters.get(
+        type(converter),  # pyright: ignore[reportUnknownArgumentType]
+    )
+    if known is not None:
+        return known
+    provided = getattr(converter, '__dmr_converter_schema__', None)
+    if isinstance(provided, ConverterSchema):
+        return provided
+    return ConverterSchema(model=provided or str)

@@ -25,6 +25,7 @@ from dmr.errors import ErrorModel, ErrorType, format_error
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.internal.docstrings import resolve_summary_and_description
 from dmr.internal.io import identity
+from dmr.internal.types import StrOrPromise
 from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.core.context import OpenAPIContext
@@ -39,10 +40,6 @@ from dmr.types import EMPTY, AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
 if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
-
     from dmr.routing import Router
 
 _METHOD_NOT_ALLOWED_MSG: Final = _(
@@ -139,7 +136,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             :func:`typing.get_type_hints` for this controller.
         api_endpoints: Dictionary of HTTPMethod name to controller instance.
         csrf_exempt: Should this controller be exempted from the CSRF check?
-            Is ``True`` by default.
+            Is ``True`` by default. See :ref:`controller-csrf`
+            to configure the CSRF correctly to support REST responses.
+            It is only supported on the controller level, because
+            it has its own per-method logic
+            inside the original Django's CSRF middleware.
         summary: A short summary of what this path item does.
             Defaults to the first paragraph of the controller's docstring.
             Set it to ``None`` to have no summary at all.
@@ -198,8 +199,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     annotations_context: ClassVar[AnnotationsContext] = AnnotationsContext()
 
     # OpenAPI:
-    summary: ClassVar['_StrOrPromise | Sentinel | None'] = EMPTY
-    description: ClassVar['_StrOrPromise | Sentinel | None'] = EMPTY
+    summary: ClassVar[StrOrPromise | Sentinel | None] = EMPTY
+    description: ClassVar[StrOrPromise | Sentinel | None] = EMPTY
     tags: ClassVar[Sequence[str] | None] = None
     servers: ClassVar[Sequence[Server] | None] = None
     ignore_from_spec: ClassVar[bool] = False
@@ -295,8 +296,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             )
         # We don't use `csrf_exempt()` decorator here, because it is slow:
         view = super().as_view(**initkwargs)
-        # TODO: add tests and docs for this feature.
-        if cls.csrf_exempt:  # pragma: no cover
+        if cls.csrf_exempt:
             view.csrf_exempt = True  # type: ignore[attr-defined]
         return view
 
@@ -622,8 +622,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             operations[method.lower()] = endpoint.get_schema(
                 path,
                 pattern,
-                cls.__qualname__,
-                cls.serializer,
+                cls,
                 context,
                 router,
             )

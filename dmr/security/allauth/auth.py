@@ -2,9 +2,11 @@ from typing import TYPE_CHECKING, Final, Literal, Self, cast, overload
 
 from asgiref.sync import sync_to_async
 from django.http import HttpRequest
+from django.views.decorators.debug import sensitive_variables
 from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
+from dmr.metadata import EndpointMetadata
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.security.base import AsyncAuth, SyncAuth
 
@@ -49,8 +51,11 @@ class _BaseXSessionTokenAuth:
         self.header_name = header_name
         self.security_scheme_name = security_scheme_name
 
-    @property
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> dict[str, 'SecurityScheme | Reference']:
         """Provides a security schema definition."""
         return {
             self.security_scheme_name: SecurityScheme(
@@ -61,10 +66,13 @@ class _BaseXSessionTokenAuth:
             ),
         }
 
-    @property
-    def security_requirement(self) -> SecurityRequirement:
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> list[SecurityRequirement]:
         """Provides a security schema usage requirement."""
-        return {self.security_scheme_name: []}
+        return [{self.security_scheme_name: []}]
 
     @property
     def www_authenticate_challenge(self) -> str | None:
@@ -86,6 +94,7 @@ class _BaseXSessionTokenAuth:
         return request.headers.get(self.header_name)
 
 
+@sensitive_variables()
 def _authenticate(token: str) -> tuple['AbstractBaseUser', 'SessionBase']:
     # Imported lazily, so this module stays importable
     # without calling `django.setup()` first.
@@ -118,6 +127,7 @@ class XSessionTokenSyncAuth(_BaseXSessionTokenAuth, SyncAuth):
     __slots__ = ()
 
     @override
+    @sensitive_variables()
     def __call__(
         self,
         endpoint: 'Endpoint',
@@ -132,6 +142,7 @@ class XSessionTokenSyncAuth(_BaseXSessionTokenAuth, SyncAuth):
         self.authenticate(controller.request, token)
         return self
 
+    @sensitive_variables()
     def authenticate(
         self,
         request: HttpRequest,
@@ -169,6 +180,7 @@ class XSessionTokenAsyncAuth(_BaseXSessionTokenAuth, AsyncAuth):
     __slots__ = ()
 
     @override
+    @sensitive_variables()
     async def __call__(
         self,
         endpoint: 'Endpoint',
@@ -183,6 +195,7 @@ class XSessionTokenAsyncAuth(_BaseXSessionTokenAuth, AsyncAuth):
         await self.authenticate(controller.request, token)
         return self
 
+    @sensitive_variables()
     async def authenticate(
         self,
         request: HttpRequest,

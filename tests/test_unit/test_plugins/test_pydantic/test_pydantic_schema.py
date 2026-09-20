@@ -510,6 +510,7 @@ class _TestClass:
 )
 def test_unsupported_type(
     schema_generator: SchemaGenerator,
+    *,
     serializer: type[PydanticSerializer],
 ) -> None:
     """Ensures that unsupported types raise."""
@@ -552,8 +553,9 @@ class _CustomSchemaGenerator(PydanticSchemaGenerator):
 )
 def test_custom_schema_generator(
     schema_generator: SchemaGenerator,
-    serializer: type[PydanticSerializer],
     monkeypatch: pytest.MonkeyPatch,
+    *,
+    serializer: type[PydanticSerializer],
 ) -> None:
     """Ensure custom ``schema_generator`` option is respected."""
     monkeypatch.setattr(serializer, 'schema_generator', _CustomSchemaGenerator)
@@ -568,8 +570,9 @@ def test_custom_schema_generator(
 )
 def test_schema_generator_fallback(
     schema_generator: SchemaGenerator,
-    serializer: type[PydanticSerializer],
     monkeypatch: pytest.MonkeyPatch,
+    *,
+    serializer: type[PydanticSerializer],
 ) -> None:
     """Ensure types a custom generator does not support still raise."""
     monkeypatch.setattr(serializer, 'schema_generator', _CustomSchemaGenerator)
@@ -609,8 +612,9 @@ class _AliasedModel(pydantic.BaseModel):
 )
 def test_custom_by_alias(
     openapi_context: OpenAPIContext,
-    serializer: type[PydanticSerializer],
     monkeypatch: pytest.MonkeyPatch,
+    *,
+    serializer: type[PydanticSerializer],
     schema_kwargs: JsonSchemaKwargs,
     field_name: str,
     field_title: str,
@@ -650,8 +654,9 @@ class _PrimitiveUnionSchemaGenerator(PydanticSchemaGenerator):
 )
 def test_custom_union_format(
     schema_generator: SchemaGenerator,
-    serializer: type[PydanticSerializer],
     monkeypatch: pytest.MonkeyPatch,
+    *,
+    serializer: type[PydanticSerializer],
 ) -> None:
     """Ensure custom ``union_format`` option is respected."""
     monkeypatch.setattr(
@@ -661,4 +666,7 @@ def test_custom_union_format(
     )
     schema = schema_generator(int | str, serializer)
 
+    assert isinstance(schema, Schema)
+    assert isinstance(schema.type, list)
+    schema.type = sorted(schema.type)
     assert schema == Schema(type=[OpenAPIType.INTEGER, OpenAPIType.STRING])

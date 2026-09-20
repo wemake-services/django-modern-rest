@@ -53,8 +53,9 @@ class _CustomContext(OpenAPIContext):
     [PydanticSerializer, PydanticFastSerializer],
 )
 def test_custom_context_schema(
-    serializer: type[BaseSerializer],
     snapshot: SnapshotAssertion,
+    *,
+    serializer: type[BaseSerializer],
 ) -> None:
     """Custom context changes the schema and preserves the input config."""
 

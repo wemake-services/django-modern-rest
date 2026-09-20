@@ -379,7 +379,10 @@ def test_modify_async_endpoint_error_for_sync() -> None:
         'SET-COOKIE',
     ],
 )
-def test_modify_with_set_cookie(header_name: str) -> None:
+def test_modify_with_set_cookie(
+    *,
+    header_name: str,
+) -> None:
     """@modify with Set-Cookie in headers= raise EndpointMetadataError."""
     with pytest.raises(EndpointMetadataError, match=header_name):
 

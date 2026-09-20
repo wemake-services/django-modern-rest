@@ -17,13 +17,10 @@ from typing import (
 from django.http import HttpRequest, HttpResponseBase
 from typing_extensions import ParamSpec, Protocol, Sentinel, TypeVar, deprecated
 
+from dmr.internal.types import StrOrPromise
 from dmr.types import EMPTY
 
 if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
-
     from dmr.controller import Controller
     from dmr.cookies import CookieSpec, NewCookie
     from dmr.endpoint import Endpoint
@@ -225,7 +222,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
             will be a streaming response that supports event validation.
-        extra_responses: List of extra responses
+        extra_responses: Sequence of extra responses
             that this endpoint can return.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this endpoint.
@@ -262,7 +259,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             Defaults to everything that goes after the first paragraph
             of the endpoint's docstring.
             Set it to ``None`` to have no description at all.
-        tags: A list of tags for API documentation control.
+        tags: A sequence of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
             These are merged with controller-level and router-level tags.
         operation_id: Unique string used to identify the operation.
@@ -274,7 +271,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             is a Callback Object that describes
             a request that may be initiated by the API provider and the
             expected responses.
-        servers: An alternative servers array to service this operation.
+        servers: An alternative servers sequence to service this operation.
         links: Possible links to other OpenAPI operations.
         response_description: Description for the generated response object.
         ignore_from_spec: If set to ``True``, this endpoint
@@ -307,7 +304,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         semantic_responses: bool | None = None,
         exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
         validate_events: bool | None = None,
-        extra_responses: list[ResponseSpec] | None = None,
+        extra_responses: Sequence[ResponseSpec] | None = None,
         no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
         parsers: Sequence[Parser] | None = None,
         renderers: Sequence[Renderer] | None = None,
@@ -315,14 +312,14 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         auth: Sequence[Never] | None = (),
         throttling: Sequence[Never] | None = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | Sentinel | None = EMPTY,
-        description: _StrOrPromise | Sentinel | None = EMPTY,
-        tags: list[str] | None = None,
+        summary: StrOrPromise | Sentinel | None = EMPTY,
+        description: StrOrPromise | Sentinel | None = EMPTY,
+        tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
-        servers: list[Server] | None = None,
+        servers: Sequence[Server] | None = None,
         links: dict[str, Link | Reference] | None = None,
         response_description: str | None = None,
         ignore_from_spec: bool | None = None,
@@ -341,7 +338,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         semantic_responses: bool | None = None,
         exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
         validate_events: bool | None = None,
-        extra_responses: list[ResponseSpec] | None = None,
+        extra_responses: Sequence[ResponseSpec] | None = None,
         no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
         parsers: Sequence[Parser] | None = None,
         renderers: Sequence[Renderer] | None = None,
@@ -349,14 +346,14 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         auth: Sequence[AsyncAuth] | None = (),
         throttling: Sequence[AsyncThrottle] | None = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | Sentinel | None = EMPTY,
-        description: _StrOrPromise | Sentinel | None = EMPTY,
-        tags: list[str] | None = None,
+        summary: StrOrPromise | Sentinel | None = EMPTY,
+        description: StrOrPromise | Sentinel | None = EMPTY,
+        tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
-        servers: list[Server] | None = None,
+        servers: Sequence[Server] | None = None,
         links: dict[str, Link | Reference] | None = None,
         response_description: str | None = None,
         ignore_from_spec: bool | None = None,
@@ -375,7 +372,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         semantic_responses: bool | None = None,
         exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
         validate_events: bool | None = None,
-        extra_responses: list[ResponseSpec] | None = None,
+        extra_responses: Sequence[ResponseSpec] | None = None,
         no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
         parsers: Sequence[Parser] | None = None,
         renderers: Sequence[Renderer] | None = None,
@@ -383,14 +380,14 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         auth: Sequence[SyncAuth] | None = (),
         throttling: Sequence[SyncThrottle] | None = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | Sentinel | None = EMPTY,
-        description: _StrOrPromise | Sentinel | None = EMPTY,
-        tags: list[str] | None = None,
+        summary: StrOrPromise | Sentinel | None = EMPTY,
+        description: StrOrPromise | Sentinel | None = EMPTY,
+        tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
-        servers: list[Server] | None = None,
+        servers: Sequence[Server] | None = None,
         links: dict[str, Link | Reference] | None = None,
         response_description: str | None = None,
         ignore_from_spec: bool | None = None,
@@ -407,7 +404,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         semantic_responses: bool | None = None,
         exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
         validate_events: bool | None = None,
-        extra_responses: list[ResponseSpec] | None = None,
+        extra_responses: Sequence[ResponseSpec] | None = None,
         no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
         error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
         parsers: Sequence[Parser] | None = None,
@@ -418,14 +415,14 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None
         ) = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | Sentinel | None = EMPTY,
-        description: _StrOrPromise | Sentinel | None = EMPTY,
-        tags: list[str] | None = None,
+        summary: StrOrPromise | Sentinel | None = EMPTY,
+        description: StrOrPromise | Sentinel | None = EMPTY,
+        tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
-        servers: list[Server] | None = None,
+        servers: Sequence[Server] | None = None,
         links: dict[str, Link | Reference] | None = None,
         response_description: str | None = None,
         ignore_from_spec: bool | None = None,
@@ -654,7 +651,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
             Defaults to everything that goes after the first paragraph
             of the endpoint's docstring.
             Set it to ``None`` to have no description at all.
-        tags: A list of tags for API documentation control.
+        tags: A sequence of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
             These are merged with controller-level and router-level tags.
         operation_id: Unique string used to identify the operation.
@@ -665,7 +662,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
             Object. Each value in the map is a Callback Object that describes
             a request that may be initiated by the API provider and the
             expected responses.
-        servers: An alternative servers array to service this operation.
+        servers: An alternative servers sequence to service this operation.
         ignore_from_spec: If set to ``True``, this endpoint
             would not be added to the final OpenAPI spec.
 
@@ -701,14 +698,14 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         auth: Sequence[Never] | None = (),
         throttling: Sequence[Never] | None = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | Sentinel | None = EMPTY,
-        description: _StrOrPromise | Sentinel | None = EMPTY,
-        tags: list[str] | None = None,
+        summary: StrOrPromise | Sentinel | None = EMPTY,
+        description: StrOrPromise | Sentinel | None = EMPTY,
+        tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
-        servers: list[Server] | None = None,
+        servers: Sequence[Server] | None = None,
         ignore_from_spec: bool | None = None,
     ) -> ValidateAnyCallable: ...
 
@@ -731,14 +728,14 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         auth: Sequence[AsyncAuth] | None = (),
         throttling: Sequence[AsyncThrottle] | None = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | Sentinel | None = EMPTY,
-        description: _StrOrPromise | Sentinel | None = EMPTY,
-        tags: list[str] | None = None,
+        summary: StrOrPromise | Sentinel | None = EMPTY,
+        description: StrOrPromise | Sentinel | None = EMPTY,
+        tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
-        servers: list[Server] | None = None,
+        servers: Sequence[Server] | None = None,
         ignore_from_spec: bool | None = None,
     ) -> ValidateAsyncCallable: ...
 
@@ -761,14 +758,14 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         auth: Sequence[SyncAuth] | None = (),
         throttling: Sequence[SyncThrottle] | None = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | Sentinel | None = EMPTY,
-        description: _StrOrPromise | Sentinel | None = EMPTY,
-        tags: list[str] | None = None,
+        summary: StrOrPromise | Sentinel | None = EMPTY,
+        description: StrOrPromise | Sentinel | None = EMPTY,
+        tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
-        servers: list[Server] | None = None,
+        servers: Sequence[Server] | None = None,
         ignore_from_spec: bool | None = None,
     ) -> ValidateSyncCallable: ...
 
@@ -792,14 +789,14 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
             Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None
         ) = (),
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
-        summary: _StrOrPromise | Sentinel | None = EMPTY,
-        description: _StrOrPromise | Sentinel | None = EMPTY,
-        tags: list[str] | None = None,
+        summary: StrOrPromise | Sentinel | None = EMPTY,
+        description: StrOrPromise | Sentinel | None = EMPTY,
+        tags: Sequence[str] | None = None,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
         callbacks: dict[str, Callback | Reference] | None = None,
-        servers: list[Server] | None = None,
+        servers: Sequence[Server] | None = None,
         ignore_from_spec: bool | None = None,
     ) -> ValidateAnyCallable | ValidateAsyncCallable | ValidateSyncCallable:
         """Adds the payload to the endpoint function."""

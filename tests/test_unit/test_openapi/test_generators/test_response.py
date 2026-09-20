@@ -65,11 +65,9 @@ def test_response_generator_multiple_cookies(
     generator: ResponseGenerator,
 ) -> None:
     """Ensure that multiple cookies are handled."""
-    controller = _ControllerWithCookies()
-
     response = generator(
-        controller.api_endpoints[HTTPMethod.POST].metadata,
-        PydanticSerializer,
+        _ControllerWithCookies.api_endpoints[HTTPMethod.POST].metadata,
+        _ControllerWithCookies,
     )
     response_created = response['201']
 
@@ -107,11 +105,9 @@ def test_response_generator_headers(
     generator: ResponseGenerator,
 ) -> None:
     """Ensure that headers are handled."""
-    controller = _ControllerWithHeaders()
-
     response = generator(
-        controller.api_endpoints[HTTPMethod.GET].metadata,
-        PydanticSerializer,
+        _ControllerWithHeaders.api_endpoints[HTTPMethod.GET].metadata,
+        _ControllerWithHeaders,
     )
     response_ok = response['200']
 
@@ -150,10 +146,10 @@ def test_response_multiple_content_types(
     generator: ResponseGenerator,
 ) -> None:
     """Ensure that multiple content types (from renderers) are handled."""
-    controller = _ControllerWithMultipleRenderers()
+    controller = _ControllerWithMultipleRenderers
     response = generator(
         controller.api_endpoints[HTTPMethod.POST].metadata,
-        PydanticSerializer,
+        controller,
     )
 
     response_created = response['201']
@@ -204,8 +200,8 @@ def test_response_generator_cookie_examples(settings: LazySettings) -> None:
     context = OpenAPIContext(OpenAPIConfig(title='tests', version='0.0.1'))
 
     response = context.generators.response(
-        _ControllerWithCookies().api_endpoints[HTTPMethod.POST].metadata,
-        PydanticSerializer,
+        _ControllerWithCookies.api_endpoints[HTTPMethod.POST].metadata,
+        _ControllerWithCookies,
     )['201']
 
     assert isinstance(response, Response)

@@ -37,7 +37,7 @@ All of them have a unified API:
   Async auth has an async ``__call__``, sync auth has a sync one.
 - :meth:`~dmr.security.SyncAuth.security_schemes`
   provides the OpenAPI spec to define this auth method in the spec.
-- :meth:`~dmr.security.SyncAuth.security_requirement`
+- :meth:`~dmr.security.SyncAuth.security_requirements`
   provides the OpenAPI spec to indicate what kind of auth will
   be required for each endpoint using this auth.
 

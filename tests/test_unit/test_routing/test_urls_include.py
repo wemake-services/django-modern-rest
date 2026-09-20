@@ -48,6 +48,7 @@ def test_router_include() -> None:
     ],
 )
 def test_router_include_with_args(
+    *,
     app_name: str | None,
     namespace: str | None,
     expected_app_name: str | None,

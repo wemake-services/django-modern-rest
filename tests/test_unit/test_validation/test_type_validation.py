@@ -25,7 +25,7 @@ else:
 
 MyInt: Any = int  # for Pyright
 
-if sys.version_info >= (3, 12):  # pragma: no cover
+if sys.version_info >= (3, 12):  # pragma: >=3.12 cover
     exec('type MyInt = int')  # noqa: S102, WPS421
 
 

@@ -15,6 +15,7 @@ from typing import (  # noqa: WPS235
 from typing_extensions import (
     Format,
     Sentinel,
+    TypeIs,
     get_original_bases,
     get_type_hints,
 )
@@ -182,7 +183,13 @@ def infer_annotation(annotation: Any, context: type[Any]) -> Any:
     return TypeVarInference(annotation, context)()[annotation]
 
 
-def is_safe_subclass(annotation: Any, base_class: type[Any]) -> bool:
+_TypeT = TypeVar('_TypeT')
+
+
+def is_safe_subclass(
+    annotation: Any,
+    base_class: type[_TypeT],
+) -> TypeIs[_TypeT]:
     """Possibly unwraps subscribed class before checking for subclassing."""
     if annotation is None:
         annotation = type(None)
@@ -245,8 +252,8 @@ class AnnotationsContext:
             'localns': self._localns,
             'include_extras': self._include_extras,
         }
-        # No cover, because it is only available in 3.14+
-        if self._format is not None:  # pragma: no cover
+        # `format` is only available in 3.14+
+        if self._format is not None:  # pragma: >=3.14 cover
             type_hints_params['format'] = self._format
 
         try:

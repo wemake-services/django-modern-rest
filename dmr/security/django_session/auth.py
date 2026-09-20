@@ -1,6 +1,6 @@
 from collections.abc import Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Self, TypeGuard
 
 from django.conf import settings
 from typing_extensions import override
@@ -9,6 +9,7 @@ from dmr.internal.csrf import ensure_csrf
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.security.base import AsyncAuth, SyncAuth, unauth_response_spec
+from dmr.security.csrf import csrf_response_spec
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
@@ -29,8 +30,11 @@ class _DjangoSessionAuth(ResponseSpecProvider):  # noqa: WPS214
         self.security_scheme_name = security_scheme_name
         self.csrf_scheme_name = csrf_scheme_name
 
-    @property
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> dict[str, 'SecurityScheme | Reference']:
         """Provides a security schema definition."""
         schemes: dict[str, SecurityScheme | Reference] = {
             self.security_scheme_name: SecurityScheme(
@@ -49,13 +53,16 @@ class _DjangoSessionAuth(ResponseSpecProvider):  # noqa: WPS214
             )
         return schemes
 
-    @property
-    def security_requirement(self) -> SecurityRequirement:
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> list[SecurityRequirement]:
         """Provides a security schema usage requirement."""
         requirement: SecurityRequirement = {self.security_scheme_name: []}
         if self._uses_csrf_cookie():
             requirement[self.csrf_scheme_name] = []
-        return requirement
+        return [requirement]
 
     @property
     def www_authenticate_challenge(self) -> str | None:
@@ -80,11 +87,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):  # noqa: WPS214
                 existing_responses,
             ),
             *self._add_new_response(
-                ResponseSpec(
-                    controller_cls.error_model,
-                    status_code=HTTPStatus.FORBIDDEN,
-                    description='Raised when CSRF check failed',
-                ),
+                csrf_response_spec(return_type=controller_cls.error_model),
                 existing_responses,
             ),
         ]
@@ -95,7 +98,7 @@ class _DjangoSessionAuth(ResponseSpecProvider):  # noqa: WPS214
     def _is_user_present(
         self,
         user: 'AbstractBaseUser | AnonymousUser | None',
-    ) -> bool:
+    ) -> TypeGuard['AbstractBaseUser']:
         return user is not None and user.is_authenticated and user.is_active
 
     def _ensure_csrf(self, controller: 'Controller[BaseSerializer]') -> None:

@@ -2,13 +2,13 @@ import base64
 import dataclasses
 from collections.abc import Callable, Sequence
 from http import HTTPStatus
-from typing import Any, ClassVar, Generic, TypeVar, final
+from typing import Any, ClassVar, Generic, TypeAlias, TypeVar, final
 
 from django.db import models
-from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
 
 from dmr.internal.django import get_model_pks
+from dmr.internal.types import StrOrPromise
 
 _ModelT = TypeVar('_ModelT')
 _DjangoModel = TypeVar('_DjangoModel', bound=models.Model)
@@ -23,12 +23,12 @@ class InvalidCursorError(Exception):
     so a malformed one is a client error.
     """
 
-    default_message: ClassVar[str | Promise] = _('Invalid cursor')
+    default_message: ClassVar[StrOrPromise] = _('Invalid cursor')
     status_code: ClassVar[HTTPStatus] = HTTPStatus.BAD_REQUEST
 
     def __init__(
         self,
-        msg: str | Promise | None = None,
+        msg: StrOrPromise | None = None,
     ) -> None:
         """Provides default error message."""
         super().__init__(msg or self.default_message)
@@ -266,11 +266,16 @@ class _BaseCursorPaginator(Generic[_DjangoModel]):
         self._queryset = self._queryset.order_by(*self._order_by_fields)
 
 
+_CursorPageType: TypeAlias = type[CursorPage[Any]]
+
+
 class CursorPaginator(
     _BaseCursorPaginator[_DjangoModel],
     Generic[_DjangoModel],
 ):
     """Cursor paginator."""
+
+    page_cls: ClassVar[_CursorPageType] = CursorPage
 
     __slots__ = ()
 
@@ -295,7 +300,7 @@ class CursorPaginator(
             )
             next_cursor = self.encode_cursor(cursor_attrs)
 
-        return CursorPage(
+        return self.page_cls(
             next_cursor=next_cursor,
             objects_list=objects_list,
         )
@@ -331,7 +336,7 @@ class CursorPaginator(
             )
             next_cursor = self.encode_cursor(cursor_attrs)
 
-        return CursorPage(
+        return self.page_cls(
             next_cursor=next_cursor,
             objects_list=objects_list,
         )

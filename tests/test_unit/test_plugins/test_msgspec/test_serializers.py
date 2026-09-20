@@ -64,8 +64,9 @@ class _ForTestMsgSpecError(msgspec.ValidationError):
     ],
 )
 def test_serialize_errors_types(
+    *,
     err: Any,
-    is_raise: bool,  # noqa: FBT001
+    is_raise: bool,
 ) -> None:
     """Ensures that MsgspecSerializer can serialize errors."""
     if is_raise:

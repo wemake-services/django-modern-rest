@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.debug import sensitive_variables
 from typing_extensions import Sentinel, override
 
 from dmr.internal.model_fields import (
@@ -141,6 +142,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
+    @sensitive_variables()
     def issue(  # noqa: WPS211
         cls,
         *,
@@ -169,6 +171,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
+    @sensitive_variables()
     async def aissue(  # noqa: WPS211
         cls,
         *,
@@ -197,6 +200,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
+    @sensitive_variables()
     def find_raw(
         cls,
         raw_token: str,
@@ -221,6 +225,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
+    @sensitive_variables()
     async def afind_raw(
         cls,
         raw_token: str,

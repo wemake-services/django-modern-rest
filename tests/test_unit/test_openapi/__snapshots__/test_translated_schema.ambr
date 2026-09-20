@@ -17,18 +17,18 @@
             "200": {
               "description": "Response descr",
               "headers": {
-                "X-Translated": {
-                  "schema": {
-                    "type": "string"
-                  },
-                  "description": "Header descr",
-                  "required": true
-                },
                 "Set-Cookie: translated-cookie": {
                   "schema": {
                     "type": "string"
                   },
                   "description": "Cookie descr",
+                  "required": true
+                },
+                "X-Translated": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "description": "Header descr",
                   "required": true
                 }
               },
@@ -40,8 +40,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -50,8 +50,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -115,8 +115,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

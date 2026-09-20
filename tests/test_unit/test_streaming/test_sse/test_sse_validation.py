@@ -441,8 +441,8 @@ async def test_sse_api_error_validation(
         'detail': [
             {
                 'msg': (
-                    'Returned status code 409 is not specified '
-                    'in the list of allowed status codes: [200, 422, 406]'
+                    'Returned status code 409 is not specified in the list '
+                    'of allowed status codes: [200, 406, 422]'
                 ),
                 'type': 'value_error',
             },

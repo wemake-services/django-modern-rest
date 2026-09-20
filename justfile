@@ -16,8 +16,8 @@ mod _docs 'docs/justfile'
 
 # Install dependencies
 [group('dev')]
-install:
-    uv sync --all-groups --all-extras --no-group integration-drivers
+install *args='':
+    uv sync --all-groups --all-extras --no-group integration-drivers {{args}}
 
 # Install dependencies
 [group('dev')]
@@ -89,6 +89,8 @@ smoke *extras='':
     uv run python -c 'from dmr.security import *'
     uv run python -c 'from dmr.security.django_session import *'
     uv run python -c 'from dmr.security.token import *'
+    uv run python -c 'from dmr.security.csrf import *'
+    uv run python -c 'from dmr.semantic_schema import *'
     uv run python -c 'from dmr.throttling import *'
     uv run python -c 'from dmr.throttling.backends import *'
     uv run python -c 'from dmr.throttling.algorithms import *'

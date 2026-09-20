@@ -29,10 +29,7 @@
         }
       }
     },
-    "components": {
-      "schemas": {},
-      "securitySchemes": {}
-    }
+    "components": {}
   }
   '''
 # ---

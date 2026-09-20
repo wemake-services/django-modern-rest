@@ -81,7 +81,7 @@ To enable TraceCov recording for ``schemathesis`` runs, make sure your
   :language: python
   :linenos:
   :no-imports-spoiler:
-  :lines: 112-
+  :start-at: @schema.parametrize()
 
 What will happen here?
 

@@ -220,7 +220,7 @@ def test_type_var_without_default() -> None:
     sys.version_info < (3, 13),
     reason='PEP-696 syntax was added in 3.13',
 )
-def test_pep696_type_params() -> None:  # pragma: no cover
+def test_pep696_type_params() -> None:  # pragma: >=3.13 cover
     """Ensure that native type var defaults are supported on 3.13+."""
     # We have to use `exec` here, because 3.13+ syntax
     # will cause `SyntaxError` for the whole test module.

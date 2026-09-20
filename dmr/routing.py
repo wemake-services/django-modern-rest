@@ -14,6 +14,7 @@ from dmr.errors import ErrorType, format_error
 from dmr.exceptions import InternalServerError, NotAcceptableError
 from dmr.internal.routing import RouterMetadata
 from dmr.internal.routing import URLExternal as _URLExternal
+from dmr.internal.types import FormatError, StrOrPromise
 from dmr.openapi.collector import (
     collect_normalized_paths,
     controller_mapping_collector,
@@ -22,11 +23,6 @@ from dmr.openapi.objects import PathItem, Paths
 from dmr.openapi.openapi import OpenAPI
 
 if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
-
-    from dmr.internal.types import FormatError
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.renderers import Renderer
     from dmr.serializer import BaseSerializer
@@ -151,7 +147,11 @@ class Router:
                 continue  # It can be private for a reason.
             paths_items[path] = path_item
 
-        return context.config_merger(paths_items, context.get_components())
+        # Sort paths, so the schema does not depend on the url order:
+        return context.config_merger(
+            dict(sorted(paths_items.items())),
+            context.get_components(),
+        )
 
     def include(
         self,
@@ -228,7 +228,7 @@ class Router:
 
 
 def external_path(
-    route: '_StrOrPromise',
+    route: StrOrPromise,
     view: _DjangoView,
     *,
     openapi: PathItem | None,
@@ -272,7 +272,7 @@ def build_404_handler(
     /,
     *prefixes: str,
     serializer: type['BaseSerializer'],
-    format_error: 'FormatError' = format_error,
+    format_error: FormatError = format_error,
     renderers: Sequence['Renderer'] | None = None,
 ) -> Callable[[HttpRequest, Exception], HttpResponse]:
     """
@@ -298,8 +298,6 @@ def build_404_handler(
         https://docs.djangoproject.com/en/stable/ref/views/#the-404-page-not-found-view
 
     """
-    from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
-    from dmr.response import build_response  # noqa: PLC0415
     from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
     combined = (prefix, *prefixes)
@@ -318,6 +316,9 @@ def build_404_handler(
         request: HttpRequest,
         exception: Exception,
     ) -> HttpResponse:
+        from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
+        from dmr.response import build_response  # noqa: PLC0415
+
         if not request.path.startswith(all_prefixes):
             return defaults.page_not_found(request, exception)
 
@@ -354,7 +355,7 @@ def build_500_handler(
     /,
     *prefixes: str,
     serializer: type['BaseSerializer'],
-    format_error: 'FormatError' = format_error,
+    format_error: FormatError = format_error,
     renderers: Sequence['Renderer'] | None = None,
 ) -> Callable[[HttpRequest], HttpResponse]:
     """
@@ -380,8 +381,6 @@ def build_500_handler(
         https://docs.djangoproject.com/en/stable/ref/views/#the-500-server-error-view
 
     """
-    from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
-    from dmr.response import build_response  # noqa: PLC0415
     from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
     combined = (prefix, *prefixes)
@@ -397,6 +396,9 @@ def build_500_handler(
     default_renderer = next(iter(renderer_by_type.values()))
 
     def factory(request: HttpRequest) -> HttpResponse:
+        from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
+        from dmr.response import build_response  # noqa: PLC0415
+
         if not request.path.startswith(all_prefixes):
             return defaults.server_error(request)
 
@@ -462,21 +464,21 @@ class _PrefixRoutePattern(RoutePattern):
 # NOTE: keep in sync with `django-stubs`!
 @overload
 def path(
-    route: '_StrOrPromise',
+    route: StrOrPromise,
     view: _DjangoView,
     kwargs: dict[str, Any] | None = None,
     name: str | None = None,
 ) -> URLPattern: ...
 @overload
 def path(
-    route: '_StrOrPromise',
+    route: StrOrPromise,
     view: tuple[Sequence[_AnyPattern], str | None, str | None],
     kwargs: dict[str, Any] | None = None,
     name: str | None = None,
 ) -> URLResolver: ...
 @overload
 def path(
-    route: '_StrOrPromise',
+    route: StrOrPromise,
     view: Sequence[URLResolver | str],
     kwargs: dict[str, Any] | None = None,
     name: str | None = None,
@@ -484,7 +486,7 @@ def path(
 
 
 def path(
-    route: '_StrOrPromise',
+    route: StrOrPromise,
     view: (
         _DjangoView
         | tuple[Sequence[_AnyPattern], str | None, str | None]

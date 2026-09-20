@@ -24,6 +24,7 @@ from dmr.openapi.objects import (
 from dmr.parsers import Parser
 
 if TYPE_CHECKING:
+    from dmr.controller import Controller
     from dmr.serializer import BaseSerializer
 
 
@@ -224,11 +225,16 @@ class FileResponseSpec(ResponseSpec):
     def get_schema(
         self,
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: OpenAPIContext,
     ) -> Response:
         """Customize schema for the file response."""
-        response = ResponseSpec.get_schema(self, metadata, serializer, context)
+        response = ResponseSpec.get_schema(
+            self,
+            metadata,
+            controller_cls,
+            context,
+        )
         # We know that we return files:
         for media in (response.content or {}).values():
             # for mypy: we've just built this response ourselves,
@@ -238,6 +244,8 @@ class FileResponseSpec(ResponseSpec):
             media.schema = self.return_type.get_schema(Schema(), context)
         # We know that `FileBody` was a fake model, remove it:
         context.registries.schema.try_unregister(
-            serializer.schema_generator.schema_name(self.return_type),
+            controller_cls.serializer.schema_generator.schema_name(
+                self.return_type,
+            ),
         )
         return response

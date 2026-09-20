@@ -41,6 +41,7 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
         {'auth': ['auth']},
         {'throttling': ['throttling']},
         {'responses': [{}]},
+        {'semantic_schema_providers': [None]},
         {'openapi_config': []},
         {'global_error_handler': None},
         {'serializer': BaseSerializer},  # the base one is not enough
@@ -62,7 +63,9 @@ def test_wrong_settings_validation(
 
     with pytest.raises(EndpointMetadataError, match='Settings'):
 
-        class _ValidController(Controller[serializer]):  # type: ignore[valid-type]
+        class _InvalidController(
+            Controller[serializer],  # type: ignore[valid-type]
+        ):
             def post(self) -> int:
                 raise NotImplementedError
 

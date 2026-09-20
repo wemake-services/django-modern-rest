@@ -59,7 +59,11 @@ def _custom_event_with_event(event_field: str) -> _CustomEvent:
 
 @pytest.mark.parametrize('char', _WRONG_CHARS)
 @pytest.mark.parametrize('field_name', ['id', 'event'])
-def test_check_event_field_wrong_chars(char: str, field_name: str) -> None:
+def test_check_event_field_wrong_chars(
+    *,
+    char: str,
+    field_name: str,
+) -> None:
     """Ensures that wrong chars are reported as validation errors."""
     with pytest.raises(ValidationError) as exc_info:
         check_event_field(f'prefix{char}suffix', field_name=field_name)
@@ -69,7 +73,10 @@ def test_check_event_field_wrong_chars(char: str, field_name: str) -> None:
 
 
 @pytest.mark.parametrize('event_field', ['correct', 1, None, object()])
-def test_check_event_field_correct(event_field: Any) -> None:
+def test_check_event_field_correct(
+    *,
+    event_field: Any,
+) -> None:
     """Ensures that correct fields and non-str fields are allowed."""
     check_event_field(event_field, field_name='id')
 
