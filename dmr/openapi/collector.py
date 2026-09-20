@@ -125,7 +125,7 @@ class ExternalRouteMetadata(_BaseRouteMetadata):
     .. versionadded:: 0.16.0
     """
 
-    #:
+    #: Optional path item, if set to `None`, it will be hidden from the spec.
     openapi: PathItem | None
 
 
