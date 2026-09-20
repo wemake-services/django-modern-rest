@@ -119,7 +119,7 @@ def test_as_view_serializer_on_concrete() -> None:
 def test_as_view_unknown_class_attr() -> None:
     """Ensures that a name the controller never declares is rejected."""
     with pytest.raises(EndpointMetadataError, match='does not declare'):
-        _Reusable.as_view(serializer=PydanticSerializer, requird_field='typo')
+        _Reusable.as_view(serializer=PydanticSerializer, required_field='typo')
 
 
 def test_as_view_http_method_class_attr() -> None:
