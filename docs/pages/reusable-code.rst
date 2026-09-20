@@ -263,54 +263,37 @@ Routing without a subclass
 
 .. versionadded:: 0.16.0
 
-Sometimes the subclass would be empty: the reusable controller
-already does everything you need, and the only thing missing
-is the serializer. Pass it to
+Sometimes the subclass would say nothing: the reusable controller
+already does everything you need, and all it is missing
+are the fields it requires. Pass them to
 :meth:`~dmr.controller.Controller.as_view` instead:
 
-.. literalinclude:: /examples/reusable_code/as_view_serializer.py
+.. literalinclude:: /examples/reusable_code/as_view_class_attrs.py
   :caption: urls.py
   :linenos:
   :language: python
+
+Every keyword argument becomes a class attribute of the controller
+that gets routed. So the import and the ``path()`` call are the whole
+thing, and there is no view code at all.
 
 This builds the subclass that you would have written by hand,
 so the rest of the rules are unchanged: every other type variable
 has to resolve, through a default or by not being used at all.
 
-Most projects use one serializer everywhere. Name it once
-in :data:`~dmr.settings.Settings.serializer` and you don't have
-to repeat it on every route:
-
-.. code-block:: python
-  :caption: settings.py
-
-  from dmr.plugins.pydantic import PydanticSerializer
-  from dmr.settings import Settings
-
-  DMR_SETTINGS = {Settings.serializer: PydanticSerializer}
-
-.. code-block:: python
-  :caption: urls.py
-
-  from dmr.routing import path
-  from dmr.security.django_session import concrete_views
-
-  urlpatterns = [
-      path('login/', concrete_views.DjangoSessionSyncController.as_view()),
-  ]
-
-An explicit ``serializer=`` still wins over the setting,
-so one route can differ from the rest.
-
 .. note::
 
-  ``serializer=`` and the setting only apply to controllers
-  that don't have an exact serializer yet.
-  Passing the argument to a concrete controller raises
-  :class:`~dmr.exceptions.EndpointMetadataError`,
-  since the argument and the type arguments would disagree
+  Only names the controller declares are accepted, a typo raises
+  :class:`~dmr.exceptions.EndpointMetadataError` instead of quietly
+  setting an attribute that nothing reads.
+  The same error is raised for http method names,
+  and for ``serializer`` on a controller that already has an exact one,
+  since the argument and the type arguments would then disagree
   about what the controller serializes.
-  The setting is simply not consulted for such controllers.
+
+Write the subclass when you have anything else to say: a hook
+to redefine, a docstring that documents this endpoint,
+or a name to route several times.
 
 Write the subclass when you have anything else to say: a setting
 to change, a hook to redefine, or a name to route several times.

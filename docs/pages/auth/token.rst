@@ -154,7 +154,7 @@ See :ref:`routing-without-a-subclass` for how ``serializer=`` works.
 
 .. note::
 
-  Set ``token_cls`` on a subclass when you swap the token model,
+  Pass ``token_cls`` to ``as_view`` when you swap the token model,
   see :ref:`swapping-token-model`. The default is imported the first time
   a subclass is built, so projects with their own model
   never need ``'dmr.security.token.app'`` installed.

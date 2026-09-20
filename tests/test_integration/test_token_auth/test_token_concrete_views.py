@@ -11,10 +11,11 @@ from dmr.security.token.app.models import Token
 from dmr.security.token.token import TokenLikeSync
 from dmr.test import DMRClient
 
-_OBTAIN_URLS: Final = (
-    reverse('api:token_auth:token_concrete_obtain_sync'),
-    reverse('api:token_auth:token_concrete_obtain_async'),
-)
+#: Routed with `as_view(serializer=..., token_cls=CustomToken)`, no class.
+_CLASS_ATTRS_URL: Final = reverse('api:token_auth:token_concrete_obtain_sync')
+#: A subclass that leaves every setting, `token_cls` included, at default.
+_DEFAULTS_URL: Final = reverse('api:token_auth:token_concrete_obtain_async')
+_OBTAIN_URLS: Final = (_CLASS_ATTRS_URL, _DEFAULTS_URL)
 
 
 @pytest.fixture
@@ -42,17 +43,14 @@ def _get_custom_token_model() -> type[TokenLikeSync]:
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('url', _OBTAIN_URLS)
 def test_concrete_obtain_default_model(
     dmr_client: DMRClient,
     user: User,
     password: str,
-    *,
-    url: str,
 ) -> None:
     """Ensures that `token_cls` defaults to the model of the bundled app."""
     response = dmr_client.post(
-        url,
+        _DEFAULTS_URL,
         data={'username': user.username, 'password': password},
     )
 
@@ -67,17 +65,35 @@ def test_concrete_obtain_default_model(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('url', _OBTAIN_URLS)
+def test_concrete_obtain_token_cls_from_as_view(
+    dmr_client: DMRClient,
+    user: User,
+    password: str,
+) -> None:
+    """Ensures that `as_view` can fill `token_cls` in without a subclass."""
+    response = dmr_client.post(
+        _CLASS_ATTRS_URL,
+        data={'username': user.username, 'password': password},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.content
+    raw_token = response.json()['token']
+    assert raw_token
+    assert Token.find_raw(raw_token) is None
+    issued = _get_custom_token_model().find_raw(raw_token)
+    assert issued is not None
+    assert issued.get_user() == user
+
+
+@pytest.mark.django_db
 def test_concrete_obtain_roundtrips_to_auth(
     dmr_client: DMRClient,
     user: User,
     password: str,
-    *,
-    url: str,
 ) -> None:
     """Ensures that the issued token authenticates the next request."""
     response = dmr_client.post(
-        url,
+        _DEFAULTS_URL,
         data={'username': user.username, 'password': password},
     )
     assert response.status_code == HTTPStatus.OK, response.content

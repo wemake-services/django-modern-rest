@@ -1,4 +1,7 @@
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import Router, path
+from dmr.security.token import concrete_views
+from server.apps.token_auth.models import CustomToken
 from server.apps.token_auth.views import example, obtain
 
 router = Router(
@@ -24,9 +27,13 @@ router = Router(
             example.ControllerWithDefaultTokenSyncAuth.as_view(),
             name='token_default_sync_auth',
         ),
+        # Both required fields are given here, so there is no view class:
         path(
             'token-concrete-obtain-sync/',
-            obtain.ConcreteObtainTokenSyncController.as_view(),
+            concrete_views.ObtainTokenSyncController.as_view(
+                serializer=PydanticFastSerializer,
+                token_cls=CustomToken,
+            ),
             name='token_concrete_obtain_sync',
         ),
         path(

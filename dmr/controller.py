@@ -16,7 +16,13 @@ from django.urls import URLPattern
 from django.utils.functional import classproperty
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from typing_extensions import Sentinel, deprecated, override
+from typing_extensions import (
+    Format,
+    Sentinel,
+    deprecated,
+    get_annotations,
+    override,
+)
 
 from dmr import throttling as dmr_throttling
 from dmr.cookies import NewCookie
@@ -35,7 +41,7 @@ from dmr.renderers import Renderer
 from dmr.response import build_response
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
-from dmr.settings import HttpSpec, Settings, resolve_setting
+from dmr.settings import HttpSpec
 from dmr.types import EMPTY, AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
@@ -232,12 +238,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
     @override
     @classmethod
-    def as_view(
-        cls,
-        *,
-        serializer: type[BaseSerializer] | None = None,
-        **initkwargs: Any,
-    ) -> Callable[..., HttpResponseBase]:
+    def as_view(cls, **class_attrs: Any) -> Callable[..., HttpResponseBase]:
         """
         Returns a view function for the class-based view.
 
@@ -245,30 +246,31 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         authentication will still be explicitly validated for CSRF,
         while all other authentication methods will be CSRF-exempt.
 
-        Pass *serializer* to route a reusable controller
-        without writing a subclass for it:
+        Every keyword argument becomes a class attribute of the controller
+        that is routed, so a reusable controller can be given the fields
+        it requires without writing a subclass for it:
 
         .. code:: python
 
-            path('login/', ReusableController.as_view(
+            path('login/', ObtainTokenSyncController.as_view(
                 serializer=PydanticSerializer,
+                token_cls=Token,
             ))
-
-        When it is omitted, the ``'serializer'`` setting is used,
-        so a project that always uses the same one can name it once
-        in ``DMR_SETTINGS`` and route reusable controllers
-        with a bare ``as_view()``, see :ref:`project-serializer`.
 
         This builds the subclass that you would have written by hand,
         so everything else works as always: every remaining type variable
         must either be given a :pep:`696` default or not be used
         by any endpoint, see :ref:`type-variable-defaults`.
+        Write the subclass yourself when it has anything more to say,
+        like a redefined hook.
 
         Raises:
             EndpointMetadataError: When called on an abstract controller,
-                because it has nothing to serve. Also when *serializer*
-                is passed to a controller that already has an exact one,
-                because the two would disagree.
+                because it has nothing to serve. Also when an argument
+                is not an attribute this controller declares, or when
+                ``serializer`` is passed to a controller
+                that already has an exact one, because the two
+                would disagree.
 
         .. versionchanged:: 0.16.0
 
@@ -277,25 +279,25 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             instead of silently returning a broken view.
 
         .. versionchanged:: 0.16.0
-            Added the ``serializer`` argument
-            and the ``'serializer'`` setting it falls back to.
+
+            Keyword arguments are now applied as class attributes
+            of a generated subclass, they used to be passed
+            to ``__init__`` as django's ``initkwargs``.
 
         """
-        if serializer is None and getattr(cls, _SERIALIZER_ATTR, None) is None:
-            serializer = resolve_setting(Settings.serializer)
-        if serializer is not None:
-            return cls._with_serializer(serializer).as_view(**initkwargs)
+        if class_attrs:
+            return cls._with_class_attrs(class_attrs).as_view()
         if cls.is_abstract:
             raise EndpointMetadataError(
                 f'{cls!r} is abstract, it cannot be used as a view. '
                 'Controllers are abstract when they do not have '
                 'an exact serializer type or any endpoints. '
                 'Use a subclass with a real serializer '
-                'and at least one endpoint, pass `serializer=` '
-                'to this method, or set the `serializer` setting',
+                'and at least one endpoint, or pass the missing '
+                'attributes to this method',
             )
         # We don't use `csrf_exempt()` decorator here, because it is slow:
-        view = super().as_view(**initkwargs)
+        view = super().as_view()
         if cls.csrf_exempt:
             view.csrf_exempt = True  # type: ignore[attr-defined]
         return view
@@ -655,18 +657,50 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     # Protected API:
 
     @classmethod
-    def _with_serializer(cls, serializer: type[BaseSerializer]) -> type[Self]:
+    def _with_class_attrs(cls, class_attrs: Mapping[str, Any]) -> type[Self]:
+        """Builds the subclass that ``as_view(**class_attrs)`` would need."""
+        cls._check_class_attrs(class_attrs)
+        return cast(
+            'type[Self]',
+            type(
+                cls.__name__,
+                (cls,),
+                {
+                    **class_attrs,
+                    '__doc__': cls.__doc__,
+                    '__module__': cls.__module__,
+                    '__qualname__': cls.__qualname__,
+                },
+            ),
+        )
+
+    @classmethod
+    def _check_class_attrs(cls, class_attrs: Mapping[str, Any]) -> None:
         """
-        Builds the subclass that ``as_view(serializer=...)`` would need.
+        Rejects arguments that cannot be controller attributes.
 
         Raises:
-            EndpointMetadataError: When this controller already has
-                an exact serializer, since overriding it here would
-                contradict the controller's own type arguments.
+            EndpointMetadataError: When a name is an http method,
+                is not declared by this controller, or is ``serializer``
+                on a controller that already has an exact one.
 
         """
+        declared = cls._declared_attrs()
+        for attr_name in class_attrs:
+            if attr_name in cls.http_method_names:
+                raise EndpointMetadataError(
+                    f'{attr_name!r} is an http method name, '
+                    'it cannot be passed to `as_view`',
+                )
+            if attr_name not in declared:
+                raise EndpointMetadataError(
+                    f'{cls!r} does not declare {attr_name!r}, '
+                    '`as_view` only sets attributes '
+                    'that the controller already has',
+                )
+
         existing_serializer = getattr(cls, _SERIALIZER_ATTR, None)
-        if existing_serializer is not None:
+        if _SERIALIZER_ATTR in class_attrs and existing_serializer is not None:
             raise EndpointMetadataError(
                 f'{cls!r} already has {existing_serializer!r} '
                 'as its serializer, passing `serializer=` would contradict '
@@ -674,19 +708,20 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 'Drop the argument, or pass it '
                 'to the reusable controller instead',
             )
-        return cast(
-            'type[Self]',
-            type(
-                cls.__name__,
-                (cls,),
-                {
-                    _SERIALIZER_ATTR: serializer,
-                    '__doc__': cls.__doc__,
-                    '__module__': cls.__module__,
-                    '__qualname__': cls.__qualname__,
-                },
-            ),
-        )
+
+    @classmethod
+    def _declared_attrs(cls) -> frozenset[str]:
+        """
+        Names that this controller defines or annotates, including bases.
+
+        Annotations are read as strings on purpose: evaluating them
+        would fail for the ones that only exist under ``TYPE_CHECKING``.
+        """
+        declared: set[str] = set()
+        for klass in cls.__mro__:
+            declared.update(klass.__dict__)
+            declared.update(get_annotations(klass, format=Format.STRING))
+        return frozenset(declared)
 
     @classmethod
     def _infer_serializer(cls) -> type[_SerializerT_co] | None:

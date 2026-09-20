@@ -19,7 +19,6 @@ if TYPE_CHECKING:
     from dmr.renderers import Renderer
     from dmr.security import AsyncAuth, SyncAuth, SyncOrAsyncAuth
     from dmr.semantic_schema import AuthProvider
-    from dmr.serializer import BaseSerializer
     from dmr.throttling import AsyncThrottle, SyncOrAsyncThrottle, SyncThrottle
 
 try:
@@ -55,7 +54,6 @@ DMR_SETTINGS: Final = 'DMR_SETTINGS'
 class Settings(enum.StrEnum):
     """Keys for all settings."""
 
-    serializer = 'serializer'
     parsers = 'parsers'
     renderers = 'renderers'
     validate_negotiation = 'validate_negotiation'
@@ -119,7 +117,6 @@ class HttpSpec(enum.StrEnum):
 class SettingsDict(TypedDict, total=False):
     """Settings type that can be used for typing."""
 
-    serializer: type['BaseSerializer'] | None
     parsers: Sequence['Parser']
     renderers: Sequence['Renderer']
     validate_negotiation: bool | None
@@ -154,9 +151,6 @@ assert SettingsDict.__optional_keys__ == set(Settings), (  # noqa: S101
 
 #: Default settings for `django-modern-rest`.
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
-    # Project-wide serializer for controllers that don't name one,
-    # there's no way for us to guess which plugin a project uses:
-    Settings.serializer: None,
     Settings.parsers: [default_parser],
     Settings.renderers: [default_renderer],
     # Defaults to the `validate_responses` setting if `None`:

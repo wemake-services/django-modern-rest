@@ -209,7 +209,7 @@ The cookie flow is routed the same way:
   with anything else:
 
   .. literalinclude:: /examples/auth/jwt/jwt_concrete_cookies_scoped.py
-    :caption: views.py
+    :caption: urls.py
     :linenos:
     :language: python
 
