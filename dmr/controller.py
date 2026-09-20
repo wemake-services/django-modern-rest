@@ -3,7 +3,6 @@ from http import HTTPMethod, HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, Final, Generic, TypeVar
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
-from django.urls import URLPattern
 from django.utils.functional import classproperty
 from django.utils.translation import gettext_lazy as _
 from django.views import View
@@ -19,6 +18,7 @@ from dmr.internal.io import identity
 from dmr.internal.types import StrOrPromise
 from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
+from dmr.openapi.collector import InternalRouteMetadata
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import Operation, PathItem, Server
 from dmr.parsers import Parser
@@ -547,8 +547,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     @classmethod
     def get_schema(  # noqa: WPS210
         cls,
-        path: str,
-        pattern: URLPattern,
+        route_metadata: InternalRouteMetadata,
         context: OpenAPIContext,
         router: 'Router',
     ) -> PathItem | None:
@@ -565,16 +564,18 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
             ``summary`` and ``description`` are now parsed
             from the controller's docstring when they are not set explicitly.
+            Changed *path* and *pattern* parameters
+            to be *route_metadata* instead.
 
         """
+        assert not cls.is_abstract, f"Can't include abstract controller: {cls}"  # noqa: S101
         operations: dict[str, Operation] = {}
         for method, endpoint in cls.api_endpoints.items():
             if endpoint.metadata.ignore_from_spec:
                 continue
 
             operations[method.lower()] = endpoint.get_schema(
-                path,
-                pattern,
+                route_metadata,
                 cls,
                 context,
                 router,

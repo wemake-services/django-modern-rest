@@ -1,7 +1,8 @@
 import dataclasses
-from typing import TYPE_CHECKING, Self, final
+from typing import TYPE_CHECKING, Any, Self, TypeAlias, final
 
-from django.urls.resolvers import URLPattern
+from django.urls.resolvers import RoutePattern, URLPattern
+from typing_extensions import override
 
 from dmr.openapi.objects import PathItem
 
@@ -67,3 +68,44 @@ class RouterMetadata:
                 router.ignore_from_spec or included.ignore_from_spec
             ),
         )
+
+
+_CapturedArgs: TypeAlias = tuple[Any, ...]
+_CapturedKwargs: TypeAlias = dict[str, int | str]
+_RouteMatch: TypeAlias = tuple[str, _CapturedArgs, _CapturedKwargs]
+
+
+@final
+class PrefixRoutePattern(RoutePattern):
+    """Custom route pattern for better speed."""
+
+    def __init__(
+        self,
+        route: str,
+        name: str | None = None,
+        is_endpoint: bool = False,  # noqa: FBT001, FBT002
+    ) -> None:
+        """Static patterns would work faster."""
+        idx = route.find('<')
+        if idx == -1:
+            self._prefix = route
+            self._is_static = True
+        else:
+            self._is_static = False
+            self._prefix = route[:idx]
+        self._is_endpoint = is_endpoint
+        super().__init__(route, name, is_endpoint)
+
+    @override
+    def match(
+        self,
+        path: str,
+    ) -> _RouteMatch | None:
+        if self._is_static:
+            if self._is_endpoint and path == self._prefix:
+                return '', (), {}
+            if not self._is_endpoint and path.startswith(self._prefix):
+                return path[len(self._prefix) :], (), {}
+        elif path.startswith(self._prefix):
+            return super().match(path)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        return None
