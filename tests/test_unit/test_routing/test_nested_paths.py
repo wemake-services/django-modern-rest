@@ -189,3 +189,60 @@ def test_deeply_nested_url_re_patterns() -> None:
             'required': True,
         },
     ])
+
+
+@pytest.mark.parametrize('path_func', [path, django_path])
+def test_deeply_nested_mixed_url_patterns(
+    *,
+    path_func: Callable[..., Any],
+) -> None:
+    """Ensure that nested URL patterns produce all path parameters."""
+    patterns: Sequence[URLPattern | URLResolver] = [
+        path_func(
+            '<int:tenant>/',
+            include([
+                re_path(
+                    r'(?P<month>\d+)/',
+                    include([
+                        path_func('<str:fin>/', _GetController.as_view()),
+                    ]),
+                ),
+            ]),
+        ),
+    ]
+    router = Router('api/<slug:version>/', patterns)
+
+    schema = build_schema(router).convert()
+
+    assert schema['paths']['/api/{version}/{tenant}/{month}/{fin}/']['get'][
+        'parameters'
+    ] == snapshot([
+        {
+            'name': 'version',
+            'in': 'path',
+            'schema': {
+                'type': 'string',
+                'pattern': '^(?:[-a-zA-Z0-9_]+)$',
+                'title': 'Version',
+            },
+            'required': True,
+        },
+        {
+            'name': 'tenant',
+            'in': 'path',
+            'schema': {'type': 'integer', 'title': 'Tenant'},
+            'required': True,
+        },
+        {
+            'name': 'month',
+            'in': 'path',
+            'schema': {'type': 'string', 'title': 'Month'},
+            'required': True,
+        },
+        {
+            'name': 'fin',
+            'in': 'path',
+            'schema': {'type': 'string', 'title': 'Fin'},
+            'required': True,
+        },
+    ])
