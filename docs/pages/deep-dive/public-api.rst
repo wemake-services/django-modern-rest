@@ -499,10 +499,6 @@ Collectors
   :members:
   :inherited-members:
 
-.. autofunction:: dmr.openapi.collector.controller_mapping_collector
-
-.. autofunction:: dmr.openapi.collector.collect_normalized_paths
-
 
 Existing OpenAPI views
 ~~~~~~~~~~~~~~~~~~~~~~

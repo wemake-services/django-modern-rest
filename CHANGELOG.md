@@ -90,6 +90,18 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `SyncOrAsyncAuth` and `SyncOrAsyncThrottle` changed `.resolve` parameter
   from *auth_cls* and *throttle_cls* respectively
   to *is_async* kw-parameter, #1562
+- `ComponentParserGenerator.__call__` signature was changed
+  to accept *route_metadata* and *controller_cls* instead
+  of *path* and *serializer*, #1502
+- `OperationIdGenerator.__call__` signature was changed
+  to accept *controller_cls* instead of *suffix*, #1502
+- `Controller.get_schema` signature was changed
+  to accept *route_metadata* instead of *path* and *route*, #1502
+- `Endpoint.get_schema` signature was changed
+  to accept *route_metadata* instead of *path* and *route*, #1502
+- `Endpoint.get_operation_id` was removed, instead customize
+  the `OperationIdGenerator` instance or `operation_id` metadata parameter
+  to the endpoint, #1502
 
 ### Performance improvements
 
@@ -270,7 +282,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Fixed that `pydantic` serializer was not dumping `@dataclass`
   instances correctly without `msgspec` installed, #1560
 - Fixed `@modify` and `@validate` types: now `tags`, `servers`,
-  and `extra_responses` are types as `Sequence`, not as `list`, #1563
+  and `extra_responses` are typed as `Sequence`, not as `list`, #1563
+- Fixed nested `Router` patterns OpenAPI parameter spec generation, #1502
 
 
 ## 0.15.0 (2026-09-11)
