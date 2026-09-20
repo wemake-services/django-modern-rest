@@ -3,15 +3,15 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast, overload
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
-from django.urls import include
+from django.urls import include, re_path
 from django.urls import path as _django_path
-from django.urls.resolvers import URLPattern, URLResolver
+from django.urls.resolvers import RegexPattern, URLPattern, URLResolver
 from django.utils.encoding import force_str
 from django.views import defaults
 
 from dmr.errors import ErrorType, format_error
 from dmr.exceptions import InternalServerError, NotAcceptableError
-from dmr.internal.routing import PrefixRoutePattern, RouterMetadata, URLExternal
+from dmr.internal.routing import PrefixRoutePattern, RouterMetadata
 from dmr.internal.types import FormatError, StrOrPromise
 from dmr.openapi.collector import (
     ExternalRouteMetadata,
@@ -81,7 +81,7 @@ class Router:
     def __init__(
         self,
         prefix: str = '',
-        urls: Iterable[_AnyPattern | URLExternal] = (),
+        urls: Iterable[_AnyPattern] = (),
         *,
         tags: Sequence[str] | None = None,
         deprecated: bool = False,
@@ -89,7 +89,7 @@ class Router:
     ) -> None:
         """Initialize a router with routes and optional OpenAPI metadata."""
         self.prefix = prefix
-        self.urls = self._maybe_process_external(urls)
+        self.urls = list(urls)
         self.tags = list(tags or [])
         self.deprecated = deprecated
         self.ignore_from_spec = ignore_from_spec
@@ -211,20 +211,7 @@ class Router:
         """
         return self._path_metadata[openapi_path]
 
-    def _maybe_process_external(
-        self,
-        urls: Iterable[_AnyPattern | URLExternal],
-    ) -> list[_AnyPattern]:
-        django_like_urls: list[_AnyPattern] = []
-        for url in urls:
-            if isinstance(url, URLExternal):
-                django_like_urls.append(url.get_url_with_metadata())
-            else:
-                django_like_urls.append(url)
-        return django_like_urls
 
-
-# TODO: support `external_re_path`
 def external_path(
     route: StrOrPromise,
     view: _DjangoView,
@@ -232,7 +219,7 @@ def external_path(
     openapi: PathItem | None,
     kwargs: dict[str, Any] | None = None,
     name: str | None = None,
-) -> URLExternal:
+) -> URLPattern:
     """
     Add an external path onto the DMR routing system.
 
@@ -249,10 +236,56 @@ def external_path(
     See :ref:`external-views` for more info.
 
     .. versionadded:: 0.13.0
+    .. versionchanged:: 0.16.0
+        Now it can be nested anywhere in the ``Router`` urls tree.
+
     """
-    return URLExternal(  # TODO: replace with a custom pattern
-        path(route, view, kwargs=kwargs, name=name),
-        openapi=openapi,
+
+    class _Pattern(PrefixRoutePattern):  # type: ignore[misc]  # noqa: WPS431
+        __dmr_external_openapi__ = openapi
+
+    return _django_path(  # type: ignore[call-overload, no-any-return]
+        route,
+        view,
+        kwargs=kwargs,
+        name=name,
+        Pattern=_Pattern,
+    )
+
+
+def external_re_path(
+    route: StrOrPromise,
+    view: _DjangoView,
+    *,
+    openapi: PathItem | None,
+    kwargs: dict[str, Any] | None = None,
+    name: str | None = None,
+) -> URLPattern:
+    """
+    Add an external path onto the DMR routing system.
+
+    Parameters:
+        route: String route for the view.
+        view: Function or class view, supports both sync and async callables.
+        openapi: OpenAPI metadata to show in the spec.
+            Or ``None`` to hide this endpoint.
+        kwargs: Init kwargs for the view.
+        name: Name to resolve this URL.
+
+    See :ref:`external-views` for more info.
+
+    .. versionadded:: 0.16.0
+    """
+
+    class _Pattern(RegexPattern):  # noqa: WPS431
+        __dmr_external_openapi__ = openapi
+
+    return re_path(  # type: ignore[call-overload, no-any-return]
+        route,
+        view,
+        kwargs=kwargs,
+        name=name,
+        Pattern=_Pattern,
     )
 
 

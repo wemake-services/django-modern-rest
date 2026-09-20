@@ -221,6 +221,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `slug` and `path` url converters now describe themselves in the schema:
   `slug` adds the `pattern` of its own regex,
   `path` adds a `description` about slashes, #1441
+- `external_path` can now be nested anywhere in the URL resolution tree, #1567
+- `external_re_path` was added to support the same use-case
+  as `external_path`, but for regex patterns, #1567
 
 ### Bugfixes
 

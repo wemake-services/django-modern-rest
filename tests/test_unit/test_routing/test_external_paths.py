@@ -5,14 +5,15 @@ import pydantic
 import pytest
 import yaml
 from django.http import HttpRequest, HttpResponse
-from django.urls import path
+from django.urls import URLPattern, include, path
 from django.views import View
+from inline_snapshot import snapshot
 from syrupy.assertion import SnapshotAssertion
 
 from dmr import Body, Controller
 from dmr.openapi import OpenAPIConfig, build_schema, load_schema, objects
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import Router, external_path
+from dmr.routing import Router, external_path, external_re_path
 
 
 def _external_func(request: HttpRequest) -> HttpResponse:
@@ -95,6 +96,68 @@ def test_external_paths_schema(  # noqa: WPS210
     )
 
 
+def test_external_re_paths_schema(  # noqa: WPS210
+    snapshot: SnapshotAssertion,
+    named_text_fixture: Callable[[str], str],
+) -> None:
+    """Ensure that schema is correct for external paths."""
+    external_openapi = yaml.safe_load(
+        named_text_fixture('django-allauth.yml'),
+    )
+
+    config = OpenAPIConfig(
+        title='Your Awesome Project',
+        version='0.1.0',
+        components=load_schema(
+            external_openapi['components'],
+            objects.Components,
+        ),
+    )
+
+    external_openapi_func = load_schema(
+        external_openapi['paths']['/_allauth/{client}/v1/config'],
+        objects.PathItem,
+    )
+
+    external_openapi_class = load_schema(
+        external_openapi['paths']['/_allauth/{client}/v1/auth/login'],
+        objects.PathItem,
+    )
+
+    router = Router(
+        'api/v1/',
+        urls=[
+            # Order is important:
+            external_re_path(
+                r'/allauth/(?P<client>\w+)/config',
+                _external_func,
+                openapi=external_openapi_func,
+            ),
+            path('/async', _AsyncController.as_view()),
+            external_re_path(
+                r'/allauth/(?P<client>\w+)/auth/login',
+                _ExternalClass.as_view(),
+                openapi=external_openapi_class,
+            ),
+            # Won't be present in the final OpenAPI, because it is hidden:
+            external_re_path('/hidden', _hidden_func, openapi=None),
+        ],
+        tags=['custom'],
+    )
+
+    assert len(router.urls) == 4
+    assert (
+        json.dumps(
+            build_schema(
+                router,
+                config=config,
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
 class _User(pydantic.BaseModel):
     email: str
 
@@ -121,12 +184,57 @@ def test_external_paths_schema_duplicate() -> None:
         build_schema(router, config=config)
 
 
-def test_external_path_ignored_with_router() -> None:
+@pytest.mark.parametrize(
+    'path_func',
+    [
+        external_re_path,
+        external_path,
+    ],
+)
+def test_external_path_deeply_nested(
+    *,
+    path_func: Callable[..., URLPattern],
+) -> None:
     """Ensure that router visibility applies to external paths."""
     router = Router(
         prefix='api/',
         urls=[
-            external_path(
+            path(
+                'v1/',
+                include([
+                    path_func(
+                        'external/',
+                        _external_func,
+                        openapi=objects.PathItem(description='Test'),
+                    ),
+                ]),
+            ),
+        ],
+    )
+
+    schema = build_schema(router)
+
+    assert schema.paths == snapshot({
+        '/api/v1/external/': objects.PathItem(description='Test'),
+    })
+
+
+@pytest.mark.parametrize(
+    'path_func',
+    [
+        external_re_path,
+        external_path,
+    ],
+)
+def test_external_path_ignored_with_router(
+    *,
+    path_func: Callable[..., URLPattern],
+) -> None:
+    """Ensure that router visibility applies to external paths."""
+    router = Router(
+        prefix='api/',
+        urls=[
+            path_func(
                 'external/',
                 _external_func,
                 openapi=objects.PathItem(),
