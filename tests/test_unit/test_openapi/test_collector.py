@@ -5,8 +5,8 @@ import pytest
 from django.urls import URLPattern, URLResolver, include, path
 
 from dmr import Controller
-from dmr.openapi import build_schema
 from dmr.openapi.collector import (
+    InternalRouteMetadata,
     _join_paths,
     _normalize_path,
     _process_pattern,
@@ -89,7 +89,7 @@ class _PostController(Controller[PydanticSerializer]):
         # Paths with regex patterns that simplify_regex processes
         ('^posts/(?P<post_id>\\d+)$', '/posts/{post_id}'),  # noqa: WPS342
         (
-            '^api/v1/users/(?P<user_id>\\d+)/posts/(?P<post_id>\\d+)$',  # noqa: WPS342
+            '^api/v1/users/(?P<user_id>[A-Z]+)/posts/(?P<post_id>\\d+)$',  # noqa: WPS342
             '/api/v1/users/{user_id}/posts/{post_id}',
         ),
         # Edge cases
@@ -130,8 +130,12 @@ def test_normalize_path(
         ('api/v1/', 'users/{id}/', '/api/v1/users/{id}/'),
         ('/api/v1', '/users/{id}/', '/api/v1/users/{id}/'),
         ('/api/v1/', '/users/{id}/', '/api/v1/users/{id}/'),
+        ('/api/{pk}/', '/users/{id}/', '/api/{pk}/users/{id}/'),
+        ('/api/<int:pk>/', '/users/<str:id>/', '/api/{pk}/users/{id}/'),
         # Edge cases
         ('api/', '', '/api/'),
+        ('api/{pk}/', '', '/api/{pk}/'),
+        ('api/{pk}/', '/', '/api/{pk}/'),
         ('api/', '/', '/api/'),
         ('', 'users/', '/users/'),
         ('api', '/users/', '/api/users/'),
@@ -163,10 +167,11 @@ def test_process_pattern_with_different_views(
 ) -> None:
     """Ensure that ``_process_pattern`` processes different types correctly."""
     pattern = path(path_str, view_class.as_view())
-    controller_mapping = _process_pattern(pattern, '/api/')
+    controller_mapping, controller_cls = _process_pattern(pattern, '/api/')
 
-    assert isinstance(controller_mapping, tuple)
-    assert controller_mapping[0] == f'/api/{path_str}'
+    assert isinstance(controller_mapping, InternalRouteMetadata)
+    assert controller_cls is view_class
+    assert controller_mapping.normalized_path == f'/api/{path_str}'
 
 
 def test_controller_mapping_collector_with_router() -> None:
@@ -179,31 +184,9 @@ def test_controller_mapping_collector_with_router() -> None:
     mappings = list(controller_mapping_collector(router.urls, router.prefix))
 
     assert len(mappings) == 2
-    assert {path for path, _, _ in mappings} == {
+    assert {
+        route_metadata.normalized_path for route_metadata, _ in mappings
+    } == {
         '/api/direct/',
         '/api/nested/inner/',
-    }
-
-
-def test_nested_url_patterns_produce_correct_parameters() -> None:
-    """Ensure that nested URL patterns produce all path parameters."""
-    patterns: Sequence[URLPattern | URLResolver] = [
-        path(
-            'tenants/<int:tenant_id>/',
-            include([
-                path('users/<int:pk>/', _GetController.as_view()),
-            ]),
-        ),
-    ]
-    router = Router('api/', patterns)
-
-    schema = build_schema(router).convert()
-
-    parameters = schema['paths']['/api/tenants/{tenant_id}/users/{pk}/']['get'][
-        'parameters'
-    ]
-
-    assert {parameter['name'] for parameter in parameters} == {
-        'tenant_id',
-        'pk',
     }

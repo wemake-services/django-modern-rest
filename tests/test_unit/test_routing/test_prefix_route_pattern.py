@@ -2,7 +2,8 @@ import pytest
 from django.http import HttpRequest, HttpResponse
 from django.urls import include
 
-from dmr.routing import _PrefixRoutePattern, path
+from dmr.internal.routing import PrefixRoutePattern
+from dmr.routing import path
 
 
 def _simple_view(request: HttpRequest) -> HttpResponse:
@@ -66,7 +67,7 @@ def test_path(
 ) -> None:
     """Ensures that prefix-optimized ``path`` works."""
     url_pattern = path(prefix, include(([path(nested, _simple_view)], 'app')))
-    assert isinstance(url_pattern.pattern, _PrefixRoutePattern)
+    assert isinstance(url_pattern.pattern, PrefixRoutePattern)
     matched = url_pattern.pattern.match(input_path)
     if expected_capture is None:
         assert matched is None
@@ -81,7 +82,7 @@ def test_path(
 def test_path_exact_match() -> None:
     """Ensures that static ``path`` matches exactly."""
     url_pattern = path('users/', _simple_view)
-    assert isinstance(url_pattern.pattern, _PrefixRoutePattern)
+    assert isinstance(url_pattern.pattern, PrefixRoutePattern)
 
     matched = url_pattern.pattern.match('users/')
     assert matched == ('', (), {})

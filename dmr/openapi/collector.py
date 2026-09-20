@@ -1,9 +1,10 @@
+import dataclasses
 import re
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Final, TypeAlias
+from typing import TYPE_CHECKING, Any, Final, TypeAlias, final
 
 from django.urls import URLPattern, URLResolver
-from django.urls.resolvers import RoutePattern
+from django.urls.resolvers import RegexPattern, RoutePattern
 
 from dmr.openapi.objects import PathItem
 
@@ -12,17 +13,9 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 _AnyPattern: TypeAlias = URLPattern | URLResolver
-_PathControllerSpec: TypeAlias = (
-    tuple[
-        str,
-        URLPattern,
-        'Controller[BaseSerializer]',
-    ]
-    | tuple[
-        str,
-        PathItem | None,  # None used to disable external view from spec
-        None,
-    ]
+_RouteMetadata: TypeAlias = (
+    tuple['InternalRouteMetadata', type['Controller[BaseSerializer]']]
+    | tuple['ExternalRouteMetadata', None]
 )
 
 _PATH_PATTERN: Final = re.compile(
@@ -33,8 +26,7 @@ _PATH_PATTERN: Final = re.compile(
 def controller_mapping_collector(
     urls: Iterable[_AnyPattern],
     base_path: str,
-    parent_route: str = '',
-) -> Iterable[_PathControllerSpec]:
+) -> Iterable[_RouteMetadata]:
     """
     Collect all API controllers from a router for OpenAPI generation.
 
@@ -46,21 +38,19 @@ def controller_mapping_collector(
     The function traverses the entire URL configuration tree, handling both
     direct URL patterns and nested URL resolvers, to build a comprehensive
     list of all available API controllers.
+
+    Args:
+        urls: Iterable of URLs that we added to the ``Router``.
+        base_path: Common prefix that these URLs have. In a Django format.
+
     """
     for url in urls:
         if isinstance(url, URLPattern):
-            yield _process_pattern(
-                url,
-                base_path,
-                parent_route,
-            )
+            yield _process_pattern(url, base_path)
         else:
-            current_path = _join_paths(base_path, str(url.pattern))
-            current_route = f'{parent_route}{url.pattern}'
             yield from controller_mapping_collector(
                 url.url_patterns,
-                current_path,
-                current_route,
+                _join_paths(base_path, str(url.pattern), normalize=False),
             )
 
 
@@ -83,42 +73,116 @@ def collect_normalized_paths(
             )
 
 
+@dataclasses.dataclass(frozen=True, slots=True)
+class _BaseRouteMetadata:
+    path: str
+    is_regex: bool
+
+    _normalized_path: str | None = dataclasses.field(init=False, default=None)
+
+    @property
+    def normalized_path(self) -> str:
+        # We cache this one, because it is quite commonly used and is heavy.
+        if self._normalized_path is not None:
+            return self._normalized_path
+        normalized = _normalize_path(self.path)
+        object.__setattr__(self, '_normalized_path', normalized)  # noqa: PLC2801
+        return normalized
+
+    def regex(self) -> re.Pattern[str]:
+        assert self.is_regex, "Can't get regex from non-regex route metadata"  # noqa: S101
+        return RegexPattern(self.path, is_endpoint=True).regex
+
+    def converters(self) -> dict[str, Any]:
+        assert not self.is_regex, (  # noqa: S101
+            "Can't get converters from regex route metadata"
+        )
+        return RoutePattern(self.path, is_endpoint=True).converters
+
+
+@final
+@dataclasses.dataclass(frozen=True, slots=True)
+class InternalRouteMetadata(_BaseRouteMetadata):
+    """
+    Represents the metadata we need to create OpenAPI path parameters.
+
+    Used for regular DMR views and URLs.
+    It is not used for routing and is only needed for metadata.
+
+    .. versionadded:: 0.16.0
+    """
+
+
+@final
+@dataclasses.dataclass(frozen=True, slots=True)
+class ExternalRouteMetadata(_BaseRouteMetadata):
+    """
+    Represents the metadata we need to reuse external OpenAPI parameters.
+
+    Used for external views and URLs.
+    It is not used for routing and is only needed for metadata.
+
+    .. versionadded:: 0.16.0
+    """
+
+    #:
+    openapi: PathItem | None
+
+
 def _process_pattern(
     url_pattern: URLPattern,
     base_path: str,
-    parent_route: str = '',
-) -> _PathControllerSpec:
-    normalized = _join_paths(base_path, str(url_pattern.pattern))
-
-    if parent_route and isinstance(url_pattern.pattern, RoutePattern):
-        pattern = URLPattern(
-            RoutePattern(
-                f'{parent_route}{url_pattern.pattern}',
-                is_endpoint=True,
-            ),
-            url_pattern.callback,
-            url_pattern.default_args,
-            url_pattern.name,
-        )
-    else:
-        pattern = url_pattern
+) -> _RouteMetadata:
+    joined = _join_paths(base_path, str(url_pattern.pattern), normalize=False)
 
     try:
-        # Try the external url first, it is easier to detect:
-        return normalized, url_pattern.callback.__dmr_external_openapi__, None  # type: ignore[attr-defined]
+        # Try the external URL first, it is easier to detect:
+        return (
+            ExternalRouteMetadata(
+                joined,
+                is_regex=False,
+                openapi=url_pattern.callback.__dmr_external_openapi__,  # type: ignore[attr-defined]
+            ),
+            None,
+        )
     except AttributeError:
-        return normalized, pattern, url_pattern.callback.view_class  # type: ignore[attr-defined]
+        # Regular, non-external URL:
+        return (
+            InternalRouteMetadata(
+                joined,
+                is_regex=isinstance(url_pattern.pattern, RegexPattern),
+            ),
+            url_pattern.callback.view_class,  # type: ignore[attr-defined]
+        )
 
 
-def _join_paths(base_path: str, pattern_path: str) -> str:
+def _join_paths(
+    base_path: str,
+    pattern_path: str,
+    *,
+    normalize: bool = True,
+) -> str:
     if not pattern_path:
-        return _normalize_path(base_path)
+        return _normalize_path(base_path) if normalize else base_path
     base = base_path.rstrip('/')
     pattern = pattern_path.lstrip('/')
-    return _normalize_path(f'{base}/{pattern}' if base else pattern)
+    joined = f'{base}/{pattern}' if base else pattern
+    return _normalize_path(joined) if normalize else joined
 
 
 def _normalize_path(path: str) -> str:
+    """
+    Normalize Django path into OpenAPI path.
+
+    Here's the example of how it works:
+
+    .. code-block:: python
+
+        >>> _normalize_path('/api/users/<int:pk>/posts/<int:post>')
+        '/api/users/{pk}/posts/{post}'
+
+    .. versionadded:: 0.16.0
+    """
     # Heavy import:
     from django.contrib.admindocs.views import simplify_regex  # noqa: PLC0415
 

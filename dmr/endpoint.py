@@ -6,7 +6,6 @@ from functools import wraps
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from django.http import HttpResponse, HttpResponseBase
-from django.urls import URLPattern
 
 from dmr.exceptions import (
     DataRenderingError,
@@ -27,6 +26,7 @@ from dmr.internal.endpoint import request_endpoint as request_endpoint
 from dmr.internal.endpoint import validate as validate
 from dmr.metadata import EndpointMetadata, ResponseModification
 from dmr.negotiation import RequestNegotiator, ResponseNegotiator
+from dmr.openapi.collector import InternalRouteMetadata
 from dmr.openapi.objects import Operation
 from dmr.response import APIError, RedirectTo
 from dmr.security.base import AsyncAuth, SyncAuth
@@ -267,8 +267,7 @@ class Endpoint:  # noqa: WPS214
 
     def get_schema(
         self,
-        path: str,
-        pattern: URLPattern,
+        route_metadata: InternalRouteMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
         router: 'Router',
@@ -279,22 +278,22 @@ class Endpoint:  # noqa: WPS214
         .. versionchanged:: 0.16.0
             Now accepts *controller_cls* parameter instead
             of *controller_name* and *serializer*.
+            Changed *path* and *pattern* parameters to be *route_metadata*.
 
         """
-        operation_id = self.get_operation_id(
-            path,
-            controller_cls.__qualname__,
-            controller_cls.serializer,
-            context,
+        operation_id = context.generators.operation_id(
+            route_metadata.normalized_path,
+            self.metadata,
+            controller_cls,
         )
         request_body, params_list = context.generators.component_parsers(
             operation_id,
-            pattern,
+            route_metadata,
             self.metadata,
-            controller_cls.serializer,
+            controller_cls,
         )
 
-        router_metadata = router.metadata_for(path)
+        router_metadata = router.metadata_for(route_metadata.normalized_path)
         tags = [
             *router_metadata.tags,
             *(self.metadata.tags or []),
@@ -329,21 +328,6 @@ class Endpoint:  # noqa: WPS214
                 controller_cls,
             ),
             parameters=params_list,
-        )
-
-    def get_operation_id(
-        self,
-        path: str,
-        controller_name: str,
-        serializer: type[BaseSerializer],
-        context: 'OpenAPIContext',
-    ) -> str:
-        """Customize how OperationId is generated for the OpenAPI."""
-        return context.generators.operation_id(
-            path,
-            controller_name,
-            self.metadata,
-            serializer,
         )
 
     def _async_endpoint(
