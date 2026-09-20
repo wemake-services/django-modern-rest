@@ -1,37 +1,11 @@
 import dataclasses
 from typing import TYPE_CHECKING, Any, Self, TypeAlias, final
 
-from django.urls.resolvers import RoutePattern, URLPattern
+from django.urls.resolvers import RoutePattern
 from typing_extensions import override
-
-from dmr.openapi.objects import PathItem
 
 if TYPE_CHECKING:
     from dmr.routing import Router
-
-
-@final
-@dataclasses.dataclass(slots=True, frozen=True)
-class URLExternal:
-    """
-    Represents an external URL that was added to the routing of DMR.
-
-    Prefer :func:`external_path` over using this class directly.
-    See :ref:`external-views` for more info.
-
-    .. versionadded:: 0.13.0
-    .. versionchanged:: 0.14.0
-        Moved to internal and made protected.
-
-    """
-
-    url: URLPattern
-    openapi: PathItem | None = dataclasses.field(kw_only=True)
-
-    def get_url_with_metadata(self) -> URLPattern:
-        """Get the url pattern with attached OpenAPI metadata."""
-        self.url.callback.__dmr_external_openapi__ = self.openapi  # type: ignore[attr-defined]
-        return self.url
 
 
 @final

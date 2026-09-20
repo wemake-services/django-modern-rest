@@ -138,6 +138,8 @@ Routing
 
 .. autofunction:: dmr.routing.external_path
 
+.. autofunction:: dmr.routing.external_re_path
+
 
 Meta mixins
 -----------

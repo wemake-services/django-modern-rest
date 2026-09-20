@@ -141,7 +141,7 @@ def _process_pattern(
             ExternalRouteMetadata(
                 joined,
                 is_regex=False,
-                openapi=url_pattern.callback.__dmr_external_openapi__,  # type: ignore[attr-defined]
+                openapi=url_pattern.pattern.__dmr_external_openapi__,  # type: ignore[union-attr]
             ),
             None,
         )

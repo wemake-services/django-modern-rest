@@ -72,10 +72,16 @@ pure-Django API views, attach this to existing schema as:
   See :meth:`dmr.openapi.openapi.OpenAPI.convert`
   and :meth:`dmr.openapi.views.base.OpenAPIView.as_view`.
 
-The main feature that allows us to do this is :func:`dmr.routing.external_path`.
-It follows the same API design as :func:`django.urls.path`,
-but also requires ``openapi`` kw-only parameter
-to be passed together with other regular ``path()`` parameters.
+The main feature that allows us to do this are two functions:
+
+- :func:`dmr.routing.external_path` for regular routes with converters,
+  like :func:`django.urls.path`
+- :func:`dmr.routing.external_re_path` for ``regex`` based routes,
+  like :func:`django.urls.re_path`
+
+They follow the same API design as regular ``path`` functions,
+but also require ``openapi`` kw-only parameter
+to be passed together with other regular parameters.
 
 Functional example
 ~~~~~~~~~~~~~~~~~~
@@ -109,6 +115,13 @@ Mixing URLs
 
 Since we just work with regular Django URLs, you can mix
 :func:`django.urls.path` and :func:`dmr.routing.external_path` items.
+
+.. note::
+
+  Both :func:`dmr.routing.external_path`
+  and :func:`dmr.routing.external_re_path`
+  return regular ``URLPattern`` objects.
+  They can be used like any regular Django ``path()`` objects.
 
 Order of passed urls is preserved:
 
