@@ -568,7 +568,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             to be *route_metadata* instead.
 
         """
-        assert not cls.is_abstract, f"Can't include abstact controller: {cls}"  # noqa: S101
+        assert not cls.is_abstract, f"Can't include abstract controller: {cls}"  # noqa: S101
         operations: dict[str, Operation] = {}
         for method, endpoint in cls.api_endpoints.items():
             if endpoint.metadata.ignore_from_spec:
