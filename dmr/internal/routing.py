@@ -1,7 +1,8 @@
 import dataclasses
-from typing import TYPE_CHECKING, Any, Self, TypeAlias, final, override
+from typing import TYPE_CHECKING, Any, Self, TypeAlias, final
 
 from django.urls.resolvers import RoutePattern, URLPattern
+from typing_extensions import override
 
 from dmr.openapi.objects import PathItem
 
