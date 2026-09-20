@@ -1,8 +1,8 @@
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from typing import Any
 
 import pytest
-from django.urls import URLPattern, URLResolver, include, re_path
+from django.urls import include, re_path
 from django.urls import path as django_path
 from inline_snapshot import snapshot
 
@@ -21,15 +21,17 @@ class _GetController(Controller[PydanticSerializer]):
 
 def test_nested_url_patterns() -> None:
     """Ensure that nested URL patterns produce all path parameters."""
-    patterns: Sequence[URLPattern | URLResolver] = [
-        path(
-            'tn/<int:tenant>/',
-            include([
-                path('us/<path:pk>/', _GetController.as_view()),
-            ]),
-        ),
-    ]
-    router = Router('api/<slug:version>/', patterns)
+    router = Router(
+        'api/<slug:version>/',
+        [
+            path(
+                'tn/<int:tenant>/',
+                include([
+                    path('us/<path:pk>/', _GetController.as_view()),
+                ]),
+            ),
+        ],
+    )
 
     schema = build_schema(router).convert()
 
@@ -71,20 +73,22 @@ def test_deeply_nested_url_patterns(
     path_func: Callable[..., Any],
 ) -> None:
     """Ensure that nested URL patterns produce all path parameters."""
-    patterns: Sequence[URLPattern | URLResolver] = [
-        path_func(
-            '<int:tenant>/',
-            include([
-                path_func(
-                    '<path:pk>/',
-                    include([
-                        path_func('<str:fin>/', _GetController.as_view()),
-                    ]),
-                ),
-            ]),
-        ),
-    ]
-    router = Router('api/<slug:version>/', patterns)
+    router = Router(
+        'api/<slug:version>/',
+        [
+            path_func(
+                '<int:tenant>/',
+                include([
+                    path_func(
+                        '<path:pk>/',
+                        include([
+                            path_func('<str:fin>/', _GetController.as_view()),
+                        ]),
+                    ),
+                ]),
+            ),
+        ],
+    )
 
     schema = build_schema(router).convert()
 
@@ -128,20 +132,22 @@ def test_deeply_nested_url_patterns(
 
 def test_deeply_nested_url_re_patterns() -> None:
     """Ensure that nested URL patterns produce all re_path parameters."""
-    patterns: Sequence[URLPattern | URLResolver] = [
-        re_path(
-            r'(?P<year>[0-9]{4})/',
-            include([
-                re_path(
-                    r'(?P<month>\d+)/',
-                    include([
-                        re_path(r'(?P<day>\w+)/', _GetController.as_view()),
-                    ]),
-                ),
-            ]),
-        ),
-    ]
-    router = Router(r'api/(?P<slug>[\w-]+)/', patterns)
+    router = Router(
+        r'api/(?P<slug>[\w-]+)/',
+        [
+            re_path(
+                r'(?P<year>[0-9]{4})/',
+                include([
+                    re_path(
+                        r'(?P<month>\d+)/',
+                        include([
+                            re_path(r'(?P<day>\w+)/', _GetController.as_view()),
+                        ]),
+                    ),
+                ]),
+            ),
+        ],
+    )
 
     schema = build_schema(router).convert()
 
@@ -197,20 +203,22 @@ def test_deeply_nested_mixed_url_patterns(
     path_func: Callable[..., Any],
 ) -> None:
     """Ensure that nested URL patterns produce all path parameters."""
-    patterns: Sequence[URLPattern | URLResolver] = [
-        path_func(
-            '<int:tenant>/',
-            include([
-                re_path(
-                    r'(?P<month>\d+)/',
-                    include([
-                        path_func('<str:fin>/', _GetController.as_view()),
-                    ]),
-                ),
-            ]),
-        ),
-    ]
-    router = Router('api/<slug:version>/', patterns)
+    router = Router(
+        'api/<slug:version>/',
+        [
+            path_func(
+                '<int:tenant>/',
+                include([
+                    re_path(
+                        r'(?P<month>\d+)/',
+                        include([
+                            path_func('<str:fin>/', _GetController.as_view()),
+                        ]),
+                    ),
+                ]),
+            ),
+        ],
+    )
 
     schema = build_schema(router).convert()
 

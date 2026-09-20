@@ -228,8 +228,8 @@ class ComponentParserGenerator:  # noqa: WPS214
         assert route_metadata.is_regex  # noqa: S101
         regex = route_metadata.regex()
         schema = dict.fromkeys(regex.groupindex, str)
-        if schema:
-            return self._add_group_patterns(
+        return (
+            self._add_group_patterns(
                 self._context.generators.parameter(
                     TypedDict(f'{operation_id}_RePath', schema),  # type: ignore[operator]
                     (),
@@ -239,7 +239,8 @@ class ComponentParserGenerator:  # noqa: WPS214
                 ),
                 regex.pattern,
             )
-        return None
+            or None
+        )
 
     def _add_converter_schemas(
         self,
