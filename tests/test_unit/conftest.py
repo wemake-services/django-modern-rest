@@ -1,13 +1,19 @@
 import json
 from collections.abc import Callable
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
 from inline_snapshot import snapshot
 
-CsrfFailureAssertion: TypeAlias = Callable[[HttpResponse], None]
+if TYPE_CHECKING:
+    from django.test.client import _MonkeyPatchedWSGIResponse
+
+CsrfFailureAssertion: TypeAlias = Callable[
+    ['HttpResponse | _MonkeyPatchedWSGIResponse'],
+    None,
+]
 
 
 @pytest.fixture(
@@ -21,14 +27,14 @@ def assert_csrf_failure_message(
     """Assert CSRF failure message according to debug mode setting."""
     settings.DEBUG = request.param
 
-    def factory(response: HttpResponse) -> None:
+    def factory(response: 'HttpResponse | _MonkeyPatchedWSGIResponse') -> None:
         if settings.DEBUG:
-            assert json.loads(response.content) == snapshot({
+            assert json.loads(response.content) == {
                 'detail': [{'msg': 'CSRF Failed: CSRF cookie not set.'}],
-            })
+            }
         else:
-            assert json.loads(response.content) == snapshot({
+            assert json.loads(response.content) == {
                 'detail': [{'msg': 'CSRF Failed.'}],
-            })
+            }
 
     return factory

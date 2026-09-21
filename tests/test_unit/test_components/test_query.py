@@ -156,7 +156,7 @@ class _EnableCastNullController(
 def test_default_cast_null(
     dmr_rf: DMRRequestFactory,
     *,
-    controller_cls: Controller[PydanticSerializer],
+    controller_cls: type[Controller[PydanticSerializer]],
     expected_query_value: str | None,
 ) -> None:
     """Ensures that query casts 'null' to None or not."""

@@ -5,6 +5,7 @@ from collections.abc import Callable, Iterator
 
 import freezegun
 import pytest
+from django.conf import LazySettings
 from django.http import HttpRequest
 from django.middleware.csrf import get_token
 from django.utils import translation
@@ -34,13 +35,15 @@ def reset_language() -> Iterator[None]:
 
 
 @pytest.fixture
-def fill_csrf() -> Callable[[HttpRequest], HttpRequest]:
+def fill_csrf(
+    settings: LazySettings,  # noqa: F811
+) -> Callable[[HttpRequest], HttpRequest]:
     """Fill CSRF parameters for the prepared request."""
 
     def factory(request: HttpRequest) -> HttpRequest:
         csrf_token = get_token(request)
-        request.META['HTTP_X_CSRFTOKEN'] = csrf_token
-        request.COOKIES['csrftoken'] = csrf_token
+        request.META[settings.CSRF_HEADER_NAME] = csrf_token
+        request.COOKIES[settings.CSRF_COOKIE_NAME] = csrf_token
         return request
 
     return factory
