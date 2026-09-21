@@ -6,6 +6,7 @@ from dmr.exceptions import EndpointMetadataError
 from dmr.internal.enums import stringify
 from dmr.metadata import ResponseSpec, ResponseSpecProvider
 from dmr.openapi import OpenAPIConfig
+from dmr.openapi.objects import SecurityRequirement
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.security import AsyncAuth, SyncAuth, SyncOrAsyncAuth
@@ -24,12 +25,16 @@ class _SettingsModel(SettingsDict, total=False):
     """
     Settings model that can be validated by our serializers.
 
-    We redefine all unsupported fields with ``Any`` types here.
+    We redefine all unsupported fields with ``Any``
+    or with concretely-resolvable types here.
     """
 
     parsers: Sequence[Any]
     renderers: Sequence[Any]
     auth: Sequence[Any]
+    # Redefined to resolve the forward reference: in `dmr.settings`
+    # `SecurityRequirement` is only imported for type checking.
+    security: Sequence[SecurityRequirement]
     throttling: Sequence[Any]
     responses: Sequence[Any]
     semantic_schema_providers: Sequence[Any]

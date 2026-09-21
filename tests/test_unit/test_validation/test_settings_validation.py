@@ -39,6 +39,8 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
         {'renderers': [None]},
         {'validate_negotiation': 'true'},
         {'auth': ['auth']},
+        {'security': 'proxy'},
+        {'security': [1]},
         {'throttling': ['throttling']},
         {'responses': [{}]},
         {'semantic_schema_providers': [None]},

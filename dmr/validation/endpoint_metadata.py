@@ -5,6 +5,7 @@ import warnings
 from collections.abc import (
     Callable,
     ItemsView,
+    Mapping,
     Sequence,
     Set,
 )
@@ -59,6 +60,7 @@ from dmr.validation.payload import (
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.errors import AsyncErrorHandler, SyncErrorHandler
+    from dmr.openapi.objects import SecurityRequirement
 
 #: Regex expression to match allowed chars in tokens
 #: For header and cookie names.
@@ -467,6 +469,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             tags=self._build_tags(payload.tags),
             operation_id=payload.operation_id,
             deprecated=payload.deprecated,
+            security=self._build_security(),
             external_docs=payload.external_docs,
             callbacks=payload.callbacks,
             servers=None if payload.servers is None else list(payload.servers),
@@ -531,6 +534,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             tags=self._build_tags(payload.tags),
             operation_id=payload.operation_id,
             deprecated=payload.deprecated,
+            security=self._build_security(),
             external_docs=payload.external_docs,
             callbacks=payload.callbacks,
             servers=None if payload.servers is None else list(payload.servers),
@@ -589,6 +593,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             tags=self._build_tags(None),
             operation_id=None,
             deprecated=False,
+            security=self._build_security(),
             external_docs=None,
             callbacks=None,
             servers=None,
@@ -717,6 +722,63 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         ):
             return None
         return auth
+
+    def _build_security(self) -> list['SecurityRequirement'] | None:
+        payload = self.payload
+        controller_security = self.controller_cls.security
+        payload_security = None if payload is None else payload.security
+        # Settings values are validated by `SettingsValidator`,
+        # these two are the only ones we have to check ourselves:
+        self._validate_security(payload_security)
+        self._validate_security(controller_security)
+
+        security: list[SecurityRequirement] = []
+        for requirement in (
+            *(payload_security or ()),
+            *(controller_security or ()),
+            *resolve_setting(Settings.security),
+        ):
+            if requirement not in security:
+                security.append(requirement)
+
+        # We are doing this as late as possible to still
+        # have the full validation logic even if some value is None.
+        if (
+            (payload is not None and payload.security is None)
+            or controller_security is None
+            # Nothing was configured on any level,
+            # so there is no user provided security at all.
+            or not security
+        ):
+            return None
+        return security
+
+    def _validate_security(
+        self,
+        security: Sequence['SecurityRequirement'] | None,
+    ) -> None:
+        # Users can pass anything here, `None` means that security
+        # is disabled, it is checked later in `_build_security`.
+        if security is None:
+            return
+        # Strings and bytes are sequences as well, but not of requirements:
+        if isinstance(
+            security,
+            (str, bytes, bytearray, Mapping),  # pyright: ignore[reportUnnecessaryIsInstance]
+        ) or not isinstance(security, Sequence):  # pyright: ignore[reportUnnecessaryIsInstance]
+            raise EndpointMetadataError(
+                '`security` must be a list of security requirements, '
+                f'got {security!r} for {self.endpoint_name=}',
+            )
+        if not all(
+            isinstance(requirement, dict)  # pyright: ignore[reportUnnecessaryIsInstance]
+            for requirement in security
+        ):
+            raise EndpointMetadataError(
+                'All security requirements must be dicts of scheme names '
+                f'to lists of scopes, got {security!r} '
+                f'for {self.endpoint_name=}',
+            )
 
     def _build_throttling(  # noqa: WPS210, WPS231
         self,

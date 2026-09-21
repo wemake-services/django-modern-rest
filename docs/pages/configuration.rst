@@ -501,6 +501,29 @@ OpenAPI
     ...     ),
     ... }
 
+.. data:: dmr.settings.Settings.security
+
+  Default: ``[]``
+
+  Extra OpenAPI security requirements for all endpoints of your API.
+
+  Use it to document security mechanisms that are not implemented
+  by ``auth``, like an API gateway or a service mesh:
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> DMR_SETTINGS = {
+    ...     Settings.security: [{'gateway': []}],
+    ... }
+
+  These requirements are merged with the controller-level
+  and endpoint-level ones. They only affect the generated schema,
+  never the runtime auth. See :ref:`customizing_security_openapi`
+  for the full set of rules.
+
+  .. versionadded:: 0.16.0
+
 .. data:: dmr.settings.Settings.openapi_examples_seed
 
   Default: ``None``

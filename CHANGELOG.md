@@ -102,6 +102,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `Endpoint.get_operation_id` was removed, instead customize
   the `OperationIdGenerator` instance or `operation_id` metadata parameter
   to the endpoint, #1502
+- `EndpointMetadata` has a new required `security` field,
+  pass it explicitly if you construct this object by hand, #1499
 
 ### Performance improvements
 
@@ -161,6 +163,13 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   customization through context subclasses, #1461, #1487, #1556
 - Added class-level overrides for `ProblemDetailsModel`
   in `ProblemDetailsError`, #1556
+- Added `security` OpenAPI setting, controller attribute,
+  and `@modify` / `@validate` argument to document security mechanisms
+  that are not implemented by `auth`: API gateways, service meshes, etc.
+  All three levels are merged together and added after the requirements
+  generated from `auth`. Schemes used there must be declared
+  in `components` of `OpenAPIConfig`, and they must not reuse
+  the scheme names that `auth` generates, #1499
 - `summary` and `description` of a `PathItem` are now parsed
   from the controller's docstring, just like they are parsed
   from the endpoint's docstring for an `Operation`.
