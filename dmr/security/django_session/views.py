@@ -62,6 +62,7 @@ class DjangoSessionSyncController(
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
     responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(
+            # TODO: move to `modify_spec`, so we can customize the error model
             return_type=ErrorModel,
             status_code=HTTPStatus.UNAUTHORIZED,
         ),
