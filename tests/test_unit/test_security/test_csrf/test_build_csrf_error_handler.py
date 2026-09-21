@@ -1,6 +1,6 @@
 import json
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pytest
 from django.http import HttpRequest, HttpResponse

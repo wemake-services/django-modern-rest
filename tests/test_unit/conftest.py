@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, TypeAlias
 import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
-from inline_snapshot import snapshot
 
 if TYPE_CHECKING:
     from django.test.client import _MonkeyPatchedWSGIResponse
