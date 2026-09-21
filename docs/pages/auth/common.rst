@@ -1,3 +1,5 @@
+.. _authentication:
+
 How authentication works
 ========================
 

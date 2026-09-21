@@ -181,6 +181,12 @@ If you need granular control, you can change anything.
 - :attr:`~dmr.controller.Controller.csrf_exempt`
   to customize whether or not this controller is exempted from CSRF.
   See :ref:`controller-csrf` for more info
+- :attr:`~dmr.controller.Controller.login_required`
+  to customize whether or not login is required for this controller.
+  By default, login is not required for this controller to exempt it
+  from Django's ``LoginRequiredMiddleware``.
+  Users should make use of authentication in ``django-modern-rest``.
+  See :ref:`authentication` for more details.
 - :attr:`~dmr.controller.Controller.controller_validator_cls`
   to customize how this controller is validated at import time
 - :attr:`~dmr.controller.Controller.annotations_context`

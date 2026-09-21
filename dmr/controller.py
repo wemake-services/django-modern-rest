@@ -128,7 +128,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             to configure the CSRF correctly to support REST responses.
             It is only supported on the controller level, because
             it has its own per-method logic
-            inside the original Django's CSRF middleware.
+            inside Django's original CSRF middleware.
+        login_required: Should this controller require the user to be logged in?
+            Is ``False`` by default.
+            Users should make use of authentication in ``django-modern-rest``.
+            See :ref:`authentication` for more details.
         summary: A short summary of what this path item does.
             Defaults to the first paragraph of the controller's docstring.
             Set it to ``None`` to have no summary at all.
@@ -157,6 +161,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     )
     api_endpoints: ClassVar[Mapping[str, Endpoint]]
     csrf_exempt: ClassVar[bool] = True
+    login_required: ClassVar[bool] = False
     serializer: ClassVar[type[BaseSerializer]]
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
     no_validate_http_spec: ClassVar[Set[HttpSpec] | None] = frozenset()
@@ -228,6 +233,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         authentication will still be explicitly validated for CSRF,
         while all other authentication methods will be CSRF-exempt.
 
+        This override also applies whether a login is required or not.
+        By default, login is not required
+        to exempt the view from Django's ``LoginRequiredMiddleware``.
+        Users should make use of authentication in ``django-modern-rest``.
+        See :ref:`authentication` for more details.
+
         Raises:
             EndpointMetadataError: When called on an abstract controller,
                 because it has nothing to serve.
@@ -237,6 +248,10 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             Abstract controllers now raise
             :class:`~dmr.exceptions.EndpointMetadataError`
             instead of silently returning a broken view.
+
+            Controllers now set ``login_required`` to ``False`` by default
+            in order to exempt controllers from
+            Django's ``LoginRequiredMiddleware``.
 
         """
         if cls.is_abstract:
@@ -251,6 +266,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         view = super().as_view(**initkwargs)
         if cls.csrf_exempt:
             view.csrf_exempt = True  # type: ignore[attr-defined]
+        # Apply login requirement to the view.
+        # By default, login is not required to exempt the view
+        # from Django's `LoginRequiredMiddleware`.
+        view.login_required = cls.login_required  # type: ignore[attr-defined]
+
         return view
 
     @override

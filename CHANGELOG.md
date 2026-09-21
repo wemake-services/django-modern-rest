@@ -26,6 +26,10 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Breaking changes
 
+- `Controller` now sets `login_required = False` by default in order to
+  exempt controllers from Django's `LoginRequiredMiddleware`.
+  Users should configure authentication in `django-modern-rest` for controllers.
+  See https://django-modern-rest.readthedocs.io/en/latest/pages/auth/common.html.
 - `Controller.as_view` now raises `EndpointMetadataError`
   when it is called on an abstract controller: one without
   an exact serializer type or without any endpoints.
