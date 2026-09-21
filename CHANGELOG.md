@@ -102,6 +102,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `Endpoint.get_operation_id` was removed, instead customize
   the `OperationIdGenerator` instance or `operation_id` metadata parameter
   to the endpoint, #1502
+- `jwt_ensure_csrf` was removed from reusable JWT cookie views,
+  it is now always mandatory, #1574
 
 ### Performance improvements
 
