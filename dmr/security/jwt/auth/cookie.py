@@ -30,7 +30,7 @@ DEFAULT_ACCESS_COOKIE: Final = 'access_token'
 DEFAULT_REFRESH_COOKIE: Final = 'refresh_token'
 
 
-class _BaseCookieJWTAuth(ResponseSpecProvider):
+class _BaseCookieJWTAuth(ResponseSpecProvider):  # noqa: WPS214
     """Reads jwt tokens from a request cookie."""
 
     # Slots are declared on the concrete classes below,
@@ -102,13 +102,6 @@ class _BaseCookieJWTAuth(ResponseSpecProvider):
             ),
         ]
 
-    # TODO: refactor this to be a mixin type, it is repeated several times
-    def _uses_csrf_cookie(self) -> bool:
-        return not settings.CSRF_USE_SESSIONS
-
-    def _is_safe_http_method(self, metadata: EndpointMetadata) -> bool:
-        return metadata.method.upper() in SAFE_HTTP_METHODS
-
     def get_token_from_request(self, request: HttpRequest) -> str | None:
         """Read the raw jwt token from a cookie."""
         return request.COOKIES.get(self.cookie_name)
@@ -121,6 +114,13 @@ class _BaseCookieJWTAuth(ResponseSpecProvider):
         ``Bearer`` prefix to strip.
         """
         return header or None
+
+    # TODO: refactor this to be a mixin type, it is repeated several times
+    def _uses_csrf_cookie(self) -> bool:
+        return not settings.CSRF_USE_SESSIONS
+
+    def _is_safe_http_method(self, metadata: EndpointMetadata) -> bool:
+        return metadata.method.upper() in SAFE_HTTP_METHODS
 
     def _ensure_csrf(self, controller: 'Controller[BaseSerializer]') -> None:
         # CSRF is only enforced when the cookie is actually present.
