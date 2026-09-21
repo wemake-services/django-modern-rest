@@ -2,7 +2,7 @@ from http import HTTPStatus
 from typing import Any
 
 import pytest
-from django.conf import settings
+from django.conf import LazySettings, settings
 
 from dmr.controller import Controller
 from dmr.openapi.objects import SecurityScheme
@@ -174,4 +174,31 @@ def test_cookie_token_schema(
     ) == instance.security_schemes(metadata, controller)
     assert instance.security_requirements(unsafe_metadata, controller) == [
         {security_scheme_name: [], csrf_scheme_name: []},
+    ]
+
+
+@pytest.mark.parametrize('typ', [CookieTokenSyncAuth, CookieTokenAsyncAuth])
+def test_cookie_token_schema_csrf_session(
+    settings: LazySettings,
+    *,
+    typ: type[CookieTokenSyncAuth] | type[CookieTokenAsyncAuth],
+) -> None:
+    """Ensures CookieToken auth emits an apiKey cookie security scheme."""
+    settings.CSRF_USE_SESSIONS = True
+    instance = typ()
+    controller = _make_controller(instance)
+    metadata = controller.api_endpoints['GET'].metadata
+
+    assert HTTPStatus.FORBIDDEN not in metadata.responses
+    assert instance.www_authenticate_challenge is None
+    assert instance.security_schemes(metadata, controller) == {
+        'token': SecurityScheme(
+            type='apiKey',
+            name='token',
+            security_scheme_in='cookie',
+            description='Opaque token authentication via cookie',
+        ),
+    }
+    assert instance.security_requirements(metadata, controller) == [
+        {'token': []},
     ]

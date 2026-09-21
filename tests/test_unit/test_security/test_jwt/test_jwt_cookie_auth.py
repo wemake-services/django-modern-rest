@@ -162,6 +162,33 @@ def test_cookie_jwt_custom_schema(
     ])
 
 
+@pytest.mark.parametrize('typ', [CookieJWTSyncAuth, CookieJWTAsyncAuth])
+def test_cookie_jwt_csrf_session(
+    settings: LazySettings,
+    *,
+    typ: type[CookieJWTSyncAuth] | type[CookieJWTAsyncAuth],
+) -> None:
+    """Ensures that cookie and scheme names are customizable."""
+    settings.CSRF_USE_SESSIONS = True
+    instance = typ()
+    controller = _make_controller(instance)
+    metadata = controller.api_endpoints['GET'].metadata
+
+    assert HTTPStatus.FORBIDDEN not in metadata.responses
+    assert instance.www_authenticate_challenge is None
+    assert instance.security_schemes(metadata, controller) == snapshot({
+        'jwt': SecurityScheme(
+            type='apiKey',
+            description='JWT token auth via cookie',
+            name='access_token',
+            security_scheme_in='cookie',
+        ),
+    })
+    assert instance.security_requirements(metadata, controller) == snapshot([
+        {'jwt': []},
+    ])
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     ('cookie_name', 'cookie_value', 'expected_status'),
