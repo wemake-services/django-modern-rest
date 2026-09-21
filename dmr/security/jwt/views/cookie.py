@@ -1,7 +1,7 @@
 import dataclasses
 import datetime as dt
 from abc import abstractmethod
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from http import HTTPStatus
 from types import MappingProxyType
 from typing import (
@@ -26,7 +26,6 @@ from dmr import Body, CookieSpec, NewCookie, ResponseSpec, validate
 from dmr.cookies import SameSite
 from dmr.decorators import endpoint_decorator
 from dmr.endpoint import ValidateAnyCallable
-from dmr.errors import ErrorModel
 from dmr.exceptions import EndpointMetadataError, NotAuthenticatedError
 from dmr.headers import HeaderSpec
 from dmr.internal.csrf import ensure_csrf
@@ -372,12 +371,6 @@ class CookieObtainTokensSyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.NO_CONTENT
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def validate_spec(cls) -> ValidateAnyCallable:
@@ -391,6 +384,10 @@ class CookieObtainTokensSyncController(
                     **cls.issued_cookies_spec(),
                     **cls.csrf_cookie_spec(),
                 },
+            ),
+            ResponseSpec(
+                return_type=cls.error_model,
+                status_code=HTTPStatus.UNAUTHORIZED,
             ),
         )
 
@@ -465,12 +462,6 @@ class CookieObtainTokensAsyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.NO_CONTENT
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def validate_spec(cls) -> ValidateAnyCallable:
@@ -484,6 +475,10 @@ class CookieObtainTokensAsyncController(
                     **cls.issued_cookies_spec(),
                     **cls.csrf_cookie_spec(),
                 },
+            ),
+            ResponseSpec(
+                return_type=cls.error_model,
+                status_code=HTTPStatus.UNAUTHORIZED,
             ),
         )
 
@@ -551,12 +546,6 @@ class CookieRefreshTokensSyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.NO_CONTENT
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def validate_spec(cls) -> ValidateAnyCallable:
@@ -567,6 +556,10 @@ class CookieRefreshTokensSyncController(
                 status_code=cls.response_status_code,
                 headers=cls.response_headers_spec(),
                 cookies=cls.issued_cookies_spec(),
+            ),
+            ResponseSpec(
+                return_type=cls.error_model,
+                status_code=HTTPStatus.UNAUTHORIZED,
             ),
             *cls.csrf_response_specs(),
         )
@@ -639,12 +632,6 @@ class CookieRefreshTokensAsyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.NO_CONTENT
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def validate_spec(cls) -> ValidateAnyCallable:
@@ -655,6 +642,10 @@ class CookieRefreshTokensAsyncController(
                 status_code=cls.response_status_code,
                 headers=cls.response_headers_spec(),
                 cookies=cls.issued_cookies_spec(),
+            ),
+            ResponseSpec(
+                return_type=cls.error_model,
+                status_code=HTTPStatus.UNAUTHORIZED,
             ),
             *cls.csrf_response_specs(),
         )
