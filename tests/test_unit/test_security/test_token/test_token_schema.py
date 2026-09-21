@@ -37,7 +37,7 @@ def _make_controller(
         {func_def} post(self) -> str:
             raise NotImplementedError
     """,
-        globals=ns,
+        ns,
     )
     return ns['_Controller']  # type: ignore[no-any-return]
 
