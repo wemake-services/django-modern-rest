@@ -35,7 +35,7 @@ class _BaseHeaderTokenAuth:
         """
         if not self.www_authenticate or self.header_name != 'Authorization':
             return None
-        return self.prefix or None
+        return self.prefix.strip() or None
 
     def security_schemes(
         self,

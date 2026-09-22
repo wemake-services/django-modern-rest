@@ -13,7 +13,12 @@ class APIController(Controller[PydanticSerializer]):
     def get(self) -> str:
         # Let's test that `User` has the correct type:
         assert self.request.user.is_authenticated
-        return 'authed'
+        return 'get'
+
+    def post(self) -> str:
+        # POST will have `csrf` security requirement.
+        assert self.request.user.is_authenticated
+        return 'post'
 
 
 # openapi: {"controller": "APIController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001

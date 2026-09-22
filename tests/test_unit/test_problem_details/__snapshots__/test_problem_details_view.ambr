@@ -219,21 +219,6 @@
                 }
               }
             },
-            "403": {
-              "description": "Raised when CSRF check failed",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                },
-                "application/problem+json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ProblemDetailsModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -267,8 +252,7 @@
           },
           "security": [
             {
-              "django_session": [],
-              "csrf": []
+              "django_session": []
             }
           ]
         }

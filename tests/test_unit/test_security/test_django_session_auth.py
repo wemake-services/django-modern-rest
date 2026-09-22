@@ -1,11 +1,12 @@
 import json
+from collections.abc import Callable
 from http import HTTPStatus
-from typing import final
+from typing import TYPE_CHECKING, final
 
 import pytest
 from django.conf import LazySettings
 from django.contrib.auth.models import AnonymousUser, User
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import override
 
@@ -28,6 +29,9 @@ from dmr.security.token import HeaderTokenAsyncAuth, HeaderTokenSyncAuth
 from dmr.settings import Settings
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
+if TYPE_CHECKING:
+    from tests.test_unit.conftest import CsrfFailureAssertion
+
 
 @final
 class _SyncController(Controller[PydanticSerializer]):
@@ -35,13 +39,23 @@ class _SyncController(Controller[PydanticSerializer]):
     def get(self) -> str:
         return 'authed'
 
+    @modify(auth=[DjangoSessionSyncAuth()])
+    def post(self) -> str:
+        return 'ok'
 
-def test_sync_session_auth_success(
+
+@pytest.mark.parametrize('should_fill_csrf', [True, False])
+def test_sync_session_auth_success_safe(
     dmr_rf: DMRRequestFactory,
+    fill_csrf: Callable[[HttpRequest], HttpRequest],
+    *,
+    should_fill_csrf: bool,
 ) -> None:
     """Ensures that sync controllers work with django session auth."""
     request = dmr_rf.get('/whatever/')
     request.user = User()
+    if should_fill_csrf:
+        fill_csrf(request)
 
     response = _SyncController.as_view()(request)
 
@@ -51,6 +65,41 @@ def test_sync_session_auth_success(
     assert isinstance(request_auth(request), DjangoSessionSyncAuth)
     assert isinstance(request_auth(request, strict=True), DjangoSessionSyncAuth)
     assert json.loads(response.content) == 'authed'
+
+
+def test_sync_session_auth_success_unsafe(
+    dmr_rf: DMRRequestFactory,
+    fill_csrf: Callable[[HttpRequest], HttpRequest],
+) -> None:
+    """Ensures that sync controllers work with django session auth."""
+    request = dmr_rf.post('/whatever/')
+    request.user = User()
+    fill_csrf(request)
+
+    response = _SyncController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert isinstance(request_auth(request), DjangoSessionSyncAuth)
+    assert isinstance(request_auth(request, strict=True), DjangoSessionSyncAuth)
+    assert json.loads(response.content) == 'ok'
+
+
+def test_sync_session_auth_csrf_unsafe(
+    dmr_rf: DMRRequestFactory,
+    assert_csrf_failure_message: 'CsrfFailureAssertion',
+) -> None:
+    """Test that POST requires CSRF."""
+    request = dmr_rf.post('/whatever/')
+    request.user = User()
+
+    response = _SyncController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert_csrf_failure_message(response)
 
 
 def test_sync_session_auth_failure(
@@ -80,18 +129,27 @@ class _AsyncController(Controller[PydanticSerializer]):
     async def get(self) -> str:
         return 'authed'
 
+    async def post(self) -> str:
+        return 'ok'
+
 
 async def _resolve(user: User) -> User:
     return user
 
 
 @pytest.mark.asyncio
-async def test_async_session_auth_success(
+@pytest.mark.parametrize('should_fill_csrf', [True, False])
+async def test_async_session_auth_success_safe(
     dmr_async_rf: DMRAsyncRequestFactory,
+    fill_csrf: Callable[[HttpRequest], HttpRequest],
+    *,
+    should_fill_csrf: bool,
 ) -> None:
     """Ensures that async controllers work with django session auth."""
     request = dmr_async_rf.get('/whatever/')
     request.auser = lambda: _resolve(User())
+    if should_fill_csrf:
+        fill_csrf(request)
 
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
 
@@ -104,6 +162,46 @@ async def test_async_session_auth_success(
         DjangoSessionAsyncAuth,
     )
     assert json.loads(response.content) == 'authed'
+
+
+@pytest.mark.asyncio
+async def test_async_session_auth_success_unsafe(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    fill_csrf: Callable[[HttpRequest], HttpRequest],
+) -> None:
+    """Ensures that async controllers work with django session auth."""
+    request = dmr_async_rf.post('/whatever/')
+    request.auser = lambda: _resolve(User())
+    fill_csrf(request)
+
+    response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert isinstance(request_auth(request), DjangoSessionAsyncAuth)
+    assert isinstance(
+        request_auth(request, strict=True),
+        DjangoSessionAsyncAuth,
+    )
+    assert json.loads(response.content) == 'ok'
+
+
+@pytest.mark.asyncio
+async def test_async_session_auth_csrf_unsafe(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    assert_csrf_failure_message: 'CsrfFailureAssertion',
+) -> None:
+    """Ensures that async controllers work with django session auth."""
+    request = dmr_async_rf.post('/whatever/')
+    request.auser = lambda: _resolve(User())
+
+    response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.FORBIDDEN, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert_csrf_failure_message(response)
 
 
 @pytest.mark.asyncio
@@ -175,6 +273,7 @@ def test_schema_with_csrf_cookie(
     metadata = _SyncController.api_endpoints['GET'].metadata
     instance = typ()
 
+    assert HTTPStatus.FORBIDDEN not in metadata.responses
     assert instance.security_schemes(metadata, _SyncController) == snapshot({
         'django_session': SecurityScheme(
             type='apiKey',
@@ -192,6 +291,17 @@ def test_schema_with_csrf_cookie(
     assert instance.security_requirements(
         metadata,
         _SyncController,
+    ) == snapshot([{'django_session': []}])
+
+    unsafe_metadata = _SyncController.api_endpoints['POST'].metadata
+    assert HTTPStatus.FORBIDDEN in unsafe_metadata.responses
+    assert instance.security_schemes(
+        unsafe_metadata,
+        _SyncController,
+    ) == instance.security_schemes(metadata, _SyncController)
+    assert instance.security_requirements(
+        unsafe_metadata,
+        _SyncController,
     ) == snapshot([{'django_session': [], 'csrf': []}])
 
 
@@ -206,6 +316,7 @@ def test_schema_with_csrf_sessions(
     metadata = _SyncController.api_endpoints['GET'].metadata
     instance = typ()
 
+    assert HTTPStatus.FORBIDDEN not in metadata.responses
     assert instance.security_schemes(metadata, _SyncController) == snapshot({
         'django_session': SecurityScheme(
             type='apiKey',
@@ -216,6 +327,17 @@ def test_schema_with_csrf_sessions(
     })
     assert instance.security_requirements(
         metadata,
+        _SyncController,
+    ) == snapshot([{'django_session': []}])
+
+    unsafe_metadata = _SyncController.api_endpoints['POST'].metadata
+    assert HTTPStatus.FORBIDDEN in unsafe_metadata.responses
+    assert instance.security_schemes(
+        unsafe_metadata,
+        _SyncController,
+    ) == instance.security_schemes(metadata, _SyncController)
+    assert instance.security_requirements(
+        unsafe_metadata,
         _SyncController,
     ) == snapshot([{'django_session': []}])
 

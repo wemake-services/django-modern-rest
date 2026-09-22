@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from http import HTTPStatus
 from typing import Any, ClassVar, Generic
 
@@ -16,7 +16,6 @@ from typing_extensions import TypedDict, TypeVar
 from dmr import Body, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
 from dmr.endpoint import ModifyAnyCallable
-from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
 from dmr.security.base import NO_STORE_HEADERS
 from dmr.security.jwt.auth.base import USER_LOOKUP_ERRORS, set_request_attrs
@@ -75,18 +74,18 @@ class ObtainTokensSyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def modify_spec(cls) -> ModifyAnyCallable:
         """Lazy endpoint spec."""
         return modify(
             status_code=cls.response_status_code,
+            extra_responses=[
+                ResponseSpec(
+                    return_type=cls.error_model,
+                    status_code=HTTPStatus.UNAUTHORIZED,
+                ),
+            ],
             headers=NO_STORE_HEADERS,
         )
 
@@ -165,18 +164,18 @@ class ObtainTokensAsyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def modify_spec(cls) -> ModifyAnyCallable:
         """Lazy endpoint spec."""
         return modify(
             status_code=cls.response_status_code,
+            extra_responses=[
+                ResponseSpec(
+                    return_type=cls.error_model,
+                    status_code=HTTPStatus.UNAUTHORIZED,
+                ),
+            ],
             headers=NO_STORE_HEADERS,
         )
 
@@ -262,18 +261,18 @@ class RefreshTokenSyncController(  # noqa: WPS214
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def modify_spec(cls) -> ModifyAnyCallable:
         """Lazy endpoint spec for sync verify tokens controller."""
         return modify(
             status_code=cls.response_status_code,
+            extra_responses=[
+                ResponseSpec(
+                    return_type=cls.error_model,
+                    status_code=HTTPStatus.UNAUTHORIZED,
+                ),
+            ],
             headers=NO_STORE_HEADERS,
         )
 
@@ -362,18 +361,18 @@ class RefreshTokenAsyncController(  # noqa: WPS214
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def modify_spec(cls) -> ModifyAnyCallable:
         """Lazy endpoint spec for async refresh tokens controller."""
         return modify(
             status_code=cls.response_status_code,
+            extra_responses=[
+                ResponseSpec(
+                    return_type=cls.error_model,
+                    status_code=HTTPStatus.UNAUTHORIZED,
+                ),
+            ],
             headers=NO_STORE_HEADERS,
         )
 
@@ -496,18 +495,18 @@ class VerifyTokenSyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.NO_CONTENT
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def modify_spec(cls) -> ModifyAnyCallable:
         """Lazy endpoint spec for sync verify tokens controller."""
         return modify(
             status_code=cls.response_status_code,
+            extra_responses=[
+                ResponseSpec(
+                    return_type=cls.error_model,
+                    status_code=HTTPStatus.UNAUTHORIZED,
+                ),
+            ],
             headers=NO_STORE_HEADERS,
         )
 
@@ -584,18 +583,18 @@ class VerifyTokenAsyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.NO_CONTENT
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def modify_spec(cls) -> ModifyAnyCallable:
         """Lazy endpoint spec for async verify tokens controller."""
         return modify(
             status_code=cls.response_status_code,
+            extra_responses=[
+                ResponseSpec(
+                    return_type=cls.error_model,
+                    status_code=HTTPStatus.UNAUTHORIZED,
+                ),
+            ],
             headers=NO_STORE_HEADERS,
         )
 

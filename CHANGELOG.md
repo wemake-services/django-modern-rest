@@ -102,8 +102,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `Endpoint.get_operation_id` was removed, instead customize
   the `OperationIdGenerator` instance or `operation_id` metadata parameter
   to the endpoint, #1502
-- `EndpointMetadata` has a new required `security` field,
-  pass it explicitly if you construct this object by hand, #1499
+- `jwt_ensure_csrf` was removed from reusable JWT cookie views,
+  it is now always mandatory, #1574
 
 ### Performance improvements
 
@@ -296,6 +296,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Fixed `@modify` and `@validate` types: now `tags`, `servers`,
   and `extra_responses` are typed as `Sequence`, not as `list`, #1563
 - Fixed nested `Router` patterns OpenAPI parameter spec generation, #1502
+- Fixed OpenAPI generation for cookie-based auth classes,
+  now we don't add `csrf` auth requirement to safe methods, #1572
+- Fixed reusable views `error_model` definition for `401` response, #1573
 
 
 ## 0.15.0 (2026-09-11)

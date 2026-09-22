@@ -65,6 +65,7 @@ class OpenAPI:
     tags: list[Tag] | None = None
     external_docs: ExternalDocumentation | None = None
 
+    # Internal fields:
     _validated: bool = dataclasses.field(
         default=False,
         init=False,

@@ -236,6 +236,8 @@ CSRF
 
 .. autofunction:: dmr.security.csrf.csrf_response_spec
 
+.. autofunction:: dmr.security.csrf.csrf_security_scheme
+
 
 Semantic schema
 ---------------
