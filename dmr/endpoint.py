@@ -324,7 +324,11 @@ class Endpoint:  # noqa: WPS214
             ),
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
-            callbacks=self.metadata.callbacks,
+            callbacks=(
+                None
+                if self.metadata.callbacks is None
+                else dict(self.metadata.callbacks)
+            ),
             operation_id=operation_id,
             request_body=request_body,
             responses=context.generators.response(

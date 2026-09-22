@@ -117,7 +117,7 @@ class ResponseSpec:
         kw_only=True,
         default=None,
     )
-    links: dict[str, 'Link | Reference'] | None = dataclasses.field(
+    links: Mapping[str, 'Link | Reference'] | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
@@ -366,7 +366,7 @@ class ResponseModification:
 
     # Metadata:
     description: StrOrPromise | None
-    links: dict[str, 'Link | Reference'] | None
+    links: Mapping[str, 'Link | Reference'] | None
 
     # Pre-computed fields:
     actionable_headers: Mapping[str, str] | None = dataclasses.field(

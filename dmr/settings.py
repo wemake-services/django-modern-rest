@@ -141,7 +141,7 @@ class SettingsDict(TypedDict, total=False):
     global_error_handler: Callable[[Any, Any, Any], Any] | str
     openapi_config: OpenAPIConfig
     openapi_examples_seed: int | Sentinel
-    openapi_static_cdn: dict[str, str]
+    openapi_static_cdn: Mapping[str, str]
     django_treat_as_post: Set[str]
 
 

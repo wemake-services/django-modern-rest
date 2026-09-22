@@ -331,9 +331,9 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: dict[str, Callback | Reference] | Sentinel = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
-        links: dict[str, Link | Reference] | Sentinel = EMPTY,
+        links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
     ) -> ModifyAnyCallable: ...
@@ -365,9 +365,9 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: dict[str, Callback | Reference] | Sentinel = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
-        links: dict[str, Link | Reference] | Sentinel = EMPTY,
+        links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
     ) -> ModifyAsyncCallable: ...
@@ -399,9 +399,9 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: dict[str, Callback | Reference] | Sentinel = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
-        links: dict[str, Link | Reference] | Sentinel = EMPTY,
+        links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
     ) -> ModifySyncCallable: ...
@@ -436,9 +436,9 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: dict[str, Callback | Reference] | Sentinel = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
-        links: dict[str, Link | Reference] | Sentinel = EMPTY,
+        links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
     ) -> ModifyAsyncCallable | ModifySyncCallable | ModifyAnyCallable:
@@ -731,7 +731,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: dict[str, Callback | Reference] | Sentinel = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
     ) -> ValidateAnyCallable: ...
@@ -761,7 +761,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: dict[str, Callback | Reference] | Sentinel = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
     ) -> ValidateAsyncCallable: ...
@@ -791,7 +791,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: dict[str, Callback | Reference] | Sentinel = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
     ) -> ValidateSyncCallable: ...
@@ -824,7 +824,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: dict[str, Callback | Reference] | Sentinel = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
     ) -> ValidateAnyCallable | ValidateAsyncCallable | ValidateSyncCallable:

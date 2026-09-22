@@ -40,7 +40,7 @@ class _BasePayload:
     deprecated: bool
     security: Sequence['SecurityRequirement'] | Sentinel | None
     external_docs: 'ExternalDocumentation | Sentinel'
-    callbacks: dict[str, 'Callback | Reference'] | Sentinel
+    callbacks: Mapping[str, 'Callback | Reference'] | Sentinel
     servers: Sequence['Server'] | Sentinel | None
     ignore_from_spec: bool | Sentinel
 
@@ -121,7 +121,7 @@ class ModifyEndpointPayload(_BasePayload):
 
     # OpenAPI metadata:
     response_description: str | Sentinel
-    links: dict[str, 'Link | Reference'] | Sentinel
+    links: Mapping[str, 'Link | Reference'] | Sentinel
 
 
 #: Alias for different payload types:

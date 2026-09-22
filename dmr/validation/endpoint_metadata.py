@@ -472,7 +472,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             operation_id=empty_to_none(payload.operation_id),
             deprecated=payload.deprecated,
             external_docs=empty_to_none(payload.external_docs),
-            callbacks=empty_to_none(payload.callbacks),
+            callbacks=(
+                None
+                if isinstance(payload.callbacks, Sentinel)
+                else dict(payload.callbacks)
+            ),
             servers=self._build_servers(payload.servers),
             ignore_from_spec=self._build_ignore_from_spec(),
         )
@@ -536,7 +540,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             operation_id=empty_to_none(payload.operation_id),
             deprecated=payload.deprecated,
             external_docs=empty_to_none(payload.external_docs),
-            callbacks=empty_to_none(payload.callbacks),
+            callbacks=(
+                None
+                if isinstance(payload.callbacks, Sentinel)
+                else dict(payload.callbacks)
+            ),
             servers=self._build_servers(payload.servers),
             ignore_from_spec=self._build_ignore_from_spec(),
         )
