@@ -26,6 +26,15 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Breaking changes
 
+- `auth`, `throttling`, `parsers`, `renderers`, `responses`, `tags`,
+  `exclude_validate_responses`, `exclude_semantic_responses`,
+  and `no_validate_http_spec` are not merged anymore
+  from settings, router, controller, and endpoint levels.
+  Now, endpoint values override controller values,
+  controller values override settings values.
+  Merging is still possible, but it must be explicit,
+  like `@modify(auth=[*auth, other_auth])`.
+  This allows a better composition and better value overrides, #1576
 - `Controller` now sets `login_required = False` by default in order to
   exempt controllers from Django's `LoginRequiredMiddleware`.
   Users should [configure authentication](https://django-modern-rest.readthedocs.io/en/latest/pages/auth/common.html)

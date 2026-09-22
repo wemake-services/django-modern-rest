@@ -6,6 +6,7 @@ from functools import wraps
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from django.http import HttpResponse, HttpResponseBase
+from typing_extensions import Sentinel
 
 from dmr.exceptions import (
     DataRenderingError,
@@ -294,10 +295,13 @@ class Endpoint:  # noqa: WPS214
         )
 
         router_metadata = router.metadata_for(route_metadata.normalized_path)
-        tags = [
-            *router_metadata.tags,
-            *(self.metadata.tags or []),
-        ]
+        # Endpoint and controller tags are already resolved,
+        # router tags are the last level:
+        tags = (
+            router_metadata.tags
+            if isinstance(self.metadata.tags, Sentinel)
+            else self.metadata.tags
+        )
 
         return Operation(
             tags=tags or None,

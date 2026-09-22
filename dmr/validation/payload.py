@@ -1,7 +1,7 @@
 import dataclasses
 from collections.abc import Callable, Mapping, Sequence, Set
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, final
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar, final
 
 from typing_extensions import Sentinel
 
@@ -33,31 +33,33 @@ if TYPE_CHECKING:
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True, init=False)
 class _BasePayload:
     # OpenAPI stuff:
-    summary: StrOrPromise | Sentinel | None = EMPTY
-    description: StrOrPromise | Sentinel | None = EMPTY
-    tags: Sequence[str] | None = None
-    operation_id: str | None = None
-    deprecated: bool = False
-    security: Sequence['SecurityRequirement'] | None = None
-    external_docs: 'ExternalDocumentation | None' = None
-    callbacks: dict[str, 'Callback | Reference'] | None = None
-    servers: Sequence['Server'] | None = None
-    ignore_from_spec: bool | None = None
+    summary: StrOrPromise | Sentinel | None
+    description: StrOrPromise | Sentinel | None
+    tags: Sequence[str] | Sentinel | None
+    operation_id: str | None
+    deprecated: bool
+    security: Sequence['SecurityRequirement'] | Sentinel | None
+    external_docs: 'ExternalDocumentation | None'
+    callbacks: dict[str, 'Callback | Reference'] | None
+    servers: Sequence['Server'] | None
+    ignore_from_spec: bool | None
 
     # Common fields:
-    validate_responses: bool | None = None
-    exclude_validate_responses: Set[HTTPStatus] | None = None
-    semantic_responses: bool | None = None
-    exclude_semantic_responses: Set[HTTPStatus] | None = None
-    validate_events: bool | None = None
-    error_handler: SyncErrorHandler | AsyncErrorHandler | None = None
-    no_validate_http_spec: Set[HttpSpec] | None = None
-    parsers: Sequence[Parser] | None = None
-    renderers: Sequence[Renderer] | None = None
-    validate_negotiation: bool | None = None
-    auth: Sequence['SyncAuth'] | Sequence['AsyncAuth'] | None = ()
-    throttling: Sequence['SyncThrottle'] | Sequence['AsyncThrottle'] | None = ()
-    throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY
+    validate_responses: bool | None
+    exclude_validate_responses: Set[HTTPStatus] | Sentinel | None
+    semantic_responses: bool | None
+    exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None
+    validate_events: bool | None
+    error_handler: SyncErrorHandler | AsyncErrorHandler | None
+    no_validate_http_spec: Set[HttpSpec] | Sentinel | None
+    parsers: Sequence[Parser] | Sentinel
+    renderers: Sequence[Renderer] | Sentinel
+    validate_negotiation: bool | None
+    auth: Sequence['SyncAuth'] | Sequence['AsyncAuth'] | Sentinel | None
+    throttling: (
+        Sequence['SyncThrottle'] | Sequence['AsyncThrottle'] | Sentinel | None
+    )
+    throttling_allow_unsafe_cache: bool | Sentinel | None
 
 
 @final
@@ -67,13 +69,49 @@ class ValidateEndpointPayload(_BasePayload):
 
     responses: list[ResponseSpec]
 
+    @classmethod
+    def implicit(cls) -> 'ValidateEndpointPayload':
+        """
+        Create a payload for endpoints that return ``HttpResponse``.
+
+        Such endpoints do not have to use ``@validate`` explicitly,
+        when responses are defined on the controller or settings level.
+        All values are the same as ``@validate`` defaults.
+        """
+        return cls(
+            responses=[],
+            summary=EMPTY,
+            description=EMPTY,
+            tags=EMPTY,
+            operation_id=None,
+            deprecated=False,
+            security=EMPTY,
+            external_docs=None,
+            callbacks=None,
+            servers=None,
+            ignore_from_spec=None,
+            validate_responses=None,
+            exclude_validate_responses=EMPTY,
+            semantic_responses=None,
+            exclude_semantic_responses=EMPTY,
+            validate_events=None,
+            error_handler=None,
+            no_validate_http_spec=EMPTY,
+            parsers=EMPTY,
+            renderers=EMPTY,
+            validate_negotiation=None,
+            auth=EMPTY,
+            throttling=EMPTY,
+            throttling_allow_unsafe_cache=EMPTY,
+        )
+
 
 @final
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class ModifyEndpointPayload(_BasePayload):
     """Payload created by ``@modify``."""
 
-    responses: Sequence[ResponseSpec] | None
+    responses: Sequence[ResponseSpec] | Sentinel | None
     status_code: HTTPStatus | None
     # Headers and cookies can be set via a middleware
     # after a response itself is formed. We need a way to describe this.
@@ -88,6 +126,34 @@ class ModifyEndpointPayload(_BasePayload):
 
 #: Alias for different payload types:
 Payload: TypeAlias = ValidateEndpointPayload | ModifyEndpointPayload | None
+
+_LayerT = TypeVar('_LayerT')
+
+
+def first_defined(
+    *layers: _LayerT | Sentinel | None,
+) -> _LayerT | Sentinel | None:
+    """
+    Return the first explicitly defined configuration layer.
+
+    Layers must go from the most specific one (endpoint)
+    to the least specific one (settings).
+    More specific layers override less specific ones, they are not merged.
+
+    ``None`` is an explicit value, it disables all less specific layers.
+    ``EMPTY`` and empty collections are not explicit,
+    the next layer is used instead. It returns ``EMPTY``
+    if no layer has an explicit value.
+
+    .. versionadded:: 0.16.0
+    """
+    for layer in layers:
+        if layer is None:
+            return None
+        if not isinstance(layer, Sentinel) and layer:
+            return layer
+    return EMPTY
+
 
 _PayloadOrLazy: TypeAlias = (
     Callable[[type['Controller[BaseSerializer]']], Callable[..., Any]] | Payload

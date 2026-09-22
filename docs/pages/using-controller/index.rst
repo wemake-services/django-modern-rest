@@ -69,6 +69,8 @@ Other response specs can be specified via the
 the :attr:`~dmr.controller.Controller.responses`
 ``Controller`` attribute,
 or the :attr:`~dmr.settings.Settings.responses` global setting.
+The most specific one wins, they are not merged,
+see :ref:`configuration-levels`.
 
 Make sure that all responses that can be returned are described!
 
@@ -112,6 +114,8 @@ decorator, the :attr:`~dmr.controller.Controller.responses`
 ``Controller`` attribute,
 or the :attr:`~dmr.settings.Settings.responses`
 global setting to specify all possible responses.
+The most specific one wins, they are not merged,
+see :ref:`configuration-levels`.
 
 To do that we utilize :class:`~dmr.metadata.ResponseSpec`:
 

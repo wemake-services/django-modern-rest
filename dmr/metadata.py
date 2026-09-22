@@ -16,7 +16,7 @@ from typing import (  # noqa: WPS235
     get_origin,
 )
 
-from typing_extensions import TypeVar, override
+from typing_extensions import Sentinel, TypeVar, override
 
 from dmr.internal.types import (
     StrOrPromise,
@@ -570,8 +570,9 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
-            Controller-level tags are already included here,
-            router-level ones are added during the schema generation.
+            Already resolved from the endpoint and the controller,
+            ``EMPTY`` means that router-level tags
+            are used during the schema generation.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
         security: A declaration of which security mechanisms can be used
@@ -630,7 +631,7 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     # OpenAPI documentation fields:
     summary: StrOrPromise | None
     description: StrOrPromise | None
-    tags: list[str] | None
+    tags: list[str] | Sentinel | None
     operation_id: str | None
     deprecated: bool
     external_docs: 'ExternalDocumentation | None'

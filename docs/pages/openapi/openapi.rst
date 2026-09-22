@@ -405,13 +405,12 @@ to apply OpenAPI metadata to all operations in the router:
 - ``tags``: List of strings to group operations in OpenAPI documentation
 - ``deprecated``: Boolean flag to mark all operations in this router as deprecated
 
-These router-level settings are automatically merged with endpoint-level customizations
-set via :deco:`~dmr.endpoint.modify` or :deco:`~dmr.endpoint.validate`.
-Router tags are prepended to endpoint tags, and deprecated is set to ``True``
+Router tags are used for operations without controller-level
+or endpoint-level tags, and deprecated is set to ``True``
 if either the router or endpoint has it enabled.
 
 You can also set ``tags`` and ``deprecated`` at the individual endpoint level
-via :deco:`~dmr.endpoint.modify` to override or extend router-level settings.
+via :deco:`~dmr.endpoint.modify` to override router-level settings.
 
 .. _customizing_tags_openapi:
 
@@ -427,8 +426,11 @@ Tags can be defined on three levels:
 3. On an endpoint with the ``tags`` parameter
    of :deco:`~dmr.endpoint.modify` or :deco:`~dmr.endpoint.validate`
 
-All of them are merged together in this exact order,
-none of them replaces the others:
+The most specific level wins, tags are not merged:
+endpoint tags override controller tags,
+controller tags override router tags.
+Set ``tags=None`` to have no tags at all.
+To merge tags from different levels, do it explicitly:
 
 .. literalinclude:: /examples/openapi/controller_tags.py
   :caption: views.py
@@ -437,6 +439,9 @@ none of them replaces the others:
 
 .. versionadded:: 0.16.0
   Controller-level ``tags``.
+
+.. versionchanged:: 0.16.0
+  Tags from different levels used to be merged.
 
 .. _customizing_parameter_openapi:
 

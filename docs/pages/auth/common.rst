@@ -112,6 +112,14 @@ There are 4 ways to provide auth classes for an endpoint:
 
 Providing several auth instances means that at least one of them must succeed.
 
+Auth instances from different levels are not merged:
+endpoint ``auth`` overrides controller ``auth``,
+controller ``auth`` overrides :data:`~dmr.settings.Settings.auth`.
+See :ref:`configuration-levels`.
+
+.. versionchanged:: 0.16.0
+  Auth instances from different levels used to be merged.
+
 
 Disabling auth
 ~~~~~~~~~~~~~~
@@ -123,8 +131,9 @@ like ``/registration`` and ``/login``.
 To do so, set ``auth=None`` for the specific
 endpoints / controllers that should not have auth.
 
-Setting ``None`` as ``auth`` in any place will always disable
-all auth in further layers.
+Setting ``None`` as ``auth`` on a controller disables
+auth from the settings for all its endpoints,
+unless an endpoint provides its own ``auth``.
 
 .. note::
 
