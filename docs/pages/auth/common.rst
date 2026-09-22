@@ -6,6 +6,14 @@ How authentication works
 1. Checking that user requests contain the required authentication credentials
 2. Boilerplate code for views that provide authentication credentials for users
 
+.. note::
+
+  Controllers set :attr:`login_required <dmr.controller.Controller.login_required>`
+  to ``False`` by default to exempt endpoints from Django's
+  :class:`LoginRequiredMiddleware <django.contrib.auth.middleware.LoginRequiredMiddleware>`.
+  The middleware redirects unauthenticated requests to the login page
+  which is not what we want for API endpoints.
+
 
 Enabling authentication
 -----------------------
