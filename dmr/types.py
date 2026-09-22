@@ -214,7 +214,7 @@ class AnnotationsContext:
     def __init__(
         self,
         *,
-        globalns: dict[str, Any] | None = None,
+        globalns: Mapping[str, Any] | None = None,
         localns: Mapping[str, Any] | None = None,
         include_extras: bool = True,
         format: Format | None = None,  # noqa: A002
@@ -266,7 +266,7 @@ class AnnotationsContext:
     def _global_namespace(
         self,
         endpoint_func: Callable[..., Any],
-    ) -> dict[str, Any]:
+    ) -> Mapping[str, Any]:
         if self._globalns is not None:
             return self._globalns
         return inspect.unwrap(endpoint_func).__globals__  # type: ignore[no-any-return]

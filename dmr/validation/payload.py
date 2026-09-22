@@ -1,7 +1,7 @@
 import dataclasses
 from collections.abc import Callable, Mapping, Sequence, Set
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar, final
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, final
 
 from typing_extensions import Sentinel
 
@@ -126,61 +126,6 @@ class ModifyEndpointPayload(_BasePayload):
 
 #: Alias for different payload types:
 Payload: TypeAlias = ValidateEndpointPayload | ModifyEndpointPayload | None
-
-_LayerT = TypeVar('_LayerT')
-
-
-def first_defined(
-    *layers: _LayerT | Sentinel | None,
-) -> _LayerT | Sentinel | None:
-    """
-    Return the first explicitly defined configuration layer.
-
-    Layers must go from the most specific one (endpoint)
-    to the least specific one (settings).
-    More specific layers override less specific ones, they are not merged.
-
-    ``None`` is an explicit value, it disables all less specific layers.
-    ``EMPTY`` and empty collections are not explicit,
-    the next layer is used instead. It returns ``EMPTY``
-    if no layer has an explicit value.
-
-    .. versionadded:: 0.16.0
-    """
-    for layer in layers:
-        if layer is None:
-            return None
-        if not isinstance(layer, Sentinel) and layer:
-            return layer
-    return EMPTY
-
-
-def first_set(*layers: _LayerT | Sentinel) -> _LayerT | Sentinel:
-    """
-    Return the first configuration layer that is not ``EMPTY``.
-
-    Unlike :func:`first_defined`, it is used for scalar values,
-    where ``False``, ``0``, and ``None`` are real values.
-    It returns ``EMPTY`` if all layers are ``EMPTY``.
-
-    .. versionadded:: 0.16.0
-    """
-    for layer in layers:
-        if not isinstance(layer, Sentinel):
-            return layer
-    return EMPTY
-
-
-def empty_to_none(layer: _LayerT | Sentinel) -> _LayerT | None:
-    """
-    Convert ``EMPTY`` to ``None`` for the resolved metadata.
-
-    Resolved metadata does not have the "not set" state anymore,
-    so ``None`` is used there for missing optional values.
-
-    .. versionadded:: 0.16.0
-    """
-    return None if isinstance(layer, Sentinel) else layer
 
 
 _PayloadOrLazy: TypeAlias = (

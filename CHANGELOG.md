@@ -33,7 +33,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   Now, endpoint values override controller values,
   controller values override settings values.
   Merging is still possible, but it must be explicit,
-  like `@modify(auth=[*auth, other_auth])`.
+  like `@modify(auth=[*auth, other_auth])`,
+  or customized with `Controller.metadata_merger_cls`.
   This allows a better composition and better value overrides, #1576
 - All endpoint, controller, and settings values now default to `EMPTY`,
   which means "not set on this level", instead of `None`.
@@ -159,6 +160,11 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Features
 
+- Added `Controller.metadata_merger_cls` and `dmr.validation.MetadataMerger`
+  to customize how endpoint, controller, and settings values are resolved
+  into the endpoint metadata. All layers of every field go through
+  a single call, so it can be used to bring back merging
+  of `auth` or other sequences from all levels, #1576
 - Now we can change the error type / instance that
   we are handling from layer to layer,
   for example: endpoint-level handler can raise a new error
