@@ -292,7 +292,7 @@ def test_throttle_sync_multiple_sources(
         ]
 
         def get(self) -> str:
-            return 'inside'
+            raise NotImplementedError
 
     # Controller throttling replaces the settings one:
     metadata = _OverrideController.api_endpoints['GET'].metadata
