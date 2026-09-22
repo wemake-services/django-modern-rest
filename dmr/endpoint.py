@@ -37,6 +37,7 @@ from dmr.throttling import AsyncThrottle, SyncThrottle
 from dmr.validation import (
     EndpointMetadataBuilder,
     EndpointMetadataValidator,
+    MetadataMerger,
     ResponseValidator,
 )
 from dmr.validation.payload import PayloadBuilder
@@ -86,6 +87,7 @@ class Endpoint:  # noqa: WPS214
     metadata_validator_cls: ClassVar[type[EndpointMetadataValidator]] = (
         EndpointMetadataValidator
     )
+    metadata_merger_cls: ClassVar[type[MetadataMerger]] = MetadataMerger
     metadata_cls: ClassVar[type[EndpointMetadata]] = EndpointMetadata
     response_modification_cls: ClassVar[type[ResponseModification]] = (
         ResponseModification
@@ -140,21 +142,25 @@ class Endpoint:  # noqa: WPS214
         #    of the components that support it. Including custom ones.
         #    Then we enrich metadata with collected responses and use it.
         # Done!
+        metadata_merger = self.metadata_merger_cls()
         metadata = self.metadata_builder_cls(
             payload=payload,
             controller_cls=controller_cls,
             func=func,
             metadata_cls=self.metadata_cls,
+            merger=metadata_merger,
             response_modification_cls=self.response_modification_cls,
             component_parsers=self._serializer_context.component_parsers,
             type_annotations=type_annotations,
         )()
-        self.metadata_validator_cls(metadata=metadata)(
+        self.metadata_validator_cls(
+            metadata=metadata,
+            merger=metadata_merger,
+        )(
             func,
             payload=payload,
             controller_cls=controller_cls,
         )
-        func.__metadata__ = metadata  # type: ignore[attr-defined]
         self.metadata = metadata
         self.request_negotiator = self.request_negotiator_cls(
             self.metadata,

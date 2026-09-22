@@ -85,6 +85,12 @@ Let's use :doc:`authentication <auth/common>` as the example.
       :linenos:
       :language: python
 
+One can customize :attr:`~dmr.endpoint.Endpoint.metadata_merger_cls`
+from the default :class:`~dmr.validation.metadata_merger.MetadataMerger`
+to change how values are merged into the final metadata.
+For example, it is possible to restore ``0.15.0`` behavior
+and merge all sequences in a custom subclass, if it is needed.
+
 .. versionchanged:: 0.16.0
   Values from different levels used to be merged.
 
