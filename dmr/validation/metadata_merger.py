@@ -19,7 +19,7 @@ class MetadataMerger:
 
     By default, nothing is merged: the first layer with an explicit value
     wins. Override this class and set it as
-    :attr:`~dmr.controller.Controller.metadata_merger_cls`
+    :attr:`~dmr.endpoint.Endpoint.metadata_merger_cls`
     to change this. For example, to merge ``auth`` from all layers:
 
     .. versionadded:: 0.16.0

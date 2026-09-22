@@ -193,9 +193,6 @@ If you need granular control, you can change anything.
   See :doc:`../auth/common` for more details.
 - :attr:`~dmr.controller.Controller.controller_validator_cls`
   to customize how this controller is validated at import time
-- :attr:`~dmr.controller.Controller.metadata_merger_cls`
-  to customize how endpoint, controller, and settings values
-  are resolved into the endpoint metadata
 - :attr:`~dmr.controller.Controller.annotations_context`
   to customize how this controller resolves its annotations
 - :attr:`~dmr.controller.Controller.endpoint_cls`
