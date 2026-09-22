@@ -36,25 +36,25 @@ class _BasePayload:
     summary: StrOrPromise | Sentinel | None
     description: StrOrPromise | Sentinel | None
     tags: Sequence[str] | Sentinel | None
-    operation_id: str | None
+    operation_id: str | Sentinel
     deprecated: bool
     security: Sequence['SecurityRequirement'] | Sentinel | None
-    external_docs: 'ExternalDocumentation | None'
-    callbacks: dict[str, 'Callback | Reference'] | None
-    servers: Sequence['Server'] | None
-    ignore_from_spec: bool | None
+    external_docs: 'ExternalDocumentation | Sentinel'
+    callbacks: dict[str, 'Callback | Reference'] | Sentinel
+    servers: Sequence['Server'] | Sentinel | None
+    ignore_from_spec: bool | Sentinel
 
     # Common fields:
-    validate_responses: bool | None
+    validate_responses: bool | Sentinel
     exclude_validate_responses: Set[HTTPStatus] | Sentinel | None
-    semantic_responses: bool | None
+    semantic_responses: bool | Sentinel
     exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None
-    validate_events: bool | None
-    error_handler: SyncErrorHandler | AsyncErrorHandler | None
+    validate_events: bool | Sentinel
+    error_handler: SyncErrorHandler | AsyncErrorHandler | Sentinel
     no_validate_http_spec: Set[HttpSpec] | Sentinel | None
     parsers: Sequence[Parser] | Sentinel
     renderers: Sequence[Renderer] | Sentinel
-    validate_negotiation: bool | None
+    validate_negotiation: bool | Sentinel
     auth: Sequence['SyncAuth'] | Sequence['AsyncAuth'] | Sentinel | None
     throttling: (
         Sequence['SyncThrottle'] | Sequence['AsyncThrottle'] | Sentinel | None
@@ -83,23 +83,23 @@ class ValidateEndpointPayload(_BasePayload):
             summary=EMPTY,
             description=EMPTY,
             tags=EMPTY,
-            operation_id=None,
+            operation_id=EMPTY,
             deprecated=False,
             security=EMPTY,
-            external_docs=None,
-            callbacks=None,
-            servers=None,
-            ignore_from_spec=None,
-            validate_responses=None,
+            external_docs=EMPTY,
+            callbacks=EMPTY,
+            servers=EMPTY,
+            ignore_from_spec=EMPTY,
+            validate_responses=EMPTY,
             exclude_validate_responses=EMPTY,
-            semantic_responses=None,
+            semantic_responses=EMPTY,
             exclude_semantic_responses=EMPTY,
-            validate_events=None,
-            error_handler=None,
+            validate_events=EMPTY,
+            error_handler=EMPTY,
             no_validate_http_spec=EMPTY,
             parsers=EMPTY,
             renderers=EMPTY,
-            validate_negotiation=None,
+            validate_negotiation=EMPTY,
             auth=EMPTY,
             throttling=EMPTY,
             throttling_allow_unsafe_cache=EMPTY,
@@ -112,16 +112,16 @@ class ModifyEndpointPayload(_BasePayload):
     """Payload created by ``@modify``."""
 
     responses: Sequence[ResponseSpec] | Sentinel | None
-    status_code: HTTPStatus | None
+    status_code: HTTPStatus | Sentinel
     # Headers and cookies can be set via a middleware
     # after a response itself is formed. We need a way to describe this.
     # That's why `HeaderSpec` and `CookieSpec` are allowed.
-    headers: Mapping[str, NewHeader | HeaderSpec] | None
-    cookies: Mapping[str, NewCookie | CookieSpec] | None
+    headers: Mapping[str, NewHeader | HeaderSpec] | Sentinel
+    cookies: Mapping[str, NewCookie | CookieSpec] | Sentinel
 
     # OpenAPI metadata:
-    response_description: str | None
-    links: dict[str, 'Link | Reference'] | None
+    response_description: str | Sentinel
+    links: dict[str, 'Link | Reference'] | Sentinel
 
 
 #: Alias for different payload types:
@@ -153,6 +153,34 @@ def first_defined(
         if not isinstance(layer, Sentinel) and layer:
             return layer
     return EMPTY
+
+
+def first_set(*layers: _LayerT | Sentinel) -> _LayerT | Sentinel:
+    """
+    Return the first configuration layer that is not ``EMPTY``.
+
+    Unlike :func:`first_defined`, it is used for scalar values,
+    where ``False``, ``0``, and ``None`` are real values.
+    It returns ``EMPTY`` if all layers are ``EMPTY``.
+
+    .. versionadded:: 0.16.0
+    """
+    for layer in layers:
+        if not isinstance(layer, Sentinel):
+            return layer
+    return EMPTY
+
+
+def empty_to_none(layer: _LayerT | Sentinel) -> _LayerT | None:
+    """
+    Convert ``EMPTY`` to ``None`` for the resolved metadata.
+
+    Resolved metadata does not have the "not set" state anymore,
+    so ``None`` is used there for missing optional values.
+
+    .. versionadded:: 0.16.0
+    """
+    return None if isinstance(layer, Sentinel) else layer
 
 
 _PayloadOrLazy: TypeAlias = (
