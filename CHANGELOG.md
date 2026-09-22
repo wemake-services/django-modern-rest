@@ -313,6 +313,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Fixed OpenAPI generation for cookie-based auth classes,
   now we don't add `csrf` auth requirement to safe methods, #1572
 - Fixed reusable views `error_model` definition for `401` response, #1573
+- Fixed that `links` and `callbacks` in endpoints definitions can
+  be any `Mapping`, not just `dict`, #1576
 
 
 ## 0.15.0 (2026-09-11)
