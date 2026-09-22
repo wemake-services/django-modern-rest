@@ -1,7 +1,6 @@
 import json
-from collections.abc import Sequence
 from http import HTTPMethod, HTTPStatus
-from typing import ClassVar, Final
+from typing import Final
 
 import pytest
 from django.conf import LazySettings
