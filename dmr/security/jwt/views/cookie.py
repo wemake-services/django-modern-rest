@@ -103,10 +103,11 @@ class _BaseCookieTokensController(  # noqa: WPS214
             Do not weaken it to ``'none'`` unless your frontend
             really is on another site.
         jwt_cookie_description: Description of the cookie in the spec.
-        jwt_ensure_csrf: Run the CSRF check on endpoints that act
-            on cookies alone, without any credentials in the body.
 
     .. versionadded:: 0.15.0
+    .. versionchanged:: 0.16.0
+        Removed *jwt_ensure_csrf*.
+
     """
 
     jwt_access_cookie: ClassVar[str] = DEFAULT_ACCESS_COOKIE
@@ -120,7 +121,6 @@ class _BaseCookieTokensController(  # noqa: WPS214
     jwt_cookie_description: ClassVar[StrOrPromise] = (
         'Refresh token, only sent to the refresh endpoint.'
     )
-    jwt_ensure_csrf: ClassVar[bool] = True
 
     @classmethod
     def access_cookie_spec(cls) -> CookieSpec:
@@ -219,8 +219,6 @@ class _BaseCookieTokensController(  # noqa: WPS214
     @classmethod
     def csrf_response_specs(cls) -> list[ResponseSpec]:
         """Describes the response of a failed CSRF check."""
-        if not cls.jwt_ensure_csrf:
-            return []
         return [csrf_response_spec(return_type=cls.error_model)]
 
     def check_csrf(self) -> None:
@@ -229,10 +227,8 @@ class _BaseCookieTokensController(  # noqa: WPS214
 
         The browser sends these cookies on its own, so without this check
         any other site could refresh or drop the tokens of our users.
-        Set ``jwt_ensure_csrf`` to ``False`` to opt out.
         """
-        if self.jwt_ensure_csrf:
-            ensure_csrf(self)
+        ensure_csrf(self)
 
     @sensitive_variables()
     def issue_cookies(self) -> dict[str, NewCookie]:

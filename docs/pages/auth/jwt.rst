@@ -385,9 +385,6 @@ Everything else already has a safe default:
   * - ``jwt_cookie_samesite``
     - ``'lax'``
     - ``samesite`` policy of both cookies
-  * - ``jwt_ensure_csrf``
-    - ``True``
-    - Check CSRF on refresh and logout
 
 The cookies live exactly as long as the tokens inside them:
 ``max-age`` comes from ``jwt_expiration``
