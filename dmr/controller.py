@@ -178,15 +178,15 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     serializer: ClassVar[type[BaseSerializer]]
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
     no_validate_http_spec: ClassVar[Set[HttpSpec] | Sentinel | None] = EMPTY
-    validate_responses: ClassVar[bool | None] = None
+    validate_responses: ClassVar[bool | Sentinel] = EMPTY
     exclude_validate_responses: ClassVar[Set[HTTPStatus] | Sentinel | None] = (
         EMPTY
     )
-    semantic_responses: ClassVar[bool | None] = None
+    semantic_responses: ClassVar[bool | Sentinel] = EMPTY
     exclude_semantic_responses: ClassVar[Set[HTTPStatus] | Sentinel | None] = (
         EMPTY
     )
-    validate_events: ClassVar[bool | None] = None
+    validate_events: ClassVar[bool | Sentinel] = EMPTY
     responses: ClassVar[Sequence[ResponseSpec] | Sentinel | None] = EMPTY
     allowed_http_methods: ClassVar[Set[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:
@@ -194,7 +194,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     )
     parsers: ClassVar[Sequence[Parser] | Sentinel] = EMPTY
     renderers: ClassVar[Sequence[Renderer] | Sentinel] = EMPTY
-    validate_negotiation: ClassVar[bool | None] = None
+    validate_negotiation: ClassVar[bool | Sentinel] = EMPTY
     auth: ClassVar[
         Sequence[SyncAuth] | Sequence[AsyncAuth] | Sentinel | None
     ] = EMPTY
@@ -215,7 +215,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     summary: ClassVar[StrOrPromise | Sentinel | None] = EMPTY
     description: ClassVar[StrOrPromise | Sentinel | None] = EMPTY
     tags: ClassVar[Sequence[str] | Sentinel | None] = EMPTY
-    servers: ClassVar[Sequence[Server] | None] = None
+    servers: ClassVar[Sequence[Server] | Sentinel | None] = EMPTY
     ignore_from_spec: ClassVar[bool] = False
 
     # Public instance API:
@@ -636,7 +636,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             additional_operations=additional_ops,
             summary=summary,
             description=description,
-            servers=None if cls.servers is None else list(cls.servers),
+            servers=(
+                None
+                if cls.servers is None or isinstance(cls.servers, Sentinel)
+                else list(cls.servers)
+            ),
         )
 
     @classproperty

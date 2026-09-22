@@ -46,6 +46,13 @@ The most specific level always wins:
 
 Values are never merged, they always redefine each other.
 
+Every value on every level defaults to :data:`~dmr.types.EMPTY`,
+which means "not set on this level, use the next one".
+This is true for sequences, sets, booleans, and all other values.
+``None`` is never a default: it is a real value that disables something,
+like ``auth=None`` or ``tags=None``, and it is only allowed
+where disabling makes sense.
+
 Here's how one can use this system to achieve different strategies.
 Let's use :doc:`authentication <auth/common>` as the example.
 
@@ -157,7 +164,7 @@ Content negotiation
 
 .. data:: dmr.settings.Settings.validate_negotiation
 
-  Default: ``None``
+  Default: ``EMPTY``
 
   Should we validate content negotiation?
   Meaning: ``django-modern-rest`` finds which parser and which renderer
@@ -167,7 +174,7 @@ Content negotiation
   See :doc:`negotiation` for more info.
 
   Defaults to the value set in :data:`~dmr.settings.Settings.validate_responses`
-  for convenience if this value is ``None``.
+  for convenience if this value is :data:`~dmr.types.EMPTY`.
 
   To disable the content negotiation validation globally, use:
 
@@ -536,11 +543,11 @@ Streaming
 
 .. data:: dmr.settings.Settings.validate_events
 
-  Default: ``None``
+  Default: ``EMPTY``
 
   Should we validate the events in all streams?
   Defaults to the value set in :data:`~dmr.settings.Settings.validate_responses`
-  for convenience if this value is ``None``.
+  for convenience if this value is :data:`~dmr.types.EMPTY`.
 
   To disable the event validation globally, use:
 
@@ -582,11 +589,11 @@ OpenAPI
 
 .. data:: dmr.settings.Settings.openapi_examples_seed
 
-  Default: ``None``
+  Default: ``EMPTY``
 
   Random seed to use when generating missing examples in the OpenAPI spec.
 
-  If set to ``None``, no examples are generated.
+  If set to :data:`~dmr.types.EMPTY`, no examples are generated.
   Existing examples won't be overridden.
 
   It only works if ``'django-modern-rest[openapi]'`` extra is installed.

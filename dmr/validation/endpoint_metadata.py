@@ -54,12 +54,15 @@ from dmr.validation.payload import (
     ModifyEndpointPayload,
     Payload,
     ValidateEndpointPayload,
+    empty_to_none,
     first_defined,
+    first_set,
 )
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.errors import AsyncErrorHandler, SyncErrorHandler
+    from dmr.openapi.objects import Server
 
 #: Regex expression to match allowed chars in tokens
 #: For header and cookie names.
@@ -466,11 +469,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             summary=summary,
             description=description,
             tags=self._build_tags(payload.tags),
-            operation_id=payload.operation_id,
+            operation_id=empty_to_none(payload.operation_id),
             deprecated=payload.deprecated,
-            external_docs=payload.external_docs,
-            callbacks=payload.callbacks,
-            servers=None if payload.servers is None else list(payload.servers),
+            external_docs=empty_to_none(payload.external_docs),
+            callbacks=empty_to_none(payload.callbacks),
+            servers=self._build_servers(payload.servers),
             ignore_from_spec=self._build_ignore_from_spec(),
         )
 
@@ -485,19 +488,19 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         self._validate_new_http_parts(payload)
         modification = self.response_modification_cls(
             return_type=return_annotation,
-            headers=payload.headers,
-            cookies=payload.cookies,
+            headers=empty_to_none(payload.headers),
+            cookies=empty_to_none(payload.cookies),
             status_code=(
                 infer_status_code(
                     method,
                     streaming=self.controller_cls.streaming,
                 )
-                if payload.status_code is None
+                if isinstance(payload.status_code, Sentinel)
                 else payload.status_code
             ),
             streaming=self.controller_cls.streaming,
-            description=payload.response_description,
-            links=payload.links,
+            description=empty_to_none(payload.response_description),
+            links=empty_to_none(payload.links),
         )
         summary, description = self._build_description()
         throttling_before_auth, throttling_after_auth, allow_cache = (
@@ -530,11 +533,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             summary=summary,
             description=description,
             tags=self._build_tags(payload.tags),
-            operation_id=payload.operation_id,
+            operation_id=empty_to_none(payload.operation_id),
             deprecated=payload.deprecated,
-            external_docs=payload.external_docs,
-            callbacks=payload.callbacks,
-            servers=None if payload.servers is None else list(payload.servers),
+            external_docs=empty_to_none(payload.external_docs),
+            callbacks=empty_to_none(payload.callbacks),
+            servers=self._build_servers(payload.servers),
             ignore_from_spec=self._build_ignore_from_spec(),
         )
 
@@ -645,14 +648,24 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         )
 
     def _build_validate_negotiation(self) -> bool:
-        if self.payload and self.payload.validate_negotiation is not None:
-            return self.payload.validate_negotiation
-        if self.controller_cls.validate_negotiation is not None:
-            return self.controller_cls.validate_negotiation
-        settings_value = resolve_setting(Settings.validate_negotiation)
-        if settings_value is not None:
-            return settings_value  # type: ignore[no-any-return]
-        return self._build_validate_responses()
+        settings_value: bool | Sentinel = resolve_setting(
+            Settings.validate_negotiation,
+        )
+        validate_negotiation = first_set(
+            self.payload.validate_negotiation if self.payload else EMPTY,
+            self.controller_cls.validate_negotiation,
+            settings_value,
+        )
+        if isinstance(validate_negotiation, Sentinel):
+            return self._build_validate_responses()
+        return validate_negotiation
+
+    def _build_servers(
+        self,
+        payload_servers: Sequence['Server'] | Sentinel | None,
+    ) -> list['Server'] | None:
+        servers = empty_to_none(payload_servers)
+        return None if servers is None else list(servers)
 
     def _build_auth(  # noqa: WPS231
         self,
@@ -837,28 +850,38 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 raise EndpointMetadataError(msg)
 
     def _build_validate_responses(self) -> bool:
-        if self.payload and self.payload.validate_responses is not None:
-            return self.payload.validate_responses
-        if self.controller_cls.validate_responses is not None:
-            return self.controller_cls.validate_responses
-        return resolve_setting(  # type: ignore[no-any-return]
+        settings_value: bool | Sentinel = resolve_setting(
             Settings.validate_responses,
         )
+        validate_responses = first_set(
+            self.payload.validate_responses if self.payload else EMPTY,
+            self.controller_cls.validate_responses,
+            settings_value,
+        )
+        # Settings is the last level, validation is enabled by default:
+        if isinstance(validate_responses, Sentinel):
+            return True
+        return validate_responses
 
     def _build_validate_events(self) -> bool:
-        if self.payload and self.payload.validate_events is not None:
-            return self.payload.validate_events
-        if self.controller_cls.validate_events is not None:
-            return self.controller_cls.validate_events
-        settings_value = resolve_setting(Settings.validate_events)
-        if settings_value is not None:
-            return settings_value  # type: ignore[no-any-return]
-        return self._build_validate_responses()
+        settings_value: bool | Sentinel = resolve_setting(
+            Settings.validate_events,
+        )
+        validate_events = first_set(
+            self.payload.validate_events if self.payload else EMPTY,
+            self.controller_cls.validate_events,
+            settings_value,
+        )
+        if isinstance(validate_events, Sentinel):
+            return self._build_validate_responses()
+        return validate_events
 
     def _build_ignore_from_spec(self) -> bool:
-        if self.payload and self.payload.ignore_from_spec is not None:
-            return self.payload.ignore_from_spec
-        return self.controller_cls.ignore_from_spec
+        ignore_from_spec = first_set(
+            self.payload.ignore_from_spec if self.payload else EMPTY,
+            self.controller_cls.ignore_from_spec,
+        )
+        return not isinstance(ignore_from_spec, Sentinel) and ignore_from_spec
 
     def _build_tags(
         self,
@@ -874,7 +897,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     def _build_error_handler(
         self,
     ) -> 'SyncErrorHandler | AsyncErrorHandler | None':
-        if self.payload is None or self.payload.error_handler is None:
+        if self.payload is None or isinstance(
+            self.payload.error_handler,
+            Sentinel,
+        ):
             return None
         if inspect.iscoroutinefunction(self.func):
             if not inspect.iscoroutinefunction(self.payload.error_handler):
@@ -897,11 +923,18 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         )
 
     def _build_semantic_responses(self) -> bool:
-        if self.payload and self.payload.semantic_responses is not None:
-            return self.payload.semantic_responses
-        if self.controller_cls.semantic_responses is not None:
-            return self.controller_cls.semantic_responses
-        return resolve_setting(Settings.semantic_responses)  # type: ignore[no-any-return]
+        settings_value: bool | Sentinel = resolve_setting(
+            Settings.semantic_responses,
+        )
+        semantic_responses = first_set(
+            self.payload.semantic_responses if self.payload else EMPTY,
+            self.controller_cls.semantic_responses,
+            settings_value,
+        )
+        # Settings is the last level, semantic responses are on by default:
+        if isinstance(semantic_responses, Sentinel):
+            return True
+        return semantic_responses
 
     def _build_exclude_validate_responses(self) -> frozenset[HTTPStatus]:
         return self._build_optional_set(
@@ -944,9 +977,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         self,
         payload: ModifyEndpointPayload,
     ) -> None:
-        if payload.headers is not None and any(
+        headers = empty_to_none(payload.headers)
+        if headers is not None and any(
             isinstance(header, HeaderSpec) and not header.skip_validation
-            for header in payload.headers.values()
+            for header in headers.values()
         ):
             raise EndpointMetadataError(
                 f'Since {self.endpoint_name!r} returns raw data, '
@@ -955,9 +989,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 '`NewHeader` to add new headers to the response. '
                 'Or add `skip_validation=True` to `HeaderSpec`',
             )
-        if payload.cookies is not None and any(
+        cookies = empty_to_none(payload.cookies)
+        if cookies is not None and any(
             isinstance(cookie, CookieSpec) and not cookie.skip_validation
-            for cookie in payload.cookies.values()
+            for cookie in cookies.values()
         ):
             raise EndpointMetadataError(
                 f'Since {self.endpoint_name!r} returns raw data, '

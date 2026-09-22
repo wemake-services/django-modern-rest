@@ -35,6 +35,14 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   Merging is still possible, but it must be explicit,
   like `@modify(auth=[*auth, other_auth])`.
   This allows a better composition and better value overrides, #1576
+- All endpoint, controller, and settings values now default to `EMPTY`,
+  which means "not set on this level", instead of `None`.
+  `None` is only allowed where it disables something explicitly,
+  like `auth=None`. This affects `validate_responses`, `semantic_responses`,
+  `validate_events`, `validate_negotiation`, `ignore_from_spec`,
+  `error_handler`, `status_code`, `headers`, `cookies`, `operation_id`,
+  `external_docs`, `callbacks`, `servers`, `links`, `response_description`,
+  and `Settings.openapi_examples_seed`, #1576
 - `Controller` now sets `login_required = False` by default in order to
   exempt controllers from Django's `LoginRequiredMiddleware`.
   Users should [configure authentication](https://django-modern-rest.readthedocs.io/en/latest/pages/auth/common.html)

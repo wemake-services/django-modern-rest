@@ -212,6 +212,26 @@ def test_empty_values_are_not_set(
     }
 
 
+def test_empty_settings_flags(settings: LazySettings) -> None:
+    """Ensure that `EMPTY` boolean settings fall back to defaults."""
+    settings.DMR_SETTINGS = {
+        Settings.validate_responses: EMPTY,
+        Settings.semantic_responses: EMPTY,
+        Settings.validate_negotiation: EMPTY,
+        Settings.validate_events: EMPTY,
+    }
+
+    class _Controller(Controller[PydanticSerializer]):
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _Controller.api_endpoints['GET'].metadata
+    assert metadata.validate_responses is True
+    assert metadata.semantic_responses is True
+    assert metadata.validate_negotiation is True
+    assert metadata.validate_events is True
+
+
 def test_none_disables_next_levels() -> None:
     """Ensure that `None` on the controller disables settings values."""
 
