@@ -186,7 +186,7 @@ If you need granular control, you can change anything.
   By default, login is not required for this controller to exempt it
   from Django's ``LoginRequiredMiddleware``.
   Users should make use of authentication in ``django-modern-rest``.
-  See :ref:`authentication` for more details.
+  See :doc:`../auth/common` for more details.
 - :attr:`~dmr.controller.Controller.controller_validator_cls`
   to customize how this controller is validated at import time
 - :attr:`~dmr.controller.Controller.annotations_context`

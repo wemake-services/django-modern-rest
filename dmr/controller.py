@@ -129,10 +129,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             It is only supported on the controller level, because
             it has its own per-method logic
             inside Django's original CSRF middleware.
-        login_required: Should this controller require the user to be logged in?
+        login_required: Whether this controller should be handled by
+            Django's ``LoginRequiredMiddleware``.
             Is ``False`` by default.
             Users should make use of authentication in ``django-modern-rest``.
-            See :ref:`authentication` for more details.
+            See :doc:`/pages/auth/common` for more details.
         summary: A short summary of what this path item does.
             Defaults to the first paragraph of the controller's docstring.
             Set it to ``None`` to have no summary at all.
@@ -237,7 +238,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         By default, login is not required
         to exempt the view from Django's ``LoginRequiredMiddleware``.
         Users should make use of authentication in ``django-modern-rest``.
-        See :ref:`authentication` for more details.
+        See :doc:`/pages/auth/common` for more details.
 
         Raises:
             EndpointMetadataError: When called on an abstract controller,
