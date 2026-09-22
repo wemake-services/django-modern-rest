@@ -68,31 +68,40 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             once the first controller is created.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this class.
+            Overrides the settings value, can be overridden per endpoint.
+            Set it to ``None`` to enable all checks back.
         validate_responses: Boolean whether or not validating responses.
             Works in runtime, can be disabled for better performance.
         exclude_validate_responses: Set of status codes that we don't
             validate, even when ``validate_responses`` is enabled.
             Useful for errors like ``500`` that can be raised
             from anywhere and that you might not want to describe.
+            Overrides the settings value, can be overridden per endpoint.
+            Set it to ``None`` to validate all status codes back.
         semantic_responses: Should semantic responses be collected
             from different providers for all endpoints in this class.
         exclude_semantic_responses: Set of semantic responses
             that user wants to disable.
+            Overrides the settings value, can be overridden per endpoint.
+            Set it to ``None`` to enable all semantic responses back.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
             will be a streaming response that supports event validation.
         responses: List of responses schemas that this controller can return.
-            Also customizable in endpoints and globally with ``'responses'``
-            key in the settings.
+            Overrides ``'responses'`` key in the settings,
+            can be overridden per endpoint.
+            Set it to ``None`` to not use any responses from the settings.
         allowed_http_methods: Set of names to be treated as names for endpoints.
             Does not include ``options``, but includes ``meta``.
         parsers: Sequence of parsers to be used for this controller
             to parse incoming request's body. All instances must be of subtypes
             of :class:`~dmr.parsers.Parser`.
+            Overrides the settings value, can be overridden per endpoint.
         renderers: Sequence of renderers to be used for this controller
             to render response's body. All instances must be of subtypes
             of :class:`~dmr.renderers.Renderer`.
+            Overrides the settings value, can be overridden per endpoint.
         validate_negotiation: Should we validate that returned response's
             ``Content-Type`` header matches the one
             that we inferred in the negotiation process?
@@ -101,12 +110,14 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             of :class:`dmr.security.SyncAuth`.
             Async controllers must use instances
             of :class:`dmr.security.AsyncAuth`.
+            Overrides the settings value, can be overridden per endpoint.
             Set it to ``None`` to disable auth of this controller.
         throttling: Sequence of throttle instances to be used.
             Sync controllers must use instances
             of :class:`dmr.throttling.SyncThrottle`.
             Async controllers must use instances
             of :class:`dmr.throttling.AsyncThrottle`.
+            Overrides the settings value, can be overridden per endpoint.
             Set it to ``None`` to disable throttling of this controller.
         throttling_allow_unsafe_cache: Should this controller allow
             unsafe throttle Django cache backends?
@@ -143,7 +154,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             Set it to ``None`` to have no description at all.
         tags: A list of tags to group all operations
             from this controller in OpenAPI documentation.
-            These are merged with router-level and endpoint-level tags.
+            Overrides router-level tags, can be overridden per endpoint.
+            Set it to ``None`` to have no tags at all.
         servers: An alternative servers array to service this path item.
         ignore_from_spec: If set to ``True``, all endpoints from this controller
             would not be added to the final OpenAPI spec.
@@ -165,26 +177,33 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     login_required: ClassVar[bool] = False
     serializer: ClassVar[type[BaseSerializer]]
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
-    no_validate_http_spec: ClassVar[Set[HttpSpec] | None] = frozenset()
+    no_validate_http_spec: ClassVar[Set[HttpSpec] | Sentinel | None] = EMPTY
     validate_responses: ClassVar[bool | None] = None
-    exclude_validate_responses: ClassVar[Set[HTTPStatus] | None] = frozenset()
+    exclude_validate_responses: ClassVar[Set[HTTPStatus] | Sentinel | None] = (
+        EMPTY
+    )
     semantic_responses: ClassVar[bool | None] = None
-    exclude_semantic_responses: ClassVar[Set[HTTPStatus] | None] = frozenset()
+    exclude_semantic_responses: ClassVar[Set[HTTPStatus] | Sentinel | None] = (
+        EMPTY
+    )
     validate_events: ClassVar[bool | None] = None
-    responses: ClassVar[Sequence[ResponseSpec]] = []
+    responses: ClassVar[Sequence[ResponseSpec] | Sentinel | None] = EMPTY
     allowed_http_methods: ClassVar[Set[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:
         {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
     )
-    parsers: ClassVar[Sequence[Parser]] = ()
-    renderers: ClassVar[Sequence[Renderer]] = ()
+    parsers: ClassVar[Sequence[Parser] | Sentinel] = EMPTY
+    renderers: ClassVar[Sequence[Renderer] | Sentinel] = EMPTY
     validate_negotiation: ClassVar[bool | None] = None
-    auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
+    auth: ClassVar[
+        Sequence[SyncAuth] | Sequence[AsyncAuth] | Sentinel | None
+    ] = EMPTY
     throttling: ClassVar[
         Sequence[dmr_throttling.SyncThrottle]
         | Sequence[dmr_throttling.AsyncThrottle]
+        | Sentinel
         | None
-    ] = ()
+    ] = EMPTY
     throttling_allow_unsafe_cache: ClassVar[bool | Sentinel | None] = EMPTY
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
@@ -195,7 +214,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     # OpenAPI:
     summary: ClassVar[StrOrPromise | Sentinel | None] = EMPTY
     description: ClassVar[StrOrPromise | Sentinel | None] = EMPTY
-    tags: ClassVar[Sequence[str] | None] = None
+    tags: ClassVar[Sequence[str] | Sentinel | None] = EMPTY
     servers: ClassVar[Sequence[Server] | None] = None
     ignore_from_spec: ClassVar[bool] = False
 

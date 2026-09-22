@@ -3,7 +3,7 @@ from collections.abc import AsyncIterator, Iterable, Mapping
 from http import HTTPStatus
 from typing import Any, ClassVar, TypeVar, cast
 
-from typing_extensions import override
+from typing_extensions import Sentinel, override
 
 from dmr.controller import Controller
 from dmr.cookies import NewCookie, set_cookies
@@ -74,9 +74,12 @@ class StreamingController(Controller[_SerializerT_co]):
         if serializer is None:
             return  # this is an abstract controller
 
+        renderers = cls.renderers
+        if isinstance(renderers, Sentinel) or not renderers:
+            renderers = resolve_setting(Settings.renderers)
         cls.renderers = (
             *cls.streaming_renderers(serializer),
-            *(cls.renderers or resolve_setting(Settings.renderers)),
+            *renderers,
         )
 
         # Now we have everything and we can create `api_endpoints`:

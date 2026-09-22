@@ -54,6 +54,7 @@ from dmr.validation.payload import (
     ModifyEndpointPayload,
     Payload,
     ValidateEndpointPayload,
+    first_defined,
 )
 
 if TYPE_CHECKING:
@@ -393,7 +394,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             object.__setattr__(
                 self,
                 'payload',
-                ValidateEndpointPayload(responses=[]),
+                ValidateEndpointPayload.implicit(),
             )
         allowed_http_methods: frozenset[str] = frozenset(
             self.controller_cls.allowed_http_methods,
@@ -402,7 +403,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             self.func.__name__,
             allowed_http_methods=allowed_http_methods,
         )
-        self.func.__name__ = method  # we can change it :)
+        self.func.__name__ = method
         object.__setattr__(self, 'endpoint_name', self._build_endpoint_name())
 
         self._validate_return_annotation(return_annotation)
@@ -586,7 +587,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
-            tags=self._build_tags(None),
+            tags=self._build_tags(EMPTY),
             operation_id=None,
             deprecated=False,
             external_docs=None,
@@ -601,49 +602,36 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         return f'{controller_name}.{func_name}'
 
     def _build_parsers(self) -> dict[str, Parser]:
-        if self.payload and self.payload.parsers:
-            return {
-                typ.content_type: self._check_supported(typ)
-                for typ in self.payload.parsers
-            }
-        if self.controller_cls.parsers:
-            return {
-                typ.content_type: self._check_supported(typ)
-                for typ in self.controller_cls.parsers
-            }
-        settings_types = resolve_setting(Settings.parsers)
-        if not settings_types:
-            # This is the last place we look at, it must be present:
-            raise EndpointMetadataError(
-                f'{self.endpoint_name!r} must have at least one parser '
-                'configured in settings',
-            )
-        return {
-            typ.content_type: self._check_supported(typ)
-            for typ in settings_types
-        }
+        return self._build_pluggables(
+            'parser',
+            self.payload.parsers if self.payload else EMPTY,
+            self.controller_cls.parsers,
+            resolve_setting(Settings.parsers),
+        )
 
     def _build_renderers(self) -> dict[str, Renderer]:
-        if self.payload and self.payload.renderers:
-            return {
-                typ.content_type: self._check_supported(typ)
-                for typ in self.payload.renderers
-            }
-        if self.controller_cls.renderers:
-            return {
-                typ.content_type: self._check_supported(typ)
-                for typ in self.controller_cls.renderers
-            }
-        settings_types = resolve_setting(Settings.renderers)
-        if not settings_types:
-            # This is the last place we look at, it must be present:
+        return self._build_pluggables(
+            'renderer',
+            self.payload.renderers if self.payload else EMPTY,
+            self.controller_cls.renderers,
+            resolve_setting(Settings.renderers),
+        )
+
+    def _build_pluggables(
+        self,
+        kind: str,
+        *layers: Sequence[_PluggableT] | Sentinel | None,
+    ) -> dict[str, _PluggableT]:
+        pluggables = first_defined(*layers)
+        if pluggables is None or isinstance(pluggables, Sentinel):
+            # Settings is the last place we look at, it must be present:
             raise EndpointMetadataError(
-                f'{self.endpoint_name!r} must have at least one renderer '
+                f'{self.endpoint_name!r} must have at least one {kind} '
                 'configured in settings',
             )
         return {
-            typ.content_type: self._check_supported(typ)
-            for typ in settings_types
+            pluggable.content_type: self._check_supported(pluggable)
+            for pluggable in pluggables
         }
 
     def _check_supported(
@@ -669,54 +657,53 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     def _build_auth(  # noqa: WPS231
         self,
     ) -> list[SyncAuth | AsyncAuth] | None:
-        payload_auth = () if self.payload is None else (self.payload.auth or ())
-        settings_auth: Sequence[
-            SyncAuth | AsyncAuth | SyncOrAsyncAuth[Any, Any]
-        ] = resolve_setting(Settings.auth)
-        # SyncOrAsyncAuth is settings-only — reject controller/endpoint usage:
-        for candidate_auth in (
-            *payload_auth,
-            *(self.controller_cls.auth or ()),
-        ):
-            if isinstance(candidate_auth, SyncOrAsyncAuth):  # pyright: ignore[reportUnnecessaryIsInstance]
+        base_type = (
+            AsyncAuth if inspect.iscoroutinefunction(self.func) else SyncAuth
+        )
+        auth = first_defined(
+            self.payload.auth if self.payload else EMPTY,
+            self.controller_cls.auth,
+        )
+        if auth is None:
+            return None  # explicitly disabled
+        if isinstance(auth, Sentinel):
+            # Nothing is set on the endpoint and the controller levels,
+            # settings is the last place we look at.
+            # `SyncOrAsyncAuth` is resolved to the actual instance here.
+            settings_auth: Sequence[
+                SyncAuth | AsyncAuth | SyncOrAsyncAuth[Any, Any]
+            ] = resolve_setting(Settings.auth)
+            resolved_auth = [
+                setting_auth.resolve(is_async=base_type is AsyncAuth)
+                if isinstance(setting_auth, SyncOrAsyncAuth)
+                else setting_auth
+                for setting_auth in settings_auth
+            ]
+        else:
+            resolved_auth = list(auth)
+            # `SyncOrAsyncAuth` is settings-only,
+            # reject controller / endpoint usage:
+            if any(
+                isinstance(candidate_auth, SyncOrAsyncAuth)  # pyright: ignore[reportUnnecessaryIsInstance]
+                for candidate_auth in resolved_auth
+            ):
                 raise EndpointMetadataError(
                     'SyncOrAsyncAuth can only be used in settings, '
                     'not at controller or endpoint level '
                     f'for {self.endpoint_name=}',
                 )
-        base_type = (
-            AsyncAuth if inspect.iscoroutinefunction(self.func) else SyncAuth
-        )
-        auth = [
-            *payload_auth,
-            *(self.controller_cls.auth or ()),
-            *(
-                setting_auth.resolve(is_async=base_type is AsyncAuth)
-                if isinstance(setting_auth, SyncOrAsyncAuth)
-                else setting_auth
-                for setting_auth in settings_auth
-            ),
-        ]
         # Validate that auth matches the sync / async endpoints:
         if not all(
             isinstance(auth_instance, base_type)  # pyright: ignore[reportUnnecessaryIsInstance]
-            for auth_instance in auth
+            for auth_instance in resolved_auth
         ):
             raise EndpointMetadataError(
                 f'All auth instances must be subtypes of {base_type!r} '
                 f'for {self.endpoint_name=}',
             )
-        # We are doing this as late as possible to still
-        # have the full validation logic even if some value is None.
-        if (
-            (self.payload and self.payload.auth is None)  # noqa: WPS222
-            or self.controller_cls.auth is None
-            # Empty auth list means that no auth is configured
-            # and it is just None.
-            or not auth
-        ):
-            return None
-        return auth
+        # Empty auth list means that no auth is configured
+        # and it is just `None`.
+        return resolved_auth or None
 
     def _build_throttling(  # noqa: WPS210, WPS231
         self,
@@ -725,81 +712,72 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         list[SyncThrottle | AsyncThrottle] | None,
         bool | None,
     ]:
-        payload_throttling = (
-            () if self.payload is None else (self.payload.throttling or ())
-        )
-        settings_throttling: Sequence[
-            SyncThrottle | AsyncThrottle | SyncOrAsyncThrottle[Any, Any]
-        ] = resolve_setting(Settings.throttling)
-
-        # Validate that throttling matches the sync / async endpoints:
         base_type = (
             AsyncThrottle
             if inspect.iscoroutinefunction(self.func)
             else SyncThrottle
         )
-
-        # We need to check that there are no `SyncOrAsyncThrottle`
-        # instances in payload and controller throttling,
-        # because they are only allowed in settings.
-        for throttle in (
-            *payload_throttling,
-            *(self.controller_cls.throttling or ()),
-        ):
-            if isinstance(throttle, SyncOrAsyncThrottle):  # pyright: ignore[reportUnnecessaryIsInstance]
+        allow_cache = self._build_throttling_allow_unsafe_cache()
+        throttling = first_defined(
+            self.payload.throttling if self.payload else EMPTY,
+            self.controller_cls.throttling,
+        )
+        if throttling is None:
+            return (None, None, allow_cache)  # explicitly disabled
+        if isinstance(throttling, Sentinel):
+            # Nothing is set on the endpoint and the controller levels,
+            # settings is the last place we look at.
+            # `SyncOrAsyncThrottle` is resolved to the actual instance here.
+            settings_throttling: Sequence[
+                SyncThrottle | AsyncThrottle | SyncOrAsyncThrottle[Any, Any]
+            ] = resolve_setting(Settings.throttling)
+            resolved_throttling = [
+                setting_throttle.resolve(is_async=base_type is AsyncThrottle)
+                if isinstance(setting_throttle, SyncOrAsyncThrottle)
+                else setting_throttle
+                for setting_throttle in settings_throttling
+            ]
+        else:
+            resolved_throttling = list(throttling)
+            # `SyncOrAsyncThrottle` is settings-only,
+            # reject controller / endpoint usage:
+            if any(
+                isinstance(throttle, SyncOrAsyncThrottle)  # pyright: ignore[reportUnnecessaryIsInstance]
+                for throttle in resolved_throttling
+            ):
                 raise EndpointMetadataError(
                     'SyncOrAsyncThrottle can only be used in settings, '
                     'not at controller or endpoint level '
                     f'for {self.endpoint_name=}',
                 )
-
-        # We use tuple and not a list, because we expose `__dmr_throttling__`
-        # to each request, so it would not be possible to mutate it by accident.
-        # We resolve `SyncOrAsyncThrottle` from settings to the actual instance.
-        throttling = [
-            *payload_throttling,
-            *(self.controller_cls.throttling or ()),
-            *(
-                setting_throttle.resolve(is_async=base_type is AsyncThrottle)
-                if isinstance(setting_throttle, SyncOrAsyncThrottle)
-                else setting_throttle
-                for setting_throttle in settings_throttling
-            ),
-        ]
+        # Validate that throttling matches the sync / async endpoints:
         if not all(
             isinstance(throttling_instance, base_type)  # pyright: ignore[reportUnnecessaryIsInstance]
-            for throttling_instance in throttling
+            for throttling_instance in resolved_throttling
         ):
             raise EndpointMetadataError(
                 f'All throttling instances must be subtypes of {base_type!r} '
                 f'for {self.endpoint_name=}',
             )
-        allow_cache = self._build_throttling_allow_unsafe_cache()
-        self._validate_throttling(throttling, allow_cache=allow_cache)
-        # We are doing this as late as possible to still
-        # have the full validation logic even if some value is None.
-        if (
-            (self.payload and self.payload.throttling is None)  # noqa: WPS222
-            or self.controller_cls.throttling is None
-            # Empty throttling list means that no throttling is configured
-            # and it is just None.
-            or not throttling
-        ):
+        self._validate_throttling(resolved_throttling, allow_cache=allow_cache)
+        # Empty throttling list means that no throttling is configured
+        # and it is just `None`.
+        if not resolved_throttling:
             return (None, None, allow_cache)
         return (
             (
                 [
-                    throttling
-                    for throttling in throttling
-                    if throttling.cache_key.runs_before_auth
+                    throttle
+                    for throttle in resolved_throttling
+                    if throttle.cache_key.runs_before_auth
                 ]
                 or None
             ),
             (
                 [
-                    throttling
-                    for throttling in throttling
-                    if not throttling.cache_key.runs_before_auth
+                    throttle
+                    for throttle in resolved_throttling
+                    if not throttle.cache_key.runs_before_auth
                 ]
                 or None
             ),
@@ -884,15 +862,14 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_tags(
         self,
-        payload_tags: Sequence[str] | None,
-    ) -> list[str] | None:
-        # Controller tags are prepended to the endpoint ones,
-        # the same way router tags are prepended to these later on.
-        tags = [
-            *(self.controller_cls.tags or []),
-            *(payload_tags or []),
-        ]
-        return tags or None
+        payload_tags: Sequence[str] | Sentinel | None,
+    ) -> list[str] | Sentinel | None:
+        # Router-level tags are resolved later during the schema generation,
+        # that's why `EMPTY` is preserved here.
+        tags = first_defined(payload_tags, self.controller_cls.tags)
+        if tags is None or isinstance(tags, Sentinel):
+            return tags
+        return list(tags)
 
     def _build_error_handler(
         self,
@@ -914,7 +891,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_no_validate_http_spec(self) -> frozenset[HttpSpec]:
         return self._build_optional_set(
-            self.payload.no_validate_http_spec if self.payload else set(),
+            self.payload.no_validate_http_spec if self.payload else EMPTY,
             self.controller_cls.no_validate_http_spec,
             resolve_setting(Settings.no_validate_http_spec),
         )
@@ -928,28 +905,26 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_exclude_validate_responses(self) -> frozenset[HTTPStatus]:
         return self._build_optional_set(
-            self.payload.exclude_validate_responses if self.payload else set(),
+            self.payload.exclude_validate_responses if self.payload else EMPTY,
             self.controller_cls.exclude_validate_responses,
             resolve_setting(Settings.exclude_validate_responses),
         )
 
     def _build_exclude_semantic_responses(self) -> frozenset[HTTPStatus]:
         return self._build_optional_set(
-            self.payload.exclude_semantic_responses if self.payload else set(),
+            self.payload.exclude_semantic_responses if self.payload else EMPTY,
             self.controller_cls.exclude_semantic_responses,
             resolve_setting(Settings.exclude_semantic_responses),
         )
 
     def _build_optional_set(
         self,
-        *sets: Set[_ItemT] | None,
+        *layers: Set[_ItemT] | Sentinel | None,
     ) -> frozenset[_ItemT]:
-        result_set: set[_ItemT] = set()
-        for set_like in sets:
-            if set_like is None:
-                return frozenset()
-            result_set.update(set_like)
-        return frozenset(result_set)
+        resolved = first_defined(*layers)
+        if resolved is None or isinstance(resolved, Sentinel):
+            return frozenset()
+        return frozenset(resolved)
 
     def _build_description(self) -> tuple[str | None, str | None]:
         """
@@ -1201,10 +1176,17 @@ def _build_responses(
     controller_cls: type['Controller[BaseSerializer]'],
     modification: ResponseModification | None = None,
 ) -> list[ResponseSpec]:
+    responses = first_defined(
+        payload.responses if payload else EMPTY,
+        controller_cls.responses,
+        resolve_setting(Settings.responses),
+    )
     return [
-        *resolve_setting(Settings.responses),
-        *controller_cls.responses,
-        *((payload.responses or []) if payload else []),
+        *(
+            []
+            if responses is None or isinstance(responses, Sentinel)
+            else responses
+        ),
         *([] if modification is None else [modification.to_spec()]),
     ]
 

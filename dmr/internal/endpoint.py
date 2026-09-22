@@ -214,26 +214,36 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             validate, even when ``validate_responses`` is enabled.
             Useful for errors like ``500`` that can be raised
             from anywhere and that you might not want to describe.
+            Overrides controller and settings values.
+            Set it to ``None`` to validate all status codes back.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
         exclude_semantic_responses: Set of semantic responses status codes
             that user wants to disable.
+            Overrides controller and settings values.
+            Set it to ``None`` to enable all semantic responses back.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
             will be a streaming response that supports event validation.
         extra_responses: Sequence of extra responses
             that this endpoint can return.
+            Overrides controller and settings values.
+            Set it to ``None`` to only use the default response.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this endpoint.
+            Overrides controller and settings values.
+            Set it to ``None`` to enable all checks back.
         error_handler: Callback function to be called
             when this endpoint faces an exception.
         parsers: Sequence of types to be used for this endpoint
             to parse incoming request's body. All types must be subtypes
             of :class:`~dmr.parsers.Parser`.
+            Overrides controller and settings values.
         renderers: Sequence of types to be used for this endpoint
             to render response's body. All types must be subtypes
             of :class:`~dmr.renderers.Renderer`.
+            Overrides controller and settings values.
         validate_negotiation: Should we validate that returned response's
             ``Content-Type`` header matches the one
             that we inferred in the negotiation process?
@@ -242,6 +252,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             of :class:`dmr.security.SyncAuth`.
             Async endpoints must use instances
             of :class:`dmr.security.AsyncAuth`.
+            Overrides controller and settings values.
             Set it to ``None`` to disable auth for this endpoint.
         throttling: Sequence of throttle instances
             to be used for this endpoint.
@@ -249,6 +260,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             of :class:`dmr.throttling.SyncThrottle`.
             Async endpoints must use instances
             of :class:`dmr.throttling.AsyncThrottle`.
+            Overrides controller and settings values.
             Set it to ``None`` to disable throttling of this endpoint.
         throttling_allow_unsafe_cache: Should this endpoint allow
             unsafe throttle Django cache backends?
@@ -261,7 +273,8 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             Set it to ``None`` to have no description at all.
         tags: A sequence of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
-            These are merged with controller-level and router-level tags.
+            Overrides controller-level and router-level tags.
+            Set it to ``None`` to have no tags at all.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
         external_docs: Additional external documentation for this operation.
@@ -300,21 +313,21 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
         cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
         validate_responses: bool | None = None,
-        exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_responses: bool | None = None,
-        exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         validate_events: bool | None = None,
-        extra_responses: Sequence[ResponseSpec] | None = None,
-        no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
-        parsers: Sequence[Parser] | None = None,
-        renderers: Sequence[Renderer] | None = None,
+        extra_responses: Sequence[ResponseSpec] | Sentinel | None = EMPTY,
+        no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
+        parsers: Sequence[Parser] | Sentinel = EMPTY,
+        renderers: Sequence[Renderer] | Sentinel = EMPTY,
         validate_negotiation: bool | None = None,
-        auth: Sequence[Never] | None = (),
-        throttling: Sequence[Never] | None = (),
+        auth: Sequence[Never] | Sentinel | None = EMPTY,
+        throttling: Sequence[Never] | Sentinel | None = EMPTY,
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
-        tags: Sequence[str] | None = None,
+        tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
@@ -334,21 +347,21 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
         cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
         validate_responses: bool | None = None,
-        exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_responses: bool | None = None,
-        exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         validate_events: bool | None = None,
-        extra_responses: Sequence[ResponseSpec] | None = None,
-        no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
-        parsers: Sequence[Parser] | None = None,
-        renderers: Sequence[Renderer] | None = None,
+        extra_responses: Sequence[ResponseSpec] | Sentinel | None = EMPTY,
+        no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
+        parsers: Sequence[Parser] | Sentinel = EMPTY,
+        renderers: Sequence[Renderer] | Sentinel = EMPTY,
         validate_negotiation: bool | None = None,
-        auth: Sequence[AsyncAuth] | None = (),
-        throttling: Sequence[AsyncThrottle] | None = (),
+        auth: Sequence[AsyncAuth] | Sentinel | None = EMPTY,
+        throttling: Sequence[AsyncThrottle] | Sentinel | None = EMPTY,
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
-        tags: Sequence[str] | None = None,
+        tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
@@ -368,21 +381,21 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
         cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
         validate_responses: bool | None = None,
-        exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_responses: bool | None = None,
-        exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         validate_events: bool | None = None,
-        extra_responses: Sequence[ResponseSpec] | None = None,
-        no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
-        parsers: Sequence[Parser] | None = None,
-        renderers: Sequence[Renderer] | None = None,
+        extra_responses: Sequence[ResponseSpec] | Sentinel | None = EMPTY,
+        no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
+        parsers: Sequence[Parser] | Sentinel = EMPTY,
+        renderers: Sequence[Renderer] | Sentinel = EMPTY,
         validate_negotiation: bool | None = None,
-        auth: Sequence[SyncAuth] | None = (),
-        throttling: Sequence[SyncThrottle] | None = (),
+        auth: Sequence[SyncAuth] | Sentinel | None = EMPTY,
+        throttling: Sequence[SyncThrottle] | Sentinel | None = EMPTY,
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
-        tags: Sequence[str] | None = None,
+        tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
@@ -400,24 +413,26 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         headers: Mapping[str, NewHeader | HeaderSpec] | None = None,
         cookies: Mapping[str, NewCookie | CookieSpec] | None = None,
         validate_responses: bool | None = None,
-        exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_responses: bool | None = None,
-        exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         validate_events: bool | None = None,
-        extra_responses: Sequence[ResponseSpec] | None = None,
-        no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
+        extra_responses: Sequence[ResponseSpec] | Sentinel | None = EMPTY,
+        no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
         error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
-        parsers: Sequence[Parser] | None = None,
-        renderers: Sequence[Renderer] | None = None,
+        parsers: Sequence[Parser] | Sentinel = EMPTY,
+        renderers: Sequence[Renderer] | Sentinel = EMPTY,
         validate_negotiation: bool | None = None,
-        auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+        auth: (
+            Sequence[AsyncAuth] | Sequence[SyncAuth] | Sentinel | None
+        ) = EMPTY,
         throttling: (
-            Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None
-        ) = (),
+            Sequence[AsyncThrottle] | Sequence[SyncThrottle] | Sentinel | None
+        ) = EMPTY,
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
-        tags: Sequence[str] | None = None,
+        tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
@@ -446,6 +461,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
                 parsers=parsers,
                 renderers=renderers,
                 validate_negotiation=validate_negotiation,
+                security=EMPTY,  # TODO
                 auth=auth,
                 throttling=throttling,
                 throttling_allow_unsafe_cache=throttling_allow_unsafe_cache,
@@ -609,24 +625,32 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
             validate, even when ``validate_responses`` is enabled.
             Useful for errors like ``500`` that can be raised
             from anywhere and that you might not want to describe.
+            Overrides controller and settings values.
+            Set it to ``None`` to validate all status codes back.
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
         exclude_semantic_responses: Set of semantic responses status codes
             that user wants to disable.
+            Overrides controller and settings values.
+            Set it to ``None`` to enable all semantic responses back.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
             will be a streaming response that supports event validation.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this endpoint.
+            Overrides controller and settings values.
+            Set it to ``None`` to enable all checks back.
         error_handler: Callback function to be called
             when this endpoint faces an exception.
         parsers: Sequence of types to be used for this endpoint
             to parse incoming request's body. All types must be subtypes
             of :class:`~dmr.parsers.Parser`.
+            Overrides controller and settings values.
         renderers: Sequence of types to be used for this endpoint
             to render response's body. All types must be subtypes
             of :class:`~dmr.renderers.Renderer`.
+            Overrides controller and settings values.
         validate_negotiation: Should we validate that returned response's
             ``Content-Type`` header matches the one
             that we inferred in the negotiation process?
@@ -635,12 +659,14 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
             of :class:`dmr.security.SyncAuth`.
             Async endpoints must use instances
             of :class:`dmr.security.AsyncAuth`.
+            Overrides controller and settings values.
             Set it to ``None`` to disable auth for this endpoint.
         throttling: Sequence of throttle instances to be used for this endpoint.
             Sync endpoints must use instances
             of :class:`dmr.throttling.SyncThrottle`.
             Async endpoints must use instances
             of :class:`dmr.throttling.AsyncThrottle`.
+            Overrides controller and settings values.
             Set it to ``None`` to disable throttling of this endpoint.
         throttling_allow_unsafe_cache: Should this controller allow
             unsafe throttle Django cache backends?
@@ -653,7 +679,8 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
             Set it to ``None`` to have no description at all.
         tags: A sequence of tags for API documentation control.
             Used to group operations in OpenAPI documentation.
-            These are merged with controller-level and router-level tags.
+            Overrides controller-level and router-level tags.
+            Set it to ``None`` to have no tags at all.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
         external_docs: Additional external documentation for this operation.
@@ -687,20 +714,20 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         *responses: ResponseSpec,
         error_handler: None = None,
         validate_responses: bool | None = None,
-        exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_responses: bool | None = None,
-        exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         validate_events: bool | None = None,
-        no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
-        parsers: Sequence[Parser] | None = None,
-        renderers: Sequence[Renderer] | None = None,
+        no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
+        parsers: Sequence[Parser] | Sentinel = EMPTY,
+        renderers: Sequence[Renderer] | Sentinel = EMPTY,
         validate_negotiation: bool | None = None,
-        auth: Sequence[Never] | None = (),
-        throttling: Sequence[Never] | None = (),
+        auth: Sequence[Never] | Sentinel | None = EMPTY,
+        throttling: Sequence[Never] | Sentinel | None = EMPTY,
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
-        tags: Sequence[str] | None = None,
+        tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
@@ -717,20 +744,20 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         *responses: ResponseSpec,
         error_handler: AsyncErrorHandler | None = None,
         validate_responses: bool | None = None,
-        exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_responses: bool | None = None,
-        exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         validate_events: bool | None = None,
-        no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
-        parsers: Sequence[Parser] | None = None,
-        renderers: Sequence[Renderer] | None = None,
+        no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
+        parsers: Sequence[Parser] | Sentinel = EMPTY,
+        renderers: Sequence[Renderer] | Sentinel = EMPTY,
         validate_negotiation: bool | None = None,
-        auth: Sequence[AsyncAuth] | None = (),
-        throttling: Sequence[AsyncThrottle] | None = (),
+        auth: Sequence[AsyncAuth] | Sentinel | None = EMPTY,
+        throttling: Sequence[AsyncThrottle] | Sentinel | None = EMPTY,
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
-        tags: Sequence[str] | None = None,
+        tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
@@ -747,20 +774,20 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         *responses: ResponseSpec,
         error_handler: SyncErrorHandler | None = None,
         validate_responses: bool | None = None,
-        exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_responses: bool | None = None,
-        exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         validate_events: bool | None = None,
-        no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
-        parsers: Sequence[Parser] | None = None,
-        renderers: Sequence[Renderer] | None = None,
+        no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
+        parsers: Sequence[Parser] | Sentinel = EMPTY,
+        renderers: Sequence[Renderer] | Sentinel = EMPTY,
         validate_negotiation: bool | None = None,
-        auth: Sequence[SyncAuth] | None = (),
-        throttling: Sequence[SyncThrottle] | None = (),
+        auth: Sequence[SyncAuth] | Sentinel | None = EMPTY,
+        throttling: Sequence[SyncThrottle] | Sentinel | None = EMPTY,
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
-        tags: Sequence[str] | None = None,
+        tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
@@ -775,23 +802,25 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         /,
         *responses: ResponseSpec,
         validate_responses: bool | None = None,
-        exclude_validate_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_responses: bool | None = None,
-        exclude_semantic_responses: Set[HTTPStatus] | None = frozenset(),
+        exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         validate_events: bool | None = None,
-        no_validate_http_spec: Set[HttpSpec] | None = frozenset(),
+        no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
         error_handler: SyncErrorHandler | AsyncErrorHandler | None = None,
-        parsers: Sequence[Parser] | None = None,
-        renderers: Sequence[Renderer] | None = None,
+        parsers: Sequence[Parser] | Sentinel = EMPTY,
+        renderers: Sequence[Renderer] | Sentinel = EMPTY,
         validate_negotiation: bool | None = None,
-        auth: Sequence[AsyncAuth] | Sequence[SyncAuth] | None = (),
+        auth: (
+            Sequence[AsyncAuth] | Sequence[SyncAuth] | Sentinel | None
+        ) = EMPTY,
         throttling: (
-            Sequence[AsyncThrottle] | Sequence[SyncThrottle] | None
-        ) = (),
+            Sequence[AsyncThrottle] | Sequence[SyncThrottle] | Sentinel | None
+        ) = EMPTY,
         throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
-        tags: Sequence[str] | None = None,
+        tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | None = None,
         deprecated: bool = False,
         external_docs: ExternalDocumentation | None = None,
@@ -815,6 +844,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
                 parsers=parsers,
                 renderers=renderers,
                 validate_negotiation=validate_negotiation,
+                security=EMPTY,  # TODO
                 auth=auth,
                 throttling=throttling,
                 throttling_allow_unsafe_cache=throttling_allow_unsafe_cache,
