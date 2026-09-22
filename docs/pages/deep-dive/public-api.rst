@@ -6,7 +6,7 @@ Controller
 
 .. autoclass:: dmr.controller.Controller
   :members:
-  :exclude-members: controller_validator_cls, endpoint_cls, error_model, metadata_merger_cls, settings_validator_cls
+  :exclude-members: controller_validator_cls, endpoint_cls, error_model, settings_validator_cls
   :inherited-members:
   :show-inheritance:
 
@@ -100,9 +100,6 @@ Validation
   :members:
 
 .. autoclass:: dmr.validation.payload.PayloadBuilder
-  :members:
-
-.. autoclass:: dmr.validation.metadata_merger.MetadataMerger
   :members:
 
 
