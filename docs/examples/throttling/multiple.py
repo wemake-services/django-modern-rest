@@ -6,8 +6,11 @@ from dmr.throttling import Rate, SyncThrottle
 class SyncController(Controller[PydanticSerializer]):
     throttling = (SyncThrottle(5, Rate.hour),)
 
-    @modify(throttling=[SyncThrottle(1, Rate.minute)])
+    @modify(throttling=[SyncThrottle(1, Rate.minute), *throttling])
     def get(self) -> str:
+        return 'inside'
+
+    def post(self) -> str:
         return 'inside'
 
 

@@ -69,6 +69,8 @@ Other response specs can be specified via the
 the :attr:`~dmr.controller.Controller.responses`
 ``Controller`` attribute,
 or the :attr:`~dmr.settings.Settings.responses` global setting.
+The most specific one wins, they are not merged,
+see :ref:`configuration-levels`.
 
 Make sure that all responses that can be returned are described!
 
@@ -112,6 +114,8 @@ decorator, the :attr:`~dmr.controller.Controller.responses`
 ``Controller`` attribute,
 or the :attr:`~dmr.settings.Settings.responses`
 global setting to specify all possible responses.
+The most specific one wins, they are not merged,
+see :ref:`configuration-levels`.
 
 To do that we utilize :class:`~dmr.metadata.ResponseSpec`:
 
@@ -181,6 +185,12 @@ If you need granular control, you can change anything.
 - :attr:`~dmr.controller.Controller.csrf_exempt`
   to customize whether or not this controller is exempted from CSRF.
   See :ref:`controller-csrf` for more info
+- :attr:`~dmr.controller.Controller.login_required`
+  to customize whether or not login is required for this controller.
+  By default, login is not required for this controller to exempt it
+  from Django's ``LoginRequiredMiddleware``.
+  Users should make use of authentication in ``django-modern-rest``.
+  See :doc:`../auth/common` for more details.
 - :attr:`~dmr.controller.Controller.controller_validator_cls`
   to customize how this controller is validated at import time
 - :attr:`~dmr.controller.Controller.annotations_context`

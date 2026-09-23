@@ -145,6 +145,7 @@ nitpick_ignore = [
     (_PY_CLASS, 'aioredis.Redis'),
     (_PY_CLASS, 'dmr.validation.endpoint_metadata._ResponseListValidator'),
     (_PY_CLASS, 'dmr.validation.response._ResponseT'),
+    (_PY_CLASS, 'dmr.validation.metadata_merger._LayerT'),
     (_PY_CLASS, 'dmr.decorators._ReturnT'),
     (_PY_CLASS, 'dmr.decorators._ViewT'),
     (_PY_CLASS, 'dmr.decorators._TypeT'),

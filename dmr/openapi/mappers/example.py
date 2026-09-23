@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING, Any
 
+from typing_extensions import Sentinel
+
 from dmr.openapi.objects import Example, Schema
 from dmr.types import EMPTY
 
@@ -73,7 +75,7 @@ else:
         from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
         seed = resolve_setting(Settings.openapi_examples_seed)
-        if seed is not None:
+        if not isinstance(seed, Sentinel):
             _ExampleFactory.seed_random(seed)
 
     def generate_example(
@@ -87,7 +89,10 @@ else:
         # Import cycle:
         from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
-        if resolve_setting(Settings.openapi_examples_seed) is None:
+        if isinstance(
+            resolve_setting(Settings.openapi_examples_seed),
+            Sentinel,
+        ):
             # Example generation is disabled in settings.
             return None
 

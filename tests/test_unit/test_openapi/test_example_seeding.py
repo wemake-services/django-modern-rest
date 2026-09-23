@@ -10,6 +10,7 @@ from dmr.openapi.mappers.example import generate_example
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 from dmr.settings import Settings
+from dmr.types import EMPTY
 
 
 class _SeveralStrings(pydantic.BaseModel):
@@ -57,6 +58,6 @@ def test_examples_do_not_depend_on_previous_ones(
 
 def test_examples_are_disabled_by_default(settings: LazySettings) -> None:
     """Ensure that we generate nothing when there is no seed."""
-    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: None}
+    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: EMPTY}
 
     assert 'examples' not in _build_schemas()['_SeveralStrings']

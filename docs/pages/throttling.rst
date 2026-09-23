@@ -83,10 +83,11 @@ We can define throttling on three different levels:
       raises :exc:`~dmr.exceptions.EndpointMetadataError`.
 
 Providing several throttling instances means that all of them must succeed.
-When multiple throttling rules are defined
-on different levels, their rules are joined.
 
-For example:
+Throttling rules from different levels are not merged:
+endpoint ``throttling`` overrides controller ``throttling``,
+controller ``throttling`` overrides :data:`~dmr.settings.Settings.throttling`.
+To combine them, do it explicitly:
 
 .. literalinclude:: /examples/throttling/multiple.py
   :caption: views.py
@@ -97,6 +98,11 @@ Will guard ``GET`` method with 2 throttling checks:
 
 1. Not more ``<=`` than 1 request per minute
 2. And not more ``<=`` than 5 requests per hour
+
+While ``POST`` method will only have the controller-level check.
+
+.. versionchanged:: 0.16.0
+  Throttling rules from different levels used to be merged.
 
 
 Customizing throttling

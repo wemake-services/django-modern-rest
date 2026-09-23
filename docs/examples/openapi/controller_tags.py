@@ -8,9 +8,13 @@ class UserController(Controller[MsgspecSerializer]):
     def get(self) -> str:
         return 'get'
 
-    @modify(tags=['admin'])  # This one is tagged as 'users' and 'admin'
+    @modify(tags=['admin'])  # This one is only tagged as 'admin'
     def post(self) -> str:
         return 'post'
+
+    @modify(tags=[*tags, 'admin'])  # This one is tagged as 'users' and 'admin'
+    def put(self) -> str:
+        return 'put'
 
 
 # openapi: {"controller": "UserController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

@@ -44,7 +44,8 @@ class Router:
             Defaults to empty string ``''``.
         urls: Sequence of URL patterns and resolvers.
         tags: Optional sequence of tags to group operations in OpenAPI.
-            These are merged with endpoint-level tags.
+            Used for operations that do not have
+            controller-level or endpoint-level tags.
         deprecated: Optional flag to mark all operations as deprecated.
             Combines with endpoint-level deprecated flag using OR logic.
         ignore_from_spec: If set to ``True``, all routes from this router

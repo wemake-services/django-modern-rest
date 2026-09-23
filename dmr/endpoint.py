@@ -6,6 +6,7 @@ from functools import wraps
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from django.http import HttpResponse, HttpResponseBase
+from typing_extensions import Sentinel
 
 from dmr.exceptions import (
     DataRenderingError,
@@ -36,6 +37,7 @@ from dmr.throttling import AsyncThrottle, SyncThrottle
 from dmr.validation import (
     EndpointMetadataBuilder,
     EndpointMetadataValidator,
+    MetadataMerger,
     ResponseValidator,
 )
 from dmr.validation.payload import PayloadBuilder
@@ -85,6 +87,7 @@ class Endpoint:  # noqa: WPS214
     metadata_validator_cls: ClassVar[type[EndpointMetadataValidator]] = (
         EndpointMetadataValidator
     )
+    metadata_merger_cls: ClassVar[type[MetadataMerger]] = MetadataMerger
     metadata_cls: ClassVar[type[EndpointMetadata]] = EndpointMetadata
     response_modification_cls: ClassVar[type[ResponseModification]] = (
         ResponseModification
@@ -139,21 +142,25 @@ class Endpoint:  # noqa: WPS214
         #    of the components that support it. Including custom ones.
         #    Then we enrich metadata with collected responses and use it.
         # Done!
+        metadata_merger = self.metadata_merger_cls()
         metadata = self.metadata_builder_cls(
             payload=payload,
             controller_cls=controller_cls,
             func=func,
             metadata_cls=self.metadata_cls,
+            merger=metadata_merger,
             response_modification_cls=self.response_modification_cls,
             component_parsers=self._serializer_context.component_parsers,
             type_annotations=type_annotations,
         )()
-        self.metadata_validator_cls(metadata=metadata)(
+        self.metadata_validator_cls(
+            metadata=metadata,
+            merger=metadata_merger,
+        )(
             func,
             payload=payload,
             controller_cls=controller_cls,
         )
-        func.__metadata__ = metadata  # type: ignore[attr-defined]
         self.metadata = metadata
         self.request_negotiator = self.request_negotiator_cls(
             self.metadata,
@@ -294,10 +301,13 @@ class Endpoint:  # noqa: WPS214
         )
 
         router_metadata = router.metadata_for(route_metadata.normalized_path)
-        tags = [
-            *router_metadata.tags,
-            *(self.metadata.tags or []),
-        ]
+        # Endpoint and controller tags are already resolved,
+        # router tags are the last level:
+        tags = (
+            router_metadata.tags
+            if isinstance(self.metadata.tags, Sentinel)
+            else self.metadata.tags
+        )
 
         return Operation(
             tags=tags or None,
@@ -320,7 +330,11 @@ class Endpoint:  # noqa: WPS214
             ),
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
-            callbacks=self.metadata.callbacks,
+            callbacks=(
+                None
+                if self.metadata.callbacks is None
+                else dict(self.metadata.callbacks)
+            ),
             operation_id=operation_id,
             request_body=request_body,
             responses=context.generators.response(

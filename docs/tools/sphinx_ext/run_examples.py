@@ -68,6 +68,7 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import build_404_handler, build_500_handler
 from dmr.security.csrf import build_csrf_handler
 from dmr.settings import Settings, clear_settings_cache
+from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from sphinx.writers.html5 import HTML5Translator
@@ -811,6 +812,7 @@ def _exec_openapi_examples(
                     ),
                     Settings.openapi_examples_seed: openapi_args.get(
                         'openapi_examples_seed',
+                        EMPTY,
                     ),
                 },
             ),

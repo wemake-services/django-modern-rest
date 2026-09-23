@@ -130,6 +130,9 @@ Endpoint
 .. autoclass:: dmr.validation.endpoint_metadata.EndpointMetadataValidator
   :members:
 
+.. autoclass:: dmr.validation.metadata_merger.MetadataMerger
+  :members:
+
 Controller
 ~~~~~~~~~~
 

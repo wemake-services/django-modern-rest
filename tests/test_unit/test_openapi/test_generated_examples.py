@@ -10,6 +10,7 @@ from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 from dmr.settings import Settings
+from dmr.types import EMPTY
 
 
 class _UserController(Controller[PydanticSerializer]):
@@ -61,7 +62,7 @@ def test_generated_examples_keyword(
 
 def test_disabled_examples_write_nothing(settings: LazySettings) -> None:
     """Ensure that we don't write ``examples: [null]`` when disabled."""
-    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: None}
+    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: EMPTY}
 
     schema = _inline_body_schema(_build_schema('3.2.0'))
 
