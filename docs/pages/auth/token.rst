@@ -150,7 +150,9 @@ and ``token_cls`` defaulting to
 :class:`~dmr.security.token.app.models.Token`.
 Every token setting and every hook still works the same way,
 subclass one as usual when you need to change something.
-See :ref:`routing-without-a-subclass` for how ``serializer=`` works.
+Their ``as_view`` takes the fields they require as typed keyword
+arguments and passes everything else to django as usual, see
+:meth:`~dmr.security.token.concrete_views.ObtainTokenSyncController.as_view`.
 
 .. note::
 
@@ -505,10 +507,10 @@ Ready-to-use views to fetch opaque tokens
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: dmr.security.token.concrete_views.ObtainTokenSyncController
-  :members: convert_auth_payload, make_api_response
+  :members: as_view, convert_auth_payload, make_api_response
 
 .. autoclass:: dmr.security.token.concrete_views.ObtainTokenAsyncController
-  :members: convert_auth_payload, make_api_response
+  :members: as_view, convert_auth_payload, make_api_response
 
 Pre-defined views to fetch opaque tokens
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

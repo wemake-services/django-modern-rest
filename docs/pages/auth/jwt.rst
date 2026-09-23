@@ -187,7 +187,9 @@ with :class:`~dmr.security.jwt.views.ObtainTokensPayload`,
 already plugged in as the request and response bodies.
 Every jwt setting and every hook still works the same way,
 subclass one as usual when you need to change something.
-See :ref:`routing-without-a-subclass` for how ``serializer=`` works.
+Their ``as_view`` takes the fields they require as typed keyword
+arguments and passes everything else to django as usual, see
+:meth:`~dmr.security.jwt.concrete_views.ObtainTokensSyncController.as_view`.
 
 The cookie flow is routed the same way:
 
@@ -664,36 +666,40 @@ Ready-to-use views
 ~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: dmr.security.jwt.concrete_views.ObtainTokensSyncController
-  :members: convert_auth_payload, make_api_response
+  :members: as_view, convert_auth_payload, make_api_response
 
 .. autoclass:: dmr.security.jwt.concrete_views.ObtainTokensAsyncController
-  :members: convert_auth_payload, make_api_response
+  :members: as_view, convert_auth_payload, make_api_response
 
 .. autoclass:: dmr.security.jwt.concrete_views.RefreshTokenSyncController
-  :members: convert_refresh_payload, make_api_response
+  :members: as_view, convert_refresh_payload, make_api_response
 
 .. autoclass:: dmr.security.jwt.concrete_views.RefreshTokenAsyncController
-  :members: convert_refresh_payload, make_api_response
+  :members: as_view, convert_refresh_payload, make_api_response
 
 .. autoclass:: dmr.security.jwt.concrete_views.VerifyTokenSyncController
-  :members: convert_verify_payload
+  :members: as_view, convert_verify_payload
 
 .. autoclass:: dmr.security.jwt.concrete_views.VerifyTokenAsyncController
-  :members: convert_verify_payload
+  :members: as_view, convert_verify_payload
 
 .. autoclass:: dmr.security.jwt.concrete_views.CookieObtainTokensSyncController
-  :members: convert_auth_payload
+  :members: as_view, convert_auth_payload
 
 .. autoclass:: dmr.security.jwt.concrete_views.CookieObtainTokensAsyncController
-  :members: convert_auth_payload
+  :members: as_view, convert_auth_payload
 
 .. autoclass:: dmr.security.jwt.concrete_views.CookieRefreshTokensSyncController
+  :members: as_view
 
 .. autoclass:: dmr.security.jwt.concrete_views.CookieRefreshTokensAsyncController
+  :members: as_view
 
 .. autoclass:: dmr.security.jwt.concrete_views.CookieLogoutSyncController
+  :members: as_view
 
 .. autoclass:: dmr.security.jwt.concrete_views.CookieLogoutAsyncController
+  :members: as_view
 
 .. autodata:: dmr.security.jwt.concrete_views.DEFAULT_REFRESH_COOKIE_PATH
 

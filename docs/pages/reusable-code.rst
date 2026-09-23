@@ -256,45 +256,6 @@ because it has an exact serializer:
   Controllers that don't have an exact serializer
   stay abstract, as always.
 
-.. _routing-without-a-subclass:
-
-Routing without a subclass
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. versionadded:: 0.16.0
-
-Sometimes the subclass would say nothing: the reusable controller
-already does everything you need, and all it is missing
-are the fields it requires. Pass them to
-:meth:`~dmr.controller.Controller.as_view` instead:
-
-.. literalinclude:: /examples/reusable_code/as_view_class_attrs.py
-  :caption: urls.py
-  :linenos:
-  :language: python
-
-Every keyword argument becomes a class attribute of the controller
-that gets routed. So the import and the ``path()`` call are the whole
-thing, and there is no view code at all.
-
-This builds the subclass that you would have written by hand,
-so the rest of the rules are unchanged: every other type variable
-has to resolve, through a default or by not being used at all.
-
-.. note::
-
-  Only names the controller declares are accepted, a typo raises
-  :class:`~dmr.exceptions.EndpointMetadataError` instead of quietly
-  setting an attribute that nothing reads.
-  The same error is raised for http method names,
-  and for ``serializer`` on a controller that already has an exact one,
-  since the argument and the type arguments would then disagree
-  about what the controller serializes.
-
-Write the subclass when you have anything else to say: a hook
-to redefine, a docstring that documents this endpoint,
-or a name to route several times.
-
 Write the subclass when you have anything else to say: a setting
 to change, a hook to redefine, or a name to route several times.
 

@@ -215,16 +215,11 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   with the default request and response bodies already plugged in.
   Nothing else is required: `token_cls` defaults to the `Token` model
   of `dmr.security.token.app`, and `jwt_refresh_cookie_path` defaults
-  to `'/'`. Route one with `as_view(serializer=...)`
-  and there is no view code at all, #1457
-- Keyword arguments of `Controller.as_view` are now applied as class
-  attributes of a generated subclass, so a reusable controller can be
-  given the fields it requires without writing a subclass for it:
+  to `'/'`. Each of them has its own typed `as_view`, which takes
+  the fields that controller requires and passes everything else
+  to Django as `initkwargs`, so there is no view code at all:
   `path('login/', ObtainTokenSyncController.as_view(
-  serializer=PydanticSerializer, token_cls=Token))`.
-  Only names the controller declares are accepted, a typo, an http method
-  name, or `serializer` on a controller that already has an exact one
-  raises `EndpointMetadataError`, #1457
+  serializer=PydanticSerializer, token_cls=Token))`, #1457
 - Added the missing OpenAPI 3.2 fields to our spec objects, #1485:
   - `OpenAPIConfig.self_uri` and `OpenAPI.self_uri` for `$self`
   - `Server.name`

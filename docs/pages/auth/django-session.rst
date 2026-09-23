@@ -85,7 +85,9 @@ as the ones in ``dmr.security.django_session.views``, with
 already plugged in as the request and response bodies.
 Every hook still works the same way,
 subclass one as usual when you need to change something.
-See :ref:`routing-without-a-subclass` for how ``serializer=`` works.
+Their ``as_view`` takes the fields they require as typed keyword
+arguments and passes everything else to django as usual, see
+:meth:`~dmr.security.django_session.concrete_views.DjangoSessionSyncController.as_view`.
 
 .. tip::
 
@@ -164,10 +166,10 @@ Ready-to-use views to get Django session cookie
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: dmr.security.django_session.concrete_views.DjangoSessionSyncController
-  :members: convert_auth_payload, make_api_response
+  :members: as_view, convert_auth_payload, make_api_response
 
 .. autoclass:: dmr.security.django_session.concrete_views.DjangoSessionAsyncController
-  :members: convert_auth_payload, make_api_response
+  :members: as_view, convert_auth_payload, make_api_response
 
 Pre-defined views to get Django session cookie
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

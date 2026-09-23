@@ -1,14 +1,13 @@
-from typing import TYPE_CHECKING, ClassVar, Generic
+from collections.abc import Callable
+from typing import Any, ClassVar, Generic
 
+from django.http import HttpResponseBase
 from typing_extensions import TypeVar, override
 
+from dmr.internal.concrete import build_concrete_controller
+from dmr.internal.types import StrOrPromise
 from dmr.security.jwt import views
 from dmr.serializer import BaseSerializer
-
-if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
 
 _SerializerT = TypeVar(
     '_SerializerT',
@@ -54,11 +53,13 @@ class CookieObtainTokensSyncController(
 
         .. code:: python
 
-            class Login(CookieObtainTokensSyncController[PydanticSerializer]):
-                jwt_refresh_cookie_path = reverse_lazy('api:refresh')
+            path('login/', CookieObtainTokensSyncController.as_view(
+                serializer=PydanticSerializer,
+                jwt_refresh_cookie_path=reverse_lazy('api:refresh'),
+            ))
 
         Every controller that shares the cookies has to agree on the value,
-        so change it on the refresh and the logout controller as well.
+        so pass it to the refresh and the logout controller as well.
 
     See :class:`~dmr.security.jwt.views.CookieObtainTokensSyncController`
     for all the cookie settings and hooks it inherits,
@@ -67,9 +68,34 @@ class CookieObtainTokensSyncController(
     .. versionadded:: 0.16.0
     """
 
-    jwt_refresh_cookie_path: ClassVar['_StrOrPromise | None'] = (
+    jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
     )
+
+    @override
+    @classmethod
+    def as_view(
+        cls,
+        *,
+        serializer: type[BaseSerializer] | None = None,
+        jwt_refresh_cookie_path: StrOrPromise | None = None,
+        **initkwargs: Any,
+    ) -> Callable[..., HttpResponseBase]:
+        """
+        Route this controller with its required fields filled in.
+
+        *serializer* is required, unless a subclass already passed one
+        as a type argument. *jwt_refresh_cookie_path* replaces the default
+        ``'/'``. *initkwargs* go to django as usual.
+        """
+        concrete_cls = build_concrete_controller(
+            cls,
+            serializer=serializer,
+            jwt_refresh_cookie_path=jwt_refresh_cookie_path,
+        )
+        if concrete_cls is None:
+            return super().as_view(**initkwargs)
+        return concrete_cls.as_view(**initkwargs)
 
     @override
     def convert_auth_payload(
@@ -98,9 +124,34 @@ class CookieObtainTokensAsyncController(
     .. versionadded:: 0.16.0
     """
 
-    jwt_refresh_cookie_path: ClassVar['_StrOrPromise | None'] = (
+    jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
     )
+
+    @override
+    @classmethod
+    def as_view(
+        cls,
+        *,
+        serializer: type[BaseSerializer] | None = None,
+        jwt_refresh_cookie_path: StrOrPromise | None = None,
+        **initkwargs: Any,
+    ) -> Callable[..., HttpResponseBase]:
+        """
+        Route this controller with its required fields filled in.
+
+        *serializer* is required, unless a subclass already passed one
+        as a type argument. *jwt_refresh_cookie_path* replaces the default
+        ``'/'``. *initkwargs* go to django as usual.
+        """
+        concrete_cls = build_concrete_controller(
+            cls,
+            serializer=serializer,
+            jwt_refresh_cookie_path=jwt_refresh_cookie_path,
+        )
+        if concrete_cls is None:
+            return super().as_view(**initkwargs)
+        return concrete_cls.as_view(**initkwargs)
 
     @override
     async def convert_auth_payload(
@@ -126,9 +177,34 @@ class CookieRefreshTokensSyncController(
     .. versionadded:: 0.16.0
     """
 
-    jwt_refresh_cookie_path: ClassVar['_StrOrPromise | None'] = (
+    jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
     )
+
+    @override
+    @classmethod
+    def as_view(
+        cls,
+        *,
+        serializer: type[BaseSerializer] | None = None,
+        jwt_refresh_cookie_path: StrOrPromise | None = None,
+        **initkwargs: Any,
+    ) -> Callable[..., HttpResponseBase]:
+        """
+        Route this controller with its required fields filled in.
+
+        *serializer* is required, unless a subclass already passed one
+        as a type argument. *jwt_refresh_cookie_path* replaces the default
+        ``'/'``. *initkwargs* go to django as usual.
+        """
+        concrete_cls = build_concrete_controller(
+            cls,
+            serializer=serializer,
+            jwt_refresh_cookie_path=jwt_refresh_cookie_path,
+        )
+        if concrete_cls is None:
+            return super().as_view(**initkwargs)
+        return concrete_cls.as_view(**initkwargs)
 
 
 class CookieRefreshTokensAsyncController(
@@ -143,9 +219,34 @@ class CookieRefreshTokensAsyncController(
     .. versionadded:: 0.16.0
     """
 
-    jwt_refresh_cookie_path: ClassVar['_StrOrPromise | None'] = (
+    jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
     )
+
+    @override
+    @classmethod
+    def as_view(
+        cls,
+        *,
+        serializer: type[BaseSerializer] | None = None,
+        jwt_refresh_cookie_path: StrOrPromise | None = None,
+        **initkwargs: Any,
+    ) -> Callable[..., HttpResponseBase]:
+        """
+        Route this controller with its required fields filled in.
+
+        *serializer* is required, unless a subclass already passed one
+        as a type argument. *jwt_refresh_cookie_path* replaces the default
+        ``'/'``. *initkwargs* go to django as usual.
+        """
+        concrete_cls = build_concrete_controller(
+            cls,
+            serializer=serializer,
+            jwt_refresh_cookie_path=jwt_refresh_cookie_path,
+        )
+        if concrete_cls is None:
+            return super().as_view(**initkwargs)
+        return concrete_cls.as_view(**initkwargs)
 
 
 class CookieLogoutSyncController(
@@ -162,9 +263,34 @@ class CookieLogoutSyncController(
     .. versionadded:: 0.16.0
     """
 
-    jwt_refresh_cookie_path: ClassVar['_StrOrPromise | None'] = (
+    jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
     )
+
+    @override
+    @classmethod
+    def as_view(
+        cls,
+        *,
+        serializer: type[BaseSerializer] | None = None,
+        jwt_refresh_cookie_path: StrOrPromise | None = None,
+        **initkwargs: Any,
+    ) -> Callable[..., HttpResponseBase]:
+        """
+        Route this controller with its required fields filled in.
+
+        *serializer* is required, unless a subclass already passed one
+        as a type argument. *jwt_refresh_cookie_path* replaces the default
+        ``'/'``. *initkwargs* go to django as usual.
+        """
+        concrete_cls = build_concrete_controller(
+            cls,
+            serializer=serializer,
+            jwt_refresh_cookie_path=jwt_refresh_cookie_path,
+        )
+        if concrete_cls is None:
+            return super().as_view(**initkwargs)
+        return concrete_cls.as_view(**initkwargs)
 
 
 class CookieLogoutAsyncController(
@@ -179,6 +305,31 @@ class CookieLogoutAsyncController(
     .. versionadded:: 0.16.0
     """
 
-    jwt_refresh_cookie_path: ClassVar['_StrOrPromise | None'] = (
+    jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
     )
+
+    @override
+    @classmethod
+    def as_view(
+        cls,
+        *,
+        serializer: type[BaseSerializer] | None = None,
+        jwt_refresh_cookie_path: StrOrPromise | None = None,
+        **initkwargs: Any,
+    ) -> Callable[..., HttpResponseBase]:
+        """
+        Route this controller with its required fields filled in.
+
+        *serializer* is required, unless a subclass already passed one
+        as a type argument. *jwt_refresh_cookie_path* replaces the default
+        ``'/'``. *initkwargs* go to django as usual.
+        """
+        concrete_cls = build_concrete_controller(
+            cls,
+            serializer=serializer,
+            jwt_refresh_cookie_path=jwt_refresh_cookie_path,
+        )
+        if concrete_cls is None:
+            return super().as_view(**initkwargs)
+        return concrete_cls.as_view(**initkwargs)

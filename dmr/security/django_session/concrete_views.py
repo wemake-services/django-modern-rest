@@ -4,11 +4,16 @@ Ready-to-use versions of everything in ``dmr.security.django_session.views``.
 Every controller here is the same controller as the one
 with the same name in ``dmr.security.django_session.views``,
 with the default request and response bodies already plugged in.
-Subclass one with your serializer type and route it, nothing else to write.
+Route one with ``as_view(serializer=...)``, there is nothing else to write.
 """
 
+from collections.abc import Callable
+from typing import Any
+
+from django.http import HttpResponseBase
 from typing_extensions import TypeVar, override
 
+from dmr.internal.concrete import build_concrete_controller
 from dmr.security.django_session import views
 from dmr.serializer import BaseSerializer
 
@@ -31,12 +36,14 @@ class DjangoSessionSyncController(
     Takes :class:`~dmr.security.django_session.views.DjangoSessionPayload`
     and returns
     :class:`~dmr.security.django_session.views.DjangoSessionResponse`.
-    The only thing it needs is a serializer type:
+    The only thing it needs is a serializer type,
+    pass it to :meth:`as_view` and there is no class to write:
 
     .. code:: python
 
-        class Login(DjangoSessionSyncController[PydanticSerializer]):
-            ...  # nothing else to define
+        path('login/', DjangoSessionSyncController.as_view(
+            serializer=PydanticSerializer,
+        ))
 
     See :class:`~dmr.security.django_session.views.DjangoSessionSyncController`
     for all the hooks it inherits, switch to it
@@ -44,6 +51,25 @@ class DjangoSessionSyncController(
 
     .. versionadded:: 0.16.0
     """
+
+    @override
+    @classmethod
+    def as_view(
+        cls,
+        *,
+        serializer: type[BaseSerializer] | None = None,
+        **initkwargs: Any,
+    ) -> Callable[..., HttpResponseBase]:
+        """
+        Route this controller with *serializer* filled in.
+
+        *serializer* is required, unless a subclass already passed one
+        as a type argument. *initkwargs* go to django as usual.
+        """
+        concrete_cls = build_concrete_controller(cls, serializer=serializer)
+        if concrete_cls is None:
+            return super().as_view(**initkwargs)
+        return concrete_cls.as_view(**initkwargs)
 
     @override
     def convert_auth_payload(
@@ -74,6 +100,25 @@ class DjangoSessionAsyncController(
 
     .. versionadded:: 0.16.0
     """
+
+    @override
+    @classmethod
+    def as_view(
+        cls,
+        *,
+        serializer: type[BaseSerializer] | None = None,
+        **initkwargs: Any,
+    ) -> Callable[..., HttpResponseBase]:
+        """
+        Route this controller with *serializer* filled in.
+
+        *serializer* is required, unless a subclass already passed one
+        as a type argument. *initkwargs* go to django as usual.
+        """
+        concrete_cls = build_concrete_controller(cls, serializer=serializer)
+        if concrete_cls is None:
+            return super().as_view(**initkwargs)
+        return concrete_cls.as_view(**initkwargs)
 
     @override
     async def convert_auth_payload(

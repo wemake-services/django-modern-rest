@@ -8,12 +8,16 @@ and ``token_cls`` defaulting to the model of the bundled token app.
 """
 
 import importlib
+from collections.abc import Callable
 from typing import Any, Generic, cast
 
 from django.contrib.auth.base_user import AbstractBaseUser
+from django.http import HttpResponseBase
 from typing_extensions import TypeVar, override
 
+from dmr.internal.concrete import build_concrete_controller
 from dmr.security.token import views
+from dmr.security.token.token import TokenLikeAsync, TokenLikeSync
 from dmr.serializer import BaseSerializer
 
 _SerializerT = TypeVar(
@@ -66,7 +70,7 @@ class ObtainTokenSyncController(
             serializer=PydanticSerializer,
         ))
 
-    Set ``token_cls`` when you swap the token model,
+    Pass ``token_cls`` to :meth:`as_view` when you swap the token model,
     see :ref:`swapping-token-model`. The default is imported the first time
     a subclass is built, so projects with their own model
     do not need ``'dmr.security.token.app'`` installed.
@@ -83,6 +87,31 @@ class ObtainTokenSyncController(
         """Fall back to the token model of the bundled app."""
         _set_default_token_cls(cls)
         super().__init_subclass__()
+
+    @override
+    @classmethod
+    def as_view(
+        cls,
+        *,
+        serializer: type[BaseSerializer] | None = None,
+        token_cls: type[TokenLikeSync[_UserT]] | None = None,
+        **initkwargs: Any,
+    ) -> Callable[..., HttpResponseBase]:
+        """
+        Route this controller with its required fields filled in.
+
+        *serializer* is required, unless a subclass already passed one
+        as a type argument. *token_cls* replaces the bundled ``Token``
+        model. *initkwargs* go to django as usual.
+        """
+        concrete_cls = build_concrete_controller(
+            cls,
+            serializer=serializer,
+            token_cls=token_cls,
+        )
+        if concrete_cls is None:
+            return super().as_view(**initkwargs)
+        return concrete_cls.as_view(**initkwargs)
 
     @override
     def convert_auth_payload(
@@ -125,6 +154,31 @@ class ObtainTokenAsyncController(
         """Fall back to the token model of the bundled app."""
         _set_default_token_cls(cls)
         super().__init_subclass__()
+
+    @override
+    @classmethod
+    def as_view(
+        cls,
+        *,
+        serializer: type[BaseSerializer] | None = None,
+        token_cls: type[TokenLikeAsync[_UserT]] | None = None,
+        **initkwargs: Any,
+    ) -> Callable[..., HttpResponseBase]:
+        """
+        Route this controller with its required fields filled in.
+
+        *serializer* is required, unless a subclass already passed one
+        as a type argument. *token_cls* replaces the bundled ``Token``
+        model. *initkwargs* go to django as usual.
+        """
+        concrete_cls = build_concrete_controller(
+            cls,
+            serializer=serializer,
+            token_cls=token_cls,
+        )
+        if concrete_cls is None:
+            return super().as_view(**initkwargs)
+        return concrete_cls.as_view(**initkwargs)
 
     @override
     async def convert_auth_payload(
