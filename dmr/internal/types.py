@@ -13,7 +13,7 @@ from typing import (  # noqa: WPS235
     get_origin,
 )
 
-from typing_extensions import TypeAliasType
+from typing_extensions import Sentinel, TypeAliasType
 
 if TYPE_CHECKING:
     from django.utils.functional import (
@@ -45,6 +45,9 @@ _UNION_TYPES: Final = frozenset((ty.Union, builtin_types.UnionType))
 #: How many nested type aliases we are willing to unwrap.
 #: Type aliases can be mutually recursive, we don't want to hang on them.
 _MAX_ALIAS_DEPTH: Final = 15
+
+#: Default singleton for empty values, re-exported as ``dmr.types.EMPTY``.
+EMPTY: Final = Sentinel('EMPTY')
 
 
 def unwrap_type_alias(annotation: Any) -> Any:

@@ -27,9 +27,10 @@ if TYPE_CHECKING:
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
 
-# Name of the header that carries auth challenges in `401` responses:
+#: Name of the header that carries auth challenges in `401` responses:
 _WWW_AUTHENTICATE: Final = 'WWW-Authenticate'
 
+#: Header spec for the `_WWW_AUTHENTICATE` header:
 _WWW_AUTHENTICATE_SPEC: Final = HeaderSpec(
     description=(
         'Challenges that the client can use to authenticate this request'
@@ -39,6 +40,7 @@ _WWW_AUTHENTICATE_SPEC: Final = HeaderSpec(
     # So, we document the header, but never enforce it in runtime.
     skip_validation=True,
 )
+
 #: Headers that every view issuing or accepting credentials must return.
 #: Responses of such views must never be written to any cache,
 #: neither shared, nor local.

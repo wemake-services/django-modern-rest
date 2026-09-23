@@ -94,7 +94,11 @@ class ResponseGenerator:
                 if response_spec.summary is None
                 else str(response_spec.summary)
             ),
-            links=response_spec.links,
+            links=(
+                None
+                if response_spec.links is None
+                else dict(response_spec.links)
+            ),
             # Sorted by header name, not by the definition order:
             headers=dict(sorted(headers.items())) or None,
             content=self._get_content(

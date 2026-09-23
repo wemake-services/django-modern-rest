@@ -2,7 +2,7 @@ import datetime as dt
 import json
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Any, Final
 
 import pytest
 from django.conf import LazySettings
@@ -15,7 +15,7 @@ from typing_extensions import override
 from dmr import Controller
 from dmr.openapi.objects import SecurityScheme
 from dmr.plugins.pydantic import PydanticFastSerializer
-from dmr.security import request_auth
+from dmr.security import AsyncAuth, SyncAuth, request_auth
 from dmr.security.jwt import (
     CookieJWTAsyncAuth,
     CookieJWTSyncAuth,
@@ -35,9 +35,29 @@ if TYPE_CHECKING:
 _LEEWAY: Final = 30  # seconds
 
 
-class _Controller(Controller[PydanticFastSerializer]):
-    def get(self) -> str:
-        raise NotImplementedError
+def _make_controller(
+    instance: SyncAuth | AsyncAuth,
+) -> type[Controller[PydanticFastSerializer]]:
+    func_def = 'async def' if isinstance(instance, AsyncAuth) else 'def'
+
+    ns: dict[str, Any] = {'instance': instance}
+    exec(  # noqa: S102, WPS421
+        f"""if True:
+    from dmr import Controller
+    from dmr.plugins.pydantic import PydanticSerializer
+
+    class _Controller(Controller[PydanticSerializer]):
+        auth = (instance,)
+
+        {func_def} get(self) -> str:
+            raise NotImplementedError
+
+        {func_def} post(self) -> str:
+            raise NotImplementedError
+    """,
+        ns,
+    )
+    return ns['_Controller']  # type: ignore[no-any-return]
 
 
 def _encode(user: User, secret: str) -> str:
@@ -55,18 +75,41 @@ def test_cookie_jwt_schema(
 ) -> None:
     """Ensures that security scheme is correct for cookie jwt auth."""
     instance = typ()
-    metadata = _Controller.api_endpoints['GET'].metadata
+    controller = _make_controller(instance)
+    metadata = controller.api_endpoints['GET'].metadata
 
-    assert instance.security_schemes(metadata, _Controller) == snapshot({
+    assert HTTPStatus.FORBIDDEN not in metadata.responses
+    assert instance.www_authenticate_challenge is None
+    assert instance.security_schemes(metadata, controller) == snapshot({
         'jwt': SecurityScheme(
             type='apiKey',
             description='JWT token auth via cookie',
             name='access_token',
             security_scheme_in='cookie',
         ),
+        'csrf': SecurityScheme(
+            type='apiKey',
+            description='CSRF protection',
+            name='csrftoken',
+            security_scheme_in='cookie',
+        ),
     })
-    assert instance.security_requirements(metadata, _Controller) == snapshot([
+    assert instance.security_requirements(metadata, controller) == snapshot([
         {'jwt': []},
+    ])
+
+    unsafe_metadata = controller.api_endpoints['POST'].metadata
+    assert HTTPStatus.FORBIDDEN in unsafe_metadata.responses
+    assert instance.www_authenticate_challenge is None
+    assert instance.security_schemes(
+        unsafe_metadata,
+        controller,
+    ) == instance.security_schemes(metadata, controller)
+    assert instance.security_requirements(
+        unsafe_metadata,
+        controller,
+    ) == snapshot([
+        {'jwt': [], 'csrf': []},
     ])
 
 
@@ -76,19 +119,73 @@ def test_cookie_jwt_custom_schema(
     typ: type[CookieJWTSyncAuth] | type[CookieJWTAsyncAuth],
 ) -> None:
     """Ensures that cookie and scheme names are customizable."""
-    metadata = _Controller.api_endpoints['GET'].metadata
-    instance = typ(cookie_name='my-jwt', security_scheme_name='my-scheme')
+    instance = typ(
+        cookie_name='my-jwt',
+        security_scheme_name='my-scheme',
+        csrf_scheme_name='my-csrf',
+    )
+    controller = _make_controller(instance)
+    metadata = controller.api_endpoints['GET'].metadata
 
-    assert instance.security_schemes(metadata, _Controller) == snapshot({
+    assert HTTPStatus.FORBIDDEN not in metadata.responses
+    assert instance.www_authenticate_challenge is None
+    assert instance.security_schemes(metadata, controller) == snapshot({
         'my-scheme': SecurityScheme(
             type='apiKey',
             description='JWT token auth via cookie',
             name='my-jwt',
             security_scheme_in='cookie',
         ),
+        'my-csrf': SecurityScheme(
+            type='apiKey',
+            description='CSRF protection',
+            name='csrftoken',
+            security_scheme_in='cookie',
+        ),
     })
-    assert instance.security_requirements(metadata, _Controller) == snapshot([
+    assert instance.security_requirements(metadata, controller) == snapshot([
         {'my-scheme': []},
+    ])
+
+    unsafe_metadata = controller.api_endpoints['POST'].metadata
+    assert HTTPStatus.FORBIDDEN in unsafe_metadata.responses
+    assert instance.www_authenticate_challenge is None
+    assert instance.security_schemes(
+        unsafe_metadata,
+        controller,
+    ) == instance.security_schemes(metadata, controller)
+    assert instance.security_requirements(
+        unsafe_metadata,
+        controller,
+    ) == snapshot([
+        {'my-scheme': [], 'my-csrf': []},
+    ])
+
+
+@pytest.mark.parametrize('typ', [CookieJWTSyncAuth, CookieJWTAsyncAuth])
+def test_cookie_jwt_csrf_session(
+    settings: LazySettings,
+    *,
+    typ: type[CookieJWTSyncAuth] | type[CookieJWTAsyncAuth],
+) -> None:
+    """Ensures that cookie and scheme names are customizable."""
+    settings.CSRF_USE_SESSIONS = True
+    instance = typ()
+    controller = _make_controller(instance)
+    metadata = controller.api_endpoints['GET'].metadata
+
+    assert HTTPStatus.FORBIDDEN not in metadata.responses
+    assert instance.www_authenticate_challenge is None
+    assert instance.security_schemes(metadata, controller) == snapshot({
+        'jwt': SecurityScheme(
+            type='apiKey',
+            description='JWT token auth via cookie',
+            name='access_token',
+            security_scheme_in='cookie',
+        ),
+    })
+    assert instance.security_requirements(metadata, controller) == snapshot([
+        {'jwt': []},
     ])
 
 

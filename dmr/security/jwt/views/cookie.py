@@ -1,7 +1,7 @@
 import dataclasses
 import datetime as dt
 from abc import abstractmethod
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from http import HTTPStatus
 from types import MappingProxyType
 from typing import (
@@ -26,7 +26,6 @@ from dmr import Body, CookieSpec, NewCookie, ResponseSpec, validate
 from dmr.cookies import SameSite
 from dmr.decorators import endpoint_decorator
 from dmr.endpoint import ValidateAnyCallable
-from dmr.errors import ErrorModel
 from dmr.exceptions import EndpointMetadataError, NotAuthenticatedError
 from dmr.headers import HeaderSpec
 from dmr.internal.csrf import ensure_csrf
@@ -104,10 +103,11 @@ class _BaseCookieTokensController(  # noqa: WPS214
             Do not weaken it to ``'none'`` unless your frontend
             really is on another site.
         jwt_cookie_description: Description of the cookie in the spec.
-        jwt_ensure_csrf: Run the CSRF check on endpoints that act
-            on cookies alone, without any credentials in the body.
 
     .. versionadded:: 0.15.0
+    .. versionchanged:: 0.16.0
+        Removed *jwt_ensure_csrf*.
+
     """
 
     jwt_access_cookie: ClassVar[str] = DEFAULT_ACCESS_COOKIE
@@ -121,7 +121,6 @@ class _BaseCookieTokensController(  # noqa: WPS214
     jwt_cookie_description: ClassVar[StrOrPromise] = (
         'Refresh token, only sent to the refresh endpoint.'
     )
-    jwt_ensure_csrf: ClassVar[bool] = True
 
     @classmethod
     def access_cookie_spec(cls) -> CookieSpec:
@@ -220,8 +219,6 @@ class _BaseCookieTokensController(  # noqa: WPS214
     @classmethod
     def csrf_response_specs(cls) -> list[ResponseSpec]:
         """Describes the response of a failed CSRF check."""
-        if not cls.jwt_ensure_csrf:
-            return []
         return [csrf_response_spec(return_type=cls.error_model)]
 
     def check_csrf(self) -> None:
@@ -230,10 +227,8 @@ class _BaseCookieTokensController(  # noqa: WPS214
 
         The browser sends these cookies on its own, so without this check
         any other site could refresh or drop the tokens of our users.
-        Set ``jwt_ensure_csrf`` to ``False`` to opt out.
         """
-        if self.jwt_ensure_csrf:
-            ensure_csrf(self)
+        ensure_csrf(self)
 
     @sensitive_variables()
     def issue_cookies(self) -> dict[str, NewCookie]:
@@ -372,12 +367,6 @@ class CookieObtainTokensSyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.NO_CONTENT
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def validate_spec(cls) -> ValidateAnyCallable:
@@ -391,6 +380,10 @@ class CookieObtainTokensSyncController(
                     **cls.issued_cookies_spec(),
                     **cls.csrf_cookie_spec(),
                 },
+            ),
+            ResponseSpec(
+                return_type=cls.error_model,
+                status_code=HTTPStatus.UNAUTHORIZED,
             ),
         )
 
@@ -465,12 +458,6 @@ class CookieObtainTokensAsyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.NO_CONTENT
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def validate_spec(cls) -> ValidateAnyCallable:
@@ -484,6 +471,10 @@ class CookieObtainTokensAsyncController(
                     **cls.issued_cookies_spec(),
                     **cls.csrf_cookie_spec(),
                 },
+            ),
+            ResponseSpec(
+                return_type=cls.error_model,
+                status_code=HTTPStatus.UNAUTHORIZED,
             ),
         )
 
@@ -551,12 +542,6 @@ class CookieRefreshTokensSyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.NO_CONTENT
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def validate_spec(cls) -> ValidateAnyCallable:
@@ -567,6 +552,10 @@ class CookieRefreshTokensSyncController(
                 status_code=cls.response_status_code,
                 headers=cls.response_headers_spec(),
                 cookies=cls.issued_cookies_spec(),
+            ),
+            ResponseSpec(
+                return_type=cls.error_model,
+                status_code=HTTPStatus.UNAUTHORIZED,
             ),
             *cls.csrf_response_specs(),
         )
@@ -639,12 +628,6 @@ class CookieRefreshTokensAsyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.NO_CONTENT
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def validate_spec(cls) -> ValidateAnyCallable:
@@ -655,6 +638,10 @@ class CookieRefreshTokensAsyncController(
                 status_code=cls.response_status_code,
                 headers=cls.response_headers_spec(),
                 cookies=cls.issued_cookies_spec(),
+            ),
+            ResponseSpec(
+                return_type=cls.error_model,
+                status_code=HTTPStatus.UNAUTHORIZED,
             ),
             *cls.csrf_response_specs(),
         )

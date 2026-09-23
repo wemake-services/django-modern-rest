@@ -47,6 +47,20 @@ Example, how to use the auth class and how to get ``self.request.user``:
 
 Custom user models are automatically supported.
 
+CSRF in auth
+~~~~~~~~~~~~
+
+We additionally require CSRF checks to pass on non-safe HTTP methods like
+``POST``, ``PUT``, ``DELETE``, etc.
+
+Security requirement generated for these methods will reflect that:
+they will need both ``django_session`` and ``csrf`` security requirements
+to be present for successful login.
+
+.. seealso::
+
+  - https://docs.djangoproject.com/en/stable/ref/csrf/
+
 
 .. _django-session-concrete-views:
 
@@ -115,17 +129,13 @@ To use them, you will need to:
 
 Any further customizations are also possible.
 
-
-CSRF
-~~~~
+CSRF in views
+~~~~~~~~~~~~~
 
 When a user logs in through these controllers, Django automatically rotates
-the CSRF token and includes a ``csrftoken`` cookie in the login response
-(alongside the session cookie).
-
-Clients making subsequent non-safe requests (``POST``, ``PUT``, ``PATCH``,
-``DELETE``) to session-protected endpoints must send this token back via the
-``X-CSRFToken`` request header.
+the CSRF token and includes
+a `CSRF cookie <https://docs.djangoproject.com/en/stable/ref/settings/#csrf-cookie-name>`_
+in the login response (alongside the session cookie).
 
 .. note::
 
@@ -134,8 +144,9 @@ Clients making subsequent non-safe requests (``POST``, ``PUT``, ``PATCH``,
   appears in the login response — the token is already embedded in the
   session used for authentication.
 
-  See also:
-    https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-CSRF_USE_SESSIONS
+.. seealso::
+
+  - https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-CSRF_USE_SESSIONS
 
 
 API Reference

@@ -3,10 +3,11 @@ import uuid
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, final
 
-from django.urls import URLPattern, converters
+from django.urls import converters
 from typing_extensions import TypedDict
 
 from dmr.internal.regex import parse_named_groups
+from dmr.openapi.collector import InternalRouteMetadata
 from dmr.openapi.objects import (
     MediaType,
     Parameter,
@@ -17,6 +18,7 @@ from dmr.openapi.objects import (
 
 if TYPE_CHECKING:
     from dmr.components import ComponentParser
+    from dmr.controller import Controller
     from dmr.metadata import EndpointMetadata
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.serializer import BaseSerializer
@@ -74,11 +76,18 @@ class ComponentParserGenerator:  # noqa: WPS214
     def __call__(
         self,
         operation_id: str,
-        pattern: URLPattern,
+        route_metadata: InternalRouteMetadata,
         metadata: 'EndpointMetadata',
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> tuple[_RequestBody, _RequestParameters]:
-        """Generate parameters from parsers."""
+        """
+        Generate parameters from parsers.
+
+        .. versionchanged:: 0.16.0
+            Now accepts *controller_cls* parameter instead of *serializer*.
+            Now accepts *route_metadata* parameter instead of *pattern*.
+
+        """
         params_list: list[Parameter | Reference] = []
         request_body: RequestBody | None = None
 
@@ -86,7 +95,7 @@ class ComponentParserGenerator:  # noqa: WPS214
             schema = self._call_component(
                 *component,
                 metadata,
-                serializer,
+                controller_cls.serializer,
             )
 
             if isinstance(schema, RequestBody):
@@ -101,9 +110,9 @@ class ComponentParserGenerator:  # noqa: WPS214
 
         pattern_param = self._parse_pattern(
             operation_id,
-            pattern,
+            route_metadata,
             params_list,
-            serializer,
+            controller_cls.serializer,
         )
         if pattern_param is not None:
             params_list.extend(pattern_param)
@@ -129,7 +138,7 @@ class ComponentParserGenerator:  # noqa: WPS214
     def _parse_pattern(
         self,
         operation_id: str,
-        pattern: URLPattern,
+        route_metadata: InternalRouteMetadata,
         parameter_specs: list[Parameter | Reference],
         serializer: type['BaseSerializer'],
     ) -> list[Parameter | Reference] | None:
@@ -139,36 +148,24 @@ class ComponentParserGenerator:  # noqa: WPS214
             for param_spec in parameter_specs
             if isinstance(param_spec, Parameter)
         ):
+            # TODO: should we validate `Path` component on `Router` creation?
             # We already have some `Path` component, so move on.
             return None
 
+        # `re_path()` and `RegexPattern`:
+        if route_metadata.is_regex:
+            return self._parse_regex(
+                operation_id,
+                route_metadata,
+                serializer,
+            )
+
         # `path()` and `RoutePattern`:
-        converter_params = self._parse_converters(
+        return self._parse_converters(
             operation_id,
-            pattern,
+            route_metadata,
             serializer,
         )
-        if converter_params is not None:
-            return converter_params
-
-        # `re_path()` and `RegexPattern`:
-        regex = pattern.pattern.regex
-        schema = dict.fromkeys(
-            regex.groupindex,
-            str,
-        )
-        if schema:
-            return self._add_group_patterns(
-                self._context.generators.parameter(
-                    TypedDict(f'{operation_id}_RePath', schema),  # type: ignore[operator]
-                    (),
-                    serializer,
-                    self._context,
-                    param_in='path',
-                ),
-                regex.pattern,
-            )
-        return None
 
     def _add_group_patterns(
         self,
@@ -199,12 +196,12 @@ class ComponentParserGenerator:  # noqa: WPS214
     def _parse_converters(
         self,
         operation_id: str,
-        pattern: URLPattern,
+        route_metadata: InternalRouteMetadata,
         serializer: type['BaseSerializer'],
     ) -> list[Parameter | Reference] | None:
         prepared = {
             converter_name: _converter_schema(converter, self._converters)
-            for converter_name, converter in pattern.pattern.converters.items()
+            for converter_name, converter in route_metadata.converters().items()
         }
         if not prepared:
             return None
@@ -220,6 +217,29 @@ class ComponentParserGenerator:  # noqa: WPS214
                 param_in='path',
             ),
             prepared,
+        )
+
+    def _parse_regex(
+        self,
+        operation_id: str,
+        route_metadata: InternalRouteMetadata,
+        serializer: type['BaseSerializer'],
+    ) -> list[Parameter | Reference] | None:
+        assert route_metadata.is_regex  # noqa: S101
+        regex = route_metadata.regex()
+        schema = dict.fromkeys(regex.groupindex, str)
+        return (
+            self._add_group_patterns(
+                self._context.generators.parameter(
+                    TypedDict(f'{operation_id}_RePath', schema),  # type: ignore[operator]
+                    (),
+                    serializer,
+                    self._context,
+                    param_in='path',
+                ),
+                regex.pattern,
+            )
+            or None
         )
 
     def _add_converter_schemas(

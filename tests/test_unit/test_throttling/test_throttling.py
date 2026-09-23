@@ -12,7 +12,7 @@ from inline_snapshot import snapshot
 from dmr import Controller, ResponseSpec, modify, validate
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.serializer import BaseSerializer
-from dmr.settings import Settings
+from dmr.settings import Settings, resolve_setting
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 from dmr.throttling.cache_keys import RemoteAddr
@@ -277,11 +277,26 @@ def test_throttle_sync_multiple_sources(
     *,
     serializer: type[BaseSerializer],
 ) -> None:
-    """Ensures that sync throttling from settings work."""
+    """Ensures that sync throttling from several levels can be merged."""
     settings.DMR_SETTINGS = {
         **settings.DMR_SETTINGS,
         Settings.throttling: [SyncThrottle(_ATTEMPTS, Rate.second)],
     }
+
+    class _OverrideController(
+        Controller[serializer],  # type: ignore[valid-type]
+    ):
+        throttling = [
+            SyncThrottle(10, Rate.minute),
+            SyncThrottle(10, Rate.hour),
+        ]
+
+        def get(self) -> str:
+            raise NotImplementedError
+
+    # Controller throttling replaces the settings one:
+    metadata = _OverrideController.api_endpoints['GET'].metadata
+    assert metadata.throttling_before_auth == _OverrideController.throttling
 
     class _SyncController(
         Controller[serializer],  # type: ignore[valid-type]
@@ -289,6 +304,8 @@ def test_throttle_sync_multiple_sources(
         throttling = [
             SyncThrottle(10, Rate.minute),
             SyncThrottle(10, Rate.hour),
+            # Merging is explicit:
+            *resolve_setting(Settings.throttling),
         ]
 
         def get(self) -> str:

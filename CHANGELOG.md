@@ -26,6 +26,28 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Breaking changes
 
+- `auth`, `throttling`, `parsers`, `renderers`, `responses`, `tags`,
+  `exclude_validate_responses`, `exclude_semantic_responses`,
+  and `no_validate_http_spec` are not merged anymore
+  from settings, router, controller, and endpoint levels.
+  Now, endpoint values override controller values,
+  controller values override settings values.
+  Merging is still possible, but it must be explicit,
+  like `@modify(auth=[*auth, other_auth])`,
+  or customized with `Controller.metadata_merger_cls`.
+  This allows a better composition and better value overrides, #1576
+- All endpoint, controller, and settings values now default to `EMPTY`,
+  which means "not set on this level", instead of `None`.
+  `None` is only allowed where it disables something explicitly,
+  like `auth=None`. This affects `validate_responses`, `semantic_responses`,
+  `validate_events`, `validate_negotiation`, `ignore_from_spec`,
+  `error_handler`, `status_code`, `headers`, `cookies`, `operation_id`,
+  `external_docs`, `callbacks`, `servers`, `links`, `response_description`,
+  and `Settings.openapi_examples_seed`, #1576
+- `Controller` now sets `login_required = False` by default in order to
+  exempt controllers from Django's `LoginRequiredMiddleware`.
+  Users should [configure authentication](https://django-modern-rest.readthedocs.io/en/latest/pages/auth/common.html)
+  in `django-modern-rest` for controllers, #1551
 - `Controller.as_view` now raises `EndpointMetadataError`
   when it is called on an abstract controller: one without
   an exact serializer type or without any endpoints.
@@ -90,6 +112,20 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `SyncOrAsyncAuth` and `SyncOrAsyncThrottle` changed `.resolve` parameter
   from *auth_cls* and *throttle_cls* respectively
   to *is_async* kw-parameter, #1562
+- `ComponentParserGenerator.__call__` signature was changed
+  to accept *route_metadata* and *controller_cls* instead
+  of *path* and *serializer*, #1502
+- `OperationIdGenerator.__call__` signature was changed
+  to accept *controller_cls* instead of *suffix*, #1502
+- `Controller.get_schema` signature was changed
+  to accept *route_metadata* instead of *path* and *route*, #1502
+- `Endpoint.get_schema` signature was changed
+  to accept *route_metadata* instead of *path* and *route*, #1502
+- `Endpoint.get_operation_id` was removed, instead customize
+  the `OperationIdGenerator` instance or `operation_id` metadata parameter
+  to the endpoint, #1502
+- `jwt_ensure_csrf` was removed from reusable JWT cookie views,
+  it is now always mandatory, #1574
 
 ### Performance improvements
 
@@ -124,6 +160,11 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Features
 
+- Added `Controller.metadata_merger_cls` and `dmr.validation.MetadataMerger`
+  to customize how endpoint, controller, and settings values are resolved
+  into the endpoint metadata. All layers of every field go through
+  a single call, so it can be used to bring back merging
+  of `auth` or other sequences from all levels, #1576
 - Now we can change the error type / instance that
   we are handling from layer to layer,
   for example: endpoint-level handler can raise a new error
@@ -226,6 +267,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `slug` and `path` url converters now describe themselves in the schema:
   `slug` adds the `pattern` of its own regex,
   `path` adds a `description` about slashes, #1441
+- `external_path` can now be nested anywhere in the URL resolution tree, #1567
+- `external_re_path` was added to support the same use-case
+  as `external_path`, but for regex patterns, #1567
 
 ### Bugfixes
 
@@ -287,7 +331,13 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Fixed that `pydantic` serializer was not dumping `@dataclass`
   instances correctly without `msgspec` installed, #1560
 - Fixed `@modify` and `@validate` types: now `tags`, `servers`,
-  and `extra_responses` are types as `Sequence`, not as `list`, #1563
+  and `extra_responses` are typed as `Sequence`, not as `list`, #1563
+- Fixed nested `Router` patterns OpenAPI parameter spec generation, #1502
+- Fixed OpenAPI generation for cookie-based auth classes,
+  now we don't add `csrf` auth requirement to safe methods, #1572
+- Fixed reusable views `error_model` definition for `401` response, #1573
+- Fixed that `links` and `callbacks` in endpoints definitions can
+  be any `Mapping`, not just `dict`, #1576
 
 
 ## 0.15.0 (2026-09-11)

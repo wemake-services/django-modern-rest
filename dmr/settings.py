@@ -6,10 +6,11 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Final, final
 
 from django.utils import module_loading
-from typing_extensions import TypedDict
+from typing_extensions import Sentinel, TypedDict
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.internal.cache import clear_settings_cache as clear_settings_cache
+from dmr.internal.types import EMPTY
 from dmr.openapi.config import OpenAPIConfig
 
 if TYPE_CHECKING:
@@ -119,7 +120,7 @@ class SettingsDict(TypedDict, total=False):
 
     parsers: Sequence['Parser']
     renderers: Sequence['Renderer']
-    validate_negotiation: bool | None
+    validate_negotiation: bool | Sentinel
     auth: (
         Sequence['AsyncAuth | SyncOrAsyncAuth[Any, Any]']
         | Sequence['SyncAuth | SyncOrAsyncAuth[Any, Any]']
@@ -130,17 +131,17 @@ class SettingsDict(TypedDict, total=False):
     )
     throttling_allow_unsafe_cache: bool | None
     no_validate_http_spec: Set[HttpSpec]
-    validate_responses: bool
+    validate_responses: bool | Sentinel
     exclude_validate_responses: Set[HTTPStatus]
-    semantic_responses: bool
+    semantic_responses: bool | Sentinel
     exclude_semantic_responses: Set[HTTPStatus]
     semantic_schema_providers: Sequence['ResponseSpecProvider | AuthProvider']
-    validate_events: bool | None
+    validate_events: bool | Sentinel
     responses: Sequence['ResponseSpec']
     global_error_handler: Callable[[Any, Any, Any], Any] | str
     openapi_config: OpenAPIConfig
-    openapi_examples_seed: int | None
-    openapi_static_cdn: dict[str, str]
+    openapi_examples_seed: int | Sentinel
+    openapi_static_cdn: Mapping[str, str]
     django_treat_as_post: Set[str]
 
 
@@ -153,8 +154,8 @@ assert SettingsDict.__optional_keys__ == set(Settings), (  # noqa: S101
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.parsers: [default_parser],
     Settings.renderers: [default_renderer],
-    # Defaults to the `validate_responses` setting if `None`:
-    Settings.validate_negotiation: None,
+    # Defaults to the `validate_responses` setting if `EMPTY`:
+    Settings.validate_negotiation: EMPTY,
     Settings.auth: [],
     Settings.throttling: [],
     Settings.throttling_allow_unsafe_cache: True,
@@ -163,7 +164,7 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
         title='Your Awesome Project',
         version='0.1.0',
     ),
-    Settings.openapi_examples_seed: None,  # turned off by default
+    Settings.openapi_examples_seed: EMPTY,  # turned off by default
     # OpenAPI static CDN configuration:
     Settings.openapi_static_cdn: {},
     # We validate some HTTP spec things by default to be strict,
@@ -184,8 +185,8 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
             'dmr.security.csrf.CSRFSemanticSchemaProvider',
         )(),
     ],
-    # Defaults to the `validate_responses` setting if `None`:
-    Settings.validate_events: None,
+    # Defaults to the `validate_responses` setting if `EMPTY`:
+    Settings.validate_events: EMPTY,
     Settings.responses: [],  # global responses, for response validation
     Settings.global_error_handler: 'dmr.errors.global_error_handler',
     # Settings for middleware:

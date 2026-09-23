@@ -20,14 +20,13 @@ from dmr.serializer import BaseSerializer
 @final
 class _PathOperationIdGenerator(OperationIdGenerator):
     @override
-    def __call__(
+    def generate_suffix(
         self,
         path: str,
-        suffix: str,
         metadata: EndpointMetadata,
-        serializer: type[BaseSerializer],
+        controller_cls: type[Controller[BaseSerializer]],
     ) -> str:
-        return super().__call__(path, '', metadata, serializer)
+        return ''
 
 
 @final

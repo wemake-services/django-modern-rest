@@ -25,6 +25,17 @@ if TYPE_CHECKING:
 _CSRF_FAILED_WITH_REASON_MSG: Final = _('CSRF Failed: {reason}')
 _CSRF_FAILED_MSG: Final = _('CSRF Failed.')
 
+#: Matches Django's definition in `CsrfViewMiddleware`.
+SAFE_HTTP_METHODS: Final = frozenset((
+    HTTPMethod.GET,
+    HTTPMethod.HEAD,
+    HTTPMethod.OPTIONS,
+    HTTPMethod.TRACE,
+))
+
+#: Default security scheme name for CSRF.
+CSRF_SCHEME_NAME: Final = 'csrf'
+
 
 def csrf_message(reason: str) -> str:
     """
@@ -34,7 +45,7 @@ def csrf_message(reason: str) -> str:
     """
     from django.conf import settings  # noqa: PLC0415
 
-    if settings.DEBUG:
+    if reason and settings.DEBUG:
         return _CSRF_FAILED_WITH_REASON_MSG.format(reason=reason)  # type: ignore[no-any-return]
 
     return force_str(_CSRF_FAILED_MSG)
@@ -156,6 +167,16 @@ class CSRFSemanticSchemaProvider(ResponseSpecProvider, AuthProvider):
         security_scheme_name: Security scheme name for CSRF auth.
         safe_http_methods: Set of secure HTTP method names.
 
+    .. warning::
+
+        We can't possibly detect if CSRF enabled for any controller or not.
+        There can be custom middleware, decorators like ``@csrf_protect``,
+        or even ``ensure_csrf()`` inline calls.
+
+        So, if you know that CSRF is disabled and still want
+        to use ``csrf_exempt = False`` for some reason (?),
+        disable this provider from settings.
+
     .. versionadded:: 0.16.0
     """
 
@@ -163,14 +184,8 @@ class CSRFSemanticSchemaProvider(ResponseSpecProvider, AuthProvider):
     error_model: Any = ErrorModel
     status_code: HTTPStatus | None = None
     description: StrOrPromise | None = None
-    security_scheme_name: str = 'csrf'
-    # Matches Django's definition in `CsrfViewMiddleware`
-    safe_http_methods: Set[HTTPMethod] = frozenset((
-        HTTPMethod.GET,
-        HTTPMethod.HEAD,
-        HTTPMethod.OPTIONS,
-        HTTPMethod.TRACE,
-    ))
+    security_scheme_name: str = CSRF_SCHEME_NAME
+    safe_http_methods: Set[HTTPMethod] = SAFE_HTTP_METHODS
 
     @override
     def provide_response_specs(
@@ -291,5 +306,27 @@ def csrf_response_spec(
             'Raised when CSRF check failed'
             if description is None
             else description
+        ),
+    )
+
+
+def csrf_security_scheme(
+    *,
+    scheme_name: str | None = None,
+    description: StrOrPromise | None = None,
+) -> SecurityScheme:
+    """
+    Default CSRF security scheme.
+
+    .. versionadded:: 0.16.0
+    """
+    from django.conf import settings  # noqa: PLC0415
+
+    return SecurityScheme(
+        type='apiKey',
+        name=settings.CSRF_COOKIE_NAME if scheme_name is None else scheme_name,
+        security_scheme_in='cookie',
+        description=(
+            'CSRF protection' if description is None else str(description)
         ),
     )

@@ -77,7 +77,8 @@ unit *args='':
     uv run python -m pytest -n auto --max-worker-restart=1 \
       --inline-snapshot=disable {{ args }}
 
-# Check package imports without django.setup(); extras are optional, e.g. `just smoke jwt msgspec`
+# Check package imports without django.setup();
+# extras are optional, e.g. `just smoke jwt msgspec`
 [group('testing')]
 smoke *extras='':
     uv run python -c 'from dmr import Controller'
