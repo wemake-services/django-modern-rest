@@ -118,7 +118,7 @@ class _HttpSpecValidator:  # noqa: WPS214
         responses: list[ResponseSpec],
     ) -> None:
         self._check_http_spec_rule(
-            rule=HttpSpec.header_name_syntax,
+            rule=HttpSpec.cookie_name_syntax,
             callback=self._check_http_syntax,
             responses=responses,
             field_type='cookie',
@@ -140,6 +140,12 @@ class _HttpSpecValidator:  # noqa: WPS214
         self._check_http_spec_rule(
             rule=HttpSpec.empty_response_body,
             callback=self._check_empty_response_body,
+            responses=responses,
+        )
+
+        self._check_http_spec_rule(
+            rule=HttpSpec.cookie_semantics,
+            callback=self._check_cookie_semantics,
             responses=responses,
         )
 
@@ -224,6 +230,67 @@ class _HttpSpecValidator:  # noqa: WPS214
             raise EndpointMetadataError(
                 f'{field_type.capitalize()} name {invalid_name!r} '
                 f'is not following http spec.',
+            )
+
+    def _check_cookie_semantics(
+        self,
+        responses: list[ResponseSpec],
+    ) -> None:
+        cookies: list[tuple[str, CookieSpec | NewCookie]] = []
+        modification = self.metadata.modification
+
+        if modification and modification.cookies:
+            cookies.extend(modification.cookies.items())
+
+        for response in responses:
+            if response.cookies:
+                cookies.extend(response.cookies.items())
+
+        for cookie_name, cookie in cookies:
+            self._validate_samesite_none_requires_secure(cookie)
+            self._validate_max_age(cookie)
+            self._validate_secure_cookie_prefix(cookie_name, cookie)
+            self._validate_host_cookie_prefix(cookie_name, cookie)
+
+    def _validate_samesite_none_requires_secure(
+        self,
+        cookie: CookieSpec | NewCookie,
+    ) -> None:
+        if cookie.samesite == 'none' and not cookie.secure:
+            raise EndpointMetadataError(
+                "Cookie with samesite='none' requires secure to be True",
+            )
+
+    def _validate_max_age(
+        self,
+        cookie: CookieSpec | NewCookie,
+    ) -> None:
+        if cookie.max_age is not None and cookie.max_age < 0:
+            raise EndpointMetadataError(
+                'Cookie max age must not be negative',
+            )
+
+    def _validate_secure_cookie_prefix(
+        self,
+        cookie_name: str,
+        cookie: CookieSpec | NewCookie,
+    ) -> None:
+        if cookie_name.startswith('__Secure-') and not cookie.secure:
+            raise EndpointMetadataError(
+                '__Secure- cookie prefix requires secure to be True',
+            )
+
+    def _validate_host_cookie_prefix(
+        self,
+        cookie_name: str,
+        cookie: CookieSpec | NewCookie,
+    ) -> None:
+        if cookie_name.startswith('__Host-') and (
+            not cookie.secure or cookie.path != '/' or cookie.domain is not None
+        ):
+            raise EndpointMetadataError(
+                '__Host- cookie prefix requires secure to be True, '
+                'path set to / and domain to be None',
             )
 
     def _get_http_field_names(

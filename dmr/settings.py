@@ -106,6 +106,9 @@ class HttpSpec(enum.StrEnum):
         cookie_name_syntax: Disables validation that check
             name syntax for cookie names to avoid disallowed
             characters.
+        cookie_semantics: Disables validation that check if cookies
+            semantix container proper values, like `max_age` must not be
+            negative, or `samesite='none'` requires `secure=True`, etc
     """
 
     empty_request_body = 'empty_request_body'
@@ -113,6 +116,7 @@ class HttpSpec(enum.StrEnum):
     header_name_server_managed = 'header_name_server_managed'
     header_name_syntax = 'header_name_syntax'
     cookie_name_syntax = 'cookie_name_syntax'
+    cookie_semantics = 'cookie_semantics'
 
 
 class SettingsDict(TypedDict, total=False):
