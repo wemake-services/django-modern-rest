@@ -21,8 +21,10 @@ The :doc:`changelog <../deep-dive/changelog>` lists the breaking changes themsel
 How to use in Codex
 -------------------
 
-1. Bump ``django-modern-rest`` in your dependencies and install it.
-2. Ask Codex to use the skill ``$dmr-upgrade``.
+1. Note the version you are on, then bump ``django-modern-rest``
+   in your dependencies and install it.
+2. Ask Codex to use the skill ``$dmr-upgrade``,
+   naming both the old and the new version.
 3. Review the report: releases applied, codemod changes, manual changes,
    and unresolved items.
 
@@ -70,9 +72,12 @@ The codemod does not need an agent. From the root of your project:
 .. code-block:: bash
 
    uv run --with libcst python \
-     .agents/skills/dmr-upgrade/scripts/dmr_upgrade.py --target 0.16.0 .
+     .agents/skills/dmr-upgrade/scripts/dmr_upgrade.py \
+     --current 0.14.0 --target 0.16.0 .
 
-It detects the installed version (pass ``--current`` otherwise),
+``--current`` is the version you are upgrading *from*. It can be omitted
+only while that version is still the installed one, because that is what
+the script falls back to. The codemod
 rewrites moved and renamed symbols including their imports,
 renames keyword arguments on the affected calls,
 and prints ``path:line: [release] message`` for everything

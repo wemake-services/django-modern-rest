@@ -44,6 +44,7 @@ lint:
 [group('dev')]
 skills:
     #!/usr/bin/env bash
+    set -euo pipefail
     for skill in dmr/.agents/skills/*/; do
       uv run agentskills validate "$skill"
     done

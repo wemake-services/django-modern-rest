@@ -207,6 +207,8 @@ include = [
 ]
 
 [tool.hatch.build.targets.wheel]
+# Agent skills ship with the package, but their evals are for our CI only:
+exclude = [ "dmr/.agents/skills/*/evals" ]
 macos-max-compat = true
 only-include = [ "dmr", "dmr_pytest.py" ]
 
@@ -589,6 +591,10 @@ timeout_method = "thread"
 
 
 [tool.coverage.run]
+# Agent skill scripts ship inside the package, but they are standalone tools
+# for other projects, not library code.
+# See `tests/test_unit/test_skills` for how they are tested.
+omit = [ "dmr/.agents/*" ]
 # Covdefaults: https://pypi.org/project/covdefaults
 plugins = [ "covdefaults" ]
 

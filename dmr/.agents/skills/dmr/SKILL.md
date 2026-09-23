@@ -101,7 +101,7 @@ and use `schemathesis` against the OpenAPI schema.
 
 | Topic | Rules | Read |
 | --- | --- | --- |
-| Controllers, `@modify` vs `@validate`, serializers, responses, components, redirects | 10 | [references/controllers.md](references/controllers.md) |
+| Controllers, `@modify` vs `@validate`, serializers, responses, components, redirects | 9 | [references/controllers.md](references/controllers.md) |
 | Routing, 404 / 500 handlers, sync and async app layout | 4 | [references/routing.md](references/routing.md) |
 | Error handlers, `APIError`, custom `error_model` | 4 | [references/errors.md](references/errors.md) |
 | Response validation, `HttpSpec`, settings | 5 | [references/validation.md](references/validation.md) |

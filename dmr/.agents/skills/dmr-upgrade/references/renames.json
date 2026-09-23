@@ -36,7 +36,7 @@
       "prompt": "0.7-to-0.8.md",
       "symbols": [
         {"old": "dmr.response.APIRedirectError", "new": "dmr.response.RedirectTo"},
-        {"old": "dmr.throttling.backend.DjangoCache", "new": "dmr.throttling.backend.SyncDjangoCache"}
+        {"old": "dmr.throttling.backends.DjangoCache", "new": "dmr.throttling.backends.SyncDjangoCache"}
       ],
       "keywords": [],
       "removed": [],

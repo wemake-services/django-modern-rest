@@ -24,8 +24,10 @@ Or standalone, ``uv`` installs the dependencies from the inline metadata::
 
     uv run dmr_upgrade.py --current 0.14.0 --target 0.16.0 .
 
-``--current`` defaults to the installed ``django-modern-rest`` version,
-pass it explicitly when the script runs outside of the project environment.
+``--current`` defaults to the installed ``django-modern-rest`` version.
+Pass it explicitly when the script runs outside of the project environment,
+and after the dependency was already bumped: the installed version is
+the target one by then, so nothing would be selected.
 """
 
 from __future__ import annotations
@@ -92,8 +94,9 @@ class Release(TypedDict):
 
 
 def parse_version(text: str) -> tuple[int, ...]:
-    """Convert ``'0.16.0'`` into a comparable tuple."""
-    return tuple(int(part) for part in text.split('.'))
+    """Convert ``'0.16'`` or ``'0.16.0rc1'`` into a comparable tuple."""
+    numbers = re.findall(r'\d+', text.split('+', maxsplit=1)[0])[:3]
+    return tuple(int(part) for part in numbers + ['0'] * (3 - len(numbers)))
 
 
 def detect_current_version() -> str | None:
@@ -138,21 +141,70 @@ def iter_python_files(paths: Sequence[Path]) -> Iterator[Path]:
                 yield file_path
 
 
-def _callee_name(func: cst.BaseExpression) -> str | None:
-    if isinstance(func, cst.Name):
-        return func.value
-    if isinstance(func, cst.Attribute):
-        return func.attr.value
+def _dotted_name(node: cst.BaseExpression) -> str | None:
+    if isinstance(node, cst.Name):
+        return node.value
+    if isinstance(node, cst.Attribute):
+        base = _dotted_name(node.value)
+        return None if base is None else f'{base}.{node.attr.value}'
     return None
+
+
+def _is_dmr_module(name: str) -> bool:
+    return name == 'dmr' or name.startswith('dmr.')
+
+
+def _imported_as(alias: cst.ImportAlias) -> str | None:
+    asname = alias.asname
+    if asname is not None:
+        return _dotted_name(asname.name)
+    dotted = _dotted_name(alias.name)
+    return None if dotted is None else dotted.split('.')[0]
+
+
+class DmrNames(cst.CSTVisitor):
+    """Collect the names that refer to ``dmr`` objects in one module."""
+
+    def __init__(self) -> None:
+        """Start with an empty name set."""
+        super().__init__()
+        self.names: set[str] = set()
+
+    @override
+    def visit_ImportFrom(self, node: cst.ImportFrom) -> None:
+        """Remember every name imported from a ``dmr`` module."""
+        module = node.module
+        if module is None or isinstance(node.names, cst.ImportStar):
+            return
+        dotted = _dotted_name(module)
+        if dotted is None or not _is_dmr_module(dotted):
+            return
+        self.names.update(
+            name for alias in node.names if (name := _imported_as(alias))
+        )
+
+    @override
+    def visit_Import(self, node: cst.Import) -> None:
+        """Remember ``import dmr.something`` and its alias."""
+        for alias in node.names:
+            dotted = _dotted_name(alias.name)
+            name = _imported_as(alias)
+            if name and dotted is not None and _is_dmr_module(dotted):
+                self.names.add(name)
 
 
 class KeywordRenamer(cst.CSTTransformer):
     """Rename keyword arguments of calls to the configured callees."""
 
-    def __init__(self, keywords: Sequence[KeywordRename]) -> None:
+    def __init__(
+        self,
+        keywords: Sequence[KeywordRename],
+        dmr_names: frozenset[str],
+    ) -> None:
         """Remember the renames, ``changed`` is set when any applied."""
         super().__init__()
         self._keywords = keywords
+        self._dmr_names = dmr_names
         self.changed = False
 
     @override
@@ -162,17 +214,26 @@ class KeywordRenamer(cst.CSTTransformer):
         updated_node: cst.Call,
     ) -> cst.Call:
         """Rewrite keyword names on matching calls."""
-        callee = _callee_name(updated_node.func)
+        callee = _dotted_name(updated_node.func)
+        if callee is None or not self._is_dmr_call(callee):
+            return updated_node
         renames = {
             keyword['old']: keyword['new']
             for keyword in self._keywords
-            if keyword['callee'] == callee
+            if keyword['callee'] == callee.rsplit('.', 1)[-1]
         }
         if not renames:
             return updated_node
         return updated_node.with_changes(
             args=[self._rename_arg(arg, renames) for arg in updated_node.args],
         )
+
+    def _is_dmr_call(self, callee: str) -> bool:
+        # Callees are matched by their last name only, so a call is rewritten
+        # only when that name, or the module it is called on, comes from
+        # ``dmr``. Otherwise `marshmallow.Schema(then=...)` would be renamed.
+        parts = callee.split('.')
+        return parts[-1] in self._dmr_names or parts[0] in self._dmr_names
 
     def _rename_arg(self, arg: cst.Arg, renames: dict[str, str]) -> cst.Arg:
         if arg.keyword is None or arg.keyword.value not in renames:
@@ -194,7 +255,9 @@ def rewrite_module(
         context = CodemodContext(filename=filename)
         command = RenameCommand(context, symbol['old'], symbol['new'])
         module = command.transform_module(module)
-    renamer = KeywordRenamer(release['keywords'])
+    dmr_names = DmrNames()
+    module.visit(dmr_names)
+    renamer = KeywordRenamer(release['keywords'], frozenset(dmr_names.names))
     module = module.visit(renamer)
     return module.code
 
@@ -210,18 +273,18 @@ def report_manual_checks(
         for check in release['manual']
     ]
     removed = [
-        (re.compile(re.escape(name.rsplit('.', 1)[-1]) + r'\b'), name)
+        (re.compile(r'\b' + re.escape(name.rsplit('.', 1)[-1]) + r'\b'), name)
         for name in release['removed']
     ]
     found = 0
     for lineno, line in enumerate(source.splitlines(), start=1):
         for pattern, message in checks:
             if pattern.search(line):
-                print(f'{path}:{lineno}: [{release["to"]}] {message}')  # noqa: WPS421
+                print(f'{path}:{lineno}: [{release["to"]}] {message}')
                 found += 1
         for pattern, name in removed:
             if pattern.search(line):
-                print(f'{path}:{lineno}: [{release["to"]}] {name} was removed')  # noqa: WPS421
+                print(f'{path}:{lineno}: [{release["to"]}] {name} was removed')
                 found += 1
     return found
 
@@ -237,9 +300,16 @@ def upgrade_file(
     source = original
     manual_hits = 0
     for release in releases:
-        if release['symbols'] or release['keywords']:
-            source = rewrite_module(source, str(path), release)
+        # Manual checks describe the API *before* this release,
+        # so they must not see what its own codemod has just written:
         manual_hits += report_manual_checks(path, source, release)
+        if not (release['symbols'] or release['keywords']):
+            continue
+        try:
+            source = rewrite_module(source, str(path), release)
+        except cst.ParserSyntaxError as exc:
+            print(f'{path}: cannot parse, skipped: {exc}', file=sys.stderr)
+            return False, manual_hits
     changed = source != original
     if changed and not dry_run:
         path.write_text(source, encoding='utf-8')
@@ -280,20 +350,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     current = args.current or detect_current_version()
     if current is None:
-        print(  # noqa: WPS421
+        print(
             'django-modern-rest is not installed here, pass --current',
             file=sys.stderr,
         )
         return 2
     releases = select_releases(load_releases(), current, args.target)
     if not releases:
-        print(f'Nothing to do between {current} and {args.target}')  # noqa: WPS421
+        print(f'Nothing to do between {current} and {args.target}')
         return 0
-    print(  # noqa: WPS421
+    print(
         'Applying releases: {}'.format(
             ', '.join(release['to'] for release in releases),
         ),
     )
+    rewritten = 'would be rewritten' if args.dry_run else 'rewritten'
     changed_files = 0
     manual_hits = 0
     for path in iter_python_files(args.paths):
@@ -301,9 +372,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         changed_files += int(changed)
         manual_hits += hits
         if changed:
-            print(f'{path}: rewritten')  # noqa: WPS421
-    print(  # noqa: WPS421
-        f'{changed_files} file(s) rewritten, {manual_hits} manual check(s). '
+            print(f'{path}: {rewritten}')
+    print(
+        f'{changed_files} file(s) {rewritten}, {manual_hits} manual check(s). '
         + 'Now read the migration prompts: '
         + ', '.join(f'references/{release["prompt"]}' for release in releases),
     )

@@ -294,8 +294,8 @@ html_theme_options = {
     ],
     'accent_color': 'green',
     # "Copy page" button and "Open in ..." links for LLM chats,
-    # see `_templates/components/copy-page-button.html`:
-    'show_ai_links': True,
+    # see `_templates/components/copy-page-button.html`
+    # (`show_ai_links` is already `True` in Shibuya's `theme.conf`):
     'ai_prompt_template': (
         'Read {url} and answer my questions about django-modern-rest. '
         'The full documentation index is at '
@@ -348,7 +348,9 @@ llms_txt_summary = (
 )
 markdown_anchor_sections = True
 markdown_http_base = html_baseurl.rstrip('/')
-markdown_uri_doc_suffix = '.html'
+# Links between pages stay inside the Markdown twins,
+# an agent that follows them keeps reading Markdown:
+markdown_uri_doc_suffix = '.md'
 
 
 def resolve_canonical_names(app: Sphinx, doctree: Node) -> None:

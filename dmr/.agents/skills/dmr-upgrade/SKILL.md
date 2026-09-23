@@ -30,11 +30,13 @@ between the installed version and the target version and apply all of it.
 - Tell the user which releases lie in between and that each one
   is applied in order. Never skip a release.
 
-### 2. Bump the dependency
+### 2. Write the current version down, then bump the dependency
+
+Keep the version from step 1 at hand: after the bump the installed version
+*is* the target one, so the codemod has nothing to detect anymore.
 
 Update `pyproject.toml` (or the requirements file) to the target version
-and install it, so the codemod can detect the version
-and the type checker sees the new API.
+and install it, so the type checker sees the new API.
 
 ### 3. Run the codemod
 
@@ -42,11 +44,11 @@ From the root of the project being upgraded:
 
 ```bash
 uv run --with libcst python <path-to-this-skill>/scripts/dmr_upgrade.py \
-  --target <target-version> .
+  --current <version-from-step-1> --target <target-version> .
 ```
 
-Pass `--current <version>` when `django-modern-rest` is not importable
-in that environment and `--dry-run` to preview. The script:
+`--current` can only be omitted when the old version is still installed.
+Pass `--dry-run` to preview. The script:
 
 - rewrites moved and renamed symbols, including imports,
 - renames keyword arguments on the affected calls,

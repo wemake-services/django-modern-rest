@@ -1,7 +1,7 @@
 ---
 max_turns: 10
 allowed_tools: [Read, Glob, Grep, Skill]
-tags: [routing]
+tags: [negative]
 ---
 
 Write a Django management command that prints how many users

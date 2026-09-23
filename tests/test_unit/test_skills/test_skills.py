@@ -34,7 +34,7 @@ _SKILLS: Final = sorted(
 def _split_frontmatter(skill_dir: Path) -> tuple[dict[str, object], str]:
     _, frontmatter, body = (
         (skill_dir / 'SKILL.md')
-        .read_text()
+        .read_text(encoding='utf-8')
         .split(
             '---\n',
             2,
@@ -69,7 +69,8 @@ def test_skill_local_links(skill_dir: Path) -> None:
     markdown_files.extend((skill_dir / 'references').glob('*.md'))
 
     for markdown_file in markdown_files:
-        for link in _LOCAL_LINK.findall(markdown_file.read_text()):
+        text = markdown_file.read_text(encoding='utf-8')
+        for link in _LOCAL_LINK.findall(text):
             assert (skill_dir / link).is_file(), f'{markdown_file}: {link}'
 
 
@@ -77,9 +78,13 @@ def test_skill_local_links(skill_dir: Path) -> None:
 def test_skill_host_metadata(skill_dir: Path) -> None:
     """Claude Code plugin and Codex metadata match the skill."""
     plugin = json.loads(
-        (skill_dir / '.claude-plugin' / 'plugin.json').read_text(),
+        (skill_dir / '.claude-plugin' / 'plugin.json').read_text(
+            encoding='utf-8',
+        ),
     )
-    codex = yaml.safe_load((skill_dir / 'agents' / 'openai.yaml').read_text())
+    codex = yaml.safe_load(
+        (skill_dir / 'agents' / 'openai.yaml').read_text(encoding='utf-8'),
+    )
 
     assert plugin['name'] == skill_dir.name
     assert plugin['skills'] == ['./']
@@ -89,7 +94,7 @@ def test_skill_host_metadata(skill_dir: Path) -> None:
 
 def test_marketplace_lists_every_skill() -> None:
     """The marketplace manifest points at every shipped skill."""
-    marketplace = json.loads(_MARKETPLACE.read_text())
+    marketplace = json.loads(_MARKETPLACE.read_text(encoding='utf-8'))
     plugins = {plugin['name']: plugin for plugin in marketplace['plugins']}
 
     assert set(plugins) == {skill_dir.name for skill_dir in _SKILLS}
@@ -104,7 +109,9 @@ def test_upgrade_prompts_are_indexed() -> None:
     """Every migration prompt is known to the codemod, in version order."""
     upgrade_dir = _SKILLS_DIR / 'dmr-upgrade'
     releases = json.loads(
-        (upgrade_dir / 'references' / 'renames.json').read_text(),
+        (upgrade_dir / 'references' / 'renames.json').read_text(
+            encoding='utf-8',
+        ),
     )['releases']
     prompts = {release['prompt'] for release in releases}
     versions = [
@@ -119,7 +126,7 @@ def test_upgrade_prompts_are_indexed() -> None:
     for prompt in prompts:
         assert (
             (upgrade_dir / 'references' / prompt)
-            .read_text()
+            .read_text(encoding='utf-8')
             .startswith(
                 '# Upgrade django-modern-rest from',
             )
@@ -130,7 +137,7 @@ def test_docs_mention_every_skill() -> None:
     """The docs advertise every skill by its ``$name``."""
     docs = (
         _REPO_ROOT / 'docs' / 'pages' / 'ai' / 'agent-skills.rst'
-    ).read_text()
+    ).read_text(encoding='utf-8')
 
     for skill_dir in _SKILLS:
         assert f'``${skill_dir.name}``' in docs
