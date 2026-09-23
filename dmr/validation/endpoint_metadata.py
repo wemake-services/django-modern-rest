@@ -234,18 +234,17 @@ class _HttpSpecValidator:  # noqa: WPS214
         self,
         responses: list[ResponseSpec],
     ) -> None:
-        cookies: dict[str, CookieSpec | NewCookie] = {}
-
+        cookies: list[tuple[str, CookieSpec | NewCookie]] = []
         modification = self.metadata.modification
 
         if modification and modification.cookies:
-            cookies.update(modification.cookies)
+            cookies.extend(modification.cookies.items())
 
         for response in responses:
             if response.cookies:
-                cookies.update(response.cookies)
+                cookies.extend(response.cookies.items())
 
-        for cookie_name, cookie in cookies.items():
+        for cookie_name, cookie in cookies:
             self._validate_samesite_none_requires_secure(cookie)
             self._validate_max_age(cookie)
             self._validate_secure_cookie_prefix(cookie_name, cookie)

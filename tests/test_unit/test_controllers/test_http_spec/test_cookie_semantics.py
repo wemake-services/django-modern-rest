@@ -147,6 +147,37 @@ def test_cookie_semantic_validation_in_modify() -> None:
                 raise NotImplementedError
 
 
+def test_same_cookie_from_different_responses() -> None:
+    """Ensure validation works for the same cookie in different responses."""
+    cookies1 = {
+        'session_id': CookieSpec(samesite='none', secure=True, max_age=-100),
+    }
+    cookies2 = {
+        'session_id': CookieSpec(samesite='none', secure=True, max_age=100),
+    }
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match=_COOKIE_AGE_NOT_NEGATIVE,
+    ):
+
+        class _Mixed(Controller[PydanticSerializer]):
+            @validate(
+                ResponseSpec(
+                    status_code=HTTPStatus.OK,
+                    cookies=cookies1,
+                    return_type=None,
+                ),
+                ResponseSpec(
+                    status_code=HTTPStatus.NO_CONTENT,
+                    cookies=cookies2,
+                    return_type=None,
+                ),
+            )
+            def get(self) -> HttpResponse:
+                raise NotImplementedError
+
+
 def test_check_cookie_semantics_controller() -> None:
     """Ensure that the validation can be disabled on controller level."""
     cookies = {
