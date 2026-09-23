@@ -29,14 +29,74 @@ We also validate defined settings in import time.
 See :ref:`settings_validation` for more details.
 
 
+.. _configuration-levels:
+
+Configuration levels
+--------------------
+
+Most of the settings can be also configured on the controller level
+with :class:`~dmr.controller.Controller` attributes
+and on the endpoint level with :func:`~dmr.endpoint.modify`
+and :func:`~dmr.endpoint.validate` parameters.
+
+The most specific level always wins:
+
+1. Endpoint values override controller values
+2. Controller values override settings values
+
+Values are never merged, they always redefine each other.
+
+Every value on every level defaults to :data:`~dmr.types.EMPTY`,
+which means "not set on this level, use the next one".
+This is true for sequences, sets, booleans, and all other values.
+``None`` is never a default: it is a real value that disables something,
+like ``auth=None`` or ``tags=None``, and it is only allowed
+where disabling makes sense.
+
+Here's how one can use this system to achieve different strategies.
+Let's use :doc:`authentication <auth/common>` as the example.
+
+.. tabs::
+
+  .. tab:: Override
+
+    Overrides values from previous levels.
+
+    .. literalinclude:: /examples/configuration/strategy_override.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: Merge
+
+    Merge values from previous levels.
+
+    .. literalinclude:: /examples/configuration/strategy_merge.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: Disable
+
+    Disable values from previous levels.
+
+    .. literalinclude:: /examples/configuration/strategy_disable.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+One can customize :attr:`~dmr.endpoint.Endpoint.metadata_merger_cls`
+from the default :class:`~dmr.validation.metadata_merger.MetadataMerger`
+to change how values are merged into the final metadata.
+For example, it is possible to restore ``0.15.0`` behavior
+and merge all sequences in a custom subclass, if it is needed.
+
+.. versionchanged:: 0.16.0
+  Values from different levels used to be merged.
+
+
 Settings
 --------
-
-Class that can be used to properly type settings in user's code:
-
-.. autoclass:: dmr.settings.SettingsDict
-  :members:
-
 
 Class with all possible setting keys as enum:
 
@@ -59,6 +119,10 @@ Class with all possible setting keys as enum:
   .. code:: python
 
     >>> DMR_SETTINGS = {Settings.responses: []}
+
+
+Class that can be used to properly type settings in user's code:
+:class:`dmr.settings.SettingsDict`.
 
 
 Content negotiation
@@ -106,7 +170,7 @@ Content negotiation
 
 .. data:: dmr.settings.Settings.validate_negotiation
 
-  Default: ``None``
+  Default: ``EMPTY``
 
   Should we validate content negotiation?
   Meaning: ``django-modern-rest`` finds which parser and which renderer
@@ -116,7 +180,7 @@ Content negotiation
   See :doc:`negotiation` for more info.
 
   Defaults to the value set in :data:`~dmr.settings.Settings.validate_responses`
-  for convenience if this value is ``None``.
+  for convenience if this value is :data:`~dmr.types.EMPTY`.
 
   To disable the content negotiation validation globally, use:
 
@@ -136,7 +200,7 @@ Response handling
   Default: ``[]``
 
   The list of global :class:`~dmr.metadata.ResponseSpec`
-  object that will be added to all endpoints' metadata
+  object that will be added to endpoints' metadata
   as a possible response schema.
 
   Use it to set global responses' status codes like ``500``:
@@ -161,6 +225,13 @@ Response handling
     ...         ),
     ...     ],
     ... }
+
+  Controller ``responses`` and endpoint ``extra_responses`` values
+  override this setting, they are not merged with it.
+  See :ref:`configuration-levels`.
+
+  .. versionchanged:: 0.16.0
+    Controller and endpoint values are not merged anymore.
 
 .. data:: dmr.settings.Settings.validate_responses
 
@@ -220,13 +291,16 @@ Response handling
     ...     },
     ... }
 
-  When this value is set to ``None`` at any level,
-  this means that the value is reset.
+  Controller and endpoint values override this setting,
+  they are not merged with it. See :ref:`configuration-levels`.
   For example, setting ``exclude_validate_responses=None`` on endpoint level
   will cancel all controller and settings level values
   and enable all validation back again.
 
   .. versionadded:: 0.15.0
+
+  .. versionchanged:: 0.16.0
+    Controller and endpoint values are not merged anymore.
 
 .. data:: dmr.settings.Settings.semantic_responses
 
@@ -267,11 +341,14 @@ Response handling
     ...    },
     ... }
 
-  When this value is set to ``None`` at any level,
-  this means that the value is reset.
+  Controller and endpoint values override this setting,
+  they are not merged with it. See :ref:`configuration-levels`.
   For example, setting ``exclude_semantic_responses=None`` on endpoint level
   will cancel all controller and settings level values
   and enable all responses back again.
+
+  .. versionchanged:: 0.16.0
+    Controller and endpoint values are not merged anymore.
 
 .. data:: dmr.settings.Settings.semantic_schema_providers
 
@@ -363,6 +440,12 @@ Authentication
   consider using :class:`~dmr.security.SyncOrAsyncAuth` for settings.
   All auth types must be importable in settings.
 
+  Controller and endpoint ``auth`` values override this setting,
+  they are not merged with it. See :ref:`configuration-levels`.
+
+  .. versionchanged:: 0.16.0
+    Controller and endpoint values are not merged anymore.
+
 
 Throttling
 ----------
@@ -388,6 +471,12 @@ Throttling
   If you use both sync and async controllers in your app,
   consider using :class:`~dmr.throttling.SyncOrAsyncThrottle` for settings.
   All throttle types must be importable in settings.
+
+  Controller and endpoint ``throttling`` values override this setting,
+  they are not merged with it. See :ref:`configuration-levels`.
+
+  .. versionchanged:: 0.16.0
+    Controller and endpoint values are not merged anymore.
 
 
 .. data:: dmr.settings.Settings.throttling_allow_unsafe_cache
@@ -440,11 +529,14 @@ HTTP Spec validation
     ...     },
     ... }
 
-  When this value is set to ``None`` at any level,
-  this means that the value is reset.
+  Controller and endpoint values override this setting,
+  they are not merged with it. See :ref:`configuration-levels`.
   For example, setting ``no_validate_http_spec=None`` on endpoint level
   will cancel all controller and settings level values
   and enable all validation back again.
+
+  .. versionchanged:: 0.16.0
+    Controller and endpoint values are not merged anymore.
 
 
 .. autoclass:: dmr.settings.HttpSpec
@@ -457,11 +549,11 @@ Streaming
 
 .. data:: dmr.settings.Settings.validate_events
 
-  Default: ``None``
+  Default: ``EMPTY``
 
   Should we validate the events in all streams?
   Defaults to the value set in :data:`~dmr.settings.Settings.validate_responses`
-  for convenience if this value is ``None``.
+  for convenience if this value is :data:`~dmr.types.EMPTY`.
 
   To disable the event validation globally, use:
 
@@ -503,11 +595,11 @@ OpenAPI
 
 .. data:: dmr.settings.Settings.openapi_examples_seed
 
-  Default: ``None``
+  Default: ``EMPTY``
 
   Random seed to use when generating missing examples in the OpenAPI spec.
 
-  If set to ``None``, no examples are generated.
+  If set to :data:`~dmr.types.EMPTY`, no examples are generated.
   Existing examples won't be overridden.
 
   It only works if ``'django-modern-rest[openapi]'`` extra is installed.
@@ -631,3 +723,6 @@ API Reference
 .. autofunction:: dmr.settings.resolve_setting
 
 .. autofunction:: dmr.settings.clear_settings_cache
+
+.. autoclass:: dmr.settings.SettingsDict
+  :members:

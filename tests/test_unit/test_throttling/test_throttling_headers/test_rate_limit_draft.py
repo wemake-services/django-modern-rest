@@ -27,6 +27,9 @@ class _SyncSeveralController(Controller[PydanticSerializer]):
                     RateLimitIETFDraft(),
                 ],
             ),
+            # Endpoint throttling replaces the controller one,
+            # so we explicitly reuse it:
+            *throttling,
         ],
     )
     def get(self) -> str:

@@ -5,7 +5,6 @@ from typing import (  # noqa: WPS235
     TYPE_CHECKING,
     Any,
     ClassVar,
-    Final,
     Generic,
     TypeAlias,
     TypeVar,
@@ -14,7 +13,6 @@ from typing import (  # noqa: WPS235
 
 from typing_extensions import (
     Format,
-    Sentinel,
     TypeIs,
     get_original_bases,
     get_type_hints,
@@ -25,6 +23,7 @@ from dmr.internal.type_inference import (
     resolve_type_args,
     resolve_type_var_default,
 )
+from dmr.internal.types import EMPTY as EMPTY
 from dmr.internal.types import unwrap_type_alias
 
 if TYPE_CHECKING:
@@ -53,10 +52,6 @@ else:
     We don't recommend using it for anything serious,
     it is better to define real models instead.
     """
-
-
-#: Default singleton for empty values.
-EMPTY: Final = Sentinel('EMPTY')
 
 
 def safe_typevar(
@@ -219,7 +214,7 @@ class AnnotationsContext:
     def __init__(
         self,
         *,
-        globalns: dict[str, Any] | None = None,
+        globalns: Mapping[str, Any] | None = None,
         localns: Mapping[str, Any] | None = None,
         include_extras: bool = True,
         format: Format | None = None,  # noqa: A002
@@ -271,7 +266,7 @@ class AnnotationsContext:
     def _global_namespace(
         self,
         endpoint_func: Callable[..., Any],
-    ) -> dict[str, Any]:
+    ) -> Mapping[str, Any]:
         if self._globalns is not None:
             return self._globalns
         return inspect.unwrap(endpoint_func).__globals__  # type: ignore[no-any-return]

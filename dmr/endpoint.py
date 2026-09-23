@@ -6,7 +6,7 @@ from functools import wraps
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from django.http import HttpResponse, HttpResponseBase
-from django.urls import URLPattern
+from typing_extensions import Sentinel
 
 from dmr.exceptions import (
     DataRenderingError,
@@ -27,6 +27,7 @@ from dmr.internal.endpoint import request_endpoint as request_endpoint
 from dmr.internal.endpoint import validate as validate
 from dmr.metadata import EndpointMetadata, ResponseModification
 from dmr.negotiation import RequestNegotiator, ResponseNegotiator
+from dmr.openapi.collector import InternalRouteMetadata
 from dmr.openapi.objects import Operation
 from dmr.response import APIError, RedirectTo
 from dmr.security.base import AsyncAuth, SyncAuth
@@ -36,6 +37,7 @@ from dmr.throttling import AsyncThrottle, SyncThrottle
 from dmr.validation import (
     EndpointMetadataBuilder,
     EndpointMetadataValidator,
+    MetadataMerger,
     ResponseValidator,
 )
 from dmr.validation.payload import PayloadBuilder
@@ -85,6 +87,7 @@ class Endpoint:  # noqa: WPS214
     metadata_validator_cls: ClassVar[type[EndpointMetadataValidator]] = (
         EndpointMetadataValidator
     )
+    metadata_merger_cls: ClassVar[type[MetadataMerger]] = MetadataMerger
     metadata_cls: ClassVar[type[EndpointMetadata]] = EndpointMetadata
     response_modification_cls: ClassVar[type[ResponseModification]] = (
         ResponseModification
@@ -139,21 +142,25 @@ class Endpoint:  # noqa: WPS214
         #    of the components that support it. Including custom ones.
         #    Then we enrich metadata with collected responses and use it.
         # Done!
+        metadata_merger = self.metadata_merger_cls()
         metadata = self.metadata_builder_cls(
             payload=payload,
             controller_cls=controller_cls,
             func=func,
             metadata_cls=self.metadata_cls,
+            merger=metadata_merger,
             response_modification_cls=self.response_modification_cls,
             component_parsers=self._serializer_context.component_parsers,
             type_annotations=type_annotations,
         )()
-        self.metadata_validator_cls(metadata=metadata)(
+        self.metadata_validator_cls(
+            metadata=metadata,
+            merger=metadata_merger,
+        )(
             func,
             payload=payload,
             controller_cls=controller_cls,
         )
-        func.__metadata__ = metadata  # type: ignore[attr-defined]
         self.metadata = metadata
         self.request_negotiator = self.request_negotiator_cls(
             self.metadata,
@@ -267,8 +274,7 @@ class Endpoint:  # noqa: WPS214
 
     def get_schema(
         self,
-        path: str,
-        pattern: URLPattern,
+        route_metadata: InternalRouteMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
         router: 'Router',
@@ -279,26 +285,29 @@ class Endpoint:  # noqa: WPS214
         .. versionchanged:: 0.16.0
             Now accepts *controller_cls* parameter instead
             of *controller_name* and *serializer*.
+            Changed *path* and *pattern* parameters to be *route_metadata*.
 
         """
-        operation_id = self.get_operation_id(
-            path,
-            controller_cls.__qualname__,
-            controller_cls.serializer,
-            context,
+        operation_id = context.generators.operation_id(
+            route_metadata.normalized_path,
+            self.metadata,
+            controller_cls,
         )
         request_body, params_list = context.generators.component_parsers(
             operation_id,
-            pattern,
+            route_metadata,
             self.metadata,
-            controller_cls.serializer,
+            controller_cls,
         )
 
-        router_metadata = router.metadata_for(path)
-        tags = [
-            *router_metadata.tags,
-            *(self.metadata.tags or []),
-        ]
+        router_metadata = router.metadata_for(route_metadata.normalized_path)
+        # Endpoint and controller tags are already resolved,
+        # router tags are the last level:
+        tags = (
+            router_metadata.tags
+            if isinstance(self.metadata.tags, Sentinel)
+            else self.metadata.tags
+        )
 
         return Operation(
             tags=tags or None,
@@ -321,7 +330,11 @@ class Endpoint:  # noqa: WPS214
             ),
             external_docs=self.metadata.external_docs,
             servers=self.metadata.servers,
-            callbacks=self.metadata.callbacks,
+            callbacks=(
+                None
+                if self.metadata.callbacks is None
+                else dict(self.metadata.callbacks)
+            ),
             operation_id=operation_id,
             request_body=request_body,
             responses=context.generators.response(
@@ -329,21 +342,6 @@ class Endpoint:  # noqa: WPS214
                 controller_cls,
             ),
             parameters=params_list,
-        )
-
-    def get_operation_id(
-        self,
-        path: str,
-        controller_name: str,
-        serializer: type[BaseSerializer],
-        context: 'OpenAPIContext',
-    ) -> str:
-        """Customize how OperationId is generated for the OpenAPI."""
-        return context.generators.operation_id(
-            path,
-            controller_name,
-            self.metadata,
-            serializer,
         )
 
     def _async_endpoint(

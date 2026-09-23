@@ -12,7 +12,13 @@ if TYPE_CHECKING:
 
 
 def ensure_csrf(controller: 'Controller[BaseSerializer]') -> None:
-    """Raise ``APIError`` (403) if the CSRF check fails."""
+    """
+    Raise ``APIError`` (403) if the CSRF check fails.
+
+    Does not perform the second CSRF check if it was processed before.
+    Since it uses the standard Django tooling, the default middleware
+    checks ``csrf_processing_done`` which is set on each successful check.
+    """
     from dmr.response import APIError  # noqa: PLC0415
 
     reason = _check_csrf_failure(controller.request)

@@ -3,19 +3,18 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast, overload
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
-from django.urls import include
+from django.urls import include, re_path
 from django.urls import path as _django_path
-from django.urls.resolvers import RoutePattern, URLPattern, URLResolver
+from django.urls.resolvers import RegexPattern, URLPattern, URLResolver
 from django.utils.encoding import force_str
 from django.views import defaults
-from typing_extensions import override
 
 from dmr.errors import ErrorType, format_error
 from dmr.exceptions import InternalServerError, NotAcceptableError
-from dmr.internal.routing import RouterMetadata
-from dmr.internal.routing import URLExternal as _URLExternal
+from dmr.internal.routing import PrefixRoutePattern, RouterMetadata
 from dmr.internal.types import FormatError, StrOrPromise
 from dmr.openapi.collector import (
+    ExternalRouteMetadata,
     collect_normalized_paths,
     controller_mapping_collector,
 )
@@ -27,9 +26,6 @@ if TYPE_CHECKING:
     from dmr.renderers import Renderer
     from dmr.serializer import BaseSerializer
 
-_CapturedArgs: TypeAlias = tuple[Any, ...]
-_CapturedKwargs: TypeAlias = dict[str, int | str]
-_RouteMatch: TypeAlias = tuple[str, _CapturedArgs, _CapturedKwargs]
 _AnyPattern: TypeAlias = URLPattern | URLResolver
 _DjangoView: TypeAlias = Callable[
     ...,
@@ -48,7 +44,8 @@ class Router:
             Defaults to empty string ``''``.
         urls: Sequence of URL patterns and resolvers.
         tags: Optional sequence of tags to group operations in OpenAPI.
-            These are merged with endpoint-level tags.
+            Used for operations that do not have
+            controller-level or endpoint-level tags.
         deprecated: Optional flag to mark all operations as deprecated.
             Combines with endpoint-level deprecated flag using OR logic.
         ignore_from_spec: If set to ``True``, all routes from this router
@@ -85,7 +82,7 @@ class Router:
     def __init__(
         self,
         prefix: str = '',
-        urls: Iterable[_AnyPattern | _URLExternal] = (),
+        urls: Iterable[_AnyPattern] = (),
         *,
         tags: Sequence[str] | None = None,
         deprecated: bool = False,
@@ -93,7 +90,7 @@ class Router:
     ) -> None:
         """Initialize a router with routes and optional OpenAPI metadata."""
         self.prefix = prefix
-        self.urls = self._maybe_process_external(urls)
+        self.urls = list(urls)
         self.tags = list(tags or [])
         self.deprecated = deprecated
         self.ignore_from_spec = ignore_from_spec
@@ -118,34 +115,35 @@ class Router:
         """
         paths_items: Paths = {}
 
-        for path, pattern_or_meta, controller in controller_mapping_collector(
+        for route_metadata, controller_cls in controller_mapping_collector(
             self.urls,
             base_path=self.prefix,
         ):
-            if self.metadata_for(path).ignore_from_spec:
+            if self.metadata_for(
+                route_metadata.normalized_path,
+            ).ignore_from_spec:
                 # Skip paths hidden by any router in the inclusion chain:
                 continue
-            if pattern_or_meta is None:
+            if isinstance(route_metadata, ExternalRouteMetadata):
+                if isinstance(route_metadata.openapi, PathItem):
+                    # Case for including extrnal views with OpenAPI:
+                    paths_items[route_metadata.normalized_path] = (
+                        route_metadata.openapi
+                    )
                 # You can also add external views without adding any OpenAPI,
                 # this way, it would be hidden from the docs:
                 continue
-            if isinstance(pattern_or_meta, PathItem):
-                # Case for including extrnal views with OpenAPI:
-                paths_items[path] = pattern_or_meta
-                continue
 
-            # for mypy: it can't narrow down the `tuple` based on the
-            # the second item type :/
-            assert controller is not None  # noqa: S101
-            path_item = controller.get_schema(
-                path,
-                pattern_or_meta,
+            # Some type checkers can't inference the type here:
+            assert controller_cls is not None  # noqa: S101
+            path_item = controller_cls.get_schema(
+                route_metadata,
                 context,
                 router=self,
             )
             if path_item is None:
                 continue  # It can be private for a reason.
-            paths_items[path] = path_item
+            paths_items[route_metadata.normalized_path] = path_item
 
         # Sort paths, so the schema does not depend on the url order:
         return context.config_merger(
@@ -203,28 +201,16 @@ class Router:
         path_spec = self.urls if app_name is None else (self.urls, app_name)
         return path(self.prefix, include(path_spec, namespace=namespace))
 
-    def metadata_for(self, pattern: str) -> RouterMetadata:
+    def metadata_for(self, openapi_path: str) -> RouterMetadata:
         """
         Returns applied nested metadata from all router layers.
 
         Raises:
-            KeyError: if pattern is not found.
+            KeyError: if *openapi_path* is not found.
 
         .. versionadded:: 0.15.0
         """
-        return self._path_metadata[pattern]
-
-    def _maybe_process_external(
-        self,
-        urls: Iterable[_AnyPattern | _URLExternal],
-    ) -> list[_AnyPattern]:
-        django_like_urls: list[_AnyPattern] = []
-        for url in urls:
-            if isinstance(url, _URLExternal):
-                django_like_urls.append(url.get_url_with_metadata())
-            else:
-                django_like_urls.append(url)
-        return django_like_urls
+        return self._path_metadata[openapi_path]
 
 
 def external_path(
@@ -234,7 +220,7 @@ def external_path(
     openapi: PathItem | None,
     kwargs: dict[str, Any] | None = None,
     name: str | None = None,
-) -> _URLExternal:
+) -> URLPattern:
     """
     Add an external path onto the DMR routing system.
 
@@ -248,21 +234,59 @@ def external_path(
         kwargs: Init kwargs for the view.
         name: Name to resolve this URL.
 
-    .. important::
-
-        This function only works when including
-        a URL into our own :class:`Router` objects,
-        not into the Django own ``urlpatterns``.
-
-        Django check ``urls.E004`` covers this statically.
-
     See :ref:`external-views` for more info.
 
     .. versionadded:: 0.13.0
+    .. versionchanged:: 0.16.0
+        Now it can be nested anywhere in the ``Router`` urls tree.
+
     """
-    return _URLExternal(
-        path(route, view, kwargs=kwargs, name=name),
-        openapi=openapi,
+
+    class _Pattern(PrefixRoutePattern):  # type: ignore[misc]  # noqa: WPS431
+        __dmr_external_openapi__ = openapi
+
+    return _django_path(  # type: ignore[call-overload, no-any-return]
+        route,
+        view,
+        kwargs=kwargs,
+        name=name,
+        Pattern=_Pattern,
+    )
+
+
+def external_re_path(
+    route: StrOrPromise,
+    view: _DjangoView,
+    *,
+    openapi: PathItem | None,
+    kwargs: dict[str, Any] | None = None,
+    name: str | None = None,
+) -> URLPattern:
+    """
+    Add an external path onto the DMR routing system.
+
+    Parameters:
+        route: String route for the view.
+        view: Function or class view, supports both sync and async callables.
+        openapi: OpenAPI metadata to show in the spec.
+            Or ``None`` to hide this endpoint.
+        kwargs: Init kwargs for the view.
+        name: Name to resolve this URL.
+
+    See :ref:`external-views` for more info.
+
+    .. versionadded:: 0.16.0
+    """
+
+    class _Pattern(RegexPattern):  # noqa: WPS431
+        __dmr_external_openapi__ = openapi
+
+    return re_path(  # type: ignore[call-overload, no-any-return]
+        route,
+        view,
+        kwargs=kwargs,
+        name=name,
+        Pattern=_Pattern,
     )
 
 
@@ -429,38 +453,6 @@ def build_500_handler(
     return factory
 
 
-class _PrefixRoutePattern(RoutePattern):
-    def __init__(
-        self,
-        route: str,
-        name: str | None = None,
-        is_endpoint: bool = False,  # noqa: FBT001, FBT002
-    ) -> None:
-        idx = route.find('<')
-        if idx == -1:
-            self._prefix = route
-            self._is_static = True
-        else:
-            self._is_static = False
-            self._prefix = route[:idx]
-        self._is_endpoint = is_endpoint
-        super().__init__(route, name, is_endpoint)
-
-    @override
-    def match(
-        self,
-        path: str,
-    ) -> _RouteMatch | None:
-        if self._is_static:
-            if self._is_endpoint and path == self._prefix:
-                return '', (), {}
-            if not self._is_endpoint and path.startswith(self._prefix):
-                return path[len(self._prefix) :], (), {}
-        elif path.startswith(self._prefix):
-            return super().match(path)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-        return None
-
-
 # NOTE: keep in sync with `django-stubs`!
 @overload
 def path(
@@ -503,6 +495,6 @@ def path(
             view,
             kwargs,
             name,
-            Pattern=_PrefixRoutePattern,
+            Pattern=PrefixRoutePattern,
         ),
     )

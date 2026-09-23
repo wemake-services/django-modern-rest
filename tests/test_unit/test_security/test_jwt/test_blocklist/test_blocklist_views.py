@@ -1,12 +1,13 @@
 import datetime as dt
 import secrets
+from collections.abc import Callable
 from http import HTTPStatus
 from typing import Final
 
 import pytest
 from django.conf import LazySettings
 from django.contrib.auth.models import User
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from typing_extensions import override
 
 from dmr.plugins.pydantic import PydanticFastSerializer
@@ -33,7 +34,6 @@ class _CookieRefreshSyncController(
     CookieRefreshTokensSyncController[PydanticFastSerializer],
 ):
     jwt_refresh_cookie_path = _REFRESH_PATH
-    jwt_ensure_csrf = False
 
 
 class _CookieRefreshAsyncController(
@@ -41,7 +41,6 @@ class _CookieRefreshAsyncController(
     CookieRefreshTokensAsyncController[PydanticFastSerializer],
 ):
     jwt_refresh_cookie_path = _REFRESH_PATH
-    jwt_ensure_csrf = False
 
 
 class _BodyRefreshSyncController(
@@ -123,20 +122,31 @@ def test_cookie_refresh_blocklisted(
     dmr_rf: DMRRequestFactory,
     refresh_token: JWToken,
     encoded_token: str,
+    fill_csrf: Callable[[HttpRequest], HttpRequest],
 ) -> None:
     """Ensures that a blocklisted token cannot refresh the cookies."""
     request = dmr_rf.post('/whatever/')
     request.COOKIES['refresh_token'] = encoded_token
+    fill_csrf(request)
     view = _CookieRefreshSyncController.as_view()
 
     allowed = view(request)
-    _CookieRefreshSyncController().blocklist(refresh_token)
-    blocked = view(request)
-
     assert isinstance(allowed, HttpResponse)
     assert allowed.status_code == HTTPStatus.NO_CONTENT, allowed.content
+
+    _CookieRefreshSyncController().blocklist(refresh_token)
+    blocked = view(request)
     assert isinstance(blocked, HttpResponse)
     assert blocked.status_code == HTTPStatus.UNAUTHORIZED, blocked.content
+    assert not blocked.cookies
+
+    # No CSRF:
+    request = dmr_rf.post('/whatever/')
+    request.COOKIES['refresh_token'] = encoded_token
+    view = _CookieRefreshSyncController.as_view()
+    blocked = view(request)
+    assert isinstance(blocked, HttpResponse)
+    assert blocked.status_code == HTTPStatus.FORBIDDEN, blocked.content
     assert not blocked.cookies
 
 
@@ -146,20 +156,35 @@ async def test_async_cookie_refresh_blocklisted(
     dmr_async_rf: DMRAsyncRequestFactory,
     refresh_token: JWToken,
     encoded_token: str,
+    fill_csrf: Callable[[HttpRequest], HttpRequest],
 ) -> None:
     """Ensures that a blocklisted token cannot refresh the cookies, async."""
     request = dmr_async_rf.post('/whatever/')
     request.COOKIES['refresh_token'] = encoded_token
-    view = _CookieRefreshAsyncController.as_view()
 
-    allowed = await dmr_async_rf.wrap(view(request))
-    await _CookieRefreshAsyncController().blocklist(refresh_token)
-    blocked = await dmr_async_rf.wrap(view(request))
-
+    allowed = await dmr_async_rf.wrap(
+        _CookieRefreshAsyncController.as_view()(fill_csrf(request)),
+    )
     assert isinstance(allowed, HttpResponse)
     assert allowed.status_code == HTTPStatus.NO_CONTENT, allowed.content
+
+    await _CookieRefreshAsyncController().blocklist(refresh_token)
+    blocked = await dmr_async_rf.wrap(
+        _CookieRefreshAsyncController.as_view()(fill_csrf(request)),
+    )
     assert isinstance(blocked, HttpResponse)
     assert blocked.status_code == HTTPStatus.UNAUTHORIZED, blocked.content
+    assert not blocked.cookies
+
+    # Missing CSRF:
+    request = dmr_async_rf.post('/whatever/')
+    request.COOKIES['refresh_token'] = encoded_token
+
+    allowed = await dmr_async_rf.wrap(
+        _CookieRefreshAsyncController.as_view()(request),
+    )
+    assert isinstance(allowed, HttpResponse)
+    assert allowed.status_code == HTTPStatus.FORBIDDEN, allowed.content
     assert not blocked.cookies
 
 
@@ -189,20 +214,35 @@ async def test_async_body_refresh_blocklisted(
     dmr_async_rf: DMRAsyncRequestFactory,
     refresh_token: JWToken,
     encoded_token: str,
+    fill_csrf: Callable[[HttpRequest], HttpRequest],
 ) -> None:
     """Ensures that a blocklisted token cannot refresh the tokens, async."""
     view = _BodyRefreshAsyncController.as_view()
 
     allowed = await dmr_async_rf.wrap(
-        view(dmr_async_rf.post('/whatever/', {'refresh_token': encoded_token})),
+        view(
+            fill_csrf(
+                dmr_async_rf.post(
+                    '/whatever/',
+                    {'refresh_token': encoded_token},
+                ),
+            ),
+        ),
     )
-    await _BodyRefreshAsyncController().blocklist(refresh_token)
-    blocked = await dmr_async_rf.wrap(
-        view(dmr_async_rf.post('/whatever/', {'refresh_token': encoded_token})),
-    )
-
     assert isinstance(allowed, HttpResponse)
     assert allowed.status_code == HTTPStatus.OK, allowed.content
+
+    await _BodyRefreshAsyncController().blocklist(refresh_token)
+    blocked = await dmr_async_rf.wrap(
+        view(
+            fill_csrf(
+                dmr_async_rf.post(
+                    '/whatever/',
+                    {'refresh_token': encoded_token},
+                ),
+            ),
+        ),
+    )
     assert isinstance(blocked, HttpResponse)
     assert blocked.status_code == HTTPStatus.UNAUTHORIZED, blocked.content
 
@@ -212,9 +252,10 @@ def test_cookie_refresh_without_jti(
     dmr_rf: DMRRequestFactory,
     admin_user: User,
     settings: LazySettings,
+    fill_csrf: Callable[[HttpRequest], HttpRequest],
 ) -> None:
     """Ensures that a token that can never be blocklisted is rejected."""
-    request = dmr_rf.post('/whatever/')
+    request = fill_csrf(dmr_rf.post('/whatever/'))
     request.COOKIES['refresh_token'] = JWToken(
         sub=str(admin_user.pk),
         exp=dt.datetime.now(dt.UTC) + dt.timedelta(days=1),

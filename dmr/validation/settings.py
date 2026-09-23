@@ -35,6 +35,12 @@ class _SettingsModel(SettingsDict, total=False):
     semantic_schema_providers: Sequence[Any]
     openapi_config: Any
     global_error_handler: Any
+    # `EMPTY` sentinel is not supported by serializers:
+    validate_responses: Any
+    semantic_responses: Any
+    validate_negotiation: Any
+    validate_events: Any
+    openapi_examples_seed: Any
 
 
 assert _SettingsModel.__optional_keys__ == set(Settings), (  # noqa: S101
@@ -184,4 +190,29 @@ class SettingsValidator:
         ):
             raise EndpointMetadataError(
                 'Settings.global_error_handler must be a string or callable',
+            )
+
+        self._validate_empty_scalars(settings)
+
+    def _validate_empty_scalars(
+        self,
+        settings: _SettingsModel,
+    ) -> None:
+        # These values can be `EMPTY`, which serializers do not understand:
+        for flag_name in (
+            'validate_responses',
+            'semantic_responses',
+            'validate_negotiation',
+            'validate_events',
+        ):
+            flag = settings.get(flag_name, EMPTY)
+            if flag is not EMPTY and not isinstance(flag, bool):
+                raise EndpointMetadataError(
+                    f'Settings.{flag_name} must be a bool or EMPTY',
+                )
+
+        examples_seed = settings.get('openapi_examples_seed', EMPTY)
+        if examples_seed is not EMPTY and not isinstance(examples_seed, int):
+            raise EndpointMetadataError(
+                'Settings.openapi_examples_seed must be an int or EMPTY',
             )
