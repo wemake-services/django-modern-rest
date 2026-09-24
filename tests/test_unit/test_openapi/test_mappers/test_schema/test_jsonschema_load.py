@@ -1,10 +1,10 @@
 from dmr.openapi.mappers.schema_loader import load_schema
 from dmr.openapi.objects import (
     XML,
-    Reference,
     Discriminator,
     OpenAPIFormat,
     OpenAPIType,
+    Reference,
     Schema,
 )
 
