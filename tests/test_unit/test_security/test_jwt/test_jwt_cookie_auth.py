@@ -13,6 +13,8 @@ from inline_snapshot import snapshot
 from typing_extensions import override
 
 from dmr import Controller
+from dmr.openapi import OpenAPIContext
+from dmr.openapi.generators import SecuritySchemeGenerator
 from dmr.openapi.objects import SecurityScheme
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security import AsyncAuth, SyncAuth, request_auth
@@ -36,18 +38,18 @@ _LEEWAY: Final = 30  # seconds
 
 
 def _make_controller(
-    instance: SyncAuth | AsyncAuth,
+    *instances: SyncAuth | AsyncAuth,
 ) -> type[Controller[PydanticFastSerializer]]:
-    func_def = 'async def' if isinstance(instance, AsyncAuth) else 'def'
+    func_def = 'async def' if isinstance(instances[0], AsyncAuth) else 'def'
 
-    ns: dict[str, Any] = {'instance': instance}
+    ns: dict[str, Any] = {'instances': instances}
     exec(  # noqa: S102, WPS421
         f"""if True:
     from dmr import Controller
     from dmr.plugins.pydantic import PydanticSerializer
 
     class _Controller(Controller[PydanticSerializer]):
-        auth = (instance,)
+        auth = instances
 
         {func_def} get(self) -> str:
             raise NotImplementedError
@@ -81,7 +83,7 @@ def test_cookie_jwt_schema(
     assert HTTPStatus.FORBIDDEN not in metadata.responses
     assert instance.www_authenticate_challenge is None
     assert instance.security_schemes(metadata, controller) == snapshot({
-        'jwt': SecurityScheme(
+        'jwt_cookie': SecurityScheme(
             type='apiKey',
             description='JWT token auth via cookie',
             name='access_token',
@@ -95,7 +97,7 @@ def test_cookie_jwt_schema(
         ),
     })
     assert instance.security_requirements(metadata, controller) == snapshot([
-        {'jwt': []},
+        {'jwt_cookie': []},
     ])
 
     unsafe_metadata = controller.api_endpoints['POST'].metadata
@@ -109,7 +111,7 @@ def test_cookie_jwt_schema(
         unsafe_metadata,
         controller,
     ) == snapshot([
-        {'jwt': [], 'csrf': []},
+        {'jwt_cookie': [], 'csrf': []},
     ])
 
 
@@ -177,7 +179,7 @@ def test_cookie_jwt_csrf_session(
     assert HTTPStatus.FORBIDDEN not in metadata.responses
     assert instance.www_authenticate_challenge is None
     assert instance.security_schemes(metadata, controller) == snapshot({
-        'jwt': SecurityScheme(
+        'jwt_cookie': SecurityScheme(
             type='apiKey',
             description='JWT token auth via cookie',
             name='access_token',
@@ -185,8 +187,53 @@ def test_cookie_jwt_csrf_session(
         ),
     })
     assert instance.security_requirements(metadata, controller) == snapshot([
-        {'jwt': []},
+        {'jwt_cookie': []},
     ])
+
+
+@pytest.mark.parametrize(
+    ('cookie_typ', 'header_typ'),
+    [
+        (CookieJWTSyncAuth, HeaderJWTSyncAuth),
+        (CookieJWTAsyncAuth, HeaderJWTAsyncAuth),
+    ],
+)
+def test_cookie_and_header_jwt_schema(
+    openapi_context: OpenAPIContext,
+    *,
+    cookie_typ: type[CookieJWTSyncAuth] | type[CookieJWTAsyncAuth],
+    header_typ: type[HeaderJWTSyncAuth] | type[HeaderJWTAsyncAuth],
+) -> None:
+    """Ensures that cookie and header jwt auth have different schemes."""
+    controller = _make_controller(cookie_typ(), header_typ())
+    metadata = controller.api_endpoints['GET'].metadata
+
+    requirements = SecuritySchemeGenerator(openapi_context)(
+        metadata,
+        controller,
+    )
+
+    assert requirements == snapshot([{'jwt_cookie': []}, {'jwt': []}])
+    assert openapi_context.registries.security_scheme.schemes == snapshot({
+        'csrf': SecurityScheme(
+            type='apiKey',
+            description='CSRF protection',
+            name='csrftoken',
+            security_scheme_in='cookie',
+        ),
+        'jwt': SecurityScheme(
+            type='http',
+            description='JWT token auth',
+            scheme='Bearer',
+            bearer_format='JWT',
+        ),
+        'jwt_cookie': SecurityScheme(
+            type='apiKey',
+            description='JWT token auth via cookie',
+            name='access_token',
+            security_scheme_in='cookie',
+        ),
+    })
 
 
 @pytest.mark.django_db

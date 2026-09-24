@@ -126,6 +126,11 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   to the endpoint, #1502
 - `jwt_ensure_csrf` was removed from reusable JWT cookie views,
   it is now always mandatory, #1574
+- `CookieJWTSyncAuth` and `CookieJWTAsyncAuth` now use `jwt_cookie`
+  as the default `security_scheme_name` instead of `jwt`.
+  Previously it was the same as the `HeaderJWTSyncAuth`
+  and `HeaderJWTAsyncAuth` one, so using both of them in a single endpoint
+  was generating a single `jwt` security scheme and requirement, #1587
 
 ### Performance improvements
 
