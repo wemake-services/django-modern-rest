@@ -1,6 +1,6 @@
 import dataclasses
 import itertools
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -13,6 +13,9 @@ if TYPE_CHECKING:
     )
     from dmr.semantic_schema import AuthProvider
     from dmr.serializer import BaseSerializer
+
+
+_SecuritySchemes: TypeAlias = dict[str, 'SecurityScheme | Reference']
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -70,18 +73,18 @@ class SecuritySchemeGenerator:
         # `OpenAPIConfig.security` is applied in config merger.
         # We process all existing `metadata.auth` security requirements
         # to possibly inject extra ones from semantic schemas.
-        self._register_security_schemes(metadata, controller_cls)
+        self._register_auth_security_schemes(metadata, controller_cls)
         requirements = self._prepare_requirements(metadata, controller_cls)
         requirements, semantic_schemes = self._inject_semantic_schema(
             metadata,
             controller_cls,
             requirements,
         )
-        for scheme_name, scheme in semantic_schemes.items():
-            self._context.registries.security_scheme.register(
-                scheme_name,
-                scheme,
-            )
+        self._register_security_schemes(
+            metadata,
+            controller_cls,
+            semantic_schemes,
+        )
 
         # Finally, return the result:
         if not requirements:
@@ -91,20 +94,37 @@ class SecuritySchemeGenerator:
             return [] if self._context.config.security else None
         return requirements
 
-    def _register_security_schemes(
+    def _register_auth_security_schemes(
         self,
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
         for auth in metadata.auth or []:
-            for scheme_name, scheme in auth.security_schemes(
+            self._register_security_schemes(
                 metadata,
                 controller_cls,
-            ).items():
-                self._context.registries.security_scheme.register(
-                    scheme_name,
-                    scheme,
-                )
+                auth.security_schemes(
+                    metadata,
+                    controller_cls,
+                ),
+            )
+
+    def _register_security_schemes(
+        self,
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
+        security_schemes: _SecuritySchemes,
+    ) -> None:
+        for scheme_name, scheme in security_schemes.items():
+            if (
+                not metadata.semantic_auth
+                or scheme_name in metadata.exclude_semantic_auth
+            ):
+                continue
+            self._context.registries.security_scheme.register(
+                scheme_name,
+                scheme,
+            )
 
     def _prepare_requirements(
         self,
@@ -114,7 +134,18 @@ class SecuritySchemeGenerator:
         requirements: list[SecurityRequirement] = []
         for auth in metadata.auth or []:
             requirements.extend(
-                auth.security_requirements(metadata, controller_cls),
+                new_requirement
+                for requirement in auth.security_requirements(
+                    metadata,
+                    controller_cls,
+                )
+                if (
+                    new_requirement := _filter_requirement(
+                        requirement,
+                        metadata,
+                    )
+                )
+                is not None
             )
         return requirements
 
@@ -125,7 +156,7 @@ class SecuritySchemeGenerator:
         requirements: list['SecurityRequirement'],
     ) -> tuple[
         list['SecurityRequirement'],
-        dict[str, 'SecurityScheme | Reference'],
+        _SecuritySchemes,
     ]:
         semantic_providers = self._resolve_auth_semantic_providers(
             metadata,
@@ -188,3 +219,17 @@ class SecuritySchemeGenerator:
             for provider in resolve_setting(Settings.semantic_schema_providers)
             if isinstance(provider, AuthProvider)
         ]
+
+
+def _filter_requirement(
+    requirement: 'SecurityRequirement',
+    metadata: 'EndpointMetadata',
+) -> 'SecurityRequirement | None':
+    return {
+        req_name: req_value
+        for req_name, req_value in requirement.items()
+        if (
+            metadata.semantic_auth
+            and req_name not in metadata.exclude_semantic_auth
+        )
+    } or None

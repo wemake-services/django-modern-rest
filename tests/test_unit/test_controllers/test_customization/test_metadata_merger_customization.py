@@ -22,11 +22,10 @@ class _MetadataMergerKeepAuth(MetadataMerger):
     def first_defined(
         self,
         *layers: Any,
-        field_name: str,
     ) -> Any:
         # All non-auth fields must be handled in the default way:
-        if field_name != 'auth':
-            return super().first_defined(*layers, field_name=field_name)
+        if self.field_name != 'auth':
+            return super().first_defined(*layers)
         # Auth must be merged:
         if any(layer is None for layer in layers):
             return None  # explicit `None` disables auth on all layers
