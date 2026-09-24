@@ -46,7 +46,7 @@ How do we build this semantic schema?
   You would still have the very basic OpenAPI schema,
   it would be similar to ones that FastAPI and others provide.
 
-  You can also have more controll over schema generation with:
+  You can also have more control over schema generation with:
 
   - :data:`~dmr.settings.Settings.semantic_responses`
   - :data:`~dmr.settings.Settings.exclude_semantic_responses`
