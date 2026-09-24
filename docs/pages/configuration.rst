@@ -148,9 +148,9 @@ Content negotiation
   .. code-block:: python
     :caption: settings.py
 
-    >>> import orjson
-    >>> from dmr.parsers import JsonParser
-    >>> DMR_SETTINGS = {Settings.parsers: [JsonParser(json_module=orjson)]}
+    import orjson
+    from dmr.parsers import JsonParser
+    DMR_SETTINGS = {Settings.parsers: [JsonParser(json_module=orjson)]}
 
   See :ref:`configuration-levels` on how
   to merge / override / disable this setting on multiple levels.
@@ -172,9 +172,9 @@ Content negotiation
   .. code-block:: python
     :caption: settings.py
 
-    >>> import orjson
-    >>> from dmr.renderers import JsonRenderer
-    >>> DMR_SETTINGS = {Settings.renderers: [JsonRenderer(json_module=orjson)]}
+    import orjson
+    from dmr.renderers import JsonRenderer
+    DMR_SETTINGS = {Settings.renderers: [JsonRenderer(json_module=orjson)]}
 
   See :ref:`configuration-levels` on how
   to merge / override / disable this setting on multiple levels.

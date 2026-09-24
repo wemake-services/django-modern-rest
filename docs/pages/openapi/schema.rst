@@ -76,7 +76,7 @@ Here's how our settings priority works:
   ``semantic_responses`` and ``semantic_auth``
 - If it is not set, we fallback to ``semantic_schema`` value
 
-For example, if you disable ``semantic_schema=False`` generation globally
+For example, if you disabled ``semantic_schema=False`` generation globally
 and then enabled ``semantic_auth=True`` for a single controller,
 it will generate semantic security schemes and security requirements
 just for endpoints in this controller.
