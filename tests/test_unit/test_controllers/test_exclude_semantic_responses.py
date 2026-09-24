@@ -1,7 +1,5 @@
 from http import HTTPMethod, HTTPStatus
-from typing import Final
 
-import pydantic
 import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
@@ -10,12 +8,6 @@ from dmr import Controller, ResponseSpec, modify, validate
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.jwt import HeaderJWTSyncAuth
 from dmr.settings import Settings
-
-_MATCH_PATTERN: Final = 'cannot have a request body'
-
-
-class _BodyModel(pydantic.BaseModel):
-    name: str
 
 
 class _PerController(Controller[PydanticSerializer]):

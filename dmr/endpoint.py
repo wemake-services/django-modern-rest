@@ -142,20 +142,19 @@ class Endpoint:  # noqa: WPS214
         #    of the components that support it. Including custom ones.
         #    Then we enrich metadata with collected responses and use it.
         # Done!
-        metadata_merger = self.metadata_merger_cls()
         metadata = self.metadata_builder_cls(
             payload=payload,
             controller_cls=controller_cls,
             func=func,
             metadata_cls=self.metadata_cls,
-            merger=metadata_merger,
+            metadata_merger_cls=self.metadata_merger_cls,
             response_modification_cls=self.response_modification_cls,
             component_parsers=self._serializer_context.component_parsers,
             type_annotations=type_annotations,
         )()
         self.metadata_validator_cls(
             metadata=metadata,
-            merger=metadata_merger,
+            metadata_merger_cls=self.metadata_merger_cls,
         )(
             func,
             payload=payload,

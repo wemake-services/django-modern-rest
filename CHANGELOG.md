@@ -253,6 +253,10 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `external_path` can now be nested anywhere in the URL resolution tree, #1567
 - `external_re_path` was added to support the same use-case
   as `external_path`, but for regex patterns, #1567
+- Added `semantic_schema`, `semantic_auth`, and `exclude_semantic_auth`
+  endpoint, controller, settings, and metadata parameters
+  to disable all semantic schema generation or semantic auth injection
+  respectively, 
 
 ### Bugfixes
 
