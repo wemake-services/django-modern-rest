@@ -90,7 +90,7 @@
     {
       "name": "dmr-upgrade",
       "source": "./dmr/.agents/skills/dmr-upgrade",
-      "description": "Upgrade a project to a newer django-modern-rest release using the official migration prompts and codemods",
+      "description": "Upgrade a project to a newer django-modern-rest release using the official migration prompts",
       "category": "development",
       "keywords": [
         "django",
@@ -98,8 +98,7 @@
         "api",
         "django-modern-rest",
         "upgrade",
-        "migration",
-        "codemod"
+        "migration"
       ],
       "license": "MIT",
       "homepage": "https://github.com/wemake-services/django-modern-rest",

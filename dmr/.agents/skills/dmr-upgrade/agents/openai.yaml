@@ -1,4 +1,4 @@
 interface:
   display_name: "DMR upgrade"
   short_description: "Upgrade a project to a newer django-modern-rest release"
-  default_prompt: "Use $dmr-upgrade to upgrade this project to the latest django-modern-rest release: detect the installed and target versions, run the bundled codemods, then apply the migration prompts for every release in between."
+  default_prompt: "Use $dmr-upgrade to upgrade this project to the latest django-modern-rest release: detect the installed and target versions, then apply the migration prompts for every release in between."

@@ -2,7 +2,7 @@
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "dmr-upgrade",
   "version": "1.0.0",
-  "description": "Upgrade a project to a newer django-modern-rest release using the official migration prompts and codemods",
+  "description": "Upgrade a project to a newer django-modern-rest release using the official migration prompts",
   "author": {
     "name": "wemake-services",
     "url": "https://github.com/wemake-services"
@@ -10,7 +10,7 @@
   "homepage": "https://github.com/wemake-services/django-modern-rest",
   "repository": "https://github.com/wemake-services/django-modern-rest",
   "license": "MIT",
-  "keywords": ["django", "rest", "api", "django-modern-rest", "upgrade", "migration", "codemod"],
+  "keywords": ["django", "rest", "api", "django-modern-rest", "upgrade", "migration"],
   "skills": ["./"],
   "agents": []
 }

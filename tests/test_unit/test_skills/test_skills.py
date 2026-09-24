@@ -43,6 +43,11 @@ def _split_frontmatter(skill_dir: Path) -> tuple[dict[str, object], str]:
     return yaml.safe_load(frontmatter), body
 
 
+def _prompt_version(prompt: str) -> tuple[int, ...]:
+    upgraded_from, _, _unused = prompt.partition('-to-')
+    return tuple(int(part) for part in upgraded_from.split('.'))
+
+
 @pytest.mark.parametrize('skill_dir', _SKILLS, ids=lambda path: path.name)
 def test_skill_frontmatter(skill_dir: Path) -> None:
     """Skills follow the Agent Skills specification."""
@@ -105,25 +110,21 @@ def test_marketplace_lists_every_skill() -> None:
         assert plugin['license'] == 'MIT'
 
 
-def test_upgrade_prompts_are_indexed() -> None:
-    """Every migration prompt is known to the codemod, in version order."""
+def test_upgrade_prompts_are_listed() -> None:
+    """Every migration prompt is linked from the skill, in version order."""
     upgrade_dir = _SKILLS_DIR / 'dmr-upgrade'
-    releases = json.loads(
-        (upgrade_dir / 'references' / 'renames.json').read_text(
-            encoding='utf-8',
-        ),
-    )['releases']
-    prompts = {release['prompt'] for release in releases}
-    versions = [
-        tuple(int(part) for part in release['to'].split('.'))
-        for release in releases
+    skill = (upgrade_dir / 'SKILL.md').read_text(encoding='utf-8')
+    listed = [
+        link.removeprefix('references/')
+        for link in _LOCAL_LINK.findall(skill)
+        if '-to-' in link
     ]
 
-    assert versions == sorted(versions)
-    assert prompts == {
+    assert listed == sorted(listed, key=_prompt_version)
+    assert set(listed) == {
         path.name for path in (upgrade_dir / 'references').glob('*-to-*.md')
     }
-    for prompt in prompts:
+    for prompt in listed:
         assert (
             (upgrade_dir / 'references' / prompt)
             .read_text(encoding='utf-8')

@@ -19,8 +19,7 @@ of requirements for an API to count as public.
 
 All migration prompts for breaking releases live in the
 [`dmr-upgrade`](https://github.com/wemake-services/django-modern-rest/tree/master/dmr/.agents/skills/dmr-upgrade) agent skill,
-one file per release in its `references/` directory,
-together with codemods for the mechanical parts of each upgrade.
+one file per release in its `references/` directory.
 Ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 
@@ -339,8 +338,7 @@ Ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   so `uvx library-skills` installs the skills matching the installed version
   into any project, the Claude Code marketplace keeps working
 - Added `dmr-upgrade` agent skill: all migration prompts of past releases
-  (previously in `CHANGELOG.md` and in GitHub releases)
-  and `libcst` codemods for the mechanical renames live there now
+  (previously in `CHANGELOG.md` and in GitHub releases) live there now
 - Split the `dmr` skill into a short `SKILL.md` and topic references,
   fixed skill descriptions to trigger on natural requests,
   added `claude plugin eval` cases and `agentskills validate` to `just lint`

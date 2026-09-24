@@ -16,7 +16,7 @@ Available skills:
 - ``$dmr`` to write ``django-modern-rest`` code with the recommended
   patterns, and to review existing code for common mistakes
 - ``$dmr-upgrade`` to :doc:`upgrade to a newer release <dmr-upgrade>`
-  with the official migration prompts and codemods
+  with the official migration prompts
 - ``$dmr-openapi-skeleton`` to :doc:`generate a project skeleton <spec-first>`
   from a single ``openapi.json`` file (the "Spec First" approach)
 - ``$dmr-from-django-ninja`` to help with

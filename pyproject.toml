@@ -88,7 +88,6 @@ dev = [
   "dennis>=1.2,<2",
   "django-stubs[compatible-mypy]>=6.1,<6.2",
   "import-linter>=2.5,<3",
-  "libcst>=1.9,<2",
   "phonenumbers>=9,<10",
   "pyrefly>=1,<2",
   # TODO: update after `mypy` and `pyrefly` will support `EMPTY` as a type:
@@ -591,10 +590,6 @@ timeout_method = "thread"
 
 
 [tool.coverage.run]
-# Agent skill scripts ship inside the package, but they are standalone tools
-# for other projects, not library code.
-# See `tests/test_unit/test_skills` for how they are tested.
-omit = [ "dmr/.agents/*" ]
 # Covdefaults: https://pypi.org/project/covdefaults
 plugins = [ "covdefaults" ]
 
