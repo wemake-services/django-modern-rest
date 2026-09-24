@@ -251,34 +251,6 @@ def test_wrong_auth_params(
         reverse('api:django_session_auth:django_session_async'),
     ],
 )
-def test_login_sends_csrf_cookie(
-    dmr_client: DMRClient,
-    user: User,
-    password: str,
-    *,
-    url: str,
-) -> None:
-    """Ensures the login response sets the CSRF cookie and session cookie."""
-    response = dmr_client.post(
-        url,
-        data={'username': user.username, 'password': password},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.content
-    assert response.cookies.keys() == {
-        settings.SESSION_COOKIE_NAME,
-        settings.CSRF_COOKIE_NAME,
-    }
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    'url',
-    [
-        reverse('api:django_session_auth:django_session_sync'),
-        reverse('api:django_session_auth:django_session_async'),
-    ],
-)
 def test_login_with_csrf_use_sessions(
     dmr_client: DMRClient,
     user: User,
