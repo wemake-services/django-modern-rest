@@ -624,8 +624,11 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     exclude_validate_responses: frozenset[HTTPStatus]
     no_validate_http_spec: frozenset['HttpSpec']
     allowed_http_methods: frozenset[str]
+    semantic_schema: bool
     semantic_responses: bool
     exclude_semantic_responses: frozenset[HTTPStatus]
+    semantic_auth: bool
+    exclude_semantic_auth: frozenset[str]
     validate_events: bool
 
     # OpenAPI documentation fields:

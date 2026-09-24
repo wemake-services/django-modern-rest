@@ -104,7 +104,7 @@ is specifically "the frontend must not be able to read the token".
 
     You can customize:
 
-    - Security scheme name, default: ``jwt``
+    - Security scheme name, default: ``jwt_cookie``
     - Cookie name, default: ``access_token``
     - :meth:`Advanced jwt parameters <dmr.security.jwt.token.JWToken.decode>`
 

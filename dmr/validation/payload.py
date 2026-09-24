@@ -47,8 +47,11 @@ class _BasePayload:
     # Common fields:
     validate_responses: bool | Sentinel
     exclude_validate_responses: Set[HTTPStatus] | Sentinel | None
+    semantic_schema: bool | Sentinel
     semantic_responses: bool | Sentinel
     exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None
+    semantic_auth: bool | Sentinel
+    exclude_semantic_auth: Set[str] | Sentinel | None
     validate_events: bool | Sentinel
     error_handler: SyncErrorHandler | AsyncErrorHandler | Sentinel
     no_validate_http_spec: Set[HttpSpec] | Sentinel | None
@@ -92,8 +95,11 @@ class ValidateEndpointPayload(_BasePayload):
             ignore_from_spec=EMPTY,
             validate_responses=EMPTY,
             exclude_validate_responses=EMPTY,
+            semantic_schema=EMPTY,
             semantic_responses=EMPTY,
             exclude_semantic_responses=EMPTY,
+            semantic_auth=EMPTY,
+            exclude_semantic_auth=EMPTY,
             validate_events=EMPTY,
             error_handler=EMPTY,
             no_validate_http_spec=EMPTY,
