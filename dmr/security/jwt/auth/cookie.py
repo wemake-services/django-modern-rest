@@ -145,6 +145,7 @@ class CookieJWTSyncAuth(_BaseCookieJWTAuth, BaseJWTSyncAuth):
     .. versionadded:: 0.15.0
     .. versionchanged:: 0.16.0
         Fixed how CSRF schema is generated.
+        Default *security_scheme_name* is now ``jwt_cookie``.
     """
 
     __slots__ = ('cookie_name', 'csrf_scheme_name')
@@ -155,7 +156,7 @@ class CookieJWTSyncAuth(_BaseCookieJWTAuth, BaseJWTSyncAuth):
         cookie_name: str = DEFAULT_ACCESS_COOKIE,
         user_id_field: str = 'pk',
         algorithm: str = 'HS256',
-        security_scheme_name: str = 'jwt',
+        security_scheme_name: str = 'jwt_cookie',
         csrf_scheme_name: str = CSRF_SCHEME_NAME,
         secret: str | None = None,
         token_cls: type[JWToken] = JWToken,
@@ -223,6 +224,8 @@ class CookieJWTAsyncAuth(_BaseCookieJWTAuth, BaseJWTAsyncAuth):
         running on the page and can leak over plain HTTP.
 
     .. versionadded:: 0.15.0
+    .. versionchanged:: 0.16.0
+        Default *security_scheme_name* is now ``jwt_cookie``.
     """
 
     __slots__ = ('cookie_name', 'csrf_scheme_name')
@@ -233,7 +236,7 @@ class CookieJWTAsyncAuth(_BaseCookieJWTAuth, BaseJWTAsyncAuth):
         cookie_name: str = DEFAULT_ACCESS_COOKIE,
         user_id_field: str = 'pk',
         algorithm: str = 'HS256',
-        security_scheme_name: str = 'jwt',
+        security_scheme_name: str = 'jwt_cookie',
         csrf_scheme_name: str = CSRF_SCHEME_NAME,
         secret: str | None = None,
         token_cls: type[JWToken] = JWToken,
