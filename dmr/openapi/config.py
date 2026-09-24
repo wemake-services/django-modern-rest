@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Final, cast
+from typing import Final
 
 from dmr.openapi.objects import (  # noqa: WPS235
     Components,
@@ -113,10 +113,7 @@ class OpenAPIConfig:
 
         .. versionadded:: 0.8.0
         """
-        return cast(
-            'tuple[int, int, int]',
-            tuple(map(int, self.openapi_version.split('.'))),
-        )
+        return tuple(map(int, self.openapi_version.split('.')))  # type: ignore[return-value]
 
 
 def default_config() -> OpenAPIConfig:

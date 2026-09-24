@@ -28,7 +28,7 @@ from contextlib import contextmanager, redirect_stderr, suppress
 from functools import partial
 from pathlib import Path
 from types import MappingProxyType, ModuleType
-from typing import TYPE_CHECKING, Any, ClassVar, Final, Literal, TypeAlias, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Final, Literal, TypeAlias
 from urllib.parse import urlencode
 
 import django
@@ -251,7 +251,7 @@ def _get_available_port() -> int:
         except OSError as error:
             raise _StartupError('Could not find an open port') from error
         else:
-            return cast(int, sock.getsockname()[1])
+            return sock.getsockname()[1]  # type: ignore[no-any-return]
 
 
 def _ensure_project_import_paths() -> None:
@@ -749,7 +749,7 @@ def _extract_comment_config(
     if '# noqa' in run_stmt:
         run_stmt = run_stmt.split('# noqa')[0]
     try:
-        return cast(dict[str, Any], json.loads(run_stmt))
+        return json.loads(run_stmt)  # type: ignore[no-any-return]
     except Exception as exc:
         raise _StartupError(
             f'Cannot parse {config_type} in {file_path!s}',
@@ -796,7 +796,7 @@ def _exec_openapi_examples(
     openapi_results = []
 
     for openapi_args in openapi_configs:
-        url_path = cast(str, openapi_args['openapi_url'])
+        url_path: str = openapi_args['openapi_url']
         # Settings must already be configured before `override_settings`
         # wraps them. Otherwise it wraps an unconfigured lazy object,
         # and `_configure_settings()` inside `_run_app` sees
@@ -1312,7 +1312,7 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
         first_node = rendered_nodes[0]
 
         if self._is_literal_block_wrapper(first_node):
-            wrapper_node = cast(container, first_node)
+            wrapper_node: container = first_node  # type: ignore[assignment]
             self._add_wrapper_class(wrapper_node, 'imports-inline-enabled')
             self._insert_spoiler_before_literal_block(
                 wrapper_node,
@@ -1443,7 +1443,7 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
 
         first_node = rendered_nodes[0]
         if self._is_literal_block_wrapper(first_node):
-            wrapper_node = cast(container, first_node)
+            wrapper_node: container = first_node  # type: ignore[assignment]
             self._add_wrapper_class(wrapper_node, 'github-link-enabled')
             self._insert_source_link(
                 wrapper_node,
