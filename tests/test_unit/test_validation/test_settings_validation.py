@@ -25,8 +25,12 @@ else:  # pragma: no cover
 
 
 @pytest.fixture(autouse=True)
-def _reset_settings_validation(dmr_clean_settings: None) -> None:
-    SettingsValidator.is_validated = False
+def _reset_settings_validation(
+    dmr_clean_settings: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Restore the original state after the test, so it does not leak:
+    monkeypatch.setattr(SettingsValidator, 'is_validated', False)
 
 
 @pytest.mark.parametrize(
