@@ -75,6 +75,9 @@ jobs:
         PYTHON_GIL: ${{ matrix.force-free-gil && '0' || '1' }}
         REDIS_IMAGE: ${{ matrix.redis-image }}
 
+    - name: Check compiled translations
+      run: just translations-check
+
     # Upload coverage to codecov: https://codecov.io/
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1

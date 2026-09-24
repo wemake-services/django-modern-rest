@@ -64,9 +64,12 @@ class Settings(enum.StrEnum):
     no_validate_http_spec = 'no_validate_http_spec'
     validate_responses = 'validate_responses'
     exclude_validate_responses = 'exclude_validate_responses'
+    semantic_schema = 'semantic_schema'
     semantic_responses = 'semantic_responses'
     exclude_semantic_responses = 'exclude_semantic_responses'
     semantic_schema_providers = 'semantic_schema_providers'
+    semantic_auth = 'semantic_auth'
+    exclude_semantic_auth = 'exclude_semantic_auth'
     validate_events = 'validate_events'
     responses = 'responses'
     global_error_handler = 'global_error_handler'
@@ -106,6 +109,9 @@ class HttpSpec(enum.StrEnum):
         cookie_name_syntax: Disables validation that check
             name syntax for cookie names to avoid disallowed
             characters.
+        cookie_semantics: Disables validation that check if cookies
+            semantix container proper values, like `max_age` must not be
+            negative, or `samesite='none'` requires `secure=True`, etc
     """
 
     empty_request_body = 'empty_request_body'
@@ -113,6 +119,7 @@ class HttpSpec(enum.StrEnum):
     header_name_server_managed = 'header_name_server_managed'
     header_name_syntax = 'header_name_syntax'
     cookie_name_syntax = 'cookie_name_syntax'
+    cookie_semantics = 'cookie_semantics'
 
 
 class SettingsDict(TypedDict, total=False):
@@ -131,11 +138,14 @@ class SettingsDict(TypedDict, total=False):
     )
     throttling_allow_unsafe_cache: bool | None
     no_validate_http_spec: Set[HttpSpec]
-    validate_responses: bool | Sentinel
+    validate_responses: bool
     exclude_validate_responses: Set[HTTPStatus]
+    semantic_schema: bool
     semantic_responses: bool | Sentinel
     exclude_semantic_responses: Set[HTTPStatus]
     semantic_schema_providers: Sequence['ResponseSpecProvider | AuthProvider']
+    semantic_auth: bool | Sentinel
+    exclude_semantic_auth: Set[str]
     validate_events: bool | Sentinel
     responses: Sequence['ResponseSpec']
     global_error_handler: Callable[[Any, Any, Any], Any] | str
@@ -170,11 +180,14 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     # We validate some HTTP spec things by default to be strict,
     # can be disabled:
     Settings.no_validate_http_spec: frozenset(),
-    # Means that we would run extra validation on the response object.
+    # Semantic schema generation:
     Settings.validate_responses: True,
+    Settings.semantic_schema: True,
     Settings.exclude_validate_responses: frozenset(),
-    Settings.semantic_responses: True,
+    Settings.semantic_responses: EMPTY,
     Settings.exclude_semantic_responses: frozenset(),
+    Settings.semantic_auth: EMPTY,
+    Settings.exclude_semantic_auth: frozenset(),
     Settings.semantic_schema_providers: [  # Fooling `importlinter`:
         # Optional response validation:
         module_loading.import_string(

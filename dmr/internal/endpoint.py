@@ -216,12 +216,20 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             from anywhere and that you might not want to describe.
             Overrides controller and settings values.
             Set it to ``None`` to validate all status codes back.
+        semantic_schema: Should we generate any
+            semantic schema for this endpoint?
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
         exclude_semantic_responses: Set of semantic responses status codes
             that user wants to disable.
             Overrides controller and settings values.
             Set it to ``None`` to enable all semantic responses back.
+        semantic_auth: Should semantic auth be collected
+            from different providers for this endpoint.
+            Overrides controller and settings values.
+        exclude_semantic_auth: Set of semantic security requirements names
+            that should not be collected.
+            Overrides controller and settings values.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
@@ -314,8 +322,11 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         cookies: Mapping[str, NewCookie | CookieSpec] | Sentinel = EMPTY,
         validate_responses: bool | Sentinel = EMPTY,
         exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_schema: bool | Sentinel = EMPTY,
         semantic_responses: bool | Sentinel = EMPTY,
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_auth: bool | Sentinel = EMPTY,
+        exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
         validate_events: bool | Sentinel = EMPTY,
         extra_responses: Sequence[ResponseSpec] | Sentinel | None = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
@@ -348,8 +359,11 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         cookies: Mapping[str, NewCookie | CookieSpec] | Sentinel = EMPTY,
         validate_responses: bool | Sentinel = EMPTY,
         exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_schema: bool | Sentinel = EMPTY,
         semantic_responses: bool | Sentinel = EMPTY,
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_auth: bool | Sentinel = EMPTY,
+        exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
         validate_events: bool | Sentinel = EMPTY,
         extra_responses: Sequence[ResponseSpec] | Sentinel | None = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
@@ -382,8 +396,11 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         cookies: Mapping[str, NewCookie | CookieSpec] | Sentinel = EMPTY,
         validate_responses: bool | Sentinel = EMPTY,
         exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_schema: bool | Sentinel = EMPTY,
         semantic_responses: bool | Sentinel = EMPTY,
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_auth: bool | Sentinel = EMPTY,
+        exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
         validate_events: bool | Sentinel = EMPTY,
         extra_responses: Sequence[ResponseSpec] | Sentinel | None = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
@@ -414,8 +431,11 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         cookies: Mapping[str, NewCookie | CookieSpec] | Sentinel = EMPTY,
         validate_responses: bool | Sentinel = EMPTY,
         exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_schema: bool | Sentinel = EMPTY,
         semantic_responses: bool | Sentinel = EMPTY,
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_auth: bool | Sentinel = EMPTY,
+        exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
         validate_events: bool | Sentinel = EMPTY,
         extra_responses: Sequence[ResponseSpec] | Sentinel | None = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
@@ -453,8 +473,11 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
                 responses=extra_responses,
                 validate_responses=validate_responses,
                 exclude_validate_responses=exclude_validate_responses,
+                semantic_schema=semantic_schema,
                 semantic_responses=semantic_responses,
                 exclude_semantic_responses=exclude_semantic_responses,
+                semantic_auth=semantic_auth,
+                exclude_semantic_auth=exclude_semantic_auth,
                 validate_events=validate_events,
                 no_validate_http_spec=no_validate_http_spec,
                 error_handler=error_handler,
@@ -627,12 +650,21 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
             from anywhere and that you might not want to describe.
             Overrides controller and settings values.
             Set it to ``None`` to validate all status codes back.
+        semantic_schema: Should we generate any
+            semantic schema for this endpoint?
         semantic_responses: Should semantic responses be collected
             from different providers for this endpoint.
+            Overrides controller and settings values.
         exclude_semantic_responses: Set of semantic responses status codes
             that user wants to disable.
             Overrides controller and settings values.
             Set it to ``None`` to enable all semantic responses back.
+        semantic_auth: Should semantic auth be collected
+            from different providers for this endpoint.
+            Overrides controller and settings values.
+        exclude_semantic_auth: Set of semantic security requirements names
+            that should not be collected.
+            Overrides controller and settings values.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
@@ -715,8 +747,11 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         error_handler: Sentinel = EMPTY,
         validate_responses: bool | Sentinel = EMPTY,
         exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_schema: bool | Sentinel = EMPTY,
         semantic_responses: bool | Sentinel = EMPTY,
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_auth: bool | Sentinel = EMPTY,
+        exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
         validate_events: bool | Sentinel = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
         parsers: Sequence[Parser] | Sentinel = EMPTY,
@@ -745,8 +780,11 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         error_handler: AsyncErrorHandler | Sentinel = EMPTY,
         validate_responses: bool | Sentinel = EMPTY,
         exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_schema: bool | Sentinel = EMPTY,
         semantic_responses: bool | Sentinel = EMPTY,
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_auth: bool | Sentinel = EMPTY,
+        exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
         validate_events: bool | Sentinel = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
         parsers: Sequence[Parser] | Sentinel = EMPTY,
@@ -775,8 +813,11 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         error_handler: SyncErrorHandler | Sentinel = EMPTY,
         validate_responses: bool | Sentinel = EMPTY,
         exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_schema: bool | Sentinel = EMPTY,
         semantic_responses: bool | Sentinel = EMPTY,
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_auth: bool | Sentinel = EMPTY,
+        exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
         validate_events: bool | Sentinel = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
         parsers: Sequence[Parser] | Sentinel = EMPTY,
@@ -803,8 +844,11 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         *responses: ResponseSpec,
         validate_responses: bool | Sentinel = EMPTY,
         exclude_validate_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_schema: bool | Sentinel = EMPTY,
         semantic_responses: bool | Sentinel = EMPTY,
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
+        semantic_auth: bool | Sentinel = EMPTY,
+        exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
         validate_events: bool | Sentinel = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
         error_handler: SyncErrorHandler | AsyncErrorHandler | Sentinel = EMPTY,
@@ -836,8 +880,11 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
                 responses=[response, *responses],
                 validate_responses=validate_responses,
                 exclude_validate_responses=exclude_validate_responses,
+                semantic_schema=semantic_schema,
                 semantic_responses=semantic_responses,
                 exclude_semantic_responses=exclude_semantic_responses,
+                semantic_auth=semantic_auth,
+                exclude_semantic_auth=exclude_semantic_auth,
                 validate_events=validate_events,
                 no_validate_http_spec=no_validate_http_spec,
                 error_handler=error_handler,

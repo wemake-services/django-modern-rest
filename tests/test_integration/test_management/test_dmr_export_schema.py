@@ -3,12 +3,20 @@ from io import StringIO
 from typing import Any, Final
 
 import pytest
+from django.conf import LazySettings
 from django.core.management import call_command
 
 from dmr.management.commands import dmr_export_schema
 
 # From the OpenAPI description:
 _NON_ASCII_TEXT: Final = 'Не АСКИИ текст'  # noqa: RUF001
+
+
+@pytest.fixture(autouse=True)
+def _modify_integration_settings(settings: LazySettings) -> None:
+    # The management command never reads `DEBUG`, so there is no value
+    # in running all cases twice via the parent conftest parametrisation.
+    settings.DEBUG = False
 
 
 @pytest.mark.parametrize(

@@ -15,7 +15,7 @@ import sys
 import tomllib
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Final, cast
+from typing import Final
 
 from docutils.nodes import Node
 from sphinx.addnodes import pending_xref
@@ -32,10 +32,7 @@ sys.path.insert(1, str(Path().resolve(strict=True)))
 
 def _get_project_meta() -> dict[str, str]:
     pyproject = _ROOT / 'pyproject.toml'
-    return cast(
-        dict[str, str],
-        tomllib.loads(pyproject.read_text())['project'],
-    )
+    return tomllib.loads(pyproject.read_text())['project']  # type: ignore[no-any-return]
 
 
 pkg_meta = _get_project_meta()

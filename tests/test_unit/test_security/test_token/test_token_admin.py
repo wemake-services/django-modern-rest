@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import datetime as dt
-from typing import Any, cast
 from unittest.mock import Mock
 
 import pytest
@@ -52,7 +51,7 @@ def test_token_admin_revoke_selected(admin_user: User) -> None:
 
     token_admin = TokenAdmin(Token, admin.site)
     message_user = Mock()
-    cast(Any, token_admin).message_user = message_user
+    token_admin.message_user = message_user  # type: ignore[method-assign]
     request = RequestFactory().post('/admin/')
 
     token_admin.revoke_selected(

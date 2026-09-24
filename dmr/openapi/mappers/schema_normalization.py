@@ -1,7 +1,7 @@
 import dataclasses
 from collections.abc import Callable
 from enum import Enum
-from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance
@@ -124,7 +124,7 @@ def _dump_value(to_normalize: Any) -> Any:
 
     """
     if dataclasses.is_dataclass(to_normalize):
-        return dump_schema(cast('DataclassInstance', to_normalize))
+        return dump_schema(to_normalize)  # type: ignore[arg-type]
 
     if isinstance(to_normalize, list):
         return [_dump_value(list_item) for list_item in to_normalize]

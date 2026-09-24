@@ -78,12 +78,19 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             from anywhere and that you might not want to describe.
             Overrides the settings value, can be overridden per endpoint.
             Set it to ``None`` to validate all status codes back.
+        semantic_schema: Should we generate any semantic schema
+            for endpoints in this controller?
         semantic_responses: Should semantic responses be collected
             from different providers for all endpoints in this class.
         exclude_semantic_responses: Set of semantic responses
             that user wants to disable.
             Overrides the settings value, can be overridden per endpoint.
             Set it to ``None`` to enable all semantic responses back.
+        semantic_auth: Should semantic auth be collected
+            from different providers for this endpoint.
+            Overrides settings value.
+        exclude_semantic_auth: Set of semantic security requirements names
+            that should not be collected. Overrides settings value.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
             This value only matters if the response
@@ -182,10 +189,13 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     exclude_validate_responses: ClassVar[Set[HTTPStatus] | Sentinel | None] = (
         EMPTY
     )
+    semantic_schema: ClassVar[bool | Sentinel] = EMPTY
     semantic_responses: ClassVar[bool | Sentinel] = EMPTY
     exclude_semantic_responses: ClassVar[Set[HTTPStatus] | Sentinel | None] = (
         EMPTY
     )
+    semantic_auth: bool | Sentinel = EMPTY
+    exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY
     validate_events: ClassVar[bool | Sentinel] = EMPTY
     responses: ClassVar[Sequence[ResponseSpec] | Sentinel | None] = EMPTY
     allowed_http_methods: ClassVar[Set[str]] = frozenset(

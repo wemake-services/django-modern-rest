@@ -17,10 +17,9 @@ def use_cdn(request: pytest.FixtureRequest) -> bool:
     return bool(request.param)
 
 
-@pytest.fixture(autouse=True, params=[True, False])
+@pytest.fixture(autouse=True)
 def _modify_cdn_settings(
     settings: LazySettings,
-    request: pytest.FixtureRequest,
     *,
     use_cdn: bool,
 ) -> None:

@@ -118,7 +118,7 @@ class _HttpSpecValidator:  # noqa: WPS214
         responses: list[ResponseSpec],
     ) -> None:
         self._check_http_spec_rule(
-            rule=HttpSpec.header_name_syntax,
+            rule=HttpSpec.cookie_name_syntax,
             callback=self._check_http_syntax,
             responses=responses,
             field_type='cookie',
@@ -140,6 +140,12 @@ class _HttpSpecValidator:  # noqa: WPS214
         self._check_http_spec_rule(
             rule=HttpSpec.empty_response_body,
             callback=self._check_empty_response_body,
+            responses=responses,
+        )
+
+        self._check_http_spec_rule(
+            rule=HttpSpec.cookie_semantics,
+            callback=self._check_cookie_semantics,
             responses=responses,
         )
 
@@ -224,6 +230,67 @@ class _HttpSpecValidator:  # noqa: WPS214
             raise EndpointMetadataError(
                 f'{field_type.capitalize()} name {invalid_name!r} '
                 f'is not following http spec.',
+            )
+
+    def _check_cookie_semantics(
+        self,
+        responses: list[ResponseSpec],
+    ) -> None:
+        cookies: list[tuple[str, CookieSpec | NewCookie]] = []
+        modification = self.metadata.modification
+
+        if modification and modification.cookies:
+            cookies.extend(modification.cookies.items())
+
+        for response in responses:
+            if response.cookies:
+                cookies.extend(response.cookies.items())
+
+        for cookie_name, cookie in cookies:
+            self._validate_samesite_none_requires_secure(cookie)
+            self._validate_max_age(cookie)
+            self._validate_secure_cookie_prefix(cookie_name, cookie)
+            self._validate_host_cookie_prefix(cookie_name, cookie)
+
+    def _validate_samesite_none_requires_secure(
+        self,
+        cookie: CookieSpec | NewCookie,
+    ) -> None:
+        if cookie.samesite == 'none' and not cookie.secure:
+            raise EndpointMetadataError(
+                "Cookie with samesite='none' requires secure to be True",
+            )
+
+    def _validate_max_age(
+        self,
+        cookie: CookieSpec | NewCookie,
+    ) -> None:
+        if cookie.max_age is not None and cookie.max_age < 0:
+            raise EndpointMetadataError(
+                'Cookie max age must not be negative',
+            )
+
+    def _validate_secure_cookie_prefix(
+        self,
+        cookie_name: str,
+        cookie: CookieSpec | NewCookie,
+    ) -> None:
+        if cookie_name.startswith('__Secure-') and not cookie.secure:
+            raise EndpointMetadataError(
+                '__Secure- cookie prefix requires secure to be True',
+            )
+
+    def _validate_host_cookie_prefix(
+        self,
+        cookie_name: str,
+        cookie: CookieSpec | NewCookie,
+    ) -> None:
+        if cookie_name.startswith('__Host-') and (
+            not cookie.secure or cookie.path != '/' or cookie.domain is not None
+        ):
+            raise EndpointMetadataError(
+                '__Host- cookie prefix requires secure to be True, '
+                'path set to / and domain to be None',
             )
 
     def _get_http_field_names(
@@ -371,7 +438,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     func: Callable[..., Any]
     metadata_cls: type[EndpointMetadata]
     response_modification_cls: type[ResponseModification]
-    merger: MetadataMerger
+    metadata_merger_cls: type[MetadataMerger]
     component_parsers: list[ComponentParserSpec]
     type_annotations: dict[str, Any]
 
@@ -431,6 +498,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             )
         assert_never(self.payload)
 
+    def _merger(self, field_name: str) -> MetadataMerger:
+        return self.metadata_merger_cls(field_name=field_name)
+
     def _from_validate(
         self,
         payload: ValidateEndpointPayload,
@@ -446,7 +516,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             type_annotations=self.type_annotations,
             responses={},
             method=method,
-            validate_responses=self._build_validate_responses(),
             modification=None,
             error_handler=self._build_error_handler(),
             component_parsers=self.component_parsers,
@@ -459,23 +528,25 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             throttling_allow_unsafe_cache=allow_cache,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
+            validate_responses=self._build_validate_responses(),
             exclude_validate_responses=(
                 self._build_exclude_validate_responses()
             ),
+            semantic_schema=self._build_semantic_schema(),
             semantic_responses=self._build_semantic_responses(),
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
+            semantic_auth=self._build_semantic_auth(),
+            exclude_semantic_auth=self._build_exclude_semantic_auth(),
             validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
             tags=self._build_tags(payload.tags),
-            operation_id=self.merger.empty_to_none(
+            operation_id=self._merger('operation_id').empty_to_none(
                 payload.operation_id,
-                field_name='operation_id',
             ),
             deprecated=payload.deprecated,
-            external_docs=self.merger.empty_to_none(
+            external_docs=self._merger('external_docs').empty_to_none(
                 payload.external_docs,
-                field_name='external_docs',
             ),
             callbacks=self._build_callbacks(payload.callbacks),
             servers=self._build_servers(payload.servers),
@@ -491,20 +562,13 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
         self._validate_new_http_parts(payload)
-        status_code = self.merger.empty_to_none(
+        status_code = self._merger('status_code').empty_to_none(
             payload.status_code,
-            field_name='status_code',
         )
         modification = self.response_modification_cls(
             return_type=return_annotation,
-            headers=self.merger.empty_to_none(
-                payload.headers,
-                field_name='headers',
-            ),
-            cookies=self.merger.empty_to_none(
-                payload.cookies,
-                field_name='cookies',
-            ),
+            headers=self._merger('headers').empty_to_none(payload.headers),
+            cookies=self._merger('cookies').empty_to_none(payload.cookies),
             status_code=(
                 infer_status_code(
                     method,
@@ -514,14 +578,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 else status_code
             ),
             streaming=self.controller_cls.streaming,
-            description=self.merger.empty_to_none(
+            description=self._merger('response_description').empty_to_none(
                 payload.response_description,
-                field_name='response_description',
             ),
-            links=self.merger.empty_to_none(
-                payload.links,
-                field_name='links',
-            ),
+            links=self._merger('links').empty_to_none(payload.links),
         )
         summary, description = self._build_description()
         throttling_before_auth, throttling_after_auth, allow_cache = (
@@ -531,7 +591,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             endpoint_name=self.endpoint_name,
             type_annotations=self.type_annotations,
             responses={},
-            validate_responses=self._build_validate_responses(),
             method=method,
             modification=modification,
             error_handler=self._build_error_handler(),
@@ -545,23 +604,25 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             throttling_allow_unsafe_cache=allow_cache,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
+            validate_responses=self._build_validate_responses(),
             exclude_validate_responses=(
                 self._build_exclude_validate_responses()
             ),
+            semantic_schema=self._build_semantic_schema(),
             semantic_responses=self._build_semantic_responses(),
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
+            semantic_auth=self._build_semantic_auth(),
+            exclude_semantic_auth=self._build_exclude_semantic_auth(),
             validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
             tags=self._build_tags(payload.tags),
-            operation_id=self.merger.empty_to_none(
+            operation_id=self._merger('operation_id').empty_to_none(
                 payload.operation_id,
-                field_name='operation_id',
             ),
             deprecated=payload.deprecated,
-            external_docs=self.merger.empty_to_none(
+            external_docs=self._merger('external_docs').empty_to_none(
                 payload.external_docs,
-                field_name='external_docs',
             ),
             callbacks=self._build_callbacks(payload.callbacks),
             servers=self._build_servers(payload.servers),
@@ -595,7 +656,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             endpoint_name=self.endpoint_name,
             type_annotations=self.type_annotations,
             responses={},
-            validate_responses=self._build_validate_responses(),
             method=method,
             modification=modification,
             error_handler=None,
@@ -609,11 +669,15 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             throttling_allow_unsafe_cache=allow_cache,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
+            validate_responses=self._build_validate_responses(),
             exclude_validate_responses=(
                 self._build_exclude_validate_responses()
             ),
+            semantic_schema=self._build_semantic_schema(),
             semantic_responses=self._build_semantic_responses(),
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
+            semantic_auth=self._build_semantic_auth(),
+            exclude_semantic_auth=self._build_exclude_semantic_auth(),
             validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
@@ -659,7 +723,8 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         kind: str,
         field_name: str,
     ) -> dict[str, _PluggableT]:
-        pluggables = self.merger.first_defined(*layers, field_name=field_name)
+        merger = self._merger(field_name)
+        pluggables = merger.first_defined(*layers)
         if pluggables is None or isinstance(pluggables, Sentinel):
             # Settings is the last place we look at, it must be present:
             raise EndpointMetadataError(
@@ -685,11 +750,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         settings_value: bool | Sentinel = resolve_setting(
             Settings.validate_negotiation,
         )
-        validate_negotiation = self.merger.first_set(
+        validate_negotiation = self._merger('validate_negotiation').first_set(
             self.payload.validate_negotiation if self.payload else EMPTY,
             self.controller_cls.validate_negotiation,
             settings_value,
-            field_name='validate_negotiation',
         )
         if isinstance(validate_negotiation, Sentinel):
             return self._build_validate_responses()
@@ -701,25 +765,17 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     ) -> list['Server'] | None:
         # Controller-level servers belong to the path item,
         # not to the operation, so they are not a layer here:
-        servers = self.merger.empty_to_none(
-            payload_servers,
-            field_name='servers',
-        )
+        servers = self._merger('servers').empty_to_none(payload_servers)
         return None if servers is None else list(servers)
 
     def _build_callbacks(
         self,
         payload_callbacks: 'Mapping[str, Callback | Reference] | Sentinel',
     ) -> 'dict[str, Callback | Reference] | None':
-        callbacks = self.merger.empty_to_none(
-            payload_callbacks,
-            field_name='callbacks',
-        )
+        callbacks = self._merger('callbacks').empty_to_none(payload_callbacks)
         return None if callbacks is None else dict(callbacks)
 
-    def _build_auth(
-        self,
-    ) -> list[SyncAuth | AsyncAuth] | None:
+    def _build_auth(self) -> list[SyncAuth | AsyncAuth] | None:
         base_type = (
             AsyncAuth if inspect.iscoroutinefunction(self.func) else SyncAuth
         )
@@ -738,11 +794,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             Sequence[SyncAuth | AsyncAuth | SyncOrAsyncAuth[Any, Any]]
             | Sentinel
             | None
-        ) = self.merger.first_defined(
+        ) = self._merger('auth').first_defined(
             endpoint_auth,
             self.controller_cls.auth,
             settings_auth,
-            field_name='auth',
         )
         if auth is None or isinstance(auth, Sentinel):
             return None  # explicitly disabled or nothing is configured
@@ -793,11 +848,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             ]
             | Sentinel
             | None
-        ) = self.merger.first_defined(
+        ) = self._merger('throttling').first_defined(
             endpoint_throttling,
             self.controller_cls.throttling,
             settings_throttling,
-            field_name='throttling',
         )
         if throttling is None or isinstance(throttling, Sentinel):
             # Explicitly disabled or nothing is configured:
@@ -842,10 +896,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         )
 
     def _build_throttling_allow_unsafe_cache(self) -> bool | None:
+        merger = self._merger('throttling_allow_unsafe_cache')
         settings_value: bool | None = resolve_setting(
             Settings.throttling_allow_unsafe_cache,
         )
-        allow_cache = self.merger.first_set(
+        allow_cache = merger.first_set(
             (
                 self.payload.throttling_allow_unsafe_cache
                 if self.payload
@@ -853,12 +908,8 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             ),
             self.controller_cls.throttling_allow_unsafe_cache,
             settings_value,
-            field_name='throttling_allow_unsafe_cache',
         )
-        return self.merger.empty_to_none(  # pyright: ignore[reportReturnType]
-            allow_cache,
-            field_name='throttling_allow_unsafe_cache',
-        )
+        return merger.not_empty(merger.empty_to_none(allow_cache))
 
     def _reject_settings_only(
         self,
@@ -886,6 +937,8 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         *,
         allow_cache: bool | None,
     ) -> None:
+        # TODO: this must be moved to `SyncThrottle` / `AsyncThrottle` class.
+        # TODO: this must be also copied to `Auth` classes as well.
         for throttle in throttling:
             if (
                 allow_cache is None
@@ -918,39 +971,34 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 raise EndpointMetadataError(msg)
 
     def _build_validate_responses(self) -> bool:
+        merger = self._merger('validate_responses')
         settings_value: bool | Sentinel = resolve_setting(
             Settings.validate_responses,
         )
-        validate_responses = self.merger.first_set(
+        validate_responses = merger.first_set(
             self.payload.validate_responses if self.payload else EMPTY,
             self.controller_cls.validate_responses,
             settings_value,
-            field_name='validate_responses',
         )
-        # Settings is the last level, validation is enabled by default:
-        if isinstance(validate_responses, Sentinel):
-            return True
-        return validate_responses
+        return merger.not_empty(validate_responses)
 
     def _build_validate_events(self) -> bool:
         settings_value: bool | Sentinel = resolve_setting(
             Settings.validate_events,
         )
-        validate_events = self.merger.first_set(
+        validate_events = self._merger('validate_events').first_set(
             self.payload.validate_events if self.payload else EMPTY,
             self.controller_cls.validate_events,
             settings_value,
-            field_name='validate_events',
         )
         if isinstance(validate_events, Sentinel):
             return self._build_validate_responses()
         return validate_events
 
     def _build_ignore_from_spec(self) -> bool:
-        ignore_from_spec = self.merger.first_set(
+        ignore_from_spec = self._merger('ignore_from_spec').first_set(
             self.payload.ignore_from_spec if self.payload else EMPTY,
             self.controller_cls.ignore_from_spec,
-            field_name='ignore_from_spec',
         )
         return not isinstance(ignore_from_spec, Sentinel) and ignore_from_spec
 
@@ -960,10 +1008,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     ) -> list[str] | Sentinel | None:
         # Router-level tags are resolved later during the schema generation,
         # that's why `EMPTY` is preserved here.
-        tags = self.merger.first_defined(
+        tags = self._merger('tags').first_defined(
             payload_tags,
             self.controller_cls.tags,
-            field_name='tags',
         )
         if tags is None or isinstance(tags, Sentinel):
             return tags
@@ -972,9 +1019,8 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     def _build_error_handler(
         self,
     ) -> 'SyncErrorHandler | AsyncErrorHandler | None':
-        error_handler = self.merger.empty_to_none(
+        error_handler = self._merger('error_handler').empty_to_none(
             self.payload.error_handler if self.payload else EMPTY,
-            field_name='error_handler',
         )
         if error_handler is None:
             return None
@@ -1002,20 +1048,31 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             field_name='no_validate_http_spec',
         )
 
+    def _build_semantic_schema(self) -> bool:
+        merger = self._merger('semantic_schema')
+        settings_value: bool | Sentinel = resolve_setting(
+            Settings.semantic_schema,
+        )
+        semantic_schema = merger.first_set(
+            self.payload.semantic_schema if self.payload else EMPTY,
+            self.controller_cls.semantic_schema,
+            settings_value,
+        )
+        return merger.not_empty(semantic_schema)
+
     def _build_semantic_responses(self) -> bool:
+        merger = self._merger('semantic_responses')
         settings_value: bool | Sentinel = resolve_setting(
             Settings.semantic_responses,
         )
-        semantic_responses = self.merger.first_set(
+        semantic_responses = merger.first_set(
             self.payload.semantic_responses if self.payload else EMPTY,
             self.controller_cls.semantic_responses,
             settings_value,
-            field_name='semantic_responses',
         )
-        # Settings is the last level, semantic responses are on by default:
         if isinstance(semantic_responses, Sentinel):
-            return True
-        return semantic_responses
+            return self._build_semantic_schema()
+        return merger.not_empty(semantic_responses)
 
     def _build_exclude_validate_responses(self) -> frozenset[HTTPStatus]:
         settings_value: Set[HTTPStatus] = resolve_setting(
@@ -1039,12 +1096,37 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             field_name='exclude_semantic_responses',
         )
 
+    def _build_semantic_auth(self) -> bool:
+        merger = self._merger('semantic_auth')
+        settings_value: bool | Sentinel = resolve_setting(
+            Settings.semantic_auth,
+        )
+        semantic_auth = merger.first_set(
+            self.payload.semantic_auth if self.payload else EMPTY,
+            self.controller_cls.semantic_auth,
+            settings_value,
+        )
+        if isinstance(semantic_auth, Sentinel):
+            return self._build_semantic_schema()
+        return merger.not_empty(semantic_auth)
+
+    def _build_exclude_semantic_auth(self) -> frozenset[str]:
+        settings_value: Set[str] = resolve_setting(
+            Settings.exclude_semantic_auth,
+        )
+        return self._build_optional_set(
+            self.payload.exclude_semantic_auth if self.payload else EMPTY,
+            self.controller_cls.exclude_semantic_auth,
+            settings_value,
+            field_name='exclude_semantic_auth',
+        )
+
     def _build_optional_set(
         self,
         *layers: Set[_ItemT] | Sentinel | None,
         field_name: str,
     ) -> frozenset[_ItemT]:
-        resolved = self.merger.first_defined(*layers, field_name=field_name)
+        resolved = self._merger(field_name).first_defined(*layers)
         if resolved is None or isinstance(resolved, Sentinel):
             return frozenset()
         return frozenset(resolved)
@@ -1067,10 +1149,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         self,
         payload: ModifyEndpointPayload,
     ) -> None:
-        headers = self.merger.empty_to_none(
-            payload.headers,
-            field_name='headers',
-        )
+        headers = self._merger('headers').empty_to_none(payload.headers)
         if headers is not None and any(
             isinstance(header, HeaderSpec) and not header.skip_validation
             for header in headers.values()
@@ -1082,10 +1161,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 '`NewHeader` to add new headers to the response. '
                 'Or add `skip_validation=True` to `HeaderSpec`',
             )
-        cookies = self.merger.empty_to_none(
-            payload.cookies,
-            field_name='cookies',
-        )
+        cookies = self._merger('cookies').empty_to_none(payload.cookies)
         if cookies is not None and any(
             isinstance(cookie, CookieSpec) and not cookie.skip_validation
             for cookie in cookies.values()
@@ -1114,7 +1190,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             if not _build_responses(
                 self.payload,
                 controller_cls=self.controller_cls,
-                merger=self.merger,
+                metadata_merger_cls=self.metadata_merger_cls,
             ):
                 raise EndpointMetadataError(
                     f'{self.endpoint_name!r} returns HttpResponse '
@@ -1149,7 +1225,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
     )
 
     metadata: EndpointMetadata
-    merger: MetadataMerger
+    metadata_merger_cls: type[MetadataMerger]
 
     def __call__(
         self,
@@ -1194,7 +1270,7 @@ class EndpointMetadataValidator:  # noqa: WPS214
                 payload=payload,
                 controller_cls=controller_cls,
                 modification=self.metadata.modification,
-                merger=self.merger,
+                metadata_merger_cls=self.metadata_merger_cls,
             )
         ])
         existing_responses = {
@@ -1308,17 +1384,16 @@ def _build_responses(
     payload: Payload,
     *,
     controller_cls: type['Controller[BaseSerializer]'],
-    merger: MetadataMerger,
+    metadata_merger_cls: type[MetadataMerger],
     modification: ResponseModification | None = None,
 ) -> list[ResponseSpec]:
     settings_responses: Sequence[ResponseSpec] = resolve_setting(
         Settings.responses,
     )
-    responses = merger.first_defined(
+    responses = metadata_merger_cls(field_name='responses').first_defined(
         payload.responses if payload else EMPTY,
         controller_cls.responses,
         settings_responses,
-        field_name='responses',
     )
     return [
         *(

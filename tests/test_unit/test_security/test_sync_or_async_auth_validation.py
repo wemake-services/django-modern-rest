@@ -1,4 +1,4 @@
-from typing import Final, Self, cast
+from typing import Final, Self
 
 import pytest
 from django.conf import LazySettings
@@ -91,7 +91,7 @@ def test_sync_or_async_auth_not_allowed_at_endpoint_level(  # noqa: WPS118
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures SyncOrAsyncAuth raises an error at endpoint level."""
-    wrong_auth = cast('list[SyncAuth]', [_AUTH])
+    wrong_auth: list[SyncAuth] = [_AUTH]  # type: ignore[list-item]
     with pytest.raises(EndpointMetadataError, match='SyncOrAsyncAuth'):
 
         class _SyncController(Controller[PydanticSerializer]):

@@ -1,5 +1,5 @@
 import json
-from typing import Any, Final, cast, final
+from typing import Any, Final, final
 
 import jwt
 from typing_extensions import override
@@ -45,7 +45,7 @@ class _DMRPyJWT(jwt.PyJWT):
             raise jwt.exceptions.DecodeError(
                 'Invalid payload string: must be a json object',
             )
-        return cast('dict[str, Any]', payload)
+        return payload  # pyright: ignore[reportUnknownVariableType]
 
 
 dmr_jwt: Final = _DMRPyJWT()

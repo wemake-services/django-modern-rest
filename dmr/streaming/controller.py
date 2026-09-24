@@ -1,7 +1,7 @@
 import abc
 from collections.abc import AsyncIterator, Iterable, Mapping
 from http import HTTPStatus
-from typing import Any, ClassVar, TypeVar, cast
+from typing import Any, ClassVar, TypeVar
 
 from typing_extensions import Sentinel, override
 
@@ -136,9 +136,8 @@ class StreamingController(Controller[_SerializerT_co]):
 
         """
         # We are sure that it is a `StreamingRenderer` at this point
-        streaming_renderer = cast(  # type: ignore[assignment]
-            StreamingResponse,  # TODO: provide a new api?
-            streaming_renderer or request_renderer(self.request),
+        streaming_renderer = (
+            streaming_renderer or request_renderer(self.request)  # type: ignore[assignment]
         )
         # for mypy: we are sure it is not `None` here.
         assert streaming_renderer is not None  # noqa: S101

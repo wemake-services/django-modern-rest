@@ -206,3 +206,16 @@ translations:
     uv run dennis-cmd lint dmr/locale
     uv run django-admin compilemessages --ignore dmr || true
     uv run django-admin compilemessages
+
+# Check that committed `.mo` files match their `.po` files
+[group('i18n')]
+[working-directory('dmr')]
+translations-check:
+    # `compilemessages` skips `.po` files that are not newer than their `.mo`:
+    find locale -name '*.po' -exec touch {} +
+    uv run django-admin compilemessages
+    if [ -n "$(git status --porcelain -- locale)" ]; then \
+      git status --short -- locale; \
+      echo 'Compiled translations are out of date, run `just translations` and commit `.mo` files'; \
+      exit 1; \
+    fi

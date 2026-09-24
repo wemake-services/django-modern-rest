@@ -1,12 +1,15 @@
+import dataclasses
 from typing import TypeVar
 
 from typing_extensions import Sentinel
 
+from dmr.exceptions import EndpointMetadataError
 from dmr.types import EMPTY
 
 _LayerT = TypeVar('_LayerT')
 
 
+@dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class MetadataMerger:
     """
     Define how endpoint, controller, and settings values are resolved.
@@ -25,12 +28,11 @@ class MetadataMerger:
     .. versionadded:: 0.16.0
     """
 
-    __slots__ = ()
+    field_name: str
 
     def first_defined(
         self,
         *layers: _LayerT | Sentinel | None,
-        field_name: str,
     ) -> _LayerT | Sentinel | None:
         """
         Return the first explicitly defined configuration layer.
@@ -52,7 +54,6 @@ class MetadataMerger:
     def first_set(
         self,
         *layers: _LayerT | Sentinel,
-        field_name: str,
     ) -> _LayerT | Sentinel:
         """
         Return the first configuration layer that is not ``EMPTY``.
@@ -69,8 +70,6 @@ class MetadataMerger:
     def empty_to_none(
         self,
         layer: _LayerT | Sentinel,
-        *,
-        field_name: str,
     ) -> _LayerT | None:
         """
         Convert ``EMPTY`` to ``None`` for the resolved metadata.
@@ -80,3 +79,12 @@ class MetadataMerger:
         It is used for endpoint-only fields, which have a single layer.
         """
         return None if isinstance(layer, Sentinel) else layer
+
+    def not_empty(self, to_check: _LayerT | Sentinel) -> _LayerT:
+        """Check that a value is not empty."""
+        if isinstance(to_check, Sentinel):
+            raise EndpointMetadataError(
+                f'Field {self.field_name} is required to be set, '
+                'but it is empty',
+            )
+        return to_check

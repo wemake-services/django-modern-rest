@@ -22,6 +22,7 @@ from dmr.settings import (
 from dmr.test import DMRRequestFactory
 from dmr.throttling import Rate, SyncThrottle
 from dmr.types import EMPTY
+from dmr.validation import SettingsValidator
 
 pytestmark = pytest.mark.filterwarnings(
     'ignore::dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning',
@@ -215,7 +216,7 @@ def test_empty_values_are_not_set(
 def test_empty_settings_flags(settings: LazySettings) -> None:
     """Ensure that `EMPTY` boolean settings fall back to defaults."""
     settings.DMR_SETTINGS = {
-        Settings.validate_responses: EMPTY,
+        Settings.validate_responses: True,
         Settings.semantic_responses: EMPTY,
         Settings.validate_negotiation: EMPTY,
         Settings.validate_events: EMPTY,
@@ -230,6 +231,25 @@ def test_empty_settings_flags(settings: LazySettings) -> None:
     assert metadata.semantic_responses is True
     assert metadata.validate_negotiation is True
     assert metadata.validate_events is True
+
+
+def test_empty_validate_responses(
+    settings: LazySettings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ensure that `EMPTY` on `validate_responses` raises."""
+    # We test the metadata merger here, not the settings validation,
+    # which would fail first if it was not run yet in this process:
+    monkeypatch.setattr(SettingsValidator, 'is_validated', True)
+    settings.DMR_SETTINGS = {
+        Settings.validate_responses: EMPTY,
+    }
+
+    with pytest.raises(EndpointMetadataError, match='validate_responses'):
+
+        class _Controller(Controller[PydanticSerializer]):
+            def get(self) -> str:
+                raise NotImplementedError
 
 
 def test_none_disables_next_levels() -> None:

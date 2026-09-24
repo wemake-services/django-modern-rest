@@ -1,6 +1,6 @@
 import dataclasses
 from collections.abc import Sequence
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar
 
 from dmr.exceptions import EndpointMetadataError
 from dmr.internal.enums import stringify
@@ -36,8 +36,8 @@ class _SettingsModel(SettingsDict, total=False):
     openapi_config: Any
     global_error_handler: Any
     # `EMPTY` sentinel is not supported by serializers:
-    validate_responses: Any
     semantic_responses: Any
+    semantic_auth: Any
     validate_negotiation: Any
     validate_events: Any
     openapi_examples_seed: Any
@@ -86,7 +86,7 @@ class SettingsValidator:
             )
         except self.serializer.validation_error as exc:
             raise EndpointMetadataError('Settings validation failed') from exc
-        return cast('_SettingsModel', settings)
+        return settings  # type: ignore[return-value]
 
     def _validate_types(
         self,
@@ -200,8 +200,8 @@ class SettingsValidator:
     ) -> None:
         # These values can be `EMPTY`, which serializers do not understand:
         for flag_name in (
-            'validate_responses',
             'semantic_responses',
+            'semantic_auth',
             'validate_negotiation',
             'validate_events',
         ):

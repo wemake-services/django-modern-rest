@@ -1,6 +1,6 @@
 from collections.abc import Callable, Coroutine, Iterable, Sequence
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar, overload
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.urls import include, re_path
@@ -488,13 +488,10 @@ def path(
     name: str | None = None,
 ) -> _AnyPattern:
     """Creates URL pattern using prefix-based matching for faster routing."""
-    return cast(
-        _AnyPattern,
-        _django_path(  # type: ignore[call-overload]
-            route,
-            view,
-            kwargs,
-            name,
-            Pattern=PrefixRoutePattern,
-        ),
+    return _django_path(  # type: ignore[call-overload,no-any-return]
+        route,
+        view,
+        kwargs,
+        name,
+        Pattern=PrefixRoutePattern,
     )
