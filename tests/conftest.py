@@ -21,6 +21,23 @@ from dmr_pytest import settings  # noqa: F401
 freezegun.configure(extend_ignore_list=['testcontainers', 'docker'])
 
 
+def pytest_configure(config: pytest.Config) -> None:
+    """
+    Use a fast password hasher for the whole test session.
+
+    The default ``PBKDF2`` hasher is intentionally slow (~100ms per hash),
+    and every ``create_user`` / ``authenticate`` call pays that price.
+    Nothing we test depends on the hashing algorithm itself,
+    so this only removes overhead from the auth tests.
+    See: https://docs.djangoproject.com/en/stable/topics/testing/overview/#password-hashing
+    """
+    from django.conf import settings as django_settings  # noqa: PLC0415
+
+    django_settings.PASSWORD_HASHERS = [
+        'django.contrib.auth.hashers.MD5PasswordHasher',
+    ]
+
+
 @pytest.fixture
 def openapi_context() -> OpenAPIContext:
     """Returns OpenAPI context for the spec tests."""

@@ -1,6 +1,6 @@
 import dataclasses
 from collections.abc import Sequence
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar
 
 from dmr.exceptions import EndpointMetadataError
 from dmr.internal.enums import stringify
@@ -86,7 +86,7 @@ class SettingsValidator:
             )
         except self.serializer.validation_error as exc:
             raise EndpointMetadataError('Settings validation failed') from exc
-        return cast('_SettingsModel', settings)
+        return settings  # type: ignore[return-value]
 
     def _validate_types(
         self,
