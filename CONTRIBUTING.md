@@ -127,8 +127,8 @@ We use Django's built-in i18n system. Translation files live in `dmr/locale/`.
 
 ### Contributing a new language
 
-1. Generate a `.po` file for your [locale](https://docs.djangoproject.com/en/stable/topics/i18n/
-#term-locale-name):
+1. Generate a `.po` file for your
+   [locale](https://docs.djangoproject.com/en/stable/topics/i18n/#term-locale-name):
    ```bash
    uv run django-admin makemessages --locale <lang>
    ```
@@ -147,6 +147,14 @@ We use Django's built-in i18n system. Translation files live in `dmr/locale/`.
    just translations
    ```
 3. Commit both `django.po` and `django.mo` files
+
+CI recompiles every `django.po` file and fails if any `django.mo` file
+does not match the committed one. To run the same check locally,
+commit your changes and run:
+
+```bash
+just translations-check
+```
 
 
 ## Other help
