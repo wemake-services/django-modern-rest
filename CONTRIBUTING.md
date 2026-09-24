@@ -148,6 +148,14 @@ We use Django's built-in i18n system. Translation files live in `dmr/locale/`.
    ```
 3. Commit both `django.po` and `django.mo` files
 
+CI recompiles every `django.po` file and fails if any `django.mo` file
+does not match the committed one. To run the same check locally,
+commit your changes and run:
+
+```bash
+just translations-check
+```
+
 
 ## Other help
 
