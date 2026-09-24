@@ -22,6 +22,7 @@ from dmr.settings import (
 from dmr.test import DMRRequestFactory
 from dmr.throttling import Rate, SyncThrottle
 from dmr.types import EMPTY
+from dmr.validation import SettingsValidator
 
 pytestmark = pytest.mark.filterwarnings(
     'ignore::dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning',
@@ -232,8 +233,14 @@ def test_empty_settings_flags(settings: LazySettings) -> None:
     assert metadata.validate_events is True
 
 
-def test_empty_validate_responses(settings: LazySettings) -> None:
+def test_empty_validate_responses(
+    settings: LazySettings,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Ensure that `EMPTY` on `validate_responses` raises."""
+    # We test the metadata merger here, not the settings validation,
+    # which would fail first if it was not run yet in this process:
+    monkeypatch.setattr(SettingsValidator, 'is_validated', True)
     settings.DMR_SETTINGS = {
         Settings.validate_responses: EMPTY,
     }
