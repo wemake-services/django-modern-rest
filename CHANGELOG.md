@@ -256,7 +256,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `semantic_schema`, `semantic_auth`, and `exclude_semantic_auth`
   endpoint, controller, settings, and metadata parameters
   to disable all semantic schema generation or semantic auth injection
-  respectively, 
+  respectively, #1586
 
 ### Bugfixes
 

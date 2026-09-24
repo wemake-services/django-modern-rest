@@ -94,7 +94,7 @@ class SecuritySchemeGenerator:
             return [] if self._context.config.security else None
         return requirements
 
-    def _register_auth_security_schemes(  # noqa: WPS231
+    def _register_auth_security_schemes(
         self,
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],

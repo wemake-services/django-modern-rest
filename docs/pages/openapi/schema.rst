@@ -39,25 +39,90 @@ How do we build this semantic schema?
 .. note::
 
   We allow users to make their schemas as dumb as regular ones
-  with just a single setting: :data:`~dmr.settings.Settings.semantic_responses`.
+  with just a single setting: :data:`~dmr.settings.Settings.semantic_schema`.
+  It will disable **all** semantic schema generation. Including response specs,
+  security requirements, security schemes.
 
-  Turn it off together with :data:`dmr.settings.Settings.validate_responses`
-  if you don't need any of this schema stuff.
   You would still have the very basic OpenAPI schema,
   it would be similar to ones that FastAPI and others provide.
 
-  If you want to disable only some status code, use
-  :data:`~dmr.settings.Settings.exclude_semantic_responses`.
+  You can also have more controll over schema generation with:
+
+  - :data:`~dmr.settings.Settings.semantic_responses`
+  - :data:`~dmr.settings.Settings.exclude_semantic_responses`
+  - :data:`~dmr.settings.Settings.semantic_auth`
+  - :data:`~dmr.settings.Settings.exclude_semantic_auth`
+
+.. tip::
+
+  Turn it off together with :data:`dmr.settings.Settings.validate_responses`
+  if you don't need any of this schema generation / validation stuff.
 
 The core part of the schema generation
 is :meth:`dmr.metadata.EndpointMetadata.collect_response_specs`
 which collects all the responses' metadata in a single place.
-
 Each :class:`~dmr.metadata.ResponseSpec` knows what it returns in great detail.
+
+And :class:`~dmr.openapi.generators.SecuritySchemeGenerator`
+for security requirements and security schemes generation.
 
 
 Customizing schema generation
 -----------------------------
+
+Here's how our settings priority works:
+
+- We check exact setting for the specific thing we try to generate, like
+  ``semantic_responses`` and ``semantic_auth``
+- If it is not set, we fallback to ``semantic_schema`` value
+
+For example, if you disable ``semantic_schema=False`` generation globally
+and then enabled ``semantic_auth=True`` for a single controller,
+it will generate semantic security schemes and security requirements
+just for endpoints in this controller.
+
+Semantic schema
+~~~~~~~~~~~~~~~
+
+To disable all semantic schema generation you can disable it on several levels:
+
+.. tabs::
+
+  .. tab:: disable per endpoint
+
+    Pass ``semantic_schema`` parameter
+    to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
+
+    .. literalinclude:: /examples/openapi/semantic_schema_per_endpoint.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: disable per controller
+
+    Customize :attr:`~dmr.controller.Controller.semantic_schema` attribute.
+
+    .. literalinclude:: /examples/openapi/semantic_schema_per_controller.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: disable per settings
+
+    Exclude some semantic responses globally:
+
+    .. code-block:: python
+      :caption: settings.py
+      :linenos:
+
+      >>> from dmr.settings import Settings, DMR_SETTINGS
+
+      >>> DMR_SETTINGS = {Settings.semantic_schema: False}
+
+This will disable both semantic responses and semantic auth.
+
+Semantic responses
+~~~~~~~~~~~~~~~~~~
 
 All endpoints by default generate semantic responses.
 However, we allow several customizations.
@@ -67,6 +132,7 @@ You can disable some specific semantic responses generation by status code:
 .. tabs::
 
   .. tab:: exclude per endpoint
+
     Pass ``exclude_semantic_responses`` parameter
     to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
 
@@ -77,7 +143,8 @@ You can disable some specific semantic responses generation by status code:
 
   .. tab:: exclude per controller
 
-    Customize :attr:`~dmr.controller.Controller.exclude_semantic_responses` attribute.
+    Customize :attr:`~dmr.controller.Controller.exclude_semantic_responses`
+    attribute.
 
     .. literalinclude:: /examples/openapi/exclude_per_controller.py
       :caption: views.py
@@ -94,7 +161,7 @@ You can disable some specific semantic responses generation by status code:
 
       >>> from dmr.settings import Settings, DMR_SETTINGS
 
-      >>> DMR_SETTINGS = {Settings.exclude_semantic_responses: frozenset((422,))}
+      >>> DMR_SETTINGS = {Settings.exclude_semantic_responses: {422}}
 
 Or disable semantic responses completely:
 
@@ -131,6 +198,92 @@ Or disable semantic responses completely:
       >>> from dmr.settings import Settings, DMR_SETTINGS
 
       >>> DMR_SETTINGS = {Settings.semantic_responses: False}
+
+Semantic auth
+~~~~~~~~~~~~~
+
+All :class:`~dmr.security.SyncAuth` and :class:`~dmr.security.AsyncAuth`
+instances by default generate semantic
+security requirement and security schemes.
+However, we allow several customizations.
+
+You can disable some specific semantic security schemes
+and security requirements generation by scheme name:
+
+.. tabs::
+
+  .. tab:: exclude per endpoint
+
+    Pass ``exclude_semantic_auth`` parameter
+    to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
+
+    .. literalinclude:: /examples/openapi/exclude_auth_per_endpoint.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: exclude per controller
+
+    Customize :attr:`~dmr.controller.Controller.exclude_semantic_auth`
+    attribute.
+
+    .. literalinclude:: /examples/openapi/exclude_auth_per_controller.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: exclude per settings
+
+    Exclude some semantic auth schemes and requirements globally:
+
+    .. code-block:: python
+      :caption: settings.py
+      :linenos:
+
+      >>> from dmr.settings import Settings, DMR_SETTINGS
+
+      >>> DMR_SETTINGS = {Settings.exclude_semantic_auth: {'jwt'}}
+
+Or disable semantic auth completely:
+
+.. tabs::
+
+  .. tab:: per endpoint
+
+    Pass ``semantic_auth`` parameter
+    to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
+
+    .. literalinclude:: /examples/openapi/semantic_auth_per_endpoint.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: per controller
+
+    Customize :attr:`~dmr.controller.Controller.semantic_auth` attribute.
+
+    .. literalinclude:: /examples/openapi/semantic_auth_per_controller.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: per settings
+
+    Disable semantic auth globally
+    via :data:`~dmr.settings.Settings.semantic_auth` setting.
+
+    .. code-block:: python
+      :caption: settings.py
+      :linenos:
+
+      >>> from dmr.settings import Settings, DMR_SETTINGS
+
+      >>> DMR_SETTINGS = {Settings.semantic_auth: False}
+
+.. note::
+
+  When disabling semantic auth on controller / endpoint levels,
+  security schemes can still be registered if some other endpoints need them.
 
 
 .. _openapi-exclude-views:

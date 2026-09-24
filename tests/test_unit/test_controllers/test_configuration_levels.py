@@ -232,6 +232,19 @@ def test_empty_settings_flags(settings: LazySettings) -> None:
     assert metadata.validate_events is True
 
 
+def test_empty_validate_responses(settings: LazySettings) -> None:
+    """Ensure that `EMPTY` on `validate_responses` raises."""
+    settings.DMR_SETTINGS = {
+        Settings.validate_responses: EMPTY,
+    }
+
+    with pytest.raises(EndpointMetadataError, match='validate_responses'):
+
+        class _Controller(Controller[PydanticSerializer]):
+            def get(self) -> str:
+                raise NotImplementedError
+
+
 def test_none_disables_next_levels() -> None:
     """Ensure that `None` on the controller disables settings values."""
 
