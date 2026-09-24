@@ -20,7 +20,7 @@ from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.collector import InternalRouteMetadata
 from dmr.openapi.core.context import OpenAPIContext
-from dmr.openapi.objects import Operation, PathItem, Server
+from dmr.openapi.objects import Operation, PathItem, SecurityRequirement, Server
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import build_response
@@ -156,6 +156,16 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             from this controller in OpenAPI documentation.
             Overrides router-level tags, can be overridden per endpoint.
             Set it to ``None`` to have no tags at all.
+        security: A sequence of security requirement objects for all operations
+            in this controller. Overrides settings value.
+            Set it to ``None`` to disable ``security`` for this controller.
+            It never affects the runtime auth.
+            Useful to document external security mechanisms,
+            for example, the ones enforced by an HTTP proxy.
+            Used security schemes must be declared
+            as ``security_schemes`` in ``components``
+            of :class:`dmr.openapi.OpenAPIConfig`.
+            See :ref:`customizing_security_openapi`.
         servers: An alternative servers array to service this path item.
         ignore_from_spec: If set to ``True``, all endpoints from this controller
             would not be added to the final OpenAPI spec.
@@ -216,6 +226,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     description: ClassVar[StrOrPromise | Sentinel | None] = EMPTY
     tags: ClassVar[Sequence[str] | Sentinel | None] = EMPTY
     servers: ClassVar[Sequence[Server] | Sentinel | None] = EMPTY
+    security: ClassVar[Sequence[SecurityRequirement] | Sentinel | None] = EMPTY
     ignore_from_spec: ClassVar[bool] = False
 
     # Public instance API:

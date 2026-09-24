@@ -60,7 +60,13 @@ from dmr.validation.payload import (
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.errors import AsyncErrorHandler, SyncErrorHandler
-    from dmr.openapi.objects import Callback, Reference, Server
+    from dmr.openapi.config import OpenAPIConfig
+    from dmr.openapi.objects import (
+        Callback,
+        Reference,
+        SecurityRequirement,
+        Server,
+    )
 
 #: Regex expression to match allowed chars in tokens
 #: For header and cookie names.
@@ -410,6 +416,20 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
         self._validate_return_annotation(return_annotation)
 
+        return self._post_validate(
+            self._build_metadata(
+                method,
+                allowed_http_methods,
+                return_annotation,
+            ),
+        )
+
+    def _build_metadata(
+        self,
+        method: str,
+        allowed_http_methods: frozenset[str],
+        return_annotation: Any,
+    ) -> EndpointMetadata:
         if isinstance(self.payload, ValidateEndpointPayload):
             return self._from_validate(
                 self.payload,
@@ -430,6 +450,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 allowed_http_methods=allowed_http_methods,
             )
         assert_never(self.payload)
+
+    def _post_validate(self, metadata: EndpointMetadata) -> EndpointMetadata:
+        # Does nothing by default
+        return metadata
 
     def _from_validate(
         self,
@@ -473,6 +497,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 field_name='operation_id',
             ),
             deprecated=payload.deprecated,
+            security=self._build_security(),
             external_docs=self.merger.empty_to_none(
                 payload.external_docs,
                 field_name='external_docs',
@@ -559,6 +584,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 field_name='operation_id',
             ),
             deprecated=payload.deprecated,
+            security=self._build_security(),
             external_docs=self.merger.empty_to_none(
                 payload.external_docs,
                 field_name='external_docs',
@@ -620,6 +646,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             tags=self._build_tags(EMPTY),
             operation_id=None,
             deprecated=False,
+            security=None,
             external_docs=None,
             callbacks=None,
             servers=None,
@@ -716,6 +743,30 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             field_name='callbacks',
         )
         return None if callbacks is None else dict(callbacks)
+
+    def _build_security(self) -> list[SecurityRequirement] | None:
+        field_name = 'security'
+        settings_config: OpenAPIConfig = resolve_setting(
+            Settings.openapi_config,
+        )
+        resolved_security = self.merger.first_defined(
+            self.payload.security if self.payload else EMPTY,
+            self.controller_cls.security,
+            (
+                EMPTY
+                if settings_config.security is None
+                else settings_config.security
+            ),
+            field_name=field_name,
+        )
+        return (
+            None
+            if (
+                resolved_security is None
+                or isinstance(resolved_security, Sentinel)
+            )
+            else list(resolved_security)
+        )
 
     def _build_auth(
         self,

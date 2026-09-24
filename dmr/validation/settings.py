@@ -6,11 +6,10 @@ from dmr.exceptions import EndpointMetadataError
 from dmr.internal.enums import stringify
 from dmr.metadata import ResponseSpec, ResponseSpecProvider
 from dmr.openapi import OpenAPIConfig
-from dmr.openapi.objects import SecurityRequirement
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.security import AsyncAuth, SyncAuth, SyncOrAsyncAuth
-from dmr.semantic_schema import AuthProvider
+from dmr.semantic_schema import SecurityProvider
 from dmr.serializer import BaseSerializer
 from dmr.settings import (
     Settings,
@@ -32,9 +31,6 @@ class _SettingsModel(SettingsDict, total=False):
     parsers: Sequence[Any]
     renderers: Sequence[Any]
     auth: Sequence[Any]
-    # Redefined to resolve the forward reference: in `dmr.settings`
-    # `SecurityRequirement` is only imported for type checking.
-    security: Sequence[SecurityRequirement]
     throttling: Sequence[Any]
     responses: Sequence[Any]
     semantic_schema_providers: Sequence[Any]
@@ -163,7 +159,7 @@ class SettingsValidator:
         if not all(
             isinstance(
                 response_spec_provider,
-                (ResponseSpecProvider, AuthProvider),
+                (ResponseSpecProvider, SecurityProvider),
             )
             for response_spec_provider in settings.get(
                 'semantic_schema_providers',
@@ -172,7 +168,7 @@ class SettingsValidator:
         ):
             raise EndpointMetadataError(
                 'Settings.semantic_schema_providers must all '
-                'be ResponseSpecProvider or AuthProvider instances',
+                'be ResponseSpecProvider or SecurityProvider instances',
             )
 
     def _validate_scalar_types(

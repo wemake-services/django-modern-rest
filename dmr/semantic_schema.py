@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 
-class AuthProvider:
+class SecurityProvider:
     """
     Provides security schemes and security requirements.
 
@@ -47,7 +47,22 @@ class AuthProvider:
         """Provides a security schema usage requirement."""
         raise NotImplementedError
 
-    def inject_requirements(
+
+class SecurityRequirementMerger:
+    """
+    Interface for things that can merge security requirements.
+
+    What can do that?
+    - Some specific auth classes
+    - Semantic schema providers
+
+    .. versionadded:: 0.16.0
+    """
+
+    __slots__ = ()
+
+    @abstractmethod
+    def merge_security_requirements(
         self,
         own_requirements: list['SecurityRequirement'],
         auth_requirements: list['SecurityRequirement'],

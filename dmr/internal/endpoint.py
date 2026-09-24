@@ -33,6 +33,7 @@ if TYPE_CHECKING:
         ExternalDocumentation,
         Link,
         Reference,
+        SecurityRequirement,
         Server,
     )
     from dmr.parsers import Parser
@@ -277,6 +278,16 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             Set it to ``None`` to have no tags at all.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
+        security: A sequence of security requirement objects for this operation.
+            Overrides controller and settings values.
+            Set it to ``None`` to disable ``security`` of this endpoint.
+            It never affects the runtime auth.
+            Useful to document external security mechanisms,
+            for example, the ones enforced by an HTTP proxy.
+            Used security schemes must be declared
+            as ``security_schemes`` in ``components``
+            of :class:`dmr.openapi.OpenAPIConfig`.
+            See :ref:`customizing_security_openapi`.
         external_docs: Additional external documentation for this operation.
         callbacks: A map of possible out-of band callbacks related to the
             parent operation. The key is a unique identifier
@@ -330,6 +341,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -364,6 +376,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -398,6 +411,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -435,6 +449,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -461,7 +476,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
                 parsers=parsers,
                 renderers=renderers,
                 validate_negotiation=validate_negotiation,
-                security=EMPTY,  # TODO
+                security=security,
                 auth=auth,
                 throttling=throttling,
                 throttling_allow_unsafe_cache=throttling_allow_unsafe_cache,
@@ -670,6 +685,16 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
             Set it to ``None`` to disable throttling of this endpoint.
         throttling_allow_unsafe_cache: Should this controller allow
             unsafe throttle Django cache backends?
+        security: A sequence of security requirement objects for this operation.
+            Overrides controller and settings values.
+            Set it to ``None`` to disable ``security`` of this endpoint.
+            It never affects the runtime auth.
+            Useful to document external security mechanisms,
+            for example, the ones enforced by an HTTP proxy.
+            Used security schemes must be declared
+            as ``security_schemes`` in ``components``
+            of :class:`dmr.openapi.OpenAPIConfig`.
+            See :ref:`customizing_security_openapi`.
         summary: A short summary of what the operation does.
             Defaults to the first paragraph of the endpoint's docstring.
             Set it to ``None`` to have no summary at all.
@@ -730,6 +755,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -760,6 +786,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -790,6 +817,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -823,6 +851,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -844,7 +873,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
                 parsers=parsers,
                 renderers=renderers,
                 validate_negotiation=validate_negotiation,
-                security=EMPTY,  # TODO
+                security=security,
                 auth=auth,
                 throttling=throttling,
                 throttling_allow_unsafe_cache=throttling_allow_unsafe_cache,

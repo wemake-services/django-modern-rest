@@ -403,7 +403,7 @@ each :class:`dmr.security.SyncAuth` and :class:`dmr.security.AsyncAuth`
 instance from ``auth`` contributes its
 :class:`~dmr.openapi.objects.SecurityScheme` objects —
 possibly none, possibly several —
-and one security requirement for the operation.
+and needed security requirements for the operation.
 
 Some security mechanisms, however, are not part of your Django app at all.
 For example, an API gateway that checks a header before the request

@@ -13,7 +13,7 @@ from dmr.exceptions import NotAcceptableError
 from dmr.internal.types import StrOrPromise
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
-from dmr.semantic_schema import AuthProvider
+from dmr.semantic_schema import SecurityProvider, SecurityRequirementMerger
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -146,7 +146,11 @@ def build_csrf_handler(
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class CSRFSemanticSchemaProvider(ResponseSpecProvider, AuthProvider):
+class CSRFSemanticSchemaProvider(
+    ResponseSpecProvider,
+    SecurityProvider,
+    SecurityRequirementMerger,
+):
     """
     Provide response specs for controllers that have ``csrf_exempt = False``.
 
@@ -253,7 +257,7 @@ class CSRFSemanticSchemaProvider(ResponseSpecProvider, AuthProvider):
         return [{self.security_scheme_name: []}]
 
     @override
-    def inject_requirements(
+    def merge_security_requirements(
         self,
         own_requirements: list[SecurityRequirement],
         auth_requirements: list[SecurityRequirement],

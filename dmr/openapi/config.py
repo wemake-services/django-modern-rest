@@ -48,6 +48,7 @@ class OpenAPIConfig:
         external_docs: Link to additional external documentation.
         security: Global security requirements applied across the API.
             Each entry may be overridden per operation.
+            See :ref:`customizing_security_openapi`.
         license: License information for the exposed API.
         components: Reusable components (schemas, responses, parameters, etc.)
             to include in the spec.

@@ -242,10 +242,13 @@ CSRF
 Semantic schema
 ---------------
 
-.. autoclass:: dmr.semantic_schema.AuthProvider
+.. autoclass:: dmr.semantic_schema.SecurityProvider
   :members:
 
 .. autoclass:: dmr.semantic_schema.ResponseValidationSpecProvider
+  :members:
+
+.. autoclass:: dmr.semantic_schema.SecurityRequirementMerger
   :members:
 
 

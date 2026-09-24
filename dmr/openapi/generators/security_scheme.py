@@ -14,7 +14,7 @@ if TYPE_CHECKING:
         SecurityRequirement,
         SecurityScheme,
     )
-    from dmr.semantic_schema import AuthProvider
+    from dmr.semantic_schema import SecurityProvider
     from dmr.serializer import BaseSerializer
 
 
@@ -177,6 +177,8 @@ class SecuritySchemeGenerator:
         list['SecurityRequirement'],
         dict[str, 'SecurityScheme | Reference'],
     ]:
+        from dmr.semantic_schema import SecurityRequirementMerger  # noqa: PLC0415
+
         semantic_providers = self._resolve_auth_semantic_providers(
             metadata,
             controller_cls,
@@ -189,10 +191,12 @@ class SecuritySchemeGenerator:
                 controller_cls,
             )
             new_requirements.extend(
-                provider.inject_requirements(
+                provider.merge_security_requirements(
                     semantic_requirements,
                     requirements,
-                ),
+                )
+                if isinstance(provider, SecurityRequirementMerger)
+                else semantic_requirements,
             )
 
         return new_requirements, self._semantic_security_schemes(
@@ -206,7 +210,7 @@ class SecuritySchemeGenerator:
         self,
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
-        semantic_providers: list['AuthProvider'],
+        semantic_providers: list['SecurityProvider'],
         requirements: list['SecurityRequirement'],
     ) -> dict[str, 'SecurityScheme | Reference']:
         used_requirements = _scheme_names(requirements)
@@ -227,19 +231,19 @@ class SecuritySchemeGenerator:
         self,
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
-    ) -> list['AuthProvider']:
-        from dmr.semantic_schema import AuthProvider  # noqa: PLC0415
+    ) -> list['SecurityProvider']:
+        from dmr.semantic_schema import SecurityProvider  # noqa: PLC0415
         from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
         return [
             provider
             for provider in resolve_setting(Settings.semantic_schema_providers)
-            if isinstance(provider, AuthProvider)
+            if isinstance(provider, SecurityProvider)
         ]
 
 
 def _scheme_names(
-    requirements: 'Sequence[SecurityRequirement]',
+    requirements: Sequence['SecurityRequirement'],
 ) -> frozenset[str]:
     return frozenset(
         itertools.chain.from_iterable(
