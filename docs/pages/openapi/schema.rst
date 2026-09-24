@@ -285,6 +285,9 @@ Or disable semantic auth completely:
   When disabling semantic auth on controller / endpoint levels,
   security schemes can still be registered if some other endpoints need them.
 
+You can mix these configurations
+in any way that makes sense for your application.
+
 
 .. _openapi-exclude-views:
 
