@@ -1,9 +1,12 @@
 import pytest
 from django.conf import LazySettings
+from typing_extensions import override
 
 from dmr import Controller, modify
 from dmr.exceptions import EndpointMetadataError
+from dmr.metadata import EndpointMetadata
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
 from dmr.throttling import (
     AsyncThrottle,
@@ -11,6 +14,31 @@ from dmr.throttling import (
     SyncOrAsyncThrottle,
     SyncThrottle,
 )
+
+
+class _StrictSyncThrottle(SyncThrottle):
+    """Throttle that only supports GET endpoints."""
+
+    @override
+    def validate(
+        self,
+        controller_cls: type[Controller[BaseSerializer]],
+        metadata: EndpointMetadata,
+    ) -> None:
+        super().validate(controller_cls, metadata)
+        if metadata.method != 'get':
+            raise EndpointMetadataError('Throttle only works on get endpoints')
+
+
+def test_custom_throttle_validate() -> None:
+    """Throttle.validate raises on invalid usage."""
+    with pytest.raises(EndpointMetadataError, match='only works on get'):
+
+        class _Controller(Controller[PydanticSerializer]):
+            throttling = (_StrictSyncThrottle(1, Rate.second),)
+
+            def post(self) -> str:
+                raise NotImplementedError
 
 
 def test_throttle_sync_mix() -> None:
