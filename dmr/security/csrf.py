@@ -80,6 +80,17 @@ class CSRFAuthMixin(ResponseSpecProvider, AuthProvider):  # noqa: WPS214
         """Provides the security scheme of the auth itself, without CSRF."""
         raise NotImplementedError
 
+    def csrf_security_scheme(self) -> SecurityScheme:
+        """Provides the security scheme of the CSRF."""
+        from django.conf import settings  # noqa: PLC0415
+
+        return SecurityScheme(
+            type='apiKey',
+            name=settings.CSRF_COOKIE_NAME,
+            security_scheme_in='cookie',
+            description='CSRF protection',
+        )
+
     @override
     def security_schemes(
         self,
@@ -92,7 +103,7 @@ class CSRFAuthMixin(ResponseSpecProvider, AuthProvider):  # noqa: WPS214
         }
         # TODO: support `CSRF` checks based on Django sessions
         if self._uses_csrf_cookie():
-            schemes[self.csrf_scheme_name] = csrf_security_scheme()
+            schemes[self.csrf_scheme_name] = self.csrf_security_scheme()
         return schemes
 
     @override
@@ -416,27 +427,5 @@ def csrf_response_spec(
             'Raised when CSRF check failed'
             if description is None
             else description
-        ),
-    )
-
-
-def csrf_security_scheme(
-    *,
-    scheme_name: str | None = None,
-    description: StrOrPromise | None = None,
-) -> SecurityScheme:
-    """
-    Default CSRF security scheme.
-
-    .. versionadded:: 0.16.0
-    """
-    from django.conf import settings  # noqa: PLC0415
-
-    return SecurityScheme(
-        type='apiKey',
-        name=settings.CSRF_COOKIE_NAME if scheme_name is None else scheme_name,
-        security_scheme_in='cookie',
-        description=(
-            'CSRF protection' if description is None else str(description)
         ),
     )
