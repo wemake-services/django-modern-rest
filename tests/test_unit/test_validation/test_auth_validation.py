@@ -54,23 +54,22 @@ def test_async_controller_requires_async_auth() -> None:
                 raise NotImplementedError
 
 
-class _GetOnlyAuth(DjangoSessionSyncAuth):
+class _RaisingAuth(DjangoSessionSyncAuth):
     @override
     def validate(
         self,
         controller_cls: type[Controller[BaseSerializer]],
         metadata: EndpointMetadata,
     ) -> None:
-        if metadata.method != 'get':
-            raise EndpointMetadataError('only works on GET endpoints')
+        raise EndpointMetadataError('Test')
 
 
 def test_auth_validate_hook_is_called() -> None:
     """Auth.validate hook is called during endpoint validation."""
-    with pytest.raises(EndpointMetadataError, match='only works on GET'):
+    with pytest.raises(EndpointMetadataError, match='Test'):
 
         class _Controller(Controller[PydanticSerializer]):
-            auth = (_GetOnlyAuth(),)
+            auth = (_RaisingAuth(),)
 
             def post(self) -> str:
                 raise NotImplementedError

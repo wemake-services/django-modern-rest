@@ -156,12 +156,12 @@ class _StrictThrottle(SyncThrottle):
         controller_cls: type[Controller[BaseSerializer]],
         metadata: EndpointMetadata,
     ) -> None:
-        raise EndpointMetadataError('custom throttle validate')
+        raise EndpointMetadataError('Test')
 
 
 def test_throttle_validate_hook_is_called() -> None:
     """Throttle.validate hook is called during endpoint validation."""
-    with pytest.raises(EndpointMetadataError, match='custom throttle validate'):
+    with pytest.raises(EndpointMetadataError, match='Test'):
 
         class _Controller(Controller[PydanticFastSerializer]):
             throttling = [_StrictThrottle(10, Rate.minute)]
