@@ -29,7 +29,8 @@ def normalize_prefixes(prefix: str, *prefixes: str) -> tuple[str, ...]:
         ('/api/', '/rest/', '/json/')
 
     """
-    return tuple(f'/{pref.strip("/")}/' for pref in (prefix, *prefixes))
+    all_prefixes = [prefix, *prefixes]
+    return tuple(f'/{pref.strip("/")}/' for pref in all_prefixes)
 
 
 @final
