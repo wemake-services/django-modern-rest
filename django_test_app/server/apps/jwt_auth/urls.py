@@ -155,11 +155,25 @@ router = Router(
             name='jwt_concrete_cookie_refresh_sync',
         ),
         path(
+            'jwt-concrete-cookie-refresh-async/',
+            concrete_views.CookieRefreshTokensAsyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='jwt_concrete_cookie_refresh_async',
+        ),
+        path(
             'jwt-concrete-cookie-logout-sync/',
             concrete_views.CookieLogoutSyncController.as_view(
                 serializer=PydanticSerializer,
             ),
             name='jwt_concrete_cookie_logout_sync',
+        ),
+        path(
+            'jwt-concrete-cookie-logout-async/',
+            concrete_views.CookieLogoutAsyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='jwt_concrete_cookie_logout_async',
         ),
     ],
     tags=['jwt_auth'],
