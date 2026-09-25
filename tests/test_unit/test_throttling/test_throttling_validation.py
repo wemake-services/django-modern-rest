@@ -1,12 +1,9 @@
 import pytest
 from django.conf import LazySettings
-from typing_extensions import override
 
 from dmr import Controller, modify
 from dmr.exceptions import EndpointMetadataError
-from dmr.metadata import EndpointMetadata
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
 from dmr.throttling import (
     AsyncThrottle,

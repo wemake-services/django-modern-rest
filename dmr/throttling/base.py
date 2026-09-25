@@ -2,7 +2,6 @@ import asyncio
 import dataclasses
 import enum
 import hashlib
-import warnings
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
@@ -18,10 +17,9 @@ from typing import (
     overload,
 )
 
-from django.core.cache.backends import dummy, locmem
 from typing_extensions import TypeVar, override
 
-from dmr.exceptions import EndpointMetadataError, TooManyRequestsError
+from dmr.exceptions import TooManyRequestsError
 from dmr.headers import HeaderSpec
 from dmr.internal.endpoint import request_endpoint
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
@@ -32,7 +30,6 @@ from dmr.throttling.backends import (
     BaseThrottleSyncBackend,
     SyncDjangoCache,
 )
-from dmr.throttling.backends.django_cache import UnsafeCacheBackendWarning
 from dmr.throttling.cache_keys import BaseThrottleCacheKey, RemoteAddr
 from dmr.throttling.headers import (
     BaseResponseHeadersProvider,

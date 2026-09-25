@@ -7,7 +7,6 @@ from typing_extensions import override
 from dmr import Controller, modify
 from dmr.endpoint import Endpoint
 from dmr.exceptions import EndpointMetadataError
-from dmr.metadata import EndpointMetadata
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import SyncAuth, SyncOrAsyncAuth
 from dmr.security.http import HttpBasicAsyncAuth, HttpBasicSyncAuth
