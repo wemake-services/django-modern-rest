@@ -236,7 +236,7 @@ CSRF
 
 .. autofunction:: dmr.security.csrf.csrf_response_spec
 
-.. autoclass:: dmr.security.csrf.csrf.CSRFAuthMixin
+.. autoclass:: dmr.security.csrf.CSRFAuthMixin
   :members:
 
 
