@@ -62,8 +62,9 @@ def test_explicitly_abstract_controller_as_view() -> None:
             raise NotImplementedError
 
     assert _Custom.is_abstract
-    # It still has a real endpoint, it is just not routed:
-    assert _Custom.api_endpoints
+    # Endpoints are only built in a concrete context,
+    # this is exactly what makes this controller abstract:
+    assert not _Custom.api_endpoints
     with pytest.raises(EndpointMetadataError, match='_Custom'):
         _Custom.as_view()
 
@@ -81,6 +82,8 @@ def test_child_of_abstract_controller_is_concrete() -> None:
         """Nothing is defined here on purpose."""
 
     assert not _Concrete.is_abstract
+    # The concrete child is the one that builds the endpoints:
+    assert set(_Concrete.api_endpoints) == {'GET'}
     assert callable(_Concrete.as_view())
 
 
@@ -97,5 +100,6 @@ def test_child_can_declare_itself_abstract() -> None:
         is_abstract = True
 
     assert _StillAbstract.is_abstract
+    assert not _StillAbstract.api_endpoints
     with pytest.raises(EndpointMetadataError, match='_StillAbstract'):
         _StillAbstract.as_view()

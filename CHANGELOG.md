@@ -94,8 +94,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `schema_hook` class method to `MsgspecSchemaGenerator`
   to customize JSON schema generation for custom types, #1462
 - Explicit `is_abstract = True` controller definitions are now respected.
-  A controller with an exact serializer and endpoints can be marked
-  as abstract to be reused without being routed.
+  A controller with an exact serializer can be marked as abstract
+  to be reused without being routed: it does not build any endpoints.
   Subclasses that don't declare `is_abstract` themselves are concrete, #1458
 - `NewCookie.expires` and `CookieSpec.expires` can now be `dt.datetime`, #1456
 

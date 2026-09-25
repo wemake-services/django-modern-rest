@@ -15,4 +15,8 @@ class MyController(MyBaseController):
     """It does not declare `is_abstract`, so it is concrete again."""
 
     # It serves the same `GET` request as `MyBaseController`,
-    # but now it can be routed.
+    # but this one builds its endpoints and can be routed.
+
+
+# run: {"controller": "MyController", "method": "get", "url": "/api/example/"}  # noqa: ERA001
+# openapi: {"controller": "MyController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001
