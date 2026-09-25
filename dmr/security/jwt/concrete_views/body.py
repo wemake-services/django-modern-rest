@@ -61,10 +61,14 @@ class ObtainTokensSyncController(
 
     See :class:`~dmr.security.jwt.views.ObtainTokensSyncController`
     for all the jwt settings and hooks it inherits,
-    switch to it when the default request or response body does not fit.
+    and subclass that one for any custom logic instead of this controller.
 
     .. versionadded:: 0.16.0
     """
+
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
 
     @override
     @classmethod
@@ -115,6 +119,10 @@ class ObtainTokensAsyncController(
     .. versionadded:: 0.16.0
     """
 
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
+
     @override
     @classmethod
     def as_view(
@@ -164,10 +172,15 @@ class RefreshTokenSyncController(
     for :class:`~dmr.security.jwt.concrete_views.ObtainTokensSyncController`.
 
     See :class:`~dmr.security.jwt.views.RefreshTokenSyncController`
-    for all the settings and hooks it inherits.
+    for all the settings and hooks it inherits,
+    and subclass that one for any custom logic instead of this controller.
 
     .. versionadded:: 0.16.0
     """
+
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
 
     @override
     @classmethod
@@ -218,6 +231,10 @@ class RefreshTokenAsyncController(
     .. versionadded:: 0.16.0
     """
 
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
+
     @override
     @classmethod
     def as_view(
@@ -264,10 +281,15 @@ class VerifyTokenSyncController(
     and answers with an empty ``204 No Content`` when the token is valid.
 
     See :class:`~dmr.security.jwt.views.VerifyTokenSyncController`
-    for all the settings and hooks it inherits.
+    for all the settings and hooks it inherits,
+    and subclass that one for any custom logic instead of this controller.
 
     .. versionadded:: 0.16.0
     """
+
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
 
     @override
     @classmethod
@@ -308,6 +330,10 @@ class VerifyTokenAsyncController(
 
     .. versionadded:: 0.16.0
     """
+
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
 
     @override
     @classmethod

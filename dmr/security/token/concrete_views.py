@@ -77,10 +77,14 @@ class ObtainTokenSyncController(
 
     See :class:`~dmr.security.token.views.ObtainTokenSyncController`
     for all the token settings and hooks it inherits,
-    switch to it when the default request or response body does not fit.
+    and subclass that one for any custom logic instead of this controller.
 
     .. versionadded:: 0.16.0
     """
+
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
 
     @override
     def __init_subclass__(cls) -> None:
@@ -148,6 +152,10 @@ class ObtainTokenAsyncController(
 
     .. versionadded:: 0.16.0
     """
+
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
 
     @override
     def __init_subclass__(cls) -> None:

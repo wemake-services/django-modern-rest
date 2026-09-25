@@ -148,11 +148,13 @@ as the ones in ``dmr.security.token.views``, with
 already plugged in as the request and response bodies,
 and ``token_cls`` defaulting to
 :class:`~dmr.security.token.app.models.Token`.
-Every token setting and every hook still works the same way,
-subclass one as usual when you need to change something.
 Their ``as_view`` takes the fields they require as typed keyword
 arguments and passes everything else to django as usual, see
 :meth:`~dmr.security.token.concrete_views.ObtainTokenSyncController.as_view`.
+
+They all set ``auth = None``: they are the very endpoints
+that check credentials, so auth from the settings
+must never be required to reach them.
 
 .. note::
 
@@ -163,9 +165,10 @@ arguments and passes everything else to django as usual, see
 
 .. tip::
 
-  Start here. Move to the reusable controllers below
-  only when you need a different request or response body,
-  they are the same classes with the bodies left open.
+  These should be your default for the common cases.
+  Any custom logic belongs to the reusable controllers below instead:
+  they are the same classes with the bodies and the hooks left open,
+  so customize those rather than subclassing these.
 
 Customizable obtain views
 ~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,16 +1,20 @@
 from typing import Any, Final, TypeAlias, final
 
 import pytest
+from django.conf import LazySettings
 
 from dmr import Controller
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
+from dmr.security.base import SyncOrAsyncAuth
 from dmr.security.django_session import concrete_views as session_views
+from dmr.security.jwt import HeaderJWTAsyncAuth, HeaderJWTSyncAuth
 from dmr.security.jwt import concrete_views as jwt_views
 from dmr.security.token import concrete_views as token_views
 from dmr.security.token.app.models import Token
 from dmr.security.token.token import TokenLikeSync
 from dmr.serializer import BaseSerializer
+from dmr.settings import Settings
 
 _AnyController: TypeAlias = type[Controller[Any]]
 
@@ -208,3 +212,60 @@ def test_as_view_rejects_unknown_initkwargs() -> None:
             serializer=PydanticSerializer,
             token_cls=Token,
         )
+
+
+@pytest.fixture
+def _settings_auth(settings: LazySettings) -> None:
+    settings.DMR_SETTINGS = {
+        Settings.auth: [
+            SyncOrAsyncAuth(HeaderJWTSyncAuth(), HeaderJWTAsyncAuth()),
+        ],
+    }
+
+
+@pytest.mark.usefixtures('_settings_auth')
+def test_settings_auth_is_applied() -> None:
+    """Ensures that the settings auth is really there to be ignored."""
+
+    class _SyncController(Controller[PydanticSerializer]):
+        def post(self) -> None:
+            raise NotImplementedError
+
+    class _AsyncController(Controller[PydanticSerializer]):
+        async def post(self) -> None:
+            raise NotImplementedError
+
+    sync_auth = _SyncController.api_endpoints['POST'].metadata.auth
+    async_auth = _AsyncController.api_endpoints['POST'].metadata.auth
+    assert sync_auth
+    assert isinstance(sync_auth[0], HeaderJWTSyncAuth)
+    assert async_auth
+    assert isinstance(async_auth[0], HeaderJWTAsyncAuth)
+
+
+@pytest.mark.usefixtures('_settings_auth')
+@pytest.mark.parametrize('view_cls', _CONCRETE_VIEWS)
+def test_concrete_views_ignore_settings_auth(view_cls: _AnyController) -> None:
+    """Ensures that auth from the settings is never required to log in."""
+    view = view_cls.as_view(serializer=PydanticSerializer)
+
+    routed_cls = view.view_class  # type: ignore[attr-defined]
+    _assert_routable(routed_cls)
+    assert all(
+        endpoint.metadata.auth is None
+        for endpoint in routed_cls.api_endpoints.values()
+    )
+
+
+@pytest.mark.usefixtures('_settings_auth')
+def test_concrete_subclass_ignores_settings_auth() -> None:
+    """Ensures that subclasses written the usual way keep `auth=None`."""
+
+    @final
+    class _Subclass(
+        token_views.ObtainTokenSyncController[PydanticSerializer],
+    ):
+        """Has its serializer as a type argument."""
+
+    _assert_routable(_Subclass)
+    assert _Subclass.api_endpoints['POST'].metadata.auth is None

@@ -224,7 +224,11 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   the fields that controller requires and passes everything else
   to Django as `initkwargs`, so there is no view code at all:
   `path('login/', ObtainTokenSyncController.as_view(
-  serializer=PydanticSerializer, token_cls=Token))`, #1457
+  serializer=PydanticSerializer, token_cls=Token))`.
+  They all set `auth = None`, so auth from the settings never makes
+  the login endpoints themselves require auth.
+  Use them for the common cases, custom logic goes
+  to the reusable controllers in `views`, #1457
 - Added the missing OpenAPI 3.2 fields to our spec objects, #1485:
   - `OpenAPIConfig.self_uri` and `OpenAPI.self_uri` for `$self`
   - `Server.name`

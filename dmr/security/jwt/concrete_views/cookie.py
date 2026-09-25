@@ -72,10 +72,14 @@ class CookieObtainTokensSyncController(
 
     See :class:`~dmr.security.jwt.views.CookieObtainTokensSyncController`
     for all the cookie settings and hooks it inherits,
-    switch to it when the default request body does not fit.
+    and subclass that one for any custom logic instead of this controller.
 
     .. versionadded:: 0.16.0
     """
+
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
 
     jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
@@ -133,6 +137,10 @@ class CookieObtainTokensAsyncController(
     .. versionadded:: 0.16.0
     """
 
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
+
     jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
     )
@@ -186,6 +194,10 @@ class CookieRefreshTokensSyncController(
     .. versionadded:: 0.16.0
     """
 
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
+
     jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
     )
@@ -227,6 +239,10 @@ class CookieRefreshTokensAsyncController(
 
     .. versionadded:: 0.16.0
     """
+
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
 
     jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
@@ -272,6 +288,10 @@ class CookieLogoutSyncController(
     .. versionadded:: 0.16.0
     """
 
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
+
     jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
     )
@@ -313,6 +333,10 @@ class CookieLogoutAsyncController(
 
     .. versionadded:: 0.16.0
     """
+
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
 
     jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH

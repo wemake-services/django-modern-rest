@@ -83,17 +83,20 @@ as the ones in ``dmr.security.django_session.views``, with
 :class:`~dmr.security.django_session.views.DjangoSessionPayload` and
 :class:`~dmr.security.django_session.views.DjangoSessionResponse`
 already plugged in as the request and response bodies.
-Every hook still works the same way,
-subclass one as usual when you need to change something.
 Their ``as_view`` takes the fields they require as typed keyword
 arguments and passes everything else to django as usual, see
 :meth:`~dmr.security.django_session.concrete_views.DjangoSessionSyncController.as_view`.
 
+They all set ``auth = None``: they are the very endpoints
+that check credentials, so auth from the settings
+must never be required to reach them.
+
 .. tip::
 
-  Start here. Move to the reusable controllers below
-  only when you need a different request or response body,
-  they are the same classes with the bodies left open.
+  These should be your default for the common cases.
+  Any custom logic belongs to the reusable controllers below instead:
+  they are the same classes with the bodies and the hooks left open,
+  so customize those rather than subclassing these.
 
 
 Customizing pre-existing views

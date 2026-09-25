@@ -51,11 +51,15 @@ class DjangoSessionSyncController(
         ... )
 
     See :class:`~dmr.security.django_session.views.DjangoSessionSyncController`
-    for all the hooks it inherits, switch to it
-    when the default request or response body does not fit.
+    for all the hooks it inherits, and subclass that one
+    for any custom logic instead of this controller.
 
     .. versionadded:: 0.16.0
     """
+
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
 
     @override
     @classmethod
@@ -105,6 +109,10 @@ class DjangoSessionAsyncController(
 
     .. versionadded:: 0.16.0
     """
+
+    # Auth endpoints handle credentials on their own,
+    # so auth from the settings must never be required for them:
+    auth = None
 
     @override
     @classmethod
