@@ -1,10 +1,9 @@
 """
-Ready-to-use versions of everything in ``dmr.security.token.views``.
+Ready-to-use token controllers that only need a serializer.
 
-Every controller here is the same controller as the one
-with the same name in ``dmr.security.token.views``,
-with the default request and response bodies already plugged in
-and ``token_cls`` defaulting to the model of the bundled token app.
+Route one with ``as_view(serializer=...)``, ``token_cls`` is optional
+and defaults to the model of the bundled token app.
+Custom logic belongs to the reusable ``dmr.security.token.views`` instead.
 """
 
 import importlib

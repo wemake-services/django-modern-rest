@@ -67,10 +67,8 @@ to be present for successful login.
 Ready-to-use views
 ------------------
 
-A login endpoint that takes a username and a password
-and starts a session is already written for you
-in ``dmr.security.django_session.concrete_views``.
-Name your serializer in the urls and you are done,
+``dmr.security.django_session.concrete_views`` has login controllers
+that only need a serializer. Pass it to ``as_view`` in your urls,
 there is no view code at all:
 
 .. literalinclude:: /examples/auth/django_session/django_session_concrete.py
@@ -78,13 +76,12 @@ there is no view code at all:
   :linenos:
   :language: python
 
-These are the very same controllers
-as the ones in ``dmr.security.django_session.views``, with
-:class:`~dmr.security.django_session.views.DjangoSessionPayload` and
-:class:`~dmr.security.django_session.views.DjangoSessionResponse`
-already plugged in as the request and response bodies.
-Their ``as_view`` takes the fields they require as typed keyword
-arguments and passes everything else to django as usual, see
+They take a username and a password
+as :class:`~dmr.security.django_session.views.DjangoSessionPayload`,
+start a session, and return the id of the user
+as :class:`~dmr.security.django_session.views.DjangoSessionResponse`.
+``as_view`` takes the serializer as a typed keyword argument
+and passes everything else to django as usual, see
 :meth:`~dmr.security.django_session.concrete_views.DjangoSessionSyncController.as_view`.
 
 They all set ``auth = None``: they are the very endpoints
@@ -94,9 +91,9 @@ must never be required to reach them.
 .. tip::
 
   These should be your default for the common cases.
-  Any custom logic belongs to the reusable controllers below instead:
-  they are the same classes with the bodies and the hooks left open,
-  so customize those rather than subclassing these.
+  Any custom logic belongs to the reusable controllers below,
+  which leave the bodies and the hooks open for you:
+  customize those rather than subclassing these.
 
 
 Customizing pre-existing views

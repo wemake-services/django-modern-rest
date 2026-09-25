@@ -7,7 +7,7 @@ from typing_extensions import override
 
 from dmr import Controller
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
-from dmr.security.token import HeaderTokenSyncAuth, concrete_views
+from dmr.security.token import HeaderTokenSyncAuth
 from dmr.security.token.app.models import Token
 from dmr.security.token.views import (
     ObtainTokenAsyncController,
@@ -70,18 +70,6 @@ class CustomObtainTokenAsyncController(
     async def make_api_response(self) -> ObtainTokenResponse:
         assert self.request.user.is_authenticated  # noqa: S101
         return {'token': await self.issue_token(user=self.request.user)}
-
-
-# Concrete view with every single setting left at its default,
-# including `token_cls`, which falls back to the bundled `Token` model.
-# Its sync counterpart is routed without a class at all, see `urls.py`.
-
-
-@final
-class ConcreteObtainTokenAsyncController(
-    concrete_views.ObtainTokenAsyncController[PydanticFastSerializer],
-):
-    """Concrete view to issue an opaque token."""
 
 
 @final

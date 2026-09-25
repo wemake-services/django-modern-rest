@@ -216,9 +216,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `concrete_views` next to `views` for every auth flow:
   `dmr.security.jwt.concrete_views`, `dmr.security.token.concrete_views`,
   and `dmr.security.django_session.concrete_views`.
-  They are the same controllers as the ones in `views`,
-  with the default request and response bodies already plugged in.
-  Nothing else is required: `token_cls` defaults to the `Token` model
+  They are controllers that only need a serializer,
+  everything else is optional: `token_cls` defaults to the `Token` model
   of `dmr.security.token.app`, and `jwt_refresh_cookie_path` defaults
   to `'/'`. Each of them has its own typed `as_view`, which takes
   the fields that controller requires and passes everything else

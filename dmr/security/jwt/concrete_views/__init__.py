@@ -1,10 +1,8 @@
 """
-Ready-to-use versions of everything in ``dmr.security.jwt.views``.
+Ready-to-use jwt controllers that only need a serializer.
 
-Every controller here is the same controller as the one
-with the same name in ``dmr.security.jwt.views``, with the default
-request and response bodies already plugged in. Route one
-with ``as_view(serializer=...)``, there is nothing else to write.
+Route one with ``as_view(serializer=...)``, there is nothing else to write.
+Custom logic belongs to the reusable ``dmr.security.jwt.views`` instead.
 """
 
 from dmr.security.jwt.concrete_views.body import (

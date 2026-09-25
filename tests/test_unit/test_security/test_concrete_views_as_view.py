@@ -91,7 +91,9 @@ def test_as_view_with_serializer(view_cls: _AnyController) -> None:
     assert routed_cls.__name__ == view_cls.__name__
     assert routed_cls.__qualname__ == view_cls.__qualname__
     assert routed_cls.__module__ == view_cls.__module__
-    assert routed_cls.__doc__ == view_cls.__doc__
+    # Our docstrings describe the library, they must not end up
+    # as `summary` and `description` in the API schema of users:
+    assert routed_cls.__doc__ is None
 
 
 @pytest.mark.parametrize('view_cls', _CONCRETE_VIEWS)

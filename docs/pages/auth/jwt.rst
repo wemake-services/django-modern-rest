@@ -169,8 +169,8 @@ Ready-to-use views
 
 Most APIs need exactly the same auth endpoints: take a username
 and a password, give back a pair of tokens, rotate them on demand.
-``dmr.security.jwt.concrete_views`` has all of that already written.
-Name your serializer in the urls and you are done,
+``dmr.security.jwt.concrete_views`` has all of them as controllers
+that only need a serializer. Pass it to ``as_view`` in your urls,
 there is no view code at all:
 
 .. literalinclude:: /examples/auth/jwt/jwt_concrete_views.py
@@ -178,15 +178,15 @@ there is no view code at all:
   :linenos:
   :language: python
 
-These are the very same controllers
-as the ones in ``dmr.security.jwt.views``,
-with :class:`~dmr.security.jwt.views.ObtainTokensPayload`,
-:class:`~dmr.security.jwt.views.RefreshTokenPayload`,
-:class:`~dmr.security.jwt.views.VerifyTokenPayload`, and
-:class:`~dmr.security.jwt.views.ObtainTokensResponse`
-already plugged in as the request and response bodies.
-Their ``as_view`` takes the fields they require as typed keyword
-arguments and passes everything else to django as usual, see
+They take a username and a password
+as :class:`~dmr.security.jwt.views.ObtainTokensPayload`,
+a refresh token as :class:`~dmr.security.jwt.views.RefreshTokenPayload`,
+or an access token as :class:`~dmr.security.jwt.views.VerifyTokenPayload`,
+and return new tokens as :class:`~dmr.security.jwt.views.ObtainTokensResponse`.
+``as_view`` takes the serializer, and the optional
+``jwt_refresh_cookie_path`` of the cookie controllers,
+as typed keyword arguments and passes everything else
+to django as usual, see
 :meth:`~dmr.security.jwt.concrete_views.ObtainTokensSyncController.as_view`.
 
 They all set ``auth = None``: they are the very endpoints
@@ -220,9 +220,9 @@ The cookie flow is routed the same way:
 .. tip::
 
   These should be your default for the common cases.
-  Any custom logic belongs to the reusable controllers below instead:
-  they are the same classes with the bodies and the hooks left open,
-  so customize those rather than subclassing these.
+  Any custom logic belongs to the reusable controllers below,
+  which leave the bodies and the hooks open for you:
+  customize those rather than subclassing these.
 
 
 Customizing pre-existing views

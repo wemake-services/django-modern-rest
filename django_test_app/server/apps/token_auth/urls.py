@@ -38,7 +38,9 @@ router = Router(
         ),
         path(
             'token-concrete-obtain-async/',
-            obtain.ConcreteObtainTokenAsyncController.as_view(),
+            concrete_views.ObtainTokenAsyncController.as_view(
+                serializer=PydanticFastSerializer,
+            ),
             name='token_concrete_obtain_async',
         ),
         path(

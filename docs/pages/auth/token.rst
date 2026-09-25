@@ -130,26 +130,23 @@ To issue a token one can use two main strategies:
 Ready-to-use obtain views
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-An endpoint that takes a username and a password and gives back a token
-is already written for you
-in ``dmr.security.token.concrete_views``.
-Name your serializer in the urls and you are done,
-there is no view code at all:
+``dmr.security.token.concrete_views`` has controllers that issue tokens
+and only need a serializer, the token model is optional.
+Pass them to ``as_view`` in your urls, there is no view code at all:
 
 .. literalinclude:: /examples/auth/token/token_concrete_obtain.py
   :caption: urls.py
   :linenos:
   :language: python
 
-These are the very same controllers
-as the ones in ``dmr.security.token.views``, with
-:class:`~dmr.security.token.views.ObtainTokenPayload` and
-:class:`~dmr.security.token.views.ObtainTokenResponse`
-already plugged in as the request and response bodies,
-and ``token_cls`` defaulting to
-:class:`~dmr.security.token.app.models.Token`.
-Their ``as_view`` takes the fields they require as typed keyword
-arguments and passes everything else to django as usual, see
+They take a username and a password
+as :class:`~dmr.security.token.views.ObtainTokenPayload`
+and return a new token
+as :class:`~dmr.security.token.views.ObtainTokenResponse`,
+issued with :class:`~dmr.security.token.app.models.Token` by default.
+``as_view`` takes the serializer and the optional ``token_cls``
+as typed keyword arguments and passes everything else
+to django as usual, see
 :meth:`~dmr.security.token.concrete_views.ObtainTokenSyncController.as_view`.
 
 They all set ``auth = None``: they are the very endpoints
@@ -166,9 +163,9 @@ must never be required to reach them.
 .. tip::
 
   These should be your default for the common cases.
-  Any custom logic belongs to the reusable controllers below instead:
-  they are the same classes with the bodies and the hooks left open,
-  so customize those rather than subclassing these.
+  Any custom logic belongs to the reusable controllers below,
+  which leave the bodies and the hooks open for you:
+  customize those rather than subclassing these.
 
 Customizable obtain views
 ~~~~~~~~~~~~~~~~~~~~~~~~~
