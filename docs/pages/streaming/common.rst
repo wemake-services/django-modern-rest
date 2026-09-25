@@ -320,7 +320,7 @@ Next we define an API endpoint for ``GET`` method.
 We use :func:`~dmr.negotiation.conditional_type` function to specify which
 type will be returned in which case for the OpenAPI metadata.
 
-And ``_event_source()`` method which will provide events for both of the formats.
+And ``_source()`` method which will provide events for both of the formats.
 
 The last thing we do is we check what ``Accept`` header
 we are working with and provide an appropriate format for each case.

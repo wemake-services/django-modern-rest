@@ -89,7 +89,7 @@ class UserPk(BaseThrottleCacheKey):
         user = controller.request.user
         user_pk = getattr(user, 'pk', None)
         if (  # TODO: this is a bug in `WPS` :(
-            user_pk is None  # noqa: WPS222
+            user_pk is None
             or (getattr(user, 'is_superuser', False) and self.exclude_superuser)
             or (getattr(user, 'is_staff', False) and self.exclude_stuff)
         ):

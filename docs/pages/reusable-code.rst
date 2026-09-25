@@ -306,14 +306,14 @@ Here's how it works:
 What happens here?
 
 1. We define a reusable controller with lazy endpoint specification
-2. We define ``_lazy_spec`` classmethod that will provide the actual decorator
+2. We define ``lazy_spec`` classmethod that will provide the actual decorator
    during the child - final - controller build time
 3. We use class-level API to define constants that people
    can modify in their child - final - controllers if needed.
    But, the default implementation would work the way we described it
 
 Notice that we use special types to define
-the return type from the ``_lazy_spec`` classmethod.
+the return type from the ``lazy_spec`` classmethod.
 Here are all of them, choose the one for your task:
 
 .. list-table::
@@ -407,7 +407,7 @@ But, user is free to modify any parts of the spec, if needed.
 
 .. note::
 
-  Notice that ``_lazy_spec`` classmethod is resolve from the final controller,
+  Notice that ``lazy_spec`` classmethod is resolve from the final controller,
   not the one that was used during the decoration time.
 
   ``@classmethod`` is preferable over ``lambda`` functions,

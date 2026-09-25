@@ -70,7 +70,6 @@ def test_unsafe_cache_warns(
     backend: dict[str, Any],
 ) -> None:
     """Test that unsafe cache warns."""
-    settings.DMR_SETTINGS = {}
     settings.CACHES = dict(backend)
 
     with pytest.warns(
@@ -101,7 +100,6 @@ def test_unsafe_cache_disabled(
     backend: dict[str, Any],
 ) -> None:
     """Test that unsafe cache can be disabled."""
-    settings.DMR_SETTINGS = {}
     settings.CACHES = dict(backend)
 
     with warnings.catch_warnings(record=True) as captured:
@@ -128,18 +126,10 @@ def test_unsafe_cache_disabled(
     assert endpoints['POST'].metadata.throttling_allow_unsafe_cache is None
 
 
-@pytest.mark.parametrize(
-    'backend',
-    [_REDIS_CACHES],
-)
-def test_safe_cache(
-    settings: LazySettings,
-    *,
-    backend: dict[str, Any],
-) -> None:
-    """Test that unsafe cache can be disabled."""
+def test_safe_cache(settings: LazySettings) -> None:
+    """Test that safe cache does not warn."""
     settings.DMR_SETTINGS = {}
-    settings.CACHES = dict(backend)
+    settings.CACHES = dict(_REDIS_CACHES)
 
     with warnings.catch_warnings(record=True) as captured:
 

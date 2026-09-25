@@ -211,7 +211,6 @@ def test_wrong_auth_params(
     })
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
     [
@@ -229,7 +228,6 @@ def test_wrong_auth_params(
 )
 def test_wrong_auth_structure(
     dmr_client: DMRClient,
-    user: User,
     *,
     url: str,
     auth_params: dict[str, str],
@@ -381,7 +379,6 @@ def test_refresh_expired_token(
     })
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
     [
@@ -573,7 +570,6 @@ def test_verify_expired_token(
     })
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
     [
@@ -595,7 +591,6 @@ def test_verify_malformed_token(
     })
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
     [
@@ -684,7 +679,6 @@ def test_verify_inactive_user(
     })
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
     [
@@ -712,7 +706,6 @@ def test_refresh_non_numeric_subject(
     })
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
     [

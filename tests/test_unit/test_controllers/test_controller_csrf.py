@@ -1,7 +1,6 @@
-from collections.abc import Callable
 from http import HTTPStatus
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpResponse
 from django.middleware.csrf import _get_new_csrf_string, _mask_cipher_secret  # type: ignore[attr-defined]
 from django.test import override_settings
 from django.urls import reverse
@@ -63,9 +62,7 @@ def test_csrf_controller() -> None:
 
 
 @override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_handler)
-def test_csrf_controller_valid(
-    fill_csrf: Callable[[HttpRequest], HttpRequest],
-) -> None:
+def test_csrf_controller_valid() -> None:
     """Ensure that `csrf_exempt=False` on controller is supported."""
     dmr_client = DMRClient(enforce_csrf_checks=True)
     secret = _get_new_csrf_string()

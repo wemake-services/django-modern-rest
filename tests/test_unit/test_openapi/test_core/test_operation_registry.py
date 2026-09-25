@@ -3,14 +3,6 @@ import pytest
 from dmr.openapi.core.registry import OperationIdRegistry
 
 
-class _TestClass:
-    field: int
-
-
-class _OtherTestClass:
-    field: int
-
-
 def test_multiple_unique_operation_ids() -> None:
     """Test that registering multiple unique operation IDs succeeds."""
     operation_id_registry = OperationIdRegistry()

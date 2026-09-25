@@ -1,12 +1,6 @@
 from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.openapi.objects import Server
-from dmr.openapi.views import (
-    OpenAPIJsonView,
-    RedocView,
-    ScalarView,
-    StoplightView,
-    SwaggerView,
-)
+from dmr.openapi.views import OpenAPIJsonView, SwaggerView
 from dmr.routing import Router, path
 from examples.getting_started.msgspec_controller import UserController
 
@@ -32,9 +26,6 @@ urlpatterns = [
     router.to_urlpatterns(namespace='api'),
     path('docs/openapi.json/', OpenAPIJsonView.as_view(schema), name='openapi'),
     path('docs/swagger/', SwaggerView.as_view(schema), name='swagger'),
-    path('docs/scalar/', ScalarView.as_view(schema), name='scalar'),
-    path('docs/redoc/', RedocView.as_view(schema), name='redoc'),
-    path('docs/stoplight/', StoplightView.as_view(schema), name='stoplight'),
 ]
 
 # openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001

@@ -366,13 +366,11 @@ async def test_event_response_validation(
 @pytest.mark.asyncio
 @pytest.mark.parametrize('serializer', serializers)
 @pytest.mark.parametrize('validate_responses', [True, False, EMPTY])
-@pytest.mark.parametrize('method', [HTTPMethod.GET, HTTPMethod.POST])
 async def test_sse_api_error(
     dmr_async_rf: DMRAsyncRequestFactory,
     *,
     serializer: type[BaseSerializer],
     validate_responses: bool | Sentinel,
-    method: HTTPMethod,
 ) -> None:
     """Ensures that raising API errors is supported in SSE."""
 
@@ -393,13 +391,44 @@ async def test_sse_api_error(
                 status_code=HTTPStatus.CONFLICT,
             )
 
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CONFLICT, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'API Error'}],
+    })
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('serializer', serializers)
+async def test_sse_api_error_raw_endpoint(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    serializer: type[BaseSerializer],
+) -> None:
+    """Ensures that returning API errors from raw SSE endpoints works."""
+
+    class _ClassBasedSSE(
+        SSEController[serializer],  # type: ignore[valid-type]
+    ):
+        responses = (
+            ResponseSpec(
+                return_type=ErrorModel,
+                status_code=HTTPStatus.CONFLICT,
+            ),
+        )
+
         async def post(self) -> HttpResponse:
             return self.to_error(
                 format_error('API Error'),
                 status_code=HTTPStatus.CONFLICT,
             )
 
-    request = dmr_async_rf.generic(str(method), '/whatever/')
+    request = dmr_async_rf.post('/whatever/')
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 

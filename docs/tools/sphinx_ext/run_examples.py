@@ -469,7 +469,7 @@ class _BaseBuilder:  # noqa: WPS214
         controller = self._find_controller(module)
         url_path = _get_route_path_from_run_args(
             self.config,
-        ).lstrip('/')  # noqa: WPS226
+        ).lstrip('/')
         return [
             path(url_path, controller),
             *_build_named_urls(self.config, controller),
@@ -496,7 +496,7 @@ class _OpenAPIBuilder(_BaseBuilder):
         controller = self._find_controller(module)
         url_path = _get_route_path_from_run_args(
             self.config,
-        ).lstrip('/')  # noqa: WPS226
+        ).lstrip('/')
 
         router = Router(
             '',

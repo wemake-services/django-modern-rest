@@ -14,6 +14,12 @@ Middleware wrappers
   :members:
 
 
+CSRF helpers
+------------
+
+.. autofunction:: dmr.internal.csrf.ensure_csrf
+
+
 Json backends
 -------------
 
