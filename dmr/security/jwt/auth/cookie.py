@@ -4,9 +4,8 @@ from typing import TYPE_CHECKING, Final, Self
 from django.http import HttpRequest
 from typing_extensions import override
 
-from dmr.internal.csrf import CSRFAuthMixin
 from dmr.openapi.objects import SecurityScheme
-from dmr.security.csrf import CSRF_SCHEME_NAME
+from dmr.security.csrf import CSRF_SCHEME_NAME, CSRFAuthMixin
 from dmr.security.jwt.auth.base import BaseJWTAsyncAuth, BaseJWTSyncAuth
 from dmr.security.jwt.token import JWToken
 

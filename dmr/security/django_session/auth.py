@@ -3,10 +3,9 @@ from typing import TYPE_CHECKING, Self, TypeGuard
 from django.conf import settings
 from typing_extensions import override
 
-from dmr.internal.csrf import CSRFAuthMixin
 from dmr.openapi.objects import SecurityScheme
 from dmr.security.base import AsyncAuth, SyncAuth
-from dmr.security.csrf import CSRF_SCHEME_NAME
+from dmr.security.csrf import CSRF_SCHEME_NAME, CSRFAuthMixin
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractBaseUser, AnonymousUser

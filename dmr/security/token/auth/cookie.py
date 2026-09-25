@@ -3,9 +3,8 @@ from typing import TYPE_CHECKING, Final, Self
 from django.http import HttpRequest
 from typing_extensions import override
 
-from dmr.internal.csrf import CSRFAuthMixin
 from dmr.openapi.objects import SecurityScheme
-from dmr.security.csrf import CSRF_SCHEME_NAME
+from dmr.security.csrf import CSRF_SCHEME_NAME, CSRFAuthMixin
 from dmr.security.token.auth.base import BaseTokenAsyncAuth, BaseTokenSyncAuth
 from dmr.security.token.token import DEFAULT_TOKEN_ALGORITHM, DEFAULT_TOKEN_SALT
 
