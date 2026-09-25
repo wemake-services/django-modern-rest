@@ -63,7 +63,6 @@ def test_throttle_sync_per_endpoint(
     assert metadata.throttling_before_auth
     assert len(metadata.throttling_before_auth) == 1
     assert metadata.throttling_after_auth is None
-    assert metadata.throttling_allow_unsafe_cache is None
     assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
 
     for _ in range(_ATTEMPTS):
@@ -130,7 +129,6 @@ async def test_throttle_async_per_controller(
     assert metadata.throttling_before_auth
     assert len(metadata.throttling_before_auth) == 1
     assert metadata.throttling_after_auth is None
-    assert metadata.throttling_allow_unsafe_cache is None
     assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
 
     for _ in range(_ATTEMPTS):

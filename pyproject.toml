@@ -563,7 +563,11 @@ addopts = [
 # Strict `@xfail` by default:
 xfail_strict = true
 # Fail on warnings:
-filterwarnings = [ "error" ]
+filterwarnings = [
+  "error",
+  # Tests use `LocMemCache` for throttling on purpose:
+  "ignore::dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning",
+]
 # pytest-asyncio configuration:
 # https://pytest-asyncio.readthedocs.io/en/stable/reference/configuration.html
 asyncio_mode = "auto"

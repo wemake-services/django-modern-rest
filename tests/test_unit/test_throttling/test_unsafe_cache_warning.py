@@ -8,12 +8,11 @@ from django.conf import LazySettings
 from django.http import HttpResponse
 from typing_extensions import override
 
-from dmr import Controller, ResponseSpec, modify, validate
+from dmr import Controller, ResponseSpec, validate
 from dmr.exceptions import EndpointMetadataError
 from dmr.metadata import EndpointMetadata
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.serializer import BaseSerializer
-from dmr.settings import Settings
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 from dmr.throttling.backends.django_cache import (
     AsyncDjangoCache,
@@ -46,10 +45,6 @@ def test_unsafe_cache_raises(
     backend: dict[str, Any],
 ) -> None:
     """Test that unsafe cache raises."""
-    settings.DMR_SETTINGS = {
-        **settings.DMR_SETTINGS,
-        Settings.throttling_allow_unsafe_cache: False,
-    }
     settings.CACHES = dict(backend)
 
     with pytest.raises(
@@ -59,7 +54,11 @@ def test_unsafe_cache_raises(
 
         class _Controller(Controller[PydanticFastSerializer]):
             throttling = [
-                SyncThrottle(10, Rate.minute, backend=SyncDjangoCache()),
+                SyncThrottle(
+                    10,
+                    Rate.minute,
+                    backend=SyncDjangoCache(allow_unsafe_cache=False),
+                ),
             ]
 
             def get(self) -> str:
@@ -72,7 +71,7 @@ def test_unsafe_cache_warns(
     *,
     backend: dict[str, Any],
 ) -> None:
-    """Test that unsafe cache warns."""
+    """Test that unsafe cache warns by default."""
     settings.CACHES = dict(backend)
 
     with pytest.warns(
@@ -81,16 +80,12 @@ def test_unsafe_cache_warns(
     ):
 
         class _Controller(Controller[PydanticFastSerializer]):
-            throttling_allow_unsafe_cache = True
             throttling = [
                 AsyncThrottle(10, Rate.minute, backend=AsyncDjangoCache()),
             ]
 
             async def get(self) -> str:
                 raise NotImplementedError
-
-    metadata = _Controller.api_endpoints['GET'].metadata
-    assert metadata.throttling_allow_unsafe_cache is True
 
 
 @pytest.mark.parametrize(
@@ -102,51 +97,75 @@ def test_unsafe_cache_disabled(
     *,
     backend: dict[str, Any],
 ) -> None:
-    """Test that unsafe cache can be disabled."""
+    """Test that unsafe cache check can be disabled."""
     settings.CACHES = dict(backend)
 
     with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter('always')
 
         class _Controller(Controller[PydanticFastSerializer]):
             throttling = [
-                AsyncThrottle(10, Rate.minute, backend=AsyncDjangoCache()),
+                AsyncThrottle(
+                    10,
+                    Rate.minute,
+                    backend=AsyncDjangoCache(allow_unsafe_cache=None),
+                ),
             ]
 
-            @modify(throttling_allow_unsafe_cache=None)
             async def get(self) -> str:
                 raise NotImplementedError
 
-            @validate(
-                ResponseSpec(str, status_code=HTTPStatus.OK),
-                throttling_allow_unsafe_cache=None,
-            )
+            @validate(ResponseSpec(str, status_code=HTTPStatus.OK))
             async def post(self) -> HttpResponse:
                 raise NotImplementedError
 
-    assert len(captured) == 0
-    endpoints = _Controller.api_endpoints
-    assert endpoints['GET'].metadata.throttling_allow_unsafe_cache is None
-    assert endpoints['POST'].metadata.throttling_allow_unsafe_cache is None
+    assert not captured
 
 
-def test_safe_cache(settings: LazySettings) -> None:
-    """Test that safe cache does not warn."""
-    settings.DMR_SETTINGS = {}
-    settings.CACHES = dict(_REDIS_CACHES)
+def test_unsafe_cache_is_checked_per_backend(settings: LazySettings) -> None:
+    """Each backend instance controls its own unsafe cache check."""
+    settings.CACHES = dict(_LOCMEM_CACHES)
 
     with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter('always')
 
         class _Controller(Controller[PydanticFastSerializer]):
             throttling = [
-                AsyncThrottle(10, Rate.minute, backend=AsyncDjangoCache()),
+                SyncThrottle(
+                    10,
+                    Rate.minute,
+                    backend=SyncDjangoCache(allow_unsafe_cache=None),
+                ),
+                SyncThrottle(100, Rate.hour, backend=SyncDjangoCache()),
+            ]
+
+            def get(self) -> str:
+                raise NotImplementedError
+
+    assert len(captured) == 1
+    assert captured[0].category is UnsafeCacheBackendWarning
+
+
+def test_safe_cache(settings: LazySettings) -> None:
+    """Test that safe cache does not warn, even in the strict mode."""
+    settings.CACHES = dict(_REDIS_CACHES)
+
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter('always')
+
+        class _Controller(Controller[PydanticFastSerializer]):
+            throttling = [
+                AsyncThrottle(
+                    10,
+                    Rate.minute,
+                    backend=AsyncDjangoCache(allow_unsafe_cache=False),
+                ),
             ]
 
             async def get(self) -> str:
                 raise NotImplementedError
 
-    assert len(captured) == 0
-    metadata = _Controller.api_endpoints['GET'].metadata
-    assert metadata.throttling_allow_unsafe_cache
+    assert not captured
 
 
 class _StrictThrottle(SyncThrottle):

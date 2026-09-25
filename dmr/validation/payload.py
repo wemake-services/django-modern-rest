@@ -66,7 +66,6 @@ class _BasePayload:
     throttling: (
         Sequence['SyncThrottle'] | Sequence['AsyncThrottle'] | Sentinel | None
     )
-    throttling_allow_unsafe_cache: bool | Sentinel | None
 
 
 @final
@@ -111,7 +110,6 @@ class ValidateEndpointPayload(_BasePayload):
             validate_negotiation=EMPTY,
             auth=EMPTY,
             throttling=EMPTY,
-            throttling_allow_unsafe_cache=EMPTY,
             extras=EMPTY,
             extras_cls=EMPTY,
         )
