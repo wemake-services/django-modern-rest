@@ -88,7 +88,7 @@ class UserPk(BaseThrottleCacheKey):
         """Return ``request.user.pk`` when user should be throttled."""
         user = controller.request.user
         user_pk = getattr(user, 'pk', None)
-        if (  # TODO: this is a bug in `WPS` :(
+        if (
             user_pk is None
             or (getattr(user, 'is_superuser', False) and self.exclude_superuser)
             or (getattr(user, 'is_staff', False) and self.exclude_stuff)
