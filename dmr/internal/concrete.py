@@ -14,7 +14,7 @@ _SERIALIZER_ATTR: Final = 'serializer'
 
 def build_concrete_controller(
     controller_cls: type[_ControllerT],
-    **class_attrs: object,
+    **class_attrs: Any,
 ) -> type[_ControllerT] | None:
     """
     Subclass *controller_cls* with the given class attributes.
