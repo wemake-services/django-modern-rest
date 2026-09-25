@@ -1207,12 +1207,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
         self._validate_components(controller_cls)
         self._validate_parsers(controller_cls)
         self._validate_renderers(controller_cls)
-        for throttling in (
-            self.metadata.throttling_before_auth,
-            self.metadata.throttling_after_auth,
-        ):
-            for throttle in throttling or ():
-                throttle.validate(controller_cls, self.metadata)
+        for throttle in self.metadata.throttling or ():
+            throttle.validate(controller_cls, self.metadata)
         for auth in self.metadata.auth or ():
             auth.validate(controller_cls, self.metadata)
 

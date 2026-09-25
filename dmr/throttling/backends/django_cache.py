@@ -1,9 +1,12 @@
 import dataclasses
+import warnings
 from typing import TYPE_CHECKING, final
 
 from django.core.cache import DEFAULT_CACHE_ALIAS, BaseCache, caches
+from django.core.cache.backends import dummy, locmem
 from typing_extensions import override
 
+from dmr.exceptions import EndpointMetadataError
 from dmr.internal.json import json_dumps_bytes, json_loads
 from dmr.throttling.backends.base import (
     BaseThrottleAsyncBackend,
@@ -14,6 +17,7 @@ from dmr.throttling.backends.base import (
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
+    from dmr.metadata import EndpointMetadata
     from dmr.serializer import BaseSerializer
     from dmr.throttling import AsyncThrottle, SyncThrottle
     from dmr.throttling.algorithms import BaseThrottleAlgorithm
@@ -51,6 +55,31 @@ class _DjangoCache:
         cache_object: CachedRateLimit,
     ) -> bytes:
         return json_dumps_bytes(cache_object)
+
+    def validate(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: 'EndpointMetadata',
+    ) -> None:
+        """Raise when unsafe cache engine is used."""
+        allow_cache = metadata.throttling_allow_unsafe_cache
+        if allow_cache is None or not isinstance(
+            self._cache,
+            (locmem.LocMemCache, dummy.DummyCache),
+        ):
+            return
+
+        cache_name = type(self._cache).__qualname__
+        msg = (
+            f'Throttling is using {cache_name!r} cache backend '
+            f'in {metadata.endpoint_name!r} which is not safe for production: '
+            'counters are NOT shared between processes/instances. '
+            'Use Redis or Memcached backends instead.'
+        )
+        if allow_cache:
+            warnings.warn(msg, category=UnsafeCacheBackendWarning, stacklevel=1)
+        else:
+            raise EndpointMetadataError(msg)
 
 
 @dataclasses.dataclass(slots=True, frozen=True)

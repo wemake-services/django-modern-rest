@@ -2,7 +2,6 @@ import asyncio
 import dataclasses
 import enum
 import hashlib
-import warnings
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
@@ -18,10 +17,9 @@ from typing import (
     overload,
 )
 
-from django.core.cache.backends import dummy, locmem
 from typing_extensions import TypeVar, override
 
-from dmr.exceptions import EndpointMetadataError, TooManyRequestsError
+from dmr.exceptions import TooManyRequestsError
 from dmr.headers import HeaderSpec
 from dmr.internal.endpoint import request_endpoint
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
@@ -32,7 +30,6 @@ from dmr.throttling.backends import (
     BaseThrottleSyncBackend,
     SyncDjangoCache,
 )
-from dmr.throttling.backends.django_cache import UnsafeCacheBackendWarning
 from dmr.throttling.cache_keys import BaseThrottleCacheKey, RemoteAddr
 from dmr.throttling.headers import (
     BaseResponseHeadersProvider,
@@ -147,29 +144,7 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
         metadata: EndpointMetadata,
     ) -> None:
         """Validate throttling configuration at import time."""
-        allow_cache = metadata.throttling_allow_unsafe_cache
-        backend = self._backend
-        if (
-            allow_cache is None
-            or not isinstance(backend, (SyncDjangoCache, AsyncDjangoCache))
-            or not isinstance(
-                backend._cache,  # noqa: SLF001
-                (locmem.LocMemCache, dummy.DummyCache),
-            )
-        ):
-            return
-
-        cache_name = type(backend._cache).__qualname__  # noqa: SLF001
-        msg = (
-            f'Throttling is using {cache_name!r} cache backend '
-            f'in {metadata.endpoint_name!r} which is not safe for production: '
-            'counters are NOT shared between processes/instances. '
-            'Use Redis or Memcached backends instead.'
-        )
-        if allow_cache:
-            warnings.warn(msg, category=UnsafeCacheBackendWarning, stacklevel=1)
-        else:
-            raise EndpointMetadataError(msg)
+        self._backend.validate(controller_cls, metadata)
 
     def full_cache_key(
         self,
