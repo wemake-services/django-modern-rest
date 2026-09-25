@@ -137,7 +137,7 @@ async def test_throttle_async_per_controller(
         freezer.tick(delta=1)  # seconds
         request = dmr_async_rf.get('/whatever/')
         response = await dmr_async_rf.wrap(
-            _AsyncController.as_view()(request),  # noqa: WPS476
+            _AsyncController.as_view()(request),
         )
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.OK, response.content
@@ -230,7 +230,7 @@ async def test_throttle_async_per_settings(
     for _ in range(_ATTEMPTS):
         request = dmr_async_rf.get('/whatever/')
         response = await dmr_async_rf.wrap(
-            _AsyncController.as_view()(request),  # noqa: WPS476
+            _AsyncController.as_view()(request),
         )
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.OK, response.content
@@ -434,7 +434,7 @@ def test_throttle_full_cache_key_is_hashed(
     ).hexdigest()
 
     assert throttle.full_cache_key(endpoint, controller) == (
-        f'per-ip::{expected_hash}'  # noqa: WPS237
+        f'per-ip::{expected_hash}'
     )
 
 

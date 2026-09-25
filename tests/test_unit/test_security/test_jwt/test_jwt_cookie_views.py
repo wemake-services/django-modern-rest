@@ -17,7 +17,7 @@ from dmr.endpoint import ValidateAnyCallable
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.jwt.token import JWToken
-from dmr.security.jwt.views import (  # noqa: WPS235
+from dmr.security.jwt.views import (
     CookieLogoutSyncController,
     CookieObtainTokensSyncController,
     CookieRefreshTokensAsyncController,
