@@ -1,21 +1,11 @@
-from collections.abc import Mapping
-from http import HTTPStatus
 from typing import TYPE_CHECKING, Final, Self
 
-from django.conf import settings
 from django.http import HttpRequest
 from typing_extensions import override
 
-from dmr.internal.csrf import ensure_csrf
-from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
-from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
-from dmr.security.base import unauth_response_spec
-from dmr.security.csrf import (
-    CSRF_SCHEME_NAME,
-    SAFE_HTTP_METHODS,
-    csrf_response_spec,
-    csrf_security_scheme,
-)
+from dmr.internal.csrf import CSRFAuthMixin
+from dmr.openapi.objects import SecurityScheme
+from dmr.security.csrf import CSRF_SCHEME_NAME
 from dmr.security.token.auth.base import BaseTokenAsyncAuth, BaseTokenSyncAuth
 from dmr.security.token.token import DEFAULT_TOKEN_ALGORITHM, DEFAULT_TOKEN_SALT
 
@@ -27,92 +17,36 @@ if TYPE_CHECKING:
 _DEFAULT_PARAM: Final = 'token'
 
 
-class _BaseCookieTokenAuth(ResponseSpecProvider):  # noqa: WPS214
+class _BaseCookieTokenAuth(CSRFAuthMixin):
+    """Reads opaque tokens from a request cookie."""
+
+    # Slots are declared on the concrete classes below,
+    # otherwise we get a layout conflict when mixing them in.
     __slots__ = ()
 
-    # Annotations from the mixin type:
-    security_scheme_name: str
-    csrf_scheme_name: str
     cookie_name: str
 
-    @property
-    def www_authenticate_challenge(self) -> str | None:
-        """
-        Cookie auth has no challenge to advertise, so this returns ``None``.
-
-        A challenge asks the client for the ``Authorization`` header,
-        and this auth reads a cookie instead.
-        """
-
-    def security_schemes(
-        self,
-        metadata: EndpointMetadata,
-        controller_cls: type['Controller[BaseSerializer]'],
-    ) -> dict[str, 'SecurityScheme | Reference']:
-        """Provides a security schema definition."""
-        schemes: dict[str, SecurityScheme | Reference] = {
-            self.security_scheme_name: SecurityScheme(
-                type='apiKey',
-                name=self.cookie_name,
-                security_scheme_in='cookie',
-                description='Opaque token authentication via cookie',
-            ),
-        }
-        # TODO: support `CSRF` checks based on Django sessions
-        if self._uses_csrf_cookie():
-            schemes[self.csrf_scheme_name] = csrf_security_scheme()
-        return schemes
-
-    def security_requirements(
-        self,
-        metadata: EndpointMetadata,
-        controller_cls: type['Controller[BaseSerializer]'],
-    ) -> list[SecurityRequirement]:
-        """Provides a security schema usage requirement."""
-        requirement: SecurityRequirement = {self.security_scheme_name: []}
-        if self._uses_csrf_cookie() and not self._is_safe_http_method(metadata):
-            requirement[self.csrf_scheme_name] = []
-        return [requirement]
-
     @override
-    def provide_response_specs(
-        self,
-        metadata: EndpointMetadata,
-        controller_cls: type['Controller[BaseSerializer]'],
-        existing_responses: Mapping[HTTPStatus, ResponseSpec],
-    ) -> list[ResponseSpec]:
-        """Declare extra responses for cookie auth + CSRF checks."""
-        auth_response = self._add_new_response(
-            unauth_response_spec(controller_cls, metadata),
-            existing_responses,
+    def auth_security_scheme(self) -> SecurityScheme:
+        """Provides a security schema definition."""
+        return SecurityScheme(
+            type='apiKey',
+            name=self.cookie_name,
+            security_scheme_in='cookie',
+            description='Opaque token authentication via cookie',
         )
-        if self._is_safe_http_method(metadata):
-            # CSRF errors can't happen for safe methods:
-            return auth_response
-        return [
-            *auth_response,
-            *self._add_new_response(
-                csrf_response_spec(return_type=controller_cls.error_model),
-                existing_responses,
-            ),
-        ]
 
     def get_raw_token(self, request: HttpRequest) -> str | None:
         """Read the raw token from a cookie."""
         return request.COOKIES.get(self.cookie_name)
 
-    def _is_safe_http_method(self, metadata: EndpointMetadata) -> bool:
-        return metadata.method.upper() in SAFE_HTTP_METHODS
-
-    def _uses_csrf_cookie(self) -> bool:
-        return not settings.CSRF_USE_SESSIONS
-
+    @override
     def _ensure_csrf(self, controller: 'Controller[BaseSerializer]') -> None:
         # We must check that token is actually present,
         # so otherwise, we can skip this auth and try the next one,
         # without triggering the CSRF error, see #1289
         if self.get_raw_token(controller.request):
-            ensure_csrf(controller)
+            super()._ensure_csrf(controller)
 
 
 class CookieTokenSyncAuth(_BaseCookieTokenAuth, BaseTokenSyncAuth):

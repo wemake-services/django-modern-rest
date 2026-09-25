@@ -14,6 +14,15 @@ Middleware wrappers
   :members:
 
 
+CSRF helpers
+------------
+
+.. autofunction:: dmr.internal.csrf.ensure_csrf
+
+.. autoclass:: dmr.internal.csrf.CSRFAuthMixin
+  :members:
+
+
 Json backends
 -------------
 
