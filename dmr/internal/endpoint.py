@@ -234,8 +234,8 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
             Overrides controller and settings values.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
-            This value only matters if the response
-            will be a streaming response that supports event validation.
+            Can only be used with streaming controllers,
+            :exc:`~dmr.exceptions.EndpointMetadataError` is raised otherwise.
         extra_responses: Sequence of extra responses
             that this endpoint can return.
             Overrides controller and settings values.
@@ -311,6 +311,11 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
     .. versionchanged:: 0.15.0
         ``modify`` used to be a function, now it is an instance
         with ``lazy`` method for lazy reusable endpoints.
+
+    .. versionchanged:: 0.16.0
+        ``validate_events`` now raises
+        :exc:`~dmr.exceptions.EndpointMetadataError`
+        for non-streaming controllers.
 
     """
 
@@ -669,8 +674,8 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
             Overrides controller and settings values.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
-            This value only matters if the response
-            will be a streaming response that supports event validation.
+            Can only be used with streaming controllers,
+            :exc:`~dmr.exceptions.EndpointMetadataError` is raised otherwise.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this endpoint.
             Overrides controller and settings values.
@@ -737,6 +742,11 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
     .. versionchanged:: 0.15.0
         ``validate`` used to be a function, now it is an instance
         with ``lazy`` method for lazy reusable endpoints.
+
+    .. versionchanged:: 0.16.0
+        ``validate_events`` now raises
+        :exc:`~dmr.exceptions.EndpointMetadataError`
+        for non-streaming controllers.
 
     """
 

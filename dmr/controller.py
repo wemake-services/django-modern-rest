@@ -93,8 +93,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             that should not be collected. Overrides settings value.
         validate_events: Should this endpoint validate events?
             If not set, defaults to the ``validate_responses`` value.
-            This value only matters if the response
-            will be a streaming response that supports event validation.
+            Can only be set for streaming controllers,
+            :exc:`~dmr.exceptions.EndpointMetadataError` is raised otherwise.
         responses: List of responses schemas that this controller can return.
             Overrides ``'responses'`` key in the settings,
             can be overridden per endpoint.
@@ -178,6 +178,9 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     .. versionchanged:: 0.16.0
         Explicit ``is_abstract`` definitions are now respected:
         abstract controllers do not build any endpoints.
+        Explicit ``validate_events`` definitions now raise
+        :exc:`~dmr.exceptions.EndpointMetadataError`
+        for non-streaming controllers.
 
     """
 

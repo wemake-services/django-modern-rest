@@ -923,6 +923,21 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                     f'for {self.endpoint_name=}',
                 )
 
+    def _reject_streaming_only(
+        self,
+        *layers: object,
+        field_name: str,
+    ) -> None:
+        """Reject values that can only be used with streaming controllers."""
+        if self.controller_cls.streaming or all(
+            isinstance(layer, Sentinel) for layer in layers
+        ):
+            return
+        raise EndpointMetadataError(
+            f'`{field_name}` can only be used with streaming controllers, '
+            f'but it is set for non-streaming {self.endpoint_name!r}',
+        )
+
     def _build_validate_responses(self) -> bool:
         merger = self._merger('validate_responses')
         settings_value: bool | Sentinel = resolve_setting(
@@ -936,11 +951,19 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         return merger.not_empty(validate_responses)
 
     def _build_validate_events(self) -> bool:
+        endpoint_value = self.payload.validate_events if self.payload else EMPTY
+        # Settings value is global, so it is fine for it
+        # to be set for non-streaming controllers as well:
+        self._reject_streaming_only(
+            endpoint_value,
+            self.controller_cls.validate_events,
+            field_name='validate_events',
+        )
         settings_value: bool | Sentinel = resolve_setting(
             Settings.validate_events,
         )
         validate_events = self._merger('validate_events').first_set(
-            self.payload.validate_events if self.payload else EMPTY,
+            endpoint_value,
             self.controller_cls.validate_events,
             settings_value,
         )

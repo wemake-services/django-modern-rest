@@ -131,6 +131,11 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   Previously it was the same as the `HeaderJWTSyncAuth`
   and `HeaderJWTAsyncAuth` one, so using both of them in a single endpoint
   was generating a single `jwt` security scheme and requirement, #1587
+- Explicit `validate_events` values for non-streaming controllers
+  and their endpoints now raise `EndpointMetadataError`.
+  Only streaming controllers validate events, so this value
+  was silently ignored before. `Settings.validate_events` is still
+  allowed, because it is global, #1612
 
 ### Performance improvements
 

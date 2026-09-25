@@ -225,6 +225,14 @@ Rules:
 - If no explicit ``validate_events`` boolean value is specified, we fallback
   to ``validate_responses`` value
 
+.. note::
+
+  Regular controllers don't have any events to validate,
+  so ``validate_events`` can only be set for streaming controllers
+  and their endpoints. Otherwise,
+  :exc:`~dmr.exceptions.EndpointMetadataError` is raised.
+  The global setting is fine, it only affects streaming controllers.
+
 .. tabs::
 
   .. tab:: per endpoint
