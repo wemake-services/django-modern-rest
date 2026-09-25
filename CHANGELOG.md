@@ -330,6 +330,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Fixed reusable views `error_model` definition for `401` response, #1573
 - Fixed that `links` and `callbacks` in endpoints definitions can
   be any `Mapping`, not just `dict`, #1576
+- Now prefixes like `api/` in `build_404_handler` and `build_500_handler`
+  only cover full URLs like `/api/v1`
+  and do not cover partials like `/apiary/v1`, #1606
 
 
 ## 0.15.0 (2026-09-11)
