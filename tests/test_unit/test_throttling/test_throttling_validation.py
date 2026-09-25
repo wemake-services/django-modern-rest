@@ -30,7 +30,19 @@ class _StrictSyncThrottle(SyncThrottle):
             raise EndpointMetadataError('Throttle only works on get endpoints')
 
 
-def test_custom_throttle_validate() -> None:
+def test_custom_throttle_validate_pass() -> None:
+    """Throttle.validate passes when constraints are met."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        throttling = (_StrictSyncThrottle(1, Rate.second),)
+
+        def get(self) -> str:
+            raise NotImplementedError
+
+    # Controller is created successfully at import time.
+
+
+def test_custom_throttle_validate_fail() -> None:
     """Throttle.validate raises on invalid usage."""
     with pytest.raises(EndpointMetadataError, match='only works on get'):
 

@@ -55,7 +55,19 @@ class _StrictSyncAuth(_SyncAuth):
             raise EndpointMetadataError('Auth only works on get endpoints')
 
 
-def test_custom_auth_validate() -> None:
+def test_custom_auth_validate_pass() -> None:
+    """Auth.validate passes when constraints are met."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        auth = (_StrictSyncAuth(),)
+
+        def get(self) -> str:
+            raise NotImplementedError
+
+    # Controller is created successfully at import time.
+
+
+def test_custom_auth_validate_fail() -> None:
     """Auth.validate raises on invalid usage."""
     with pytest.raises(EndpointMetadataError, match='only works on get'):
 
