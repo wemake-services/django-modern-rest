@@ -124,7 +124,6 @@ async def test_async_throttle_jwt_token_cases(
 )
 def test_jwt_cache_key_is_hashed(
     dmr_rf: DMRRequestFactory,
-    freezer: FrozenDateTimeFactory,
     *,
     token: JWToken,
 ) -> None:

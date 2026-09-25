@@ -12,7 +12,7 @@ about its future URL. Why so?
    Our design allows any possible customizations
 
 .. literalinclude:: /examples/getting_started/urls.py
-  :caption: views.py
+  :caption: urls.py
   :language: python
   :linenos:
 
@@ -146,7 +146,7 @@ Here is how you can use it in your root ``urls.py``
 (in your `ROOT_URLCONF <https://docs.djangoproject.com/en/stable/ref/settings/#root-urlconf>`_):
 
 .. literalinclude:: /examples/routing/handler500.py
-  :caption: views.py
+  :caption: urls.py
   :language: python
   :linenos:
 

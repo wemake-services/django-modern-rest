@@ -6,7 +6,6 @@ from dmr.endpoint import Endpoint
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.serializer import BaseSerializer
-from dmr.test import DMRRequestFactory
 from dmr.throttling import AsyncThrottle, SyncThrottle
 from dmr.throttling.algorithms import (
     BaseThrottleAlgorithm,
@@ -55,7 +54,6 @@ class _NeedsSqlSync(BaseThrottleSyncBackend):
     ],
 )
 def test_unsupported_sync_backend(
-    dmr_rf: DMRRequestFactory,
     *,
     algorithm: BaseThrottleAlgorithm,
 ) -> None:
@@ -108,7 +106,6 @@ class _NeedsSqlAsync(BaseThrottleAsyncBackend):
     ],
 )
 def test_unsupported_async_backend(
-    dmr_rf: DMRRequestFactory,
     *,
     algorithm: BaseThrottleAlgorithm,
 ) -> None:

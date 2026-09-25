@@ -313,12 +313,8 @@ Choosing an algorithm
      - Auth endpoints (login, OTP, password reset), public APIs
 
 For auth and abuse-sensitive endpoints, use
-:class:`~dmr.throttling.algorithms.LeakyBucket`:
-
-.. literalinclude:: /examples/throttling/auth_leaky_bucket.py
-  :caption: views.py
-  :linenos:
-  :language: python
+:class:`~dmr.throttling.algorithms.LeakyBucket`,
+see the algorithm customization example above.
 
 Cache keys
 ~~~~~~~~~~

@@ -17,7 +17,7 @@ from dmr.endpoint import ValidateAnyCallable
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.jwt.token import JWToken
-from dmr.security.jwt.views import (  # noqa: WPS235
+from dmr.security.jwt.views import (
     CookieLogoutSyncController,
     CookieObtainTokensSyncController,
     CookieRefreshTokensAsyncController,
@@ -282,7 +282,6 @@ async def test_async_refresh(
     assert response.cookies.keys() == expected_cookies
 
 
-@pytest.mark.django_db
 def test_logout_checks_csrf(
     dmr_rf: DMRRequestFactory,
     fill_csrf: Callable[[HttpRequest], HttpRequest],
@@ -341,7 +340,6 @@ def test_refresh_cookie_path_is_required(
             """Missing `jwt_refresh_cookie_path` here."""
 
 
-@pytest.mark.django_db
 def test_redefined_validate_spec(
     dmr_rf: DMRRequestFactory,
     fill_csrf: Callable[[HttpRequest], HttpRequest],

@@ -19,7 +19,7 @@ and ``required=False`` headers (might be missing in some cases):
   :caption: views.py
   :language: python
   :linenos:
-  :emphasize-lines: 29-32
+  :emphasize-lines: 20-23
 
 .. note::
 
@@ -38,7 +38,7 @@ with known values to the final response.
   :caption: views.py
   :language: python
   :linenos:
-  :emphasize-lines: 20
+  :emphasize-lines: 14
 
 If you need headers with not static, but dynamic values, use "real endpoints"
 and pass ``headers`` dict to
@@ -83,7 +83,7 @@ of endpoints to describe response cookies.
   :caption: views.py
   :language: python
   :linenos:
-  :emphasize-lines: 16
+  :emphasize-lines: 14
 
 And you can set any cookies to :attr:`django.http.HttpResponse.cookies`
 with "real endpoints". Since we have strict schemas,

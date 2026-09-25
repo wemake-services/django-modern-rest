@@ -3,8 +3,6 @@ from dmr.plugins.pydantic import PydanticSerializer
 
 
 class BillController(Controller[PydanticSerializer]):
-    ignore_from_spec = True
-
     @modify(ignore_from_spec=True)
     async def get(self) -> str:
         return 'It works!'

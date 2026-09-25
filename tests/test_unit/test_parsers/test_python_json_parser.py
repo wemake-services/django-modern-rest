@@ -295,7 +295,6 @@ class _ProductModel(pydantic.BaseModel):
 @pytest.mark.parametrize('method', [HTTPMethod.GET, HTTPMethod.PUT])
 def test_json_parser_return_validation(
     dmr_rf: DMRRequestFactory,
-    faker: Faker,
     *,
     timezone: dt.timezone,
     method: HTTPMethod,

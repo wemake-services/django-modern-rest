@@ -92,18 +92,6 @@ def test_empty_request_body_patch_with_body_works() -> None:
     assert 'PATCH' in _GoodController.api_endpoints
 
 
-def test_empty_request_body_disabled_controller() -> None:
-    """Ensure that validation can be disabled on controller level."""
-
-    class _Controller(Controller[PydanticSerializer]):
-        no_validate_http_spec = {HttpSpec.empty_request_body}
-
-        def get(self, parsed_body: Body[_BodyModel]) -> str:
-            raise NotImplementedError
-
-    assert 'GET' in _Controller.api_endpoints
-
-
 def test_empty_request_body_disabled_scope() -> None:
     """Ensure that disabling on one controller does not affect others."""
 

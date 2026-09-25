@@ -4,8 +4,6 @@ from typing import TYPE_CHECKING
 import pytest
 from django.conf import LazySettings
 
-from dmr.settings import Settings
-
 if TYPE_CHECKING:
     import tracecov
 
@@ -37,15 +35,6 @@ def _openapi_schema_cache_clear() -> Iterator[None]:
 
     yield
     schema.cache_clear()
-
-
-@pytest.fixture(autouse=True)
-def _set_dmr_settings(settings: LazySettings) -> None:
-    settings.DMR_SETTINGS = {
-        Settings.openapi_examples_seed: 1,
-        # It might be already defined in some other place:
-        **getattr(settings, 'DMR_SETTINGS', {}),
-    }
 
 
 @pytest.fixture(autouse=True, params=[True, False])

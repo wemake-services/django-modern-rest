@@ -1,6 +1,7 @@
 import dataclasses
+import types
 from collections.abc import Sequence
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Final, TypeAlias
 
 from dmr.exceptions import EndpointMetadataError
 from dmr.internal.enums import stringify
@@ -46,6 +47,18 @@ class _SettingsModel(SettingsDict, total=False):
 assert _SettingsModel.__optional_keys__ == set(Settings), (  # noqa: S101
     'Settings enum and its type _SettingsModel have different keys'
 )
+
+_AllowedTypes: TypeAlias = tuple[type, ...]
+
+# Sequence settings and the types their items are allowed to have:
+_SEQUENCE_TYPES: Final = types.MappingProxyType({
+    'parsers': (Parser,),
+    'renderers': (Renderer,),
+    'auth': (SyncAuth, AsyncAuth, SyncOrAsyncAuth),
+    'throttling': (SyncThrottle, AsyncThrottle, SyncOrAsyncThrottle),
+    'responses': (ResponseSpec,),
+    'semantic_schema_providers': (ResponseSpecProvider, AuthProvider),
+})
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -97,78 +110,22 @@ class SettingsValidator:
         self._validate_sequence_types(settings)
         self._validate_scalar_types(settings)
 
-    # TODO: refactor and simplify this check:
-    def _validate_sequence_types(  # noqa: WPS231, WPS238, C901
+    def _validate_sequence_types(
         self,
         settings: _SettingsModel,
     ) -> None:
-        # Parsers:
-        if not all(
-            isinstance(parser, Parser) for parser in settings.get('parsers', [])
-        ):
-            raise EndpointMetadataError(
-                'Settings.parsers must all be Parser instances',
-            )
-
-        # Renderers:
-        if not all(
-            isinstance(renderer, Renderer)
-            for renderer in settings.get('renderers', [])
-        ):
-            raise EndpointMetadataError(
-                'Settings.renderers must all be Renderer instances',
-            )
-
-        # Auth:
-        if not all(
-            isinstance(auth, (SyncAuth, AsyncAuth, SyncOrAsyncAuth))
-            for auth in settings.get('auth', [])
-        ):
-            raise EndpointMetadataError(
-                'Settings.auth must all be SyncAuth, AsyncAuth, '
-                'or SyncOrAsyncAuth instances',
-            )
-
-        # Throttling:
-        if not all(
-            isinstance(
-                throttling,
-                (SyncThrottle, AsyncThrottle, SyncOrAsyncThrottle),
-            )
-            for throttling in settings.get('throttling', [])
-        ):
-            raise EndpointMetadataError(
-                (
-                    'Settings.throttling must all be '
-                    'SyncThrottle, AsyncThrottle, or '
-                    'SyncOrAsyncThrottle instances'
-                ),
-            )
-
-        # Responses:
-        if not all(
-            isinstance(response, ResponseSpec)
-            for response in settings.get('responses', [])
-        ):
-            raise EndpointMetadataError(
-                'Settings.responses must all be ResponseSpec instances',
-            )
-
-        # Response providers:
-        if not all(
-            isinstance(
-                response_spec_provider,
-                (ResponseSpecProvider, AuthProvider),
-            )
-            for response_spec_provider in settings.get(
-                'semantic_schema_providers',
-                [],
-            )
-        ):
-            raise EndpointMetadataError(
-                'Settings.semantic_schema_providers must all '
-                'be ResponseSpecProvider or AuthProvider instances',
-            )
+        for setting_name, allowed_types in _SEQUENCE_TYPES.items():
+            sequence: Sequence[Any] = settings.get(setting_name, ())  # type: ignore[assignment]
+            if not all(
+                isinstance(element, allowed_types) for element in sequence
+            ):
+                type_names = ', '.join(
+                    allowed_type.__name__ for allowed_type in allowed_types
+                )
+                raise EndpointMetadataError(
+                    f'Settings.{setting_name} must all be instances of: '
+                    f'{type_names}',
+                )
 
     def _validate_scalar_types(
         self,

@@ -205,7 +205,7 @@ def build_response(
 ) -> HttpResponse: ...
 
 
-def build_response(  # noqa: WPS210, WPS211
+def build_response(  # noqa: WPS211
     serializer: type['BaseSerializer'],
     *,
     raw_data: Any,
