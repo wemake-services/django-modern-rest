@@ -27,5 +27,5 @@ urlpatterns = [
     ),
 ]
 
-# run: {"method": "post", "url": "/api/auth/", "body" :{"username": "test_user", "password": "password"}, "curl_args": ["-D", "-"], "populate_db": true, "use_urlpatterns": true}  # noqa: ERA001, E501
+# run: {"method": "post", "url": "/api/auth/", "body": {"username": "test_user", "password": "password"}, "curl_args": ["-D", "-"], "populate_db": true, "use_urlpatterns": true}  # noqa: ERA001, E501
 # openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001
