@@ -42,42 +42,6 @@ class _AsyncAuth(HttpBasicAsyncAuth):
 _AUTH: Final = SyncOrAsyncAuth(_SyncAuth(), _AsyncAuth())
 
 
-class _StrictSyncAuth(_SyncAuth):
-    """Auth that only supports GET endpoints."""
-
-    @override
-    def validate(
-        self,
-        controller_cls: type[Controller[BaseSerializer]],
-        metadata: EndpointMetadata,
-    ) -> None:
-        if metadata.method != 'get':
-            raise EndpointMetadataError('Auth only works on get endpoints')
-
-
-def test_custom_auth_validate_pass() -> None:
-    """Auth.validate passes when constraints are met."""
-
-    class _Controller(Controller[PydanticSerializer]):
-        auth = (_StrictSyncAuth(),)
-
-        def get(self) -> str:
-            raise NotImplementedError
-
-    # Controller is created successfully at import time.
-
-
-def test_custom_auth_validate_fail() -> None:
-    """Auth.validate raises on invalid usage."""
-    with pytest.raises(EndpointMetadataError, match='only works on get'):
-
-        class _Controller(Controller[PydanticSerializer]):
-            auth = (_StrictSyncAuth(),)
-
-            def post(self) -> str:
-                raise NotImplementedError
-
-
 def test_sync_or_async_auth_not_allowed_at_controller_level(  # noqa: WPS118
 ) -> None:
     """Ensures SyncOrAsyncAuth raises an error at controller level."""

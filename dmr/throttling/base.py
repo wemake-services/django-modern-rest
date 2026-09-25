@@ -141,6 +141,14 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
         # Run check and early initializations:
         self._backend.initialize_algorithm(self._algorithm)
 
+    def validate(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: EndpointMetadata,
+    ) -> None:
+        """Validate throttling configuration at import time."""
+        self._backend.validate(controller_cls, metadata)
+
     def full_cache_key(
         self,
         endpoint: 'Endpoint',
@@ -166,50 +174,6 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
         ).hexdigest()
         cache_key_name = self.cache_key.name
         return f'{cache_key_name}::{cache_key_hash}'
-
-    def validate(
-        self,
-        controller_cls: type['Controller[BaseSerializer]'],
-        metadata: EndpointMetadata,
-    ) -> None:
-        """
-        Validate throttling configuration at import time.
-
-        Override this method to enforce throttle-specific constraints.
-        Raise :class:`dmr.exceptions.EndpointMetadataError`
-        if the throttle is used incorrectly.
-        """
-        allow_cache = metadata.throttling_allow_unsafe_cache
-        if (
-            allow_cache is None
-            or not isinstance(
-                self._backend,
-                (SyncDjangoCache, AsyncDjangoCache),
-            )
-            or not isinstance(
-                self._backend._cache,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-                (locmem.LocMemCache, dummy.DummyCache),
-            )
-        ):
-            return
-
-        backend = type(
-            self._backend._cache,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-        ).__qualname__
-        msg = (
-            f'Throttling is using {backend!r} cache backend '
-            f'in {metadata.endpoint_name!r} which is not safe for production: '
-            'counters are NOT shared between processes/instances. '
-            'Use Redis or Memcached backends instead.'
-        )
-        if allow_cache:
-            warnings.warn(
-                msg,
-                category=UnsafeCacheBackendWarning,
-                stacklevel=1,
-            )
-        else:
-            raise EndpointMetadataError(msg)
 
     def replace(
         self,

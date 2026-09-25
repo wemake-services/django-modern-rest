@@ -162,6 +162,13 @@ class _BaseAuth(ResponseSpecProvider, AuthProvider):
         """
         raise NotImplementedError
 
+    def validate(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: EndpointMetadata,
+    ) -> None:
+        """Validate auth configuration at import time."""
+
     @override
     def provide_response_specs(
         self,
