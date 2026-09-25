@@ -1,12 +1,15 @@
 import pytest
+from typing_extensions import override
 
 from dmr import Controller, modify
 from dmr.exceptions import EndpointMetadataError
+from dmr.metadata import EndpointMetadata
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.django_session import (
     DjangoSessionAsyncAuth,
     DjangoSessionSyncAuth,
 )
+from dmr.serializer import BaseSerializer
 
 
 def test_sync_endpoint_requires_sync_auth() -> None:
@@ -48,4 +51,26 @@ def test_async_controller_requires_async_auth() -> None:
             auth = [DjangoSessionSyncAuth()]
 
             async def get(self) -> str:
+                raise NotImplementedError
+
+
+class _GetOnlyAuth(DjangoSessionSyncAuth):
+    @override
+    def validate(
+        self,
+        controller_cls: type[Controller[BaseSerializer]],
+        metadata: EndpointMetadata,
+    ) -> None:
+        if metadata.method != 'get':
+            raise EndpointMetadataError('only works on GET endpoints')
+
+
+def test_auth_validate_hook_is_called() -> None:
+    """Auth.validate hook is called during endpoint validation."""
+    with pytest.raises(EndpointMetadataError, match='only works on GET'):
+
+        class _Controller(Controller[PydanticSerializer]):
+            auth = (_GetOnlyAuth(),)
+
+            def post(self) -> str:
                 raise NotImplementedError
