@@ -77,10 +77,7 @@ of the installed version. These are the entry points:
   is the index of all pages, with the version in its header
 - https://django-modern-rest.readthedocs.io/llms-full.txt
   is the complete documentation in a single file
-- every page is also published as Markdown: replace ``.html``
-  with ``.md`` in its URL, for example
-  https://django-modern-rest.readthedocs.io/en/latest/pages/routing.md
-- the "Copy page" button on every page copies that Markdown,
+- the "Copy page" button on every page copies its source,
   and its menu opens the page in ChatGPT or Claude
 - `Context7 <https://context7.com/wemake-services/django-modern-rest>`_
   and `DeepWiki <https://deepwiki.com/wemake-services/django-modern-rest>`_
@@ -93,15 +90,9 @@ of a specific release.
 How skills are tested
 ---------------------
 
-Skills are code and are tested like code:
-
-- ``agentskills validate`` from the reference implementation
-  runs in ``just lint`` on every skill
-- unit tests check the frontmatter, local links,
-  and that the Claude Code marketplace lists every skill
-- `Claude Code plugin evals <https://code.claude.com/docs/en/plugin-evals>`_
-  in ``dmr/.agents/skills/dmr/evals`` run real prompts with and without
-  the skill and compare the results, see the ``skill-evals`` workflow
+``agentskills validate`` from the
+`reference implementation <https://github.com/agentskills/agentskills>`_
+checks every skill against the specification, it runs in ``just lint``.
 
 .. important::
 

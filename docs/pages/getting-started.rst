@@ -76,9 +76,6 @@ knows our framework:
   for indexes with links to different pages and topics
 - https://django-modern-rest.readthedocs.io/llms-full.txt
   for complete docs
-- Every documentation page is also served as Markdown,
-  replace ``.html`` with ``.md`` in its URL,
-  or press "Copy page" on any page
 
 We also support
 `Context7 <https://context7.com/wemake-services/django-modern-rest>`_

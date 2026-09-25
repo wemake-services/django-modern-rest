@@ -123,7 +123,6 @@ docs = [
   "sphinx-design>=0.7,<0.8",
   "sphinx-iconify>=0.3,<0.4",
   "sphinx-llms-txt>=0.7,<0.8",
-  "sphinx-markdown-builder>=0.6,<0.7",
   "sphinx-tabs>=3.5,<4",
   "sphinxcontrib-mermaid>=2,<3",
   # Needed for our extension:
@@ -206,8 +205,6 @@ include = [
 ]
 
 [tool.hatch.build.targets.wheel]
-# Agent skills ship with the package, but their evals are for our CI only:
-exclude = [ "dmr/.agents/skills/*/evals" ]
 macos-max-compat = true
 only-include = [ "dmr", "dmr_pytest.py" ]
 
@@ -477,16 +474,6 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 # `django-allauth` does not ship a `py.typed` marker:
 module = [ "allauth.*" ]
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-# Docs extensions without a `py.typed` marker,
-# only used in `docs/tools/sphinx_ext/markdown.py`:
-module = [
-  "sphinx_iconify.*",
-  "sphinx_markdown_builder.*",
-  "sphinxcontrib.mermaid"
-]
 ignore_missing_imports = true
 
 

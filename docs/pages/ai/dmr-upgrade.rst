@@ -6,9 +6,10 @@ By example, you can use agent skill
 to upgrade a project to a newer ``django-modern-rest`` release.
 
 Every release with breaking changes ships an official migration prompt.
-All of them live in the skill, one file per release in its ``references/``
-directory.
-The :doc:`changelog <../deep-dive/changelog>` lists the breaking changes themselves.
+The prompts of the three latest breaking releases live in the skill,
+one file per release in its ``references/`` directory.
+Older ones are in the :doc:`changelog <../deep-dive/changelog>`
+and in the `release notes <https://github.com/wemake-services/django-modern-rest/releases>`_.
 
 .. important::
 

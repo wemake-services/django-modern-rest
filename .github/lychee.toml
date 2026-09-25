@@ -62,12 +62,4 @@ exclude = [
   # Telegram terminates automated requests even when public channel links are
   # reachable in regular browsers.
   "^https://t\\.me/.*$",
-  # We link our own agent skills and their documentation from `CHANGELOG.md`
-  # and from the skills themselves. Both of them resolve only after the pull
-  # request that adds them is merged and Read the Docs rebuilds `latest`,
-  # so they cannot be checked while that pull request is open.
-  # `CHANGELOG.md` is rendered by `myst`, relative links are not an option:
-  # they become cross-references to documentation pages that do not exist.
-  "^https://django-modern-rest\\.readthedocs\\.io/en/latest/pages/ai/(agent-skills|dmr-upgrade)\\.html$",
-  "^https://github\\.com/wemake-services/django-modern-rest/(blob|tree)/master/dmr/\\.agents/.*$",
 ]

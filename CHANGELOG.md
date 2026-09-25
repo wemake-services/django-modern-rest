@@ -17,10 +17,13 @@ What is a public API for us (all criteria must be met)?
 Later on we will make the API more stable and decrease the amount
 of requirements for an API to count as public.
 
-All migration prompts for breaking releases live in the
+All migration prompts since `0.13.0` release
+are stored as descriptions in version releases on GitHub, example:
+https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
+
+Prompts of the three latest breaking releases also live in the
 [`dmr-upgrade`](https://github.com/wemake-services/django-modern-rest/tree/master/dmr/.agents/skills/dmr-upgrade) agent skill,
-one file per release in its `references/` directory.
-Ask your coding agent to use `$dmr-upgrade` to upgrade a project.
+ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 
 ## 0.16.0 WIP
@@ -337,14 +340,13 @@ Ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Agent skills now ship inside the `dmr` package as `dmr/.agents/skills`,
   so `uvx library-skills` installs the skills matching the installed version
   into any project, the Claude Code marketplace keeps working
-- Added `dmr-upgrade` agent skill: all migration prompts of past releases
-  (previously in `CHANGELOG.md` and in GitHub releases) live there now
+- Added `dmr-upgrade` agent skill with the migration prompts
+  of the three latest breaking releases
 - Split the `dmr` skill into a short `SKILL.md` and topic references,
   fixed skill descriptions to trigger on natural requests,
-  added `claude plugin eval` cases and `agentskills validate` to `just lint`
+  added `agentskills validate` to `just lint`
 - Fixed `dmr-from-dj-rest-auth` entry in the Claude Code marketplace
-- Docs: every page is also published as Markdown (`<page>.md`),
-  "Copy page" copies it, `llms.txt` now carries the version
+- Docs: `llms.txt` now carries the version
 
 
 ## 0.15.0 (2026-09-11)
@@ -625,6 +627,9 @@ See https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Breaking changes
 
+Since this release, we would only publish migration prompts
+on the releases page: https://github.com/wemake-services/django-modern-rest/releases
+
 - `Schema.then` is renamed to be `Schema.schema_then`
   to be consistent with other similar names, #1221
 - `dmr.openapi.objects.openapi.convert` function is renamed and moved
@@ -762,8 +767,14 @@ for both sync and async controllers at the same time.
   `FileResponseSpec(as_attachment=True)` when returning Django's
   `FileResponse(..., as_attachment=True)`, #1020
 
-Migration prompt: see the `dmr-upgrade` agent skill,
-[`references/0.9-to-0.10.md`](https://github.com/wemake-services/django-modern-rest/blob/master/dmr/.agents/skills/dmr-upgrade/references/0.9-to-0.10.md).
+### Migrations prompt
+
+User-facing changes:
+
+```md
+Change all existing `dmr.files.FileResponseSpec` usages
+to include `as_attachment=True` parameter.
+```
 
 ### Features
 
@@ -813,8 +824,17 @@ Migration prompt: see the `dmr-upgrade` agent skill,
   now `BaseThrottleAlgorithm.access` must also record accesses.
   This will help to make throttling more atomic, #942
 
-Migration prompt: see the `dmr-upgrade` agent skill,
-[`references/0.7-to-0.8.md`](https://github.com/wemake-services/django-modern-rest/blob/master/dmr/.agents/skills/dmr-upgrade/references/0.7-to-0.8.md).
+### Migrations prompt
+
+User-facing changes:
+
+```md
+Apply this change to the code that uses `django-modern-rest`:
+1. Replace `dmr.response.APIRedirectError` with `dmr.response.RedirectTo`
+2. Replace `dmr.throttling.backends.DjangoCache`
+   with `dmr.throttling.backends.SyncDjangoCache` for sync throttles
+   and with `dmr.throttling.backends.AsyncDjangoCache` for async throttles
+```
 
 ### Features
 
@@ -871,8 +891,20 @@ Migration prompt: see the `dmr-upgrade` agent skill,
 4. *Breaking*: new required `router` parameter added
    to `Endpoint.get_schema` and `Controller.get_path_item`, #879
 
-Migration prompt: see the `dmr-upgrade` agent skill,
-[`references/0.6-to-0.7.md`](https://github.com/wemake-services/django-modern-rest/blob/master/dmr/.agents/skills/dmr-upgrade/references/0.6-to-0.7.md).
+### Migration Prompt
+
+```md
+Apply this change to the code that uses `django-modern-rest`:
+1. Replace `OpenAPIView.dumps` usage with `dmr.openapi.core.dump.json_dump`
+   usage
+2. Change `dmr.security.jwt.auth.get_jwt` function
+   to use `dmr.security.jwt.auth.request_jwt` instead, if user expects
+   to always get a token back, add `strict=True` argument
+3. Change `provide_response_specs` class method to be instance method,
+   replace all `cls` usage with `self`
+4. Add `router: Router` parameter to `Endpoint.get_schema`
+   and `Controller.get_path_item` methods
+```
 
 ### Features
 
@@ -1011,8 +1043,143 @@ AKA "The first version that I enjoy".
    Old API was removed, new one was introduced.
    `dmr.sse` package was moved to `dmr.streaming.sse`
 
-Migration prompt: see the `dmr-upgrade` agent skill,
-[`references/0.3-to-0.4.md`](https://github.com/wemake-services/django-modern-rest/blob/master/dmr/.agents/skills/dmr-upgrade/references/0.3-to-0.4.md).
+We always ship AI prompts to all breaking changes.
+So, it would be easier for you to migrate
+to a newer version using AI tool of your choice.
+
+### Migration Prompt
+
+To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
+1. Load the latest documentation from https://django-modern-rest.readthedocs.io/llms-full.txt
+2. Convert component parsing from old class-based API to new method-based API.
+  Before:
+
+  ```python
+  from dmr import Blueprint, Body
+  from dmr.routing import compose_blueprints
+  from dmr.plugins.pydantic import PydanticSerializer
+
+
+  class UserCreateBlueprint(
+      Body[_UserInput],  # <- needs a request body
+      Blueprint[PydanticSerializer],
+  ):
+      def post(self) -> _UserOutput:
+          return _UserOutput(
+              uid=uuid.uuid4(),
+              email=self.parsed_body.email,
+              age=self.parsed_body.age,
+          )
+
+
+  class UserListBlueprint(Blueprint[PydanticSerializer]):
+      def get(self) -> list[_UserInput]:
+          return [
+              _UserInput(email='first@example.org', age=1),
+              _UserInput(email='second@example.org', age=2),
+          ]
+
+
+  UsersController = compose_blueprints(UserCreateBlueprint, UserListBlueprint)
+  ```
+
+  To:
+
+  ```python
+  from dmr import Controller, Body
+  from dmr.plugins.pydantic import PydanticSerializer
+
+
+  class UsersController(Controller[PydanticSerializer]):
+      def get(self) -> list[_UserInput]:
+          return [
+              _UserInput(email='first@example.org', age=1),
+              _UserInput(email='second@example.org', age=2),
+          ]
+
+      def post(self, parsed_body: Body[_UserInput]) -> _UserOutput:
+          return _UserOutput(
+              uid=uuid.uuid4(),
+              email=self.parsed_body.email,
+              age=self.parsed_body.age,
+          )
+  ```
+
+3. Replace all `Blueprint` and `compose_blueprints` references with a new API:
+  Instead you must use `Controller` and different methods under a single class
+4. Now, change all `@sse`-based controllers to new `SSEController` API, from:
+
+  ```python
+  from collections.abc import AsyncIterator
+
+  import msgspec
+  from django.http import HttpRequest
+
+  from dmr.components import Headers
+  from dmr.plugins.msgspec import MsgspecSerializer
+  from dmr.sse import SSEContext, SSEResponse, SSEvent, sse
+
+
+  class HeaderModel(msgspec.Struct):
+      last_event_id: int | None = msgspec.field(
+          default=None,
+          name='Last-Event-ID',
+      )
+
+
+  async def produce_user_events(
+      request_headers: HeaderModel,
+  ) -> AsyncIterator[SSEvent[str]]:
+      if request_headers.last_event_id:
+          yield SSEvent(f'starting from {request_headers.last_event_id}')
+      else:
+          yield SSEvent('starting from scratch')
+
+
+  @sse(MsgspecSerializer, headers=Headers[HeaderModel])
+  async def user_events(
+      request: HttpRequest,
+      context: SSEContext[None, None, HeaderModel],
+  ) -> SSEResponse[SSEvent[str]]:
+      return SSEResponse(produce_user_events(context.parsed_headers))
+  ```
+
+  To:
+
+  ```python
+  from collections.abc import AsyncIterator
+
+  import msgspec
+
+  from dmr.components import Headers
+  from dmr.plugins.msgspec import MsgspecSerializer
+  from dmr.streaming.sse import SSEController, SSEvent
+
+
+  class HeaderModel(msgspec.Struct):
+      last_event_id: int | None = msgspec.field(
+          default=None,
+          name='Last-Event-ID',
+      )
+
+
+  class UserEventsController(SSEController[MsgspecSerializer]):
+      def get(
+          self,
+          parsed_headers: Headers[HeaderModel],
+      ) -> AsyncIterator[SSEvent[str]]:
+          return self.produce_user_events(parsed_headers)
+
+      async def produce_user_events(
+          self,
+          parsed_headers: HeaderModel,
+      ) -> AsyncIterator[SSEvent[str]]:
+          if parsed_headers.last_event_id is None:
+              yield SSEvent('starting from scratch')
+          else:
+              yield SSEvent(f'starting from {parsed_headers.last_event_id}')
+  ```
+5. Replace old `dmr.sse` imports with new `dmr.streaming.sse` alternatives
 
 ### Features
 

@@ -267,6 +267,3 @@ wheelhouse/
 # AI slop:
 .claude/
 .codex/
-
-# Claude Code plugin evals write their reports here:
-dmr/.agents/skills/*/evals/results/

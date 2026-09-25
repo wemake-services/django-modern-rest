@@ -12,7 +12,8 @@ metadata:
 ## Overview
 
 Every breaking `django-modern-rest` release ships an official migration prompt.
-They all live in this skill, one file per release in [references/](references/).
+The prompts of the three latest breaking releases live in this skill,
+one file per release in [references/](references/).
 The `CHANGELOG.md` of the package lists the breaking changes themselves.
 
 Do not guess how an API changed. Read the prompt for every release
@@ -42,23 +43,22 @@ and apply every numbered item to the whole project
 
 | Upgrade across | Prompt |
 | --- | --- |
-| 0.3 to 0.4 | [references/0.3-to-0.4.md](references/0.3-to-0.4.md) |
-| 0.6 to 0.7 | [references/0.6-to-0.7.md](references/0.6-to-0.7.md) |
-| 0.7 to 0.8 | [references/0.7-to-0.8.md](references/0.7-to-0.8.md) |
-| 0.9 to 0.10 | [references/0.9-to-0.10.md](references/0.9-to-0.10.md) |
-| 0.12 to 0.13 | [references/0.12-to-0.13.md](references/0.12-to-0.13.md) |
 | 0.13 to 0.14 | [references/0.13-to-0.14.md](references/0.13-to-0.14.md) |
 | 0.14 to 0.15 | [references/0.14-to-0.15.md](references/0.14-to-0.15.md) |
 | 0.15 to 0.16 | [references/0.15-to-0.16.md](references/0.15-to-0.16.md) |
 
-Releases that are not listed had no breaking changes.
+Releases in between that are not listed had no breaking changes.
+When the project is on a version older than `0.13`, the prompts
+of the older releases are not in this skill:
+since `0.13.0` they are the descriptions of the releases on
+https://github.com/wemake-services/django-modern-rest/releases,
+before that they are in `CHANGELOG.md`. Apply them first, the same way.
 
 Apply one release at a time and keep its edits together,
 so the user can review them release by release.
 
 When the installed docs matter, load the version-specific index:
-`https://django-modern-rest.readthedocs.io/en/<version>/llms.txt`
-(every page is also served as Markdown, replace `.html` with `.md`).
+`https://django-modern-rest.readthedocs.io/en/<version>/llms.txt`.
 
 ### 4. Verify
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sphinx.application import Sphinx
 
-from tools.sphinx_ext import chartjs, markdown, run_examples
+from tools.sphinx_ext import chartjs, run_examples
 
 
 def _register_directives(app: Sphinx) -> None:
@@ -20,5 +20,4 @@ def setup(app: Sphinx) -> dict[str, bool]:
     app.connect('builder-inited', _register_directives)
     chartjs.setup(app)
     run_examples.setup(app)
-    markdown.setup(app)
     return {'parallel_read_safe': True, 'parallel_write_safe': True}

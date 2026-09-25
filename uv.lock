@@ -936,7 +936,6 @@ docs = [
     { name = "sphinx-design" },
     { name = "sphinx-iconify" },
     { name = "sphinx-llms-txt" },
-    { name = "sphinx-markdown-builder" },
     { name = "sphinx-tabs" },
     { name = "sphinxcontrib-mermaid" },
     { name = "uvicorn" },
@@ -1065,7 +1064,6 @@ docs = [
     { name = "sphinx-design", specifier = ">=0.7,<0.8" },
     { name = "sphinx-iconify", specifier = ">=0.3,<0.4" },
     { name = "sphinx-llms-txt", specifier = ">=0.7,<0.8" },
-    { name = "sphinx-markdown-builder", specifier = ">=0.6,<0.7" },
     { name = "sphinx-tabs", specifier = ">=3.5,<4" },
     { name = "sphinxcontrib-mermaid", specifier = ">=2,<3" },
     { name = "uvicorn", specifier = ">=0.52,<0.54" },
@@ -3579,21 +3577,6 @@ wheels = [
 ]
 
 [[package]]
-name = "sphinx-markdown-builder"
-version = "0.6.11"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "docutils" },
-    { name = "sphinx", version = "9.0.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "sphinx", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "tabulate" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ad/13/102d7134743120db25e636ffb57a30818e95a416583dca83aadac9c5dd87/sphinx_markdown_builder-0.6.11.tar.gz", hash = "sha256:ba3bf33e0e42ff30ae686ac73957a95e6d045790dcfbaca012dd8ae01794e577", size = 24020, upload-time = "2026-08-16T06:51:38.158Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c9/71/06b415631c2e494c80546073b46013d1715dceb3abe30bd63b34b4e7d9ca/sphinx_markdown_builder-0.6.11-py3-none-any.whl", hash = "sha256:acfb94d6ee66c7a47da0ca0420578fa16f115812af25b8fd21755d5909aacf51", size = 18088, upload-time = "2026-08-16T06:51:36.81Z" },
-]
-
-[[package]]
 name = "sphinx-tabs"
 version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3734,15 +3717,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/74/2c/8ffc1414d1951895d0d5b7dc83c0b079ebc48c3bf27ffbb0064646367500/syrupy-6.1.1.tar.gz", hash = "sha256:7e584a8df4ede6dd3c1c44a77f9edc46186b6767a73dea6f0083044946839a59", size = 109705, upload-time = "2026-09-13T20:25:21.599Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2c/b5/bf2a8a335a6a813869dd482cedbcde252f582b5afbfe50eb78ec09962800/syrupy-6.1.1-py3-none-any.whl", hash = "sha256:6ac9ac6a42d70ae44156f5f157a9563b9bb8cc96dcf9364327f330463bff889a", size = 63436, upload-time = "2026-09-13T20:25:20.294Z" },
-]
-
-[[package]]
-name = "tabulate"
-version = "0.10.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/46/58/8c37dea7bbf769b20d58e7ace7e5edfe65b849442b00ffcdd56be88697c6/tabulate-0.10.0.tar.gz", hash = "sha256:e2cfde8f79420f6deeffdeda9aaec3b6bc5abce947655d17ac662b126e48a60d", size = 91754, upload-time = "2026-03-04T18:55:34.402Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/99/55/db07de81b5c630da5cbf5c7df646580ca26dfaefa593667fc6f2fe016d2e/tabulate-0.10.0-py3-none-any.whl", hash = "sha256:f0b0622e567335c8fabaaa659f1b33bcb6ddfe2e496071b743aa113f8774f2d3", size = 39814, upload-time = "2026-03-04T18:55:31.284Z" },
 ]
 
 [[package]]
