@@ -84,8 +84,6 @@ class StreamingController(Controller[_SerializerT_co]):
 
         # Now we have everything and we can create `api_endpoints`:
         call_init_subclass(Controller, cls)
-        # TODO: run extra validation?
-        # TODO: validate that endpoints can't contain `yield event` themself.
 
     @classmethod
     @abc.abstractmethod
