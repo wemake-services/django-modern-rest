@@ -238,6 +238,9 @@ CSRF
 
 .. autofunction:: dmr.security.csrf.csrf_security_scheme
 
+.. autoclass:: dmr.security.csrf.CSRFAuthMixin
+  :members:
+
 
 Semantic schema
 ---------------

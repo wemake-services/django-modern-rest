@@ -6,7 +6,7 @@ import pytest
 from dirty_equals import IsInstance
 from django.http import HttpResponse
 
-from dmr import (  # noqa: WPS235
+from dmr import (
     Body,
     Controller,
     Headers,

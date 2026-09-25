@@ -1,10 +1,10 @@
 from http import HTTPStatus
 from typing import TYPE_CHECKING, final
 
+from django.conf import settings
 from django.http import HttpRequest
+from django.http.request import HttpHeaders
 from django.middleware.csrf import CsrfViewMiddleware
-
-from dmr.security.csrf import csrf_message
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -30,6 +30,19 @@ def ensure_csrf(controller: 'Controller[BaseSerializer]') -> None:
         )
 
 
+def csrf_header_name() -> str:
+    """
+    Convert ``CSRF_HEADER_NAME`` from the ``META`` form to the HTTP form.
+
+    Django stores this setting as a ``request.META`` key,
+    like ``HTTP_X_CSRFTOKEN``, while OpenAPI needs the header name
+    that a client sends, like ``X-Csrftoken``. HTTP header names
+    are case-insensitive, so the exact casing does not matter.
+    """
+    header_name = HttpHeaders.parse_header_name(settings.CSRF_HEADER_NAME)
+    return settings.CSRF_HEADER_NAME if header_name is None else header_name
+
+
 @final
 class _EnsureCsrfToken(CsrfViewMiddleware):
     """
@@ -39,6 +52,8 @@ class _EnsureCsrfToken(CsrfViewMiddleware):
     """
 
     def _reject(self, request: HttpRequest, reason: str) -> str:
+        from dmr.security.csrf import csrf_message  # noqa: PLC0415
+
         # Return the failure reason instead of an ``HttpResponse``.
         # Expose detailed csrf failure reason on DEBUG mode.
         # Otherwise, provide default placeholder reason.

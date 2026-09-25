@@ -170,7 +170,7 @@ def test_cookie_jwt_csrf_session(
     *,
     typ: type[CookieJWTSyncAuth] | type[CookieJWTAsyncAuth],
 ) -> None:
-    """Ensures that cookie and scheme names are customizable."""
+    """Ensures that CSRF is a header scheme for session-backed CSRF."""
     settings.CSRF_USE_SESSIONS = True
     instance = typ()
     controller = _make_controller(instance)
@@ -185,9 +185,24 @@ def test_cookie_jwt_csrf_session(
             name='access_token',
             security_scheme_in='cookie',
         ),
+        'csrf': SecurityScheme(
+            type='apiKey',
+            description='CSRF protection, the secret is stored in the session',
+            name='X-Csrftoken',
+            security_scheme_in='header',
+        ),
     })
     assert instance.security_requirements(metadata, controller) == snapshot([
         {'jwt_cookie': []},
+    ])
+
+    unsafe_metadata = controller.api_endpoints['POST'].metadata
+    assert HTTPStatus.FORBIDDEN in unsafe_metadata.responses
+    assert instance.security_requirements(
+        unsafe_metadata,
+        controller,
+    ) == snapshot([
+        {'jwt_cookie': [], 'csrf': []},
     ])
 
 

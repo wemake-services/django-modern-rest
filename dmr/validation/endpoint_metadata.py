@@ -323,7 +323,7 @@ class _HttpSpecValidator:  # noqa: WPS214
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class _ResponseListValidator:  # noqa: WPS214
+class _ResponseListValidator:
     """Validates responses metadata."""
 
     metadata: EndpointMetadata
