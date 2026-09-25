@@ -39,23 +39,6 @@ class _DjangoCache:
         """Initialize the cache backend."""
         object.__setattr__(self, '_cache', caches[self.cache_name])
 
-    def _load_cache(
-        self,
-        controller: 'Controller[BaseSerializer]',
-        stored_cache: bytes | None,
-    ) -> CachedRateLimit | None:
-        if stored_cache is None:
-            return None
-
-        return json_loads(stored_cache)  # type: ignore[no-any-return]
-
-    def _dump_cache(
-        self,
-        controller: 'Controller[BaseSerializer]',
-        cache_object: CachedRateLimit,
-    ) -> bytes:
-        return json_dumps_bytes(cache_object)
-
     def validate(
         self,
         controller_cls: type['Controller[BaseSerializer]'],
@@ -80,6 +63,23 @@ class _DjangoCache:
             warnings.warn(msg, category=UnsafeCacheBackendWarning, stacklevel=1)
         else:
             raise EndpointMetadataError(msg)
+
+    def _load_cache(
+        self,
+        controller: 'Controller[BaseSerializer]',
+        stored_cache: bytes | None,
+    ) -> CachedRateLimit | None:
+        if stored_cache is None:
+            return None
+
+        return json_loads(stored_cache)  # type: ignore[no-any-return]
+
+    def _dump_cache(
+        self,
+        controller: 'Controller[BaseSerializer]',
+        cache_object: CachedRateLimit,
+    ) -> bytes:
+        return json_dumps_bytes(cache_object)
 
 
 @dataclasses.dataclass(slots=True, frozen=True)
