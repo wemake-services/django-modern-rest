@@ -34,7 +34,7 @@ class _AsyncController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def test_external_paths_schema(  # noqa: WPS210
+def test_external_paths_schema(
     snapshot: SnapshotAssertion,
     named_text_fixture: Callable[[str], str],
 ) -> None:
@@ -96,7 +96,7 @@ def test_external_paths_schema(  # noqa: WPS210
     )
 
 
-def test_external_re_paths_schema(  # noqa: WPS210
+def test_external_re_paths_schema(
     snapshot: SnapshotAssertion,
     named_text_fixture: Callable[[str], str],
 ) -> None:

@@ -772,7 +772,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
     ) -> ValidateAnyCallable: ...
 
     @overload
-    def __call__(  # pyright: ignore[reportOverlappingOverload]  # noqa: WPS234
+    def __call__(  # pyright: ignore[reportOverlappingOverload]
         self,
         response: ResponseSpec,
         /,

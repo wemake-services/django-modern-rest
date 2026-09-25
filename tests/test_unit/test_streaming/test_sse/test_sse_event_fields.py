@@ -208,8 +208,8 @@ async def test_wrong_chars_skipped_when_disabled(
     assert isinstance(response, StreamingResponse)
     assert response.status_code == HTTPStatus.OK
     assert await get_streaming_content(response) == (
-        b'id: wrong\nid\r\n'  # noqa: WPS342
-        b'event: wrong\nevent\r\n'  # noqa: WPS342
+        b'id: wrong\nid\r\n'
+        b'event: wrong\nevent\r\n'
         b'data: 1\r\n'
         b'\r\n'
     )
@@ -237,8 +237,8 @@ async def test_custom_event_skipped_when_disabled(
     assert isinstance(response, StreamingResponse)
     assert response.status_code == HTTPStatus.OK
     assert await get_streaming_content(response) == (
-        b'id: wrong\nid\r\n'  # noqa: WPS342
-        b'event: wrong\nevent\r\n'  # noqa: WPS342
+        b'id: wrong\nid\r\n'
+        b'event: wrong\nevent\r\n'
         b'data: 1\r\n'
         b'\r\n'
     )
