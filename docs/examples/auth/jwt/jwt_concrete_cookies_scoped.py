@@ -1,6 +1,6 @@
 from django.urls import reverse_lazy
 
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import Router, path
 from dmr.security.jwt import concrete_views
 
@@ -14,7 +14,7 @@ router = Router(
         path(
             'auth/',
             concrete_views.CookieObtainTokensSyncController.as_view(
-                serializer=PydanticSerializer,
+                serializer=PydanticFastSerializer,
                 jwt_refresh_cookie_path=REFRESH_COOKIE_PATH,
             ),
             name='jwt_obtain',
@@ -22,7 +22,7 @@ router = Router(
         path(
             'auth/refresh/',
             concrete_views.CookieRefreshTokensSyncController.as_view(
-                serializer=PydanticSerializer,
+                serializer=PydanticFastSerializer,
                 jwt_refresh_cookie_path=REFRESH_COOKIE_PATH,
             ),
             name='jwt_refresh',
@@ -30,7 +30,7 @@ router = Router(
         path(
             'auth/logout/',
             concrete_views.CookieLogoutSyncController.as_view(
-                serializer=PydanticSerializer,
+                serializer=PydanticFastSerializer,
                 jwt_refresh_cookie_path=REFRESH_COOKIE_PATH,
             ),
             name='jwt_logout',

@@ -68,7 +68,14 @@ Ready-to-use views
 ------------------
 
 ``dmr.security.django_session.concrete_views`` has login controllers
-that only need a serializer. Pass it to ``as_view`` in your urls,
+that only need a serializer:
+
+- :class:`~dmr.security.django_session.concrete_views.DjangoSessionSyncController`
+  for sync views
+- :class:`~dmr.security.django_session.concrete_views.DjangoSessionAsyncController`
+  for async views
+
+Pass the serializer to ``as_view`` in your urls,
 there is no view code at all:
 
 .. literalinclude:: /examples/auth/django_session/django_session_concrete.py
@@ -91,9 +98,8 @@ must never be required to reach them.
 .. tip::
 
   These should be your default for the common cases.
-  Any custom logic belongs to the reusable controllers below,
-  which leave the bodies and the hooks open for you:
-  customize those rather than subclassing these.
+  They are final, so any custom logic belongs to the reusable
+  controllers below, which leave the bodies and the hooks open for you.
 
 
 Customizing pre-existing views

@@ -7,14 +7,15 @@ Custom logic belongs to the reusable
 """
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, final
 
 from django.http import HttpResponseBase
-from typing_extensions import TypeVar, override
+from typing_extensions import Sentinel, TypeVar, override
 
 from dmr.internal.concrete import build_concrete_controller
 from dmr.security.django_session import views
 from dmr.serializer import BaseSerializer
+from dmr.types import EMPTY
 
 _SerializerT = TypeVar(
     '_SerializerT',
@@ -22,6 +23,7 @@ _SerializerT = TypeVar(
 )
 
 
+@final
 class DjangoSessionSyncController(
     views.DjangoSessionSyncController[
         _SerializerT,
@@ -40,12 +42,12 @@ class DjangoSessionSyncController(
 
     .. code:: python
 
-        >>> from dmr.plugins.pydantic import PydanticSerializer
+        >>> from dmr.plugins.pydantic import PydanticFastSerializer
         >>> from dmr.routing import path
         >>> route = path(
         ...     'login/',
         ...     DjangoSessionSyncController.as_view(
-        ...         serializer=PydanticSerializer,
+        ...         serializer=PydanticFastSerializer,
         ...     ),
         ... )
 
@@ -65,14 +67,13 @@ class DjangoSessionSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | None = None,
+        serializer: type[BaseSerializer] | Sentinel = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with *serializer* filled in.
 
-        *serializer* is required, unless a subclass already passed one
-        as a type argument. *initkwargs* go to django as usual.
+        *serializer* is required, *initkwargs* go to django as usual.
         """
         concrete_cls = build_concrete_controller(cls, serializer=serializer)
         if concrete_cls is None:
@@ -93,6 +94,7 @@ class DjangoSessionSyncController(
         return {'user_id': str(self.request.user.pk)}
 
 
+@final
 class DjangoSessionAsyncController(
     views.DjangoSessionAsyncController[
         _SerializerT,
@@ -118,14 +120,13 @@ class DjangoSessionAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | None = None,
+        serializer: type[BaseSerializer] | Sentinel = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with *serializer* filled in.
 
-        *serializer* is required, unless a subclass already passed one
-        as a type argument. *initkwargs* go to django as usual.
+        *serializer* is required, *initkwargs* go to django as usual.
         """
         concrete_cls = build_concrete_controller(cls, serializer=serializer)
         if concrete_cls is None:

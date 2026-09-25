@@ -1,14 +1,15 @@
 import datetime as dt
 from collections.abc import Callable
-from typing import Any
+from typing import Any, final
 
 from django.http import HttpResponseBase
-from typing_extensions import TypeVar, override
+from typing_extensions import Sentinel, TypeVar, override
 
 from dmr.internal.concrete import build_concrete_controller
 from dmr.security.jwt import views
 from dmr.security.jwt.views.base import BaseTokenController
 from dmr.serializer import BaseSerializer
+from dmr.types import EMPTY
 
 _SerializerT = TypeVar(
     '_SerializerT',
@@ -33,6 +34,7 @@ def _issue_token_pair(
     }
 
 
+@final
 class ObtainTokensSyncController(
     views.ObtainTokensSyncController[
         _SerializerT,
@@ -50,12 +52,12 @@ class ObtainTokensSyncController(
 
     .. code:: python
 
-        >>> from dmr.plugins.pydantic import PydanticSerializer
+        >>> from dmr.plugins.pydantic import PydanticFastSerializer
         >>> from dmr.routing import path
         >>> route = path(
         ...     'login/',
         ...     ObtainTokensSyncController.as_view(
-        ...         serializer=PydanticSerializer,
+        ...         serializer=PydanticFastSerializer,
         ...     ),
         ... )
 
@@ -75,14 +77,13 @@ class ObtainTokensSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | None = None,
+        serializer: type[BaseSerializer] | Sentinel = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with *serializer* filled in.
 
-        *serializer* is required, unless a subclass already passed one
-        as a type argument. *initkwargs* go to django as usual.
+        *serializer* is required, *initkwargs* go to django as usual.
         """
         concrete_cls = build_concrete_controller(cls, serializer=serializer)
         if concrete_cls is None:
@@ -103,6 +104,7 @@ class ObtainTokensSyncController(
         return _issue_token_pair(self)
 
 
+@final
 class ObtainTokensAsyncController(
     views.ObtainTokensAsyncController[
         _SerializerT,
@@ -128,14 +130,13 @@ class ObtainTokensAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | None = None,
+        serializer: type[BaseSerializer] | Sentinel = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with *serializer* filled in.
 
-        *serializer* is required, unless a subclass already passed one
-        as a type argument. *initkwargs* go to django as usual.
+        *serializer* is required, *initkwargs* go to django as usual.
         """
         concrete_cls = build_concrete_controller(cls, serializer=serializer)
         if concrete_cls is None:
@@ -156,6 +157,7 @@ class ObtainTokensAsyncController(
         return _issue_token_pair(self)
 
 
+@final
 class RefreshTokenSyncController(
     views.RefreshTokenSyncController[
         _SerializerT,
@@ -187,14 +189,13 @@ class RefreshTokenSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | None = None,
+        serializer: type[BaseSerializer] | Sentinel = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with *serializer* filled in.
 
-        *serializer* is required, unless a subclass already passed one
-        as a type argument. *initkwargs* go to django as usual.
+        *serializer* is required, *initkwargs* go to django as usual.
         """
         concrete_cls = build_concrete_controller(cls, serializer=serializer)
         if concrete_cls is None:
@@ -215,6 +216,7 @@ class RefreshTokenSyncController(
         return _issue_token_pair(self)
 
 
+@final
 class RefreshTokenAsyncController(
     views.RefreshTokenAsyncController[
         _SerializerT,
@@ -240,14 +242,13 @@ class RefreshTokenAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | None = None,
+        serializer: type[BaseSerializer] | Sentinel = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with *serializer* filled in.
 
-        *serializer* is required, unless a subclass already passed one
-        as a type argument. *initkwargs* go to django as usual.
+        *serializer* is required, *initkwargs* go to django as usual.
         """
         concrete_cls = build_concrete_controller(cls, serializer=serializer)
         if concrete_cls is None:
@@ -268,6 +269,7 @@ class RefreshTokenAsyncController(
         return _issue_token_pair(self)
 
 
+@final
 class VerifyTokenSyncController(
     views.VerifyTokenSyncController[
         _SerializerT,
@@ -296,14 +298,13 @@ class VerifyTokenSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | None = None,
+        serializer: type[BaseSerializer] | Sentinel = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with *serializer* filled in.
 
-        *serializer* is required, unless a subclass already passed one
-        as a type argument. *initkwargs* go to django as usual.
+        *serializer* is required, *initkwargs* go to django as usual.
         """
         concrete_cls = build_concrete_controller(cls, serializer=serializer)
         if concrete_cls is None:
@@ -316,6 +317,7 @@ class VerifyTokenSyncController(
         return payload['access_token']
 
 
+@final
 class VerifyTokenAsyncController(
     views.VerifyTokenAsyncController[
         _SerializerT,
@@ -340,14 +342,13 @@ class VerifyTokenAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | None = None,
+        serializer: type[BaseSerializer] | Sentinel = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with *serializer* filled in.
 
-        *serializer* is required, unless a subclass already passed one
-        as a type argument. *initkwargs* go to django as usual.
+        *serializer* is required, *initkwargs* go to django as usual.
         """
         concrete_cls = build_concrete_controller(cls, serializer=serializer)
         if concrete_cls is None:

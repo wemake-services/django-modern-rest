@@ -170,7 +170,19 @@ Ready-to-use views
 Most APIs need exactly the same auth endpoints: take a username
 and a password, give back a pair of tokens, rotate them on demand.
 ``dmr.security.jwt.concrete_views`` has all of them as controllers
-that only need a serializer. Pass it to ``as_view`` in your urls,
+that only need a serializer:
+
+- :class:`~dmr.security.jwt.concrete_views.ObtainTokensSyncController`
+  and :class:`~dmr.security.jwt.concrete_views.ObtainTokensAsyncController`
+  to get access and refresh tokens
+- :class:`~dmr.security.jwt.concrete_views.RefreshTokenSyncController`
+  and :class:`~dmr.security.jwt.concrete_views.RefreshTokenAsyncController`
+  to get a new pair for a refresh token
+- :class:`~dmr.security.jwt.concrete_views.VerifyTokenSyncController`
+  and :class:`~dmr.security.jwt.concrete_views.VerifyTokenAsyncController`
+  to check that an access token is still valid
+
+Pass the serializer to ``as_view`` in your urls,
 there is no view code at all:
 
 .. literalinclude:: /examples/auth/jwt/jwt_concrete_views.py
@@ -193,7 +205,19 @@ They all set ``auth = None``: they are the very endpoints
 that check credentials, so auth from the settings
 must never be required to reach them.
 
-The cookie flow is routed the same way:
+The same tokens can be issued as cookies instead:
+
+- :class:`~dmr.security.jwt.concrete_views.CookieObtainTokensSyncController`
+  and :class:`~dmr.security.jwt.concrete_views.CookieObtainTokensAsyncController`
+  to log in and set both cookies
+- :class:`~dmr.security.jwt.concrete_views.CookieRefreshTokensSyncController`
+  and :class:`~dmr.security.jwt.concrete_views.CookieRefreshTokensAsyncController`
+  to rotate both cookies
+- :class:`~dmr.security.jwt.concrete_views.CookieLogoutSyncController`
+  and :class:`~dmr.security.jwt.concrete_views.CookieLogoutAsyncController`
+  to drop both cookies
+
+They are routed the same way:
 
 .. literalinclude:: /examples/auth/jwt/jwt_concrete_cookies.py
   :caption: urls.py
@@ -220,9 +244,8 @@ The cookie flow is routed the same way:
 .. tip::
 
   These should be your default for the common cases.
-  Any custom logic belongs to the reusable controllers below,
-  which leave the bodies and the hooks open for you:
-  customize those rather than subclassing these.
+  They are final, so any custom logic belongs to the reusable
+  controllers below, which leave the bodies and the hooks open for you.
 
 
 Customizing pre-existing views

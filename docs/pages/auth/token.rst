@@ -131,8 +131,15 @@ Ready-to-use obtain views
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``dmr.security.token.concrete_views`` has controllers that issue tokens
-and only need a serializer, the token model is optional.
-Pass them to ``as_view`` in your urls, there is no view code at all:
+and only need a serializer, the token model is optional:
+
+- :class:`~dmr.security.token.concrete_views.ObtainTokenSyncController`
+  for sync views
+- :class:`~dmr.security.token.concrete_views.ObtainTokenAsyncController`
+  for async views
+
+Pass the serializer to ``as_view`` in your urls,
+there is no view code at all:
 
 .. literalinclude:: /examples/auth/token/token_concrete_obtain.py
   :caption: urls.py
@@ -157,15 +164,14 @@ must never be required to reach them.
 
   Pass ``token_cls`` to ``as_view`` when you swap the token model,
   see :ref:`swapping-token-model`. The default is imported the first time
-  a subclass is built, so projects with their own model
+  the controller is routed, so projects with their own model
   never need ``'dmr.security.token.app'`` installed.
 
 .. tip::
 
   These should be your default for the common cases.
-  Any custom logic belongs to the reusable controllers below,
-  which leave the bodies and the hooks open for you:
-  customize those rather than subclassing these.
+  They are final, so any custom logic belongs to the reusable
+  controllers below, which leave the bodies and the hooks open for you.
 
 Customizable obtain views
 ~~~~~~~~~~~~~~~~~~~~~~~~~

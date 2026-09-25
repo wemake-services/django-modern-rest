@@ -8,16 +8,17 @@ Custom logic belongs to the reusable ``dmr.security.token.views`` instead.
 
 import importlib
 from collections.abc import Callable
-from typing import Any, Generic, cast
+from typing import Any, Generic, cast, final
 
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.http import HttpResponseBase
-from typing_extensions import TypeVar, override
+from typing_extensions import Sentinel, TypeVar, override
 
 from dmr.internal.concrete import build_concrete_controller
 from dmr.security.token import views
 from dmr.security.token.token import TokenLikeAsync, TokenLikeSync
 from dmr.serializer import BaseSerializer
+from dmr.types import EMPTY
 
 _SerializerT = TypeVar(
     '_SerializerT',
@@ -45,6 +46,7 @@ def _set_default_token_cls(controller: type[Any]) -> None:
         controller.token_cls = _load_default_model()
 
 
+@final
 class ObtainTokenSyncController(
     views.ObtainTokenSyncController[
         _SerializerT,
@@ -65,13 +67,18 @@ class ObtainTokenSyncController(
 
     .. code:: python
 
-        path('login/', ObtainTokenSyncController.as_view(
-            serializer=PydanticSerializer,
-        ))
+        >>> from dmr.plugins.pydantic import PydanticFastSerializer
+        >>> from dmr.routing import path
+        >>> route = path(
+        ...     'login/',
+        ...     ObtainTokenSyncController.as_view(
+        ...         serializer=PydanticFastSerializer,
+        ...     ),
+        ... )
 
     Pass ``token_cls`` to :meth:`as_view` when you swap the token model,
     see :ref:`swapping-token-model`. The default is imported the first time
-    a subclass is built, so projects with their own model
+    the controller is routed, so projects with their own model
     do not need ``'dmr.security.token.app'`` installed.
 
     See :class:`~dmr.security.token.views.ObtainTokenSyncController`
@@ -96,16 +103,15 @@ class ObtainTokenSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | None = None,
-        token_cls: type[TokenLikeSync[_UserT]] | None = None,
+        serializer: type[BaseSerializer] | Sentinel = EMPTY,
+        token_cls: type[TokenLikeSync[_UserT]] | Sentinel = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with its required fields filled in.
 
-        *serializer* is required, unless a subclass already passed one
-        as a type argument. *token_cls* replaces the bundled ``Token``
-        model. *initkwargs* go to django as usual.
+        *serializer* is required, *token_cls* replaces the bundled
+        ``Token`` model. *initkwargs* go to django as usual.
         """
         concrete_cls = build_concrete_controller(
             cls,
@@ -134,6 +140,7 @@ class ObtainTokenSyncController(
         }
 
 
+@final
 class ObtainTokenAsyncController(
     views.ObtainTokenAsyncController[
         _SerializerT,
@@ -167,16 +174,15 @@ class ObtainTokenAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | None = None,
-        token_cls: type[TokenLikeAsync[_UserT]] | None = None,
+        serializer: type[BaseSerializer] | Sentinel = EMPTY,
+        token_cls: type[TokenLikeAsync[_UserT]] | Sentinel = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with its required fields filled in.
 
-        *serializer* is required, unless a subclass already passed one
-        as a type argument. *token_cls* replaces the bundled ``Token``
-        model. *initkwargs* go to django as usual.
+        *serializer* is required, *token_cls* replaces the bundled
+        ``Token`` model. *initkwargs* go to django as usual.
         """
         concrete_cls = build_concrete_controller(
             cls,

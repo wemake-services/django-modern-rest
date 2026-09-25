@@ -226,7 +226,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   serializer=PydanticSerializer, token_cls=Token))`.
   They all set `auth = None`, so auth from the settings never makes
   the login endpoints themselves require auth.
-  Use them for the common cases, custom logic goes
+  They are `@final`: use them for the common cases, custom logic goes
   to the reusable controllers in `views`, #1457
 - Added the missing OpenAPI 3.2 fields to our spec objects, #1485:
   - `OpenAPIConfig.self_uri` and `OpenAPI.self_uri` for `$self`

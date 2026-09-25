@@ -1,10 +1,11 @@
-from typing import Any, Final, TypeAlias, final
+from typing import Any, Final, TypeAlias
 
 import pytest
 from django.conf import LazySettings
 
 from dmr import Controller
 from dmr.exceptions import EndpointMetadataError
+from dmr.internal.concrete import build_concrete_controller
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.security.base import SyncOrAsyncAuth
 from dmr.security.django_session import concrete_views as session_views
@@ -15,6 +16,7 @@ from dmr.security.token.app.models import Token
 from dmr.security.token.token import TokenLikeSync
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
+from dmr.types import EMPTY
 
 _AnyController: TypeAlias = type[Controller[Any]]
 
@@ -115,8 +117,14 @@ def test_as_view_leaves_the_view_alone(
 @pytest.mark.parametrize('view_cls', _CONCRETE_VIEWS)
 def test_as_view_without_serializer(view_cls: _AnyController) -> None:
     """Ensures that a concrete view still needs its serializer."""
-    with pytest.raises(EndpointMetadataError, match='is abstract'):
+    with pytest.raises(EndpointMetadataError, match='needs a serializer'):
         view_cls.as_view()
+
+
+@pytest.mark.parametrize('view_cls', _CONCRETE_VIEWS)
+def test_concrete_views_are_final(view_cls: _AnyController) -> None:
+    """Ensures that custom logic goes to reusable views, not to subclasses."""
+    assert getattr(view_cls, '__final__', False) is True
 
 
 @pytest.mark.parametrize('view_cls', _COOKIE_VIEWS)
@@ -163,37 +171,56 @@ def test_as_view_default_token_cls(
     assert routed_cls.token_cls is Token
 
 
-@final
-class _ConcreteSubclass(
-    jwt_views.CookieObtainTokensSyncController[PydanticSerializer],
-):
-    """Already has its serializer, the usual way."""
+def _routed_cookie_obtain_class() -> Any:
+    view = jwt_views.CookieObtainTokensSyncController.as_view(
+        serializer=PydanticSerializer,
+    )
+    return view.view_class  # type: ignore[attr-defined]
 
 
-def test_subclass_as_view() -> None:
-    """Ensures that subclasses are routed the usual way."""
-    view = _ConcreteSubclass.as_view()
+def test_routed_class_as_view() -> None:
+    """Ensures that the class django routes is a regular controller."""
+    routed_cls = _routed_cookie_obtain_class()
 
-    routed_cls = view.view_class  # type: ignore[attr-defined]
-    _assert_routable(routed_cls)
-    assert routed_cls is _ConcreteSubclass
+    view = routed_cls.as_view()
 
-
-def test_subclass_as_view_fills_other_fields() -> None:
-    """Ensures that a subclass can still be given the rest of its fields."""
-    view = _ConcreteSubclass.as_view(jwt_refresh_cookie_path='/refresh/')
-
-    routed_cls = view.view_class  # type: ignore[attr-defined]
-    _assert_routable(routed_cls)
-    assert routed_cls.serializer is PydanticSerializer
-    assert routed_cls.jwt_refresh_cookie_path == '/refresh/'
-    assert issubclass(routed_cls, _ConcreteSubclass)
+    assert view.view_class is routed_cls
 
 
-def test_subclass_as_view_serializer() -> None:
+def test_routed_class_as_view_other_fields() -> None:
+    """Ensures that the routed class can still be given its other fields."""
+    routed_cls = _routed_cookie_obtain_class()
+
+    view = routed_cls.as_view(jwt_refresh_cookie_path='/refresh/')
+
+    rerouted_cls = view.view_class
+    _assert_routable(rerouted_cls)
+    assert rerouted_cls.serializer is PydanticSerializer
+    assert rerouted_cls.jwt_refresh_cookie_path == '/refresh/'
+    assert issubclass(rerouted_cls, routed_cls)
+
+
+def test_routed_class_as_view_serializer() -> None:
     """Ensures that a serializer cannot be replaced after the fact."""
+    routed_cls = _routed_cookie_obtain_class()
+
     with pytest.raises(EndpointMetadataError, match='already has'):
-        _ConcreteSubclass.as_view(serializer=PydanticFastSerializer)
+        routed_cls.as_view(serializer=PydanticFastSerializer)
+
+
+def test_none_is_a_value() -> None:
+    """Ensures that only `EMPTY` means that a field was not given."""
+    routed_cls = build_concrete_controller(
+        jwt_views.ObtainTokensSyncController,
+        serializer=PydanticSerializer,
+        jwt_issuer=None,
+        jwt_audiences=EMPTY,
+    )
+
+    assert routed_cls is not None
+    assert 'jwt_issuer' in routed_cls.__dict__
+    assert routed_cls.jwt_issuer is None
+    assert 'jwt_audiences' not in routed_cls.__dict__
 
 
 def test_as_view_passes_initkwargs() -> None:
@@ -257,17 +284,3 @@ def test_concrete_views_ignore_settings_auth(view_cls: _AnyController) -> None:
         endpoint.metadata.auth is None
         for endpoint in routed_cls.api_endpoints.values()
     )
-
-
-@pytest.mark.usefixtures('_settings_auth')
-def test_concrete_subclass_ignores_settings_auth() -> None:
-    """Ensures that subclasses written the usual way keep `auth=None`."""
-
-    @final
-    class _Subclass(
-        token_views.ObtainTokenSyncController[PydanticSerializer],
-    ):
-        """Has its serializer as a type argument."""
-
-    _assert_routable(_Subclass)
-    assert _Subclass.api_endpoints['POST'].metadata.auth is None

@@ -1,6 +1,6 @@
 from dmr.openapi import build_schema
 from dmr.openapi.views import OpenAPIJsonView
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import Router, path
 from dmr.security.token import concrete_views
 
@@ -11,7 +11,7 @@ router = Router(
         path(
             'auth/',
             concrete_views.ObtainTokenSyncController.as_view(
-                serializer=PydanticSerializer,
+                serializer=PydanticFastSerializer,
             ),
             name='obtain_token',
         ),
