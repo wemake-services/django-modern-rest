@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Any, ClassVar, Generic, final, Final
+from typing import Any, ClassVar, Generic, final
 
 from django.http import HttpResponseBase
 from typing_extensions import Sentinel, TypeVar, override
