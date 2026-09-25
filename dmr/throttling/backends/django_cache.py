@@ -33,9 +33,7 @@ class _DjangoCache:
     cache_name: str = DEFAULT_CACHE_ALIAS
     _cache: BaseCache = dataclasses.field(init=False)
 
-    def __post_init__(
-        self,
-    ) -> None:
+    def __post_init__(self) -> None:
         """Initialize the cache backend."""
         object.__setattr__(self, '_cache', caches[self.cache_name])
 
@@ -44,7 +42,11 @@ class _DjangoCache:
         controller_cls: type['Controller[BaseSerializer]'],
         metadata: 'EndpointMetadata',
     ) -> None:
-        """Raise when unsafe cache engine is used."""
+        """
+        Validate if unsafe cache engine is used at import time.
+
+        .. versionadded:: 0.16.0
+        """
         allow_cache = metadata.throttling_allow_unsafe_cache
         if allow_cache is None or not isinstance(
             self._cache,

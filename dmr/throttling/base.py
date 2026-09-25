@@ -143,7 +143,11 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
         controller_cls: type['Controller[BaseSerializer]'],
         metadata: EndpointMetadata,
     ) -> None:
-        """Validate throttling configuration at import time."""
+        """
+        Validate throttling configuration at import time.
+
+        .. versionadded:: 0.16.0
+        """
         self._backend.validate(controller_cls, metadata)
 
     def full_cache_key(

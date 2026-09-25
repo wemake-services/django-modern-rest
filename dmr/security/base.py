@@ -154,7 +154,11 @@ class _BaseAuth(ResponseSpecProvider, AuthProvider):
         controller_cls: type['Controller[BaseSerializer]'],
         metadata: EndpointMetadata,
     ) -> None:
-        """Validate auth configuration at import time."""
+        """
+        Validate auth configuration at import time.
+
+        .. versionadded:: 0.16.0
+        """
 
     @override
     def provide_response_specs(
