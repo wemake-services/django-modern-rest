@@ -138,6 +138,14 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
         # Run check and early initializations:
         self._backend.initialize_algorithm(self._algorithm)
 
+    def validate(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: EndpointMetadata,
+    ) -> None:
+        """Validate throttling configuration at import time."""
+        self._backend.validate(controller_cls, metadata)
+
     def full_cache_key(
         self,
         endpoint: 'Endpoint',

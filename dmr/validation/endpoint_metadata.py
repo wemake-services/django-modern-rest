@@ -1,7 +1,6 @@
 import dataclasses
 import inspect
 import re
-import warnings
 from collections.abc import (
     Callable,
     ItemsView,
@@ -21,7 +20,6 @@ from typing import (
     assert_never,
 )
 
-from django.core.cache.backends import dummy, locmem
 from django.http import HttpResponseBase
 from typing_extensions import ParamSpec, Sentinel
 
@@ -44,11 +42,6 @@ from dmr.security.base import AsyncAuth, SyncAuth, SyncOrAsyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.throttling import AsyncThrottle, SyncOrAsyncThrottle, SyncThrottle
-from dmr.throttling.backends.django_cache import (
-    AsyncDjangoCache,
-    SyncDjangoCache,
-    UnsafeCacheBackendWarning,
-)
 from dmr.types import EMPTY, infer_annotation, is_safe_subclass
 from dmr.validation.metadata_merger import MetadataMerger
 from dmr.validation.payload import (
@@ -872,7 +865,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 f'All throttling instances must be subtypes of {base_type!r} '
                 f'for {self.endpoint_name=}',
             )
-        self._validate_throttling(resolved_throttling, allow_cache=allow_cache)
         # Empty throttling list means that no throttling is configured
         # and it is just `None`, `or None` below handles that:
         return (
@@ -930,45 +922,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                     'in settings, not at controller or endpoint level '
                     f'for {self.endpoint_name=}',
                 )
-
-    def _validate_throttling(
-        self,
-        throttling: Sequence[SyncThrottle | AsyncThrottle],
-        *,
-        allow_cache: bool | None,
-    ) -> None:
-        # TODO: this must be moved to `SyncThrottle` / `AsyncThrottle` class.
-        # TODO: this must be also copied to `Auth` classes as well.
-        for throttle in throttling:
-            if (
-                allow_cache is None
-                or not isinstance(
-                    throttle._backend,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-                    (SyncDjangoCache, AsyncDjangoCache),
-                )
-                or not isinstance(
-                    throttle._backend._cache,  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-                    (locmem.LocMemCache, dummy.DummyCache),
-                )
-            ):
-                continue
-
-            cache = throttle._backend._cache  # noqa: SLF001  # pyright: ignore[reportPrivateUsage]
-            backend = type(cache).__qualname__
-            msg = (
-                f'Throttling is using {backend!r} cache backend '
-                f'in {self.endpoint_name!r} which is not safe for production: '
-                'counters are NOT shared between processes/instances. '
-                'Use Redis or Memcached backends instead.'
-            )
-            if allow_cache:
-                warnings.warn(
-                    msg,
-                    category=UnsafeCacheBackendWarning,
-                    stacklevel=1,
-                )
-            else:
-                raise EndpointMetadataError(msg)
 
     def _build_validate_responses(self) -> bool:
         merger = self._merger('validate_responses')
@@ -1254,6 +1207,10 @@ class EndpointMetadataValidator:  # noqa: WPS214
         self._validate_components(controller_cls)
         self._validate_parsers(controller_cls)
         self._validate_renderers(controller_cls)
+        for throttle in self.metadata.throttling or ():
+            throttle.validate(controller_cls, self.metadata)
+        for auth in self.metadata.auth or ():
+            auth.validate(controller_cls, self.metadata)
 
     def _resolve_all_responses(
         self,
