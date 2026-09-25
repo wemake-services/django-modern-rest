@@ -44,13 +44,6 @@ class CSRFAuthMixin(ResponseSpecProvider, AuthProvider):  # noqa: WPS214
     """
     Shared parts of auth classes that are protected by CSRF.
 
-    Auth that reads credentials that browsers send automatically
-    (cookies, sessions) must also be protected from CSRF.
-    Such auth has to enforce the CSRF check in runtime
-    and to document it in the OpenAPI schema:
-    an extra security scheme, an extra security requirement
-    for unsafe HTTP methods, and the extra ``403`` response.
-
     This mixin does all of it. Subclasses only have to:
 
     - set ``security_scheme_name`` and ``csrf_scheme_name`` attributes,
@@ -59,6 +52,8 @@ class CSRFAuthMixin(ResponseSpecProvider, AuthProvider):  # noqa: WPS214
 
     Must be listed before the concrete auth base in the class bases,
     so the methods here win over the default ones.
+
+    .. versionadded:: 0.16.0
     """
 
     __slots__ = ()
