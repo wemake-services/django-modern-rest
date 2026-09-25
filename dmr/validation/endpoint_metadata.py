@@ -1304,20 +1304,6 @@ class EndpointMetadataValidator:  # noqa: WPS214
         for renderer in self.metadata.renderers.values():
             renderer.validate(controller_cls, self.metadata)
 
-    def _validate_auth(
-        self,
-        controller_cls: type['Controller[BaseSerializer]'],
-    ) -> None:
-        for auth in self.metadata.auth or ():
-            auth.validate(controller_cls, self.metadata)
-
-    def _validate_throttling(
-        self,
-        controller_cls: type['Controller[BaseSerializer]'],
-    ) -> None:
-        for throttle in self.metadata.throttling or ():
-            throttle.validate(controller_cls, self.metadata)
-
     def _validate_request_http_spec(self) -> None:
         """Validate HTTP spec rules for request."""
         if (

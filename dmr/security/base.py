@@ -131,19 +131,6 @@ class _BaseAuth(ResponseSpecProvider, AuthProvider):
 
     __slots__ = ()
 
-    def validate(
-        self,
-        controller_cls: type['Controller[BaseSerializer]'],
-        metadata: EndpointMetadata,
-    ) -> None:
-        """
-        Validate authentication configuration at import time.
-
-        Override this method to enforce auth-specific constraints.
-        Raise :class:`dmr.exceptions.EndpointMetadataError`
-        if the auth instance is used incorrectly.
-        """
-
     @property
     @abstractmethod
     def www_authenticate_challenge(self) -> str | None:
