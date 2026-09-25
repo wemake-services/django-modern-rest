@@ -75,10 +75,9 @@ Let's pass custom error handling to a single endpoint:
   :linenos:
 
 In this example we add error handling defined as ``division_error``
-to ``patch`` endpoint (which serves as a division operation),
-while keeping ``post`` endpoint (which serves as a multiply operation)
+to ``patch`` endpoint, while keeping ``post`` endpoint
 without a custom error handler.
-Because :exc:`ZeroDivisionError` can't happen in ``post``.
+So, the same request to ``post`` results in a default ``500`` response.
 
 Per-endpoint's error handling has a priority
 over per-controller and global handlers.

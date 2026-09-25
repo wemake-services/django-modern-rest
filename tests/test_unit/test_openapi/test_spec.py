@@ -32,16 +32,8 @@ def test_config_raises_wrong_type(
         build_schema(router=Router())
 
 
-def test_schema_nested_objects_can_be_mutated(
-    settings: LazySettings,
-) -> None:
+def test_schema_nested_objects_can_be_mutated() -> None:
     """Ensure schema nested objects can be modified in place."""
-    settings.DMR_SETTINGS = {
-        'openapi_config': OpenAPIConfig(
-            title='Original',
-            version='1.0.0',
-        ),
-    }
     router = Router()
     schema = build_schema(router)
 
@@ -50,16 +42,8 @@ def test_schema_nested_objects_can_be_mutated(
     assert schema.info.title == 'Modified'
 
 
-def test_schema_collections_can_be_mutated(
-    settings: LazySettings,
-) -> None:
+def test_schema_collections_can_be_mutated() -> None:
     """Ensure schema collections can be modified in place."""
-    settings.DMR_SETTINGS = {
-        'openapi_config': OpenAPIConfig(
-            title='Original',
-            version='1.0.0',
-        ),
-    }
     router = Router()
     schema = build_schema(router)
 

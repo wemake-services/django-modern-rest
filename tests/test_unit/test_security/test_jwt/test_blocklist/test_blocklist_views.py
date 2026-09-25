@@ -185,7 +185,7 @@ async def test_async_cookie_refresh_blocklisted(
     )
     assert isinstance(allowed, HttpResponse)
     assert allowed.status_code == HTTPStatus.FORBIDDEN, allowed.content
-    assert not blocked.cookies
+    assert not allowed.cookies
 
 
 @pytest.mark.django_db
@@ -214,18 +214,15 @@ async def test_async_body_refresh_blocklisted(
     dmr_async_rf: DMRAsyncRequestFactory,
     refresh_token: JWToken,
     encoded_token: str,
-    fill_csrf: Callable[[HttpRequest], HttpRequest],
 ) -> None:
     """Ensures that a blocklisted token cannot refresh the tokens, async."""
     view = _BodyRefreshAsyncController.as_view()
 
     allowed = await dmr_async_rf.wrap(
         view(
-            fill_csrf(
-                dmr_async_rf.post(
-                    '/whatever/',
-                    {'refresh_token': encoded_token},
-                ),
+            dmr_async_rf.post(
+                '/whatever/',
+                {'refresh_token': encoded_token},
             ),
         ),
     )
@@ -235,11 +232,9 @@ async def test_async_body_refresh_blocklisted(
     await _BodyRefreshAsyncController().blocklist(refresh_token)
     blocked = await dmr_async_rf.wrap(
         view(
-            fill_csrf(
-                dmr_async_rf.post(
-                    '/whatever/',
-                    {'refresh_token': encoded_token},
-                ),
+            dmr_async_rf.post(
+                '/whatever/',
+                {'refresh_token': encoded_token},
             ),
         ),
     )

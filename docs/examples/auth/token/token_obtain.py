@@ -5,7 +5,7 @@ from dmr.security.token import views
 from dmr.security.token.app.models import Token
 
 
-# You can also use `ObtainTokensSyncController` if needed:
+# You can also use `ObtainTokenSyncController` if needed:
 class ObtainTokenAsyncController(
     views.ObtainTokenAsyncController[
         PydanticFastSerializer,
@@ -15,7 +15,7 @@ class ObtainTokenAsyncController(
 ):
     # Specifying token_cls is required:
     token_cls = Token
-    # And multiple optional configurations:
+    # These configurations are optional:
     token_algorithm = 'sha512'
 
     @override

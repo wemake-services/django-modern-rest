@@ -171,12 +171,7 @@ async def test_throttle_async_per_controller(
     assert json.loads(response.content) == 'inside'
 
 
-@pytest.mark.asyncio
-async def test_throttle_settings_override(
-    dmr_async_rf: DMRAsyncRequestFactory,
-    freezer: FrozenDateTimeFactory,
-    settings: LazySettings,
-) -> None:
+def test_throttle_settings_override(settings: LazySettings) -> None:
     """Ensures that async throttling from settings work."""
     settings.DMR_SETTINGS = {
         **settings.DMR_SETTINGS,

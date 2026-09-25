@@ -3,7 +3,6 @@ from http import HTTPStatus
 from typing import Any
 
 import pytest
-from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.http import HttpRequest
 from django.urls import reverse
@@ -88,7 +87,6 @@ def test_wrong_token_header(
 def test_valid_auth(
     dmr_client: DMRClient,
     admin_user: User,
-    settings: LazySettings,
     *,
     url: str,
     expires_at: Any,
@@ -125,7 +123,6 @@ def test_valid_auth(
 def test_revoked_token(
     dmr_client: DMRClient,
     admin_user: User,
-    settings: LazySettings,
     *,
     url: str,
 ) -> None:

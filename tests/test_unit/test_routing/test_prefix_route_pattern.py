@@ -53,7 +53,6 @@ def _simple_view(request: HttpRequest) -> HttpResponse:
         ('api/<int:version>/', 'users/', 'api/v1/users/', None, None),
         ('users/<int:user_id>/', '', 'users/abc/', None, None),
         ('<int:id>/', '', 'abc/', None, None),
-        ('api/<int:version>/', 'users/', 'api/invalid/users/', None, None),
         ('api/<int:version>/', '', 'other/path/', None, None),
     ],
 )

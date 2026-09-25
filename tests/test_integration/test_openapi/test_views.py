@@ -17,7 +17,7 @@ def use_cdn(request: pytest.FixtureRequest) -> bool:
     return bool(request.param)
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def _modify_cdn_settings(
     settings: LazySettings,
     *,
@@ -50,6 +50,7 @@ _ENDPOINTS: Final = MappingProxyType({
 })
 
 
+@pytest.mark.usefixtures('_modify_cdn_settings')
 @pytest.mark.parametrize(
     ('endpoint_name', 'expected_content_type'),
     _ENDPOINTS.items(),
@@ -92,6 +93,7 @@ def test_wrong_method(
     assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
 
 
+@pytest.mark.usefixtures('_modify_cdn_settings')
 @pytest.mark.parametrize(
     'endpoint_name',
     [

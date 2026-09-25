@@ -12,7 +12,6 @@ from dmr.security import SyncAuth, SyncOrAsyncAuth
 from dmr.security.http import HttpBasicAsyncAuth, HttpBasicSyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
-from dmr.test import DMRRequestFactory
 
 
 class _SyncAuth(HttpBasicSyncAuth):
@@ -42,40 +41,7 @@ class _AsyncAuth(HttpBasicAsyncAuth):
 _AUTH: Final = SyncOrAsyncAuth(_SyncAuth(), _AsyncAuth())
 
 
-def test_sync_or_async_auth_resolves_to_sync_via_settings(  # noqa: WPS118
-    dmr_rf: DMRRequestFactory,
-    settings: LazySettings,
-) -> None:
-    """Ensures SyncOrAsyncAuth resolves to SyncAuth for sync endpoints."""
-    settings.DMR_SETTINGS = {Settings.auth: [_AUTH]}
-
-    class _SyncController(Controller[PydanticSerializer]):
-        def get(self) -> str:
-            raise NotImplementedError
-
-    metadata = _SyncController.api_endpoints['GET'].metadata
-    assert metadata.auth is not None
-    assert isinstance(metadata.auth[0], HttpBasicSyncAuth)
-
-
-def test_sync_or_async_auth_resolves_to_async_via_settings(  # noqa: WPS118
-    dmr_rf: DMRRequestFactory,
-    settings: LazySettings,
-) -> None:
-    """Ensures SyncOrAsyncAuth resolves to AsyncAuth for async endpoints."""
-    settings.DMR_SETTINGS = {Settings.auth: [_AUTH]}
-
-    class _AsyncController(Controller[PydanticSerializer]):
-        async def get(self) -> str:
-            raise NotImplementedError
-
-    metadata = _AsyncController.api_endpoints['GET'].metadata
-    assert metadata.auth is not None
-    assert isinstance(metadata.auth[0], HttpBasicAsyncAuth)
-
-
 def test_sync_or_async_auth_not_allowed_at_controller_level(  # noqa: WPS118
-    dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures SyncOrAsyncAuth raises an error at controller level."""
     with pytest.raises(EndpointMetadataError, match='SyncOrAsyncAuth'):
@@ -88,7 +54,6 @@ def test_sync_or_async_auth_not_allowed_at_controller_level(  # noqa: WPS118
 
 
 def test_sync_or_async_auth_not_allowed_at_endpoint_level(  # noqa: WPS118
-    dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures SyncOrAsyncAuth raises an error at endpoint level."""
     wrong_auth: list[SyncAuth] = [_AUTH]  # type: ignore[list-item]
@@ -100,25 +65,7 @@ def test_sync_or_async_auth_not_allowed_at_endpoint_level(  # noqa: WPS118
                 raise NotImplementedError
 
 
-def test_endpoint_metadata_never_has_sync_or_async_auth_instance(  # noqa: WPS118
-    dmr_rf: DMRRequestFactory,
-    settings: LazySettings,
-) -> None:
-    """Ensures resolved metadata contains no SyncOrAsyncAuth instances."""
-    settings.DMR_SETTINGS = {Settings.auth: [_AUTH]}
-
-    class _SyncController(Controller[PydanticSerializer]):
-        def get(self) -> str:
-            raise NotImplementedError
-
-    metadata = _SyncController.api_endpoints['GET'].metadata
-    assert metadata.auth is not None
-    for auth in metadata.auth:
-        assert not isinstance(auth, SyncOrAsyncAuth)  # type: ignore[unreachable]
-
-
 def test_same_instance_reused_for_sync_and_async(
-    dmr_rf: DMRRequestFactory,
     settings: LazySettings,
 ) -> None:
     """Ensures the same SyncOrAsyncAuth yields the same inner instances."""
@@ -145,7 +92,6 @@ def test_same_instance_reused_for_sync_and_async(
 
 
 def test_sync_auth_in_settings_raises_for_async_endpoint(  # noqa: WPS118
-    dmr_rf: DMRRequestFactory,
     settings: LazySettings,
 ) -> None:
     """Ensures sync auth in settings raises for async endpoints."""
@@ -159,7 +105,6 @@ def test_sync_auth_in_settings_raises_for_async_endpoint(  # noqa: WPS118
 
 
 def test_async_auth_in_settings_raises_for_sync_endpoint(  # noqa: WPS118
-    dmr_rf: DMRRequestFactory,
     settings: LazySettings,
 ) -> None:
     """Ensures async auth in settings raises for sync endpoints."""

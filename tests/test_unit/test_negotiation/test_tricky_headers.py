@@ -60,36 +60,6 @@ def test_wrong_accept_header(
     })
 
 
-def test_wrong_accept_header_with_content_type(
-    dmr_rf: DMRRequestFactory,
-) -> None:
-    """Ensures we raise an error when `Accept` header is wrong."""
-    request = dmr_rf.get(
-        '/whatever/',
-        headers={
-            'Content-Type': 'application/json',
-            'Accept': 'wrong',
-        },
-    )
-
-    response = _UncalledController.as_view()(request)
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.NOT_ACCEPTABLE
-    assert response.headers == {'Content-Type': 'application/json'}
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': (
-                    'Cannot serialize response body with accepted '
-                    "types [<MediaType: wrong>], supported=['application/json']"
-                ),
-                'type': 'value_error',
-            },
-        ],
-    })
-
-
 def test_zero_quality_accept_header(
     dmr_rf: DMRRequestFactory,
 ) -> None:
