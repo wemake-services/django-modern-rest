@@ -106,7 +106,8 @@ def test_prefix_normalization(
     [
         (('api/', 'v1/'), '/v1/missing/', 'application/json'),
         (('api/', 'v1/'), '/other/missing/', 'text/html'),
-        (('api',), '/apiary/test/', 'application/json'),
+        (('api',), '/apiary/test/', 'text/html'),
+        (('api',), '/api/ary/test/', 'application/json'),
     ],
 )
 def test_prefix_matching(
