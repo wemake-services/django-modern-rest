@@ -10,7 +10,11 @@ from django.utils.encoding import force_str
 from django.views import defaults
 
 from dmr.errors import ErrorType, format_error
-from dmr.exceptions import InternalServerError, NotAcceptableError
+from dmr.exceptions import InternalServerError
+from dmr.internal.error_handlers import (
+    NegotiatedErrorRenderer,
+    normalize_prefixes,
+)
 from dmr.internal.routing import PrefixRoutePattern, RouterMetadata
 from dmr.internal.types import FormatError, StrOrPromise
 from dmr.openapi.collector import (
@@ -322,52 +326,26 @@ def build_404_handler(
         https://docs.djangoproject.com/en/stable/ref/views/#the-404-page-not-found-view
 
     """
-    from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
-
-    combined = (prefix, *prefixes)
-    all_prefixes = tuple(f'/{pref.strip("/")}' for pref in combined)
-    renderers_list = (
-        resolve_setting(Settings.renderers) if renderers is None else renderers
+    all_prefixes = normalize_prefixes(prefix, *prefixes)
+    render_error = NegotiatedErrorRenderer(
+        serializer=serializer,
+        format_error=format_error,
+        renderers=renderers,
     )
-    renderer_by_type = {
-        renderer.content_type: renderer
-        for renderer in renderers_list
-        if not renderer.streaming
-    }
-    default_renderer = next(iter(renderer_by_type.values()))
 
     def factory(
         request: HttpRequest,
         exception: Exception,
     ) -> HttpResponse:
-        from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
-        from dmr.response import build_response  # noqa: PLC0415
-
         if not request.path.startswith(all_prefixes):
             return defaults.page_not_found(request, exception)
-
-        try:
-            renderer = negotiate_renderer(
-                request,
-                renderer_by_type,
-                default=default_renderer,
-            )
-        except NotAcceptableError as exc:
-            return build_response(
-                serializer=serializer,
-                raw_data=format_error(exc),
-                status_code=exc.status_code,
-                renderer=default_renderer,
-            )
-
-        return build_response(
-            serializer=serializer,
+        return render_error(
+            request,
             raw_data=format_error(
                 'Page not found',
                 error_type=ErrorType.not_found,
             ),
             status_code=HTTPStatus.NOT_FOUND,
-            renderer=renderer,
         )
 
     return factory
@@ -405,49 +383,23 @@ def build_500_handler(
         https://docs.djangoproject.com/en/stable/ref/views/#the-500-server-error-view
 
     """
-    from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
-
-    combined = (prefix, *prefixes)
-    all_prefixes = tuple(f'/{pref.strip("/")}' for pref in combined)
-    renderers_list = (
-        resolve_setting(Settings.renderers) if renderers is None else renderers
+    all_prefixes = normalize_prefixes(prefix, *prefixes)
+    render_error = NegotiatedErrorRenderer(
+        serializer=serializer,
+        format_error=format_error,
+        renderers=renderers,
     )
-    renderer_by_type = {
-        renderer.content_type: renderer
-        for renderer in renderers_list
-        if not renderer.streaming
-    }
-    default_renderer = next(iter(renderer_by_type.values()))
 
     def factory(request: HttpRequest) -> HttpResponse:
-        from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
-        from dmr.response import build_response  # noqa: PLC0415
-
         if not request.path.startswith(all_prefixes):
             return defaults.server_error(request)
-
-        try:
-            renderer = negotiate_renderer(
-                request,
-                renderer_by_type,
-                default=default_renderer,
-            )
-        except NotAcceptableError as exc:
-            return build_response(
-                serializer=serializer,
-                raw_data=format_error(exc),
-                status_code=exc.status_code,
-                renderer=default_renderer,
-            )
-
-        return build_response(
-            serializer=serializer,
+        return render_error(
+            request,
             raw_data=format_error(
                 force_str(InternalServerError.default_message),
                 error_type=ErrorType.internal_error,
             ),
             status_code=InternalServerError.status_code,
-            renderer=renderer,
         )
 
     return factory

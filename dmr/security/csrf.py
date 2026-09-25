@@ -11,8 +11,11 @@ from django.utils.translation import gettext_lazy as _
 from typing_extensions import override
 
 from dmr.errors import ErrorModel, format_error
-from dmr.exceptions import NotAcceptableError
 from dmr.internal.csrf import ensure_csrf
+from dmr.internal.error_handlers import (
+    NegotiatedErrorRenderer,
+    normalize_prefixes,
+)
 from dmr.internal.types import FormatError, StrOrPromise
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
@@ -211,51 +214,22 @@ def build_csrf_handler(
 
     .. versionadded:: 0.16.0
     """
-    # TODO: unify this logic for all three handlers: 404, 500, this one
-    combined = (prefix, *prefixes)
-    all_prefixes = tuple(f'/{pref.strip("/")}' for pref in combined)
+    all_prefixes = normalize_prefixes(prefix, *prefixes)
+    render_error = NegotiatedErrorRenderer(
+        serializer=serializer,
+        format_error=format_error,
+        renderers=renderers,
+    )
 
     def factory(request: HttpRequest, reason: str = '') -> HttpResponse:
         from django.views.csrf import csrf_failure  # noqa: PLC0415
 
-        from dmr.internal.negotiation import negotiate_renderer  # noqa: PLC0415
-        from dmr.response import build_response  # noqa: PLC0415
-        from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
-
         if not request.path.startswith(all_prefixes):
             return csrf_failure(request, reason)
-
-        renderers_list = (
-            resolve_setting(Settings.renderers)
-            if renderers is None
-            else renderers
-        )
-        renderer_by_type = {
-            renderer.content_type: renderer
-            for renderer in renderers_list
-            if not renderer.streaming
-        }
-        default_renderer = next(iter(renderer_by_type.values()))
-
-        try:
-            renderer = negotiate_renderer(
-                request,
-                renderer_by_type,
-                default=default_renderer,
-            )
-        except NotAcceptableError as exc:
-            return build_response(
-                serializer=serializer,
-                raw_data=format_error(exc),
-                status_code=exc.status_code,
-                renderer=default_renderer,
-            )
-
-        return build_response(
-            serializer=serializer,
+        return render_error(
+            request,
             raw_data=format_error(csrf_message(reason)),
             status_code=status_code,
-            renderer=renderer,
         )
 
     return factory
