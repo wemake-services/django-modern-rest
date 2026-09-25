@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from typing_extensions import override
 
 from dmr.errors import ErrorModel, format_error
-from dmr.internal.csrf import ensure_csrf
+from dmr.internal.csrf import csrf_header_name, ensure_csrf
 from dmr.internal.error_handlers import (
     NegotiatedErrorRenderer,
     normalize_prefixes,
@@ -41,6 +41,34 @@ SAFE_HTTP_METHODS: Final = frozenset((
 
 #: Default security scheme name for CSRF.
 CSRF_SCHEME_NAME: Final = 'csrf'
+
+
+def csrf_security_scheme() -> SecurityScheme:
+    """
+    Build the security scheme that describes how CSRF is checked.
+
+    By default Django keeps the CSRF secret in the
+    ``CSRF_COOKIE_NAME`` cookie, so the scheme is an ``apiKey`` in ``cookie``.
+
+    With ``CSRF_USE_SESSIONS = True`` Django requires to send CSRF in a header.
+    The session cookie itself is not part of this scheme, it is described
+    by the auth that reads it, for example ``DjangoSessionSyncAuth``.
+
+    .. versionadded:: 0.16.0
+    """
+    if settings.CSRF_USE_SESSIONS:
+        return SecurityScheme(
+            type='apiKey',
+            name=csrf_header_name(),
+            security_scheme_in='header',
+            description='CSRF protection, the secret is stored in the session',
+        )
+    return SecurityScheme(
+        type='apiKey',
+        name=settings.CSRF_COOKIE_NAME,
+        security_scheme_in='cookie',
+        description='CSRF protection',
+    )
 
 
 class CSRFAuthMixin(ResponseSpecProvider, AuthProvider):  # noqa: WPS214
@@ -80,14 +108,7 @@ class CSRFAuthMixin(ResponseSpecProvider, AuthProvider):  # noqa: WPS214
 
     def csrf_security_scheme(self) -> SecurityScheme:
         """Provides the security scheme of the CSRF."""
-        from django.conf import settings  # noqa: PLC0415
-
-        return SecurityScheme(
-            type='apiKey',
-            name=settings.CSRF_COOKIE_NAME,
-            security_scheme_in='cookie',
-            description='CSRF protection',
-        )
+        return csrf_security_scheme()
 
     @override
     def security_schemes(
@@ -96,13 +117,10 @@ class CSRFAuthMixin(ResponseSpecProvider, AuthProvider):  # noqa: WPS214
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> dict[str, 'SecurityScheme | Reference']:
         """Provides the auth security scheme together with the CSRF one."""
-        schemes: dict[str, SecurityScheme | Reference] = {
+        return {
             self.security_scheme_name: self.auth_security_scheme(),
+            self.csrf_scheme_name: self.csrf_security_scheme(),
         }
-        # TODO: support `CSRF` checks based on Django sessions
-        if self._uses_csrf_cookie():
-            schemes[self.csrf_scheme_name] = self.csrf_security_scheme()
-        return schemes
 
     @override
     def security_requirements(
@@ -112,7 +130,7 @@ class CSRFAuthMixin(ResponseSpecProvider, AuthProvider):  # noqa: WPS214
     ) -> list[SecurityRequirement]:
         """Requires the auth scheme and CSRF for unsafe HTTP methods."""
         requirement: SecurityRequirement = {self.security_scheme_name: []}
-        if self._uses_csrf_cookie() and not self._is_safe_http_method(metadata):
+        if not self._is_safe_http_method(metadata):
             requirement[self.csrf_scheme_name] = []
         return [requirement]
 
@@ -148,9 +166,6 @@ class CSRFAuthMixin(ResponseSpecProvider, AuthProvider):  # noqa: WPS214
         can fall through to the next auth without a CSRF error.
         """
         ensure_csrf(controller)
-
-    def _uses_csrf_cookie(self) -> bool:
-        return not settings.CSRF_USE_SESSIONS
 
     def _is_safe_http_method(self, metadata: EndpointMetadata) -> bool:
         return metadata.method.upper() in SAFE_HTTP_METHODS
@@ -311,22 +326,9 @@ class CSRFSemanticSchemaProvider(ResponseSpecProvider, AuthProvider):
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> dict[str, SecurityScheme | Reference]:
         """Provides a security schema definition."""
-        from django.conf import settings  # noqa: PLC0415
-
-        if (
-            self._is_csrf_disabled(metadata, controller_cls)
-            or not self._uses_csrf_cookie()
-        ):
-            # TODO: think about representing Django sessions as `auth` as well.
+        if self._is_csrf_disabled(metadata, controller_cls):
             return {}
-        return {
-            self.security_scheme_name: SecurityScheme(
-                type='apiKey',
-                name=settings.CSRF_COOKIE_NAME,
-                security_scheme_in='cookie',
-                description='CSRF protection',
-            ),
-        }
+        return {self.security_scheme_name: csrf_security_scheme()}
 
     @override
     def security_requirements(
@@ -335,10 +337,7 @@ class CSRFSemanticSchemaProvider(ResponseSpecProvider, AuthProvider):
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> list[SecurityRequirement]:
         """Provides a security schema usage requirement."""
-        if (
-            self._is_csrf_disabled(metadata, controller_cls)
-            or not self._uses_csrf_cookie()
-        ):
+        if self._is_csrf_disabled(metadata, controller_cls):
             return []
         return [{self.security_scheme_name: []}]
 
@@ -359,11 +358,6 @@ class CSRFSemanticSchemaProvider(ResponseSpecProvider, AuthProvider):
             for own in own_requirements
             for auth in auth_requirements
         ]
-
-    def _uses_csrf_cookie(self) -> bool:
-        from django.conf import settings  # noqa: PLC0415
-
-        return not settings.CSRF_USE_SESSIONS
 
     def _is_csrf_disabled(
         self,

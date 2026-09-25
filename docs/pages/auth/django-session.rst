@@ -152,6 +152,14 @@ in the login response (alongside the session cookie).
   appears in the login response — the token is already embedded in the
   session used for authentication.
 
+  The OpenAPI schema reflects this as well: with a CSRF cookie
+  the ``csrf`` security scheme is an ``apiKey`` in ``cookie``,
+  with ``CSRF_USE_SESSIONS`` it is an ``apiKey`` in ``header``
+  named after ``CSRF_HEADER_NAME``, like ``X-Csrftoken``.
+  The session cookie itself is described only once,
+  by the ``django_session`` security scheme.
+  See :func:`~dmr.security.csrf.csrf_security_scheme`.
+
 .. seealso::
 
   - https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-CSRF_USE_SESSIONS
