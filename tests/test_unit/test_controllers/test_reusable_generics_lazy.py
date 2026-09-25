@@ -37,7 +37,7 @@ def test_lazy_modify(
 
         @modify.lazy(
             lambda controller: modify(
-                status_code=controller.status_code,  # type: ignore[attr-defined]
+                status_code=controller.status_code,
             ),
         )
         def post(self, parsed_body: Body[_ModelT]) -> str:
@@ -132,9 +132,7 @@ def test_lazy_validate(
 
         @validate.lazy(
             lambda controller: validate(
-                # TODO: fix this type.
-                # Maybe we can improve it and also fix pyright?
-                ResponseSpec(str, status_code=controller.status_code),  # type: ignore[attr-defined]
+                ResponseSpec(str, status_code=controller.status_code),
             ),
         )
         def post(self, parsed_body: Body[_ModelT]) -> HttpResponse:

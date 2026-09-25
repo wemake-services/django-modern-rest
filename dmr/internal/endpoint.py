@@ -173,7 +173,9 @@ _ModifyDecoratorT = TypeVar(
 
 # We can't split this line into multiline strings,
 # because `pyrefly` does not support this pattern.
-_CallableOrClassmethod: TypeAlias = 'classmethod[_ControllerT, [], _ReturnT] | Callable[[type[_ControllerT]], _ReturnT]'  # noqa: E501
+_CallableOrClassmethod: TypeAlias = (
+    'classmethod[_ControllerT, [], _ReturnT] | Callable[[type[Any]], _ReturnT]'
+)
 
 
 @final
