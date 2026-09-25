@@ -17,9 +17,6 @@ def normalize_prefixes(prefix: str, *prefixes: str) -> tuple[str, ...]:
     """
     Normalize path prefixes to start with a leading slash.
 
-    Trailing slashes are dropped, so ``'api/'``, ``'/api'``,
-    and ``'api'`` all become ``'/api'``.
-
     .. code-block:: python
 
         >>> normalize_prefixes('api/')
