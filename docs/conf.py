@@ -70,8 +70,7 @@ extensions = [
     'sphinx_tabs.tabs',
     'sphinx_iconify',
     'sphinxcontrib.mermaid',
-    'sphinx_llms_txt',
-    'sphinx_markdown_builder',
+    'sphinx_llm_friendly',
     # custom extensions
     'docs.tools.sphinx_ext',
 ]
@@ -291,14 +290,9 @@ html_theme_options = {
         },
     ],
     'accent_color': 'green',
-    # "Copy page" button and "Open in ..." links for LLM chats,
-    # see `_templates/components/copy-page-button.html`
-    # (`show_ai_links` is already `True` in Shibuya's `theme.conf`):
-    'ai_prompt_template': (
-        'Read {url} and answer my questions about django-modern-rest. '
-        'The full documentation index is at '
-        'https://django-modern-rest.readthedocs.io/en/latest/llms.txt'
-    ),
+    # `sphinx_llm_friendly` adds its own button that copies the page
+    # as Markdown, Shibuya's "Copy page" would be a second one:
+    'show_ai_links': False,
     'light_logo': '_static/images/logo-light.svg',
     'dark_logo': '_static/images/logo-dark.svg',
     'og_image_url': 'https://repository-images.githubusercontent.com/1072817092/f0ab70e3-c165-485b-b591-e860c16f7c4f',
@@ -324,31 +318,26 @@ html_js_files = [
 html_show_sourcelink = False
 html_sourcelink_suffix = ''
 
-# LLM-friendly outputs:
-# - `llms.txt` and `llms-full.txt` from `sphinx_llms_txt`,
-# - a Markdown twin of every page from `sphinx_markdown_builder`,
-#   built by `just docs` and by `.readthedocs.yml` next to the HTML,
-#   so `pages/routing.md` sits next to `pages/routing.html`.
-# Read the Docs exports the canonical URL of the version being built,
-# it makes `pageurl` available to templates and absolute links in `llms.txt`:
+# `sphinx_llm_friendly` writes a Markdown version of every page
+# next to its HTML one (`pages/routing.md` for `pages/routing.html`),
+# `llms.txt` and `llms-full.txt`, all during the HTML build.
+# Read the Docs exports the canonical URL of the version being built.
+# Its path prefixes the links in `llms.txt`, so they also work when
+# `llms.txt` is served from the root of the domain:
 html_baseurl = os.environ.get(
     'READTHEDOCS_CANONICAL_URL',
     'https://django-modern-rest.readthedocs.io/en/latest/',
 )
-llms_txt_uri_template = '{base_url}{docname}.html'
-llms_txt_title = f'django-modern-rest {release}'
-llms_txt_summary = (
+llm_friendly_llms_txt_summary = (
     f'Documentation for django-modern-rest version {release}. '
-    'Every page listed below is also available as Markdown: '
-    'replace `.html` with `.md` in its URL. '
     'The complete documentation in one file is `llms-full.txt` '
     'next to this file.'
 )
-markdown_anchor_sections = True
-markdown_http_base = html_baseurl.rstrip('/')
-# Links between pages stay inside the Markdown twins,
-# an agent that follows them keeps reading Markdown:
-markdown_uri_doc_suffix = '.md'
+# A token budget, not a hard requirement: going over it is a warning,
+# which fails our build. `llms-full.txt` has about 296k tokens now.
+# When it grows past the budget, decide between raising it and leaving
+# some pages out with `llm_friendly_llms_full_txt_exclude`:
+llm_friendly_llms_full_txt_max_tokens = 350_000
 
 
 def resolve_canonical_names(app: Sphinx, doctree: Node) -> None:

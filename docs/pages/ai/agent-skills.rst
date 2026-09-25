@@ -74,14 +74,14 @@ Every skill tells the agent to read the documentation
 of the installed version. These are the entry points:
 
 - https://django-modern-rest.readthedocs.io/llms.txt
-  is the index of all pages, with the version in its header
+  is the index of all pages, with the version in its summary
 - https://django-modern-rest.readthedocs.io/llms-full.txt
-  is the complete documentation in a single file
+  is the complete documentation in a single file,
+  including the code of every example
 - every page is also published as Markdown: replace ``.html``
   with ``.md`` in its URL, for example
   https://django-modern-rest.readthedocs.io/en/latest/pages/routing.md
-- the "Copy page" button on every page copies that Markdown,
-  and its menu opens the page in ChatGPT or Claude
+- the ``M↓`` button next to the title of every page copies that Markdown
 - `Context7 <https://context7.com/wemake-services/django-modern-rest>`_
   and `DeepWiki <https://deepwiki.com/wemake-services/django-modern-rest>`_
   index the same documentation

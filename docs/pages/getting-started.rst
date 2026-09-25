@@ -78,7 +78,7 @@ knows our framework:
   for complete docs
 - Every documentation page is also served as Markdown,
   replace ``.html`` with ``.md`` in its URL,
-  or press "Copy page" on any page
+  or press ``M↓`` next to the title of any page
 
 We also support
 `Context7 <https://context7.com/wemake-services/django-modern-rest>`_

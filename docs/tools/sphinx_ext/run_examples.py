@@ -69,6 +69,7 @@ from dmr.routing import build_404_handler, build_500_handler
 from dmr.security.csrf import build_csrf_handler
 from dmr.settings import Settings, clear_settings_cache
 from dmr.types import EMPTY
+from tools.sphinx_ext.markdown import skip_node
 
 if TYPE_CHECKING:
     from sphinx.writers.html5 import HTML5Translator
@@ -927,7 +928,9 @@ def _create_openapi_admonition(result_content: str) -> Node:
         '',
         title('', 'OpenAPI Schema'),
         result_toggle,
-        classes=['hint'],
+        # The generated schema is large and follows from the example code,
+        # it is left out of the Markdown output to save LLMs tokens:
+        classes=['hint', 'llm-friendly-exclude'],
     )
 
 
@@ -1522,9 +1525,12 @@ def setup(app: Sphinx) -> None:
     """Register Sphinx extension directives."""
     tmp_examples_path = Path.cwd() / _PATH_TO_TMP_EXAMPLES
     tmp_examples_path.mkdir(exist_ok=True, parents=True)
+    # In Markdown, imports are shown in full, and the example code
+    # is already there, so there is nothing to toggle or to link to:
     app.add_node(
         _ImportsSpoiler,
         html=(_visit_imports_spoiler, _depart_imports_spoiler),
+        llm_markdown=(skip_node, None),
     )
     app.add_node(
         _ImportsSpoilerSummary,
@@ -1536,6 +1542,7 @@ def setup(app: Sphinx) -> None:
     app.add_node(
         _GithubSourceLink,
         html=(_visit_github_source_link, _depart_github_source_link),
+        llm_markdown=(skip_node, None),
     )
     app.add_node(
         _OpenAPIResultToggle,
