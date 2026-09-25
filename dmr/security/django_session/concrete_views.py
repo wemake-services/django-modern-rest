@@ -41,9 +41,14 @@ class DjangoSessionSyncController(
 
     .. code:: python
 
-        path('login/', DjangoSessionSyncController.as_view(
-            serializer=PydanticSerializer,
-        ))
+        >>> from dmr.plugins.pydantic import PydanticSerializer
+        >>> from dmr.routing import path
+        >>> route = path(
+        ...     'login/',
+        ...     DjangoSessionSyncController.as_view(
+        ...         serializer=PydanticSerializer,
+        ...     ),
+        ... )
 
     See :class:`~dmr.security.django_session.views.DjangoSessionSyncController`
     for all the hooks it inherits, switch to it

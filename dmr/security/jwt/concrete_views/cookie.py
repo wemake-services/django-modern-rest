@@ -38,9 +38,14 @@ class CookieObtainTokensSyncController(
 
     .. code:: python
 
-        path('login/', CookieObtainTokensSyncController.as_view(
-            serializer=PydanticSerializer,
-        ))
+        >>> from dmr.plugins.pydantic import PydanticSerializer
+        >>> from dmr.routing import path
+        >>> route = path(
+        ...     'login/',
+        ...     CookieObtainTokensSyncController.as_view(
+        ...         serializer=PydanticSerializer,
+        ...     ),
+        ... )
 
     .. warning::
 
@@ -53,10 +58,14 @@ class CookieObtainTokensSyncController(
 
         .. code:: python
 
-            path('login/', CookieObtainTokensSyncController.as_view(
-                serializer=PydanticSerializer,
-                jwt_refresh_cookie_path=reverse_lazy('api:refresh'),
-            ))
+            >>> from django.urls import reverse_lazy
+            >>> route = path(
+            ...     'login/',
+            ...     CookieObtainTokensSyncController.as_view(
+            ...         serializer=PydanticSerializer,
+            ...         jwt_refresh_cookie_path=reverse_lazy('api:refresh'),
+            ...     ),
+            ... )
 
         Every controller that shares the cookies has to agree on the value,
         so pass it to the refresh and the logout controller as well.

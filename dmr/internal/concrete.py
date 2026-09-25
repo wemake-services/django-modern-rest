@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Final, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Final, TypeVar
 
 from dmr.exceptions import EndpointMetadataError
 
@@ -51,17 +51,13 @@ def build_concrete_controller(
 
     # The new class is a subclass of *controller_cls* by construction,
     # but type checkers cannot follow `type()` with a type var base:
-    base_cls: type[Any] = controller_cls
-    return cast(
-        'type[_ControllerT]',
-        type(
-            controller_cls.__name__,
-            (base_cls,),
-            {
-                **given_attrs,
-                '__doc__': controller_cls.__doc__,
-                '__module__': controller_cls.__module__,
-                '__qualname__': controller_cls.__qualname__,
-            },
-        ),
+    return type(  # pyright: ignore[reportReturnType]
+        controller_cls.__name__,
+        (controller_cls,),
+        {
+            **given_attrs,
+            '__doc__': controller_cls.__doc__,
+            '__module__': controller_cls.__module__,
+            '__qualname__': controller_cls.__qualname__,
+        },
     )

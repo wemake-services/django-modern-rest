@@ -50,9 +50,14 @@ class ObtainTokensSyncController(
 
     .. code:: python
 
-        path('login/', ObtainTokensSyncController.as_view(
-            serializer=PydanticSerializer,
-        ))
+        >>> from dmr.plugins.pydantic import PydanticSerializer
+        >>> from dmr.routing import path
+        >>> route = path(
+        ...     'login/',
+        ...     ObtainTokensSyncController.as_view(
+        ...         serializer=PydanticSerializer,
+        ...     ),
+        ... )
 
     See :class:`~dmr.security.jwt.views.ObtainTokensSyncController`
     for all the jwt settings and hooks it inherits,
