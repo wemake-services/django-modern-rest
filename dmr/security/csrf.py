@@ -40,7 +40,7 @@ SAFE_HTTP_METHODS: Final = frozenset((
 CSRF_SCHEME_NAME: Final = 'csrf'
 
 
-class CSRFAuthMixin(ResponseSpecProvider, AuthProvider):
+class CSRFAuthMixin(ResponseSpecProvider, AuthProvider):  # noqa: WPS214
     """
     Shared parts of auth classes that are protected by CSRF.
 
