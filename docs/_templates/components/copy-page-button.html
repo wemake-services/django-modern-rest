@@ -1,0 +1,78 @@
+{#-
+  Override of Shibuya's `components/copy-page-button.html`.
+
+  The theme copies the raw reStructuredText source of a page.
+  We publish a Markdown twin of every page next to its HTML
+  (see `markdown` in `docs/justfile` and `.readthedocs.yml`),
+  which is what LLMs and agents should read: includes are resolved,
+  examples are inlined, and the content matches the built version.
+-#}
+{%- if meta and meta.hide_ai_links == "true" -%}
+  {% set _show_ai_links = False %}
+{%- else -%}
+  {% set _show_ai_links = theme_show_ai_links %}
+{%- endif -%}
+
+{%- set raw_source_url = pathto(pagename + ".md", 1) -%}
+{%- set can_fetch_source = True -%}
+{%- set page_source_suffix = ".md" -%}
+
+{%- if _show_ai_links and raw_source_url -%}
+{%- set prompt_text = theme_ai_prompt_template.format(url=(pageurl | replace(".html", ".md")) if pageurl else raw_source_url) -%}
+<div class="copy-page-wrapper relative pb-4 lg:absolute lg:top-8 lg:right-6 xl:right-12">
+  <div id="copy-page-trigger">
+    <button
+      type="button"
+      class="js-copy px-3 py-1 inline-flex items-center gap-1"
+      {% if can_fetch_source %}data-url="{{ raw_source_url }}"{% endif %}
+    >
+      <i class="i-lucide" data-icon="copy"></i>
+      <span>{{ _('Copy page') }}</span>
+    </button>
+    <button class="js-menu px-2 py-1" type="button" aria-label="{{ _('More actions') }}"
+      aria-haspopup="menu" aria-expanded="false" aria-controls="copy-page-content">
+      <i class="i-lucide chevron-down"></i>
+    </button>
+  </div>
+  <div id="copy-page-content" role="menu" aria-orientation="vertical" aria-hidden="true">
+    <div role="presentation">
+      <div class="flex flex-col" role="group">
+        <button class="js-copy" type="button" role="menuitem"
+          {% if can_fetch_source %}data-url="{{ raw_source_url }}"{% endif %}>
+          <span class="iconify-icon">
+            <i class="i-lucide" data-icon="copy"></i>
+          </span>
+          <span>{{ _('Copy page') }}</span>
+        </button>
+        <a role="menuitem" href="{{ raw_source_url }}" target="_blank" rel="nofollow">
+          {%- if page_source_suffix and page_source_suffix.endswith(".md") -%}
+            <iconify-icon icon="bi:markdown"></iconify-icon>
+            <span>{{ _('View as Markdown') }}</span>
+          {%- else -%}
+            <iconify-icon icon="bi:code-slash"></iconify-icon>
+            <span>{{ _('View Source') }}</span>
+          {%- endif -%}
+        </a>
+        {%- if theme_open_in_chatgpt -%}
+        <a role="menuitem" href="https://chatgpt.com/?hints=search&q={{ prompt_text|urlencode }}" target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:openai"></iconify-icon>
+          <span>{{ _('Open in ChatGPT') }}</span>
+        </a>
+        {%- endif -%}
+        {%- if theme_open_in_claude -%}
+        <a role="menuitem" href="https://claude.ai/new?q={{ prompt_text|urlencode }}" target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:claude"></iconify-icon>
+          <span>{{ _('Open in Claude') }}</span>
+        </a>
+        {%- endif -%}
+        {%- if theme_open_in_perplexity -%}
+        <a role="menuitem" href="https://www.perplexity.ai/search?q={{ prompt_text|urlencode }}" target="_blank" rel="nofollow">
+          <iconify-icon icon="bi:perplexity"></iconify-icon>
+          <span>{{ _('Open in Perplexity') }}</span>
+        </a>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+{%- endif -%}

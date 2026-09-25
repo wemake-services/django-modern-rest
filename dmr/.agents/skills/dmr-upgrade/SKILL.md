@@ -58,7 +58,8 @@ Apply one release at a time and keep its edits together,
 so the user can review them release by release.
 
 When the installed docs matter, load the version-specific index:
-`https://django-modern-rest.readthedocs.io/en/<version>/llms.txt`.
+`https://django-modern-rest.readthedocs.io/en/<version>/llms.txt`
+(every page is also served as Markdown, replace `.html` with `.md`).
 
 ### 4. Verify
 

@@ -77,7 +77,10 @@ of the installed version. These are the entry points:
   is the index of all pages, with the version in its header
 - https://django-modern-rest.readthedocs.io/llms-full.txt
   is the complete documentation in a single file
-- the "Copy page" button on every page copies its source,
+- every page is also published as Markdown: replace ``.html``
+  with ``.md`` in its URL, for example
+  https://django-modern-rest.readthedocs.io/en/latest/pages/routing.md
+- the "Copy page" button on every page copies that Markdown,
   and its menu opens the page in ChatGPT or Claude
 - `Context7 <https://context7.com/wemake-services/django-modern-rest>`_
   and `DeepWiki <https://deepwiki.com/wemake-services/django-modern-rest>`_

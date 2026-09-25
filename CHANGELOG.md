@@ -346,7 +346,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   fixed skill descriptions to trigger on natural requests,
   added `agentskills validate` to `just lint`
 - Fixed `dmr-from-dj-rest-auth` entry in the Claude Code marketplace
-- Docs: `llms.txt` now carries the version
+- Docs: every page is also published as Markdown (`<page>.md`),
+  "Copy page" copies it, `llms.txt` now carries the version
 
 
 ## 0.15.0 (2026-09-11)

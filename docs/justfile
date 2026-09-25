@@ -20,3 +20,8 @@ sphinx +targets:
 
 # Pass-through: route any target to Sphinx
 build +targets='html': (sphinx targets)
+
+# Build Markdown twins of every page and copy them next to the HTML output,
+# Read the Docs does the same in `.readthedocs.yml`
+markdown: (sphinx 'markdown')
+  cp -r "{{builddir}}/markdown/." "{{builddir}}/html/"

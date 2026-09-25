@@ -186,9 +186,9 @@ clean:
     rm -rf build/ dist/
     find dmr/_compiled -type f -name '*.so' | xargs rm -rf
 
-# Build docs
+# Build docs, including the Markdown twins of every page for LLMs
 [group('docs')]
-docs +targets='clean html': (_docs::build targets)
+docs +targets='clean html': (_docs::build targets) _docs::markdown
 
 # Add new translation strings
 [group('i18n')]

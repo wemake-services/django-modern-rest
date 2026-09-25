@@ -35,6 +35,9 @@ For scaffolding from an OpenAPI document use `dmr-openapi-skeleton`.
    for the installed version, not the latest one.
 2. **Load the docs you need**, they are versioned and LLM friendly:
    - index: `https://django-modern-rest.readthedocs.io/en/<version>/llms.txt`
+   - one page as Markdown: replace `.html` with `.md` in any docs URL,
+     for example
+     `https://django-modern-rest.readthedocs.io/en/latest/pages/routing.md`
    - everything at once:
      `https://django-modern-rest.readthedocs.io/en/<version>/llms-full.txt`
 3. **Read the reference for the area you are changing**

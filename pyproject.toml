@@ -123,6 +123,7 @@ docs = [
   "sphinx-design>=0.7,<0.8",
   "sphinx-iconify>=0.3,<0.4",
   "sphinx-llms-txt>=0.7,<0.8",
+  "sphinx-markdown-builder>=0.6,<0.7",
   "sphinx-tabs>=3.5,<4",
   "sphinxcontrib-mermaid>=2,<3",
   # Needed for our extension:
