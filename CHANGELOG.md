@@ -182,6 +182,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   get the correct response specs and `build_csrf_handler` allows customizing
   `CSRF_FAILURE_VIEW` Django setting to return actual REST responses,
   instead of HTML ones, #1521
+- Added `CSRF_USE_SESSIONS=True` CSRF security scheme support,
 - Added `semantic_schema` module with `AuthProvider` interface, #1521
 - Now `security_requirements` can return both
   `AND` and `OR` auth strategies, previously
