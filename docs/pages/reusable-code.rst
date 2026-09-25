@@ -406,8 +406,9 @@ But, user is free to modify any parts of the spec, if needed.
   not the one that was used during the decoration time.
 
   ``@classmethod`` is preferable over ``lambda`` functions,
-  because they provide easier override API and they are fully typed,
-  unlike ``lambda`` functions.
+  because they provide easier override API and they are fully typed.
+  The ``controller`` argument of a ``lambda`` is typed as ``type[Any]``,
+  so attribute access on it is not checked by type checkers.
 
 
 Where is it actually helpful in practice?
