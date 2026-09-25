@@ -20,7 +20,7 @@ _CookieResponseT = TypeVar('_CookieResponseT', default=None)
 
 #: Widest scope there is, so that a controller works wherever it is routed.
 #: Narrow it down to the url of your refresh endpoint, see the class docs.
-DEFAULT_REFRESH_COOKIE_PATH: str = '/'
+DEFAULT_REFRESH_COOKIE_PATH: Final = '/'
 
 
 @final
