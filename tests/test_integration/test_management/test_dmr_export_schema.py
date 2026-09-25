@@ -23,10 +23,8 @@ def _modify_integration_settings(settings: LazySettings) -> None:
     'kwargs',
     [
         {},  # default
-        {'format': 'json'},  # explicit json
         {'format': 'json', 'no_ensure_ascii': True},
         {'indent': 0},
-        {'indent': None},
         {'indent': 2},  # pretty
         {'sort_keys': True},  # sort keys
         {'indent': 2, 'sort_keys': True},
@@ -72,7 +70,6 @@ def test_export_schema_json(
         {'no_ensure_ascii': True},
         {'indent': 4},  # custom indentation
         {'indent': 2},
-        {'indent': None},
         {'sort_keys': True},  # sort keys
         {'indent': 4, 'sort_keys': True},
         {'indent': 4, 'no_ensure_ascii': True},

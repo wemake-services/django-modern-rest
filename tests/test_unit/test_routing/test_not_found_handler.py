@@ -21,8 +21,6 @@ def _simple_view(request: HttpRequest) -> HttpResponse:
 
 urlpatterns = [
     path('api/existing/', _simple_view),
-    path('v1/existing/', _simple_view),
-    path('other/existing/', _simple_view),
 ]
 handler404 = build_404_handler('api/', serializer=PydanticSerializer)
 
@@ -89,7 +87,10 @@ def test_prefix_normalization(
 ) -> None:
     """Ensure that normalizes prefix with or without slashes."""
     not_found_view = build_404_handler(prefix, serializer=PydanticSerializer)
-    request = dmr_rf.get('/api/missing/')
+    request = dmr_rf.get(
+        '/api/missing/',
+        headers={'Accept': 'application/json'},
+    )
 
     response = not_found_view(request, Exception())
 

@@ -8,14 +8,13 @@ import pytest
 from dmr import Controller, ResponseSpec, validate
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.test import DMRRequestFactory
 from dmr.types import AnnotationsContext
 
 if TYPE_CHECKING:
     from django.http import HttpResponse  # <- required for test
 
 
-def test_validate_forward_ref(dmr_rf: DMRRequestFactory) -> None:
+def test_validate_forward_ref() -> None:
     """Ensures `@validate` cannot work on forward ref annotation."""
     with pytest.raises(UnsolvableAnnotationsError, match=r'\.get'):
 
@@ -30,7 +29,7 @@ def test_validate_forward_ref(dmr_rf: DMRRequestFactory) -> None:
                 raise NotImplementedError
 
 
-def test_validate_forward_ref_custom(dmr_rf: DMRRequestFactory) -> None:
+def test_validate_forward_ref_custom() -> None:
     """Ensures custom context helps to solve annotations."""
     from django.http import HttpResponse as _HttpResponse  # noqa: PLC0415
 

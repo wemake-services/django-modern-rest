@@ -14,8 +14,6 @@ from dmr.serializer import BaseSerializer
 from dmr.test import DMRRequestFactory
 
 _SerializerT = TypeVar('_SerializerT', bound=BaseSerializer)
-_OtherT = TypeVar('_OtherT')
-_ExtraT = TypeVar('_ExtraT')
 
 
 class _BodyModel(pydantic.BaseModel):

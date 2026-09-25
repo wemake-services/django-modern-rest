@@ -30,7 +30,6 @@ def _simple_view(request: HttpRequest) -> HttpResponse:
 
 urlpatterns = [
     path('api/csrf/', _CsrfController.as_view(), name='csrf'),
-    path('api/other-csrf/', _CsrfController.as_view(), name='other-csrf'),
     path('other/existing/', _simple_view, name='not-api'),
 ]
 csrf_handler = build_csrf_handler('api/', serializer=PydanticSerializer)
@@ -66,7 +65,7 @@ def test_fallback_html_forbidden() -> None:
 
 
 @override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_handler)
-def test_unsupported_accept_header(dmr_client: DMRClient) -> None:
+def test_unsupported_accept_header() -> None:
     """Ensure that unsupported ``Accept`` returns correct error message."""
     dmr_client = DMRClient(enforce_csrf_checks=True)
 

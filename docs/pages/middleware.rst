@@ -50,6 +50,8 @@ In this example:
    transforms the response to JSON
 4. The response description is automatically added to the OpenAPI schema
 
+.. _custom-middleware:
+
 Custom Middleware
 -----------------
 
@@ -167,11 +169,8 @@ Common use cases:
 - Cache hits (return cached response)
 - Custom authentication/authorization checks
 
-Example with rate limiting:
-
-.. literalinclude:: /examples/middleware/rate_limit.py
-  :linenos:
-  :language: python
+See the rate limiting middleware in :ref:`custom-middleware`
+for an example.
 
 Wrapping Django's Built-in Decorators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

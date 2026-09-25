@@ -38,7 +38,7 @@ class _HttpBasicAuth:  # noqa: WPS214
         'www_authenticate',
     )
 
-    def __init__(  # noqa: WPS211
+    def __init__(
         self,
         *,
         security_scheme_name: str = 'http_basic',

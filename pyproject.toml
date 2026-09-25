@@ -97,7 +97,7 @@ dev = [
   "skills-ref>=0.1,<0.2",
   "slotscheck>=0.19,<0.22",
   # TODO: relax the pin after a stable `ty` release:
-  "ty==0.0.81",
+  "ty==0.0.82",
   "types-django-filter>=25.2,<27",
   "types-docker>=7.2,<8",
   "types-docutils>=0.22,<0.24",

@@ -340,10 +340,7 @@ class _NoThrottleSyncController(Controller[PydanticSerializer]):
         return 'inside'
 
 
-def test_no_throttle_report_sync(
-    dmr_rf: DMRRequestFactory,
-    freezer: FrozenDateTimeFactory,
-) -> None:
+def test_no_throttle_report_sync(dmr_rf: DMRRequestFactory) -> None:
     """Ensures that no throttle produces empty reports."""
     request = dmr_rf.get('/whatever/')
 
@@ -364,7 +361,6 @@ class _NoThrottleAsyncController(Controller[PydanticSerializer]):
 @pytest.mark.asyncio
 async def test_no_throttle_report_async(
     dmr_async_rf: DMRAsyncRequestFactory,
-    freezer: FrozenDateTimeFactory,
 ) -> None:
     """Ensures that no throttle produces empty reports."""
     request = dmr_async_rf.get('/whatever/')

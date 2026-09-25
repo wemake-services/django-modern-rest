@@ -5,7 +5,6 @@ from collections.abc import Collection, Mapping
 from typing import (
     Annotated,
     Any,
-    Final,
     Literal,
     Optional,
     Union,
@@ -49,9 +48,6 @@ class _TestTypedDict(TypedDict):
 class _TestEnum(enum.IntEnum):
     height = 1
     width = 2
-
-
-_TEST_SCHEMA: Final = Schema(type=OpenAPIType.OBJECT)
 
 
 @pytest.mark.parametrize(

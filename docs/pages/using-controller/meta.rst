@@ -35,7 +35,7 @@ Their features are identical:
   .. tab:: sync
 
     .. literalinclude:: /examples/using_controller/meta_sync.py
-      :caption: dtos.py
+      :caption: views.py
       :language: python
       :linenos:
 

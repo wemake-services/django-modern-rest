@@ -156,7 +156,6 @@ def test_obtain_inactive_user(
     assert not response.cookies
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize('url', _OBTAIN_URLS)
 def test_obtain_wrong_structure(
     dmr_client: DMRClient,
@@ -256,7 +255,6 @@ def test_refresh_rotates_cookies(
     }
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize('url', _REFRESH_URLS)
 def test_refresh_without_cookie(
     dmr_client: DMRClient,
@@ -349,7 +347,6 @@ def test_logout_drops_cookies(
     assert not dmr_client.cookies['refresh_token'].value
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize('url', _LOGOUT_URLS)
 def test_logout_without_cookies(
     dmr_client: DMRClient,

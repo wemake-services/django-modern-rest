@@ -4,8 +4,6 @@ from typing import TYPE_CHECKING, final
 from django.http import HttpRequest
 from django.middleware.csrf import CsrfViewMiddleware
 
-from dmr.security.csrf import csrf_message
-
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.serializer import BaseSerializer
@@ -39,6 +37,8 @@ class _EnsureCsrfToken(CsrfViewMiddleware):
     """
 
     def _reject(self, request: HttpRequest, reason: str) -> str:
+        from dmr.security.csrf import csrf_message  # noqa: PLC0415
+
         # Return the failure reason instead of an ``HttpResponse``.
         # Expose detailed csrf failure reason on DEBUG mode.
         # Otherwise, provide default placeholder reason.

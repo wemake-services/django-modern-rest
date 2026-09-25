@@ -133,7 +133,7 @@ The shortest example [(click here to copy the whole file)](https://github.com/we
 And then route this controller in your `urls.py`:
 
 ```python
->>> from django.urls import include, path
+>>> from django.urls import path
 >>> from dmr.routing import Router
 
 >>> router = Router(

@@ -108,7 +108,7 @@ class _BaseTokenAuth(Generic[_TokenLikeT]):
         return [{self.security_scheme_name: []}]
 
 
-class BaseTokenSyncAuth(_BaseTokenAuth[TokenLikeSync[Any]], SyncAuth):  # noqa: WPS214
+class BaseTokenSyncAuth(_BaseTokenAuth[TokenLikeSync[Any]], SyncAuth):
     """Shared sync authentication pipeline for single-source token auth."""
 
     __slots__ = ()
@@ -189,7 +189,7 @@ class BaseTokenSyncAuth(_BaseTokenAuth[TokenLikeSync[Any]], SyncAuth):  # noqa: 
         set_request_attrs(request, user, token=token)
 
 
-class BaseTokenAsyncAuth(_BaseTokenAuth[TokenLikeAsync[Any]], AsyncAuth):  # noqa: WPS214
+class BaseTokenAsyncAuth(_BaseTokenAuth[TokenLikeAsync[Any]], AsyncAuth):
     """Shared async authentication pipeline for single-source token auth."""
 
     __slots__ = ()

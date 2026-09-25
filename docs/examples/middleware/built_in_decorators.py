@@ -16,10 +16,6 @@ from dmr.response import build_response
         return_type=ErrorModel,
         status_code=HTTPStatus.UNAUTHORIZED,
     ),
-    ResponseSpec(  # Uses for proxy authed response with HTTPStatus.OK
-        return_type=dict[str, str],
-        status_code=HTTPStatus.OK,
-    ),
 )
 def login_required_json(response: HttpResponse) -> HttpResponse:
     """Convert Django's login_required redirect to JSON 401 response."""

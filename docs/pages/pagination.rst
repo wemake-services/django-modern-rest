@@ -188,7 +188,7 @@ For example, you can encrypt your cursor values to not expose any details and
 prevent people from forging cursor values:
 
 .. literalinclude:: /examples/integrations/custom_cursor_encoding.py
-  :caption: models.py
+  :caption: views.py
   :language: python
   :linenos:
 

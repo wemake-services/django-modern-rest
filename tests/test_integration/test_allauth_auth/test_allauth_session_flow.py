@@ -69,7 +69,6 @@ def test_allauth_session_flow(
     }
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize('url', _PROTECTED_URLS)
 def test_allauth_session_missing_token(
     dmr_client: DMRClient,

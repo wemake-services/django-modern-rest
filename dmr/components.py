@@ -102,7 +102,7 @@ class ComponentParserBuilder:
     def _find_components(  # noqa: WPS231
         self,
         type_annotations: dict[str, Any],
-    ) -> list[ComponentParserSpec]:  # noqa: WPS231
+    ) -> list[ComponentParserSpec]:
         components: list[ComponentParserSpec] = []
         for context_name, component in type_annotations.items():
             if context_name == 'return':

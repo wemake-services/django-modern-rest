@@ -1,4 +1,4 @@
-from typing import Final, Self
+from typing import Self
 
 import pytest
 from inline_snapshot import snapshot
@@ -14,8 +14,6 @@ from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import SyncAuth
 from dmr.serializer import BaseSerializer
-
-_TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 
 
 class _NoSchemeAuth(SyncAuth):
