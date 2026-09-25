@@ -66,7 +66,6 @@ def test_sync_token_auth_success(
     assert json.loads(response.content) == 'authed'
 
 
-@pytest.mark.django_db
 def test_sync_token_auth_missing_header(
     dmr_rf: DMRRequestFactory,
 ) -> None:
@@ -264,7 +263,6 @@ async def test_async_token_auth_success(
 
 
 @pytest.mark.asyncio
-@pytest.mark.django_db(transaction=True)
 async def test_async_token_auth_missing_header(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:

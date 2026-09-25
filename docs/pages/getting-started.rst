@@ -193,11 +193,10 @@ In this example:
 
 1. We defined regular ``pydantic``, ``msgspec``, or any other models
    we will use for our API
-2. We added two component parsers: one for the request's
-   :data:`~dmr.components.Body` and one
-   for :data:`~dmr.components.Headers`,
-   which will parse them into the typed models
-   that we pass to these components as type parameters
+2. We added a component parser for the request's
+   :data:`~dmr.components.Body`,
+   which will parse it into the typed model
+   that we pass to this component as a type parameter
 3. Next, we created
    a :class:`~dmr.controller.Controller` class
    with :class:`~dmr.plugins.pydantic.PydanticSerializer`

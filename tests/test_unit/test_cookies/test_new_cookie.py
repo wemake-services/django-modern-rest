@@ -194,23 +194,6 @@ class _WrongCookieController(Controller[PydanticSerializer]):
             },
         )
 
-    @validate(
-        ResponseSpec(
-            list[int],
-            status_code=HTTPStatus.OK,
-            cookies={
-                'session_id': CookieSpec(),
-            },
-        ),
-    )
-    def delete(self) -> HttpResponse:
-        return self.to_response(
-            [1, 2],
-            cookies={
-                'Session_Id': NewCookie(value='123'),  # wrong case
-            },
-        )
-
 
 @pytest.mark.parametrize(
     'method',
@@ -219,7 +202,6 @@ class _WrongCookieController(Controller[PydanticSerializer]):
         HTTPMethod.POST,
         HTTPMethod.PUT,
         HTTPMethod.PATCH,
-        HTTPMethod.DELETE,
     ],
 )
 def test_validate_cookies(

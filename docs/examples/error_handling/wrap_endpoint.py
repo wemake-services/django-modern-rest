@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from dmr import Body, Controller, modify
 from dmr.endpoint import Endpoint
 from dmr.errors import wrap_handler
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.serializer import BaseSerializer
 
 
@@ -15,7 +15,7 @@ class TwoNumbers(pydantic.BaseModel):
     right: int
 
 
-class MathController(Controller[PydanticSerializer]):
+class MathController(Controller[PydanticFastSerializer]):
     def division_error(  # <- we define an error handler
         self,
         endpoint: Endpoint,
@@ -42,12 +42,6 @@ class MathController(Controller[PydanticSerializer]):
         parsed_body: Body[TwoNumbers],
     ) -> float:  # <- has custom error handling
         return parsed_body.left / parsed_body.right
-
-    def post(
-        self,
-        parsed_body: Body[TwoNumbers],
-    ) -> float:  # <- has only default error handling
-        return parsed_body.left * parsed_body.right
 
 
 # run: {"controller": "MathController", "method": "patch", "body": {"left": 1, "right": 0}, "url": "/api/math/", "curl_args": ["-D", "-"], "assert-error-text": "division by zero", "fail-with-body": false}  # noqa: ERA001, E501

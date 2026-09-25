@@ -168,10 +168,7 @@ class _UnserializableController(Controller[PydanticSerializer]):
         return {'a': object()}
 
 
-def test_not_serializable_response(
-    dmr_rf: DMRRequestFactory,
-    faker: Faker,
-) -> None:
+def test_not_serializable_response(dmr_rf: DMRRequestFactory) -> None:
     """Ensures in custom type aliases do not work."""
     request = dmr_rf.post('/whatever/', data={})
 

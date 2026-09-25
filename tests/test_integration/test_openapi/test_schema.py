@@ -40,7 +40,7 @@ def _patch_response_validation(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture(autouse=True)
-def _disable_logging(settings: LazySettings) -> Iterator[None]:
+def _disable_logging() -> Iterator[None]:
     # Logging has too much output with schemathesis:
     logging.disable(logging.CRITICAL)
     yield

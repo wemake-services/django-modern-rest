@@ -1,8 +1,6 @@
 import json
 from http import HTTPMethod, HTTPStatus
-from typing import final
 
-import pydantic
 import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
@@ -15,17 +13,6 @@ from dmr.errors import wrap_handler
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.settings import Settings
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
-
-
-@final
-class _Payload(pydantic.BaseModel):
-    number: int
-
-
-@final
-class _ErrorPayload(pydantic.BaseModel):
-    mode: str
-    message: str
 
 
 class _AsyncValidateErrorHandlerController(Controller[PydanticSerializer]):

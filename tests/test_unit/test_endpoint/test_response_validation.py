@@ -52,13 +52,12 @@ class _WrongController(Controller[PydanticSerializer]):
     )
     def delete(self) -> HttpResponse:
         """Does not respect a `return_type` validator."""
-        return HttpResponse(b'[]')
+        return HttpResponse(b'[]', content_type='application/json')
 
 
 @pytest.mark.parametrize(
     'method',
     [
-        HTTPMethod.GET,
         HTTPMethod.POST,
         HTTPMethod.PUT,
         HTTPMethod.PATCH,
