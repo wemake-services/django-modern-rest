@@ -332,7 +332,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   be any `Mapping`, not just `dict`, #1576
 - Now prefixes like `api/` in `build_404_handler` and `build_500_handler`
   only cover full URLs like `/api/v1`
-  and do not cover partials like `/apiary/v1`, #
+  and do not cover partials like `/apiary/v1`, #1606
 
 
 ## 0.15.0 (2026-09-11)
