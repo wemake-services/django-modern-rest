@@ -165,6 +165,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Features
 
+- Auth and throttling instances now provide a `validate` hook for enforcing
+  instance-specific constraints during endpoint construction, #1600
 - Added `Controller.metadata_merger_cls` and `dmr.validation.MetadataMerger`
   to customize how endpoint, controller, and settings values are resolved
   into the endpoint metadata. All layers of every field go through
