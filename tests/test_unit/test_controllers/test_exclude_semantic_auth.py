@@ -178,6 +178,37 @@ def test_exclude_semantic_auth_validate(
     })
 
 
+def test_exclude_semantic_auth_csrf(
+    openapi_context: OpenAPIContext,
+) -> None:
+    """Ensure that semantic auth can be disabled on endpoint level."""
+
+    class _PerEndpoint(Controller[PydanticSerializer]):
+        csrf_exempt = False
+
+        @modify(
+            auth=[HeaderJWTSyncAuth()],
+            exclude_semantic_auth={'csrf'},
+        )
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _PerEndpoint.api_endpoints['GET'].metadata
+    requirements = SecuritySchemeGenerator(openapi_context)(
+        metadata,
+        _PerEndpoint,
+    )
+
+    assert metadata.semantic_schema is True
+    assert metadata.semantic_auth is True
+    assert metadata.semantic_responses is True
+    assert metadata.exclude_semantic_auth == frozenset(('csrf',))
+    assert HTTPStatus.OK in metadata.responses
+    assert HTTPStatus.UNAUTHORIZED in metadata.responses
+    assert requirements == snapshot([{'jwt': []}])
+    assert openapi_context.registries.security_scheme.schemes.keys() == {'jwt'}
+
+
 def test_disable_semantic_auth_settings(
     openapi_context: OpenAPIContext,
     settings: LazySettings,
@@ -283,4 +314,34 @@ def test_disable_semantic_auth_async_validate(
     assert metadata.semantic_auth is False
     assert requirements is None
     assert HTTPStatus.UNAUTHORIZED in metadata.responses
+    assert openapi_context.registries.security_scheme.schemes == {}
+
+
+def test_semantic_auth_csrf(
+    openapi_context: OpenAPIContext,
+) -> None:
+    """Ensure that semantic auth can be disabled on endpoint level."""
+
+    class _PerEndpoint(Controller[PydanticSerializer]):
+        csrf_exempt = False
+
+        @modify(
+            auth=[HeaderJWTSyncAuth()],
+            semantic_auth=False,
+        )
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _PerEndpoint.api_endpoints['GET'].metadata
+    requirements = SecuritySchemeGenerator(openapi_context)(
+        metadata,
+        _PerEndpoint,
+    )
+
+    assert metadata.semantic_schema is True
+    assert metadata.semantic_auth is False
+    assert metadata.semantic_responses is True
+    assert HTTPStatus.OK in metadata.responses
+    assert HTTPStatus.UNAUTHORIZED in metadata.responses
+    assert requirements is None
     assert openapi_context.registries.security_scheme.schemes == {}
