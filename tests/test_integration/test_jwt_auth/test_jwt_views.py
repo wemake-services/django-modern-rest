@@ -1,5 +1,6 @@
 import datetime as dt
 from http import HTTPStatus
+from typing import Final
 
 import jwt
 import pytest
@@ -13,6 +14,26 @@ from inline_snapshot import snapshot
 
 from dmr.security.jwt.token import JWToken
 from dmr.test import DMRClient
+
+#: Customized reusable views and concrete views behave exactly the same:
+_OBTAIN_URLS: Final = (
+    reverse('api:jwt_auth:jwt_obtain_access_refresh_sync'),
+    reverse('api:jwt_auth:jwt_obtain_access_refresh_async'),
+    reverse('api:jwt_auth:jwt_concrete_obtain_sync'),
+    reverse('api:jwt_auth:jwt_concrete_obtain_async'),
+)
+_REFRESH_URLS: Final = (
+    reverse('api:jwt_auth:jwt_refresh_sync'),
+    reverse('api:jwt_auth:jwt_refresh_async'),
+    reverse('api:jwt_auth:jwt_concrete_refresh_sync'),
+    reverse('api:jwt_auth:jwt_concrete_refresh_async'),
+)
+_VERIFY_URLS: Final = (
+    reverse('api:jwt_auth:jwt_verify_sync'),
+    reverse('api:jwt_auth:jwt_verify_async'),
+    reverse('api:jwt_auth:jwt_concrete_verify_sync'),
+    reverse('api:jwt_auth:jwt_concrete_verify_async'),
+)
 
 
 @pytest.fixture
@@ -45,10 +66,7 @@ def inactive_user(faker: Faker, password: str) -> User:
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_obtain_access_refresh_sync'),
-        reverse('api:jwt_auth:jwt_obtain_access_refresh_async'),
-    ],
+    _OBTAIN_URLS,
 )
 @pytest.mark.parametrize(
     'check_url',
@@ -145,10 +163,7 @@ def test_correct_auth_params(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_obtain_access_refresh_sync'),
-        reverse('api:jwt_auth:jwt_obtain_access_refresh_async'),
-    ],
+    _OBTAIN_URLS,
 )
 def test_inactive_user(
     dmr_client: DMRClient,
@@ -173,10 +188,7 @@ def test_inactive_user(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_obtain_access_refresh_sync'),
-        reverse('api:jwt_auth:jwt_obtain_access_refresh_async'),
-    ],
+    _OBTAIN_URLS,
 )
 @pytest.mark.parametrize(
     'auth_params',
@@ -213,10 +225,7 @@ def test_wrong_auth_params(
 
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_obtain_access_refresh_sync'),
-        reverse('api:jwt_auth:jwt_obtain_access_refresh_async'),
-    ],
+    _OBTAIN_URLS,
 )
 @pytest.mark.parametrize(
     'auth_params',
@@ -246,17 +255,11 @@ def test_wrong_auth_structure(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_refresh_sync'),
-        reverse('api:jwt_auth:jwt_refresh_async'),
-    ],
+    _REFRESH_URLS,
 )
 @pytest.mark.parametrize(
     'obtain_url',
-    [
-        reverse('api:jwt_auth:jwt_obtain_access_refresh_sync'),
-        reverse('api:jwt_auth:jwt_obtain_access_refresh_async'),
-    ],
+    _OBTAIN_URLS,
 )
 def test_refresh_valid_token(
     dmr_client: DMRClient,
@@ -317,10 +320,7 @@ def test_refresh_valid_token(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_refresh_sync'),
-        reverse('api:jwt_auth:jwt_refresh_async'),
-    ],
+    _REFRESH_URLS,
 )
 def test_refresh_with_access_token(
     dmr_client: DMRClient,
@@ -349,10 +349,7 @@ def test_refresh_with_access_token(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_refresh_sync'),
-        reverse('api:jwt_auth:jwt_refresh_async'),
-    ],
+    _REFRESH_URLS,
 )
 def test_refresh_expired_token(
     dmr_client: DMRClient,
@@ -381,10 +378,7 @@ def test_refresh_expired_token(
 
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_refresh_sync'),
-        reverse('api:jwt_auth:jwt_refresh_async'),
-    ],
+    _REFRESH_URLS,
 )
 @pytest.mark.parametrize(
     'body',
@@ -411,10 +405,7 @@ def test_refresh_wrong_structure(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_refresh_sync'),
-        reverse('api:jwt_auth:jwt_refresh_async'),
-    ],
+    _REFRESH_URLS,
 )
 def test_refresh_deleted_user(
     dmr_client: DMRClient,
@@ -441,10 +432,7 @@ def test_refresh_deleted_user(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_refresh_sync'),
-        reverse('api:jwt_auth:jwt_refresh_async'),
-    ],
+    _REFRESH_URLS,
 )
 def test_refresh_inactive_user(
     dmr_client: DMRClient,
@@ -470,17 +458,11 @@ def test_refresh_inactive_user(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_verify_sync'),
-        reverse('api:jwt_auth:jwt_verify_async'),
-    ],
+    _VERIFY_URLS,
 )
 @pytest.mark.parametrize(
     'obtain_url',
-    [
-        reverse('api:jwt_auth:jwt_obtain_access_refresh_sync'),
-        reverse('api:jwt_auth:jwt_obtain_access_refresh_async'),
-    ],
+    _OBTAIN_URLS,
 )
 def test_verify_valid_token(
     dmr_client: DMRClient,
@@ -508,10 +490,7 @@ def test_verify_valid_token(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_verify_sync'),
-        reverse('api:jwt_auth:jwt_verify_async'),
-    ],
+    _VERIFY_URLS,
 )
 def test_verify_with_refresh_token(
     dmr_client: DMRClient,
@@ -540,10 +519,7 @@ def test_verify_with_refresh_token(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_verify_sync'),
-        reverse('api:jwt_auth:jwt_verify_async'),
-    ],
+    _VERIFY_URLS,
 )
 def test_verify_expired_token(
     dmr_client: DMRClient,
@@ -572,10 +548,7 @@ def test_verify_expired_token(
 
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_verify_sync'),
-        reverse('api:jwt_auth:jwt_verify_async'),
-    ],
+    _VERIFY_URLS,
 )
 def test_verify_malformed_token(
     dmr_client: DMRClient,
@@ -593,10 +566,7 @@ def test_verify_malformed_token(
 
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_verify_sync'),
-        reverse('api:jwt_auth:jwt_verify_async'),
-    ],
+    _VERIFY_URLS,
 )
 @pytest.mark.parametrize(
     'body',
@@ -623,10 +593,7 @@ def test_verify_wrong_structure(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_verify_sync'),
-        reverse('api:jwt_auth:jwt_verify_async'),
-    ],
+    _VERIFY_URLS,
 )
 def test_verify_deleted_user(
     dmr_client: DMRClient,
@@ -653,10 +620,7 @@ def test_verify_deleted_user(
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_verify_sync'),
-        reverse('api:jwt_auth:jwt_verify_async'),
-    ],
+    _VERIFY_URLS,
 )
 def test_verify_inactive_user(
     dmr_client: DMRClient,
@@ -681,10 +645,7 @@ def test_verify_inactive_user(
 
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_refresh_sync'),
-        reverse('api:jwt_auth:jwt_refresh_async'),
-    ],
+    _REFRESH_URLS,
 )
 def test_refresh_non_numeric_subject(
     dmr_client: DMRClient,
@@ -708,10 +669,7 @@ def test_refresh_non_numeric_subject(
 
 @pytest.mark.parametrize(
     'url',
-    [
-        reverse('api:jwt_auth:jwt_verify_sync'),
-        reverse('api:jwt_auth:jwt_verify_async'),
-    ],
+    _VERIFY_URLS,
 )
 def test_verify_non_numeric_subject(
     dmr_client: DMRClient,

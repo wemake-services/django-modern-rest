@@ -213,6 +213,21 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Added `schema_hook` class method to `MsgspecSchemaGenerator`
   to customize JSON schema generation for custom types, #1462
 - `NewCookie.expires` and `CookieSpec.expires` can now be `dt.datetime`, #1456
+- Added `concrete_views` next to `views` for every auth flow:
+  `dmr.security.jwt.concrete_views`, `dmr.security.token.concrete_views`,
+  and `dmr.security.django_session.concrete_views`.
+  They are controllers that only need a serializer,
+  everything else is optional: `token_cls` defaults to the `Token` model
+  of `dmr.security.token.app`, and `jwt_refresh_cookie_path` defaults
+  to `'/'`. Each of them has its own typed `as_view`, which takes
+  the fields that controller requires and passes everything else
+  to Django as `initkwargs`, so there is no view code at all:
+  `path('login/', ObtainTokenSyncController.as_view(
+  serializer=PydanticSerializer, token_cls=Token))`.
+  They all set `auth = None`, so auth from the settings never makes
+  the login endpoints themselves require auth.
+  They are `@final`: use them for the common cases, custom logic goes
+  to the reusable controllers in `views`, #1457
 - Added the missing OpenAPI 3.2 fields to our spec objects, #1485:
   - `OpenAPIConfig.self_uri` and `OpenAPI.self_uri` for `$self`
   - `Server.name`

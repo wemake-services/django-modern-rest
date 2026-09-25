@@ -124,10 +124,63 @@ To issue a token one can use two main strategies:
    This might be useful if you only want to have just a couple of clients.
 
 2. Provide an API view for users to obtain tokens when they need them.
-   To do so, we provide two :ref:`reusable-controllers`:
 
-   - :class:`~dmr.security.token.views.ObtainTokenSyncController`
-   - :class:`~dmr.security.token.views.ObtainTokenAsyncController`
+.. _token-concrete-views:
+
+Ready-to-use obtain views
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``dmr.security.token.concrete_views`` has controllers that issue tokens
+and only need a serializer, the token model is optional:
+
+- :class:`~dmr.security.token.concrete_views.ObtainTokenSyncController`
+  for sync views
+- :class:`~dmr.security.token.concrete_views.ObtainTokenAsyncController`
+  for async views
+
+Pass the serializer to ``as_view`` in your urls,
+there is no view code at all:
+
+.. literalinclude:: /examples/auth/token/token_concrete_obtain.py
+  :caption: urls.py
+  :linenos:
+  :language: python
+
+They take a username and a password
+as :class:`~dmr.security.token.views.ObtainTokenPayload`
+and return a new token
+as :class:`~dmr.security.token.views.ObtainTokenResponse`,
+issued with :class:`~dmr.security.token.app.models.Token` by default.
+``as_view`` takes the serializer and the optional ``token_cls``
+as typed keyword arguments and passes everything else
+to django as usual, see
+:meth:`~dmr.security.token.concrete_views.ObtainTokenSyncController.as_view`.
+
+They all set ``auth = None``: they are the very endpoints
+that check credentials, so auth from the settings
+must never be required to reach them.
+
+.. note::
+
+  Pass ``token_cls`` to ``as_view`` when you swap the token model,
+  see :ref:`swapping-token-model`. The default is imported the first time
+  the controller is routed, so projects with their own model
+  never need ``'dmr.security.token.app'`` installed.
+
+.. tip::
+
+  These should be your default for the common cases.
+  They are final, so any custom logic belongs to the reusable
+  controllers below, which leave the bodies and the hooks open for you.
+
+Customizable obtain views
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When the bodies of :ref:`token-concrete-views` do not match your API,
+use the two :ref:`reusable-controllers` they are built on:
+
+- :class:`~dmr.security.token.views.ObtainTokenSyncController`
+- :class:`~dmr.security.token.views.ObtainTokenAsyncController`
 
 To use a pre-defined controller, you will need to:
 
@@ -455,6 +508,15 @@ Interfaces
 
 .. autoclass:: dmr.security.token.token.TokenLikeAsync
   :members:
+
+Ready-to-use views to fetch opaque tokens
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: dmr.security.token.concrete_views.ObtainTokenSyncController
+  :members: as_view, convert_auth_payload, make_api_response
+
+.. autoclass:: dmr.security.token.concrete_views.ObtainTokenAsyncController
+  :members: as_view, convert_auth_payload, make_api_response
 
 Pre-defined views to fetch opaque tokens
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

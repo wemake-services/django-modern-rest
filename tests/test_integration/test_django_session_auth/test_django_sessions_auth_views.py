@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Final
 
 import pytest
 from django.conf import LazySettings, settings
@@ -8,6 +9,18 @@ from faker import Faker
 from inline_snapshot import snapshot
 
 from dmr.test import DMRClient
+
+#: Customized reusable views and concrete views behave exactly the same:
+_LOGIN_URLS: Final = (
+    reverse('api:django_session_auth:django_session_sync'),
+    reverse('api:django_session_auth:django_session_async'),
+    reverse('api:django_session_auth:django_session_concrete_sync'),
+    reverse('api:django_session_auth:django_session_concrete_async'),
+)
+_CHECK_URLS: Final = (
+    reverse('api:django_session_auth:user_session_sync'),
+    reverse('api:django_session_auth:user_session_async'),
+)
 
 
 @pytest.fixture
@@ -38,20 +51,8 @@ def inactive_user(faker: Faker, password: str) -> User:
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    'url',
-    [
-        reverse('api:django_session_auth:django_session_sync'),
-        reverse('api:django_session_auth:django_session_async'),
-    ],
-)
-@pytest.mark.parametrize(
-    'check_url',
-    [
-        reverse('api:django_session_auth:user_session_sync'),
-        reverse('api:django_session_auth:user_session_async'),
-    ],
-)
+@pytest.mark.parametrize('url', _LOGIN_URLS)
+@pytest.mark.parametrize('check_url', _CHECK_URLS)
 def test_correct_django_session(
     dmr_client: DMRClient,
     user: User,
@@ -83,20 +84,8 @@ def test_correct_django_session(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    'url',
-    [
-        reverse('api:django_session_auth:django_session_sync'),
-        reverse('api:django_session_auth:django_session_async'),
-    ],
-)
-@pytest.mark.parametrize(
-    'check_url',
-    [
-        reverse('api:django_session_auth:user_session_sync'),
-        reverse('api:django_session_auth:user_session_async'),
-    ],
-)
+@pytest.mark.parametrize('url', _LOGIN_URLS)
+@pytest.mark.parametrize('check_url', _CHECK_URLS)
 def test_django_session_new_client(
     dmr_client: DMRClient,
     user: User,
@@ -130,20 +119,8 @@ def test_django_session_new_client(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    'url',
-    [
-        reverse('api:django_session_auth:django_session_sync'),
-        reverse('api:django_session_auth:django_session_async'),
-    ],
-)
-@pytest.mark.parametrize(
-    'check_url',
-    [
-        reverse('api:django_session_auth:user_session_sync'),
-        reverse('api:django_session_auth:user_session_async'),
-    ],
-)
+@pytest.mark.parametrize('url', _LOGIN_URLS)
+@pytest.mark.parametrize('check_url', _CHECK_URLS)
 def test_just_csrf_cookie(
     dmr_client: DMRClient,
     user: User,
@@ -176,13 +153,7 @@ def test_just_csrf_cookie(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    'url',
-    [
-        reverse('api:django_session_auth:django_session_sync'),
-        reverse('api:django_session_auth:django_session_async'),
-    ],
-)
+@pytest.mark.parametrize('url', _LOGIN_URLS)
 def test_inactive_user(
     dmr_client: DMRClient,
     inactive_user: User,
@@ -202,13 +173,7 @@ def test_inactive_user(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    'url',
-    [
-        reverse('api:django_session_auth:django_session_sync'),
-        reverse('api:django_session_auth:django_session_async'),
-    ],
-)
+@pytest.mark.parametrize('url', _LOGIN_URLS)
 @pytest.mark.parametrize(
     'auth_params',
     [
@@ -244,13 +209,7 @@ def test_wrong_auth_params(
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    'url',
-    [
-        reverse('api:django_session_auth:django_session_sync'),
-        reverse('api:django_session_auth:django_session_async'),
-    ],
-)
+@pytest.mark.parametrize('url', _LOGIN_URLS)
 def test_login_with_csrf_use_sessions(
     dmr_client: DMRClient,
     user: User,
@@ -270,3 +229,18 @@ def test_login_with_csrf_use_sessions(
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.cookies[settings.SESSION_COOKIE_NAME]
     assert settings.CSRF_COOKIE_NAME not in response.cookies
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('url', _LOGIN_URLS)
+def test_wrong_structure(
+    dmr_client: DMRClient,
+    *,
+    url: str,
+) -> None:
+    """Ensures that the request body is validated."""
+    response = dmr_client.post(url, data={'login': 'wrong'})
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json()['detail']

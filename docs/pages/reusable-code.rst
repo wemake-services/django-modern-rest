@@ -188,6 +188,8 @@ And then - implementations:
 This way offers you more control over the response headers, cookies, etc.
 Choose the one that fits best of the job.
 
+.. _type-variable-defaults:
+
 Type variable defaults
 ~~~~~~~~~~~~~~~~~~~~~~
 
@@ -253,6 +255,9 @@ because it has an exact serializer:
   A type variable without a default is still required.
   Controllers that don't have an exact serializer
   stay abstract, as always.
+
+Write the subclass when you have anything else to say: a setting
+to change, a hook to redefine, or a name to route several times.
 
 
 .. _lazy-reusable-endpoints:
