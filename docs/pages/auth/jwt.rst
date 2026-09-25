@@ -162,11 +162,100 @@ having ``msgspec`` installed makes
   and verified by different installs.
 
 
-Reusing pre-existing views
---------------------------
+.. _jwt-concrete-views:
+
+Ready-to-use views
+------------------
+
+Most APIs need exactly the same auth endpoints: take a username
+and a password, give back a pair of tokens, rotate them on demand.
+``dmr.security.jwt.concrete_views`` has all of them as controllers
+that only need a serializer:
+
+- :class:`~dmr.security.jwt.concrete_views.ObtainTokensSyncController`
+  and :class:`~dmr.security.jwt.concrete_views.ObtainTokensAsyncController`
+  to get access and refresh tokens
+- :class:`~dmr.security.jwt.concrete_views.RefreshTokenSyncController`
+  and :class:`~dmr.security.jwt.concrete_views.RefreshTokenAsyncController`
+  to get a new pair for a refresh token
+- :class:`~dmr.security.jwt.concrete_views.VerifyTokenSyncController`
+  and :class:`~dmr.security.jwt.concrete_views.VerifyTokenAsyncController`
+  to check that an access token is still valid
+
+Pass the serializer to ``as_view`` in your urls,
+there is no view code at all:
+
+.. literalinclude:: /examples/auth/jwt/jwt_concrete_views.py
+  :caption: urls.py
+  :linenos:
+  :language: python
+
+They take a username and a password
+as :class:`~dmr.security.jwt.views.ObtainTokensPayload`,
+a refresh token as :class:`~dmr.security.jwt.views.RefreshTokenPayload`,
+or an access token as :class:`~dmr.security.jwt.views.VerifyTokenPayload`,
+and return new tokens as :class:`~dmr.security.jwt.views.ObtainTokensResponse`.
+``as_view`` takes the serializer, and the optional
+``jwt_refresh_cookie_path`` of the cookie controllers,
+as typed keyword arguments and passes everything else
+to django as usual, see
+:meth:`~dmr.security.jwt.concrete_views.ObtainTokensSyncController.as_view`.
+
+They all set ``auth = None``: they are the very endpoints
+that check credentials, so auth from the settings
+must never be required to reach them.
+
+The same tokens can be issued as cookies instead:
+
+- :class:`~dmr.security.jwt.concrete_views.CookieObtainTokensSyncController`
+  and :class:`~dmr.security.jwt.concrete_views.CookieObtainTokensAsyncController`
+  to log in and set both cookies
+- :class:`~dmr.security.jwt.concrete_views.CookieRefreshTokensSyncController`
+  and :class:`~dmr.security.jwt.concrete_views.CookieRefreshTokensAsyncController`
+  to rotate both cookies
+- :class:`~dmr.security.jwt.concrete_views.CookieLogoutSyncController`
+  and :class:`~dmr.security.jwt.concrete_views.CookieLogoutAsyncController`
+  to drop both cookies
+
+They are routed the same way:
+
+.. literalinclude:: /examples/auth/jwt/jwt_concrete_cookies.py
+  :caption: urls.py
+  :linenos:
+  :language: python
+
+.. warning::
+
+  ``jwt_refresh_cookie_path`` defaults to ``'/'`` in these controllers,
+  which sends the refresh token with every request to your site.
+  The reusable controllers below have no default on purpose,
+  see :ref:`issuing-tokens-as-cookies`, but a ready-to-use one
+  cannot know the url of your refresh endpoint.
+
+  Point it there once you have one, on every controller
+  that shares the cookies, and the refresh token stops being sent
+  with anything else:
+
+  .. literalinclude:: /examples/auth/jwt/jwt_concrete_cookies_scoped.py
+    :caption: urls.py
+    :linenos:
+    :language: python
+
+.. tip::
+
+  These should be your default for the common cases.
+  They are final, so any custom logic belongs to the reusable
+  controllers below, which leave the bodies and the hooks open for you.
+
+
+Customizing pre-existing views
+------------------------------
 
 We provide several pre-existing views to get auth tokens.
 So, users won't have to write tons of boilerplate code.
+
+Reach for them when the bodies of :ref:`jwt-concrete-views`
+do not match your API.
 
 
 JWT with access and refresh tokens
@@ -598,6 +687,47 @@ Helpers
 .. autofunction:: dmr.security.jwt.auth.request_jwt
 
 .. autofunction:: dmr.security.jwt.auth.set_request_attrs
+
+Ready-to-use views
+~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: dmr.security.jwt.concrete_views.ObtainTokensSyncController
+  :members: as_view, convert_auth_payload, make_api_response
+
+.. autoclass:: dmr.security.jwt.concrete_views.ObtainTokensAsyncController
+  :members: as_view, convert_auth_payload, make_api_response
+
+.. autoclass:: dmr.security.jwt.concrete_views.RefreshTokenSyncController
+  :members: as_view, convert_refresh_payload, make_api_response
+
+.. autoclass:: dmr.security.jwt.concrete_views.RefreshTokenAsyncController
+  :members: as_view, convert_refresh_payload, make_api_response
+
+.. autoclass:: dmr.security.jwt.concrete_views.VerifyTokenSyncController
+  :members: as_view, convert_verify_payload
+
+.. autoclass:: dmr.security.jwt.concrete_views.VerifyTokenAsyncController
+  :members: as_view, convert_verify_payload
+
+.. autoclass:: dmr.security.jwt.concrete_views.CookieObtainTokensSyncController
+  :members: as_view, convert_auth_payload
+
+.. autoclass:: dmr.security.jwt.concrete_views.CookieObtainTokensAsyncController
+  :members: as_view, convert_auth_payload
+
+.. autoclass:: dmr.security.jwt.concrete_views.CookieRefreshTokensSyncController
+  :members: as_view
+
+.. autoclass:: dmr.security.jwt.concrete_views.CookieRefreshTokensAsyncController
+  :members: as_view
+
+.. autoclass:: dmr.security.jwt.concrete_views.CookieLogoutSyncController
+  :members: as_view
+
+.. autoclass:: dmr.security.jwt.concrete_views.CookieLogoutAsyncController
+  :members: as_view
+
+.. autodata:: dmr.security.jwt.concrete_views.DEFAULT_REFRESH_COOKIE_PATH
 
 Pre-defined views to fetch JWT tokens
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

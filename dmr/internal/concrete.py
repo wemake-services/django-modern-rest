@@ -1,0 +1,83 @@
+import types
+from typing import TYPE_CHECKING, Any, Final, TypeVar
+
+from dmr.exceptions import EndpointMetadataError
+from dmr.internal.types import EMPTY
+
+if TYPE_CHECKING:
+    from dmr.controller import Controller
+
+_ControllerT = TypeVar('_ControllerT', bound='Controller[Any]')
+
+#: Name of the attribute that holds the serializer type of a controller.
+_SERIALIZER_ATTR: Final = 'serializer'
+
+
+def build_concrete_controller(
+    controller_cls: type[_ControllerT],
+    **class_attrs: Any,
+) -> type[_ControllerT] | None:
+    """
+    Subclass *controller_cls* with the given class attributes.
+
+    It is the subclass that users would write by hand:
+    ``serializer`` is passed as a type argument of the base,
+    everything else becomes a class attribute.
+    Arguments that are :data:`~dmr.types.EMPTY` were not given
+    and are skipped, ``None`` is a value like any other.
+
+    Returns:
+        The new subclass, or ``None`` when there is nothing to set,
+        which means that *controller_cls* must be routed as-is.
+
+    """
+    given_attrs = {
+        attr_name: attr_value
+        for attr_name, attr_value in class_attrs.items()
+        if attr_value is not EMPTY
+    }
+    serializer = given_attrs.pop(_SERIALIZER_ATTR, EMPTY)
+    base_cls = _parametrized_base(controller_cls, serializer)
+    if serializer is EMPTY and not given_attrs:
+        return None
+
+    return types.new_class(
+        controller_cls.__name__,
+        (base_cls,),
+        # Otherwise it would be `types`, where the class is created:
+        exec_body=lambda namespace: namespace.update(
+            given_attrs,
+            __module__=controller_cls.__module__,
+        ),
+    )
+
+
+def _parametrized_base(
+    controller_cls: type[_ControllerT],
+    serializer: object,
+) -> object:
+    """
+    Return the base to subclass, with *serializer* as its type argument.
+
+    Raises:
+        EndpointMetadataError: When *controller_cls* has no serializer
+            and none was given, or when it already has one
+            and another was given, since the two would disagree.
+
+    """
+    existing_serializer = getattr(controller_cls, _SERIALIZER_ATTR, None)
+    if serializer is EMPTY:
+        if existing_serializer is None:
+            raise EndpointMetadataError(
+                f'{controller_cls!r} needs a serializer, '
+                'pass it as `as_view(serializer=...)`',
+            )
+        return controller_cls
+
+    if existing_serializer is not None:
+        raise EndpointMetadataError(
+            f'{controller_cls!r} already has {existing_serializer!r} '
+            'as its serializer, passing `serializer=` would contradict '
+            'the type arguments of this controller',
+        )
+    return controller_cls[serializer]  # type: ignore[index]

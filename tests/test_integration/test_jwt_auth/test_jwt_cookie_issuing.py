@@ -14,17 +14,43 @@ from inline_snapshot import snapshot
 from dmr.security.jwt.token import JWToken
 from dmr.test import DMRClient
 
-_OBTAIN_URLS: Final = (
-    reverse('api:jwt_auth:jwt_cookie_obtain_sync'),
-    reverse('api:jwt_auth:jwt_cookie_obtain_async'),
+#: Customized reusable views and concrete views behave the same way,
+#: except for the path of the refresh cookie they issue:
+_CUSTOM_REFRESH_COOKIE_PATH: Final = reverse(
+    'api:jwt_auth:jwt_cookie_refresh_sync',
 )
+_CONCRETE_REFRESH_COOKIE_PATH: Final = '/'
+
+_OBTAIN_URLS_WITH_PATHS: Final = (
+    (
+        reverse('api:jwt_auth:jwt_cookie_obtain_sync'),
+        _CUSTOM_REFRESH_COOKIE_PATH,
+    ),
+    (
+        reverse('api:jwt_auth:jwt_cookie_obtain_async'),
+        _CUSTOM_REFRESH_COOKIE_PATH,
+    ),
+    (
+        reverse('api:jwt_auth:jwt_concrete_cookie_obtain_sync'),
+        _CONCRETE_REFRESH_COOKIE_PATH,
+    ),
+    (
+        reverse('api:jwt_auth:jwt_concrete_cookie_obtain_async'),
+        _CONCRETE_REFRESH_COOKIE_PATH,
+    ),
+)
+_OBTAIN_URLS: Final = tuple(url for url, _ in _OBTAIN_URLS_WITH_PATHS)
 _REFRESH_URLS: Final = (
     reverse('api:jwt_auth:jwt_cookie_refresh_sync'),
     reverse('api:jwt_auth:jwt_cookie_refresh_async'),
+    reverse('api:jwt_auth:jwt_concrete_cookie_refresh_sync'),
+    reverse('api:jwt_auth:jwt_concrete_cookie_refresh_async'),
 )
 _LOGOUT_URLS: Final = (
     reverse('api:jwt_auth:jwt_cookie_logout_sync'),
     reverse('api:jwt_auth:jwt_cookie_logout_async'),
+    reverse('api:jwt_auth:jwt_concrete_cookie_logout_sync'),
+    reverse('api:jwt_auth:jwt_concrete_cookie_logout_async'),
 )
 
 
@@ -70,13 +96,17 @@ def _decode(encoded_token: str) -> dict[str, object]:
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize('url', _OBTAIN_URLS)
+@pytest.mark.parametrize(
+    ('url', 'refresh_cookie_path'),
+    _OBTAIN_URLS_WITH_PATHS,
+)
 def test_obtain_sets_cookies(
     dmr_client: DMRClient,
     user: User,
     password: str,
     *,
     url: str,
+    refresh_cookie_path: str,
 ) -> None:
     """Ensures that a login sets both token cookies and nothing else."""
     response = dmr_client.post(
@@ -112,7 +142,7 @@ def test_obtain_sets_cookies(
     assert refresh['httponly']
     assert refresh['secure']
     assert refresh['samesite'] == 'lax'
-    assert refresh['path'] == reverse('api:jwt_auth:jwt_cookie_refresh_sync')
+    assert refresh['path'] == refresh_cookie_path
     assert refresh['max-age'] == int(dt.timedelta(days=10).total_seconds())
 
 

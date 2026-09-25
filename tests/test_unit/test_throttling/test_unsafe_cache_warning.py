@@ -6,10 +6,13 @@ from typing import Any, Final
 import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
+from typing_extensions import override
 
 from dmr import Controller, ResponseSpec, modify, validate
 from dmr.exceptions import EndpointMetadataError
+from dmr.metadata import EndpointMetadata
 from dmr.plugins.pydantic import PydanticFastSerializer
+from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 from dmr.throttling.backends.django_cache import (
@@ -144,3 +147,24 @@ def test_safe_cache(settings: LazySettings) -> None:
     assert len(captured) == 0
     metadata = _Controller.api_endpoints['GET'].metadata
     assert metadata.throttling_allow_unsafe_cache
+
+
+class _StrictThrottle(SyncThrottle):
+    @override
+    def validate(
+        self,
+        controller_cls: type[Controller[BaseSerializer]],
+        metadata: EndpointMetadata,
+    ) -> None:
+        raise EndpointMetadataError('Test')
+
+
+def test_throttle_validate_hook_is_called() -> None:
+    """Throttle.validate hook is called during endpoint validation."""
+    with pytest.raises(EndpointMetadataError, match='Test'):
+
+        class _Controller(Controller[PydanticFastSerializer]):
+            throttling = [_StrictThrottle(10, Rate.minute)]
+
+            def get(self) -> str:
+                raise NotImplementedError
