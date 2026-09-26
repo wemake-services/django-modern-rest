@@ -1,8 +1,18 @@
 # NOTE: when editing this file, also edit `test_msgspec_schema.py`
 
+import dataclasses
 import enum
 from collections.abc import Iterable, Mapping
-from typing import Annotated, Any, ClassVar, Literal, Optional, Union, final
+from typing import (
+    Annotated,
+    Any,
+    ClassVar,
+    Literal,
+    NotRequired,
+    Optional,
+    Union,
+    final,
+)
 
 import pydantic
 import pytest
@@ -419,6 +429,60 @@ def test_parameter_schema_with_str_enum() -> None:
             'type': 'string',
         },
     )
+
+
+class _OptionalPathModel(pydantic.BaseModel):
+    user_id: int
+    opt: str = ''
+
+
+class _OptionalPathTypedDict(TypedDict):
+    user_id: int
+    opt: NotRequired[str]
+
+
+@dataclasses.dataclass
+class _OptionalPathDataclass:
+    user_id: int
+    opt: str = ''
+
+
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+@pytest.mark.parametrize(
+    'path_model',
+    [_OptionalPathModel, _OptionalPathTypedDict, _OptionalPathDataclass],
+)
+def test_optional_path_fields(
+    *,
+    serializer: type[PydanticSerializer],
+    path_model: Any,
+) -> None:
+    """Ensure that path parameters are always required, even with defaults."""
+
+    class _OptionalPathController(Controller[serializer]):  # type: ignore[valid-type]
+        def get(self, parsed_path: Path[path_model]) -> None:  # pyright: ignore[reportInvalidTypeForm]
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router(
+            'api/',
+            [
+                path(
+                    'user/<int:user_id>/<str:opt>/',
+                    _OptionalPathController.as_view(),
+                ),
+            ],
+        ),
+    ).convert()
+
+    operation = schema['paths']['/api/user/{user_id}/{opt}/']['get']
+    assert {
+        parameter['name']: parameter['required']
+        for parameter in operation['parameters']
+    } == {'user_id': True, 'opt': True}
 
 
 def test_root_model(
