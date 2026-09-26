@@ -16,8 +16,8 @@ All error handling functions always accept 3 arguments:
 Here's how it works:
 
 1. We first try to call ``error_handler`` that was passed into the endpoint
-   definition via :func:`~dmr.endpoint.modify`
-   or :func:`~dmr.endpoint.validate`
+   definition via :data:`~dmr.endpoint.modify`
+   or :data:`~dmr.endpoint.validate`
 2. If it returns :class:`django.http.HttpResponse`, return it to the user
 3. If it raises an error, call
    :meth:`~dmr.controller.Controller.handle_error` for sync

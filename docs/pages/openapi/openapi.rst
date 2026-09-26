@@ -367,7 +367,7 @@ for :class:`~dmr.openapi.objects.PathItem`:
 Customizing operation
 ~~~~~~~~~~~~~~~~~~~~~
 
-:deco:`~dmr.endpoint.modify` and :deco:`~dmr.endpoint.validate`
+:data:`~dmr.endpoint.modify` and :data:`~dmr.endpoint.validate`
 can be used to customize the resulting :class:`~dmr.openapi.objects.Operation`
 metadata.
 
@@ -410,7 +410,7 @@ or endpoint-level tags, and deprecated is set to ``True``
 if either the router or endpoint has it enabled.
 
 You can also set ``tags`` and ``deprecated`` at the individual endpoint level
-via :deco:`~dmr.endpoint.modify` to override router-level settings.
+via :data:`~dmr.endpoint.modify` to override router-level settings.
 
 .. _customizing_tags_openapi:
 
@@ -424,7 +424,7 @@ Tags can be defined on three levels:
    the :attr:`~dmr.controller.Controller.tags` attribute,
    it applies to all endpoints of this controller
 3. On an endpoint with the ``tags`` parameter
-   of :deco:`~dmr.endpoint.modify` or :deco:`~dmr.endpoint.validate`
+   of :data:`~dmr.endpoint.modify` or :data:`~dmr.endpoint.validate`
 
 The most specific level wins, tags are not merged:
 endpoint tags override controller tags,

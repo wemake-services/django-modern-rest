@@ -23,6 +23,7 @@ from dmr.security.django_session import (
 )
 from dmr.serializer import BaseSerializer
 from dmr.throttling import AsyncThrottle, SyncThrottle
+from dmr.types import EMPTY
 
 
 class _Model(pydantic.BaseModel):
@@ -330,3 +331,11 @@ class WrongErrorHandlerController(Controller[PydanticSerializer]):
     )
     async def patch(self) -> str:
         return 'mixed'
+
+
+# Explicit `EMPTY` for `extras` should be allowed:
+modify(extras=EMPTY)
+validate(
+    ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+    extras=EMPTY,
+)

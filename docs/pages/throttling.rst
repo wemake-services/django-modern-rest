@@ -501,7 +501,7 @@ All our regular rules apply:
 
 - All new headers must be added to the corresponding
   :class:`~dmr.metadata.ResponseSpec` definitions
-- When settings headers, you would need to use :func:`~dmr.endpoint.validate`
+- When settings headers, you would need to use :data:`~dmr.endpoint.validate`
 
 .. literalinclude:: /examples/throttling/reports.py
   :caption: views.py

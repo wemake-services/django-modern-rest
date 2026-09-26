@@ -9,8 +9,8 @@ Our ``jsonl`` implementation allows users to follow the standard above.
 Using JsonLines
 ---------------
 
-You can use JsonLines format with both :func:`~dmr.endpoint.validate`
-and :func:`~dmr.endpoint.modify` style endpoints:
+You can use JsonLines format with both :data:`~dmr.streaming.validate`
+and :data:`~dmr.streaming.modify` style endpoints:
 
 .. tabs::
 
@@ -126,9 +126,11 @@ Everything just works out of the box, you don't have to do anything.
 However, we don't send ``ping`` events by default, because the format
 for them is not well defined in ``jsonl``.
 
-You can enable them by changing
-:attr:`~dmr.streaming.controller.StreamingController.streaming_ping_seconds`
-to the maximum number of seconds before the ``ping`` event happens.
+You can enable them by setting ``ping_seconds``
+in :class:`~dmr.streaming.Streaming` extras to the maximum number
+of seconds before the ``ping`` event happens, either per controller
+with ``extras = Streaming(ping_seconds=30)`` or per endpoint
+with ``@modify(extras=Streaming(ping_seconds=30))``.
 And :meth:`~dmr.streaming.controller.StreamingController.ping_event`
 for the event payload.
 
