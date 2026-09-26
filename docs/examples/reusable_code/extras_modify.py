@@ -10,7 +10,7 @@ modify: Final = ModifyEndpoint(SmartResponse)
 
 
 class APIController(Controller[PydanticFastSerializer]):
-    extras = SmartResponse(response_text='from controller')
+    extras = SmartResponse()
 
     def get(self) -> str:
         return SmartResponse.of(self)

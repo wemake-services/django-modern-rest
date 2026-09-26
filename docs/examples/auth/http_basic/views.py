@@ -1,7 +1,7 @@
 from typing_extensions import TypedDict
 
 from dmr import Body, Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from examples.auth.http_basic.auth import HttpBasicAsync
 
 
@@ -9,7 +9,7 @@ class _RequestModel(TypedDict):
     bill: str
 
 
-class BillController(Controller[PydanticSerializer]):
+class BillController(Controller[PydanticFastSerializer]):
     auth = (HttpBasicAsync(),)
 
     async def post(self, parsed_body: Body[_RequestModel]) -> str:

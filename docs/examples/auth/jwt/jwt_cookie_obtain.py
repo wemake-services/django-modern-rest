@@ -3,7 +3,7 @@ from typing_extensions import override
 
 from dmr.openapi import build_schema
 from dmr.openapi.views import OpenAPIJsonView
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import Router, path
 from dmr.security.jwt.views import (
     CookieObtainTokensSyncController,
@@ -15,7 +15,7 @@ from examples.auth.jwt.jwt_cookie_refresh import RefreshCookiesSyncController
 # You can also use `CookieObtainTokensAsyncController` if needed:
 class ObtainCookiesSyncController(
     CookieObtainTokensSyncController[
-        PydanticSerializer,
+        PydanticFastSerializer,
         ObtainTokensPayload,
     ],
 ):

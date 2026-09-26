@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict
 
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from examples.reusable_code.reusable_defaults import ReusableController
 
 
@@ -9,7 +9,7 @@ class _RequestModel(TypedDict):
 
 
 class PydanticController(
-    ReusableController[PydanticSerializer, _RequestModel],
+    ReusableController[PydanticFastSerializer, _RequestModel],
 ):
     """
     Defaults are only used when type args are missing.

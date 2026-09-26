@@ -1,10 +1,10 @@
 from http import HTTPStatus
 
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
-class APIController(Controller[PydanticSerializer]):
+class APIController(Controller[PydanticFastSerializer]):
     exclude_semantic_responses = frozenset((HTTPStatus.UNPROCESSABLE_ENTITY,))
 
     async def get(self) -> str:

@@ -1,8 +1,8 @@
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
-class MyBaseController(Controller[PydanticSerializer]):
+class MyBaseController(Controller[PydanticFastSerializer]):
     # It has an exact serializer and an endpoint,
     # but we only want to reuse it, we don't want to route it:
     is_abstract = True

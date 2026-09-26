@@ -1,7 +1,7 @@
 from django.http import HttpRequest
 
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from examples.middleware.wrap_add_request_id import add_request_id_json
 
 
@@ -10,7 +10,7 @@ class _RequestWithID(HttpRequest):
 
 
 @add_request_id_json
-class RequestIdController(Controller[PydanticSerializer]):
+class RequestIdController(Controller[PydanticFastSerializer]):
     """Controller that uses request_id added by middleware."""
 
     responses = add_request_id_json.responses

@@ -1,11 +1,11 @@
 from dmr import Controller, modify
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.django_session import DjangoSessionSyncAuth
 from dmr.throttling import Rate, SyncThrottle
 from dmr.throttling.cache_keys import RemoteAddr
 
 
-class SyncController(Controller[PydanticSerializer]):
+class SyncController(Controller[PydanticFastSerializer]):
     @modify(
         auth=[DjangoSessionSyncAuth()],
         throttling=[

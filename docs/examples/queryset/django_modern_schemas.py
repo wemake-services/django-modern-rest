@@ -7,7 +7,7 @@ from django_modern_schemas import MethodSource, ModelSchema
 from typing_extensions import TypedDict
 
 from dmr import Body, Controller, Path
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import Router, path
 
 
@@ -34,7 +34,7 @@ _UserList: Final = pydantic.TypeAdapter(list[UserSchema])
 
 
 @final
-class UsersController(Controller[PydanticSerializer]):
+class UsersController(Controller[PydanticFastSerializer]):
     def get(self) -> list[UserSchema]:
         return _UserList.validate_python(User.objects.all())
 
@@ -44,7 +44,7 @@ class UsersController(Controller[PydanticSerializer]):
 
 
 @final
-class UserDetailController(Controller[PydanticSerializer]):
+class UserDetailController(Controller[PydanticFastSerializer]):
     def get(self, parsed_path: Path[_UserPath]) -> UserSchema:
         return UserSchema.model_validate(
             get_object_or_404(User, pk=parsed_path['user_id']),

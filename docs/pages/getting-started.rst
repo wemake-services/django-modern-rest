@@ -135,13 +135,16 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
   .. tab:: pydantic
 
     We support :class:`pydantic.BaseModel`
-    via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+    via :class:`~dmr.plugins.pydantic.PydanticSerializer`
+    and :class:`~dmr.plugins.pydantic.PydanticFastSerializer`.
 
     .. tip::
 
-      If you only use ``json`` :doc:`parsers and renderers <negotiation>`,
-      it is faster to use
-      :class:`~dmr.plugins.pydantic.PydanticFastSerializer` instead.
+      :class:`~dmr.plugins.pydantic.PydanticFastSerializer` is faster,
+      but it only works with ``json``
+      :doc:`parsers and renderers <negotiation>`.
+      If you need other formats, use
+      :class:`~dmr.plugins.pydantic.PydanticSerializer` instead.
 
     .. literalinclude:: /examples/getting_started/pydantic_controller.py
       :caption: views.py

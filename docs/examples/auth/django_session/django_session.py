@@ -1,6 +1,6 @@
 from typing_extensions import override
 
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.django_session.views import (
     DjangoSessionPayload,
     DjangoSessionResponse,
@@ -10,7 +10,7 @@ from dmr.security.django_session.views import (
 
 class SessionSyncController(
     DjangoSessionSyncController[
-        PydanticSerializer,
+        PydanticFastSerializer,
         DjangoSessionPayload,
         DjangoSessionResponse,
     ],
