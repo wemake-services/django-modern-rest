@@ -27,8 +27,7 @@ from typing_extensions import (
 )
 
 from dmr.exceptions import EndpointMetadataError
-from dmr.internal.types import StrOrPromise
-from dmr.types import EMPTY
+from dmr.internal.types import EMPTY, StrOrPromise
 
 if TYPE_CHECKING:
     from dmr.controller import Controller

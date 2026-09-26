@@ -18,6 +18,7 @@ from dmr import Body, Controller, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
 from dmr.endpoint import ModifyAnyCallable
 from dmr.exceptions import NotAuthenticatedError
+from dmr.internal.types import EMPTY
 from dmr.security.base import NO_STORE_HEADERS
 from dmr.security.token.constants import TOKEN_DEFAULT_EXPIRY
 from dmr.security.token.request import set_request_attrs
@@ -27,7 +28,6 @@ from dmr.security.token.token import (
     resolve_expiry,
 )
 from dmr.serializer import BaseSerializer
-from dmr.types import EMPTY
 
 _ObtainTokenT = TypeVar('_ObtainTokenT', bound=Mapping[str, Any])
 _TokenResponseT = TypeVar('_TokenResponseT')

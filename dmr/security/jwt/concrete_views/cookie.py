@@ -5,10 +5,9 @@ from django.http import HttpResponseBase
 from typing_extensions import Sentinel, TypeVar, override
 
 from dmr.internal.concrete import build_concrete_controller
-from dmr.internal.types import StrOrPromise
+from dmr.internal.types import EMPTY, StrOrPromise
 from dmr.security.jwt import views
 from dmr.serializer import BaseSerializer
-from dmr.types import EMPTY
 
 _SerializerT = TypeVar(
     '_SerializerT',

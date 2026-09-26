@@ -15,10 +15,10 @@ from django.http import HttpResponseBase
 from typing_extensions import Sentinel, TypeVar, override
 
 from dmr.internal.concrete import build_concrete_controller
+from dmr.internal.types import EMPTY
 from dmr.security.token import views
 from dmr.security.token.token import TokenLikeAsync, TokenLikeSync
 from dmr.serializer import BaseSerializer
-from dmr.types import EMPTY
 
 _SerializerT = TypeVar(
     '_SerializerT',

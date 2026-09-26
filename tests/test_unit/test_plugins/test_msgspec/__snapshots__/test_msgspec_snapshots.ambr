@@ -769,7 +769,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "default": null
             },
             "tails_optional": {
               "anyOf": [
@@ -779,7 +780,8 @@
                 {
                   "type": "null"
                 }
-              ]
+              ],
+              "default": null
             }
           },
           "type": "object",
