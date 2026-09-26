@@ -112,7 +112,8 @@ class SchemaRegistry:
         """
         Resolve reference and return a flat schema back.
 
-        Both a :class:`Reference` and a :class:`Schema` that carries
+        Both a :class:`dmr.openapi.objects.Reference` and
+        a :class:`dmr.openapi.objects.Schema` that carries
         a ``$ref`` point to a registered component. The schema's sibling
         keywords, like ``default``, only annotate that one usage:
         they are put on top of the component's own schema,
