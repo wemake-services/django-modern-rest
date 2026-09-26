@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING, Any
 
 from typing_extensions import Sentinel
 
+from dmr.internal.types import EMPTY
 from dmr.openapi.objects import Example, Schema
-from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer

@@ -16,11 +16,12 @@ from typing import (
 
 import pydantic
 import pytest
+from inline_snapshot import snapshot
 from pydantic.json_schema import GenerateJsonSchema
 from pydantic_core import core_schema
 from typing_extensions import TypedDict, override
 
-from dmr import Controller, Cookies, Headers, Path, Query
+from dmr import Body, Controller, Cookies, Headers, Path, Query
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
@@ -483,6 +484,45 @@ def test_optional_path_fields(
         parameter['name']: parameter['required']
         for parameter in operation['parameters']
     } == {'user_id': True, 'opt': True}
+
+
+class _NoneDefaultModel(pydantic.BaseModel):
+    first: int
+    second: str = ''
+    third: str | None = None
+
+
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+def test_none_default(*, serializer: type[PydanticSerializer]) -> None:
+    """Ensure that ``None`` defaults are dumped into the schema."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1619
+
+    class _NoneDefaultController(Controller[serializer]):  # type: ignore[valid-type]
+        def post(self, parsed_body: Body[_NoneDefaultModel]) -> str:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('user/', _NoneDefaultController.as_view())]),
+    ).convert()
+
+    assert schema['components']['schemas']['_NoneDefaultModel'] == snapshot({
+        'properties': {
+            'first': {'type': 'integer', 'title': 'First'},
+            'second': {'type': 'string', 'title': 'Second', 'default': ''},
+            'third': {
+                'anyOf': [{'type': 'string'}, {'type': 'null'}],
+                'title': 'Third',
+                'default': None,
+            },
+        },
+        'type': 'object',
+        'required': ['first'],
+        'title': '_NoneDefaultModel',
+    })
 
 
 def test_root_model(

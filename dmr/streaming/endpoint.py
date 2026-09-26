@@ -5,8 +5,8 @@ from typing_extensions import Sentinel, override
 
 from dmr.exceptions import EndpointMetadataError
 from dmr.internal.endpoint import Extras, ModifyEndpoint, ValidateEndpoint
+from dmr.internal.types import EMPTY
 from dmr.settings import Settings, resolve_setting
-from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from dmr.controller import Controller

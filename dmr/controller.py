@@ -15,7 +15,7 @@ from dmr.errors import ErrorModel, ErrorType, format_error
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.internal.docstrings import resolve_summary_and_description
 from dmr.internal.io import identity
-from dmr.internal.types import StrOrPromise
+from dmr.internal.types import EMPTY, StrOrPromise
 from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.collector import InternalRouteMetadata
@@ -27,7 +27,7 @@ from dmr.response import build_response
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
-from dmr.types import EMPTY, AnnotationsContext, infer_type_args
+from dmr.types import AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
 if TYPE_CHECKING:

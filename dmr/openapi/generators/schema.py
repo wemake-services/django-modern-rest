@@ -2,6 +2,7 @@ import dataclasses
 from typing import TYPE_CHECKING, Any, Literal, overload
 
 from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.internal.types import EMPTY
 from dmr.openapi.mappers.example import (
     generate_example,
     set_generated_example,
@@ -218,7 +219,7 @@ class SchemaGenerator:
         annotation: Any,
         serializer: type['BaseSerializer'],
     ) -> None:
-        if not schema.example and not schema.examples:  # pragma: no branch
+        if schema.example is EMPTY and not schema.examples:  # pragma: no branch
             set_generated_example(
                 schema,
                 generate_example(annotation, serializer),

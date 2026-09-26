@@ -4,7 +4,7 @@ from typing import TypeVar
 from typing_extensions import Sentinel
 
 from dmr.exceptions import EndpointMetadataError
-from dmr.types import EMPTY
+from dmr.internal.types import EMPTY
 
 _LayerT = TypeVar('_LayerT')
 

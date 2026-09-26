@@ -6,6 +6,7 @@ from dmr.openapi.objects import (
     OpenAPIType,
     Schema,
 )
+from dmr.types import EMPTY
 
 
 def test_load_schema_issue1490() -> None:
@@ -76,3 +77,23 @@ def test_load_schema_format_preserve_type() -> None:
     custom = load_schema({'type': 'string', 'format': 'cool-format'})
     assert custom.format == 'cool-format'
     assert not isinstance(custom.format, OpenAPIFormat)
+
+
+def test_load_schema_none_values() -> None:
+    """Keep ``None`` values of ``const``, ``default``, and ``example``."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1619
+    loaded = load_schema({'const': None, 'default': None, 'example': None})
+
+    assert loaded.const is None
+    assert loaded.default is None
+    assert loaded.example is None
+
+
+def test_load_schema_unset_values() -> None:
+    """Missing ``const``, ``default``, and ``example`` are ``EMPTY``."""
+    loaded = load_schema({'type': 'string'})
+
+    assert loaded.const is EMPTY
+    assert loaded.default is EMPTY
+    assert loaded.example is EMPTY
