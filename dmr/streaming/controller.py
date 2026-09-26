@@ -56,23 +56,11 @@ class StreamingController(Controller[_SerializerT_co]):
     Streaming settings for all endpoints of this controller.
 
     Override it to change controller-level defaults,
-    for example: ``extras = Streaming(validate_events=False)``.
+    for example: ``extras = Streaming(validate_events=False)``
+    or ``extras = Streaming(ping_seconds=30)``.
     Per-endpoint values are passed as ``extras=``
     to :data:`~dmr.streaming.modify` and :data:`~dmr.streaming.validate`.
     Use ``Streaming.of(self)`` to read the resolved values.
-    """
-
-    streaming_ping_seconds: ClassVar[float | None] = None
-    """
-    Optional ping keep alive event support.
-
-    Some servers might close long living connections with no activity.
-    Specify number in second how long should we wait between events.
-    If we wait longer, we will send a ping event.
-    The payload of the ping event is defined in
-    :meth:`~dmr.streaming.controller.StreamingController.ping_event`.
-
-    By default it is disabled. It is only enabled in the SSE streaming.
     """
 
     streaming_response_cls: ClassVar[type[StreamingResponse]] = (
@@ -178,5 +166,6 @@ class StreamingController(Controller[_SerializerT_co]):
         By default pings are disabled for ``StreamingController`` types.
         Pings must be explicitly enabled in subclasses.
 
-        If ``streaming_ping_seconds`` is set, this method will be called.
+        If ``ping_seconds`` is set in :class:`~dmr.streaming.Streaming`
+        extras, this method will be called.
         """
