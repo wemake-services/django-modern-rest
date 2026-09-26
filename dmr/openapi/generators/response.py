@@ -3,6 +3,7 @@ from http import HTTPStatus
 from operator import attrgetter
 from typing import TYPE_CHECKING, Literal
 
+from dmr.internal.types import EMPTY
 from dmr.openapi.mappers.example import generate_example, set_generated_example
 from dmr.openapi.objects import (
     Header,
@@ -161,7 +162,7 @@ class ResponseGenerator:
             cookie_value = generate_example(str, controller_cls.serializer)
             schema = set_generated_example(
                 dataclasses.replace(schema),
-                None if cookie_value is None else f'{name}={cookie_value}',
+                EMPTY if cookie_value is EMPTY else f'{name}={cookie_value}',
             )
 
             cookies[f'Set-Cookie: {name}'] = Header(

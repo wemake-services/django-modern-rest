@@ -17,12 +17,13 @@ def set_generated_example(schema: Schema, example: Any) -> Schema:
     keyword: ``examples`` is valid in every OpenAPI version we support,
     while OpenAPI 3.2 deprecates ``example`` inside Schema Objects.
 
-    Generating examples can be disabled in settings, in that case *example*
-    is ``None`` and we don't write anything at all.
+    When there's no example, *example* is :data:`~dmr.types.EMPTY`
+    and we don't write anything at all. For example, when generating
+    examples is disabled in settings. ``None`` is a valid example.
 
     .. versionadded:: 0.16.0
     """
-    if example is not None:
+    if example is not EMPTY:
         schema.examples = [example]
     return schema
 
@@ -37,8 +38,9 @@ except ImportError:  # pragma: no cover
     def generate_example(
         annotation: Any,
         serializer: type['BaseSerializer'],
-    ) -> Any | None:
+    ) -> Any | Sentinel:
         """Does nothing, since polyfactory is not installed."""
+        return EMPTY
 
 else:
     # The idea of generating examples and some parts of the implementation
@@ -81,10 +83,20 @@ else:
     def generate_example(
         annotation: Any,
         serializer: type['BaseSerializer'],
-    ) -> Any | None:
-        """Generates examples based on the type annotation."""
+    ) -> Any | Sentinel:
+        """
+        Generates examples based on the type annotation.
+
+        Returns :data:`~dmr.types.EMPTY` when there's no example:
+        when generating examples is disabled or has failed.
+
+        .. versionchanged:: 0.16.0
+            Returns :data:`~dmr.types.EMPTY` instead of ``None``
+            when there's no example, because ``None`` is a valid example.
+
+        """
         if annotation is EMPTY:  # pragma: no cover
-            return None
+            return EMPTY
 
         # Import cycle:
         from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
@@ -94,7 +106,7 @@ else:
             Sentinel,
         ):
             # Example generation is disabled in settings.
-            return None
+            return EMPTY
 
         try:  # noqa: WPS505
             return serializer.to_python(
@@ -103,4 +115,4 @@ else:
                 ),
             )
         except Exception:  # pragma: no cover
-            return None
+            return EMPTY
