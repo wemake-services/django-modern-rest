@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Annotated, Any, Literal, TypeAlias
 
 from dmr.internal.dataclass_aliases import Field
-from dmr.internal.types import EMPTY
+from dmr.internal.empty import EMPTY
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.example import Example

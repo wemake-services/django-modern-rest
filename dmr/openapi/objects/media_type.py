@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, final
 
 from typing_extensions import override
 
-from dmr.internal.types import EMPTY
+from dmr.internal.empty import EMPTY
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.encoding import Encoding

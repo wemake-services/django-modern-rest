@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 
-from dmr.internal.types import EMPTY
+from dmr.internal.empty import EMPTY
 
 
 @dataclass(kw_only=True, slots=True)

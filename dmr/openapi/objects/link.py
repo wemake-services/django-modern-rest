@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from dmr.internal.types import EMPTY
+from dmr.internal.empty import EMPTY
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.server import Server

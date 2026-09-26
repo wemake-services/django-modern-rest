@@ -146,11 +146,6 @@ layers =
   collector | config
   objects
 
-ignore_imports =
-  # Objects use `EMPTY` for fields where `None` is a real value,
-  # `dmr.internal.types` only imports exceptions lazily to raise them:
-  dmr.internal.types -> dmr.exceptions
-
 [importlinter:openapi:generators-independence]
 name = All OpenAPI `generators` must be independent
 type = independence
@@ -164,11 +159,6 @@ type = independence
 
 modules =
   dmr.openapi.objects.*
-
-ignore_imports =
-  # Objects use `EMPTY` for fields where `None` is a real value,
-  # `dmr.internal.types` only imports exceptions lazily to raise them:
-  dmr.internal.types -> dmr.exceptions
 
 [importlinter:openapi:views-independence]
 name = All OpenAPI `views` must be independent

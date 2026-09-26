@@ -29,6 +29,7 @@ from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.internal.docstrings import resolve_summary_and_description
 from dmr.internal.enums import stringify
+from dmr.internal.types import EMPTY
 from dmr.metadata import (
     ComponentParserSpec,
     EndpointMetadata,
@@ -42,7 +43,7 @@ from dmr.security.base import AsyncAuth, SyncAuth, SyncOrAsyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec, Settings, resolve_setting
 from dmr.throttling import AsyncThrottle, SyncOrAsyncThrottle, SyncThrottle
-from dmr.types import EMPTY, infer_annotation, is_safe_subclass
+from dmr.types import infer_annotation, is_safe_subclass
 from dmr.validation.metadata_merger import MetadataMerger
 from dmr.validation.payload import (
     ModifyEndpointPayload,

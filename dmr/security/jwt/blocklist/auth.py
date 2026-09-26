@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING, Final, Protocol
 from django.views.decorators.debug import sensitive_variables
 
 from dmr.exceptions import NotAuthenticatedError
+from dmr.internal.types import EMPTY
 from dmr.security.jwt.token import JWToken
-from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from django.contrib.auth.base_user import AbstractBaseUser

@@ -8,12 +8,11 @@ from typing_extensions import Sentinel
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.errors import AsyncErrorHandler, SyncErrorHandler
 from dmr.headers import HeaderSpec, NewHeader
-from dmr.internal.types import StrOrPromise
+from dmr.internal.types import EMPTY, StrOrPromise
 from dmr.metadata import ResponseSpec
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.settings import HttpSpec
-from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from dmr.controller import Controller

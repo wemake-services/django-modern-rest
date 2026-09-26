@@ -3,7 +3,7 @@ from collections.abc import Callable
 from enum import Enum
 from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 
-from dmr.types import EMPTY
+from dmr.internal.types import EMPTY
 
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance

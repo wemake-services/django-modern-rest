@@ -14,6 +14,7 @@ from typing import (
 )
 
 import pytest
+from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
 from dmr import Body, Controller, Cookies, Headers, Path, Query
@@ -490,14 +491,19 @@ def test_none_default() -> None:
         Router('api/', [path('user/', _NoneDefaultController.as_view())]),
     ).convert()
 
-    properties = schema['components']['schemas']['_NoneDefaultStruct'][
-        'properties'
-    ]
-    assert properties['second'] == {'type': 'string', 'default': ''}
-    assert properties['third'] == {
-        'anyOf': [{'type': 'string'}, {'type': 'null'}],
-        'default': None,
-    }
+    assert schema['components']['schemas']['_NoneDefaultStruct'] == snapshot({
+        'properties': {
+            'first': {'type': 'integer'},
+            'second': {'type': 'string', 'default': ''},
+            'third': {
+                'anyOf': [{'type': 'string'}, {'type': 'null'}],
+                'default': None,
+            },
+        },
+        'type': 'object',
+        'required': ['first'],
+        'title': '_NoneDefaultStruct',
+    })
 
 
 @pytest.mark.parametrize(

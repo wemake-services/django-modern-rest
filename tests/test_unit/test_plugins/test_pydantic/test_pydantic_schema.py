@@ -16,6 +16,7 @@ from typing import (
 
 import pydantic
 import pytest
+from inline_snapshot import snapshot
 from pydantic.json_schema import GenerateJsonSchema
 from pydantic_core import core_schema
 from typing_extensions import TypedDict, override
@@ -508,19 +509,20 @@ def test_none_default(*, serializer: type[PydanticSerializer]) -> None:
         Router('api/', [path('user/', _NoneDefaultController.as_view())]),
     ).convert()
 
-    properties = schema['components']['schemas']['_NoneDefaultModel'][
-        'properties'
-    ]
-    assert properties['second'] == {
-        'type': 'string',
-        'title': 'Second',
-        'default': '',
-    }
-    assert properties['third'] == {
-        'anyOf': [{'type': 'string'}, {'type': 'null'}],
-        'title': 'Third',
-        'default': None,
-    }
+    assert schema['components']['schemas']['_NoneDefaultModel'] == snapshot({
+        'properties': {
+            'first': {'type': 'integer', 'title': 'First'},
+            'second': {'type': 'string', 'title': 'Second', 'default': ''},
+            'third': {
+                'anyOf': [{'type': 'string'}, {'type': 'null'}],
+                'title': 'Third',
+                'default': None,
+            },
+        },
+        'type': 'object',
+        'required': ['first'],
+        'title': '_NoneDefaultModel',
+    })
 
 
 def test_root_model(
