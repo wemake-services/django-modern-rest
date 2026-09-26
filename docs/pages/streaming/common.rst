@@ -225,6 +225,9 @@ Rules:
 - If no explicit ``validate_events`` boolean value is specified, we fallback
   to ``validate_responses`` value
 
+To support the custom ``validate_events`` per endpoint,
+we use :class:`~dmr.streaming.Streaming` extra for
+
 .. tabs::
 
   .. tab:: per endpoint
@@ -336,6 +339,16 @@ Controllers
   :members:
   :show-inheritance:
 
+Endpoint
+~~~~~~~~
+
+.. autodata:: dmr.streaming.modify
+
+.. autodata:: dmr.streaming.validate
+
+.. autoclass:: dmr.streaming.Streaming
+  :members:
+
 Responses
 ~~~~~~~~~
 
@@ -355,7 +368,6 @@ Validation
 
 .. autoclass:: dmr.streaming.validation.StreamingValidator
   :members:
-
 
 .. autoclass:: dmr.streaming.validation.StreamingResponseValidator
   :members:

@@ -201,7 +201,8 @@ class Extras(Generic[_BuiltExtrasT_co]):
     in :attr:`~dmr.endpoint.Endpoint.extras_cls`.
 
     The type parameter is the type of the built value,
-    it is stored in :attr:`~dmr.metadata.EndpointMetadata.extras`.
+    it is stored in :attr:`~dmr.metadata.EndpointMetadata.extras`
+    as the first type variable.
 
     .. versionadded:: 0.16.0
     """
@@ -234,7 +235,7 @@ class Extras(Generic[_BuiltExtrasT_co]):
         ...
 
 
-_ExtrasT = TypeVar('_ExtrasT', bound=Extras[Any], default=Never)
+_ExtrasT = TypeVar('_ExtrasT', bound=Extras[Any] | Sentinel, default=Sentinel)
 
 
 @final
@@ -583,7 +584,8 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         return _lazy_payload(provider)
 
 
-modify: Final = ModifyEndpoint[Never]()
+#: Default instance of :class:`ModifyEndpoint` for regular controllers.
+modify: Final = ModifyEndpoint()
 
 
 class _ValidateCallable(Protocol):
@@ -990,7 +992,8 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         return _lazy_payload(provider)
 
 
-validate: Final = ValidateEndpoint[Never]()
+#: Default instance of :class:`ValidateEndpoint` for regular controllers.
+validate: Final = ValidateEndpoint()
 
 
 @overload

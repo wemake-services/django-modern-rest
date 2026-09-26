@@ -248,13 +248,14 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
         # Explicit `is_abstract` definitions always win. We don't use
         # `getattr`, because subclasses of explicitly abstract controllers
-        # must become concrete again, unless they declare `is_abstract`
-        # themselves. `None` means that nothing was declared:
-        explicit_is_abstract = cls.__dict__.get('is_abstract')
+        # must become concrete again,
+        # unless they declare `is_abstract` themselves.
+        explicit_is_abstract = cls.__dict__.get('is_abstract', False)
         if explicit_is_abstract:
             # Abstract controllers have nothing to serve,
             # so endpoints are only built in a concrete context:
             cls.api_endpoints = {}
+            cls.is_abstract = True
         else:
             # Now it is validated that we don't have intersections.
             cls.api_endpoints = {
@@ -264,10 +265,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 )
                 for canonical, meth in cls._find_existing_http_methods().items()
             }
-        # A controller that has no endpoints is abstract either way:
-        cls.is_abstract = bool(explicit_is_abstract) or not bool(
-            cls.api_endpoints,
-        )
+            # A controller that has no endpoints is abstract either way:
+            cls.is_abstract = not bool(cls.api_endpoints)
         cls.is_async = cls.controller_validator_cls()(cls)
 
     @override

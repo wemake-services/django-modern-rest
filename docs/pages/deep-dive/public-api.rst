@@ -20,11 +20,29 @@ Endpoint
 .. autoclass:: dmr.metadata.EndpointMetadata
   :members:
 
-.. autodecorator:: dmr.endpoint.modify
+.. autofunction:: dmr.endpoint.request_endpoint
 
-.. autodecorator:: dmr.endpoint.validate
+Modify
+~~~~~~
 
-.. autodecorator:: dmr.endpoint.request_endpoint
+.. autoclass:: dmr.endpoint.ModifyEndpoint
+  :members:
+
+.. autodata:: dmr.endpoint.modify
+
+Validate
+~~~~~~~~
+
+.. autoclass:: dmr.endpoint.ValidateEndpoint
+  :members:
+
+.. autodata:: dmr.endpoint.validate
+
+Extras
+~~~~~~
+
+.. autoclass:: dmr.endpoint.Extras
+  :members:
 
 Lazy endpoints
 ~~~~~~~~~~~~~~

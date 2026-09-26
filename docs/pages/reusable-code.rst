@@ -40,6 +40,48 @@ So, ``MyController`` from the example above does the same
 .. versionadded:: 0.16.0
 
 
+.. _modify-and-validate-with-extras:
+
+Providing extras for ``@modify`` and ``@validate``
+--------------------------------------------------
+
+Your custom controllers might require custom parameters that users can provide
+to :data:`~dmr.endpoint.validate` and :data:`~dmr.endpoint.modify`.
+
+To do so, we utilize ``extras=`` parameter. By default it is always typed
+as empty sentinel, because default controller do not allow any extra parameters.
+To type ``extras=`` parameter one would need to create new instances
+of :class:`~dmr.endpoint.ModifyEndpoint`
+and :class:`~dmr.endpoint.ValidateEndpoint` with proper type arg,
+which must be a subclass of :class:`~dmr.endpoint.Extras` class.
+
+The returned value of :meth:`~dmr.endpoint.Extras.build`
+would be used inside :attr:`~dmr.metadata.EndpointMetadata.extras`
+and can be accessed in the code as any other metadata:
+
+.. tabs::
+
+    .. tab:: modify
+
+      Real world example: :data:`dmr.streaming.modify`
+
+      .. literalinclude:: /examples/reusable_code/extras_modify.py
+        :caption: views.py
+        :linenos:
+        :language: python
+
+    .. tab:: validate
+
+      Real world example: :data:`dmr.streaming.validate`
+
+      .. literalinclude:: /examples/reusable_code/extras_validate.py
+        :caption: views.py
+        :linenos:
+        :language: python
+
+.. versionadded:: 0.16.0
+
+
 .. _reusable-controllers:
 
 Reusable controllers
