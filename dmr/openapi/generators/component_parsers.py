@@ -4,8 +4,9 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, final
 
 from django.urls import converters
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, TypeIs
 
+from dmr.exceptions import EndpointMetadataError
 from dmr.internal.regex import parse_named_groups
 from dmr.openapi.collector import InternalRouteMetadata
 from dmr.openapi.objects import (
@@ -108,16 +109,13 @@ class ComponentParserGenerator:  # noqa: WPS214
                     'from ComponentParser.get_schema is not supported',
                 )
 
-        pattern_param = self._parse_pattern(
+        params_list = self._parse_pattern(
             operation_id,
             route_metadata,
             params_list,
             metadata,
             controller_cls,
         )
-        if pattern_param is not None:
-            params_list.extend(pattern_param)
-
         return request_body, params_list or None
 
     def _call_component(
@@ -143,17 +141,77 @@ class ComponentParserGenerator:  # noqa: WPS214
         parameter_specs: list[Parameter | Reference],
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
-    ) -> list[Parameter | Reference] | None:
+    ) -> list[Parameter | Reference]:
         # TODO: support `parameter` references:
-        if any(
-            param_spec.param_in == 'path'
-            for param_spec in parameter_specs
-            if isinstance(param_spec, Parameter)
-        ):
-            # TODO: should we validate `Path` component on `Router` creation?
-            # We already have some `Path` component, so move on.
-            return None
+        url_params = route_metadata.path_parameters()
+        self._validate_path_params(
+            parameter_specs,
+            url_params,
+            route_metadata,
+            controller_cls,
+        )
 
+        # Now all params that are not in the url come from url kwargs
+        # or have default values, clients don't send them,
+        # so they are not documented. The rest are always required,
+        # even with defaults, because OpenAPI requires all path params
+        # to be required. Defaults are still useful, because
+        # a controller can be routed to several urls:
+        params_list: list[Parameter | Reference] = [
+            dataclasses.replace(param_spec, required=True)
+            if _is_path_param(param_spec)
+            else param_spec
+            for param_spec in parameter_specs
+            if not _is_path_param(param_spec) or param_spec.name in url_params
+        ]
+        # Document the url params that no component has documented:
+        pattern_params = self._parse_url_params(
+            operation_id,
+            route_metadata,
+            metadata,
+            controller_cls,
+            exclude={
+                param_spec.name
+                for param_spec in parameter_specs
+                if _is_path_param(param_spec)
+            },
+        )
+        if pattern_params is not None:
+            params_list.extend(pattern_params)
+        return params_list
+
+    def _validate_path_params(
+        self,
+        parameter_specs: list[Parameter | Reference],
+        url_params: frozenset[str],
+        route_metadata: InternalRouteMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> None:
+        # Django never passes required params that are not in the url
+        # and not in its kwargs, so such an endpoint can't be called:
+        unknown = sorted(
+            param_spec.name
+            for param_spec in parameter_specs
+            if _is_path_param(param_spec)
+            and param_spec.required
+            and param_spec.name not in url_params | route_metadata.extra_kwargs
+        )
+        if unknown:
+            raise EndpointMetadataError(
+                f'Required path parameters {unknown!r} '
+                f'of {controller_cls!r} are not found '
+                f'in {route_metadata.path!r} url and its kwargs',
+            )
+
+    def _parse_url_params(
+        self,
+        operation_id: str,
+        route_metadata: InternalRouteMetadata,
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
+        *,
+        exclude: set[str],
+    ) -> list[Parameter | Reference] | None:
         # `re_path()` and `RegexPattern`:
         if route_metadata.is_regex:
             return self._parse_regex(
@@ -161,6 +219,7 @@ class ComponentParserGenerator:  # noqa: WPS214
                 route_metadata,
                 metadata,
                 controller_cls,
+                exclude=exclude,
             )
 
         # `path()` and `RoutePattern`:
@@ -169,6 +228,7 @@ class ComponentParserGenerator:  # noqa: WPS214
             route_metadata,
             metadata,
             controller_cls,
+            exclude=exclude,
         )
 
     def _add_group_patterns(
@@ -203,10 +263,13 @@ class ComponentParserGenerator:  # noqa: WPS214
         route_metadata: InternalRouteMetadata,
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
+        *,
+        exclude: set[str],
     ) -> list[Parameter | Reference] | None:
         prepared = {
             converter_name: _converter_schema(converter, self._converters)
             for converter_name, converter in route_metadata.converters().items()
+            if converter_name not in exclude
         }
         if not prepared:
             return None
@@ -230,10 +293,15 @@ class ComponentParserGenerator:  # noqa: WPS214
         route_metadata: InternalRouteMetadata,
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
+        *,
+        exclude: set[str],
     ) -> list[Parameter | Reference] | None:
         assert route_metadata.is_regex  # noqa: S101
         regex = route_metadata.regex()
-        schema = dict.fromkeys(regex.groupindex, str)
+        schema = dict.fromkeys(
+            (group for group in regex.groupindex if group not in exclude),
+            str,
+        )
         return (
             self._add_group_patterns(
                 self._context.generators.parameter(
@@ -317,6 +385,10 @@ class ComponentParserGenerator:  # noqa: WPS214
                 schema=Schema(all_of=media_items),
             )
         return new_content
+
+
+def _is_path_param(param_spec: Parameter | Reference) -> TypeIs[Parameter]:
+    return isinstance(param_spec, Parameter) and param_spec.param_in == 'path'
 
 
 def _converter_models(
