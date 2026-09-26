@@ -68,6 +68,11 @@ def dump_schema(to_convert: 'DataclassInstance') -> DumpedSchema:  # noqa: WPS23
         schema_value = getattr(to_convert, field.name, None)
         if field.name.startswith('_') or schema_value is None:
             continue
+        if field.name == 'extensions':
+            # Specification extensions, like ``x-thing``,
+            # live next to the schema's own keys, not nested, #1491
+            schema.update(_dump_value(schema_value))
+            continue
         if field.name == 'required' and not schema_value:
             continue  # Skip empty `required` field
 

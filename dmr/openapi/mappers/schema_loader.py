@@ -32,6 +32,12 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         :func:`dmr.openapi.mappers.example.set_generated_example`
         does that now.
 
+    .. versionchanged:: 0.16.0
+        ``$ref`` is now loaded as :class:`~dmr.openapi.objects.Schema.ref`,
+        not as a separate :class:`~dmr.openapi.objects.Reference`:
+        inside a schema position ``$ref`` is a regular JSON Schema keyword
+        and its siblings must survive, #1491
+
     """
     return Schema(
         all_of=_try_sequence(raw_data.get('allOf')),
@@ -92,10 +98,12 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         example=raw_data.get('example'),
         dynamic_ref=raw_data.get('$dynamicRef'),
         dynamic_anchor=raw_data.get('$dynamicAnchor'),
+        ref=raw_data.get('$ref'),
         anchor=raw_data.get('$anchor'),
         comment=raw_data.get('$comment'),
         schema_uri=raw_data.get('$schema'),
         defs=_try_dict(raw_data.get('$defs')),
+        extensions=_try_extensions(raw_data),
     )
 
 
@@ -109,19 +117,26 @@ def _try_optional_bool_type(raw_value: Any) -> Reference | Schema | bool | None:
 
 
 def _try_optional_type(raw_value: Any) -> Reference | Schema | None:
-    """Load a raw_value as Reference (if it has '$ref') or Schema, or None."""
+    """Load a raw_value as Schema, or None."""
     return None if raw_value is None else _try_type(raw_value)  # noqa: WPS204
 
 
 def _try_type(raw_value: Any) -> Reference | Schema:
-    """Load a raw_value as Reference (if it has '$ref') or Schema."""
-    if isinstance(raw_value, dict) and '$ref' in raw_value:
-        return Reference(
-            ref=raw_value['$ref'],
-            summary=raw_value.get('summary'),
-            description=raw_value.get('description'),
-        )
+    """Load a raw_value as Schema, with ``$ref`` being just its keyword."""
+    # In a schema position, like ``properties`` or ``items``,
+    # ``$ref`` belongs to the Schema Object, not to the Reference Object:
+    # siblings next to it, like ``default``, are valid and must survive, #1491
     return load_schema(raw_value)
+
+
+def _try_extensions(raw_data: dict[str, Any]) -> dict[str, Any] | None:
+    """Keep specification extensions, like ``x-thing``, as they are."""
+    extensions = {
+        raw_key: raw_value
+        for raw_key, raw_value in raw_data.items()
+        if raw_key.startswith('x-')
+    }
+    return extensions or None
 
 
 def _try_sequence(raw_value: Any) -> list[Reference | Schema] | None:

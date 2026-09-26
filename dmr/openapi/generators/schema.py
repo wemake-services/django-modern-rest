@@ -122,7 +122,7 @@ class SchemaGenerator:
         skip_registration: bool,
         register_referenced_components: bool,
     ) -> Reference | Schema:
-        reference = schema.get('$ref')  # FIXME: this can be a schema with $ref
+        reference = schema.get('$ref')
         loaded_components = {
             component_name: load_schema(component)
             for component_name, component in components.items()
@@ -134,6 +134,16 @@ class SchemaGenerator:
             register_referenced_components=register_referenced_components,
         )
 
+        if reference and _has_schema_siblings(schema):
+            # ``$ref`` next to schema keywords, like ``default`` or ``x-``,
+            # stays a ``Schema``: a ``Reference`` would drop them, #1491
+            return self._resolve_reference(
+                annotation,
+                load_schema(schema),
+                loaded_components,
+                serializer,
+                skip_registration=skip_registration,
+            )
         if reference:
             return self._resolve_reference(
                 annotation,
@@ -191,7 +201,7 @@ class SchemaGenerator:
     def _resolve_reference(
         self,
         annotation: Any,
-        reference: Reference,
+        reference: Reference | Schema,
         components: dict[str, Schema],
         serializer: type['BaseSerializer'],
         *,
@@ -203,6 +213,14 @@ class SchemaGenerator:
                 reference,
                 resolution_context=components,
             )
+        if isinstance(reference, Schema) and reference.ref:
+            # The example belongs to the component itself,
+            # while this schema keeps its siblings as they are, #1491
+            target = registry.schemas[
+                reference.ref.removeprefix(registry.schema_prefix)
+            ]
+            self._maybe_generate_example(target, annotation, serializer)
+            return reference
         # If we got a reference from the start,
         # it might still miss the examples:
         self._maybe_generate_example(
@@ -223,3 +241,17 @@ class SchemaGenerator:
                 schema,
                 generate_example(annotation, serializer),
             )
+
+
+#: Keys a plain ``Reference`` can carry next to ``$ref`` without losing them.
+_REFERENCE_ONLY_KEYS = frozenset(('$ref', 'summary', 'description'))
+
+
+def _has_schema_siblings(schema: dict[str, Any]) -> bool:
+    """
+    Check that ``$ref`` has keywords next to it that only a ``Schema`` holds.
+
+    ``summary`` and ``description`` are valid on a ``Reference``
+    and dump the same way, so they alone don't change the outcome.
+    """
+    return any(key not in _REFERENCE_ONLY_KEYS for key in schema)

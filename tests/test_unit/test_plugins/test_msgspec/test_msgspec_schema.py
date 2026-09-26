@@ -14,7 +14,7 @@ from typing import (
 import pytest
 from typing_extensions import TypedDict
 
-from dmr import Controller, Cookies, Headers, Path, Query
+from dmr import Body, Controller, Cookies, Headers, Path, Query
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
@@ -284,11 +284,24 @@ def test_enum(
     assert schema == Schema(enum=[1, 2], title=_TestEnum.__qualname__)
 
 
+def _expected_enum_parameter_schema(
+    component_name: str,
+    parameter_location: str,
+    expected_default: Any,
+) -> dict[str, Any]:
+    """Keep the query field's ``default`` next to ``$ref``, see #1491."""
+    expected = {'$ref': f'#/components/schemas/{component_name}'}
+    if parameter_location == 'query':
+        expected['default'] = expected_default
+    return expected
+
+
 def _assert_enum_parameter_schema(
     *,
     controller: type[Controller[MsgspecSerializer]],
     component_name: str,
     expected_values: list[str | int],
+    expected_default: Any,
 ) -> None:
     """Ensure enum parameter fields register referenced schemas."""
     schema = build_schema(
@@ -306,9 +319,11 @@ def _assert_enum_parameter_schema(
 
     for parameter_location in ('path', 'query', 'header', 'cookie'):
         parameter = parameter_specs['enum_value', parameter_location]
-        assert parameter['schema'] == {
-            '$ref': f'#/components/schemas/{component_name}',
-        }
+        assert parameter['schema'] == _expected_enum_parameter_schema(
+            component_name,
+            parameter_location,
+            expected_default,
+        )
     assert schema['components']['schemas'][component_name] == {
         'enum': expected_values,
         'title': component_name,
@@ -348,6 +363,7 @@ def test_parameter_schema_with_enum() -> None:
         controller=_EnumQueryController,
         component_name=_QueryEnum.__name__,
         expected_values=['alpha', 'beta'],
+        expected_default='alpha',
     )
 
 
@@ -384,6 +400,7 @@ def test_parameter_schema_with_int_enum() -> None:
         controller=_EnumQueryController,
         component_name=_QueryEnum.__name__,
         expected_values=[1, 2],
+        expected_default=1,
     )
 
 
@@ -420,6 +437,7 @@ def test_parameter_schema_with_str_enum() -> None:
         controller=_EnumQueryController,
         component_name=_QueryEnum.__name__,
         expected_values=['alpha', 'beta'],
+        expected_default='alpha',
     )
 
 
@@ -482,10 +500,28 @@ class _OtherCustomType:
     """Another custom type without any schema support."""
 
 
+class _RefCustomType:
+    """Custom type that resolves to a ``$ref`` with sibling keywords."""
+
+
 def _schema_hook(typ: type[Any]) -> dict[str, Any]:
     """Describe custom types for the JSON schema generation."""
     if typ is _CustomType:
         return {'type': 'string'}
+    if typ is _RefCustomType:
+        return {
+            '$ref': '#/components/schemas/_Placeholder',
+            'default': {'city': 'Moscow'},
+            'x-source': 'schema-hook',
+            '$defs': {
+                '_Placeholder': {
+                    'title': '_Placeholder',
+                    'type': 'object',
+                    'properties': {'city': {'type': 'string'}},
+                    'required': ['city'],
+                },
+            },
+        }
     raise NotImplementedError(typ)
 
 
@@ -514,3 +550,50 @@ def test_schema_hook_fallback(schema_generator: SchemaGenerator) -> None:
         match='Cannot generate OpenAPI schema',
     ):
         schema_generator(_OtherCustomType, _HookedSerializer)
+
+
+def test_schema_ref_siblings_issue1491(
+    schema_generator: SchemaGenerator,
+    openapi_context: OpenAPIContext,
+) -> None:
+    """Keep the keywords that sit next to a top-level ``$ref``."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1491
+    generated = schema_generator(_RefCustomType, _HookedSerializer)
+
+    assert isinstance(generated, Schema)
+    assert generated.ref == '#/components/schemas/_Placeholder'
+    assert generated.default == {'city': 'Moscow'}
+    assert generated.extensions == {'x-source': 'schema-hook'}
+    assert set(openapi_context.registries.schema.schemas) == {'_Placeholder'}
+
+
+def test_ref_siblings_and_extensions_issue1491() -> None:
+    """Keep ``$ref`` siblings and explicit extras in the final schema."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1491
+
+    class _Address(msgspec.Struct, frozen=True):
+        city: str
+
+    class _User(msgspec.Struct, kw_only=True):
+        name: Annotated[
+            str,
+            msgspec.Meta(extra_json_schema={'x-display': 'Name'}),
+        ] = 'unknown'
+        address: _Address = _Address(city='Moscow')
+
+    class _IssueController(Controller[MsgspecSerializer]):
+        async def post(self, parsed_body: Body[_User]) -> None:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('test/', _IssueController.as_view())]),
+    ).convert()
+
+    user_schema = schema['components']['schemas']['_User']
+    assert user_schema['properties']['address'] == {
+        '$ref': '#/components/schemas/_Address',
+        'default': {'city': 'Moscow'},
+    }
+    assert user_schema['properties']['name']['x-display'] == 'Name'
