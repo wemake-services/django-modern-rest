@@ -15,6 +15,7 @@ from dmr.serializer import BaseSerializer
 from dmr.settings import Settings, resolve_setting
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
+from dmr.throttling.backends import AsyncDjangoCache, SyncDjangoCache
 from dmr.throttling.cache_keys import RemoteAddr
 
 _Serializes: TypeAlias = list[type[BaseSerializer]]
@@ -48,13 +49,27 @@ def test_throttle_sync_per_endpoint(
     class _SyncEndpointController(
         Controller[serializer],  # type: ignore[valid-type]
     ):
-        @modify(throttling=[SyncThrottle(1, Rate.second)])
+        @modify(
+            throttling=[
+                SyncThrottle(
+                    1,
+                    Rate.second,
+                    backend=SyncDjangoCache(allow_unsafe_cache=None),
+                ),
+            ],
+        )
         def get(self) -> str:
             return 'inside'
 
         @validate(
             ResponseSpec(str, status_code=HTTPStatus.OK),
-            throttling=[SyncThrottle(1, Rate.second)],
+            throttling=[
+                SyncThrottle(
+                    1,
+                    Rate.second,
+                    backend=SyncDjangoCache(allow_unsafe_cache=None),
+                ),
+            ],
         )
         def put(self) -> HttpResponse:
             return self.to_response('inside')
@@ -117,7 +132,13 @@ async def test_throttle_async_per_controller(
     class _AsyncController(
         Controller[serializer],  # type: ignore[valid-type]
     ):
-        throttling = [AsyncThrottle(1, Rate.second)]
+        throttling = [
+            AsyncThrottle(
+                1,
+                Rate.second,
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+            ),
+        ]
 
         async def get(self) -> str:
             return 'inside'
@@ -173,7 +194,13 @@ def test_throttle_settings_override(settings: LazySettings) -> None:
     """Ensures that async throttling from settings work."""
     settings.DMR_SETTINGS = {
         **settings.DMR_SETTINGS,
-        Settings.throttling: [AsyncThrottle(1, Rate.second)],
+        Settings.throttling: [
+            AsyncThrottle(
+                1,
+                Rate.second,
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+            ),
+        ],
     }
 
     class _DisabledPerController(Controller[PydanticSerializer]):
@@ -188,8 +215,16 @@ def test_throttle_settings_override(settings: LazySettings) -> None:
 
     class _DisabledPerEndpoint(Controller[PydanticSerializer]):
         throttling = [
-            AsyncThrottle(10, Rate.minute),
-            AsyncThrottle(10, Rate.hour),
+            AsyncThrottle(
+                10,
+                Rate.minute,
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+            ),
+            AsyncThrottle(
+                10,
+                Rate.hour,
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+            ),
         ]
 
         @modify(throttling=None)
@@ -213,7 +248,13 @@ async def test_throttle_async_per_settings(
     """Ensures that async throttling from settings work."""
     settings.DMR_SETTINGS = {
         **settings.DMR_SETTINGS,
-        Settings.throttling: [AsyncThrottle(_ATTEMPTS, Rate.second)],
+        Settings.throttling: [
+            AsyncThrottle(
+                _ATTEMPTS,
+                Rate.second,
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+            ),
+        ],
     }
 
     class _AsyncController(
@@ -273,15 +314,29 @@ def test_throttle_sync_multiple_sources(
     """Ensures that sync throttling from several levels can be merged."""
     settings.DMR_SETTINGS = {
         **settings.DMR_SETTINGS,
-        Settings.throttling: [SyncThrottle(_ATTEMPTS, Rate.second)],
+        Settings.throttling: [
+            SyncThrottle(
+                _ATTEMPTS,
+                Rate.second,
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
+        ],
     }
 
     class _OverrideController(
         Controller[serializer],  # type: ignore[valid-type]
     ):
         throttling = [
-            SyncThrottle(10, Rate.minute),
-            SyncThrottle(10, Rate.hour),
+            SyncThrottle(
+                10,
+                Rate.minute,
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
+            SyncThrottle(
+                10,
+                Rate.hour,
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
         ]
 
         def get(self) -> str:
@@ -295,8 +350,16 @@ def test_throttle_sync_multiple_sources(
         Controller[serializer],  # type: ignore[valid-type]
     ):
         throttling = [
-            SyncThrottle(10, Rate.minute),
-            SyncThrottle(10, Rate.hour),
+            SyncThrottle(
+                10,
+                Rate.minute,
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
+            SyncThrottle(
+                10,
+                Rate.hour,
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
             # Merging is explicit:
             *resolve_setting(Settings.throttling),
         ]
@@ -352,7 +415,13 @@ def test_throttle_sync_rates(
     """Ensures that rates work correctly."""
 
     class _SyncController(Controller[PydanticSerializer]):
-        throttling = [SyncThrottle(1, rate)]
+        throttling = [
+            SyncThrottle(
+                1,
+                rate,
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
+        ]
 
         def get(self) -> str:
             return 'inside'
@@ -403,6 +472,7 @@ def test_throttle_full_cache_key_is_hashed(
         5,
         Rate.minute,
         cache_key=RemoteAddr(name='per-ip'),
+        backend=SyncDjangoCache(allow_unsafe_cache=None),
     )
 
     class _SyncController(Controller[PydanticSerializer]):
@@ -444,6 +514,7 @@ def test_throttle_full_cache_key_is_unique(
         5,
         Rate.minute,
         cache_key=RemoteAddr(name='per-ip'),
+        backend=SyncDjangoCache(allow_unsafe_cache=None),
     )
 
     class _SyncController(Controller[PydanticSerializer]):
