@@ -11,7 +11,6 @@ from dmr.types import EMPTY
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.serializer import BaseSerializer
-    from dmr.streaming.controller import StreamingController
     from dmr.validation import EndpointMetadataBuilder
 
 
@@ -43,6 +42,9 @@ class Streaming(Extras[StreamingExtras]):
     or :data:`~dmr.streaming.validate`.
     It can only be used with streaming controllers.
 
+    Set it as ``extras`` on a controller to provide controller-level
+    defaults, for example: ``extras = Streaming(validate_events=False)``.
+
     Attributes:
         validate_events: Should this endpoint validate events?
             If not set, defaults to the controller value,
@@ -58,22 +60,21 @@ class Streaming(Extras[StreamingExtras]):
     @override
     def build(  # pyright: ignore[reportIncompatibleMethodOverride]
         cls,  # TODO: this looks like a pyright bug
-        payload_extras: Self | Sentinel,
+        from_endpoint: Self | Sentinel,
+        from_controller: Self,
         controller_cls: type['Controller[BaseSerializer]'],
         builder: 'EndpointMetadataBuilder',
     ) -> StreamingExtras:
         """Resolve streaming settings from all configuration layers."""
-        from dmr.streaming.controller import StreamingController  # noqa: PLC0415
-
-        if not issubclass(controller_cls, StreamingController):
+        if not controller_cls.streaming:
             raise EndpointMetadataError(
-                f'Cannot apply streaming extras {payload_extras!r} '
+                f'Cannot apply streaming extras {from_endpoint!r} '
                 f'to non-streaming controller: {controller_cls!r}',
             )
         return StreamingExtras(
             validate_events=cls._build_validate_events(
-                payload_extras,
-                controller_cls,
+                from_endpoint,
+                from_controller,
                 builder,
             ),
         )
@@ -81,8 +82,8 @@ class Streaming(Extras[StreamingExtras]):
     @classmethod
     def _build_validate_events(
         cls,
-        payload_extras: Self | Sentinel,
-        controller_cls: type['StreamingController[BaseSerializer]'],
+        from_endpoint: Self | Sentinel,
+        from_controller: Self,
         builder: 'EndpointMetadataBuilder',
     ) -> bool:
         settings_value: bool | Sentinel = resolve_setting(
@@ -91,10 +92,10 @@ class Streaming(Extras[StreamingExtras]):
         validate_events = builder.merger('validate_events').first_set(
             (
                 EMPTY
-                if isinstance(payload_extras, Sentinel)
-                else payload_extras.validate_events
+                if isinstance(from_endpoint, Sentinel)
+                else from_endpoint.validate_events
             ),
-            controller_cls.validate_events,
+            from_controller.validate_events,
             settings_value,
         )
         if isinstance(validate_events, Sentinel):
@@ -103,7 +104,7 @@ class Streaming(Extras[StreamingExtras]):
 
 
 #: Same as :data:`dmr.modify`, but supports ``extras=Streaming(...)``.
-modify: Final = ModifyEndpoint[Streaming]()
+modify: Final = ModifyEndpoint(Streaming)
 
 #: Same as :data:`dmr.validate`, but supports ``extras=Streaming(...)``.
-validate: Final = ValidateEndpoint[Streaming]()
+validate: Final = ValidateEndpoint(Streaming)

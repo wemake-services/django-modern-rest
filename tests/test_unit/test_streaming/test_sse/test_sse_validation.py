@@ -142,7 +142,9 @@ async def test_wrong_event_type(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
         validate_responses = options.get('validate_responses', EMPTY)
-        validate_events = options.get('validate_events', EMPTY)
+        extras = Streaming(
+            validate_events=options.get('validate_events', EMPTY),
+        )
 
         async def get(self) -> AsyncIterator[_EventsType]:
             return _wrong_type_events()
@@ -548,7 +550,7 @@ async def test_missing_event_model(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
         validate_responses = False
-        validate_events = False
+        extras = Streaming(validate_events=False)
 
         @validate(
             streaming_response_spec(
@@ -592,7 +594,7 @@ async def test_missing_event_model_strict(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
         validate_responses = False
-        validate_events = True
+        extras = Streaming(validate_events=True)
 
         @validate(
             streaming_response_spec(

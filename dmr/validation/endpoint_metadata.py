@@ -433,7 +433,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     metadata_cls: type[EndpointMetadata]
     response_modification_cls: type[ResponseModification]
     metadata_merger_cls: type[MetadataMerger]
-    extras_cls: type['Extras[Any]'] | None
     component_parsers: list[ComponentParserSpec]
     type_annotations: dict[str, Any]
 
@@ -1103,21 +1102,56 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         )
 
     def _build_extras(self) -> Any:
+        controller_extras = self.controller_cls.extras
         payload_extras = EMPTY if self.payload is None else self.payload.extras
-        if self.extras_cls is None:
-            if not isinstance(payload_extras, Sentinel):
+        required_cls = (
+            EMPTY if self.payload is None else self.payload.extras_cls
+        )
+        if isinstance(controller_extras, Sentinel):
+            if not isinstance(payload_extras, Sentinel) or not isinstance(
+                required_cls,
+                Sentinel,
+            ):
                 raise EndpointMetadataError(
-                    f'Endpoint {self.endpoint_name!r} does not support '
-                    f'extras, but got {payload_extras!r}',
+                    f'{self.controller_cls!r} does not support extras, '
+                    f'but {self.endpoint_name!r} uses them, '
+                    'set `extras` on the controller to enable them',
                 )
             return None
-        if not isinstance(payload_extras, (self.extras_cls, Sentinel)):
-            supported = self.extras_cls.__name__
+        extras_cls = self._validate_extras_cls(
+            type(controller_extras),
+            required_cls,
+            payload_extras,
+        )
+        # Always called, so controller and settings defaults are resolved:
+        return extras_cls.build(
+            payload_extras,
+            controller_extras,
+            self.controller_cls,
+            self,
+        )
+
+    def _validate_extras_cls(
+        self,
+        extras_cls: type['Extras[Any]'],
+        required_cls: type['Extras[Any]'] | Sentinel,
+        payload_extras: 'Extras[Any] | Sentinel',
+    ) -> type['Extras[Any]']:
+        if not isinstance(required_cls, Sentinel) and not issubclass(
+            extras_cls,
+            required_cls,
+        ):
             raise EndpointMetadataError(
-                f'Endpoint {self.endpoint_name!r} only supports '
-                f'{supported!r} extras, but got {payload_extras!r}',
+                f'Endpoint {self.endpoint_name!r} is created with '
+                f'{required_cls.__name__!r} extras, '
+                f'but {self.controller_cls!r} uses {extras_cls.__name__!r}',
             )
-        return self.extras_cls.build(payload_extras, self.controller_cls, self)
+        if not isinstance(payload_extras, Sentinel | extras_cls):
+            raise EndpointMetadataError(
+                f'{self.controller_cls!r} only supports '
+                f'{extras_cls.__name__!r} extras, but got {payload_extras!r}',
+            )
+        return extras_cls
 
     def _validate_new_http_parts(
         self,

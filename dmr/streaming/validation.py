@@ -9,13 +9,13 @@ from typing_extensions import override
 
 from dmr.exceptions import EndpointMetadataError, ValidationError
 from dmr.metadata import EndpointMetadata, ResponseModification
+from dmr.streaming.endpoint import Streaming
 from dmr.validation.response import ResponseValidator
 
 if TYPE_CHECKING:
     from dmr.renderers import Renderer
     from dmr.serializer import BaseSerializer
     from dmr.streaming.controller import StreamingController
-    from dmr.streaming.endpoint import StreamingExtras
 
 
 def validate_event_type(
@@ -111,11 +111,16 @@ class StreamingValidator:
         # for mypy: it can't be `None` at this point
         assert method is not None  # noqa: S101
         metadata = controller.api_endpoints[method].metadata
+        extras = Streaming.of(controller)
 
         return cls(
-            event_model=_resolve_event_model(metadata, status_code),
+            event_model=_resolve_event_model(
+                metadata,
+                status_code,
+                validate_events=extras.validate_events,
+            ),
             serializer=controller.serializer,
-            validate_events=metadata.extras.validate_events,
+            validate_events=extras.validate_events,
         )
 
 
@@ -144,13 +149,15 @@ class StreamingResponseValidator(ResponseValidator):
 
 
 def _resolve_event_model(
-    metadata: EndpointMetadata['StreamingExtras'],
+    metadata: EndpointMetadata,
     status_code: HTTPStatus,
+    *,
+    validate_events: bool,
 ) -> Any:
     try:
         return metadata.responses[status_code].return_type
     except (KeyError, ValueError):
-        if metadata.extras.validate_events:
+        if validate_events:
             raise EndpointMetadataError(
                 'Cannot resolve event model for endpoint '
                 f'{metadata.endpoint_name!r} and {status_code=}',

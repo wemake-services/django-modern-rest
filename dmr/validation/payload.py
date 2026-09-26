@@ -44,7 +44,10 @@ class _BasePayload:
     callbacks: Mapping[str, 'Callback | Reference'] | Sentinel
     servers: Sequence['Server'] | Sentinel | None
     ignore_from_spec: bool | Sentinel
+
+    # Extras:
     extras: 'Extras[Any] | Sentinel'
+    extras_cls: 'type[Extras[Any]] | Sentinel'
 
     # Common fields:
     validate_responses: bool | Sentinel
@@ -110,6 +113,7 @@ class ValidateEndpointPayload(_BasePayload):
             throttling=EMPTY,
             throttling_allow_unsafe_cache=EMPTY,
             extras=EMPTY,
+            extras_cls=EMPTY,
         )
 
 

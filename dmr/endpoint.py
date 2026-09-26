@@ -62,7 +62,6 @@ class Endpoint:  # noqa: WPS214
         Endpoint no longer creates ``HttpResponseBase`` objects
         from modifications, now ``ResponseValidator`` returns full responses.
         ``func`` is now public, but ``__call__`` is removed.
-        Added *extras_cls*.
 
     """
 
@@ -106,7 +105,6 @@ class Endpoint:  # noqa: WPS214
         ResponseValidator
     )
     payload_builder_cls: ClassVar[type[PayloadBuilder]] = PayloadBuilder
-    extras_cls: ClassVar[type[Extras[Any]] | None] = None
 
     def __init__(
         self,
@@ -154,7 +152,6 @@ class Endpoint:  # noqa: WPS214
             metadata_cls=self.metadata_cls,
             metadata_merger_cls=self.metadata_merger_cls,
             response_modification_cls=self.response_modification_cls,
-            extras_cls=self.extras_cls,
             component_parsers=self._serializer_context.component_parsers,
             type_annotations=type_annotations,
         )()

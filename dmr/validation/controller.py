@@ -25,7 +25,6 @@ class ControllerValidator:
         self._validate_error_handlers(controller, is_async=is_async)
         self._validate_meta_mixins(controller)
         self._validate_non_endpoints(controller)
-        self._validate_streaming_attributes(controller)
         return is_async
 
     def _validate_generator_endpoints(
@@ -111,18 +110,6 @@ class ControllerValidator:
         ):
             raise EndpointMetadataError(
                 f'Use only one mixin, not both meta mixins in {controller!r}',
-            )
-
-    def _validate_streaming_attributes(
-        self,
-        controller: type['Controller[BaseSerializer]'],
-    ) -> None:
-        defines_validate_events = 'validate_events' in controller.__dict__
-        if not controller.streaming and defines_validate_events:
-            raise EndpointMetadataError(
-                f'{controller!r} is not a streaming controller, '
-                'but defines `validate_events`, '
-                'which only affects streaming controllers',
             )
 
     def _validate_non_endpoints(

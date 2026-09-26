@@ -10,7 +10,7 @@ from typing_extensions import Sentinel, deprecated, override
 
 from dmr import throttling as dmr_throttling
 from dmr.cookies import NewCookie
-from dmr.endpoint import Endpoint
+from dmr.endpoint import Endpoint, Extras
 from dmr.errors import ErrorModel, ErrorType, format_error
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.internal.docstrings import resolve_summary_and_description
@@ -138,6 +138,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             :class:`~dmr.exceptions.EndpointMetadataError` for them.
         is_async: Whether or not this controller is async.
         streaming: Does this controller work with streaming responses like SSE?
+        extras: Default extras instance for this controller.
+            Setting it enables ``extras=`` in ``@modify`` and ``@validate``
+            for all endpoints and provides controller-level defaults.
+            ``EMPTY`` means that extras are not supported.
+            See :ref:`modify-and-validate-with-extras` to learn more.
         controller_validator_cls: Runs full controller validation on definition.
         annotations_context: Inference context to call
             :func:`typing.get_type_hints` for this controller.
@@ -223,6 +228,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     is_abstract: ClassVar[bool] = True
     is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
     streaming: ClassVar[bool] = False
+    extras: ClassVar[Extras[Any] | Sentinel] = EMPTY
     annotations_context: ClassVar[AnnotationsContext] = AnnotationsContext()
 
     # OpenAPI:

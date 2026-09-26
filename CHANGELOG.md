@@ -144,8 +144,8 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   it was silently ignored for non-streaming controllers.
   Use `extras=Streaming(validate_events=...)` with `dmr.streaming.modify`
   and `dmr.streaming.validate` instead. `Controller.validate_events`
-  moved to `StreamingController.validate_events`, non-streaming controllers
-  that define it now raise `EndpointMetadataError`, #1612
+  was removed as well, use `extras = Streaming(validate_events=...)`
+  on streaming controllers, #1612
 
 ### Performance improvements
 
@@ -300,9 +300,10 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   to disable all semantic schema generation or semantic auth injection
   respectively, #1586
 - Added `extras=` parameter to `@modify` and `@validate` for custom
-  controllers: subclass `dmr.endpoint.Extras`, set `Endpoint.extras_cls`,
-  and create decorators with `ModifyEndpoint[YourExtras]()`
-  and `ValidateEndpoint[YourExtras]()`, #1612
+  controllers: subclass `dmr.endpoint.Extras`, create typed decorators
+  with `ModifyEndpoint(YourExtras)` and `ValidateEndpoint(YourExtras)`,
+  and assign `extras = YourExtras(...)` on the controller to enable them
+  and to provide controller-level defaults, #1612
 
 ### Bugfixes
 

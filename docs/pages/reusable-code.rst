@@ -50,14 +50,35 @@ to :data:`~dmr.endpoint.validate` and :data:`~dmr.endpoint.modify`.
 
 To do so, we utilize ``extras=`` parameter. By default it is always typed
 as empty sentinel, because default controller do not allow any extra parameters.
-To type ``extras=`` parameter one would need to create new instances
-of :class:`~dmr.endpoint.ModifyEndpoint`
-and :class:`~dmr.endpoint.ValidateEndpoint` with proper type arg,
-which must be a subclass of :class:`~dmr.endpoint.Extras` class.
 
-The returned value of :meth:`~dmr.endpoint.Extras.build`
-would be used inside :attr:`~dmr.metadata.EndpointMetadata.extras`
-and can be accessed in the code as any other metadata:
+Three steps are needed:
+
+1. Define a subclass of :class:`~dmr.endpoint.Extras`.
+   Its fields can default to ``EMPTY`` if some arguments can be missing
+2. Define :attr:`~dmr.endpoint.Extras.build` with how to build your value
+   from several configuration layers, you can use global settings there as well
+3. Create typed decorators by passing this class
+   to :class:`~dmr.endpoint.ModifyEndpoint`
+   and :class:`~dmr.endpoint.ValidateEndpoint`
+4. Assign an instance of this class to ``extras`` attribute
+   of your controller. It enables ``extras=`` for all endpoints
+   of this controller and provides controller-level defaults
+
+:meth:`~dmr.endpoint.Extras.build` receives the endpoint layer,
+which is ``EMPTY`` when ``extras=`` is not passed,
+and the controller layer as instances of your class,
+and returns the resolved value.
+It is stored inside :attr:`~dmr.metadata.EndpointMetadata.extras`
+and can be read with :meth:`~dmr.endpoint.Extras.of` in a typed way.
+
+First, define the extras model itself:
+
+.. literalinclude:: /examples/reusable_code/extras_model.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+Then define and use new endpoint decorators:
 
 .. tabs::
 
@@ -78,6 +99,8 @@ and can be accessed in the code as any other metadata:
       :caption: views.py
       :linenos:
       :language: python
+
+This way your controller subtypes can have any extras that you need!
 
 These definitions would only differ in terms of typing.
 Everything else would work the same way.

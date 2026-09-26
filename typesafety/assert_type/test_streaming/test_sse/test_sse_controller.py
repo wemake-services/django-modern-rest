@@ -31,6 +31,8 @@ class InvalidController(SSEController[PydanticSerializer]):
 
 
 class ExtrasController(SSEController[PydanticSerializer]):
+    extras = Streaming(validate_events=False)
+
     @streaming_modify(extras=Streaming(validate_events=False))
     async def get(self) -> AsyncIterator[SSEvent[bytes]]:
         return _valid_events()

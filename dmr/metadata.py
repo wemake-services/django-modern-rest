@@ -587,8 +587,9 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
         ignore_from_spec: If set to ``True``, this endpoint
             would not be added to the final OpenAPI spec.
         extras: Extra settings for custom controllers,
-            built by :attr:`~dmr.endpoint.Endpoint.extras_cls`.
-            It is ``None`` when the endpoint does not support extras.
+            built by :meth:`~dmr.endpoint.Extras.build`
+            of :attr:`~dmr.controller.Controller.extras`.
+            It is ``None`` when the controller does not support extras.
             See :ref:`modify-and-validate-with-extras` to learn more.
 
     ``method`` can be a custom name, not specified

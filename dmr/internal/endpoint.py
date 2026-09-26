@@ -26,6 +26,7 @@ from typing_extensions import (
     deprecated,
 )
 
+from dmr.exceptions import EndpointMetadataError
 from dmr.internal.types import StrOrPromise
 from dmr.types import EMPTY
 
@@ -188,7 +189,7 @@ _CallableOrClassmethod: TypeAlias = (
 )
 
 
-_BuiltExtrasT_co = TypeVar('_BuiltExtrasT_co', covariant=True)
+_BuiltExtrasT_co = TypeVar('_BuiltExtrasT_co', covariant=True, default=Any)
 
 
 class Extras(Generic[_BuiltExtrasT_co]):
@@ -197,31 +198,42 @@ class Extras(Generic[_BuiltExtrasT_co]):
 
     Extras are extra settings for custom controllers, they are passed
     as ``extras=`` to ``@modify`` and ``@validate``.
-    Each endpoint type declares which extras it supports
-    in :attr:`~dmr.endpoint.Endpoint.extras_cls`.
+    A controller declares which extras it supports by assigning
+    a default instance to :attr:`~dmr.controller.Controller.extras`,
+    the same instance provides controller-level defaults.
+
+    Fields that can be omitted on some level should default to ``EMPTY``,
+    required fields are allowed as well.
 
     The type parameter is the type of the built value,
     it is stored in :attr:`~dmr.metadata.EndpointMetadata.extras`
-    as the first type variable.
+    as the first type variable. Use :meth:`of` to read it with proper types.
 
     .. versionadded:: 0.16.0
     """
+
+    __slots__ = ()
 
     @classmethod
     @abc.abstractmethod
     def build(
         cls,
-        payload_extras: Self | Sentinel,
+        from_endpoint: Self | Sentinel,
+        from_controller: Self,
         controller_cls: type[Controller[BaseSerializer]],
         builder: EndpointMetadataBuilder,
     ) -> _BuiltExtrasT_co:
         """
         Method that we need to build the final value.
 
-        It is called for all endpoints that support these extras,
-        even when ``extras=`` is not passed to the decorator
+        It is called for all endpoints of controllers that support
+        these extras, even when ``extras=`` is not passed to the decorator
         or when there's no decorator at all.
-        In this case *payload_extras* is ``EMPTY``.
+
+        *from_endpoint* is the instance passed as ``extras=``
+        to the decorator, or ``EMPTY`` when it was not passed.
+        *from_controller* is the instance set as ``Controller.extras``,
+        it is always present.
 
         We pass *controller_cls*, so user can take any needed values from there.
         Or from settings, or from where else.
@@ -234,8 +246,37 @@ class Extras(Generic[_BuiltExtrasT_co]):
         """
         ...
 
+    @classmethod
+    def of(cls, controller: Controller[BaseSerializer]) -> _BuiltExtrasT_co:
+        """
+        Get the built extras of the endpoint that serves the current request.
+
+        This is the typed way to read
+        :attr:`~dmr.metadata.EndpointMetadata.extras`.
+        Raises :exc:`~dmr.exceptions.EndpointMetadataError`
+        when *controller* does not use these extras.
+        """
+        if not isinstance(controller.extras, cls):
+            raise EndpointMetadataError(
+                f'{type(controller)!r} does not use {cls.__name__!r} extras',
+            )
+        method = controller.request.method
+        # for mypy: it can't be `None` at this point
+        assert method is not None  # noqa: S101
+        endpoint = controller.api_endpoints[method]
+        extras: _BuiltExtrasT_co = endpoint.metadata.extras
+        return extras
+
 
 _ExtrasT = TypeVar('_ExtrasT', bound=Extras[Any] | Sentinel, default=Sentinel)
+
+
+def _payload_extras_cls(
+    extras_cls: type[object] | Sentinel,
+) -> type[Extras[Any]] | Sentinel:
+    if isinstance(extras_cls, Sentinel) or not issubclass(extras_cls, Extras):
+        return EMPTY
+    return extras_cls  # pyright: ignore[reportUnknownVariableType]
 
 
 @final
@@ -374,6 +415,15 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         Removed *validate_events* parameter, added *extras* parameter instead.
         This class is now generic and public.
 
+    """
+
+    extras_cls: type[_ExtrasT] | Sentinel = EMPTY
+    """
+    Extras class that this decorator instance supports.
+
+    Pass it to create a typed decorator: ``ModifyEndpoint(MyExtras)``.
+    Controllers using such decorator must use the same extras class
+    in :attr:`~dmr.controller.Controller.extras`.
     """
 
     @overload
@@ -563,6 +613,7 @@ class ModifyEndpoint(Generic[_ExtrasT]):
                 response_description=response_description,
                 ignore_from_spec=ignore_from_spec,
                 extras=extras,
+                extras_cls=_payload_extras_cls(self.extras_cls),
             ),
         )
 
@@ -805,6 +856,15 @@ class ValidateEndpoint(Generic[_ExtrasT]):
 
     """
 
+    extras_cls: type[_ExtrasT] | Sentinel = EMPTY
+    """
+    Extras class that this decorator instance supports.
+
+    Pass it to create a typed decorator: ``ValidateEndpoint(MyExtras)``.
+    Controllers using such decorator must use the same extras class
+    in :attr:`~dmr.controller.Controller.extras`.
+    """
+
     @overload
     def __call__(
         self,
@@ -971,6 +1031,7 @@ class ValidateEndpoint(Generic[_ExtrasT]):
                 servers=servers,
                 ignore_from_spec=ignore_from_spec,
                 extras=extras,
+                extras_cls=_payload_extras_cls(self.extras_cls),
             ),
         )
 
