@@ -150,6 +150,10 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   and `dmr.streaming.validate` instead. `Controller.validate_events`
   was removed as well, use `extras = Streaming(validate_events=...)`
   on streaming controllers, #1612
+- `StreamingController.streaming_ping_seconds` was removed,
+  use `extras = Streaming(ping_seconds=...)` on streaming controllers
+  or `extras=Streaming(ping_seconds=...)` per endpoint instead.
+  `SSEController` still sends pings every 15 seconds by default
 
 ### Performance improvements
 
@@ -308,6 +312,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   with `ModifyEndpoint(YourExtras)` and `ValidateEndpoint(YourExtras)`,
   and assign `extras = YourExtras(...)` on the controller to enable them
   and to provide controller-level defaults, #1612
+- Added `Streaming.ping_seconds` to configure keep-alive pings
+  per endpoint and per controller, previously it was only possible
+  per controller with `streaming_ping_seconds`
 
 ### Bugfixes
 

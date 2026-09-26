@@ -220,6 +220,8 @@ Best practices
 - Every 15 seconds we send ``: ping`` keep-alive events,
   when there hasn't been any message,
   to prevent some servers from closing the connection as inactive.
+  Change ``ping_seconds`` in :class:`~dmr.streaming.Streaming` extras
+  per controller or per endpoint to adjust or disable it
   This is a direct recommendation from `the SSE spec <https://html.spec.whatwg.org/multipage/server-sent-events.html#authoring-notes>`_
 
 
