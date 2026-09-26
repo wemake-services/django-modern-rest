@@ -23,10 +23,8 @@ class APIController(Controller[PydanticFastSerializer]):
     def get(self) -> HttpResponse:
         return self.to_response(SmartResponse.of(self))
 
-    @validate(
-        ResponseSpec(str, status_code=HTTPStatus.OK),
-    )
-    def post(self) -> HttpResponse:
+    @validate(ResponseSpec(str, status_code=HTTPStatus.CREATED))
+    def post(self) -> HttpResponse:  # controller level extras
         return self.to_response(SmartResponse.of(self))
 
 
