@@ -122,8 +122,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             of :class:`dmr.throttling.AsyncThrottle`.
             Overrides the settings value, can be overridden per endpoint.
             Set it to ``None`` to disable throttling of this controller.
-        throttling_allow_unsafe_cache: Should this controller allow
-            unsafe throttle Django cache backends?
         error_model: Schema type that represents
             and validates common error responses.
         is_abstract: Whether or not this controller is abstract.
@@ -223,7 +221,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         | Sentinel
         | None
     ] = EMPTY
-    throttling_allow_unsafe_cache: ClassVar[bool | Sentinel | None] = EMPTY
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
     is_async: ClassVar[bool | None] = None  # `None` means that nothing's found

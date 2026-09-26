@@ -552,8 +552,6 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
             to be used before auth checks.
         throttling_after_auth: Sequence of throttle instances
             to be used after auth checks.
-        throttling_allow_unsafe_cache: Should this endpoint allow
-            unsafe throttle Django cache backends?
         exclude_validate_responses: Set of status codes that we don't
             validate, even when ``validate_responses`` is enabled.
         no_validate_http_spec: Set of checks that user wants
@@ -626,7 +624,6 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
     throttling_before_auth: list[_ThrottlingT] | None
     # Second line of throttling:
     throttling_after_auth: list[_ThrottlingT] | None
-    throttling_allow_unsafe_cache: bool | None
 
     exclude_validate_responses: frozenset[HTTPStatus]
     no_validate_http_spec: frozenset['HttpSpec']

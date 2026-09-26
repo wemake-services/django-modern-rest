@@ -105,7 +105,7 @@ def test_throttle_sync_leaky_bucket(
                     backend=(
                         backend_cls(redis_client)
                         if issubclass(backend_cls, SyncRedis)
-                        else backend_cls()
+                        else backend_cls(allow_unsafe_cache=None)
                     ),
                     algorithm=LeakyBucket(),
                 ),
@@ -161,7 +161,7 @@ def test_throttle_sync_leaky_bucket_limit_reached(
                     backend=(
                         backend_cls(redis_client)
                         if issubclass(backend_cls, SyncRedis)
-                        else backend_cls()
+                        else backend_cls(allow_unsafe_cache=None)
                     ),
                     algorithm=LeakyBucket(),
                 ),

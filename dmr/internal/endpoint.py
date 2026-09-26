@@ -369,8 +369,6 @@ class ModifyEndpoint(Generic[_ExtrasT]):
             of :class:`dmr.throttling.AsyncThrottle`.
             Overrides controller and settings values.
             Set it to ``None`` to disable throttling of this endpoint.
-        throttling_allow_unsafe_cache: Should this endpoint allow
-            unsafe throttle Django cache backends?
         summary: A short summary of what the operation does.
             Defaults to the first paragraph of the endpoint's docstring.
             Set it to ``None`` to have no summary at all.
@@ -448,7 +446,6 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         validate_negotiation: bool | Sentinel = EMPTY,
         auth: Sequence[Never] | Sentinel | None = EMPTY,
         throttling: Sequence[Never] | Sentinel | None = EMPTY,
-        throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
@@ -485,7 +482,6 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         validate_negotiation: bool | Sentinel = EMPTY,
         auth: Sequence[AsyncAuth] | Sentinel | None = EMPTY,
         throttling: Sequence[AsyncThrottle] | Sentinel | None = EMPTY,
-        throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
@@ -522,7 +518,6 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         validate_negotiation: bool | Sentinel = EMPTY,
         auth: Sequence[SyncAuth] | Sentinel | None = EMPTY,
         throttling: Sequence[SyncThrottle] | Sentinel | None = EMPTY,
-        throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
@@ -562,7 +557,6 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         throttling: (
             Sequence[AsyncThrottle] | Sequence[SyncThrottle] | Sentinel | None
         ) = EMPTY,
-        throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
@@ -600,7 +594,6 @@ class ModifyEndpoint(Generic[_ExtrasT]):
                 security=EMPTY,  # TODO
                 auth=auth,
                 throttling=throttling,
-                throttling_allow_unsafe_cache=throttling_allow_unsafe_cache,
                 summary=summary,
                 description=description,
                 tags=tags,
@@ -812,8 +805,6 @@ class ValidateEndpoint(Generic[_ExtrasT]):
             of :class:`dmr.throttling.AsyncThrottle`.
             Overrides controller and settings values.
             Set it to ``None`` to disable throttling of this endpoint.
-        throttling_allow_unsafe_cache: Should this controller allow
-            unsafe throttle Django cache backends?
         summary: A short summary of what the operation does.
             Defaults to the first paragraph of the endpoint's docstring.
             Set it to ``None`` to have no summary at all.
@@ -885,7 +876,6 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         validate_negotiation: bool | Sentinel = EMPTY,
         auth: Sequence[Never] | Sentinel | None = EMPTY,
         throttling: Sequence[Never] | Sentinel | None = EMPTY,
-        throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
@@ -918,7 +908,6 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         validate_negotiation: bool | Sentinel = EMPTY,
         auth: Sequence[AsyncAuth] | Sentinel | None = EMPTY,
         throttling: Sequence[AsyncThrottle] | Sentinel | None = EMPTY,
-        throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
@@ -951,7 +940,6 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         validate_negotiation: bool | Sentinel = EMPTY,
         auth: Sequence[SyncAuth] | Sentinel | None = EMPTY,
         throttling: Sequence[SyncThrottle] | Sentinel | None = EMPTY,
-        throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
@@ -987,7 +975,6 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         throttling: (
             Sequence[AsyncThrottle] | Sequence[SyncThrottle] | Sentinel | None
         ) = EMPTY,
-        throttling_allow_unsafe_cache: bool | Sentinel | None = EMPTY,
         summary: StrOrPromise | Sentinel | None = EMPTY,
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
@@ -1020,7 +1007,6 @@ class ValidateEndpoint(Generic[_ExtrasT]):
                 security=EMPTY,  # TODO
                 auth=auth,
                 throttling=throttling,
-                throttling_allow_unsafe_cache=throttling_allow_unsafe_cache,
                 summary=summary,
                 description=description,
                 tags=tags,
