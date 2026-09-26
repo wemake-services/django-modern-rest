@@ -12,7 +12,7 @@ from dmr.openapi.objects import (
     Reference,
     Schema,
 )
-from dmr.types import EMPTY
+from dmr.internal.types import EMPTY
 
 _EnumT = TypeVar('_EnumT', bound=Enum)
 
