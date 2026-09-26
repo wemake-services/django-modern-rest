@@ -129,6 +129,8 @@ def test_set_generated_example(
     assert (
         set_generated_example(Schema(), example).examples == expected_examples
     )
+
+
 class _NoneExampleModel(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(json_schema_extra={'example': None})
 
