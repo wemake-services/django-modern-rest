@@ -47,8 +47,6 @@ Extras
 Lazy endpoints
 ~~~~~~~~~~~~~~
 
-.. autodecorator:: dmr.endpoint.modify.lazy
-
 .. autoclass:: dmr.endpoint.ModifySyncCallable
   :members:
 
@@ -57,8 +55,6 @@ Lazy endpoints
 
 .. autoclass:: dmr.endpoint.ModifyAnyCallable
   :members:
-
-.. autodecorator:: dmr.endpoint.validate.lazy
 
 .. autoclass:: dmr.endpoint.ValidateSyncCallable
   :members:

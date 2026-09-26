@@ -226,7 +226,7 @@ class Extras(Generic[_BuiltExtrasT_co]):
         We pass *controller_cls*, so user can take any needed values from there.
         Or from settings, or from where else.
         *builder* provides other context from the whole payload,
-        use :meth:`~dmr.validation.EndpointMetadataBuilder.merger`
+        use :meth:`~.EndpointMetadataBuilder.merger`
         to resolve configuration layers the same way other fields do.
 
         The value returned from here will be used in the final metadata.

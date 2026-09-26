@@ -61,23 +61,26 @@ and can be accessed in the code as any other metadata:
 
 .. tabs::
 
-    .. tab:: modify
+  .. tab:: modify
 
-      Real world example: :data:`dmr.streaming.modify`
+    Real world example: :data:`dmr.streaming.modify`
 
-      .. literalinclude:: /examples/reusable_code/extras_modify.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/reusable_code/extras_modify.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
-    .. tab:: validate
+  .. tab:: validate
 
-      Real world example: :data:`dmr.streaming.validate`
+    Real world example: :data:`dmr.streaming.validate`
 
-      .. literalinclude:: /examples/reusable_code/extras_validate.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/reusable_code/extras_validate.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+These definitions would only differ in terms of typing.
+Everything else would work the same way.
 
 .. versionadded:: 0.16.0
 
@@ -105,19 +108,19 @@ Let's try to create two exact controllers with exact serializers:
 
 .. tabs::
 
-    .. tab:: msgspec
+  .. tab:: msgspec
 
-      .. literalinclude:: /examples/reusable_code/msgspec_controller.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/reusable_code/msgspec_controller.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
-    .. tab:: pydantic
+  .. tab:: pydantic
 
-      .. literalinclude:: /examples/reusable_code/pydantic_controller.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/reusable_code/pydantic_controller.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
 Basically - we just specify what kind of serializer to use. And that's it.
 But, this is just the first step. We can do much more!
@@ -209,7 +212,7 @@ Real endpoints support
 .. versionadded:: 0.14.0
 
 The same would work with endpoints defined
-with :func:`~dmr.endpoint.validate` function.
+with :data:`~dmr.endpoint.validate` decorator.
 
 The logic is the same, but syntax is a bit different.
 
@@ -342,11 +345,11 @@ maybe even auth or throttling definitions.
 
 To use the full customization, we provide:
 
-- :func:`dmr.endpoint.modify.lazy` function to work
-  with :func:`~dmr.endpoint.modify`. It accepts
+- :meth:`dmr.endpoint.ModifyEndpoint.lazy` method to work
+  with :data:`~dmr.endpoint.modify`. It accepts
   a function or a :class:`classmethod` to lazily provide a spec in the future
-- :func:`dmr.endpoint.validate.lazy` function to work
-  with :func:`~dmr.endpoint.validate`. It accepts
+- :meth:`dmr.endpoint.ValidateEndpoint.lazy` method to work
+  with :data:`~dmr.endpoint.validate`. It accepts
   a function or a :class:`classmethod` to lazily provide a spec in the future
 
 Here's how it works:
@@ -388,23 +391,23 @@ Here are all of them, choose the one for your task:
     - What it does
 
   * - :class:`~dmr.endpoint.ModifyAnyCallable`
-    - :func:`~dmr.endpoint.modify`
+    - :data:`~dmr.endpoint.modify`
     - Creates a decorator for endpoints without sync / async specifics
   * - :class:`~dmr.endpoint.ModifySyncCallable`
-    - :func:`~dmr.endpoint.modify`
+    - :data:`~dmr.endpoint.modify`
     - Creates a decorator for sync endpoints
   * - :class:`~dmr.endpoint.ModifyAsyncCallable`
-    - :func:`~dmr.endpoint.modify`
+    - :data:`~dmr.endpoint.modify`
     - Creates a decorator for async endpoints
 
   * - :class:`~dmr.endpoint.ValidateAnyCallable`
-    - :func:`~dmr.endpoint.validate`
+    - :data:`~dmr.endpoint.validate`
     - Creates a decorator for endpoints without sync / async specifics
   * - :class:`~dmr.endpoint.ValidateSyncCallable`
-    - :func:`~dmr.endpoint.validate`
+    - :data:`~dmr.endpoint.validate`
     - Creates a decorator for sync endpoints
   * - :class:`~dmr.endpoint.ValidateAsyncCallable`
-    - :func:`~dmr.endpoint.validate`
+    - :data:`~dmr.endpoint.validate`
     - Creates a decorator for async endpoints
 
 Basically, there are several major rules:

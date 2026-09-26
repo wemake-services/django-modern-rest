@@ -120,6 +120,13 @@ nitpick_ignore = [
     # internal type helpers
     (_PY_CLASS, 'FromJson'),
     (_PY_CLASS, 'dmr.endpoint._ResponseT'),
+    (_PY_CLASS, 'dmr.metadata._ExtrasT'),
+    (_PY_CLASS, 'dmr.internal.endpoint._ExtrasT'),
+    (_PY_CLASS, '_BuiltExtrasT_co'),
+    (_PY_CLASS, '_CallableOrClassmethod'),
+    (_PY_CLASS, '_ControllerT'),
+    (_PY_CLASS, '_ModifyDecoratorT'),
+    (_PY_CLASS, '_ValidateDecoratorT'),
     (_PY_CLASS, 'dmr.internal.endpoint.ModifyAsyncCallable'),
     (_PY_CLASS, 'dmr.internal.endpoint.ModifySyncCallable'),
     (_PY_CLASS, 'dmr.internal.endpoint.ModifyAnyCallable'),
