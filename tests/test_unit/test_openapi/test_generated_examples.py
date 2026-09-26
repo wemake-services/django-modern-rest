@@ -78,7 +78,7 @@ class _NoneController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def test_none_example_is_kept(*, settings: LazySettings) -> None:
+def test_generated_none_example(*, settings: LazySettings) -> None:
     """Ensure that generated ``None`` examples are not dropped."""
     # Regression test for
     # https://github.com/wemake-services/django-modern-rest/issues/1626
