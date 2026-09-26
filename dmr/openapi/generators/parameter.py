@@ -60,7 +60,15 @@ class ParameterGenerator:
                 name=property_name,
                 param_in=param_in,
                 schema=property_schema,
-                required=property_name in schema.required or None,
+                # OpenAPI requires all path parameters to be required.
+                # But, path fields can still have defaults, because
+                # a controller can be routed to several urls,
+                # and not all of them might have this parameter:
+                required=(
+                    param_in == 'path'
+                    or property_name in schema.required
+                    or None
+                ),
                 **self._compute_metadata(
                     annotated_meta,
                     property_name,
