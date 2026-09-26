@@ -3,6 +3,7 @@
 from enum import Enum
 from typing import Any, TypeVar
 
+from dmr.internal.types import EMPTY
 from dmr.openapi.objects import (
     XML,
     Discriminator,
@@ -12,7 +13,6 @@ from dmr.openapi.objects import (
     Reference,
     Schema,
 )
-from dmr.internal.types import EMPTY
 
 _EnumT = TypeVar('_EnumT', bound=Enum)
 
