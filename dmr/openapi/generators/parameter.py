@@ -10,6 +10,8 @@ from dmr.openapi.objects import (
 )
 
 if TYPE_CHECKING:
+    from dmr.controller import Controller
+    from dmr.metadata import EndpointMetadata
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.serializer import BaseSerializer
 
@@ -24,24 +26,31 @@ class ParameterGenerator:
         self,
         model: Any,
         model_meta: tuple[Any, ...],
-        serializer: type['BaseSerializer'],
-        context: 'OpenAPIContext',
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
         *,
         param_in: ParameterLocation,
     ) -> list[Parameter | Reference]:
-        """Generate parameter spec for the OpenAPI."""
+        """
+        Generate parameter spec for the OpenAPI.
+
+        .. versionchanged:: 0.16.0
+            Now accepts *metadata* and *controller_cls* parameters.
+            Removed *serializer* and *context* parameters.
+
+        """
         # Import cycle:
         from dmr.metadata import get_annotated_metadata  # noqa: PLC0415
 
         schema = self._context.registries.schema.maybe_resolve_reference(
             self._context.generators.schema(
                 model,
-                serializer,
+                controller_cls.serializer,
                 skip_registration=True,
                 register_referenced_components=True,
             ),
         )
-        metadata = get_annotated_metadata(
+        annotated_meta = get_annotated_metadata(
             model,
             ParameterMetadata,
             model_meta=model_meta,
@@ -51,13 +60,12 @@ class ParameterGenerator:
                 name=property_name,
                 param_in=param_in,
                 schema=property_schema,
-                required=(property_name in schema.required) or None,
+                required=property_name in schema.required or None,
                 **self._compute_metadata(
-                    metadata,
+                    annotated_meta,
                     property_name,
                     property_schema,
                     schema,
-                    self._context,
                 ),
             )
             for property_name, property_schema in (
@@ -67,21 +75,21 @@ class ParameterGenerator:
 
     def _compute_metadata(
         self,
-        metadata: ParameterMetadata | None,
+        annotated_meta: ParameterMetadata | None,
         property_name: str,
         property_schema: Reference | Schema,
         schema: Schema,
-        context: 'OpenAPIContext',
     ) -> dict[str, Any]:
         metadata_params = (
             {}
-            if metadata is None
+            if annotated_meta is None
             else {
-                field.name: getattr(metadata, field.name)
-                for field in dataclasses.fields(metadata)
+                field.name: getattr(annotated_meta, field.name)
+                for field in dataclasses.fields(annotated_meta)
             }
         )
-        property_schema = context.registries.schema.maybe_resolve_reference(
+        schema_registry = self._context.registries.schema
+        property_schema = schema_registry.maybe_resolve_reference(
             property_schema,
         )
         return {
