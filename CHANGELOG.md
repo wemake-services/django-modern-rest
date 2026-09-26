@@ -144,6 +144,16 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   Previously it was the same as the `HeaderJWTSyncAuth`
   and `HeaderJWTAsyncAuth` one, so using both of them in a single endpoint
   was generating a single `jwt` security scheme and requirement, #1587
+- `validate_events` parameter was removed from `@modify` and `@validate`,
+  it was silently ignored for non-streaming controllers.
+  Use `extras=Streaming(validate_events=...)` with `dmr.streaming.modify`
+  and `dmr.streaming.validate` instead. `Controller.validate_events`
+  was removed as well, use `extras = Streaming(validate_events=...)`
+  on streaming controllers, #1612
+- `StreamingController.streaming_ping_seconds` was removed,
+  use `extras = Streaming(ping_seconds=...)` on streaming controllers
+  or `extras=Streaming(ping_seconds=...)` per endpoint instead.
+  `SSEController` still sends pings every 15 seconds by default, #1623
 
 ### Performance improvements
 
@@ -297,6 +307,11 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   endpoint, controller, settings, and metadata parameters
   to disable all semantic schema generation or semantic auth injection
   respectively, #1586
+- Added `extras=` parameter to `@modify` and `@validate` for custom
+  controllers: subclass `dmr.endpoint.Extras`, create typed decorators
+  with `ModifyEndpoint(YourExtras)` and `ValidateEndpoint(YourExtras)`,
+  and assign `extras = YourExtras(...)` on the controller to enable them
+  and to provide controller-level defaults, #1612
 
 ### Bugfixes
 

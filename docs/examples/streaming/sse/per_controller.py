@@ -2,11 +2,12 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.streaming import Streaming
 from dmr.streaming.sse import SSEController, SSEvent
 
 
 class UserEventsController(SSEController[MsgspecSerializer]):
-    validate_events = False
+    extras = Streaming(validate_events=False)
 
     async def get(self) -> AsyncIterator[SSEvent[int]]:
         return self.produce_user_events()
@@ -16,3 +17,4 @@ class UserEventsController(SSEController[MsgspecSerializer]):
 
 
 # run: {"controller": "UserEventsController", "method": "get", "url": "/api/user/events/"}  # noqa: ERA001, E501
+# openapi: {"controller": "UserEventsController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

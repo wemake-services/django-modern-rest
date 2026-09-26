@@ -219,7 +219,6 @@ def test_empty_settings_flags(settings: LazySettings) -> None:
         Settings.validate_responses: True,
         Settings.semantic_responses: EMPTY,
         Settings.validate_negotiation: EMPTY,
-        Settings.validate_events: EMPTY,
     }
 
     class _Controller(Controller[PydanticSerializer]):
@@ -230,7 +229,7 @@ def test_empty_settings_flags(settings: LazySettings) -> None:
     assert metadata.validate_responses is True
     assert metadata.semantic_responses is True
     assert metadata.validate_negotiation is True
-    assert metadata.validate_events is True
+    assert metadata.extras is None
 
 
 def test_empty_validate_responses(

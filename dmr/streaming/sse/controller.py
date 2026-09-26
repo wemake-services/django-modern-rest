@@ -1,4 +1,4 @@
-from typing import Any, ClassVar, TypeVar
+from typing import Any, ClassVar, Final, TypeVar
 
 from typing_extensions import override
 
@@ -8,10 +8,14 @@ from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.settings import default_renderer
 from dmr.streaming.controller import StreamingController
+from dmr.streaming.endpoint import Streaming
 from dmr.streaming.renderer import StreamingRenderer
 from dmr.streaming.sse.metadata import SSEvent
 from dmr.streaming.sse.renderer import SSERenderer
 from dmr.streaming.sse.validation import SSEStreamingValidator
+
+#: Default interval between ping events in SSE streams.
+_DEFAULT_PING_SECONDS: Final = 15.0
 
 _SerializerT_co = TypeVar(
     '_SerializerT_co',
@@ -35,8 +39,8 @@ class SSEController(StreamingController[_SerializerT_co]):
 
     """
 
-    streaming_ping_seconds = 15.0
-    """Send ping keep alive events every 15 seconds."""
+    extras = Streaming(ping_seconds=_DEFAULT_PING_SECONDS)
+    """Send ping keep alive events every 15 seconds by default."""
 
     # Custom attributes:
     streaming_default_renderer: ClassVar[Renderer] = default_renderer

@@ -36,8 +36,8 @@ Configuration levels
 
 Most of the settings can be also configured on the controller level
 with :class:`~dmr.controller.Controller` attributes
-and on the endpoint level with :func:`~dmr.endpoint.modify`
-and :func:`~dmr.endpoint.validate` parameters.
+and on the endpoint level with :data:`~dmr.endpoint.modify`
+and :data:`~dmr.endpoint.validate` parameters.
 
 The most specific level always wins:
 
@@ -278,8 +278,8 @@ Response handling
     You can also switch off this validation per-controller
     with :attr:`~dmr.controller.Controller.validate_responses`
     and per-endpoint with ``validate_responses`` argument
-    to :func:`~dmr.endpoint.modify`
-    and :func:`~dmr.endpoint.validate`.
+    to :data:`~dmr.endpoint.modify`
+    and :data:`~dmr.endpoint.validate`.
 
   We recommend setting this value to ``not DEBUG``.
 

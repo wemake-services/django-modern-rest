@@ -86,7 +86,7 @@ to let such responses through:
 The same works per-controller with
 :attr:`~dmr.controller.Controller.exclude_validate_responses`
 and per-endpoint with the argument of the same name
-to :func:`~dmr.endpoint.modify` and :func:`~dmr.endpoint.validate`.
+to :data:`~dmr.endpoint.modify` and :data:`~dmr.endpoint.validate`.
 Setting it to ``None`` on any level resets all the other levels.
 
 All other status codes are still validated as usual.
