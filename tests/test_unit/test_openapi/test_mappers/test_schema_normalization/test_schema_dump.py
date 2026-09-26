@@ -308,6 +308,6 @@ def test_dump_schema_none_values(
         Link(),
     ],
 )
-def test_dump_schema_unset_values(input_value: Any) -> None:
+def test_dump_schema_unset_values(*, input_value: Any) -> None:
     """Ensure that unset fields are not dumped."""
     assert dump_schema(input_value) == {}
