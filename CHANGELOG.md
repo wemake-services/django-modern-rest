@@ -321,6 +321,10 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Bugfixes
 
+- Fixed generated OpenAPI examples that are `None` being dropped,
+  for example, for `-> None` and `-> int | None` responses.
+  `dmr.openapi.mappers.example.generate_example` now returns `EMPTY`
+  instead of `None` when there's no example, #1626
 - Path parameters now always have `required: true` in the OpenAPI schema,
   even when their `Path` model fields have default values.
   Previously, such parameters generated an invalid schema, #1610

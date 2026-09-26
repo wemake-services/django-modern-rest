@@ -4,9 +4,12 @@ from typing import Any
 import pytest
 from django.conf import LazySettings
 from django.urls import path
+from inline_snapshot import snapshot
 
 from dmr import Body, Controller
 from dmr.openapi import OpenAPIConfig, build_schema
+from dmr.openapi.mappers.example import generate_example, set_generated_example
+from dmr.openapi.objects import Schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 from dmr.settings import Settings
@@ -68,3 +71,60 @@ def test_disabled_examples_write_nothing(settings: LazySettings) -> None:
 
     assert 'example' not in schema
     assert 'examples' not in schema
+
+
+class _NoneController(Controller[PydanticSerializer]):
+    def get(self) -> None:
+        raise NotImplementedError
+
+
+def test_none_example_is_kept(*, settings: LazySettings) -> None:
+    """Ensure that generated ``None`` examples are not dropped."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1626
+    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
+
+    schema = build_schema(
+        Router('api/v1/', [path('none/', _NoneController.as_view())]),
+    ).convert()
+
+    operation = schema['paths']['/api/v1/none/']['get']
+    response = operation['responses']['200']
+    assert response['content']['application/json']['schema'] == snapshot({
+        'type': 'null',
+        'examples': [None],
+    })
+
+
+def test_generate_example_none(*, settings: LazySettings) -> None:
+    """Ensure that ``None`` is a generated example, not a missing one."""
+    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
+
+    assert generate_example(None, PydanticSerializer) is None
+
+
+def test_generate_example_disabled(*, settings: LazySettings) -> None:
+    """Ensure that ``EMPTY`` is returned when examples are disabled."""
+    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: EMPTY}
+
+    assert generate_example(None, PydanticSerializer) is EMPTY
+
+
+@pytest.mark.parametrize(
+    ('example', 'expected_examples'),
+    [
+        (None, [None]),
+        (0, [0]),
+        ('', ['']),
+        (EMPTY, None),
+    ],
+)
+def test_set_generated_example(
+    *,
+    example: Any,
+    expected_examples: list[Any] | None,
+) -> None:
+    """Ensure that only ``EMPTY`` examples are skipped."""
+    assert (
+        set_generated_example(Schema(), example).examples == expected_examples
+    )
