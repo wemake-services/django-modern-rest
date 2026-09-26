@@ -1,14 +1,14 @@
 import pydantic
 
 from dmr import Body, Controller, NewHeader, modify
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class UserModel(pydantic.BaseModel):
     email: str
 
 
-class UserController(Controller[PydanticSerializer]):
+class UserController(Controller[PydanticFastSerializer]):
     @modify(
         # Add explicit header:
         headers={'X-Created': NewHeader(value='true')},

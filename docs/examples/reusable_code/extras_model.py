@@ -32,6 +32,6 @@ class SmartResponse(Extras[str]):
                     else from_endpoint.response_text
                 ),
                 from_controller.response_text,
-                'default_response',
+                'default response',
             ),
         )

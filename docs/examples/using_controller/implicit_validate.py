@@ -4,14 +4,14 @@ import pydantic
 from django.http import HttpResponse
 
 from dmr import Body, Controller, ResponseSpec
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class UserModel(pydantic.BaseModel):
     email: str
 
 
-class UserController(Controller[PydanticSerializer]):
+class UserController(Controller[PydanticFastSerializer]):
     responses = (
         # Describes unique return types for this controller:
         ResponseSpec(UserModel, status_code=HTTPStatus.OK),

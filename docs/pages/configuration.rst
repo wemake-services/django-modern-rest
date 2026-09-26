@@ -259,9 +259,9 @@ Response handling
   .. code:: python
 
     >>> from dmr import Controller
-    >>> from dmr.plugins.pydantic import PydanticSerializer
+    >>> from dmr.plugins.pydantic import PydanticFastSerializer
 
-    >>> class MyController(Controller[PydanticSerializer]):
+    >>> class MyController(Controller[PydanticFastSerializer]):
     ...     def get(self) -> list[str]:
     ...         return [1, 2]  # <- both static typing and runtime error
 

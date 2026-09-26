@@ -94,7 +94,7 @@ it is required to describe the set cookies with
   :caption: views.py
   :language: python
   :linenos:
-  :emphasize-lines: 23-24
+  :emphasize-lines: 21-22
 
 .. tip::
 

@@ -6,7 +6,7 @@ from typing_extensions import TypedDict
 from dmr import Controller, Path
 from dmr.openapi import build_schema
 from dmr.openapi.views import OpenAPIJsonView
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import Router, path
 
 
@@ -15,7 +15,7 @@ class _PathModel(TypedDict):
     post_id: Annotated[int, pydantic.Field(gt=0)]
 
 
-class PostController(Controller[PydanticSerializer]):
+class PostController(Controller[PydanticFastSerializer]):
     def get(self, parsed_path: Path[_PathModel]) -> _PathModel:
         return parsed_path
 

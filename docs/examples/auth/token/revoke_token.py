@@ -3,12 +3,12 @@ from http import HTTPStatus
 from django.contrib.auth.models import User
 
 from dmr import Controller, modify
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security import AuthenticatedHttpRequest
 from dmr.security.token import HeaderTokenSyncAuth, request_token
 
 
-class RevokeTokenController(Controller[PydanticSerializer]):
+class RevokeTokenController(Controller[PydanticFastSerializer]):
     """Revoke the token used to make this request."""
 
     request: AuthenticatedHttpRequest[User]
