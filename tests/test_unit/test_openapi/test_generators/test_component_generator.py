@@ -37,7 +37,7 @@ class _FakeComponent(ComponentParser, Generic[_FakeT]):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type[BaseSerializer],
+        controller_cls: type[Controller[BaseSerializer]],
         context: OpenAPIContext,
     ) -> Any:
         """Just return None."""

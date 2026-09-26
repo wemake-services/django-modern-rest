@@ -245,10 +245,16 @@ class ComponentParser(ResponseSpecProvider):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
-        """Generate OpenAPI spec for component."""
+        """
+        Generate OpenAPI spec for component.
+
+        .. versionchanged:: 0.16.0
+            *serializer* parameter was changed to be *controller_cls*.
+
+        """
         raise NotImplementedError
 
 
@@ -311,14 +317,14 @@ class QueryComponent(ComponentParser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
             model_meta,
-            serializer,
-            context,
+            metadata,
+            controller_cls,
             param_in='query',
         )
 
@@ -438,15 +444,15 @@ class BodyComponent(ComponentParser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
-        schema = context.generators.schema(model, serializer)
+        schema = context.generators.schema(model, controller_cls.serializer)
         conditional_types = self.conditional_types(model, model_meta)
         conditional_schemas = {
             content_type: context.generators.schema(
                 conditional_model,
-                serializer,
+                controller_cls.serializer,
             )
             for content_type, conditional_model in conditional_types.items()
         }
@@ -541,14 +547,14 @@ class HeadersComponent(ComponentParser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
             model_meta,
-            serializer,
-            context,
+            metadata,
+            controller_cls,
             param_in='header',
         )
 
@@ -668,14 +674,14 @@ class PathComponent(ComponentParser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
             model_meta,
-            serializer,
-            context,
+            metadata,
+            controller_cls,
             param_in='path',
         )
 
@@ -733,14 +739,14 @@ class CookiesComponent(ComponentParser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
             model_meta,
-            serializer,
-            context,
+            metadata,
+            controller_cls,
             param_in='cookie',
         )
 
@@ -916,18 +922,18 @@ class FileMetadataComponent(ComponentParser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         schema = context.generators.schema(
             model,
-            serializer,
+            controller_cls.serializer,
             skip_registration=True,
         )
         conditional_schemas = {
             content_type: context.generators.schema(
                 conditional_model,
-                serializer,
+                controller_cls.serializer,
             )
             for content_type, conditional_model in self.conditional_types(
                 model,
@@ -941,12 +947,14 @@ class FileMetadataComponent(ComponentParser):
                     model,
                     model_meta,
                     metadata,
-                    serializer,
+                    controller_cls,
                     context,
                 ).media_type(
                     conditional_schemas.get(parser.content_type, schema),
                     model,
                     model_meta,
+                    metadata,
+                    controller_cls,
                     parser,
                     context,
                 )
