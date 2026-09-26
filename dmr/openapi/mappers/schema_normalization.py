@@ -3,6 +3,8 @@ from collections.abc import Callable
 from enum import Enum
 from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 
+from dmr.internal.types import EMPTY
+
 if TYPE_CHECKING:
     from _typeshed import DataclassInstance
 
@@ -58,15 +60,21 @@ def dump_schema(to_convert: 'DataclassInstance') -> DumpedSchema:  # noqa: WPS23
     """
     Converts any our dataclass OpenAPI object into a JSON schema.
 
+    Unset fields are skipped: the ones with ``None`` values,
+    or with :data:`~dmr.types.EMPTY` values for fields that default to it.
+
     .. versionchanged:: 0.13.0
         It used to be named ``dmr.openapi.objects.openapi.convert``.
+    .. versionchanged:: 0.16.0
+        Fields that default to :data:`~dmr.types.EMPTY`
+        now dump ``None`` values as ``null``.
 
     """
     schema: DumpedSchema = {}
 
     for field in dataclasses.fields(to_convert):
         schema_value = getattr(to_convert, field.name, None)
-        if field.name.startswith('_') or schema_value is None:
+        if field.name.startswith('_') or _is_unset(field, schema_value):
             continue
         if field.name == 'required' and not schema_value:
             continue  # Skip empty `required` field
@@ -76,6 +84,13 @@ def dump_schema(to_convert: 'DataclassInstance') -> DumpedSchema:  # noqa: WPS23
         )
 
     return schema
+
+
+def _is_unset(field: 'dataclasses.Field[Any]', field_value: Any) -> bool:
+    # Fields that can have `None` as a real value use `EMPTY` as a default:
+    if field.default is EMPTY:
+        return field_value is EMPTY
+    return field_value is None
 
 
 def _dump_field(key: str, field_type: Any) -> str:

@@ -160,6 +160,13 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   use `extras = Streaming(ping_seconds=...)` on streaming controllers
   or `extras=Streaming(ping_seconds=...)` per endpoint instead.
   `SSEController` still sends pings every 15 seconds by default, #1623
+- OpenAPI object fields that can have `None` as a real value
+  now default to `EMPTY` instead of `None`: `Schema.const`, `Schema.default`,
+  `Schema.example`, `Example.value`, `Example.data_value`, `Header.example`,
+  `MediaType.example`, `MediaTypeMetadata.example`,
+  `ParameterMetadata.example`, `Parameter.example`,
+  and `Link.request_body`. Passing `None` to them explicitly
+  now dumps `null` into the schema, #1619
 
 ### Performance improvements
 
@@ -336,6 +343,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   are not documented as path parameters anymore.
   `Path` fields with default values are documented only for the URLs
   that have them, and always with `required: true`, #1616
+- Fixed `default: null` being dropped from the OpenAPI schema,
+  for example, for `field: str | None = None` model fields.
+  The same was true for `const: null` and `example: null`, #1619
 - Path parameters now always have `required: true` in the OpenAPI schema,
   even when their `Path` model fields have default values.
   Previously, such parameters generated an invalid schema, #1610
