@@ -332,6 +332,11 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   for example, for `-> None` and `-> int | None` responses.
   `dmr.openapi.mappers.example.generate_example` now returns `EMPTY`
   instead of `None` when there's no example, #1626
+- Fixed seeded OpenAPI examples depending on `PYTHONHASHSEED`.
+  `Controller.api_endpoints` was built in the iteration order
+  of `allowed_http_methods`, which is a `frozenset`,
+  so endpoints got their examples in a different order in every process.
+  Now `api_endpoints` is sorted by controller method names, #1629
 - Fixed `default: null` being dropped from the OpenAPI schema,
   for example, for `field: str | None = None` model fields.
   The same was true for `const: null` and `example: null`, #1619

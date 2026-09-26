@@ -6,7 +6,7 @@ from django.views.decorators.csrf import csrf_protect
 from dmr import Controller, ResponseSpec
 from dmr.decorators import wrap_middleware
 from dmr.errors import ErrorModel, format_error
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.response import build_response
 
 
@@ -20,7 +20,7 @@ from dmr.response import build_response
 def csrf_protect_json(response: HttpResponse) -> HttpResponse:
     """Convert CSRF failure responses to JSON."""
     return build_response(
-        PydanticSerializer,
+        PydanticFastSerializer,
         raw_data=format_error(
             'CSRF verification failed. Request aborted.',
         ),
@@ -29,7 +29,7 @@ def csrf_protect_json(response: HttpResponse) -> HttpResponse:
 
 
 @csrf_protect_json
-class MyController(Controller[PydanticSerializer]):
+class MyController(Controller[PydanticFastSerializer]):
     """Example controller using CSRF protection middleware."""
 
     responses = csrf_protect_json.responses

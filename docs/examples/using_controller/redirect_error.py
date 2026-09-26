@@ -5,7 +5,7 @@ from django.http import HttpResponse
 
 from dmr import Controller, HeaderSpec, RedirectTo, modify, validate
 from dmr.metadata import ResponseSpec
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 _RedirectSpec: Final = ResponseSpec(
     None,
@@ -14,7 +14,7 @@ _RedirectSpec: Final = ResponseSpec(
 )
 
 
-class UserController(Controller[PydanticSerializer]):
+class UserController(Controller[PydanticFastSerializer]):
     @validate(_RedirectSpec)
     def get(self) -> HttpResponse:
         raise RedirectTo('https://example.com/api/new/user/list')

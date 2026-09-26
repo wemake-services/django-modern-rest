@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, override
 
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from examples.reusable_code.reusable_parsing import ReusableController
 
 
@@ -14,7 +14,7 @@ class _ResponseBody(TypedDict):
 
 
 class PydanticController(
-    ReusableController[PydanticSerializer, _RequestModel, _ResponseBody],
+    ReusableController[PydanticFastSerializer, _RequestModel, _ResponseBody],
 ):
     @override
     def convert(self, parsed_body: _RequestModel) -> _ResponseBody:

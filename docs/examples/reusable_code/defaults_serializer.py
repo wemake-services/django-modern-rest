@@ -3,7 +3,7 @@ from typing import Generic
 from typing_extensions import TypedDict, TypeVar
 
 from dmr import Body, Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.serializer import BaseSerializer
 
 
@@ -15,7 +15,7 @@ class _RequestModel(TypedDict):
 _SerializerT = TypeVar(
     '_SerializerT',
     bound=BaseSerializer,
-    default=PydanticSerializer,
+    default=PydanticFastSerializer,
 )
 _RequestModelT = TypeVar('_RequestModelT', default=_RequestModel)
 

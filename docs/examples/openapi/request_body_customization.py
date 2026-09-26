@@ -4,7 +4,7 @@ import pydantic
 
 from dmr import Body, Controller
 from dmr.openapi.objects import MediaTypeMetadata
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class SearchModel(pydantic.BaseModel):
@@ -15,9 +15,7 @@ class SearchModel(pydantic.BaseModel):
 example = SearchModel(search='example', max_items=10).model_dump(mode='json')
 
 
-class UserController(
-    Controller[PydanticSerializer],
-):
+class UserController(Controller[PydanticFastSerializer]):
     def post(
         self,
         parsed_body: Body[

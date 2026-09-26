@@ -4,14 +4,14 @@ import pydantic
 from django.http import HttpResponse
 
 from dmr import Body, Controller, ResponseSpec, validate
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class UserModel(pydantic.BaseModel):
     email: str
 
 
-class UserController(Controller[PydanticSerializer]):
+class UserController(Controller[PydanticFastSerializer]):
     @validate(  # <- describes unique return types from this endpoint
         ResponseSpec(
             UserModel,

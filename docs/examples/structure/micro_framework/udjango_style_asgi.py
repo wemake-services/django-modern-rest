@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.handlers.asgi import ASGIHandler
 
 from dmr import Body, Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import path
 
 if not settings.configured:
@@ -31,7 +31,7 @@ class UserResponseModel(UserCreateModel):
     uid: uuid.UUID
 
 
-class UserController(Controller[PydanticSerializer]):
+class UserController(Controller[PydanticFastSerializer]):
     async def post(
         self,
         parsed_body: Body[UserCreateModel],

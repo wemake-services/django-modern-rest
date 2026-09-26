@@ -5,7 +5,7 @@ from django.http import HttpRequest, HttpResponse
 
 from dmr import ResponseSpec
 from dmr.decorators import wrap_middleware
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.response import build_response
 
 
@@ -36,13 +36,13 @@ def multi_status_middleware(response: HttpResponse) -> HttpResponse:
     """Handle multiple status codes."""
     if response.status_code == HTTPStatus.BAD_REQUEST:
         return build_response(
-            PydanticSerializer,
+            PydanticFastSerializer,
             raw_data={'error': 'Bad request'},
             status_code=HTTPStatus(response.status_code),
         )
     if response.status_code == HTTPStatus.UNAUTHORIZED:
         return build_response(
-            PydanticSerializer,
+            PydanticFastSerializer,
             raw_data={'error': 'Unauthorized'},
             status_code=HTTPStatus(response.status_code),
         )

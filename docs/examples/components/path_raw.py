@@ -9,7 +9,7 @@ from dmr.errors import ErrorType
 from dmr.metadata import ResponseSpec
 from dmr.openapi import build_schema
 from dmr.openapi.views import OpenAPIJsonView
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import Router, path
 
 
@@ -18,7 +18,7 @@ class _PostModel(pydantic.BaseModel):
     post_id: uuid.UUID
 
 
-class PostController(Controller[PydanticSerializer]):
+class PostController(Controller[PydanticFastSerializer]):
     responses = (
         ResponseSpec(
             Controller.error_model,

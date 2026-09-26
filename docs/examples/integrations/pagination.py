@@ -6,7 +6,7 @@ from typing_extensions import TypedDict
 
 from dmr import Controller, Query
 from dmr.pagination import Page, Paginated
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class _User(pydantic.BaseModel):
@@ -25,7 +25,7 @@ _USERS: Final = (
 )
 
 
-class UsersController(Controller[PydanticSerializer]):
+class UsersController(Controller[PydanticFastSerializer]):
     def get(self, parsed_query: Query[_PageQuery]) -> Paginated[_User]:
         page = parsed_query.get('page', 1)
         page_size = parsed_query.get('page_size', 2)
