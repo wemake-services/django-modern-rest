@@ -141,7 +141,7 @@ class ComponentParserGenerator:  # noqa: WPS214
         parameter_specs: list[Parameter | Reference],
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
-    ) -> list[Parameter | Reference] | None:
+    ) -> list[Parameter | Reference]:
         # TODO: support `parameter` references:
         component_params = {
             param_spec.name
@@ -164,7 +164,8 @@ class ComponentParserGenerator:  # noqa: WPS214
         pattern_params = self._parse_url_params(
             operation_id,
             route_metadata,
-            controller_cls.serializer,
+            metadata,
+            controller_cls,
             exclude=component_params,
         )
         if pattern_params is not None:
@@ -189,7 +190,8 @@ class ComponentParserGenerator:  # noqa: WPS214
         self,
         operation_id: str,
         route_metadata: InternalRouteMetadata,
-        serializer: type['BaseSerializer'],
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
         *,
         exclude: set[str],
     ) -> list[Parameter | Reference] | None:
@@ -198,20 +200,18 @@ class ComponentParserGenerator:  # noqa: WPS214
             return self._parse_regex(
                 operation_id,
                 route_metadata,
-                serializer,
-                exclude=exclude,
                 metadata,
                 controller_cls,
+                exclude=exclude,
             )
 
         # `path()` and `RoutePattern`:
         return self._parse_converters(
             operation_id,
             route_metadata,
-            serializer,
-            exclude=exclude,
             metadata,
             controller_cls,
+            exclude=exclude,
         )
 
     def _add_group_patterns(
@@ -244,11 +244,10 @@ class ComponentParserGenerator:  # noqa: WPS214
         self,
         operation_id: str,
         route_metadata: InternalRouteMetadata,
-        serializer: type['BaseSerializer'],
-        *,
-        exclude: set[str],
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
+        *,
+        exclude: set[str],
     ) -> list[Parameter | Reference] | None:
         prepared = {
             converter_name: _converter_schema(converter, self._converters)
@@ -275,11 +274,10 @@ class ComponentParserGenerator:  # noqa: WPS214
         self,
         operation_id: str,
         route_metadata: InternalRouteMetadata,
-        serializer: type['BaseSerializer'],
-        *,
-        exclude: set[str],
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
+        *,
+        exclude: set[str],
     ) -> list[Parameter | Reference] | None:
         assert route_metadata.is_regex  # noqa: S101
         regex = route_metadata.regex()
