@@ -649,6 +649,15 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   for transports we don't ship, #1366
 
 
+## Unreleased
+
+### Bugfixes
+
+- `UserCreateSchema.email` now validates the email format via
+  `pydantic.EmailStr`, so malformed addresses fail at the serializer
+  layer instead of reaching the database, #945
+
+
 ## 0.14.0 (2026-08-14)
 
 ### Breaking changes
