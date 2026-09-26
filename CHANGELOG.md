@@ -321,6 +321,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Bugfixes
 
+- Fixed `example` of `NewHeader` and `HeaderSpec` not being
+  in the OpenAPI schema. Now it is set on the `Header` object,
+  and such headers don't get generated examples, #1627
 - Path parameters now always have `required: true` in the OpenAPI schema,
   even when their `Path` model fields have default values.
   Previously, such parameters generated an invalid schema, #1610
