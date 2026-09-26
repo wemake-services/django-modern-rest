@@ -97,6 +97,7 @@ def test_optional_path_field_in_several_urls() -> None:
             'schema': {
                 'anyOf': [{'type': 'integer'}, {'type': 'null'}],
                 'title': 'Id',
+                'default': None,
             },
             'required': True,
         },
