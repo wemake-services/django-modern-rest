@@ -126,13 +126,13 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   to the endpoint, #1502
 - `ParameterGenerator.__call__` signature was changed
   to accept *metadata* and *controller_cls* instead
-  of *serializer* and *context*,
+  of *serializer* and *context*, #1620
 - `ComponentParser.get_schema` signature was changed
-  to accept *controller_cls* instead of *serializer*,
+  to accept *controller_cls* instead of *serializer*, #1620
 - `SupportsFileParsing.schema_metadata` signature was changed
   to accept *controller_cls* instead of *serializer*,
-- `FileBodyLike.media_type` signature was changed,
-  now it also accepts *metadata* and *controller_cls* parameters,
+- `FileBodyLike.media_type` signature was changed, #1620
+  now it also accepts *metadata* and *controller_cls* parameters, #1620
 - `jwt_ensure_csrf` was removed from reusable JWT cookie views,
   it is now always mandatory, #1574
 - `CookieJWTSyncAuth` and `CookieJWTAsyncAuth` now use `jwt_cookie`
