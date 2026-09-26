@@ -54,15 +54,23 @@ class FileBodyLike:
 
     @classmethod
     @abc.abstractmethod
-    def media_type(
+    def media_type(  # noqa: WPS211
         cls,
         schema: Reference | Schema,
         model: Any,
         model_meta: tuple[Any, ...],
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
         parser: Parser,
         context: OpenAPIContext,
     ) -> MediaType:
-        """Provides file request schema for this parser."""
+        """
+        Provides file request schema for this parser.
+
+        .. versionchanged:: 0.16.0
+            Now accepts *metadata* and *controller_cls* parameters.
+
+        """
         raise NotImplementedError
 
     @classmethod
@@ -82,11 +90,13 @@ class FileBody(FileBodyLike):
 
     @override
     @classmethod
-    def media_type(
+    def media_type(  # noqa: WPS211
         cls,
         schema: Reference | Schema,
         model: Any,
         model_meta: tuple[Any, ...],
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
         parser: Parser,
         context: OpenAPIContext,
     ) -> MediaType:

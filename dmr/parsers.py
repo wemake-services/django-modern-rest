@@ -201,13 +201,17 @@ class SupportsFileParsing:
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> type['FileBodyLike']:
         """
         Provide schema for the file request spec.
 
         .. versionadded:: 0.15.0
+
+        .. versionchanged:: 0.16.0
+            *serializer* parameter was changed to be *controller_cls*.
+
         """
         raise NotImplementedError
 
@@ -308,7 +312,7 @@ class MultiPartParser(
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> type['FileBodyLike']:
         # We have to do this dynamic import here, because otherwise
