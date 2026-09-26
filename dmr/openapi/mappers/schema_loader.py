@@ -3,6 +3,7 @@
 from enum import Enum
 from typing import Any, TypeVar
 
+from dmr.internal.types import EMPTY
 from dmr.openapi.objects import (
     XML,
     Discriminator,
@@ -57,7 +58,7 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         ),
         type=_try_type_field(raw_data.get('type')),
         enum=raw_data.get('enum'),
-        const=raw_data.get('const'),
+        const=raw_data.get('const', EMPTY),
         multiple_of=raw_data.get('multipleOf'),
         maximum=raw_data.get('maximum'),
         exclusive_maximum=raw_data.get('exclusiveMaximum'),
@@ -81,7 +82,7 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         content_schema=_try_optional_type(raw_data.get('contentSchema')),
         title=raw_data.get('title'),
         description=raw_data.get('description'),
-        default=raw_data.get('default'),
+        default=raw_data.get('default', EMPTY),
         deprecated=raw_data.get('deprecated'),
         read_only=raw_data.get('readOnly'),
         write_only=raw_data.get('writeOnly'),
@@ -89,7 +90,7 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         xml=_try_xml(raw_data.get('xml')),
         external_docs=_try_external_documentation(raw_data.get('externalDocs')),
         examples=raw_data.get('examples'),
-        example=raw_data.get('example'),
+        example=raw_data.get('example', EMPTY),
         dynamic_ref=raw_data.get('$dynamicRef'),
         dynamic_anchor=raw_data.get('$dynamicAnchor'),
         anchor=raw_data.get('$anchor'),

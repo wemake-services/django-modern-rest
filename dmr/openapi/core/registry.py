@@ -2,8 +2,8 @@ from typing import Any, ClassVar, Protocol
 
 from typing_extensions import Sentinel
 
+from dmr.internal.types import EMPTY
 from dmr.openapi.objects import Reference, Schema, SecurityScheme
-from dmr.types import EMPTY
 
 
 class SchemaCallback(Protocol):

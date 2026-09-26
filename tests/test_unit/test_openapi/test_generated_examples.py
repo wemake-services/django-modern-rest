@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from typing import Any
 
+import pydantic
 import pytest
 from django.conf import LazySettings
 from django.urls import path
@@ -128,3 +129,27 @@ def test_set_generated_example(
     assert (
         set_generated_example(Schema(), example).examples == expected_examples
     )
+class _NoneExampleModel(pydantic.BaseModel):
+    model_config = pydantic.ConfigDict(json_schema_extra={'example': None})
+
+    name: str | None
+
+
+class _NoneExampleController(Controller[PydanticSerializer]):
+    def post(self, parsed_body: Body[_NoneExampleModel]) -> str:
+        raise NotImplementedError
+
+
+def test_none_example_is_kept(*, settings: LazySettings) -> None:
+    """Ensure that ``example: null`` is not replaced with generated ones."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1619
+    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
+
+    schema = build_schema(
+        Router('api/v1/', [path('user/', _NoneExampleController.as_view())]),
+    ).convert()
+
+    model_schema = schema['components']['schemas']['_NoneExampleModel']
+    assert model_schema['example'] is None
+    assert 'examples' not in model_schema

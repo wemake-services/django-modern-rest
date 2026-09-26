@@ -14,9 +14,10 @@ from typing import (
 )
 
 import pytest
+from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
-from dmr import Controller, Cookies, Headers, Path, Query
+from dmr import Body, Controller, Cookies, Headers, Path, Query
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
@@ -469,6 +470,40 @@ def test_optional_path_fields(path_model: Any) -> None:
         parameter['name']: parameter['required']
         for parameter in operation['parameters']
     } == {'user_id': True, 'opt': True}
+
+
+class _NoneDefaultStruct(msgspec.Struct):
+    first: int
+    second: str = ''
+    third: str | None = None
+
+
+def test_none_default() -> None:
+    """Ensure that ``None`` defaults are dumped into the schema."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1619
+
+    class _NoneDefaultController(Controller[MsgspecSerializer]):
+        def post(self, parsed_body: Body[_NoneDefaultStruct]) -> str:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('user/', _NoneDefaultController.as_view())]),
+    ).convert()
+
+    assert schema['components']['schemas']['_NoneDefaultStruct'] == snapshot({
+        'properties': {
+            'first': {'type': 'integer'},
+            'second': {'type': 'string', 'default': ''},
+            'third': {
+                'anyOf': [{'type': 'string'}, {'type': 'null'}],
+                'default': None,
+            },
+        },
+        'type': 'object',
+        'required': ['first'],
+        'title': '_NoneDefaultStruct',
+    })
 
 
 @pytest.mark.parametrize(
