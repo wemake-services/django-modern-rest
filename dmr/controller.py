@@ -731,6 +731,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         return {
             # Rename `meta` back to `options`:
             ('OPTIONS' if dsl_method == 'meta' else dsl_method.upper()): method
-            for dsl_method in cls.allowed_http_methods
+            # Sorted, because set order depends on `PYTHONHASHSEED`,
+            # and endpoints must have the same order in every process:
+            for dsl_method in sorted(cls.allowed_http_methods)
             if (method := getattr(cls, dsl_method, None)) is not None
         }

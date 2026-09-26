@@ -321,6 +321,11 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Bugfixes
 
+- Fixed seeded OpenAPI examples depending on `PYTHONHASHSEED`.
+  `Controller.api_endpoints` was built in the iteration order
+  of `allowed_http_methods`, which is a `frozenset`,
+  so endpoints got their examples in a different order in every process.
+  Now `api_endpoints` is sorted by controller method names, #1629
 - Path parameters now always have `required: true` in the OpenAPI schema,
   even when their `Path` model fields have default values.
   Previously, such parameters generated an invalid schema, #1610
