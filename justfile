@@ -38,6 +38,16 @@ lint:
     uv run python -m flake8 .
     uv run python -m slotscheck -v -m dmr
     uv run import-linter lint
+    just skills
+
+# Validate agent skills against https://agentskills.io/specification
+[group('dev')]
+skills:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for skill in dmr/.agents/skills/*/; do
+      uv run agentskills validate "$skill"
+    done
 
 # Run all checks (with sqlite as db)
 [group('dev')]

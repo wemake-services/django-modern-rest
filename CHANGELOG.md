@@ -21,6 +21,10 @@ All migration prompts since `0.13.0` release
 are stored as descriptions in version releases on GitHub, example:
 https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
+Prompts of the three latest breaking releases also live in the
+[`dmr-upgrade`](https://github.com/wemake-services/django-modern-rest/tree/master/dmr/.agents/skills/dmr-upgrade) agent skill,
+ask your coding agent to use `$dmr-upgrade` to upgrade a project.
+
 
 ## 0.16.0 WIP
 
@@ -377,6 +381,22 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Now prefixes like `api/` in `build_404_handler` and `build_500_handler`
   only cover full URLs like `/api/v1`
   and do not cover partials like `/apiary/v1`, #1606
+
+### Misc
+
+- Agent skills now ship inside the `dmr` package as `dmr/.agents/skills`,
+  so `uvx library-skills` installs the skills matching the installed version
+  into any project, the Claude Code marketplace keeps working
+- Added `dmr-upgrade` agent skill with the migration prompts
+  of the three latest breaking releases
+- Split the `dmr` skill into a short `SKILL.md` and topic references,
+  fixed skill descriptions to trigger on natural requests,
+  added `agentskills validate` to `just lint`
+- Fixed `dmr-from-dj-rest-auth` entry in the Claude Code marketplace
+- Docs: every page is also published as Markdown (`<page>.md`),
+  the `M↓` button next to its title copies it,
+  `llms-full.txt` now includes the code of every example,
+  `llms.txt` now carries the version
 
 
 ## 0.15.0 (2026-09-11)
@@ -861,9 +881,9 @@ User-facing changes:
 ```md
 Apply this change to the code that uses `django-modern-rest`:
 1. Replace `dmr.response.APIRedirectError` with `dmr.response.RedirectTo`
-2. Replace `dmr.throttling.backend.DjangoCache`
-   with `dmr.throttling.backend.SyncDjangoCache` for sync throttles
-   and with `dmr.throttling.backend.AsyncDjangoCache` for async throttles
+2. Replace `dmr.throttling.backends.DjangoCache`
+   with `dmr.throttling.backends.SyncDjangoCache` for sync throttles
+   and with `dmr.throttling.backends.AsyncDjangoCache` for async throttles
 ```
 
 ### Features
