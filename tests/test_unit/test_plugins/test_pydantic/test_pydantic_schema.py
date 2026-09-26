@@ -2,7 +2,6 @@
 
 import dataclasses
 import enum
-import re
 from collections.abc import Iterable, Mapping
 from typing import (
     Annotated,
@@ -22,7 +21,7 @@ from pydantic_core import core_schema
 from typing_extensions import TypedDict, override
 
 from dmr import Controller, Cookies, Headers, Path, Query
-from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
+from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators import SchemaGenerator
@@ -448,43 +447,42 @@ class _OptionalPathDataclass:
     opt: str = ''
 
 
-class _OptionalPathModelController(Controller[PydanticSerializer]):
-    def get(self, parsed_path: Path[_OptionalPathModel]) -> None:
-        raise NotImplementedError
-
-
-class _OptionalPathTypedDictController(Controller[PydanticSerializer]):
-    def get(self, parsed_path: Path[_OptionalPathTypedDict]) -> None:
-        raise NotImplementedError
-
-
-class _OptionalPathDataclassController(Controller[PydanticSerializer]):
-    def get(self, parsed_path: Path[_OptionalPathDataclass]) -> None:
-        raise NotImplementedError
-
-
 @pytest.mark.parametrize(
-    'controller',
-    [
-        _OptionalPathModelController,
-        _OptionalPathTypedDictController,
-        _OptionalPathDataclassController,
-    ],
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+@pytest.mark.parametrize(
+    'path_model',
+    [_OptionalPathModel, _OptionalPathTypedDict, _OptionalPathDataclass],
 )
 def test_optional_path_fields(
-    controller: type[Controller[PydanticSerializer]],
+    *,
+    serializer: type[PydanticSerializer],
+    path_model: Any,
 ) -> None:
-    """Ensure that optional path parameters are not allowed."""
-    router = Router(
-        'api/',
-        [path('user/<int:user_id>/<str:opt>/', controller.as_view())],
-    )
+    """Ensure that path parameters are always required, even with defaults."""
 
-    with pytest.raises(
-        EndpointMetadataError,
-        match=re.escape("found optional fields ['opt']"),
-    ):
-        build_schema(router)
+    class _OptionalPathController(Controller[serializer]):  # type: ignore[valid-type]
+        def get(self, parsed_path: Path[path_model]) -> None:  # pyright: ignore[reportInvalidTypeForm]
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router(
+            'api/',
+            [
+                path(
+                    'user/<int:user_id>/<str:opt>/',
+                    _OptionalPathController.as_view(),
+                ),
+            ],
+        ),
+    ).convert()
+
+    operation = schema['paths']['/api/user/{user_id}/{opt}/']['get']
+    assert {
+        parameter['name']: parameter['required']
+        for parameter in operation['parameters']
+    } == {'user_id': True, 'opt': True}
 
 
 def test_root_model(

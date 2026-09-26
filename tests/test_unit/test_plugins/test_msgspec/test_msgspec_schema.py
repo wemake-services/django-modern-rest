@@ -2,7 +2,6 @@
 
 import dataclasses
 import enum
-import re
 from collections.abc import Collection, Mapping
 from typing import (
     Annotated,
@@ -18,7 +17,7 @@ import pytest
 from typing_extensions import TypedDict
 
 from dmr import Controller, Cookies, Headers, Path, Query
-from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
+from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.schema import SchemaGenerator
@@ -442,43 +441,34 @@ class _OptionalPathDataclass:
     opt: str = ''
 
 
-class _OptionalPathStructController(Controller[MsgspecSerializer]):
-    def get(self, parsed_path: Path[_OptionalPathStruct]) -> None:
-        raise NotImplementedError
-
-
-class _OptionalPathTypedDictController(Controller[MsgspecSerializer]):
-    def get(self, parsed_path: Path[_OptionalPathTypedDict]) -> None:
-        raise NotImplementedError
-
-
-class _OptionalPathDataclassController(Controller[MsgspecSerializer]):
-    def get(self, parsed_path: Path[_OptionalPathDataclass]) -> None:
-        raise NotImplementedError
-
-
 @pytest.mark.parametrize(
-    'controller',
-    [
-        _OptionalPathStructController,
-        _OptionalPathTypedDictController,
-        _OptionalPathDataclassController,
-    ],
+    'path_model',
+    [_OptionalPathStruct, _OptionalPathTypedDict, _OptionalPathDataclass],
 )
-def test_optional_path_fields(
-    controller: type[Controller[MsgspecSerializer]],
-) -> None:
-    """Ensure that optional path parameters are not allowed."""
-    router = Router(
-        'api/',
-        [path('user/<int:user_id>/<str:opt>/', controller.as_view())],
-    )
+def test_optional_path_fields(path_model: Any) -> None:
+    """Ensure that path parameters are always required, even with defaults."""
 
-    with pytest.raises(
-        EndpointMetadataError,
-        match=re.escape("found optional fields ['opt']"),
-    ):
-        build_schema(router)
+    class _OptionalPathController(Controller[MsgspecSerializer]):
+        def get(self, parsed_path: Path[path_model]) -> None:  # pyright: ignore[reportInvalidTypeForm]
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router(
+            'api/',
+            [
+                path(
+                    'user/<int:user_id>/<str:opt>/',
+                    _OptionalPathController.as_view(),
+                ),
+            ],
+        ),
+    ).convert()
+
+    operation = schema['paths']['/api/user/{user_id}/{opt}/']['get']
+    assert {
+        parameter['name']: parameter['required']
+        for parameter in operation['parameters']
+    } == {'user_id': True, 'opt': True}
 
 
 @pytest.mark.parametrize(

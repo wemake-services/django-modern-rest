@@ -138,12 +138,27 @@ What is the difference from the raw ``path()`` model?
   Make sure that your ``path()`` URL pattern and ``Path`` model fields match.
   We don't automatically validate it.
 
-.. important::
+.. note::
 
-  All ``Path`` model fields must be required: no default values
-  and no ``NotRequired`` keys. OpenAPI requires all path parameters
-  to be required, so the OpenAPI schema generation
-  raises :exc:`~dmr.exceptions.EndpointMetadataError` for optional fields.
+  ``Path`` model fields can have default values.
+  Frameworks like FastAPI route each view with a single ``@app.get(url)``,
+  so path parameters with defaults make no sense there.
+  But a single controller can be routed to several URLs,
+  and these URLs can differ in a single URL parameter:
+
+  .. code:: python
+
+    urlpatterns = [
+        path('users/', UserController.as_view()),
+        path('users/<int:user_id>/', UserController.as_view()),
+    ]
+
+  A default value, like ``user_id: int | None = None``,
+  makes the same ``Path`` model work for both URLs.
+
+  OpenAPI requires all path parameters to be required,
+  so they always have ``required: true`` in the schema,
+  even when they have default values.
 
 
 Customizing OpenAPI metadata for Path

@@ -1,7 +1,6 @@
 import dataclasses
 from typing import TYPE_CHECKING, Any
 
-from dmr.exceptions import EndpointMetadataError
 from dmr.openapi.objects import (
     Parameter,
     ParameterLocation,
@@ -51,9 +50,6 @@ class ParameterGenerator:
                 register_referenced_components=True,
             ),
         )
-        if param_in == 'path':
-            self._validate_path_parameters(model, schema)
-
         annotated_meta = get_annotated_metadata(
             model,
             ParameterMetadata,
@@ -64,7 +60,15 @@ class ParameterGenerator:
                 name=property_name,
                 param_in=param_in,
                 schema=property_schema,
-                required=property_name in schema.required or None,
+                # OpenAPI requires all path parameters to be required.
+                # But, path fields can still have defaults, because
+                # a controller can be routed to several urls,
+                # and not all of them might have this parameter:
+                required=(
+                    param_in == 'path'
+                    or property_name in schema.required
+                    or None
+                ),
                 **self._compute_metadata(
                     annotated_meta,
                     property_name,
@@ -76,21 +80,6 @@ class ParameterGenerator:
                 schema.properties or {}
             ).items()
         ]
-
-    def _validate_path_parameters(self, model: Any, schema: Schema) -> None:
-        # OpenAPI requires all path parameters to have `required: true`,
-        # we can't guess whether optional fields are defined by mistake,
-        # so we don't allow them at all:
-        optional_fields = [
-            property_name
-            for property_name in schema.properties or {}
-            if property_name not in schema.required
-        ]
-        if optional_fields:
-            raise EndpointMetadataError(
-                f'Path parameters must always be required, '
-                f'found optional fields {optional_fields!r} in {model!r}',
-            )
 
     def _compute_metadata(
         self,
