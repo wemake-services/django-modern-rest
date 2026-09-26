@@ -12,6 +12,7 @@ from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
 from dmr.throttling.algorithms import LeakyBucket
+from dmr.throttling.backends import AsyncDjangoCache, SyncDjangoCache
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft
 
@@ -26,6 +27,7 @@ class _SyncController(Controller[PydanticFastSerializer]):
                 _ATTEMPTS,
                 _RATE,
                 algorithm=LeakyBucket(),
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
     )
@@ -159,7 +161,12 @@ def test_leaky_bucket_rates(
 
     class _Controller(Controller[PydanticFastSerializer]):
         throttling = [
-            SyncThrottle(1, rate, algorithm=LeakyBucket()),
+            SyncThrottle(
+                1,
+                rate,
+                algorithm=LeakyBucket(),
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
         ]
 
         def get(self) -> str:
@@ -193,6 +200,7 @@ class _TwoEndpointsController(Controller[PydanticFastSerializer]):
                 1,
                 Rate.second,
                 algorithm=LeakyBucket(),
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
     )
@@ -205,6 +213,7 @@ class _TwoEndpointsController(Controller[PydanticFastSerializer]):
                 1,
                 Rate.second,
                 algorithm=LeakyBucket(),
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
     )
@@ -249,6 +258,7 @@ class _AsyncController(Controller[PydanticFastSerializer]):
             _RATE,
             algorithm=LeakyBucket(),
             response_headers=[RateLimitIETFDraft()],
+            backend=AsyncDjangoCache(allow_unsafe_cache=None),
         ),
         AsyncThrottle(
             30,  # noqa: WPS432
@@ -256,6 +266,7 @@ class _AsyncController(Controller[PydanticFastSerializer]):
             algorithm=LeakyBucket(),
             response_headers=[RateLimitIETFDraft()],
             cache_key=RemoteAddr(name='min'),
+            backend=AsyncDjangoCache(allow_unsafe_cache=None),
         ),
     ]
 

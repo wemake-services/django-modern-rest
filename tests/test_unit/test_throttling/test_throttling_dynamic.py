@@ -19,6 +19,7 @@ from dmr.throttling import (
     SyncOrAsyncThrottle,
     SyncThrottle,
 )
+from dmr.throttling.backends import AsyncDjangoCache, SyncDjangoCache
 
 _Serializes: TypeAlias = list[type[BaseSerializer]]
 serializers: Final[_Serializes] = [
@@ -36,8 +37,16 @@ else:  # pragma: no cover
 
 _ATTEMPTS: Final = 5
 _THROTTLE: Final = SyncOrAsyncThrottle(
-    SyncThrottle(_ATTEMPTS, Rate.second),
-    AsyncThrottle(_ATTEMPTS, Rate.second),
+    SyncThrottle(
+        _ATTEMPTS,
+        Rate.second,
+        backend=SyncDjangoCache(allow_unsafe_cache=None),
+    ),
+    AsyncThrottle(
+        _ATTEMPTS,
+        Rate.second,
+        backend=AsyncDjangoCache(allow_unsafe_cache=None),
+    ),
 )
 
 

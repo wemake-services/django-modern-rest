@@ -72,6 +72,12 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   it is not needed anymore, #1456
 - Removed `build_headers`, `actionable_headers`, `actionable_cookies`,
   `infer_return_type` methods from `dmr.metadata.ResponseModification`, #1456
+- Removed `Settings.throttling_allow_unsafe_cache`, the
+  `throttling_allow_unsafe_cache` controller attribute and endpoint parameter,
+  and `EndpointMetadata.throttling_allow_unsafe_cache`.
+  Use `allow_unsafe_cache` parameter of `SyncDjangoCache`
+  and `AsyncDjangoCache` instead, like
+  `SyncDjangoCache(allow_unsafe_cache=False)`, #1611
 - Removed `NewCookie.as_dict` method, #1456
 - `NewCookie.secure`, `CookieSpec.secure`, `NewCookie.httponly`,
   `CookieSpec.httponly` can no longer be `None`, use `False` instead, #1456

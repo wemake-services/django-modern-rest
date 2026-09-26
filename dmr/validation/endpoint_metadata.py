@@ -529,9 +529,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
         summary, description = self._build_description()
-        throttling_before_auth, throttling_after_auth, allow_cache = (
-            self._build_throttling()
-        )
+        throttling_before_auth, throttling_after_auth = self._build_throttling()
         return self.metadata_cls(
             endpoint_name=self.endpoint_name,
             type_annotations=self.type_annotations,
@@ -546,7 +544,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             auth=self._build_auth(),
             throttling_before_auth=throttling_before_auth,
             throttling_after_auth=throttling_after_auth,
-            throttling_allow_unsafe_cache=allow_cache,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             validate_responses=self.build_validate_responses(),
@@ -605,9 +602,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             links=self.merger('links').empty_to_none(payload.links),
         )
         summary, description = self._build_description()
-        throttling_before_auth, throttling_after_auth, allow_cache = (
-            self._build_throttling()
-        )
+        throttling_before_auth, throttling_after_auth = self._build_throttling()
         return self.metadata_cls(
             endpoint_name=self.endpoint_name,
             type_annotations=self.type_annotations,
@@ -622,7 +617,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             auth=self._build_auth(),
             throttling_before_auth=throttling_before_auth,
             throttling_after_auth=throttling_after_auth,
-            throttling_allow_unsafe_cache=allow_cache,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             validate_responses=self.build_validate_responses(),
@@ -670,9 +664,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             links=None,
         )
         summary, description = self._build_description()
-        throttling_before_auth, throttling_after_auth, allow_cache = (
-            self._build_throttling()
-        )
+        throttling_before_auth, throttling_after_auth = self._build_throttling()
         return self.metadata_cls(
             endpoint_name=self.endpoint_name,
             type_annotations=self.type_annotations,
@@ -687,7 +679,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             auth=self._build_auth(),
             throttling_before_auth=throttling_before_auth,
             throttling_after_auth=throttling_after_auth,
-            throttling_allow_unsafe_cache=allow_cache,
             no_validate_http_spec=self._build_no_validate_http_spec(),
             allowed_http_methods=allowed_http_methods,
             validate_responses=self.build_validate_responses(),
@@ -847,11 +838,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     ) -> tuple[
         list[SyncThrottle | AsyncThrottle] | None,
         list[SyncThrottle | AsyncThrottle] | None,
-        bool | None,
     ]:
         is_async = inspect.iscoroutinefunction(self.func)
         base_type = AsyncThrottle if is_async else SyncThrottle
-        allow_cache = self._build_throttling_allow_unsafe_cache()
         endpoint_throttling = self.payload.throttling if self.payload else EMPTY
         # `SyncOrAsyncThrottle` is settings-only,
         # reject controller / endpoint usage:
@@ -876,7 +865,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         )
         if throttling is None or isinstance(throttling, Sentinel):
             # Explicitly disabled or nothing is configured:
-            return (None, None, allow_cache)
+            return (None, None)
         # `SyncOrAsyncThrottle` is resolved to the actual instance here:
         resolved_throttling = [
             candidate_throttle.resolve(is_async=is_async)
@@ -912,24 +901,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 ]
                 or None
             ),
-            allow_cache,
         )
-
-    def _build_throttling_allow_unsafe_cache(self) -> bool | None:
-        merger = self.merger('throttling_allow_unsafe_cache')
-        settings_value: bool | None = resolve_setting(
-            Settings.throttling_allow_unsafe_cache,
-        )
-        allow_cache = merger.first_set(
-            (
-                self.payload.throttling_allow_unsafe_cache
-                if self.payload
-                else EMPTY
-            ),
-            self.controller_cls.throttling_allow_unsafe_cache,
-            settings_value,
-        )
-        return merger.not_empty(merger.empty_to_none(allow_cache))
 
     def _reject_settings_only(
         self,
