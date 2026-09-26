@@ -21,6 +21,10 @@ from dmr.test import DMRRequestFactory
 from dmr.types import EMPTY
 from dmr.validation import EndpointMetadataBuilder
 
+#: Default `SSEController` ping interval and a custom one for endpoints:
+_SSE_PING: Final = 15.0
+_ENDPOINT_PING: Final = 0.5
+
 
 @final
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -93,7 +97,10 @@ def test_extras_fallback_from_settings(settings: LazySettings) -> None:
             raise NotImplementedError
 
     metadata = _Controller.api_endpoints['GET'].metadata
-    assert metadata.extras == StreamingExtras(validate_events=True)
+    assert metadata.extras == StreamingExtras(
+        validate_events=True,
+        ping_seconds=_SSE_PING,
+    )
 
 
 def test_extras_configuration_levels() -> None:
@@ -117,13 +124,45 @@ def test_extras_configuration_levels() -> None:
     endpoints = _Controller.api_endpoints
     assert endpoints['GET'].metadata.extras == StreamingExtras(
         validate_events=False,
+        ping_seconds=None,
     )
     assert endpoints['POST'].metadata.extras == StreamingExtras(
         validate_events=False,
+        ping_seconds=None,
     )
     assert endpoints['PUT'].metadata.extras == StreamingExtras(
         validate_events=True,
+        ping_seconds=None,
     )
+
+
+def test_ping_seconds_levels() -> None:
+    """Ensures that `ping_seconds` is resolved from all levels."""
+
+    class _Custom(SSEController[PydanticSerializer]):
+        # Replaces `SSEController.extras` entirely, no merging:
+        extras = Streaming(validate_events=False)
+
+        async def get(self) -> AsyncIterator[SSEvent[int]]:
+            raise NotImplementedError
+
+        @modify(extras=Streaming(ping_seconds=_ENDPOINT_PING))
+        async def post(self) -> AsyncIterator[SSEvent[int]]:
+            raise NotImplementedError
+
+        @modify(extras=Streaming(ping_seconds=None))
+        async def put(self) -> AsyncIterator[SSEvent[int]]:
+            raise NotImplementedError
+
+    endpoints = _Custom.api_endpoints
+    assert endpoints['GET'].metadata.extras == StreamingExtras(
+        validate_events=False,
+        ping_seconds=None,
+    )
+    assert endpoints['POST'].metadata.extras.ping_seconds == pytest.approx(
+        _ENDPOINT_PING,
+    )
+    assert endpoints['PUT'].metadata.extras.ping_seconds is None
 
 
 def test_extras_on_unsupported_controller() -> None:

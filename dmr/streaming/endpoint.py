@@ -25,11 +25,14 @@ class StreamingExtras:
 
     Attributes:
         validate_events: Should this endpoint validate events?
+        ping_seconds: Seconds to wait for the next event
+            before sending a ping event, ``None`` disables pings.
 
     .. versionadded:: 0.16.0
     """
 
     validate_events: bool
+    ping_seconds: float | None
 
 
 @final
@@ -44,17 +47,31 @@ class Streaming(Extras[StreamingExtras]):
 
     Set it as ``extras`` on a controller to provide controller-level
     defaults, for example: ``extras = Streaming(validate_events=False)``.
+    A controller that assigns its own ``extras`` replaces all values
+    of its base controllers, the same way any other attribute does.
 
     Attributes:
         validate_events: Should this endpoint validate events?
             If not set, defaults to the controller value,
             then to :data:`~dmr.settings.Settings.validate_events`,
             then to the ``validate_responses`` value.
+        ping_seconds: Optional ping keep alive event support.
+            Some servers might close long living connections
+            with no activity. Specify number of seconds to wait
+            for the next event before sending a ping event.
+            The payload of the ping event is defined in
+            :meth:`~dmr.streaming.controller.StreamingController.ping_event`.
+            ``None`` disables pings. If not set, defaults
+            to the controller value, then to ``None``.
+            :class:`~dmr.streaming.sse.controller.SSEController`
+            enables pings
+            every 15 seconds by default.
 
     .. versionadded:: 0.16.0
     """
 
     validate_events: bool | Sentinel = EMPTY
+    ping_seconds: float | Sentinel | None = EMPTY
 
     @classmethod
     @override
@@ -73,6 +90,11 @@ class Streaming(Extras[StreamingExtras]):
             )
         return StreamingExtras(
             validate_events=cls._build_validate_events(
+                from_endpoint,
+                from_controller,
+                builder,
+            ),
+            ping_seconds=cls._build_ping_seconds(
                 from_endpoint,
                 from_controller,
                 builder,
@@ -101,6 +123,23 @@ class Streaming(Extras[StreamingExtras]):
         if isinstance(validate_events, Sentinel):
             return builder.build_validate_responses()
         return validate_events
+
+    @classmethod
+    def _build_ping_seconds(
+        cls,
+        from_endpoint: Self | Sentinel,
+        from_controller: Self,
+        builder: 'EndpointMetadataBuilder',
+    ) -> float | None:
+        ping_seconds = builder.merger('ping_seconds').first_set(
+            (
+                EMPTY
+                if isinstance(from_endpoint, Sentinel)
+                else from_endpoint.ping_seconds
+            ),
+            from_controller.ping_seconds,
+        )
+        return None if isinstance(ping_seconds, Sentinel) else ping_seconds
 
 
 #: Same as :data:`dmr.modify`, but supports ``extras=Streaming(...)``.
