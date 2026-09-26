@@ -17,6 +17,7 @@ from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
+    from dmr.internal.endpoint import ExtrasLike
     from dmr.openapi.objects import (
         Callback,
         ExternalDocumentation,
@@ -43,6 +44,7 @@ class _BasePayload:
     callbacks: Mapping[str, 'Callback | Reference'] | Sentinel
     servers: Sequence['Server'] | Sentinel | None
     ignore_from_spec: bool | Sentinel
+    extras: 'ExtrasLike | Sentinel'
 
     # Common fields:
     validate_responses: bool | Sentinel
@@ -52,7 +54,6 @@ class _BasePayload:
     exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None
     semantic_auth: bool | Sentinel
     exclude_semantic_auth: Set[str] | Sentinel | None
-    validate_events: bool | Sentinel
     error_handler: SyncErrorHandler | AsyncErrorHandler | Sentinel
     no_validate_http_spec: Set[HttpSpec] | Sentinel | None
     parsers: Sequence[Parser] | Sentinel
@@ -109,6 +110,7 @@ class ValidateEndpointPayload(_BasePayload):
             auth=EMPTY,
             throttling=EMPTY,
             throttling_allow_unsafe_cache=EMPTY,
+            extras=EMPTY,
         )
 
 

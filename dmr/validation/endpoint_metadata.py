@@ -53,6 +53,7 @@ from dmr.validation.payload import (
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.errors import AsyncErrorHandler, SyncErrorHandler
+    from dmr.internal.endpoint import ExtrasLike
     from dmr.openapi.objects import Callback, Reference, Server
 
 #: Regex expression to match allowed chars in tokens
@@ -530,7 +531,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
             semantic_auth=self._build_semantic_auth(),
             exclude_semantic_auth=self._build_exclude_semantic_auth(),
-            validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
             tags=self._build_tags(payload.tags),
@@ -544,6 +544,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             callbacks=self._build_callbacks(payload.callbacks),
             servers=self._build_servers(payload.servers),
             ignore_from_spec=self._build_ignore_from_spec(),
+            extras=self._build_extras(),
         )
 
     def _from_modify(  # noqa: WPS210
@@ -606,7 +607,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
             semantic_auth=self._build_semantic_auth(),
             exclude_semantic_auth=self._build_exclude_semantic_auth(),
-            validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
             tags=self._build_tags(payload.tags),
@@ -620,6 +620,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             callbacks=self._build_callbacks(payload.callbacks),
             servers=self._build_servers(payload.servers),
             ignore_from_spec=self._build_ignore_from_spec(),
+            extras=self._build_extras(),
         )
 
     def _from_raw_data(  # noqa: WPS210
@@ -671,7 +672,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
             semantic_auth=self._build_semantic_auth(),
             exclude_semantic_auth=self._build_exclude_semantic_auth(),
-            validate_events=self._build_validate_events(),
             summary=summary,
             description=description,
             tags=self._build_tags(EMPTY),
@@ -681,6 +681,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             callbacks=None,
             servers=None,
             ignore_from_spec=self._build_ignore_from_spec(),
+            extras=None,
         )
 
     def _build_endpoint_name(self) -> str:
@@ -935,19 +936,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         )
         return merger.not_empty(validate_responses)
 
-    def _build_validate_events(self) -> bool:
-        settings_value: bool | Sentinel = resolve_setting(
-            Settings.validate_events,
-        )
-        validate_events = self._merger('validate_events').first_set(
-            self.payload.validate_events if self.payload else EMPTY,
-            self.controller_cls.validate_events,
-            settings_value,
-        )
-        if isinstance(validate_events, Sentinel):
-            return self._build_validate_responses()
-        return validate_events
-
     def _build_ignore_from_spec(self) -> bool:
         ignore_from_spec = self._merger('ignore_from_spec').first_set(
             self.payload.ignore_from_spec if self.payload else EMPTY,
@@ -1097,6 +1085,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             EMPTY if self.payload is None else self.payload.summary,
             EMPTY if self.payload is None else self.payload.description,
         )
+
+    def _build_extras(self) -> 'ExtrasLike | None':
+        if self.payload is None or isinstance(self.payload.extras, Sentinel):
+            return None
+        return self.payload.extras.build(self.controller_cls)
 
     def _validate_new_http_parts(
         self,

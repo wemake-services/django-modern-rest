@@ -499,9 +499,11 @@ _ThrottlingT = TypeVar(
     default='SyncThrottle | AsyncThrottle',
 )
 
+_ExtrasT = TypeVar('_ExtrasT', default='Any')
+
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
+class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
     """
     Base class for common endpoint metadata.
 
@@ -562,10 +564,6 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
             from different providers be collected?
         exclude_semantic_responses: Set of semantic responses
             that user wants to disable.
-        validate_events: Should this endpoint validate events?
-            If not set, defaults to the ``validate_responses`` value.
-            This value only matters if the response
-            will be a streaming response that supports event validation.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -588,6 +586,8 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
             OpenAPI Object level, it will be overridden by this value.
         ignore_from_spec: If set to ``True``, this endpoint
             would not be added to the final OpenAPI spec.
+        extras: Extra settings for custom controllers.
+            See :ref:`modify-and-validate-with-extras` to learn more.
 
     ``method`` can be a custom name, not specified
     in :class:`http.HTTPMethod` enum, when
@@ -599,6 +599,10 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     .. seealso::
 
         https://www.ietf.org/archive/id/draft-ietf-httpbis-safe-method-w-body-05.html
+
+    .. versionchanged:: 0.16.0
+        It is now a generic class.
+        *extras* is added.
 
     """
 
@@ -629,7 +633,6 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     exclude_semantic_responses: frozenset[HTTPStatus]
     semantic_auth: bool
     exclude_semantic_auth: frozenset[str]
-    validate_events: bool
 
     # OpenAPI documentation fields:
     summary: StrOrPromise | None
@@ -641,6 +644,9 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     callbacks: dict[str, 'Callback | Reference'] | None
     servers: list['Server'] | None
     ignore_from_spec: bool
+
+    # Extras:
+    extras: _ExtrasT | None
 
     # Pre-computed fields:
     throttling: list[_ThrottlingT] | None = dataclasses.field(init=False)

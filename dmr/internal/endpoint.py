@@ -7,6 +7,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Final,
+    Generic,
     Literal,
     Never,
     TypeAlias,
@@ -15,7 +16,7 @@ from typing import (
 )
 
 from django.http import HttpRequest, HttpResponseBase
-from typing_extensions import ParamSpec, Protocol, Sentinel, TypeVar, deprecated
+from typing_extensions import ParamSpec, Protocol, Sentinel, TypeVar, deprecated, Self
 
 from dmr.internal.types import StrOrPromise
 from dmr.types import EMPTY
@@ -44,6 +45,7 @@ if TYPE_CHECKING:
     from dmr.validation import (
         ModifyEndpointPayload,
         ValidateEndpointPayload,
+        EndpointMetadataBuilder,
     )
 
 
@@ -178,9 +180,39 @@ _CallableOrClassmethod: TypeAlias = (
 )
 
 
+class ExtrasLike(Protocol):
+    """
+    Protocol that describes how any extras should look like.
+
+    .. versionadded:: 0.16.0
+    """
+
+    @classmethod
+    def build(
+        cls,
+        payload_extras: Self | Sentinel,
+        controller_cls: type['Controller[BaseSerializer]'],
+        builder: 'EndpointMetadataBuilder',
+    ) -> Any | None:
+        """
+        Method that we need to build the final value.
+
+        We pass *controller_cls*, so user can take any needed values from there.
+        Or from settings, or from where else.
+        *builder* provides other context from the whole payload.
+
+        The value returned from here will be used in the final metadata.
+        It is called during the import-time and can be slow.
+        """
+        ...
+
+
+_ExtrasT = TypeVar('_ExtrasT', bound=ExtrasLike)
+
+
 @final
-@dataclasses.dataclass(frozen=True)
-class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
+@dataclasses.dataclass(frozen=True, slots=True)
+class ModifyEndpoint(Generic[_ExtrasT]):
     """
     Decorator to modify endpoints that return raw model data.
 
@@ -232,10 +264,6 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         exclude_semantic_auth: Set of semantic security requirements names
             that should not be collected.
             Overrides controller and settings values.
-        validate_events: Should this endpoint validate events?
-            If not set, defaults to the ``validate_responses`` value.
-            This value only matters if the response
-            will be a streaming response that supports event validation.
         extra_responses: Sequence of extra responses
             that this endpoint can return.
             Overrides controller and settings values.
@@ -299,6 +327,8 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         response_description: Description for the generated response object.
         ignore_from_spec: If set to ``True``, this endpoint
             would not be added to the final OpenAPI spec.
+        extras: Extra settings for custom controllers.
+            See :ref:`modify-and-validate-with-extras` to learn more.
 
     Returns:
         The same function with ``__dmr_payload__`` payload instance.
@@ -311,6 +341,10 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
     .. versionchanged:: 0.15.0
         ``modify`` used to be a function, now it is an instance
         with ``lazy`` method for lazy reusable endpoints.
+
+    .. versionchanged:: 0.16.0
+        Removed *validate_events* parameter, added *extras* parameter instead.
+        This class is now generic and public.
 
     """
 
@@ -329,7 +363,6 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_auth: bool | Sentinel = EMPTY,
         exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
-        validate_events: bool | Sentinel = EMPTY,
         extra_responses: Sequence[ResponseSpec] | Sentinel | None = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
         parsers: Sequence[Parser] | Sentinel = EMPTY,
@@ -349,6 +382,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
+        extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ModifyAnyCallable: ...
 
     @overload
@@ -366,7 +400,6 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_auth: bool | Sentinel = EMPTY,
         exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
-        validate_events: bool | Sentinel = EMPTY,
         extra_responses: Sequence[ResponseSpec] | Sentinel | None = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
         parsers: Sequence[Parser] | Sentinel = EMPTY,
@@ -386,6 +419,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
+        extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ModifyAsyncCallable: ...
 
     @overload
@@ -403,7 +437,6 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_auth: bool | Sentinel = EMPTY,
         exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
-        validate_events: bool | Sentinel = EMPTY,
         extra_responses: Sequence[ResponseSpec] | Sentinel | None = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
         parsers: Sequence[Parser] | Sentinel = EMPTY,
@@ -423,6 +456,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
+        extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ModifySyncCallable: ...
 
     def __call__(  # noqa: WPS211
@@ -438,7 +472,6 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_auth: bool | Sentinel = EMPTY,
         exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
-        validate_events: bool | Sentinel = EMPTY,
         extra_responses: Sequence[ResponseSpec] | Sentinel | None = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
         error_handler: SyncErrorHandler | AsyncErrorHandler | Sentinel = EMPTY,
@@ -463,6 +496,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
+        extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ModifyAsyncCallable | ModifySyncCallable | ModifyAnyCallable:
         """Adds the payload to the endpoint function."""
         from dmr.validation import ModifyEndpointPayload  # noqa: PLC0415
@@ -480,7 +514,6 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
                 exclude_semantic_responses=exclude_semantic_responses,
                 semantic_auth=semantic_auth,
                 exclude_semantic_auth=exclude_semantic_auth,
-                validate_events=validate_events,
                 no_validate_http_spec=no_validate_http_spec,
                 error_handler=error_handler,
                 parsers=parsers,
@@ -501,6 +534,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
                 links=links,
                 response_description=response_description,
                 ignore_from_spec=ignore_from_spec,
+                extras=extras,
             ),
         )
 
@@ -522,7 +556,7 @@ class _ModifyEndpoint:  # we can't use slots here, because docs won't build :(
         return _lazy_payload(provider)
 
 
-modify: Final = _ModifyEndpoint()
+modify: Final = ModifyEndpoint[Never]()
 
 
 class _ValidateCallable(Protocol):
@@ -605,8 +639,8 @@ _ValidateDecoratorT = TypeVar('_ValidateDecoratorT', bound=_ValidateCallable)
 
 
 @final
-@dataclasses.dataclass(frozen=True)
-class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
+@dataclasses.dataclass(frozen=True, slots=True)
+class ValidateEndpoint(Generic[_ExtrasT]):
     """
     Decorator to validate responses from endpoints that return ``HttpResponse``.
 
@@ -667,10 +701,6 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         exclude_semantic_auth: Set of semantic security requirements names
             that should not be collected.
             Overrides controller and settings values.
-        validate_events: Should this endpoint validate events?
-            If not set, defaults to the ``validate_responses`` value.
-            This value only matters if the response
-            will be a streaming response that supports event validation.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this endpoint.
             Overrides controller and settings values.
@@ -726,6 +756,8 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         servers: An alternative servers sequence to service this operation.
         ignore_from_spec: If set to ``True``, this endpoint
             would not be added to the final OpenAPI spec.
+        extras: Extra settings for custom controllers.
+            See :ref:`modify-and-validate-with-extras` to learn more.
 
     Returns:
         The same function with ``__dmr_payload__`` payload instance.
@@ -737,6 +769,10 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
     .. versionchanged:: 0.15.0
         ``validate`` used to be a function, now it is an instance
         with ``lazy`` method for lazy reusable endpoints.
+
+    .. versionchanged:: 0.16.0
+        Removed *validate_events* parameter, added *extras* parameter instead.
+        This class is now generic and public.
 
     """
 
@@ -754,7 +790,6 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_auth: bool | Sentinel = EMPTY,
         exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
-        validate_events: bool | Sentinel = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
         parsers: Sequence[Parser] | Sentinel = EMPTY,
         renderers: Sequence[Renderer] | Sentinel = EMPTY,
@@ -771,6 +806,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
+        extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ValidateAnyCallable: ...
 
     @overload
@@ -787,7 +823,6 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_auth: bool | Sentinel = EMPTY,
         exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
-        validate_events: bool | Sentinel = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
         parsers: Sequence[Parser] | Sentinel = EMPTY,
         renderers: Sequence[Renderer] | Sentinel = EMPTY,
@@ -804,6 +839,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
+        extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ValidateAsyncCallable: ...
 
     @overload
@@ -820,7 +856,6 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_auth: bool | Sentinel = EMPTY,
         exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
-        validate_events: bool | Sentinel = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
         parsers: Sequence[Parser] | Sentinel = EMPTY,
         renderers: Sequence[Renderer] | Sentinel = EMPTY,
@@ -837,6 +872,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
+        extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ValidateSyncCallable: ...
 
     def __call__(  # noqa: WPS211  # pyright: ignore[reportInconsistentOverload]
@@ -851,7 +887,6 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None = EMPTY,
         semantic_auth: bool | Sentinel = EMPTY,
         exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY,
-        validate_events: bool | Sentinel = EMPTY,
         no_validate_http_spec: Set[HttpSpec] | Sentinel | None = EMPTY,
         error_handler: SyncErrorHandler | AsyncErrorHandler | Sentinel = EMPTY,
         parsers: Sequence[Parser] | Sentinel = EMPTY,
@@ -873,6 +908,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
+        extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ValidateAnyCallable | ValidateAsyncCallable | ValidateSyncCallable:
         """Adds the payload to the endpoint function."""
         from dmr.validation import ValidateEndpointPayload  # noqa: PLC0415
@@ -887,7 +923,6 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
                 exclude_semantic_responses=exclude_semantic_responses,
                 semantic_auth=semantic_auth,
                 exclude_semantic_auth=exclude_semantic_auth,
-                validate_events=validate_events,
                 no_validate_http_spec=no_validate_http_spec,
                 error_handler=error_handler,
                 parsers=parsers,
@@ -906,6 +941,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
                 callbacks=callbacks,
                 servers=servers,
                 ignore_from_spec=ignore_from_spec,
+                extras=extras,
             ),
         )
 
@@ -927,7 +963,7 @@ class _ValidateEndpoint:  # we can't use slots here, because docs won't build :(
         return _lazy_payload(provider)
 
 
-validate: Final = _ValidateEndpoint()
+validate: Final = ValidateEndpoint[Never]()
 
 
 @overload

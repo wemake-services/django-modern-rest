@@ -18,9 +18,11 @@ from dmr.exceptions import (
 from dmr.internal.context import SerializerContext as SerializerContext
 from dmr.internal.endpoint import ModifyAnyCallable as ModifyAnyCallable
 from dmr.internal.endpoint import ModifyAsyncCallable as ModifyAsyncCallable
+from dmr.internal.endpoint import ModifyEndpoint as ModifyEndpoint
 from dmr.internal.endpoint import ModifySyncCallable as ModifySyncCallable
 from dmr.internal.endpoint import ValidateAnyCallable as ValidateAnyCallable
 from dmr.internal.endpoint import ValidateAsyncCallable as ValidateAsyncCallable
+from dmr.internal.endpoint import ValidateEndpoint as ValidateEndpoint
 from dmr.internal.endpoint import ValidateSyncCallable as ValidateSyncCallable
 from dmr.internal.endpoint import modify as modify
 from dmr.internal.endpoint import request_endpoint as request_endpoint
@@ -427,7 +429,7 @@ class Endpoint:  # noqa: WPS214
 
     def _run_checks(self, controller: 'Controller[BaseSerializer]') -> None:
         # We validated this during the startup:
-        metadata: EndpointMetadata[SyncAuth, SyncThrottle] = self.metadata  # type: ignore[assignment]
+        metadata: EndpointMetadata[Any, SyncAuth, SyncThrottle] = self.metadata  # type: ignore[assignment]
 
         # First round of throttling:
         if metadata.throttling_before_auth is not None:
@@ -479,7 +481,9 @@ class Endpoint:  # noqa: WPS214
         controller: 'Controller[BaseSerializer]',
     ) -> None:
         # We validated this during the startup:
-        metadata: EndpointMetadata[AsyncAuth, AsyncThrottle] = self.metadata  # type: ignore[assignment]
+        metadata: EndpointMetadata[Any, AsyncAuth, AsyncThrottle] = (
+            self.metadata
+        )  # type: ignore[assignment]
 
         # First round of throttling:
         if metadata.throttling_before_auth is not None:
