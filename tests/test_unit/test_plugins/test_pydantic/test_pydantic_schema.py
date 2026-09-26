@@ -10,7 +10,7 @@ from pydantic.json_schema import GenerateJsonSchema
 from pydantic_core import core_schema
 from typing_extensions import TypedDict, override
 
-from dmr import Controller, Cookies, Headers, Path, Query
+from dmr import Body, Controller, Cookies, Headers, Path, Query
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
@@ -273,11 +273,24 @@ def test_enum(
     )
 
 
+def _expected_enum_parameter_schema(
+    component_name: str,
+    parameter_location: str,
+    expected_default: Any,
+) -> dict[str, Any]:
+    """Keep the query field's ``default`` next to ``$ref``, see #1491."""
+    expected = {'$ref': f'#/components/schemas/{component_name}'}
+    if parameter_location == 'query':
+        expected['default'] = expected_default
+    return expected
+
+
 def _assert_enum_parameter_schema(
     *,
     controller: type[Controller[PydanticSerializer]],
     component_name: str,
     expected_schema: dict[str, Any],
+    expected_default: Any,
 ) -> None:
     """Ensure enum parameter fields register referenced schemas."""
     schema = build_schema(
@@ -295,9 +308,11 @@ def _assert_enum_parameter_schema(
 
     for parameter_location in ('path', 'query', 'header', 'cookie'):
         parameter = parameter_specs['enum_value', parameter_location]
-        assert parameter['schema'] == {
-            '$ref': f'#/components/schemas/{component_name}',
-        }
+        assert parameter['schema'] == _expected_enum_parameter_schema(
+            component_name,
+            parameter_location,
+            expected_default,
+        )
     assert schema['components']['schemas'][component_name] == expected_schema
 
 
@@ -338,6 +353,7 @@ def test_parameter_schema_with_enum() -> None:
             'title': _QueryEnum.__name__,
             'type': 'string',
         },
+        expected_default='alpha',
     )
 
 
@@ -378,6 +394,7 @@ def test_parameter_schema_with_int_enum() -> None:
             'title': _QueryEnum.__name__,
             'type': 'integer',
         },
+        expected_default=1,
     )
 
 
@@ -418,6 +435,7 @@ def test_parameter_schema_with_str_enum() -> None:
             'title': _QueryEnum.__name__,
             'type': 'string',
         },
+        expected_default='alpha',
     )
 
 
@@ -670,3 +688,54 @@ def test_custom_union_format(
     assert isinstance(schema.type, list)
     schema.type = sorted(schema.type)
     assert schema == Schema(type=[OpenAPIType.INTEGER, OpenAPIType.STRING])
+
+
+def test_ref_siblings_and_extensions_issue1491() -> None:
+    """Keep ``$ref`` siblings and explicit extras in the final schema."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1491
+
+    class _Address(pydantic.BaseModel):
+        model_config = pydantic.ConfigDict(
+            json_schema_extra={
+                '$anchor': 'address',
+                '$comment': 'Postal address',
+                'x-category': 'contact',
+            },
+        )
+        city: str
+
+    class _User(pydantic.BaseModel):
+        model_config = pydantic.ConfigDict(
+            json_schema_extra={'x-api-version': 'v1'},
+        )
+        name: str = pydantic.Field(
+            default='unknown',
+            json_schema_extra={'x-display': 'Name'},
+        )
+        address: _Address = pydantic.Field(
+            default=_Address(city='Moscow'),
+            description='Where the user lives',
+        )
+
+    class _IssueController(Controller[PydanticSerializer]):
+        async def post(self, parsed_body: Body[_User]) -> None:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('test/', _IssueController.as_view())]),
+    ).convert()
+
+    user_schema = schema['components']['schemas']['_User']
+    assert user_schema['properties']['address'] == {
+        '$ref': '#/components/schemas/_Address',
+        'default': {'city': 'Moscow'},
+        'description': 'Where the user lives',
+    }
+    assert user_schema['x-api-version'] == 'v1'
+    assert user_schema['properties']['name']['x-display'] == 'Name'
+
+    address_schema = schema['components']['schemas']['_Address']
+    assert address_schema['$anchor'] == 'address'
+    assert address_schema['$comment'] == 'Postal address'
+    assert address_schema['x-category'] == 'contact'

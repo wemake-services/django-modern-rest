@@ -92,3 +92,4 @@ class Schema:
         dict[str, 'Reference | Schema'] | None,
         Field(alias='$defs'),
     ] = None
+    extensions: dict[str, Any] | None = None

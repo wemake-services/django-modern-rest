@@ -39,7 +39,7 @@ class Components:
     security_schemes: dict[str, 'SecurityScheme | Reference'] | None = None
     links: dict[str, 'Link | Reference'] | None = None
     callbacks: dict[str, 'Callback | Reference'] | None = None
-    path_items: dict[str, 'PathItem | Reference'] | None = None
+    path_items: dict[str, 'PathItem'] | None = None
 
     # OpenAPI 3.2+ fields:
     media_types: dict[str, 'MediaType | Reference'] | None = None

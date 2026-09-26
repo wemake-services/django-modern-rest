@@ -1,3 +1,4 @@
+import dataclasses
 from typing import Any, ClassVar, Protocol
 
 from typing_extensions import Sentinel
@@ -108,11 +109,27 @@ class SchemaRegistry:
         *,
         resolution_context: dict[str, Schema] | None = None,
     ) -> Schema:
-        """Resolve reference and return a schema back."""
+        """
+        Resolve reference and return a flat schema back.
+
+        Both a :class:`Reference` and a :class:`Schema` that carries
+        a ``$ref`` point to a registered component. The schema's sibling
+        keywords, like ``default``, only annotate that one usage:
+        they are put on top of the component's own schema,
+        but they never modify the component itself, #1491
+
+        """
         if isinstance(reference, Schema):
-            return reference
-        schema_name = reference.ref.removeprefix(self.schema_prefix)
-        return (resolution_context or self.schemas)[schema_name]
+            if reference.ref is None:
+                return reference
+            ref = reference.ref
+        else:
+            ref = reference.ref
+        schema_name = ref.removeprefix(self.schema_prefix)
+        target = (resolution_context or self.schemas)[schema_name]
+        if isinstance(reference, Reference):
+            return target
+        return _overlay_ref_site(target, reference)
 
     def try_unregister(self, schema_name: str | None) -> None:
         """Try to unregister the schema by name."""
@@ -154,6 +171,27 @@ class SecuritySchemeRegistry:
     ) -> None:
         """Register security scheme in registry."""
         self._schemes[name] = scheme
+
+
+def _overlay_ref_site(target: Schema, ref_site: Schema) -> Schema:
+    """
+    Put the keywords next to ``$ref`` on top of the referenced schema.
+
+    The component the ``$ref`` points to owns the actual shape,
+    while the sibling keywords only annotate this one usage:
+    non-empty sibling values win, and everything else stays untouched.
+    """
+    overrides: dict[str, Any] = {}
+    for schema_field in dataclasses.fields(ref_site):
+        if schema_field.name == 'ref':
+            continue
+        field_value = getattr(ref_site, schema_field.name)
+        if field_value is None or field_value in ([], {}):
+            continue
+        overrides[schema_field.name] = field_value
+    if not overrides:
+        return target
+    return dataclasses.replace(target, **overrides)
 
 
 def _check_hashes(

@@ -8,6 +8,48 @@ from dmr.openapi.objects import (
 )
 
 
+def test_load_schema_issue1491() -> None:
+    """Keep the schema keywords that sit next to ``$ref``."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1491
+    loaded = load_schema(
+        {
+            '$ref': '#/components/schemas/Address',
+            'default': {'city': 'Moscow'},
+            'description': 'Where the user lives',
+        },
+    )
+
+    assert isinstance(loaded, Schema)
+    assert loaded.ref == '#/components/schemas/Address'
+    assert loaded.default == {'city': 'Moscow'}
+    assert loaded.description == 'Where the user lives'
+
+
+def test_load_schema_pure_ref() -> None:
+    """A ``$ref`` alone is a schema keyword, not a ``Reference``."""
+    loaded = load_schema({'$ref': '#/components/schemas/Address'})
+
+    assert loaded == Schema(ref='#/components/schemas/Address')
+
+
+def test_load_schema_extensions() -> None:
+    """Specification extensions, like ``x-thing``, are kept as they are."""
+    loaded = load_schema(
+        {
+            '$ref': '#/components/schemas/Address',
+            'x-display-name': 'Home address',
+        },
+    )
+    assert loaded.extensions == {'x-display-name': 'Home address'}
+
+    plain = load_schema({'type': 'string', 'x-range': {'min': 0}})
+    assert plain.extensions == {'x-range': {'min': 0}}
+
+    no_extensions = load_schema({'type': 'string'})
+    assert no_extensions.extensions is None
+
+
 def test_load_schema_issue1490() -> None:
     """Keep ``$anchor``, ``$comment`` and ``$schema`` on the schema."""
     # Regression test for
