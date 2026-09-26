@@ -495,7 +495,7 @@ class _NoneDefaultModel(pydantic.BaseModel):
     'serializer',
     [PydanticSerializer, PydanticFastSerializer],
 )
-def test_none_default(serializer: type[PydanticSerializer]) -> None:
+def test_none_default(*, serializer: type[PydanticSerializer]) -> None:
     """Ensure that ``None`` defaults are dumped into the schema."""
     # Regression test for
     # https://github.com/wemake-services/django-modern-rest/issues/1619
