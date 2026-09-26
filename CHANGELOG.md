@@ -131,6 +131,9 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   Previously it was the same as the `HeaderJWTSyncAuth`
   and `HeaderJWTAsyncAuth` one, so using both of them in a single endpoint
   was generating a single `jwt` security scheme and requirement, #1587
+- `Path` models with optional fields now raise `EndpointMetadataError`
+  during OpenAPI schema generation. Previously, an invalid schema
+  with path parameters without `required: true` was generated, #1610
 
 ### Performance improvements
 

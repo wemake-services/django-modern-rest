@@ -138,6 +138,13 @@ What is the difference from the raw ``path()`` model?
   Make sure that your ``path()`` URL pattern and ``Path`` model fields match.
   We don't automatically validate it.
 
+.. important::
+
+  All ``Path`` model fields must be required: no default values
+  and no ``NotRequired`` keys. OpenAPI requires all path parameters
+  to be required, so the OpenAPI schema generation
+  raises :exc:`~dmr.exceptions.EndpointMetadataError` for optional fields.
+
 
 Customizing OpenAPI metadata for Path
 -------------------------------------

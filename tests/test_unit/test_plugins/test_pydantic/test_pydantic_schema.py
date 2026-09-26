@@ -1,8 +1,19 @@
 # NOTE: when editing this file, also edit `test_msgspec_schema.py`
 
+import dataclasses
 import enum
+import re
 from collections.abc import Iterable, Mapping
-from typing import Annotated, Any, ClassVar, Literal, Optional, Union, final
+from typing import (
+    Annotated,
+    Any,
+    ClassVar,
+    Literal,
+    NotRequired,
+    Optional,
+    Union,
+    final,
+)
 
 import pydantic
 import pytest
@@ -11,7 +22,7 @@ from pydantic_core import core_schema
 from typing_extensions import TypedDict, override
 
 from dmr import Controller, Cookies, Headers, Path, Query
-from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators import SchemaGenerator
@@ -419,6 +430,61 @@ def test_parameter_schema_with_str_enum() -> None:
             'type': 'string',
         },
     )
+
+
+class _OptionalPathModel(pydantic.BaseModel):
+    user_id: int
+    opt: str = ''
+
+
+class _OptionalPathTypedDict(TypedDict):
+    user_id: int
+    opt: NotRequired[str]
+
+
+@dataclasses.dataclass
+class _OptionalPathDataclass:
+    user_id: int
+    opt: str = ''
+
+
+class _OptionalPathModelController(Controller[PydanticSerializer]):
+    def get(self, parsed_path: Path[_OptionalPathModel]) -> None:
+        raise NotImplementedError
+
+
+class _OptionalPathTypedDictController(Controller[PydanticSerializer]):
+    def get(self, parsed_path: Path[_OptionalPathTypedDict]) -> None:
+        raise NotImplementedError
+
+
+class _OptionalPathDataclassController(Controller[PydanticSerializer]):
+    def get(self, parsed_path: Path[_OptionalPathDataclass]) -> None:
+        raise NotImplementedError
+
+
+@pytest.mark.parametrize(
+    'controller',
+    [
+        _OptionalPathModelController,
+        _OptionalPathTypedDictController,
+        _OptionalPathDataclassController,
+    ],
+)
+def test_optional_path_fields(
+    controller: type[Controller[PydanticSerializer]],
+) -> None:
+    """Ensure that optional path parameters are not allowed."""
+    router = Router(
+        'api/',
+        [path('user/<int:user_id>/<str:opt>/', controller.as_view())],
+    )
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match=re.escape("found optional fields ['opt']"),
+    ):
+        build_schema(router)
 
 
 def test_root_model(
