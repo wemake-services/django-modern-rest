@@ -2,7 +2,7 @@ Returning redirects
 ===================
 
 We support returning redirects from API endpoints with
-:class:`~dmr.response.RedirectTo` exception with :func:`~dmr.endpoint.modify`:
+:class:`~dmr.response.RedirectTo` exception with :data:`~dmr.endpoint.modify`:
 
 .. literalinclude:: /examples/using_controller/redirect_error.py
   :caption: views.py
@@ -11,7 +11,7 @@ We support returning redirects from API endpoints with
 
 We model ``RedirectTo`` as an exception, because you are not allowed
 to return :class:`~django.http.HttpResponse` objects
-from :func:`~dmr.endpoint.modify` endpoints.
+from :data:`~dmr.endpoint.modify` endpoints.
 
 .. note::
 
@@ -20,7 +20,7 @@ from :func:`~dmr.endpoint.modify` endpoints.
 
 The second way is to use
 default Django's :class:`django.http.HttpResponseRedirect`
-together with :func:`~dmr.endpoint.validate`:
+together with :data:`~dmr.endpoint.validate`:
 
 .. literalinclude:: /examples/using_controller/redirect_response.py
   :caption: views.py

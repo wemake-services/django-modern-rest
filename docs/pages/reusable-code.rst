@@ -40,6 +40,74 @@ So, ``MyController`` from the example above does the same
 .. versionadded:: 0.16.0
 
 
+.. _modify-and-validate-with-extras:
+
+Providing extras for ``@modify`` and ``@validate``
+--------------------------------------------------
+
+Your custom controllers might require custom parameters that users can provide
+to :data:`~dmr.endpoint.validate` and :data:`~dmr.endpoint.modify`.
+
+To do so, we utilize ``extras=`` parameter. By default it is always typed
+as empty sentinel, because default controller do not allow any extra parameters.
+
+Three steps are needed:
+
+1. Define a subclass of :class:`~dmr.endpoint.Extras`.
+   Its fields can default to ``EMPTY`` if some arguments can be missing
+2. Define :attr:`~dmr.endpoint.Extras.build` with how to build your value
+   from several configuration layers, you can use global settings there as well
+3. Create typed decorators by passing this class
+   to :class:`~dmr.endpoint.ModifyEndpoint`
+   and :class:`~dmr.endpoint.ValidateEndpoint`
+4. Assign an instance of this class to ``extras`` attribute
+   of your controller. It enables ``extras=`` for all endpoints
+   of this controller and provides controller-level defaults
+
+:meth:`~dmr.endpoint.Extras.build` receives the endpoint layer,
+which is ``EMPTY`` when ``extras=`` is not passed,
+and the controller layer as instances of your class,
+and returns the resolved value.
+It is stored inside :attr:`~dmr.metadata.EndpointMetadata.extras`
+and can be read with :meth:`~dmr.endpoint.Extras.of` in a typed way.
+
+First, define the extras model itself:
+
+.. literalinclude:: /examples/reusable_code/extras_model.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+Then define and use new endpoint decorators:
+
+.. tabs::
+
+  .. tab:: modify
+
+    Real world example: :data:`dmr.streaming.modify`
+
+    .. literalinclude:: /examples/reusable_code/extras_modify.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: validate
+
+    Real world example: :data:`dmr.streaming.validate`
+
+    .. literalinclude:: /examples/reusable_code/extras_validate.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+This way your controller subtypes can have any extras that you need!
+
+These definitions would only differ in terms of typing.
+Everything else would work the same way.
+
+.. versionadded:: 0.16.0
+
+
 .. _reusable-controllers:
 
 Reusable controllers
@@ -63,19 +131,19 @@ Let's try to create two exact controllers with exact serializers:
 
 .. tabs::
 
-    .. tab:: msgspec
+  .. tab:: msgspec
 
-      .. literalinclude:: /examples/reusable_code/msgspec_controller.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/reusable_code/msgspec_controller.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
-    .. tab:: pydantic
+  .. tab:: pydantic
 
-      .. literalinclude:: /examples/reusable_code/pydantic_controller.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/reusable_code/pydantic_controller.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
 Basically - we just specify what kind of serializer to use. And that's it.
 But, this is just the first step. We can do much more!
@@ -167,7 +235,7 @@ Real endpoints support
 .. versionadded:: 0.14.0
 
 The same would work with endpoints defined
-with :func:`~dmr.endpoint.validate` function.
+with :data:`~dmr.endpoint.validate` decorator.
 
 The logic is the same, but syntax is a bit different.
 
@@ -300,11 +368,11 @@ maybe even auth or throttling definitions.
 
 To use the full customization, we provide:
 
-- :func:`dmr.endpoint.modify.lazy` function to work
-  with :func:`~dmr.endpoint.modify`. It accepts
+- :meth:`dmr.endpoint.ModifyEndpoint.lazy` method to work
+  with :data:`~dmr.endpoint.modify`. It accepts
   a function or a :class:`classmethod` to lazily provide a spec in the future
-- :func:`dmr.endpoint.validate.lazy` function to work
-  with :func:`~dmr.endpoint.validate`. It accepts
+- :meth:`dmr.endpoint.ValidateEndpoint.lazy` method to work
+  with :data:`~dmr.endpoint.validate`. It accepts
   a function or a :class:`classmethod` to lazily provide a spec in the future
 
 Here's how it works:
@@ -346,23 +414,23 @@ Here are all of them, choose the one for your task:
     - What it does
 
   * - :class:`~dmr.endpoint.ModifyAnyCallable`
-    - :func:`~dmr.endpoint.modify`
+    - :data:`~dmr.endpoint.modify`
     - Creates a decorator for endpoints without sync / async specifics
   * - :class:`~dmr.endpoint.ModifySyncCallable`
-    - :func:`~dmr.endpoint.modify`
+    - :data:`~dmr.endpoint.modify`
     - Creates a decorator for sync endpoints
   * - :class:`~dmr.endpoint.ModifyAsyncCallable`
-    - :func:`~dmr.endpoint.modify`
+    - :data:`~dmr.endpoint.modify`
     - Creates a decorator for async endpoints
 
   * - :class:`~dmr.endpoint.ValidateAnyCallable`
-    - :func:`~dmr.endpoint.validate`
+    - :data:`~dmr.endpoint.validate`
     - Creates a decorator for endpoints without sync / async specifics
   * - :class:`~dmr.endpoint.ValidateSyncCallable`
-    - :func:`~dmr.endpoint.validate`
+    - :data:`~dmr.endpoint.validate`
     - Creates a decorator for sync endpoints
   * - :class:`~dmr.endpoint.ValidateAsyncCallable`
-    - :func:`~dmr.endpoint.validate`
+    - :data:`~dmr.endpoint.validate`
     - Creates a decorator for async endpoints
 
 Basically, there are several major rules:

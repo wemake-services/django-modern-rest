@@ -13,6 +13,7 @@ from dmr.negotiation import request_renderer
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings, default_renderer, resolve_setting
+from dmr.streaming.endpoint import Streaming
 from dmr.streaming.metadata import StreamingResponseModification
 from dmr.streaming.renderer import StreamingRenderer
 from dmr.streaming.stream import StreamingResponse
@@ -50,6 +51,17 @@ class StreamingController(Controller[_SerializerT_co]):
     endpoint_cls = _StreamingEndpoint
 
     # Customizable attributes for subclasses:
+    extras: ClassVar[Streaming] = Streaming()  # pyright: ignore[reportIncompatibleVariableOverride]
+    """
+    Streaming settings for all endpoints of this controller.
+
+    Override it to change controller-level defaults,
+    for example: ``extras = Streaming(validate_events=False)``.
+    Per-endpoint values are passed as ``extras=``
+    to :data:`~dmr.streaming.modify` and :data:`~dmr.streaming.validate`.
+    Use ``Streaming.of(self)`` to read the resolved values.
+    """
+
     streaming_ping_seconds: ClassVar[float | None] = None
     """
     Optional ping keep alive event support.

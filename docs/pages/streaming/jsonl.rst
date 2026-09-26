@@ -9,8 +9,8 @@ Our ``jsonl`` implementation allows users to follow the standard above.
 Using JsonLines
 ---------------
 
-You can use JsonLines format with both :func:`~dmr.endpoint.validate`
-and :func:`~dmr.endpoint.modify` style endpoints:
+You can use JsonLines format with both :data:`~dmr.streaming.validate`
+and :data:`~dmr.streaming.modify` style endpoints:
 
 .. tabs::
 

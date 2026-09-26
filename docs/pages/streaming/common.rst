@@ -219,18 +219,29 @@ It is recommended to be turned on in development and turned off in production.
 
 Rules:
 
-- If endpoint specified ``validate_events`` boolean value, we use it
+- If endpoint specifies ``validate_events`` in its
+  :class:`~dmr.streaming.Streaming` extras, we use it
 - If endpoint does not specify this flag, but controller does, we use it
 - If controller does not specify this flag, but settings does, we use it
 - If no explicit ``validate_events`` boolean value is specified, we fallback
   to ``validate_responses`` value
 
+To set ``validate_events`` per endpoint,
+pass :class:`~dmr.streaming.Streaming` as ``extras=``
+to the streaming versions of the decorators:
+:data:`~dmr.streaming.modify` and :data:`~dmr.streaming.validate`.
+Regular :data:`~dmr.endpoint.modify` and :data:`~dmr.endpoint.validate`
+do not accept streaming extras.
+If you don't set ``validate_events`` for your endpoints,
+you are free to use any of these two decorators.
+They work identically, only typing is different.
+
 .. tabs::
 
   .. tab:: per endpoint
 
-    Both :func:`~dmr.endpoint.validate` and :func:`~dmr.endpoint.modify`
-    support this flag:
+    Both :data:`~dmr.streaming.validate` and :data:`~dmr.streaming.modify`
+    support this extra:
 
     .. literalinclude:: /examples/streaming/sse/per_endpoint.py
       :language: python
@@ -336,6 +347,19 @@ Controllers
   :members:
   :show-inheritance:
 
+Endpoint
+~~~~~~~~
+
+.. autodata:: dmr.streaming.modify
+
+.. autodata:: dmr.streaming.validate
+
+.. autoclass:: dmr.streaming.Streaming
+  :members:
+
+.. autoclass:: dmr.streaming.endpoint.StreamingExtras
+  :members:
+
 Responses
 ~~~~~~~~~
 
@@ -355,7 +379,6 @@ Validation
 
 .. autoclass:: dmr.streaming.validation.StreamingValidator
   :members:
-
 
 .. autoclass:: dmr.streaming.validation.StreamingResponseValidator
   :members:

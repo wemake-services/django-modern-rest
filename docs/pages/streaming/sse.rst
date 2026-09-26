@@ -10,8 +10,8 @@ or fully customize the experience for custom needs.
 Using SSE
 ---------
 
-You can use SSE with both :func:`~dmr.endpoint.validate`
-and :func:`~dmr.endpoint.modify` style endpoints:
+You can use SSE with both :data:`~dmr.streaming.validate`
+and :data:`~dmr.streaming.modify` style endpoints:
 
 .. tabs::
 
