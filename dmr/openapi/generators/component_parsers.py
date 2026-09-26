@@ -143,22 +143,26 @@ class ComponentParserGenerator:  # noqa: WPS214
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> list[Parameter | Reference]:
         # TODO: support `parameter` references:
-        component_params = {
-            param_spec.name
-            for param_spec in parameter_specs
-            if _is_path_param(param_spec)
-        }
-        not_in_url = component_params - route_metadata.path_parameters()
-        self._validate_path_params(not_in_url, route_metadata, controller_cls)
+        url_params = route_metadata.path_parameters()
+        self._validate_path_params(
+            parameter_specs,
+            url_params,
+            route_metadata,
+            controller_cls,
+        )
 
-        # Now all params that are not in the url come from url kwargs,
-        # clients don't send them, so they are not documented:
-        params_list = [
-            param_spec
+        # Now all params that are not in the url come from url kwargs
+        # or have default values, clients don't send them,
+        # so they are not documented. The rest are always required,
+        # even with defaults, because OpenAPI requires all path params
+        # to be required. Defaults are still useful, because
+        # a controller can be routed to several urls:
+        params_list: list[Parameter | Reference] = [
+            dataclasses.replace(param_spec, required=True)
+            if _is_path_param(param_spec)
+            else param_spec
             for param_spec in parameter_specs
-            if not (
-                _is_path_param(param_spec) and param_spec.name in not_in_url
-            )
+            if not _is_path_param(param_spec) or param_spec.name in url_params
         ]
         # Document the url params that no component has documented:
         pattern_params = self._parse_url_params(
@@ -166,7 +170,11 @@ class ComponentParserGenerator:  # noqa: WPS214
             route_metadata,
             metadata,
             controller_cls,
-            exclude=component_params,
+            exclude={
+                param_spec.name
+                for param_spec in parameter_specs
+                if _is_path_param(param_spec)
+            },
         )
         if pattern_params is not None:
             params_list.extend(pattern_params)
@@ -174,14 +182,23 @@ class ComponentParserGenerator:  # noqa: WPS214
 
     def _validate_path_params(
         self,
-        not_in_url: set[str],
+        parameter_specs: list[Parameter | Reference],
+        url_params: frozenset[str],
         route_metadata: InternalRouteMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
-        unknown = not_in_url - route_metadata.extra_kwargs
+        # Django never passes required params that are not in the url
+        # and not in its kwargs, so such an endpoint can't be called:
+        unknown = sorted(
+            param_spec.name
+            for param_spec in parameter_specs
+            if _is_path_param(param_spec)
+            and param_spec.required
+            and param_spec.name not in url_params | route_metadata.extra_kwargs
+        )
         if unknown:
             raise EndpointMetadataError(
-                f'Path parameters {sorted(unknown)!r} '
+                f'Required path parameters {unknown!r} '
                 f'of {controller_cls!r} are not found '
                 f'in {route_metadata.path!r} url and its kwargs',
             )

@@ -27,6 +27,10 @@ class _OrgUserPath(pydantic.BaseModel):
     id: int
 
 
+class _OptionalUserPath(pydantic.BaseModel):
+    id: int | None = None
+
+
 class _UserController(Controller[PydanticSerializer]):
     def get(self, parsed_path: Path[_UserPath]) -> None:
         raise NotImplementedError
@@ -39,6 +43,11 @@ class _ExtraFieldController(Controller[PydanticSerializer]):
 
 class _OrgUserController(Controller[PydanticSerializer]):
     def get(self, parsed_path: Path[_OrgUserPath]) -> None:
+        raise NotImplementedError
+
+
+class _OptionalUserController(Controller[PydanticSerializer]):
+    def get(self, parsed_path: Path[_OptionalUserPath]) -> None:
         raise NotImplementedError
 
 
@@ -56,15 +65,42 @@ def _path_params(url: URLPattern | URLResolver, openapi_path: str) -> Any:
     ],
 )
 def test_path_field_not_in_url(url: URLPattern) -> None:
-    """Ensure that `Path` fields must be in the url or in its kwargs."""
+    """Ensure that required `Path` fields must be in the url or its kwargs."""
     with pytest.raises(
         EndpointMetadataError,
         match=re.escape(
-            f"Path parameters ['extra'] of {_ExtraFieldController!r} "
+            f"Required path parameters ['extra'] of {_ExtraFieldController!r} "
             f"are not found in 'api/{url.pattern}' url and its kwargs",
         ),
     ):
         build_schema(Router('api/', [url]))
+
+
+def test_optional_path_field_in_several_urls() -> None:
+    """Ensure that optional `Path` fields are documented only in their urls."""
+    schema = build_schema(
+        Router(
+            'api/',
+            [
+                path('users/', _OptionalUserController.as_view()),
+                path('users/<int:id>/', _OptionalUserController.as_view()),
+            ],
+        ),
+    ).convert()
+
+    assert 'parameters' not in schema['paths']['/api/users/']['get']
+    operation = schema['paths']['/api/users/{id}/']['get']
+    assert operation['parameters'] == snapshot([
+        {
+            'name': 'id',
+            'in': 'path',
+            'schema': {
+                'anyOf': [{'type': 'integer'}, {'type': 'null'}],
+                'title': 'Id',
+            },
+            'required': True,
+        },
+    ])
 
 
 def test_url_param_not_in_model() -> None:
