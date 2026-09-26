@@ -213,6 +213,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   `AND` and `OR` auth strategies, previously
   it was only possible to represent `OR` strategy, #1521
 - Added `CursorPagination` support to `drm.pagination`, #1428
+- Added validations for server-managed header names, header name syntax,
+  cookie name syntax, and cookie semantics, #1341
 - Added `clear_cache` method to `RequestNegotiator` and `ResponseNegotiator`
   to drop the memoized negotiation results. Needed when parsers
   or renderers of an endpoint are modified in place, #1455
@@ -659,7 +661,6 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 ### Features
 
 - Added initial `ty` support, #1257
-- Added new checks for HTTP spec validation, #1341
 - Added support of reusable controllers with `@validate`, #1259
 - Added default value to `prefix` parameter in `Router.__init__`, #1267
 - Added `to_urlpatterns` function to include `Router`
