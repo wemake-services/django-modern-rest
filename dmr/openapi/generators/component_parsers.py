@@ -4,8 +4,9 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, final
 
 from django.urls import converters
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, TypeIs
 
+from dmr.exceptions import EndpointMetadataError
 from dmr.internal.regex import parse_named_groups
 from dmr.openapi.collector import InternalRouteMetadata
 from dmr.openapi.objects import (
@@ -108,15 +109,12 @@ class ComponentParserGenerator:  # noqa: WPS214
                     'from ComponentParser.get_schema is not supported',
                 )
 
-        pattern_param = self._parse_pattern(
+        params_list = self._parse_pattern(
             operation_id,
             route_metadata,
             params_list,
-            controller_cls.serializer,
+            controller_cls,
         )
-        if pattern_param is not None:
-            params_list.extend(pattern_param)
-
         return request_body, params_list or None
 
     def _call_component(
@@ -140,24 +138,66 @@ class ComponentParserGenerator:  # noqa: WPS214
         operation_id: str,
         route_metadata: InternalRouteMetadata,
         parameter_specs: list[Parameter | Reference],
-        serializer: type['BaseSerializer'],
-    ) -> list[Parameter | Reference] | None:
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> list[Parameter | Reference]:
         # TODO: support `parameter` references:
-        if any(
-            param_spec.param_in == 'path'
+        component_params = {
+            param_spec.name
             for param_spec in parameter_specs
-            if isinstance(param_spec, Parameter)
-        ):
-            # TODO: should we validate `Path` component on `Router` creation?
-            # We already have some `Path` component, so move on.
-            return None
+            if _is_path_param(param_spec)
+        }
+        not_in_url = component_params - route_metadata.path_parameters()
+        self._validate_path_params(not_in_url, route_metadata, controller_cls)
 
+        # Now all params that are not in the url come from url kwargs,
+        # clients don't send them, so they are not documented:
+        params_list = [
+            param_spec
+            for param_spec in parameter_specs
+            if not (
+                _is_path_param(param_spec) and param_spec.name in not_in_url
+            )
+        ]
+        # Document the url params that no component has documented:
+        pattern_params = self._parse_url_params(
+            operation_id,
+            route_metadata,
+            controller_cls.serializer,
+            exclude=component_params,
+        )
+        if pattern_params is not None:
+            params_list.extend(pattern_params)
+        return params_list
+
+    def _validate_path_params(
+        self,
+        not_in_url: set[str],
+        route_metadata: InternalRouteMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> None:
+        unknown = not_in_url - route_metadata.extra_kwargs
+        if unknown:
+            raise EndpointMetadataError(
+                f'Path parameters {sorted(unknown)!r} '
+                f'of {controller_cls!r} are not found '
+                f'in {route_metadata.path!r} url and its kwargs',
+            )
+
+    def _parse_url_params(
+        self,
+        operation_id: str,
+        route_metadata: InternalRouteMetadata,
+        serializer: type['BaseSerializer'],
+        *,
+        exclude: set[str],
+    ) -> list[Parameter | Reference] | None:
         # `re_path()` and `RegexPattern`:
         if route_metadata.is_regex:
             return self._parse_regex(
                 operation_id,
                 route_metadata,
                 serializer,
+                exclude=exclude,
             )
 
         # `path()` and `RoutePattern`:
@@ -165,6 +205,7 @@ class ComponentParserGenerator:  # noqa: WPS214
             operation_id,
             route_metadata,
             serializer,
+            exclude=exclude,
         )
 
     def _add_group_patterns(
@@ -198,10 +239,13 @@ class ComponentParserGenerator:  # noqa: WPS214
         operation_id: str,
         route_metadata: InternalRouteMetadata,
         serializer: type['BaseSerializer'],
+        *,
+        exclude: set[str],
     ) -> list[Parameter | Reference] | None:
         prepared = {
             converter_name: _converter_schema(converter, self._converters)
             for converter_name, converter in route_metadata.converters().items()
+            if converter_name not in exclude
         }
         if not prepared:
             return None
@@ -224,10 +268,15 @@ class ComponentParserGenerator:  # noqa: WPS214
         operation_id: str,
         route_metadata: InternalRouteMetadata,
         serializer: type['BaseSerializer'],
+        *,
+        exclude: set[str],
     ) -> list[Parameter | Reference] | None:
         assert route_metadata.is_regex  # noqa: S101
         regex = route_metadata.regex()
-        schema = dict.fromkeys(regex.groupindex, str)
+        schema = dict.fromkeys(
+            (group for group in regex.groupindex if group not in exclude),
+            str,
+        )
         return (
             self._add_group_patterns(
                 self._context.generators.parameter(
@@ -311,6 +360,10 @@ class ComponentParserGenerator:  # noqa: WPS214
                 schema=Schema(all_of=media_items),
             )
         return new_content
+
+
+def _is_path_param(param_spec: Parameter | Reference) -> TypeIs[Parameter]:
+    return isinstance(param_spec, Parameter) and param_spec.param_in == 'path'
 
 
 def _converter_models(

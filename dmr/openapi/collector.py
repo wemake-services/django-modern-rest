@@ -21,11 +21,15 @@ _RouteMetadata: TypeAlias = (
 _PATH_PATTERN: Final = re.compile(
     r'<(?:(?P<converter>[^>:]+):)?(?P<parameter>\w+)>',
 )
+_OPENAPI_PATH_PATTERN: Final = re.compile(r'{(?P<parameter>\w+)}')
+_NO_EXTRA_KWARGS: Final = frozenset[str]()
 
 
 def controller_mapping_collector(
     urls: Iterable[_AnyPattern],
     base_path: str,
+    *,
+    extra_kwargs: frozenset[str] = _NO_EXTRA_KWARGS,
 ) -> Iterable[_RouteMetadata]:
     """
     Collect all API controllers from a router for OpenAPI generation.
@@ -42,15 +46,21 @@ def controller_mapping_collector(
     Args:
         urls: Iterable of URLs that we added to the ``Router``.
         base_path: Common prefix that these URLs have. In a Django format.
+        extra_kwargs: Names of extra view kwargs that these URLs get
+            from ``include()`` calls of their parents.
+
+    .. versionchanged:: 0.16.0
+        Added *extra_kwargs* parameter.
 
     """
     for url in urls:
         if isinstance(url, URLPattern):
-            yield _process_pattern(url, base_path)
+            yield _process_pattern(url, base_path, extra_kwargs=extra_kwargs)
         else:
             yield from controller_mapping_collector(
                 url.url_patterns,
                 _join_paths(base_path, str(url.pattern), normalize=False),
+                extra_kwargs=extra_kwargs.union(url.default_kwargs),
             )
 
 
@@ -99,6 +109,10 @@ class _BaseRouteMetadata:
         )
         return RoutePattern(self.path, is_endpoint=True).converters
 
+    def path_parameters(self) -> frozenset[str]:
+        """Names of all path parameters in the normalized path."""
+        return frozenset(_OPENAPI_PATH_PATTERN.findall(self.normalized_path))
+
 
 @final
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -111,6 +125,13 @@ class InternalRouteMetadata(_BaseRouteMetadata):
 
     .. versionadded:: 0.16.0
     """
+
+    #: Names of extra view kwargs from ``path(..., kwargs)`` and ``include()``,
+    #: clients don't send them, so they are not path parameters.
+    extra_kwargs: frozenset[str] = dataclasses.field(
+        default=_NO_EXTRA_KWARGS,
+        kw_only=True,
+    )
 
 
 @final
@@ -132,6 +153,8 @@ class ExternalRouteMetadata(_BaseRouteMetadata):
 def _process_pattern(
     url_pattern: URLPattern,
     base_path: str,
+    *,
+    extra_kwargs: frozenset[str] = _NO_EXTRA_KWARGS,
 ) -> _RouteMetadata:
     joined = _join_paths(base_path, str(url_pattern.pattern), normalize=False)
 
@@ -151,6 +174,7 @@ def _process_pattern(
             InternalRouteMetadata(
                 joined,
                 is_regex=isinstance(url_pattern.pattern, RegexPattern),
+                extra_kwargs=extra_kwargs.union(url_pattern.default_args),
             ),
             url_pattern.callback.view_class,  # type: ignore[attr-defined]
         )
