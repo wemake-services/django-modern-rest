@@ -9,7 +9,7 @@ from typing_extensions import override
 
 from dmr import Body
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.streaming import StreamingResponse
+from dmr.streaming import Streaming, StreamingResponse, modify
 from dmr.streaming.sse import SSEController, SSEvent
 from dmr.test import DMRAsyncRequestFactory
 from tests.infra.streaming import get_streaming_content
@@ -23,11 +23,10 @@ class _PingSSE(SSEController[PydanticSerializer]):
     # We don't sleep between the events, we wait for the exact
     # number of pings instead. Otherwise, the test would be flaky
     # on slow machines: a late event might miss its ping window.
-    streaming_ping_seconds = 0.1
-
     _pings: int
     _new_ping: asyncio.Event
 
+    @modify(extras=Streaming(ping_seconds=0.1))
     async def post(
         self,
         parsed_body: Body[_BodyModel],

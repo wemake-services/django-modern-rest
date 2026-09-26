@@ -21,6 +21,10 @@ All migration prompts since `0.13.0` release
 are stored as descriptions in version releases on GitHub, example:
 https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
+Prompts of the three latest breaking releases also live in the
+[`dmr-upgrade`](https://github.com/wemake-services/django-modern-rest/tree/master/dmr/.agents/skills/dmr-upgrade) agent skill,
+ask your coding agent to use `$dmr-upgrade` to upgrade a project.
+
 
 ## 0.16.0 WIP
 
@@ -68,6 +72,12 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   it is not needed anymore, #1456
 - Removed `build_headers`, `actionable_headers`, `actionable_cookies`,
   `infer_return_type` methods from `dmr.metadata.ResponseModification`, #1456
+- Removed `Settings.throttling_allow_unsafe_cache`, the
+  `throttling_allow_unsafe_cache` controller attribute and endpoint parameter,
+  and `EndpointMetadata.throttling_allow_unsafe_cache`.
+  Use `allow_unsafe_cache` parameter of `SyncDjangoCache`
+  and `AsyncDjangoCache` instead, like
+  `SyncDjangoCache(allow_unsafe_cache=False)`, #1611
 - Removed `NewCookie.as_dict` method, #1456
 - `NewCookie.secure`, `CookieSpec.secure`, `NewCookie.httponly`,
   `CookieSpec.httponly` can no longer be `None`, use `False` instead, #1456
@@ -124,6 +134,15 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `Endpoint.get_operation_id` was removed, instead customize
   the `OperationIdGenerator` instance or `operation_id` metadata parameter
   to the endpoint, #1502
+- `ParameterGenerator.__call__` signature was changed
+  to accept *metadata* and *controller_cls* instead
+  of *serializer* and *context*, #1620
+- `ComponentParser.get_schema` signature was changed
+  to accept *controller_cls* instead of *serializer*, #1620
+- `SupportsFileParsing.schema_metadata` signature was changed
+  to accept *controller_cls* instead of *serializer*,
+- `FileBodyLike.media_type` signature was changed, #1620
+  now it also accepts *metadata* and *controller_cls* parameters, #1620
 - `jwt_ensure_csrf` was removed from reusable JWT cookie views,
   it is now always mandatory, #1574
 - `CookieJWTSyncAuth` and `CookieJWTAsyncAuth` now use `jwt_cookie`
@@ -131,6 +150,16 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   Previously it was the same as the `HeaderJWTSyncAuth`
   and `HeaderJWTAsyncAuth` one, so using both of them in a single endpoint
   was generating a single `jwt` security scheme and requirement, #1587
+- `validate_events` parameter was removed from `@modify` and `@validate`,
+  it was silently ignored for non-streaming controllers.
+  Use `extras=Streaming(validate_events=...)` with `dmr.streaming.modify`
+  and `dmr.streaming.validate` instead. `Controller.validate_events`
+  was removed as well, use `extras = Streaming(validate_events=...)`
+  on streaming controllers, #1612
+- `StreamingController.streaming_ping_seconds` was removed,
+  use `extras = Streaming(ping_seconds=...)` on streaming controllers
+  or `extras=Streaming(ping_seconds=...)` per endpoint instead.
+  `SSEController` still sends pings every 15 seconds by default, #1623
 
 ### Performance improvements
 
@@ -291,6 +320,11 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   endpoint, controller, settings, and metadata parameters
   to disable all semantic schema generation or semantic auth injection
   respectively, #1586
+- Added `extras=` parameter to `@modify` and `@validate` for custom
+  controllers: subclass `dmr.endpoint.Extras`, create typed decorators
+  with `ModifyEndpoint(YourExtras)` and `ValidateEndpoint(YourExtras)`,
+  and assign `extras = YourExtras(...)` on the controller to enable them
+  and to provide controller-level defaults, #1612
 
 ### Bugfixes
 
@@ -370,6 +404,22 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Now prefixes like `api/` in `build_404_handler` and `build_500_handler`
   only cover full URLs like `/api/v1`
   and do not cover partials like `/apiary/v1`, #1606
+
+### Misc
+
+- Agent skills now ship inside the `dmr` package as `dmr/.agents/skills`,
+  so `uvx library-skills` installs the skills matching the installed version
+  into any project, the Claude Code marketplace keeps working
+- Added `dmr-upgrade` agent skill with the migration prompts
+  of the three latest breaking releases
+- Split the `dmr` skill into a short `SKILL.md` and topic references,
+  fixed skill descriptions to trigger on natural requests,
+  added `agentskills validate` to `just lint`
+- Fixed `dmr-from-dj-rest-auth` entry in the Claude Code marketplace
+- Docs: every page is also published as Markdown (`<page>.md`),
+  the `M↓` button next to its title copies it,
+  `llms-full.txt` now includes the code of every example,
+  `llms.txt` now carries the version
 
 
 ## 0.15.0 (2026-09-11)
@@ -854,9 +904,9 @@ User-facing changes:
 ```md
 Apply this change to the code that uses `django-modern-rest`:
 1. Replace `dmr.response.APIRedirectError` with `dmr.response.RedirectTo`
-2. Replace `dmr.throttling.backend.DjangoCache`
-   with `dmr.throttling.backend.SyncDjangoCache` for sync throttles
-   and with `dmr.throttling.backend.AsyncDjangoCache` for async throttles
+2. Replace `dmr.throttling.backends.DjangoCache`
+   with `dmr.throttling.backends.SyncDjangoCache` for sync throttles
+   and with `dmr.throttling.backends.AsyncDjangoCache` for async throttles
 ```
 
 ### Features

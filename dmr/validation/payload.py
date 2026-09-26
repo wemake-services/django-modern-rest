@@ -17,6 +17,7 @@ from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
+    from dmr.internal.endpoint import Extras
     from dmr.openapi.objects import (
         Callback,
         ExternalDocumentation,
@@ -44,6 +45,10 @@ class _BasePayload:
     servers: Sequence['Server'] | Sentinel | None
     ignore_from_spec: bool | Sentinel
 
+    # Extras:
+    extras: 'Extras[Any] | Sentinel'
+    extras_cls: 'type[Extras[Any]] | Sentinel'
+
     # Common fields:
     validate_responses: bool | Sentinel
     exclude_validate_responses: Set[HTTPStatus] | Sentinel | None
@@ -52,7 +57,6 @@ class _BasePayload:
     exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None
     semantic_auth: bool | Sentinel
     exclude_semantic_auth: Set[str] | Sentinel | None
-    validate_events: bool | Sentinel
     error_handler: SyncErrorHandler | AsyncErrorHandler | Sentinel
     no_validate_http_spec: Set[HttpSpec] | Sentinel | None
     parsers: Sequence[Parser] | Sentinel
@@ -62,7 +66,6 @@ class _BasePayload:
     throttling: (
         Sequence['SyncThrottle'] | Sequence['AsyncThrottle'] | Sentinel | None
     )
-    throttling_allow_unsafe_cache: bool | Sentinel | None
 
 
 @final
@@ -100,7 +103,6 @@ class ValidateEndpointPayload(_BasePayload):
             exclude_semantic_responses=EMPTY,
             semantic_auth=EMPTY,
             exclude_semantic_auth=EMPTY,
-            validate_events=EMPTY,
             error_handler=EMPTY,
             no_validate_http_spec=EMPTY,
             parsers=EMPTY,
@@ -108,7 +110,8 @@ class ValidateEndpointPayload(_BasePayload):
             validate_negotiation=EMPTY,
             auth=EMPTY,
             throttling=EMPTY,
-            throttling_allow_unsafe_cache=EMPTY,
+            extras=EMPTY,
+            extras_cls=EMPTY,
         )
 
 

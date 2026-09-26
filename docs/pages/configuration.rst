@@ -36,8 +36,8 @@ Configuration levels
 
 Most of the settings can be also configured on the controller level
 with :class:`~dmr.controller.Controller` attributes
-and on the endpoint level with :func:`~dmr.endpoint.modify`
-and :func:`~dmr.endpoint.validate` parameters.
+and on the endpoint level with :data:`~dmr.endpoint.modify`
+and :data:`~dmr.endpoint.validate` parameters.
 
 The most specific level always wins:
 
@@ -278,8 +278,8 @@ Response handling
     You can also switch off this validation per-controller
     with :attr:`~dmr.controller.Controller.validate_responses`
     and per-endpoint with ``validate_responses`` argument
-    to :func:`~dmr.endpoint.modify`
-    and :func:`~dmr.endpoint.validate`.
+    to :data:`~dmr.endpoint.modify`
+    and :data:`~dmr.endpoint.validate`.
 
   We recommend setting this value to ``not DEBUG``.
 
@@ -557,33 +557,6 @@ Throttling
 
   .. versionchanged:: 0.16.0
     Controller and endpoint values are not merged anymore.
-
-
-.. data:: dmr.settings.Settings.throttling_allow_unsafe_cache
-
-  Default: ``True``
-
-  By default we emit
-  :class:`~dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning`
-  at startup if an unsafe cache backend is detected
-  for throttling backend instance (``LocMemCache``, ``DummyCache``).
-  These backends do not share state between processes,
-  so throttling counters are not consistent in multi-process deployments.
-
-  When set to ``False``,
-  we raise :exc:`~django.core.exceptions.ImproperlyConfigured` instead.
-
-  Set to ``None`` to completely disable this check:
-  no warnings or errors will be produced.
-
-  .. code-block:: python
-    :caption: settings.py
-
-    >>> from dmr.settings import Settings
-
-    >>> DMR_SETTINGS = {
-    ...     Settings.throttling_allow_unsafe_cache: False,
-    ... }
 
 
 HTTP Spec validation

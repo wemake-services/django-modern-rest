@@ -60,7 +60,6 @@ class Settings(enum.StrEnum):
     validate_negotiation = 'validate_negotiation'
     auth = 'auth'
     throttling = 'throttling'
-    throttling_allow_unsafe_cache = 'throttling_allow_unsafe_cache'
     no_validate_http_spec = 'no_validate_http_spec'
     validate_responses = 'validate_responses'
     exclude_validate_responses = 'exclude_validate_responses'
@@ -136,7 +135,6 @@ class SettingsDict(TypedDict, total=False):
         Sequence['AsyncThrottle | SyncOrAsyncThrottle[Any, Any]']
         | Sequence['SyncThrottle | SyncOrAsyncThrottle[Any, Any]']
     )
-    throttling_allow_unsafe_cache: bool | None
     no_validate_http_spec: Set[HttpSpec]
     validate_responses: bool
     exclude_validate_responses: Set[HTTPStatus]
@@ -168,7 +166,6 @@ _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.validate_negotiation: EMPTY,
     Settings.auth: [],
     Settings.throttling: [],
-    Settings.throttling_allow_unsafe_cache: True,
     # OpenAPI settings:
     Settings.openapi_config: OpenAPIConfig(
         title='Your Awesome Project',

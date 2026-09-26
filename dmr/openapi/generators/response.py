@@ -71,14 +71,16 @@ class ResponseGenerator:
         headers.update(
             self._get_headers(
                 response_spec,
-                controller_cls.serializer,
+                metadata,
+                controller_cls,
                 context,
             ),
         )
         headers.update(
             self._get_cookies(
                 response_spec,
-                controller_cls.serializer,
+                metadata,
+                controller_cls,
                 context,
             ),
         )
@@ -103,9 +105,9 @@ class ResponseGenerator:
             headers=dict(sorted(headers.items())) or None,
             content=self._get_content(
                 response_spec,
-                controller_cls.serializer,
-                context,
                 metadata,
+                controller_cls,
+                context,
                 schema_field_name=schema_field_name,
                 used_for_response=used_for_response,
             ),
@@ -114,7 +116,8 @@ class ResponseGenerator:
     def _get_headers(
         self,
         response_spec: 'ResponseSpec',
-        serializer: type['BaseSerializer'],
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> dict[str, Header | Reference]:
         if not response_spec.headers:
@@ -129,7 +132,10 @@ class ResponseGenerator:
                 ),
                 deprecated=header_spec.deprecated or None,
                 required=header_spec.required or None,
-                schema=context.generators.schema(str, serializer),
+                schema=context.generators.schema(
+                    str,
+                    controller_cls.serializer,
+                ),
             )
             for name, header_spec in response_spec.headers.items()
         }
@@ -137,22 +143,22 @@ class ResponseGenerator:
     def _get_cookies(
         self,
         response_spec: 'ResponseSpec',
-        serializer: type['BaseSerializer'],
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> dict[str, Header | Reference]:
-        # Import cycle:
         if not response_spec.cookies:
             return {}
 
         cookies: dict[str, Header | Reference] = {}
         for name, cookie_spec in response_spec.cookies.items():
-            schema = context.generators.schema(str, serializer)
+            schema = context.generators.schema(str, controller_cls.serializer)
             # for mypy: `str` cannot return a reference, it is a primitive
             assert isinstance(schema, Schema)  # noqa: S101
             # A `Set-Cookie` value is `name=value`, so we only generate
             # the value part. `replace` copies the schema, so the example
             # does not land on the shared `str` one:
-            cookie_value = generate_example(str, serializer)
+            cookie_value = generate_example(str, controller_cls.serializer)
             schema = set_generated_example(
                 dataclasses.replace(schema),
                 None if cookie_value is None else f'{name}={cookie_value}',
@@ -172,9 +178,9 @@ class ResponseGenerator:
     def _get_content(
         self,
         response_spec: 'ResponseSpec',
-        serializer: type['BaseSerializer'],
-        context: 'OpenAPIContext',
         metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
+        context: 'OpenAPIContext',
         *,
         schema_field_name: str,
         used_for_response: bool,
@@ -196,7 +202,7 @@ class ResponseGenerator:
                             renderer.content_type,
                             response_spec.return_type,
                         ),
-                        serializer,
+                        controller_cls.serializer,
                         used_for_response=used_for_response,
                     ),
                 },

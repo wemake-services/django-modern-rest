@@ -11,6 +11,7 @@ from dmr.throttling import (
     SyncOrAsyncThrottle,
     SyncThrottle,
 )
+from dmr.throttling.backends import AsyncDjangoCache, SyncDjangoCache
 
 
 def test_throttle_sync_mix() -> None:
@@ -20,7 +21,13 @@ def test_throttle_sync_mix() -> None:
         class _SyncEndpointController(
             Controller[PydanticSerializer],
         ):
-            throttling = (AsyncThrottle(1, Rate.second),)
+            throttling = (
+                AsyncThrottle(
+                    1,
+                    Rate.second,
+                    backend=AsyncDjangoCache(allow_unsafe_cache=None),
+                ),
+            )
 
             def get(self) -> str:
                 raise NotImplementedError
@@ -33,7 +40,13 @@ def test_throttle_async_mix() -> None:
         class _AsyncEndpointController(
             Controller[PydanticSerializer],
         ):
-            throttling = (SyncThrottle(1, Rate.second),)
+            throttling = (
+                SyncThrottle(
+                    1,
+                    Rate.second,
+                    backend=SyncDjangoCache(allow_unsafe_cache=None),
+                ),
+            )
 
             async def get(self) -> str:
                 raise NotImplementedError
@@ -49,8 +62,16 @@ def test_sync_or_async_throttle_not_allowed_at_controller_level(  # noqa: WPS118
         ):
             throttling = (  # type: ignore[assignment]
                 SyncOrAsyncThrottle(
-                    SyncThrottle(1, Rate.second),
-                    AsyncThrottle(1, Rate.second),
+                    SyncThrottle(
+                        1,
+                        Rate.second,
+                        backend=SyncDjangoCache(allow_unsafe_cache=None),
+                    ),
+                    AsyncThrottle(
+                        1,
+                        Rate.second,
+                        backend=AsyncDjangoCache(allow_unsafe_cache=None),
+                    ),
                 ),
             )
 
@@ -63,8 +84,16 @@ def test_sync_or_async_throttle_not_allowed_at_endpoint_level(  # noqa: WPS118
     """Ensures SyncOrAsyncThrottle raises an error at endpoint level."""
     wrong_throttling: list[SyncThrottle] = [  # pyrefly: ignore[bad-assignment]
         SyncOrAsyncThrottle(  # type: ignore[list-item]
-            SyncThrottle(1, Rate.second),
-            AsyncThrottle(1, Rate.second),
+            SyncThrottle(
+                1,
+                Rate.second,
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
+            AsyncThrottle(
+                1,
+                Rate.second,
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+            ),
         ),
     ]
     with pytest.raises(EndpointMetadataError, match='SyncOrAsyncThrottle'):
@@ -84,8 +113,16 @@ def test_same_instance_reused_for_sync_and_async(
     settings: LazySettings,
 ) -> None:
     """Ensures the same SyncOrAsyncThrottle yields the same inner instances."""
-    sync_throttle = SyncThrottle(1, Rate.second)
-    async_throttle = AsyncThrottle(1, Rate.second)
+    sync_throttle = SyncThrottle(
+        1,
+        Rate.second,
+        backend=SyncDjangoCache(allow_unsafe_cache=None),
+    )
+    async_throttle = AsyncThrottle(
+        1,
+        Rate.second,
+        backend=AsyncDjangoCache(allow_unsafe_cache=None),
+    )
     instance = SyncOrAsyncThrottle(sync_throttle, async_throttle)
     settings.DMR_SETTINGS = {
         Settings.throttling: [instance],

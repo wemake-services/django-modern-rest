@@ -10,7 +10,7 @@ from typing_extensions import Sentinel, deprecated, override
 
 from dmr import throttling as dmr_throttling
 from dmr.cookies import NewCookie
-from dmr.endpoint import Endpoint
+from dmr.endpoint import Endpoint, Extras
 from dmr.errors import ErrorModel, ErrorType, format_error
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.internal.docstrings import resolve_summary_and_description
@@ -91,10 +91,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             Overrides settings value.
         exclude_semantic_auth: Set of semantic security requirements names
             that should not be collected. Overrides settings value.
-        validate_events: Should this endpoint validate events?
-            If not set, defaults to the ``validate_responses`` value.
-            This value only matters if the response
-            will be a streaming response that supports event validation.
         responses: List of responses schemas that this controller can return.
             Overrides ``'responses'`` key in the settings,
             can be overridden per endpoint.
@@ -126,8 +122,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             of :class:`dmr.throttling.AsyncThrottle`.
             Overrides the settings value, can be overridden per endpoint.
             Set it to ``None`` to disable throttling of this controller.
-        throttling_allow_unsafe_cache: Should this controller allow
-            unsafe throttle Django cache backends?
         error_model: Schema type that represents
             and validates common error responses.
         is_abstract: Whether or not this controller is abstract.
@@ -142,6 +136,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             :class:`~dmr.exceptions.EndpointMetadataError` for them.
         is_async: Whether or not this controller is async.
         streaming: Does this controller work with streaming responses like SSE?
+        extras: Default extras instance for this controller.
+            Setting it enables ``extras=`` in ``@modify`` and ``@validate``
+            for all endpoints and provides controller-level defaults.
+            ``EMPTY`` means that extras are not supported.
+            See :ref:`modify-and-validate-with-extras` to learn more.
         controller_validator_cls: Runs full controller validation on definition.
         annotations_context: Inference context to call
             :func:`typing.get_type_hints` for this controller.
@@ -205,7 +204,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     )
     semantic_auth: bool | Sentinel = EMPTY
     exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY
-    validate_events: ClassVar[bool | Sentinel] = EMPTY
     responses: ClassVar[Sequence[ResponseSpec] | Sentinel | None] = EMPTY
     allowed_http_methods: ClassVar[Set[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:
@@ -223,11 +221,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         | Sentinel
         | None
     ] = EMPTY
-    throttling_allow_unsafe_cache: ClassVar[bool | Sentinel | None] = EMPTY
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
     is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
     streaming: ClassVar[bool] = False
+    extras: ClassVar[Extras[Any] | Sentinel] = EMPTY
     annotations_context: ClassVar[AnnotationsContext] = AnnotationsContext()
 
     # OpenAPI:
@@ -253,13 +251,14 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
         # Explicit `is_abstract` definitions always win. We don't use
         # `getattr`, because subclasses of explicitly abstract controllers
-        # must become concrete again, unless they declare `is_abstract`
-        # themselves. `None` means that nothing was declared:
-        explicit_is_abstract = cls.__dict__.get('is_abstract')
+        # must become concrete again,
+        # unless they declare `is_abstract` themselves.
+        explicit_is_abstract = cls.__dict__.get('is_abstract', False)
         if explicit_is_abstract:
             # Abstract controllers have nothing to serve,
             # so endpoints are only built in a concrete context:
             cls.api_endpoints = {}
+            cls.is_abstract = True
         else:
             # Now it is validated that we don't have intersections.
             cls.api_endpoints = {
@@ -269,10 +268,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 )
                 for canonical, meth in cls._find_existing_http_methods().items()
             }
-        # A controller that has no endpoints is abstract either way:
-        cls.is_abstract = bool(explicit_is_abstract) or not bool(
-            cls.api_endpoints,
-        )
+            # A controller that has no endpoints is abstract either way:
+            cls.is_abstract = not bool(cls.api_endpoints)
         cls.is_async = cls.controller_validator_cls()(cls)
 
     @override
