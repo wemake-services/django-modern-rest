@@ -124,6 +124,15 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `Endpoint.get_operation_id` was removed, instead customize
   the `OperationIdGenerator` instance or `operation_id` metadata parameter
   to the endpoint, #1502
+- `ParameterGenerator.__call__` signature was changed
+  to accept *metadata* and *controller_cls* instead
+  of *serializer* and *context*,
+- `ComponentParser.get_schema` signature was changed
+  to accept *controller_cls* instead of *serializer*,
+- `SupportsFileParsing.schema_metadata` signature was changed
+  to accept *controller_cls* instead of *serializer*,
+- `FileBodyLike.media_type` signature was changed,
+  now it also accepts *metadata* and *controller_cls* parameters,
 - `jwt_ensure_csrf` was removed from reusable JWT cookie views,
   it is now always mandatory, #1574
 - `CookieJWTSyncAuth` and `CookieJWTAsyncAuth` now use `jwt_cookie`

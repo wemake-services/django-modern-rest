@@ -14,6 +14,7 @@ from django.http import HttpRequest
 from django.utils.http import parse_header_parameters
 from typing_extensions import override
 
+from dmr.controller import Controller
 from dmr.files import FileBody, FileBodyLike
 from dmr.metadata import EndpointMetadata
 from dmr.openapi import OpenAPIContext
@@ -101,7 +102,7 @@ class OctetStreamParser(SupportsFileParsing, Parser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type[BaseSerializer],
+        controller_cls: type[Controller[BaseSerializer]],
         context: OpenAPIContext,
     ) -> type[FileBodyLike]:
         """Provide schema for the file request spec."""
