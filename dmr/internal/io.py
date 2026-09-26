@@ -1,9 +1,22 @@
 import asyncio
-from collections.abc import AsyncIterable, AsyncIterator, Iterator
+from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Iterator
 from contextlib import aclosing, closing, nullcontext
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Protocol, TypeGuard, TypeVar
 
 _ItemT = TypeVar('_ItemT')
+
+
+class _SupportsAclose(Protocol):
+    """An object that can be asynchronously closed."""
+
+    def aclose(self) -> Awaitable[Any]: ...
+
+
+def _supports_aclose(
+    potentially_closable: object,
+) -> TypeGuard[_SupportsAclose]:
+    """Return whether *potentially_closable* provides an async close method."""
+    return callable(getattr(potentially_closable, 'aclose', None))
 
 
 if TYPE_CHECKING:
@@ -41,12 +54,8 @@ def aiter_to_iter(aiterator: AsyncIterator[_ItemT]) -> Iterator[_ItemT]:
 
         # After we received an exception, we want to explicitly close any
         # async generators.
-        try:
-            aclose = aiterator.aclose  # type: ignore[attr-defined]
-        except AttributeError:  # pragma: no cover
-            pass  # noqa: WPS420
-        else:
-            loop.run_until_complete(aclose())  # pyright: ignore[reportUnknownArgumentType]
+        if _supports_aclose(aiterator):
+            loop.run_until_complete(aiterator.aclose())
 
 
 def maybe_aclosing(
@@ -58,6 +67,6 @@ def maybe_aclosing(
     # and not do any cleanup.
     return (
         aclosing(streaming_content)
-        if hasattr(streaming_content, 'aclose')
+        if _supports_aclose(streaming_content)
         else nullcontext()
     )
