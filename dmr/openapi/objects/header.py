@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
+from dmr.internal.types import EMPTY
+
 if TYPE_CHECKING:
     from dmr.openapi.objects.example import Example
     from dmr.openapi.objects.media_type import MediaType
@@ -20,6 +22,8 @@ class Header:
 
     .. versionchanged:: 0.16.0
         ``content`` values can now be references.
+        ``example`` now defaults to :data:`~dmr.types.EMPTY`
+        instead of ``None``, because ``None`` is a valid value for it.
 
     """
 
@@ -29,6 +33,6 @@ class Header:
     deprecated: bool | None = None
     style: str | None = None
     explode: bool | None = None
-    example: Any | None = None
+    example: Any = EMPTY
     examples: dict[str, 'Example | Reference'] | None = None
     content: dict[str, 'MediaType | Reference'] | None = None

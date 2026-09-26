@@ -8,6 +8,7 @@ from dmr.openapi.mappers.example import (
 )
 from dmr.openapi.mappers.schema_loader import load_schema
 from dmr.openapi.objects import Reference, Schema
+from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext
@@ -218,7 +219,7 @@ class SchemaGenerator:
         annotation: Any,
         serializer: type['BaseSerializer'],
     ) -> None:
-        if not schema.example and not schema.examples:  # pragma: no branch
+        if schema.example is EMPTY and not schema.examples:  # pragma: no branch
             set_generated_example(
                 schema,
                 generate_example(annotation, serializer),

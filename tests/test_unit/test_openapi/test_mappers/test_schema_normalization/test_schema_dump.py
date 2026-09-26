@@ -9,10 +9,16 @@ from dmr.openapi.mappers.schema_normalization import (
     _dump_value,
     dump_schema,
 )
-from dmr.openapi.objects import (
+from dmr.openapi.objects import (  # noqa: WPS235
+    Example,
     Header,
+    Link,
+    MediaType,
+    MediaTypeMetadata,
     OpenAPIFormat,
     OpenAPIType,
+    Parameter,
+    ParameterMetadata,
     Reference,
     Schema,
     Tag,
@@ -258,3 +264,50 @@ def test_dump_schema_base_objects(
     """Ensure that ``_dump_value`` calls ``dump_schema`` correctly."""
     assert dump_schema(input_value) == expected_output
     assert _dump_value(input_value) == expected_output
+
+
+@pytest.mark.parametrize(
+    ('input_value', 'expected_output'),
+    [
+        (Schema(const=None), {'const': None}),
+        (Schema(default=None), {'default': None}),
+        (Schema(example=None), {'example': None}),
+        (Example(value=None), {'value': None}),
+        (Example(data_value=None), {'dataValue': None}),
+        (Header(example=None), {'example': None}),
+        (MediaType(example=None), {'example': None}),
+        (MediaTypeMetadata(example=None), {'example': None}),
+        (
+            Parameter(name='test', param_in='query', example=None),
+            {'name': 'test', 'in': 'query', 'example': None},
+        ),
+        (ParameterMetadata(example=None), {'example': None}),
+        (Link(request_body=None), {'requestBody': None}),
+    ],
+)
+def test_dump_schema_none_values(
+    *,
+    input_value: Any,
+    expected_output: Any,
+) -> None:
+    """Ensure that ``None`` is dumped for fields where it is a real value."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1619
+    assert dump_schema(input_value) == expected_output
+
+
+@pytest.mark.parametrize(
+    'input_value',
+    [
+        Schema(),
+        Example(),
+        Header(),
+        MediaType(),
+        MediaTypeMetadata(),
+        ParameterMetadata(),
+        Link(),
+    ],
+)
+def test_dump_schema_unset_values(input_value: Any) -> None:
+    """Ensure that unset fields are not dumped."""
+    assert dump_schema(input_value) == {}
