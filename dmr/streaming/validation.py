@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from dmr.renderers import Renderer
     from dmr.serializer import BaseSerializer
     from dmr.streaming.controller import StreamingController
+    from dmr.streaming.endpoint import StreamingExtras
 
 
 def validate_event_type(
@@ -114,7 +115,7 @@ class StreamingValidator:
         return cls(
             event_model=_resolve_event_model(metadata, status_code),
             serializer=controller.serializer,
-            validate_events=metadata.validate_events,
+            validate_events=metadata.extras.validate_events,
         )
 
 
@@ -143,13 +144,13 @@ class StreamingResponseValidator(ResponseValidator):
 
 
 def _resolve_event_model(
-    metadata: EndpointMetadata,
+    metadata: EndpointMetadata['StreamingExtras'],
     status_code: HTTPStatus,
 ) -> Any:
     try:
         return metadata.responses[status_code].return_type
     except (KeyError, ValueError):
-        if metadata.validate_events:
+        if metadata.extras.validate_events:
             raise EndpointMetadataError(
                 'Cannot resolve event model for endpoint '
                 f'{metadata.endpoint_name!r} and {status_code=}',

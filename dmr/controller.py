@@ -91,10 +91,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             Overrides settings value.
         exclude_semantic_auth: Set of semantic security requirements names
             that should not be collected. Overrides settings value.
-        validate_events: Should this endpoint validate events?
-            If not set, defaults to the ``validate_responses`` value.
-            This value only matters if the response
-            will be a streaming response that supports event validation.
         responses: List of responses schemas that this controller can return.
             Overrides ``'responses'`` key in the settings,
             can be overridden per endpoint.
@@ -205,7 +201,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     )
     semantic_auth: bool | Sentinel = EMPTY
     exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY
-    validate_events: ClassVar[bool | Sentinel] = EMPTY
     responses: ClassVar[Sequence[ResponseSpec] | Sentinel | None] = EMPTY
     allowed_http_methods: ClassVar[Set[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:

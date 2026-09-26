@@ -16,6 +16,7 @@ from dmr.exceptions import (
     ValidationError,
 )
 from dmr.internal.context import SerializerContext as SerializerContext
+from dmr.internal.endpoint import Extras as Extras
 from dmr.internal.endpoint import ModifyAnyCallable as ModifyAnyCallable
 from dmr.internal.endpoint import ModifyAsyncCallable as ModifyAsyncCallable
 from dmr.internal.endpoint import ModifyEndpoint as ModifyEndpoint
@@ -61,6 +62,7 @@ class Endpoint:  # noqa: WPS214
         Endpoint no longer creates ``HttpResponseBase`` objects
         from modifications, now ``ResponseValidator`` returns full responses.
         ``func`` is now public, but ``__call__`` is removed.
+        Added *extras_cls*.
 
     """
 
@@ -104,6 +106,7 @@ class Endpoint:  # noqa: WPS214
         ResponseValidator
     )
     payload_builder_cls: ClassVar[type[PayloadBuilder]] = PayloadBuilder
+    extras_cls: ClassVar[type[Extras[Any]] | None] = None
 
     def __init__(
         self,
@@ -151,6 +154,7 @@ class Endpoint:  # noqa: WPS214
             metadata_cls=self.metadata_cls,
             metadata_merger_cls=self.metadata_merger_cls,
             response_modification_cls=self.response_modification_cls,
+            extras_cls=self.extras_cls,
             component_parsers=self._serializer_context.component_parsers,
             type_annotations=type_annotations,
         )()
@@ -482,8 +486,8 @@ class Endpoint:  # noqa: WPS214
     ) -> None:
         # We validated this during the startup:
         metadata: EndpointMetadata[Any, AsyncAuth, AsyncThrottle] = (
-            self.metadata
-        )  # type: ignore[assignment]
+            self.metadata  # type: ignore[assignment]
+        )
 
         # First round of throttling:
         if metadata.throttling_before_auth is not None:

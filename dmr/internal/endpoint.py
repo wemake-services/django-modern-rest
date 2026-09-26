@@ -1,22 +1,30 @@
 from __future__ import annotations
 
+import abc
 import dataclasses
 from collections.abc import Awaitable, Callable, Mapping, Sequence, Set
 from http import HTTPStatus
-from typing import (
+from typing import (  # noqa: WPS235
     TYPE_CHECKING,
     Any,
     Final,
     Generic,
     Literal,
     Never,
+    Self,
     TypeAlias,
     final,
     overload,
 )
 
 from django.http import HttpRequest, HttpResponseBase
-from typing_extensions import ParamSpec, Protocol, Sentinel, TypeVar, deprecated, Self
+from typing_extensions import (
+    ParamSpec,
+    Protocol,
+    Sentinel,
+    TypeVar,
+    deprecated,
+)
 
 from dmr.internal.types import StrOrPromise
 from dmr.types import EMPTY
@@ -43,9 +51,9 @@ if TYPE_CHECKING:
     from dmr.settings import HttpSpec
     from dmr.throttling import AsyncThrottle, SyncThrottle
     from dmr.validation import (
+        EndpointMetadataBuilder,
         ModifyEndpointPayload,
         ValidateEndpointPayload,
-        EndpointMetadataBuilder,
     )
 
 
@@ -180,26 +188,45 @@ _CallableOrClassmethod: TypeAlias = (
 )
 
 
-class ExtrasLike(Protocol):
+_BuiltExtrasT_co = TypeVar('_BuiltExtrasT_co', covariant=True)
+
+
+class Extras(Generic[_BuiltExtrasT_co]):
     """
-    Protocol that describes how any extras should look like.
+    Abstract base class that describes how any extras should look like.
+
+    Extras are extra settings for custom controllers, they are passed
+    as ``extras=`` to ``@modify`` and ``@validate``.
+    Each endpoint type declares which extras it supports
+    in :attr:`~dmr.endpoint.Endpoint.extras_cls`.
+
+    The type parameter is the type of the built value,
+    it is stored in :attr:`~dmr.metadata.EndpointMetadata.extras`.
 
     .. versionadded:: 0.16.0
     """
 
     @classmethod
+    @abc.abstractmethod
     def build(
         cls,
         payload_extras: Self | Sentinel,
-        controller_cls: type['Controller[BaseSerializer]'],
-        builder: 'EndpointMetadataBuilder',
-    ) -> Any | None:
+        controller_cls: type[Controller[BaseSerializer]],
+        builder: EndpointMetadataBuilder,
+    ) -> _BuiltExtrasT_co:
         """
         Method that we need to build the final value.
 
+        It is called for all endpoints that support these extras,
+        even when ``extras=`` is not passed to the decorator
+        or when there's no decorator at all.
+        In this case *payload_extras* is ``EMPTY``.
+
         We pass *controller_cls*, so user can take any needed values from there.
         Or from settings, or from where else.
-        *builder* provides other context from the whole payload.
+        *builder* provides other context from the whole payload,
+        use :meth:`~dmr.validation.EndpointMetadataBuilder.merger`
+        to resolve configuration layers the same way other fields do.
 
         The value returned from here will be used in the final metadata.
         It is called during the import-time and can be slow.
@@ -207,7 +234,7 @@ class ExtrasLike(Protocol):
         ...
 
 
-_ExtrasT = TypeVar('_ExtrasT', bound=ExtrasLike)
+_ExtrasT = TypeVar('_ExtrasT', bound=Extras[Any], default=Never)
 
 
 @final

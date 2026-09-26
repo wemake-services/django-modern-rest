@@ -499,7 +499,7 @@ _ThrottlingT = TypeVar(
     default='SyncThrottle | AsyncThrottle',
 )
 
-_ExtrasT = TypeVar('_ExtrasT', default='Any')
+_ExtrasT = TypeVar('_ExtrasT', default=Any)
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -586,7 +586,9 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
             OpenAPI Object level, it will be overridden by this value.
         ignore_from_spec: If set to ``True``, this endpoint
             would not be added to the final OpenAPI spec.
-        extras: Extra settings for custom controllers.
+        extras: Extra settings for custom controllers,
+            built by :attr:`~dmr.endpoint.Endpoint.extras_cls`.
+            It is ``None`` when the endpoint does not support extras.
             See :ref:`modify-and-validate-with-extras` to learn more.
 
     ``method`` can be a custom name, not specified
@@ -646,7 +648,7 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
     ignore_from_spec: bool
 
     # Extras:
-    extras: _ExtrasT | None
+    extras: _ExtrasT
 
     # Pre-computed fields:
     throttling: list[_ThrottlingT] | None = dataclasses.field(init=False)

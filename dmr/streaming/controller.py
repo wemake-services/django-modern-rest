@@ -9,10 +9,12 @@ from dmr.controller import Controller
 from dmr.cookies import NewCookie, set_cookies
 from dmr.endpoint import Endpoint
 from dmr.internal.types import call_init_subclass
+from dmr.metadata import EndpointMetadata
 from dmr.negotiation import request_renderer
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings, default_renderer, resolve_setting
+from dmr.streaming.endpoint import Streaming, StreamingExtras
 from dmr.streaming.metadata import StreamingResponseModification
 from dmr.streaming.renderer import StreamingRenderer
 from dmr.streaming.stream import StreamingResponse
@@ -20,11 +22,15 @@ from dmr.streaming.validation import (
     StreamingResponseValidator,
     StreamingValidator,
 )
+from dmr.types import EMPTY
 
 
 class _StreamingEndpoint(Endpoint):
+    metadata: EndpointMetadata[StreamingExtras]  # pyright: ignore[reportIncompatibleVariableOverride]
+
     response_modification_cls = StreamingResponseModification
     response_validator_cls = StreamingResponseValidator
+    extras_cls = Streaming
 
     __slots__ = ()
 
@@ -48,8 +54,18 @@ class StreamingController(Controller[_SerializerT_co]):
 
     streaming = True
     endpoint_cls = _StreamingEndpoint
+    api_endpoints: ClassVar[Mapping[str, _StreamingEndpoint]]  # pyright: ignore[reportIncompatibleVariableOverride]
 
     # Customizable attributes for subclasses:
+    validate_events: ClassVar[bool | Sentinel] = EMPTY
+    """
+    Should endpoints of this controller validate events?
+
+    If not set, defaults to :data:`~dmr.settings.Settings.validate_events`
+    and then to the ``validate_responses`` value.
+    Can be overridden per endpoint with :class:`~dmr.streaming.Streaming`.
+    """
+
     streaming_ping_seconds: ClassVar[float | None] = None
     """
     Optional ping keep alive event support.

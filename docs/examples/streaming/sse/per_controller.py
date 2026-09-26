@@ -16,3 +16,4 @@ class UserEventsController(SSEController[MsgspecSerializer]):
 
 
 # run: {"controller": "UserEventsController", "method": "get", "url": "/api/user/events/"}  # noqa: ERA001, E501
+# openapi: {"controller": "UserEventsController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
