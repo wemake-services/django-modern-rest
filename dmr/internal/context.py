@@ -115,6 +115,8 @@ class SerializerContext:
         context = self._collect_context(endpoint, controller)
         return self._validate_context(context, controller)
 
+    # Import time methods:
+
     def _build_fields(
         self,
     ) -> tuple[_ContextFields, _ContentTypeOverrides]:
@@ -175,6 +177,8 @@ class SerializerContext:
             },
         }
 
+    # Runtime methods:
+
     def _collect_context(
         self,
         endpoint: 'Endpoint',
@@ -200,14 +204,14 @@ class SerializerContext:
         serializer = controller.serializer
         context_model = self._default_model
         if self._conditional_models:
-            context_model = self._conditional_models.get(  # pyrefly: ignore[no-matching-overload]
+            context_model = self._conditional_models.get(  # pyrefly: ignore[no-matching-overload]  # pyright: ignore[reportUnknownVariableType]
                 controller.request.content_type,  # type: ignore[arg-type]
                 context_model,
             )
         try:
             parsed = serializer.from_python(
                 context,
-                context_model.model,
+                context_model.model,  # pyright: ignore[reportUnknownMemberType]
                 strict=self.strict_validation,
             )
         except serializer.validation_error as exc:
@@ -215,6 +219,6 @@ class SerializerContext:
                 serializer.serialize_validation_error(exc),
                 status_code=HTTPStatus.BAD_REQUEST,
             ) from None
-        if context_model.to_kwargs is None:
+        if context_model.to_kwargs is None:  # pyright: ignore[reportUnknownMemberType]
             return parsed  # type: ignore[no-any-return]
-        return context_model.to_kwargs(parsed)
+        return context_model.to_kwargs(parsed)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]

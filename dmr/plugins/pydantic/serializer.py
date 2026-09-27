@@ -264,12 +264,13 @@ class PydanticSerializer(BaseSerializer):
 
         """
         if all(field.default is EMPTY for field in fields.values()):
+            annotations = {
+                field_name: field.annotation
+                for field_name, field in fields.items()
+            }
             typed_dict = TypedDict(  # type: ignore[misc]
                 name,  # pyright: ignore[reportArgumentType]  # pyrefly: ignore[name-mismatch]
-                {
-                    field_name: field.annotation
-                    for field_name, field in fields.items()
-                },
+                annotations,  # pyright: ignore[reportArgumentType]
                 total=True,
             )
             _get_cached_type_adapter(typed_dict)  # prepare during import time
