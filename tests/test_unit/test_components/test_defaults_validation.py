@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Optional, final
+from typing import Annotated, Any, Optional, Union
 
 import pydantic
 import pytest
@@ -9,7 +9,6 @@ from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.plugins.pydantic import PydanticSerializer
 
 
-@final
 class _Model(pydantic.BaseModel):
     name: str
 
@@ -21,9 +20,12 @@ _OptionalBody = TypeAliasType('_OptionalBody', Optional[Body[_Model]])  # noqa: 
     'annotation',
     [
         Body[_Model] | None,
+        Union[Body[_Model], str],  # noqa: UP007
+        Body[_Model] | str,
         Optional[Body[_Model]],  # noqa: UP045
         list[Body[_Model]],
         dict[str, Body[_Model]],
+        dict[Body[str], _Model],
         Annotated[Body[_Model] | None, 'metadata'],
         _OptionalBody,
     ],
@@ -35,7 +37,6 @@ def test_hidden_component_annotation(annotation: Any) -> None:
         match='has a component hidden inside',
     ):
 
-        @final
         class _Controller(Controller[PydanticSerializer]):
             def post(self, parsed_body: annotation = None) -> str:  # pyright: ignore[reportInvalidTypeForm]
                 raise NotImplementedError
@@ -53,7 +54,6 @@ def test_hidden_component_annotation(annotation: Any) -> None:
 def test_regular_parameters_are_allowed(annotation: Any) -> None:
     """Ensures that regular parameters with defaults are not components."""
 
-    @final
     class _Controller(Controller[PydanticSerializer]):
         def get(
             self,
@@ -70,7 +70,6 @@ def test_regular_parameters_are_allowed(annotation: Any) -> None:
 def test_optional_inside_component_is_allowed() -> None:
     """Ensures that `Query[Model | None] = None` is the correct form."""
 
-    @final
     class _Controller(Controller[PydanticSerializer]):
         def get(self, parsed_query: Query[_Model | None] = None) -> str:
             raise NotImplementedError

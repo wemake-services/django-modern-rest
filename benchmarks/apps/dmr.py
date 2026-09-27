@@ -2,7 +2,6 @@ import datetime as dt
 import decimal
 import enum
 import uuid
-from typing import Annotated
 
 import msgspec
 from django.conf import settings

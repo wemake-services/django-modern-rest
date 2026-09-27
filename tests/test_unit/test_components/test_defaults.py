@@ -87,7 +87,6 @@ def _build_controller(
     serializer: type[BaseSerializer],
     model: Any,
 ) -> type[Controller]:  # type: ignore[type-arg]
-    @final
     class _DefaultsController(Controller[serializer]):  # type: ignore[valid-type]
         def post(  # noqa: WPS211
             self,
@@ -115,6 +114,7 @@ def _build_controller(
 )
 def test_all_defaults(
     dmr_rf: DMRRequestFactory,
+    *,
     serializer: type[BaseSerializer],
     model: Any,
 ) -> None:
@@ -142,6 +142,7 @@ def test_all_defaults(
 )
 def test_all_provided(
     dmr_rf: DMRRequestFactory,
+    *,
     serializer: type[BaseSerializer],
     model: Any,
 ) -> None:
@@ -176,6 +177,7 @@ def test_all_provided(
 )
 def test_invalid_data_with_defaults(
     dmr_rf: DMRRequestFactory,
+    *,
     serializer: type[BaseSerializer],
     model: Any,
 ) -> None:
@@ -278,6 +280,7 @@ class _ModelDefaultsController(Controller[PydanticSerializer]):
 )
 def test_model_defaults(
     dmr_rf: DMRRequestFactory,
+    *,
     request_kwargs: dict[str, Any],
     expected: dict[str, Any],
 ) -> None:
@@ -314,6 +317,7 @@ def test_body_null_is_not_default(dmr_rf: DMRRequestFactory) -> None:
 
 @pytest.mark.parametrize(('serializer', 'default'), mutable_defaults)
 def test_mutable_default_is_rejected(
+    *,
     serializer: type[BaseSerializer],
     default: Any,
 ) -> None:
@@ -325,7 +329,6 @@ def test_mutable_default_is_rejected(
     """
     with pytest.raises((TypeError, ValueError), match='default'):
 
-        @final
         class _Controller(Controller[serializer]):  # type: ignore[valid-type]
             def post(self, parsed_body: Body[Any] = default) -> str:
                 raise NotImplementedError
@@ -335,7 +338,6 @@ def _build_union_controller(
     serializer: type[BaseSerializer],
     model: Any,
 ) -> type[Controller]:  # type: ignore[type-arg]
-    @final
     class _UnionController(Controller[serializer]):  # type: ignore[valid-type]
         def post(
             self,
@@ -501,7 +503,7 @@ class _ConditionalController(Controller[PydanticSerializer]):
         self,
         parsed_body: Body[
             Annotated[
-                _Model | None,
+                _Model | _XmlModel | None,
                 conditional_type({
                     ContentType.json: _Model | None,
                     'application/xml': _XmlModel,

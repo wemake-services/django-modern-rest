@@ -110,6 +110,8 @@ class _UnionDefaultsController(Controller[PydanticSerializer]):
 
 @final
 class _UnionRequiredController(Controller[PydanticSerializer]):
+    # NOTE: OpenAPI support for `Union` in `headers` and `query` is rather
+    # bad, so we can't really do much, except just not using unions :(
     def get(
         self,
         parsed_query: Query[_Model | _OtherModel],
