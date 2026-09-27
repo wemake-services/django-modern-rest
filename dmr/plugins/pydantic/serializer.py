@@ -1,5 +1,5 @@
+import dataclasses
 from collections.abc import Callable, Mapping
-from dataclasses import is_dataclass
 from functools import lru_cache
 from typing import (
     TYPE_CHECKING,
@@ -24,7 +24,14 @@ from dmr.exceptions import DataParsingError, DataRenderingError
 from dmr.parsers import Parser, Raw
 from dmr.plugins.pydantic.schema import PydanticSchemaGenerator
 from dmr.renderers import Renderer
-from dmr.serializer import BaseEndpointOptimizer, BaseSerializer
+from dmr.serializer import (
+    BaseEndpointOptimizer,
+    BaseSerializer,
+    ContextField,
+    ContextModel,
+    context_field_tuples,
+)
+from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata
@@ -155,7 +162,7 @@ class PydanticSerializer(BaseSerializer):
         # We support dataclasses here, because raw `JsonRenderer`
         # does not support them, however, we use them in multiple places inside.
         # Or this is a pydantic field inside a `TypedDict`, `@dataclass`, etc:
-        if is_dataclass(to_serialize) or hasattr(
+        if dataclasses.is_dataclass(to_serialize) or hasattr(
             to_serialize,
             '__get_pydantic_core_schema__',
         ):
@@ -233,6 +240,52 @@ class PydanticSerializer(BaseSerializer):
             strict=strict,
             **cls.to_model_kwargs,
         )
+
+    @override
+    @classmethod
+    def build_context_model(
+        cls,
+        name: str,
+        fields: Mapping[str, ContextField],
+    ) -> ContextModel:
+        """
+        Build the model to parse the whole request context at once.
+
+        We build a :class:`typing.TypedDict` when there are no defaults,
+        because it is the fastest thing that ``pydantic`` can validate
+        and it does not need any conversion into keyword arguments.
+
+        When some fields have defaults, we build a regular
+        :func:`dataclasses.dataclass`, since ``TypedDict`` cannot have them.
+        Defaults are passed as-is, so :mod:`dataclasses` rules apply:
+        mutable defaults like ``[]`` or non-frozen models are not allowed.
+
+        .. versionadded:: 0.16.0
+
+        """
+        if all(field.default is EMPTY for field in fields.values()):
+            annotations = {
+                field_name: field.annotation
+                for field_name, field in fields.items()
+            }
+            typed_dict = TypedDict(  # type: ignore[misc]
+                name,  # pyright: ignore[reportArgumentType]  # pyrefly: ignore[name-mismatch]
+                annotations,  # pyright: ignore[reportArgumentType]
+                total=True,
+                closed=True,
+            )
+            _get_cached_type_adapter(typed_dict)  # prepare during import time
+            return ContextModel(typed_dict)
+
+        # We don't use `slots=True` here on purpose:
+        # `vars()` is the fastest way to unpack a dataclass instance,
+        # it requires an instance `__dict__` to exist:
+        dataclass = dataclasses.make_dataclass(
+            name,
+            context_field_tuples(fields),
+        )
+        _get_cached_type_adapter(dataclass)  # prepare during import time
+        return ContextModel(dataclass, to_kwargs=vars)
 
     @override
     @classmethod

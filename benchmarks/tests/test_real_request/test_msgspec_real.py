@@ -5,7 +5,6 @@ import uuid
 from typing import Final
 
 import msgspec
-from django.http import HttpResponseBase
 from pytest_codspeed import BenchmarkFixture
 
 from dmr import Body, Controller
@@ -66,5 +65,7 @@ def test_msgspec_parse_and_validate(
     controller = _MsgspecController()
     controller.setup(request)
 
-    def factory() -> HttpResponseBase:
-        return controller.dispatch(request)
+    @benchmark
+    def factory() -> None:
+        for _ in range(100):
+            controller.dispatch(request)

@@ -137,6 +137,21 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - `ParameterGenerator.__call__` signature was changed
   to accept *metadata* and *controller_cls* instead
   of *serializer* and *context*, #1620
+- `ComponentParserSpec` moved from `dmr.metadata` to `dmr.components`,
+  it is now a named tuple of `parser`, `model`, `model_meta`, and `default`
+  fields. Previously it was a regular tuple of three elements, #1494
+- `BaseSerializer.build_context_model` is a new abstract method,
+  custom serializers must implement it. It builds the model
+  that parses all components of an endpoint at once,
+  previously it was always a `TypedDict` built by `SerializerContext`, #1494
+- Component annotations hidden inside other types are now rejected.
+  Things like `parsed_body: Body[Model] | None = None` used to be silently
+  ignored, since the component is hidden behind a union, now they raise
+  `UnsolvableAnnotationsError`. Use `Body[Model | None] = None` instead, #1494
+- `ComponentParser.provide_context_data` now accepts *default* keyword
+  parameter, custom components must accept it as well.
+  It is the default value of the endpoint parameter
+  or `EMPTY` when there's none, #1494
 - `ComponentParser.get_schema` signature was changed
   to accept *controller_cls* instead of *serializer*, #1620
 - `SupportsFileParsing.schema_metadata` signature was changed
@@ -170,6 +185,11 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Performance improvements
 
+- `MsgspecSerializer` now parses all components of an endpoint
+  into a `msgspec.Struct` with `gc=False` instead of a `TypedDict`.
+  Validation of the parsed context is around x2 faster, #1494
+  `PydanticSerializer` keeps using a `TypedDict`, it is the fastest
+  model for `pydantic` when there are no defaults, #1494
 - `RequestNegotiator` and `ResponseNegotiator` now memoize their decisions
   per header value. Almost every client sends the very same
   `Content-Type: application/json` and `Accept: application/json` headers,
@@ -201,6 +221,16 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Features
 
+- Component parameters can now have default values, like
+  `parsed_body: Body[Model | None] = None`
+  or `parsed_query: Query[Filters | None] = None`.
+  When a request has no data for a component, the endpoint
+  receives its default as-is, without any parsing.
+  Bodies with defaults are documented with `required: false`,
+  parameters of other components with defaults are documented
+  as not required in the OpenAPI schema, #1494
+- Added `FunctionDefaults` and `ComponentParserBuilder.defaults_cls`
+  to customize how defaults of component parameters are found, #1494
 - Auth and throttling instances now provide a `validate` hook for enforcing
   instance-specific constraints during endpoint construction, #1600
 - Added `Controller.metadata_merger_cls` and `dmr.validation.MetadataMerger`

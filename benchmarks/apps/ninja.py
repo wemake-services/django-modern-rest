@@ -68,7 +68,6 @@ class QueryModel(Schema):
     per_page: int
     count: int
     page: int
-    filter: str
 
 
 api = NinjaAPI()
@@ -82,7 +81,7 @@ async def async_post(
     token: str = Header(alias='X-API-Token'),
     origin: str = Header(alias='X-Request-Origin'),
 ) -> UserModel:
-    assert filters.filter == 'ninja', filters.filter
+    assert filters
     return UserModel(
         uid=uuid.uuid4(),
         **data.model_dump(),

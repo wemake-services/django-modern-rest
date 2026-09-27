@@ -134,7 +134,21 @@ Serialization
 .. autoclass:: dmr.serializer.BaseSchemaGenerator
   :members:
 
+.. autoclass:: dmr.serializer.ContextField
+  :members:
+
+.. autoclass:: dmr.serializer.ContextModel
+  :members:
+
+.. autofunction:: dmr.serializer.context_field_tuples
+
 .. autoclass:: dmr.components.ComponentParserBuilder
+  :members:
+
+.. autoclass:: dmr.components.ComponentParserSpec
+  :members:
+
+.. autoclass:: dmr.components.FunctionDefaults
   :members:
 
 
