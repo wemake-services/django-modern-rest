@@ -134,7 +134,6 @@ class _EventController(Controller[PydanticSerializer]):
 
 
 def test_date_examples_do_not_depend_on_now(
-    *,
     settings: LazySettings,
 ) -> None:
     """Ensure that date and time examples don't change with the clock."""
