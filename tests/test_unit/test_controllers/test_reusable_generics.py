@@ -131,7 +131,7 @@ def test_generics_in_validate() -> None:
     sys.version_info < (3, 12),
     reason='PEP-695 was added in 3.12',
 )
-def test_pep695_type_params() -> None:  # pragma: no cover
+def test_pep695_type_params() -> None:  # pragma: >=3.12 cover
     """Ensure that PEP-695 syntax is supported on 3.12+."""
     # We have to use `exec` here, because 3.12+ syntax
     # will cause `SyntaxError` for the whole test module.

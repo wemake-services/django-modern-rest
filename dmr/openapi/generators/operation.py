@@ -3,6 +3,7 @@ import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from dmr.controller import Controller
     from dmr.metadata import EndpointMetadata
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.serializer import BaseSerializer
@@ -27,9 +28,8 @@ class OperationIdGenerator:
     def __call__(
         self,
         path: str,
-        suffix: str,
         metadata: 'EndpointMetadata',
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> str:
         """
         Generate a unique operation ID for an OpenAPI operation.
@@ -37,6 +37,11 @@ class OperationIdGenerator:
         Uses the explicit ``operation_id`` from endpoint metadata if available,
         otherwise generates one from the HTTP method and path. The operation ID
         is registered in the registry to ensure uniqueness.
+
+        .. versionchanged:: 0.16.0
+            Now accepts *controller_cls* parameter instead
+            of *suffix* and *serializer*.
+
         """
         operation_id = metadata.operation_id
 
@@ -45,12 +50,26 @@ class OperationIdGenerator:
             return operation_id
 
         # Generate operation_id from path and method
+        suffix = self.generate_suffix(path, metadata, controller_cls)
         operation_id = metadata.method.lower() + ''.join(
             self._tokenize_path(suffix + path),
         )
 
         self._context.registries.operation_id.register(operation_id)
         return operation_id
+
+    def generate_suffix(
+        self,
+        path: str,
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> str:
+        """
+        Generate suffix for operation ID.
+
+        .. versionadded:: 0.16.0
+        """
+        return controller_cls.__qualname__
 
     def _tokenize_path(self, path: str) -> list[str]:  # noqa: WPS210
         """

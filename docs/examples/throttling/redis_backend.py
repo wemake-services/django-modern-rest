@@ -4,7 +4,7 @@ import redis
 from django.core.cache import caches
 
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.throttling import Rate, SyncThrottle
 from dmr.throttling.backends.redis import SyncRedis
 
@@ -13,7 +13,7 @@ from dmr.throttling.backends.redis import SyncRedis
 redis_client: 'redis.Redis[Any]' = caches['redis']._cache.get_client()  # type: ignore[attr-defined]  # noqa: SLF001
 
 
-class SyncController(Controller[PydanticSerializer]):
+class SyncController(Controller[PydanticFastSerializer]):
     throttling = (
         SyncThrottle(
             max_requests=1,

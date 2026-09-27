@@ -8,13 +8,48 @@ from faker import Faker
 from inline_snapshot import snapshot
 
 from dmr.security.token.app.models import Token
-from dmr.security.token.token import TokenLikeSync
+from dmr.security.token.token import (
+    DEFAULT_TOKEN_ALGORITHM,
+    DEFAULT_TOKEN_SALT,
+    TokenLikeSync,
+)
 from dmr.test import DMRClient
 
 # Matches values from
 # django_test_app/server/apps/token_auth/views/obtain.py
 _SALT: Final = 'custom_salt'
 _ALGO: Final = 'sha512'
+
+#: Customized reusable views and concrete views issue tokens the same way,
+#: they only differ in the model and in the hashing settings.
+#: The url, whether the model is `CustomToken`, the salt, and the algorithm:
+_ISSUED_TOKENS: Final = (
+    (
+        reverse('api:token_auth:token_obtain_sync'),
+        True,
+        DEFAULT_TOKEN_SALT,
+        DEFAULT_TOKEN_ALGORITHM,
+    ),
+    (
+        reverse('api:token_auth:token_obtain_async'),
+        False,
+        _SALT,
+        _ALGO,
+    ),
+    (
+        reverse('api:token_auth:token_concrete_obtain_sync'),
+        True,
+        DEFAULT_TOKEN_SALT,
+        DEFAULT_TOKEN_ALGORITHM,
+    ),
+    (
+        reverse('api:token_auth:token_concrete_obtain_async'),
+        False,
+        DEFAULT_TOKEN_SALT,
+        DEFAULT_TOKEN_ALGORITHM,
+    ),
+)
+_OBTAIN_URLS: Final = tuple(issued[0] for issued in _ISSUED_TOKENS)
 
 
 @pytest.fixture
@@ -42,75 +77,93 @@ def _get_token_model() -> type[TokenLikeSync]:
 
 
 @pytest.mark.django_db
-def test_full_e2e_sync(
+@pytest.mark.parametrize(
+    ('url', 'is_custom_model', 'token_salt', 'token_algorithm'),
+    _ISSUED_TOKENS,
+)
+def test_obtain_token(
     dmr_client: DMRClient,
     user: User,
     password: str,
+    *,
+    url: str,
+    is_custom_model: bool,
+    token_salt: str,
+    token_algorithm: str,
 ) -> None:
-    """Ensures that full pipeline with getting the token and auth works."""
+    """Ensures that obtain views issue a token of their own model."""
     response = dmr_client.post(
-        reverse('api:token_auth:token_obtain_async'),
+        url,
         data={'username': user.username, 'password': password},
     )
 
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers['Content-Type'] == 'application/json'
     assert response.headers['Cache-Control'] == 'no-store'
-    response_json = response.json()
-    assert response_json['token']
-    assert Token.find_raw(
-        response_json['token'],
-        token_salt=_SALT,
-        token_algorithm=_ALGO,
+    raw_token = response.json()['token']
+    token_model, other_model = (
+        (_get_token_model(), Token)
+        if is_custom_model
+        else (Token, _get_token_model())
     )
+    issued = token_model.find_raw(
+        raw_token,
+        token_salt=token_salt,
+        token_algorithm=token_algorithm,
+    )
+    assert issued is not None
+    assert issued.get_user() == user
     assert (
-        _get_token_model().find_raw(
-            response_json['token'],
-            token_salt=_SALT,
-            token_algorithm=_ALGO,
+        other_model.find_raw(
+            raw_token,
+            token_salt=token_salt,
+            token_algorithm=token_algorithm,
         )
         is None
     )
 
-    response = dmr_client.get(
-        reverse('api:token_auth:token_custom_sync_auth'),
-        headers={'X-API-Token': response_json['token']},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.content
-    assert response.headers['Content-Type'] == 'application/json'
-    assert response.json() == {'username': user.username}
-
-
-@pytest.mark.django_db
-def test_obtain_custom_token_model(
-    dmr_client: DMRClient,
-    user: User,
-    password: str,
-) -> None:
-    """Ensures that custom user model works for the obtain view."""
-    response = dmr_client.post(
-        reverse('api:token_auth:token_obtain_sync'),
-        data={'username': user.username, 'password': password},
-    )
-
-    assert response.status_code == HTTPStatus.OK, response.content
-    assert response.headers['Content-Type'] == 'application/json'
-    assert response.headers['Cache-Control'] == 'no-store'
-    response_json = response.json()
-    assert response_json['token']
-    assert Token.find_raw(response_json['token']) is None
-    assert _get_token_model().find_raw(response_json['token'])
-
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    'url',
+    ('url', 'auth_url'),
     [
-        reverse('api:token_auth:token_obtain_sync'),
-        reverse('api:token_auth:token_obtain_async'),
+        (
+            reverse('api:token_auth:token_obtain_async'),
+            reverse('api:token_auth:token_custom_sync_auth'),
+        ),
+        (
+            reverse('api:token_auth:token_concrete_obtain_async'),
+            reverse('api:token_auth:token_default_sync_auth'),
+        ),
     ],
 )
+def test_obtained_token_authenticates(
+    dmr_client: DMRClient,
+    user: User,
+    password: str,
+    *,
+    url: str,
+    auth_url: str,
+) -> None:
+    """Ensures that full pipeline with getting the token and auth works."""
+    response = dmr_client.post(
+        url,
+        data={'username': user.username, 'password': password},
+    )
+    assert response.status_code == HTTPStatus.OK, response.content
+
+    response = dmr_client.get(
+        auth_url,
+        headers={'X-API-Token': response.json()['token']},
+    )
+
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json()['username'] == user.username
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('url', _OBTAIN_URLS)
 def test_obtain_failures(
     dmr_client: DMRClient,
     user: User,

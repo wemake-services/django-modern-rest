@@ -90,7 +90,7 @@ def wrap_middleware(
             do_wrap_dispatch(cls, middleware, converter_spec)
             return cls
 
-        return DecoratorWithResponses(  # pyrefly: ignore[bad-specialization]
+        return DecoratorWithResponses(
             decorator=decorator,
             responses=all_descriptions,
         )

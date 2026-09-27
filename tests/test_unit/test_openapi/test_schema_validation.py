@@ -2,11 +2,11 @@ import pytest
 from django.urls import path
 from faker import Faker
 from inline_snapshot import snapshot
-from syrupy.assertion import SnapshotAssertion
 from typing_extensions import override
 
 from dmr import Controller, modify
 from dmr.endpoint import Endpoint
+from dmr.metadata import EndpointMetadata
 from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.openapi.objects import (
     Components,
@@ -34,9 +34,12 @@ class _WrongAuth(SyncAuth):
     ) -> None:
         raise NotImplementedError
 
-    @property
     @override
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> dict[str, SecurityScheme | Reference]:
         return {
             'wrong': SecurityScheme(
                 type='http',
@@ -44,10 +47,13 @@ class _WrongAuth(SyncAuth):
             ),
         }
 
-    @property
     @override
-    def security_requirement(self) -> SecurityRequirement:
-        return SecurityRequirement()
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> list[SecurityRequirement]:
+        return []
 
     @property
     @override
@@ -96,7 +102,7 @@ def test_schema_supports_json_schema_keywords(  # noqa: WPS210
     })
 
 
-def test_schema_validation(snapshot: SnapshotAssertion) -> None:
+def test_schema_validation() -> None:
     """Ensure that schema is validated correctly."""
     router = Router(
         'api/v1/',

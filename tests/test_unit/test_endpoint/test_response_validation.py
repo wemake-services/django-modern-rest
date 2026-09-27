@@ -6,7 +6,7 @@ import pydantic
 import pytest
 from django.http import HttpResponse, HttpResponseBase
 from inline_snapshot import snapshot
-from typing_extensions import TypedDict
+from typing_extensions import Sentinel, TypedDict
 
 from dmr import Controller, ResponseSpec, modify, validate
 from dmr.plugins.pydantic import PydanticSerializer
@@ -52,13 +52,12 @@ class _WrongController(Controller[PydanticSerializer]):
     )
     def delete(self) -> HttpResponse:
         """Does not respect a `return_type` validator."""
-        return HttpResponse(b'[]')
+        return HttpResponse(b'[]', content_type='application/json')
 
 
 @pytest.mark.parametrize(
     'method',
     [
-        HTTPMethod.GET,
         HTTPMethod.POST,
         HTTPMethod.PUT,
         HTTPMethod.PATCH,
@@ -129,7 +128,7 @@ def test_validate_status_code(
             {
                 'msg': (
                     'Returned status code 200 is not specified in the list '
-                    'of allowed status codes: [201, 422, 406]'
+                    'of allowed status codes: [201, 406, 422]'
                 ),
                 'type': 'value_error',
             },
@@ -225,7 +224,7 @@ def test_validation_disabled_endpoint(
 
 @final
 class _ValidationDisabledController(Controller[PydanticSerializer]):
-    validate_responses: ClassVar[bool | None] = False
+    validate_responses: ClassVar[bool | Sentinel] = False
 
     def post(self) -> list[int]:
         return ['a']  # type: ignore[list-item]

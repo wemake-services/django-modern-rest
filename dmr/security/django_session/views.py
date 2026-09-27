@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from http import HTTPStatus
 from typing import Any, ClassVar, Generic, TypeVar
 
@@ -14,7 +14,6 @@ from typing_extensions import TypedDict
 from dmr import Body, Controller, CookieSpec, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
 from dmr.endpoint import ModifyAnyCallable
-from dmr.errors import ErrorModel
 from dmr.exceptions import NotAuthenticatedError
 from dmr.security.base import NO_STORE_HEADERS
 from dmr.serializer import BaseSerializer
@@ -60,18 +59,18 @@ class DjangoSessionSyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def modify_spec(cls) -> ModifyAnyCallable:
         """Lazy endpoint spec."""
         return modify(
             status_code=cls.response_status_code,
+            extra_responses=[
+                ResponseSpec(
+                    return_type=cls.error_model,
+                    status_code=HTTPStatus.UNAUTHORIZED,
+                ),
+            ],
             headers=NO_STORE_HEADERS,
             cookies={
                 settings.SESSION_COOKIE_NAME: CookieSpec(skip_validation=True),
@@ -144,18 +143,18 @@ class DjangoSessionAsyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
-    responses: ClassVar[Sequence[ResponseSpec]] = (
-        ResponseSpec(
-            return_type=ErrorModel,
-            status_code=HTTPStatus.UNAUTHORIZED,
-        ),
-    )
 
     @classmethod
     def modify_spec(cls) -> ModifyAnyCallable:
         """Lazy endpoint spec."""
         return modify(
             status_code=cls.response_status_code,
+            extra_responses=[
+                ResponseSpec(
+                    return_type=cls.error_model,
+                    status_code=HTTPStatus.UNAUTHORIZED,
+                ),
+            ],
             headers=NO_STORE_HEADERS,
             cookies={
                 settings.SESSION_COOKIE_NAME: CookieSpec(skip_validation=True),

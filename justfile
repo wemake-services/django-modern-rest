@@ -16,8 +16,8 @@ mod _docs 'docs/justfile'
 
 # Install dependencies
 [group('dev')]
-install:
-    uv sync --all-groups --all-extras --no-group integration-drivers
+install *args='':
+    uv sync --all-groups --all-extras --no-group integration-drivers {{args}}
 
 # Install dependencies
 [group('dev')]
@@ -38,6 +38,16 @@ lint:
     uv run python -m flake8 .
     uv run python -m slotscheck -v -m dmr
     uv run import-linter lint
+    just skills
+
+# Validate agent skills against https://agentskills.io/specification
+[group('dev')]
+skills:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for skill in dmr/.agents/skills/*/; do
+      uv run agentskills validate "$skill"
+    done
 
 # Run all checks (with sqlite as db)
 [group('dev')]
@@ -77,7 +87,8 @@ unit *args='':
     uv run python -m pytest -n auto --max-worker-restart=1 \
       --inline-snapshot=disable {{ args }}
 
-# Check package imports without django.setup(); extras are optional, e.g. `just smoke jwt msgspec`
+# Check package imports without django.setup();
+# extras are optional, e.g. `just smoke jwt msgspec`
 [group('testing')]
 smoke *extras='':
     uv run python -c 'from dmr import Controller'
@@ -89,6 +100,8 @@ smoke *extras='':
     uv run python -c 'from dmr.security import *'
     uv run python -c 'from dmr.security.django_session import *'
     uv run python -c 'from dmr.security.token import *'
+    uv run python -c 'from dmr.security.csrf import *'
+    uv run python -c 'from dmr.semantic_schema import *'
     uv run python -c 'from dmr.throttling import *'
     uv run python -c 'from dmr.throttling.backends import *'
     uv run python -c 'from dmr.throttling.algorithms import *'
@@ -132,8 +145,9 @@ example:
 
 # Start Django + DRM example app
 [group('testing')]
+[working-directory('django_test_app')]
 example-run:
-    cd django_test_app && uv run python manage.py runserver
+    uv run python manage.py runserver
 
 # Validate package dependencies and run security audit
 [group('testing')]
@@ -154,13 +168,14 @@ integration_db_start *containers:
 
 # Type-check benchmark code
 [group('benchmarks')]
+[working-directory('benchmarks')]
 benchmarks-type-check:
-    cd benchmarks && uv run python -m mypy tests/
+    uv run python -m mypy tests/
 
 # Compile with mypyc then run feature benchmarks
 [group('benchmarks')]
-benchmarks: mypyc
-    uv run python -m pytest benchmarks/tests -o 'addopts="--codspeed"'
+benchmarks *args='benchmarks/tests': mypyc
+    uv run python -m pytest -o 'addopts="--codspeed"' {{args}}
 
 # Compile code with mypyc
 [group('build')]
@@ -193,3 +208,16 @@ translations:
     uv run dennis-cmd lint dmr/locale
     uv run django-admin compilemessages --ignore dmr || true
     uv run django-admin compilemessages
+
+# Check that committed `.mo` files match their `.po` files
+[group('i18n')]
+[working-directory('dmr')]
+translations-check:
+    # `compilemessages` skips `.po` files that are not newer than their `.mo`:
+    find locale -name '*.po' -exec touch {} +
+    uv run django-admin compilemessages
+    if [ -n "$(git status --porcelain -- locale)" ]; then \
+      git status --short -- locale; \
+      echo 'Compiled translations are out of date, run `just translations` and commit `.mo` files'; \
+      exit 1; \
+    fi

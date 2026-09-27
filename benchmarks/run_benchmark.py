@@ -11,7 +11,7 @@ _HOST = 'http://127.0.0.1:8000'
 _ASYNC_COMMAND = 'uvicorn --workers=4 --no-access-log apps.{0}:async_app'
 _ASYNC_ENDPOINTS = [
     (
-        '/async/user/?per_page=1&count=2&page=3&filter={0}',
+        '/async/user/?per_page=1&count=2&page=3',
         'POST',
         'payload.json',
         (
@@ -24,7 +24,7 @@ _ASYNC_ENDPOINTS = [
 _SYNC_COMMAND = 'gunicorn apps.{0}:sync_app --workers=4 --threads=16'
 _SYNC_ENDPOINTS = [
     (
-        '/sync/user/?per_page=1&count=2&page=3&filter={0}',
+        '/sync/user/?per_page=1&count=2&page=3',
         'POST',
         'payload.json',
         (
@@ -94,7 +94,7 @@ def _run_bench(
     for header in endpoint[3]:
         cmd.extend(('-H', header))
 
-    cmd.append(_HOST + endpoint[0].format(app))
+    cmd.append(_HOST + endpoint[0])
 
     print(' '.join(cmd))
 

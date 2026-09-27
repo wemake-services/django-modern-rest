@@ -31,27 +31,34 @@ import dataclasses
 import datetime as dt
 from collections.abc import Mapping
 from http.cookies import Morsel, SimpleCookie
-from typing import TYPE_CHECKING, Any, ClassVar, Final, Literal, final
+from typing import (
+    Any,
+    ClassVar,
+    Final,
+    Literal,
+    TypeAlias,
+    final,
+)
 
 from django.http import HttpResponseBase
 
-if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
+from dmr.internal.types import StrOrPromise
+
+#: Type alias for possible `samesite` values.
+SameSite: TypeAlias = Literal['lax', 'strict', 'none']
 
 
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
 class _BaseCookie:
     """Base class for all cookies."""
 
-    path: '_StrOrPromise' = '/'
+    path: StrOrPromise = '/'
     max_age: int | None = None
     expires: int | dt.datetime | None = None
     domain: str | None = None
     secure: bool = False
     httponly: bool = False
-    samesite: Literal['lax', 'strict', 'none'] = 'lax'
+    samesite: SameSite = 'lax'
 
 
 @final
@@ -92,7 +99,7 @@ class CookieSpec(_BaseCookie):
 
     is_actionable: ClassVar[Literal[False]] = False
 
-    description: '_StrOrPromise | None' = None
+    description: StrOrPromise | None = None
     required: bool = True
     skip_validation: bool = False
 

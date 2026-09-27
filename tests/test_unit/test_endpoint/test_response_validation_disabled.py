@@ -7,6 +7,7 @@ import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
 from inline_snapshot import snapshot
+from typing_extensions import Sentinel
 
 from dmr import Controller, HeaderSpec, ResponseSpec, modify, validate
 from dmr.plugins.pydantic import PydanticSerializer
@@ -165,7 +166,7 @@ def test_override_endpoint_validation(
 
 @final
 class _ValidatedController(Controller[PydanticSerializer]):
-    validate_responses: ClassVar[bool | None] = True
+    validate_responses: ClassVar[bool | Sentinel] = True
 
     @validate(
         ResponseSpec(
@@ -222,7 +223,7 @@ def test_override_controller_validation(
 
 @final
 class _EndpointOverController(Controller[PydanticSerializer]):
-    validate_responses: ClassVar[bool | None] = False
+    validate_responses: ClassVar[bool | Sentinel] = False
 
     @modify(validate_responses=True)  # takes priority
     def post(self) -> list[int]:

@@ -3,10 +3,11 @@ import datetime as dt
 from typing import TYPE_CHECKING, Final, Generic, Self
 
 from django.utils.crypto import salted_hmac
+from django.views.decorators.debug import sensitive_variables
 from typing_extensions import Sentinel, TypeVar
 
+from dmr.internal.types import EMPTY
 from dmr.security.token.constants import TOKEN_DEFAULT_EXPIRY
-from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from django.contrib.auth.base_user import AbstractBaseUser
@@ -191,6 +192,7 @@ DEFAULT_TOKEN_SALT: Final = 'dmr.security.token'  # noqa: S105
 DEFAULT_TOKEN_ALGORITHM: Final = 'sha256'  # noqa: S105
 
 
+@sensitive_variables()
 def get_token_hash(
     raw_token: str,
     *,

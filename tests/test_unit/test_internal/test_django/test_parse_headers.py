@@ -18,6 +18,7 @@ from dmr.internal.django import parse_headers
     ],
 )
 def test_parse_headers_split_commas(
+    *,
     header_value: str,
     expected: list[str],
 ) -> None:

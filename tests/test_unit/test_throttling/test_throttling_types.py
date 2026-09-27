@@ -13,6 +13,7 @@ from dmr.throttling.headers import RateLimitIETFDraft
 
 @pytest.mark.parametrize('throttle_cls', [SyncThrottle, AsyncThrottle])
 def test_throttle_replace(
+    *,
     throttle_cls: type[SyncThrottle | AsyncThrottle],
 ) -> None:
     """`replace` overrides the given fields and keeps the rest."""
@@ -42,6 +43,7 @@ def test_throttle_replace(
 
 @pytest.mark.parametrize('throttle_cls', [SyncThrottle, AsyncThrottle])
 def test_throttle_replace_empty(
+    *,
     throttle_cls: type[SyncThrottle | AsyncThrottle],
 ) -> None:
     """`replace` overrides the given fields and keeps the rest."""
@@ -61,14 +63,15 @@ def test_throttle_replace_empty(
     reason='`copy.replace` is added in Python 3.13',
 )
 @pytest.mark.parametrize('throttle_cls', [SyncThrottle, AsyncThrottle])
-def test_throttle_copy_replace(  # pragma: no cover
+def test_throttle_copy_replace(  # pragma: >=3.13 cover
+    *,
     throttle_cls: type[SyncThrottle | AsyncThrottle],
 ) -> None:
     """`copy.replace` works through the `__replace__` alias."""
     # This is a hack to work around `copy.replace` typing:
     original: Any = throttle_cls(1000, Rate.minute)
 
-    if sys.version_info >= (3, 13):
+    if sys.version_info >= (3, 13):  # pragma: >=3.13 cover
         # `typeshed` wants `__replace__(**kwargs: Any)`, our alias is stricter:
         copied = copy.replace(original, max_requests=2, algorithm=LeakyBucket())
 

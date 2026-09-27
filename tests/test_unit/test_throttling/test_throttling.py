@@ -12,9 +12,10 @@ from inline_snapshot import snapshot
 from dmr import Controller, ResponseSpec, modify, validate
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.serializer import BaseSerializer
-from dmr.settings import Settings
+from dmr.settings import Settings, resolve_setting
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
+from dmr.throttling.backends import AsyncDjangoCache, SyncDjangoCache
 from dmr.throttling.cache_keys import RemoteAddr
 
 _Serializes: TypeAlias = list[type[BaseSerializer]]
@@ -48,13 +49,27 @@ def test_throttle_sync_per_endpoint(
     class _SyncEndpointController(
         Controller[serializer],  # type: ignore[valid-type]
     ):
-        @modify(throttling=[SyncThrottle(1, Rate.second)])
+        @modify(
+            throttling=[
+                SyncThrottle(
+                    1,
+                    Rate.second,
+                    backend=SyncDjangoCache(allow_unsafe_cache=None),
+                ),
+            ],
+        )
         def get(self) -> str:
             return 'inside'
 
         @validate(
             ResponseSpec(str, status_code=HTTPStatus.OK),
-            throttling=[SyncThrottle(1, Rate.second)],
+            throttling=[
+                SyncThrottle(
+                    1,
+                    Rate.second,
+                    backend=SyncDjangoCache(allow_unsafe_cache=None),
+                ),
+            ],
         )
         def put(self) -> HttpResponse:
             return self.to_response('inside')
@@ -63,7 +78,6 @@ def test_throttle_sync_per_endpoint(
     assert metadata.throttling_before_auth
     assert len(metadata.throttling_before_auth) == 1
     assert metadata.throttling_after_auth is None
-    assert metadata.throttling_allow_unsafe_cache is None
     assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
 
     for _ in range(_ATTEMPTS):
@@ -118,7 +132,13 @@ async def test_throttle_async_per_controller(
     class _AsyncController(
         Controller[serializer],  # type: ignore[valid-type]
     ):
-        throttling = [AsyncThrottle(1, Rate.second)]
+        throttling = [
+            AsyncThrottle(
+                1,
+                Rate.second,
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+            ),
+        ]
 
         async def get(self) -> str:
             return 'inside'
@@ -130,14 +150,13 @@ async def test_throttle_async_per_controller(
     assert metadata.throttling_before_auth
     assert len(metadata.throttling_before_auth) == 1
     assert metadata.throttling_after_auth is None
-    assert metadata.throttling_allow_unsafe_cache is None
     assert HTTPStatus.TOO_MANY_REQUESTS in metadata.responses
 
     for _ in range(_ATTEMPTS):
         freezer.tick(delta=1)  # seconds
         request = dmr_async_rf.get('/whatever/')
         response = await dmr_async_rf.wrap(
-            _AsyncController.as_view()(request),  # noqa: WPS476
+            _AsyncController.as_view()(request),
         )
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.OK, response.content
@@ -171,16 +190,17 @@ async def test_throttle_async_per_controller(
     assert json.loads(response.content) == 'inside'
 
 
-@pytest.mark.asyncio
-async def test_throttle_settings_override(
-    dmr_async_rf: DMRAsyncRequestFactory,
-    freezer: FrozenDateTimeFactory,
-    settings: LazySettings,
-) -> None:
+def test_throttle_settings_override(settings: LazySettings) -> None:
     """Ensures that async throttling from settings work."""
     settings.DMR_SETTINGS = {
         **settings.DMR_SETTINGS,
-        Settings.throttling: [AsyncThrottle(1, Rate.second)],
+        Settings.throttling: [
+            AsyncThrottle(
+                1,
+                Rate.second,
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+            ),
+        ],
     }
 
     class _DisabledPerController(Controller[PydanticSerializer]):
@@ -195,8 +215,16 @@ async def test_throttle_settings_override(
 
     class _DisabledPerEndpoint(Controller[PydanticSerializer]):
         throttling = [
-            AsyncThrottle(10, Rate.minute),
-            AsyncThrottle(10, Rate.hour),
+            AsyncThrottle(
+                10,
+                Rate.minute,
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+            ),
+            AsyncThrottle(
+                10,
+                Rate.hour,
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+            ),
         ]
 
         @modify(throttling=None)
@@ -220,7 +248,13 @@ async def test_throttle_async_per_settings(
     """Ensures that async throttling from settings work."""
     settings.DMR_SETTINGS = {
         **settings.DMR_SETTINGS,
-        Settings.throttling: [AsyncThrottle(_ATTEMPTS, Rate.second)],
+        Settings.throttling: [
+            AsyncThrottle(
+                _ATTEMPTS,
+                Rate.second,
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+            ),
+        ],
     }
 
     class _AsyncController(
@@ -235,7 +269,7 @@ async def test_throttle_async_per_settings(
     for _ in range(_ATTEMPTS):
         request = dmr_async_rf.get('/whatever/')
         response = await dmr_async_rf.wrap(
-            _AsyncController.as_view()(request),  # noqa: WPS476
+            _AsyncController.as_view()(request),
         )
         assert isinstance(response, HttpResponse)
         assert response.status_code == HTTPStatus.OK, response.content
@@ -277,18 +311,57 @@ def test_throttle_sync_multiple_sources(
     *,
     serializer: type[BaseSerializer],
 ) -> None:
-    """Ensures that sync throttling from settings work."""
+    """Ensures that sync throttling from several levels can be merged."""
     settings.DMR_SETTINGS = {
         **settings.DMR_SETTINGS,
-        Settings.throttling: [SyncThrottle(_ATTEMPTS, Rate.second)],
+        Settings.throttling: [
+            SyncThrottle(
+                _ATTEMPTS,
+                Rate.second,
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
+        ],
     }
+
+    class _OverrideController(
+        Controller[serializer],  # type: ignore[valid-type]
+    ):
+        throttling = [
+            SyncThrottle(
+                10,
+                Rate.minute,
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
+            SyncThrottle(
+                10,
+                Rate.hour,
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
+        ]
+
+        def get(self) -> str:
+            raise NotImplementedError
+
+    # Controller throttling replaces the settings one:
+    metadata = _OverrideController.api_endpoints['GET'].metadata
+    assert metadata.throttling_before_auth == _OverrideController.throttling
 
     class _SyncController(
         Controller[serializer],  # type: ignore[valid-type]
     ):
         throttling = [
-            SyncThrottle(10, Rate.minute),
-            SyncThrottle(10, Rate.hour),
+            SyncThrottle(
+                10,
+                Rate.minute,
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
+            SyncThrottle(
+                10,
+                Rate.hour,
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
+            # Merging is explicit:
+            *resolve_setting(Settings.throttling),
         ]
 
         def get(self) -> str:
@@ -342,7 +415,13 @@ def test_throttle_sync_rates(
     """Ensures that rates work correctly."""
 
     class _SyncController(Controller[PydanticSerializer]):
-        throttling = [SyncThrottle(1, rate)]
+        throttling = [
+            SyncThrottle(
+                1,
+                rate,
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
+        ]
 
         def get(self) -> str:
             return 'inside'
@@ -393,6 +472,7 @@ def test_throttle_full_cache_key_is_hashed(
         5,
         Rate.minute,
         cache_key=RemoteAddr(name='per-ip'),
+        backend=SyncDjangoCache(allow_unsafe_cache=None),
     )
 
     class _SyncController(Controller[PydanticSerializer]):
@@ -422,7 +502,7 @@ def test_throttle_full_cache_key_is_hashed(
     ).hexdigest()
 
     assert throttle.full_cache_key(endpoint, controller) == (
-        f'per-ip::{expected_hash}'  # noqa: WPS237
+        f'per-ip::{expected_hash}'
     )
 
 
@@ -434,6 +514,7 @@ def test_throttle_full_cache_key_is_unique(
         5,
         Rate.minute,
         cache_key=RemoteAddr(name='per-ip'),
+        backend=SyncDjangoCache(allow_unsafe_cache=None),
     )
 
     class _SyncController(Controller[PydanticSerializer]):

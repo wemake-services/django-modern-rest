@@ -1,7 +1,7 @@
 import pydantic
 
 from dmr import Body, Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class _User(pydantic.BaseModel):
@@ -9,7 +9,7 @@ class _User(pydantic.BaseModel):
     age: int
 
 
-class UserController(Controller[PydanticSerializer]):
+class UserController(Controller[PydanticFastSerializer]):
     def put(self, parsed_body: Body[_User]) -> _User:
         return parsed_body
 

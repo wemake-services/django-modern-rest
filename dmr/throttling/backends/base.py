@@ -9,6 +9,7 @@ from dmr.exceptions import EndpointMetadataError
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
+    from dmr.metadata import EndpointMetadata
     from dmr.serializer import BaseSerializer
     from dmr.throttling import AsyncThrottle, SyncThrottle
     from dmr.throttling.algorithms import BaseThrottleAlgorithm
@@ -59,6 +60,13 @@ class _BaseThrottleBackend:
                 f'because backend requires {script_format} transactional '
                 'script support, while algorithm does not provide it',
             )
+
+    def validate(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: 'EndpointMetadata',
+    ) -> None:
+        """Validate the backend definition."""
 
 
 class BaseThrottleSyncBackend(_BaseThrottleBackend):

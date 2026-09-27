@@ -1,4 +1,5 @@
 import pytest
+from django.conf import LazySettings
 from django.db import models
 
 from dmr.pagination.cursor import CursorPaginator, InvalidCursorError
@@ -7,13 +8,24 @@ from server.apps.model_cursor.models import (  # type: ignore[import-not-found]
 )
 
 
+@pytest.fixture(autouse=True)
+def _modify_integration_settings(settings: LazySettings) -> None:
+    # The paginator is called directly, without any requests,
+    # and it never reads `DEBUG`, so there is no value
+    # in running all cases twice via the parent conftest parametrisation.
+    settings.DEBUG = False
+
+
 def _encode(paginator: CursorPaginator[Entry], *to_encode: str) -> str:
     """Encode cursor values with the default encoder."""
     return paginator._cursor_encoder(paginator._separator.join(to_encode))
 
 
 @pytest.mark.parametrize('per_page', [0, -1])
-def test_invalid_per_page_raises_value_error(per_page: int) -> None:
+def test_invalid_per_page_raises_value_error(
+    *,
+    per_page: int,
+) -> None:
     """`per_page` must be a positive integer."""
     with pytest.raises(ValueError, match='per_page'):
         CursorPaginator(
@@ -29,7 +41,10 @@ def test_invalid_per_page_raises_value_error(per_page: int) -> None:
         pytest.param('////', id='invalid-utf-8'),
     ],
 )
-def test_undecodable_cursor_raises(cursor: str) -> None:
+def test_undecodable_cursor_raises(
+    *,
+    cursor: str,
+) -> None:
     """Cursors that cannot be decoded are rejected."""
     paginator = CursorPaginator(
         Entry.objects.none().order_by('rank'),

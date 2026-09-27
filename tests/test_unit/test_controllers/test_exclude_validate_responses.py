@@ -1,7 +1,6 @@
 import json
-from collections.abc import Sequence
 from http import HTTPMethod, HTTPStatus
-from typing import ClassVar, Final
+from typing import Final
 
 import pytest
 from django.conf import LazySettings
@@ -162,7 +161,7 @@ class _WronglyDescribed(Controller[PydanticSerializer]):
 
     # Our errors are not lists of integers,
     # but we don't validate this status code anymore:
-    responses: ClassVar[Sequence[ResponseSpec]] = (
+    responses = (
         ResponseSpec(list[int], status_code=HTTPStatus.INTERNAL_SERVER_ERROR),
     )
 

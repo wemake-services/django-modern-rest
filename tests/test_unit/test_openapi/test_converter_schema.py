@@ -7,11 +7,13 @@ from inline_snapshot import snapshot
 
 from dmr import Controller
 from dmr.openapi import build_schema
+from dmr.openapi.generators.component_parsers import ConverterSchema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 
 _YEAR_CONVERTER: Final = 'dmr_year'
 _INVALID_CONVERTER: Final = 'dmr_invalid'
+_LOWERCASE_CONVERTER: Final = 'dmr_lowercase'
 
 
 class _YearConverter:
@@ -105,3 +107,98 @@ def test_converter_schema_invalid() -> None:
                 ],
             ),
         ).convert()
+
+
+def test_builtin_converter_schemas() -> None:
+    """Ensure built-in converters document their own constraints."""
+    schema = build_schema(
+        Router(
+            'api/',
+            [
+                path(
+                    'tags/<slug:tag>/<path:file>/',
+                    _ArticleController.as_view(),
+                ),
+            ],
+        ),
+    ).convert()
+
+    tag_params = schema['paths']['/api/tags/{tag}/{file}/']['get']['parameters']
+    assert tag_params == snapshot([
+        {
+            'name': 'tag',
+            'in': 'path',
+            'schema': {
+                'type': 'string',
+                'pattern': '^(?:[-a-zA-Z0-9_]+)$',
+                'title': 'Tag',
+            },
+            'required': True,
+        },
+        {
+            'name': 'file',
+            'in': 'path',
+            'schema': {
+                'type': 'string',
+                'title': 'File',
+                'description': 'Can contain slashes',
+            },
+            'required': True,
+        },
+    ])
+
+
+class _LowercaseConverter:
+    """Custom converter that provides a fully prepared schema."""
+
+    regex = '[a-z]+'
+    __dmr_converter_schema__ = ConverterSchema(
+        model=str,
+        pattern=rf'^(?:{regex})$',
+        description='Lowercase letters only',
+    )
+
+    def to_python(self, value: str) -> str:  # noqa: WPS110
+        """Return the captured path segment unchanged."""
+        raise NotImplementedError
+
+    def to_url(self, value: str) -> str:  # noqa: WPS110
+        """Render the segment back into a URL."""
+        raise NotImplementedError
+
+
+def test_custom_converter_prepared_schema() -> None:
+    """Ensure custom converters can provide a ``ConverterSchema``."""
+    register_converter(_LowercaseConverter, _LOWERCASE_CONVERTER)
+    schema = build_schema(
+        Router(
+            'api/',
+            [
+                path(
+                    f'<{_LOWERCASE_CONVERTER}:code>/<int:fix>/',
+                    _ArticleController.as_view(),
+                ),
+            ],
+        ),
+    ).convert()
+
+    code_params = schema['paths']['/api/{code}/{fix}/']['get']['parameters']
+    assert code_params == snapshot([
+        {
+            'name': 'code',
+            'in': 'path',
+            'schema': {
+                'type': 'string',
+                'pattern': '^(?:[a-z]+)$',
+                'title': 'Code',
+                'description': 'Lowercase letters only',
+            },
+            'required': True,
+        },
+        {
+            'name': 'fix',
+            'in': 'path',
+            'schema': {'type': 'integer', 'title': 'Fix'},
+            'required': True,
+        },
+    ])

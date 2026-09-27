@@ -32,13 +32,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -70,8 +70,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -80,8 +80,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -210,8 +210,7 @@
           ],
           "title": "_UserEvent"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -238,13 +237,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -259,8 +258,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -269,8 +268,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -347,8 +346,7 @@
             "value": "data: test"
           }
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -375,13 +373,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -396,8 +394,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -406,8 +404,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -430,13 +428,13 @@
                   },
                   "required": true
                 },
-                "X-Accel-Buffering": {
+                "Connection": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Connection": {
+                "X-Accel-Buffering": {
                   "schema": {
                     "type": "string"
                   },
@@ -451,8 +449,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -461,8 +459,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -541,7 +539,8 @@
                   "type": "null"
                 }
               ],
-              "title": "Event"
+              "title": "Event",
+              "default": null
             },
             "id": {
               "anyOf": [
@@ -555,7 +554,8 @@
                   "type": "null"
                 }
               ],
-              "title": "Id"
+              "title": "Id",
+              "default": null
             },
             "retry": {
               "anyOf": [
@@ -566,7 +566,8 @@
                   "type": "null"
                 }
               ],
-              "title": "Retry"
+              "title": "Retry",
+              "default": null
             },
             "comment": {
               "anyOf": [
@@ -577,7 +578,8 @@
                   "type": "null"
                 }
               ],
-              "title": "Comment"
+              "title": "Comment",
+              "default": null
             }
           },
           "type": "object",
@@ -587,8 +589,7 @@
           "title": "SSEvent",
           "description": "Server sent event payload."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

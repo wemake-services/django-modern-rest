@@ -115,6 +115,22 @@ Here's how we select a renderer:
   because utils like :func:`dmr.response.build_response`
   fallbacks to settings-defined renderers in some error cases.
 
+.. note::
+
+  Both selections only depend on the header value,
+  because parsers and renderers are fixed for an endpoint in import time.
+  That's why every endpoint remembers what it has already selected
+  for a given ``Content-Type`` and ``Accept`` header value:
+  a client that keeps sending ``Accept: application/json``
+  only pays for the negotiation once.
+
+  The number of remembered header values is limited
+  by :envvar:`DMR_MAX_CACHE_SIZE`.
+  If you modify parsers or renderers of an endpoint in place,
+  call :meth:`~dmr.negotiation.RequestNegotiator.clear_cache`
+  or :meth:`~dmr.negotiation.ResponseNegotiator.clear_cache`
+  to make the negotiators forget what they have already decided.
+
 
 .. _alternative-json:
 
@@ -171,7 +187,7 @@ going back to the less specific:
       :caption: views.py
       :language: python
       :linenos:
-      :emphasize-lines: 35
+      :emphasize-lines: 32
 
   .. tab:: per controller
 
@@ -179,7 +195,7 @@ going back to the less specific:
       :caption: views.py
       :language: python
       :linenos:
-      :emphasize-lines: 39-40
+      :emphasize-lines: 33-34
 
   .. tab:: per settings
 
@@ -191,7 +207,7 @@ going back to the less specific:
       :caption: settings.py
       :language: python
       :linenos:
-      :emphasize-lines: 6-7
+      :emphasize-lines: 5-6
 
 First parsers / renderers definition found, starting from the top,
 will win and be used for the endpoint.

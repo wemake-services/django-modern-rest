@@ -29,29 +29,9 @@ def test_empty_response_body(
             responses = [
                 ResponseSpec(int, status_code=status),
             ]
-            no_validate_http_spec = {HttpSpec.empty_request_body}
 
             def get(self) -> str:  # needs at least one endpoint to validate
                 raise NotImplementedError
-
-
-@pytest.mark.parametrize('status', _NO_BODY_STATUSES)
-def test_empty_response_body_controller(
-    *,
-    status: HTTPStatus,
-) -> None:
-    """Ensure that can be disabled on controller level."""
-
-    class _Mixed(Controller[PydanticSerializer]):
-        responses = [
-            ResponseSpec(int, status_code=status),
-        ]
-        no_validate_http_spec = {HttpSpec.empty_response_body}
-
-        def get(self) -> str:  # needs at least one endpoint to validate
-            raise NotImplementedError
-
-    assert _Mixed.no_validate_http_spec
 
 
 @pytest.mark.parametrize('status', _NO_BODY_STATUSES)

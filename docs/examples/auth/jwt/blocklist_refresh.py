@@ -1,6 +1,6 @@
 from django.urls import reverse_lazy
 
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.jwt.blocklist import JWTokenBlocklistSyncMixin
 from dmr.security.jwt.views import CookieRefreshTokensSyncController
 
@@ -8,7 +8,7 @@ from dmr.security.jwt.views import CookieRefreshTokensSyncController
 # The mixin goes first, so its `check_auth` runs before ours:
 class RefreshWithBlocklistController(
     JWTokenBlocklistSyncMixin,
-    CookieRefreshTokensSyncController[PydanticSerializer],
+    CookieRefreshTokensSyncController[PydanticFastSerializer],
 ):
     # A blocklisted refresh token cannot buy a new pair of tokens,
     # every other token still can:

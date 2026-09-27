@@ -10,6 +10,7 @@ from typing_extensions import override
 from dmr.internal.enums import stringify
 from dmr.internal.io import aiter_to_iter, maybe_aclosing
 from dmr.renderers import Renderer
+from dmr.streaming.endpoint import Streaming
 from dmr.streaming.exceptions import StreamingCloseError
 
 if TYPE_CHECKING:
@@ -134,12 +135,12 @@ class StreamingResponse(HttpResponseBase):  # noqa: WPS338
             self.streaming_validator = None
 
     async def _produce_events(self) -> AsyncIterator[bytes]:
-        event_producer = (
-            self._produce_events_no_ping
-            if self._controller.streaming_ping_seconds is None
-            else self._produce_events_with_ping
+        ping_seconds = Streaming.of(self._controller).ping_seconds
+        events = (
+            self._produce_events_no_ping()
+            if ping_seconds is None
+            else self._produce_events_with_ping(ping_seconds)
         )
-        events = event_producer()
         async with (
             maybe_aclosing(self._streaming_content),
             maybe_aclosing(events),
@@ -161,10 +162,10 @@ class StreamingResponse(HttpResponseBase):  # noqa: WPS338
                 renderer=self.streaming_renderer,
             )
 
-    async def _produce_events_with_ping(self) -> AsyncIterator[Any]:
-        # for mypy: just checked above
-        assert self._controller.streaming_ping_seconds is not None  # noqa: S101
-
+    async def _produce_events_with_ping(
+        self,
+        ping_seconds: float,
+    ) -> AsyncIterator[Any]:
         event_task: asyncio.Task[Any] | None = None
 
         while True:
@@ -172,7 +173,7 @@ class StreamingResponse(HttpResponseBase):  # noqa: WPS338
                 event_task = asyncio.ensure_future(self._next_event())
 
             ping_task: asyncio.Task[None] = asyncio.ensure_future(
-                asyncio.sleep(self._controller.streaming_ping_seconds),
+                asyncio.sleep(ping_seconds),
             )
             done, _ = await asyncio.wait(
                 [event_task, ping_task],

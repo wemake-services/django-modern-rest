@@ -1,21 +1,23 @@
 # NOTE: when editing this file, also edit `test_pydantic_schema.py`
 
+import dataclasses
 import enum
 from collections.abc import Collection, Mapping
 from typing import (
     Annotated,
     Any,
-    Final,
     Literal,
+    NotRequired,
     Optional,
     Union,
     final,
 )
 
 import pytest
+from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
-from dmr import Controller, Cookies, Headers, Path, Query
+from dmr import Body, Controller, Cookies, Headers, Path, Query
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
@@ -49,9 +51,6 @@ class _TestTypedDict(TypedDict):
 class _TestEnum(enum.IntEnum):
     height = 1
     width = 2
-
-
-_TEST_SCHEMA: Final = Schema(type=OpenAPIType.OBJECT)
 
 
 @pytest.mark.parametrize(
@@ -425,6 +424,86 @@ def test_parameter_schema_with_str_enum() -> None:
         component_name=_QueryEnum.__name__,
         expected_values=['alpha', 'beta'],
     )
+
+
+class _OptionalPathStruct(msgspec.Struct):
+    user_id: int
+    opt: str = ''
+
+
+class _OptionalPathTypedDict(TypedDict):
+    user_id: int
+    opt: NotRequired[str]
+
+
+@dataclasses.dataclass
+class _OptionalPathDataclass:
+    user_id: int
+    opt: str = ''
+
+
+@pytest.mark.parametrize(
+    'path_model',
+    [_OptionalPathStruct, _OptionalPathTypedDict, _OptionalPathDataclass],
+)
+def test_optional_path_fields(path_model: Any) -> None:
+    """Ensure that path parameters are always required, even with defaults."""
+
+    class _OptionalPathController(Controller[MsgspecSerializer]):
+        def get(self, parsed_path: Path[path_model]) -> None:  # pyright: ignore[reportInvalidTypeForm]
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router(
+            'api/',
+            [
+                path(
+                    'user/<int:user_id>/<str:opt>/',
+                    _OptionalPathController.as_view(),
+                ),
+            ],
+        ),
+    ).convert()
+
+    operation = schema['paths']['/api/user/{user_id}/{opt}/']['get']
+    assert {
+        parameter['name']: parameter['required']
+        for parameter in operation['parameters']
+    } == {'user_id': True, 'opt': True}
+
+
+class _NoneDefaultStruct(msgspec.Struct):
+    first: int
+    second: str = ''
+    third: str | None = None
+
+
+def test_none_default() -> None:
+    """Ensure that ``None`` defaults are dumped into the schema."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1619
+
+    class _NoneDefaultController(Controller[MsgspecSerializer]):
+        def post(self, parsed_body: Body[_NoneDefaultStruct]) -> str:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('user/', _NoneDefaultController.as_view())]),
+    ).convert()
+
+    assert schema['components']['schemas']['_NoneDefaultStruct'] == snapshot({
+        'properties': {
+            'first': {'type': 'integer'},
+            'second': {'type': 'string', 'default': ''},
+            'third': {
+                'anyOf': [{'type': 'string'}, {'type': 'null'}],
+                'default': None,
+            },
+        },
+        'type': 'object',
+        'required': ['first'],
+        'title': '_NoneDefaultStruct',
+    })
 
 
 @pytest.mark.parametrize(

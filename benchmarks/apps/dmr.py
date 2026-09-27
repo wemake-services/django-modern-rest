@@ -2,7 +2,6 @@ import datetime as dt
 import decimal
 import enum
 import uuid
-from typing import Annotated
 
 import msgspec
 from django.conf import settings
@@ -72,38 +71,33 @@ class HeadersModel(msgspec.Struct):
 
 
 class QueryModel(msgspec.Struct):
-    per_page: Annotated[list[int], msgspec.Meta(min_length=1, max_length=1)]
-    count: Annotated[list[int], msgspec.Meta(min_length=1, max_length=1)]
-    page: Annotated[list[int], msgspec.Meta(min_length=1, max_length=1)]
-    filter: list[str]
+    per_page: int
+    count: int
+    page: int
 
 
-class UserAsyncController(
-    Controller[MsgspecSerializer],
-):
+class UserAsyncController(Controller[MsgspecSerializer]):
     async def post(
         self,
         parsed_body: Body[UserCreateModel],
         parsed_headers: Headers[HeadersModel],
         parsed_query: Query[QueryModel],
     ) -> UserModel:
-        assert parsed_query.filter[0] == 'dmr', parsed_query
+        assert parsed_query
         return UserModel(
             uid=uuid.uuid4(),
             **msgspec.to_builtins(parsed_body),
         )
 
 
-class UserSyncController(
-    Controller[MsgspecSerializer],
-):
+class UserSyncController(Controller[MsgspecSerializer]):
     def post(
         self,
         parsed_body: Body[UserCreateModel],
         parsed_headers: Headers[HeadersModel],
         parsed_query: Query[QueryModel],
     ) -> UserModel:
-        assert parsed_query.filter[0] == 'dmr', parsed_query
+        assert parsed_query
         return UserModel(
             uid=uuid.uuid4(),
             **msgspec.to_builtins(parsed_body),

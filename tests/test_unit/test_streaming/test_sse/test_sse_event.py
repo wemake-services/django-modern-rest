@@ -255,7 +255,10 @@ def test_event_model_validation() -> None:
         '\r',
     ],
 )
-def test_wrong_chars_are_not_checked_on_creation(char: str) -> None:
+def test_wrong_chars_are_not_checked_on_creation(
+    *,
+    char: str,
+) -> None:
     """Ensures that wrong chars are not checked when creating an event."""
     assert SSEvent({}, id=char).id == char
     assert SSEvent({}, event=char).event == char

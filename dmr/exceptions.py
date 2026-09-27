@@ -1,8 +1,9 @@
 from http import HTTPStatus
 from typing import TYPE_CHECKING, ClassVar, Final, final
 
-from django.utils.functional import Promise
 from django.utils.translation import gettext_lazy as _
+
+from dmr.internal.types import StrOrPromise
 
 if TYPE_CHECKING:
     from dmr.errors import ErrorDetail
@@ -46,7 +47,7 @@ class InternalServerError(Exception):
     If it is disabled, we just show a generic message.
     """
 
-    default_message: ClassVar[str | Promise] = _('Internal server error')
+    default_message: ClassVar[StrOrPromise] = _('Internal server error')
     status_code: ClassVar[HTTPStatus] = HTTPStatus.INTERNAL_SERVER_ERROR
 
 
@@ -106,12 +107,12 @@ class NotAcceptableError(Exception):
 class NotAuthenticatedError(Exception):
     """Raised when we fail to authenticate a user."""
 
-    default_message: ClassVar[str | Promise] = _NOT_AUTHENTICATED_MSG
+    default_message: ClassVar[StrOrPromise] = _NOT_AUTHENTICATED_MSG
     status_code: ClassVar[HTTPStatus] = HTTPStatus.UNAUTHORIZED
 
     def __init__(
         self,
-        msg: str | Promise | None = None,
+        msg: StrOrPromise | None = None,
         *,
         headers: dict[str, str] | None = None,
     ) -> None:
@@ -133,12 +134,12 @@ class NotAuthenticatedError(Exception):
 class TooManyRequestsError(Exception):
     """Raised when user fails the throttling check."""
 
-    default_message: ClassVar[str | Promise] = _TOO_MANY_REQUESTS
+    default_message: ClassVar[StrOrPromise] = _TOO_MANY_REQUESTS
     status_code: ClassVar[HTTPStatus] = HTTPStatus.TOO_MANY_REQUESTS
 
     def __init__(
         self,
-        msg: str | Promise | None = None,
+        msg: StrOrPromise | None = None,
         *,
         headers: dict[str, str] | None = None,
     ) -> None:

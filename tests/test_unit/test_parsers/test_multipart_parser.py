@@ -43,10 +43,7 @@ def test_multipart_correct_request(
     assert json.loads(response.content) == request_data
 
 
-def test_multipart_empty_request(
-    rf: RequestFactory,
-    faker: Faker,
-) -> None:
+def test_multipart_empty_request(rf: RequestFactory) -> None:
     """Ensures we can send empty bytes to our parser."""
     request = rf.post(
         '/whatever/',

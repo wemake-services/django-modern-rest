@@ -33,7 +33,7 @@ or :class:`~dmr.security.AsyncAuth` and implements several things:
     - Decides whether this request is authenticated.
   * - :meth:`~dmr.security.SyncAuth.security_schemes`
     - Describes the auth itself in the OpenAPI spec.
-  * - :meth:`~dmr.security.SyncAuth.security_requirement`
+  * - :meth:`~dmr.security.SyncAuth.security_requirements`
     - References that description from every endpoint using this auth.
   * - :meth:`~dmr.security.SyncAuth.www_authenticate_challenge`
     - Tells a rejected client how to authenticate.

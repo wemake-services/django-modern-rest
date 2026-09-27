@@ -1,12 +1,9 @@
 from dmr import Controller
 from dmr.options_mixins import MetaMixin
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
-class SyncMetaController(
-    MetaMixin,
-    Controller[PydanticSerializer],
-):
+class SyncMetaController(MetaMixin, Controller[PydanticFastSerializer]):
     def get(self) -> str:
         return 'response from GET'
 

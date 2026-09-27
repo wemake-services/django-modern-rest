@@ -6,6 +6,7 @@ from django.urls import URLPattern, URLResolver, include, path
 
 from dmr import Controller
 from dmr.openapi.collector import (
+    InternalRouteMetadata,
     _join_paths,
     _normalize_path,
     _process_pattern,
@@ -88,7 +89,7 @@ class _PostController(Controller[PydanticSerializer]):
         # Paths with regex patterns that simplify_regex processes
         ('^posts/(?P<post_id>\\d+)$', '/posts/{post_id}'),  # noqa: WPS342
         (
-            '^api/v1/users/(?P<user_id>\\d+)/posts/(?P<post_id>\\d+)$',  # noqa: WPS342
+            '^api/v1/users/(?P<user_id>[A-Z]+)/posts/(?P<post_id>\\d+)$',  # noqa: WPS342
             '/api/v1/users/{user_id}/posts/{post_id}',
         ),
         # Edge cases
@@ -98,6 +99,7 @@ class _PostController(Controller[PydanticSerializer]):
     ],
 )
 def test_normalize_path(
+    *,
     input_path: str,
     expected_output: str,
 ) -> None:
@@ -128,8 +130,12 @@ def test_normalize_path(
         ('api/v1/', 'users/{id}/', '/api/v1/users/{id}/'),
         ('/api/v1', '/users/{id}/', '/api/v1/users/{id}/'),
         ('/api/v1/', '/users/{id}/', '/api/v1/users/{id}/'),
+        ('/api/{pk}/', '/users/{id}/', '/api/{pk}/users/{id}/'),
+        ('/api/<int:pk>/', '/users/<str:id>/', '/api/{pk}/users/{id}/'),
         # Edge cases
         ('api/', '', '/api/'),
+        ('api/{pk}/', '', '/api/{pk}/'),
+        ('api/{pk}/', '/', '/api/{pk}/'),
         ('api/', '/', '/api/'),
         ('', 'users/', '/users/'),
         ('api', '/users/', '/api/users/'),
@@ -137,6 +143,7 @@ def test_normalize_path(
     ],
 )
 def test_join_paths(
+    *,
     base_path: str,
     pattern_path: str,
     expected: str,
@@ -154,15 +161,17 @@ def test_join_paths(
     ],
 )
 def test_process_pattern_with_different_views(
+    *,
     path_str: str,
     view_class: type[Controller[BaseSerializer]],
 ) -> None:
     """Ensure that ``_process_pattern`` processes different types correctly."""
     pattern = path(path_str, view_class.as_view())
-    controller_mapping = _process_pattern(pattern, '/api/')
+    controller_mapping, controller_cls = _process_pattern(pattern, '/api/')
 
-    assert isinstance(controller_mapping, tuple)
-    assert controller_mapping[0] == f'/api/{path_str}'
+    assert isinstance(controller_mapping, InternalRouteMetadata)
+    assert controller_cls is view_class
+    assert controller_mapping.normalized_path == f'/api/{path_str}'
 
 
 def test_controller_mapping_collector_with_router() -> None:
@@ -175,7 +184,9 @@ def test_controller_mapping_collector_with_router() -> None:
     mappings = list(controller_mapping_collector(router.urls, router.prefix))
 
     assert len(mappings) == 2
-    assert {path for path, _, _ in mappings} == {
+    assert {
+        route_metadata.normalized_path for route_metadata, _ in mappings
+    } == {
         '/api/direct/',
         '/api/nested/inner/',
     }

@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.debug import sensitive_variables
 from typing_extensions import Sentinel, override
 
 from dmr.internal.model_fields import (
@@ -14,13 +15,13 @@ from dmr.internal.model_fields import (
     DateTimeFieldNullable,
     UserForeignKey,
 )
+from dmr.internal.types import EMPTY
 from dmr.security.token.token import (
     TokenLikeAsync,
     TokenLikeSync,
     get_token_hash,
     resolve_expiry,
 )
-from dmr.types import EMPTY
 
 _REVOKE_FIELDS: Final = ('revoked_at', 'updated_at')
 _LAST_USED_FIELDS: Final = ('last_used_at', 'updated_at')
@@ -141,6 +142,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
+    @sensitive_variables()
     def issue(  # noqa: WPS211
         cls,
         *,
@@ -169,6 +171,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
+    @sensitive_variables()
     async def aissue(  # noqa: WPS211
         cls,
         *,
@@ -197,6 +200,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
+    @sensitive_variables()
     def find_raw(
         cls,
         raw_token: str,
@@ -221,6 +225,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
 
     @classmethod
     @override
+    @sensitive_variables()
     async def afind_raw(
         cls,
         raw_token: str,

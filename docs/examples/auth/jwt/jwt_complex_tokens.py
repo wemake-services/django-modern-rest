@@ -2,7 +2,7 @@ import datetime as dt
 
 from typing_extensions import TypedDict, override
 
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.jwt.views import (
     ObtainTokensPayload,
     ObtainTokensSyncController,
@@ -27,7 +27,7 @@ class _ResponseModel(TypedDict):
 # You can also use `ObtainTokensAsyncController` if needed:
 class ObtainAccessAndRefreshSyncController(
     ObtainTokensSyncController[
-        PydanticSerializer,
+        PydanticFastSerializer,
         _RequestModel,
         _ResponseModel,
     ],

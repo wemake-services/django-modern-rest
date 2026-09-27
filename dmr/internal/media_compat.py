@@ -1,12 +1,14 @@
-# Code here is copied from
+# Compatibility helpers below are copied from
 # https://github.com/django/django/blob/main/django/http/request.py
+
+from collections.abc import Iterable
 
 import django
 from django.http.request import MediaType
 
 # Django <5.2 does not have `.quality` and `.specificity` media attributes.
-# We don't cover these functions, because the code is taken from the Django.
-# It should be pretty stable.
+# We don't cover the copied functions, because the code is taken
+# from the Django. It should be pretty stable.
 
 
 def media_quality(media: MediaType) -> float:  # pragma: no cover
@@ -92,3 +94,19 @@ def media_match(  # pragma: no cover  # noqa: C901, WPS210
         # If other has params and self does not, don't match.
         result = bool(media_range or not other_range)  # noqa: WPS110
     return result
+
+
+# Our own helpers, built on top of the compatibility ones above:
+
+
+def media_by_precedence(content_types: Iterable[str]) -> list[MediaType]:
+    """Return sorted content types based on specificity and quality."""
+    return sorted(
+        (
+            media_type
+            for content_type in content_types
+            if media_quality((media_type := MediaType(content_type))) != 0
+        ),
+        key=lambda media: (media_specificity(media), media_quality(media)),
+        reverse=True,
+    )

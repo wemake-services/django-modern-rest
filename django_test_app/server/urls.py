@@ -1,5 +1,9 @@
 import json
 
+from django.contrib import admin
+from django.contrib.admindocs import urls as admindocs_urls
+from django.urls import include
+
 from dmr.openapi import OpenAPIConfig, build_schema, load_schema
 from dmr.openapi.objects import (
     Components,
@@ -31,6 +35,8 @@ from server.apps.model_simple import urls as model_simple_urls
 from server.apps.negotiations import urls as negotiations_urls
 from server.apps.token_auth import urls as token_auth_urls
 from server.apps.token_custom_user import urls as token_custom_user_urls
+
+admin.autodiscover()
 
 router = Router(prefix='api/')
 router.include(model_simple_urls.router, namespace='model_simple')
@@ -84,6 +90,9 @@ urlpatterns = [
     path('docs/scalar/', ScalarView.as_view(schema), name='scalar'),
     path('docs/swagger/', SwaggerView.as_view(schema), name='swagger'),
     path('docs/stoplight/', StoplightView.as_view(schema), name='stoplight'),
+    # Admin:
+    path('admin/doc/', include(admindocs_urls)),
+    path('admin/', admin.site.urls),
 ]
 
 handler404 = build_404_handler(

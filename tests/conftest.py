@@ -5,6 +5,7 @@ from collections.abc import Callable, Iterator
 
 import freezegun
 import pytest
+from django.conf import LazySettings
 from django.http import HttpRequest
 from django.middleware.csrf import get_token
 from django.utils import translation
@@ -18,6 +19,23 @@ from dmr_pytest import settings  # noqa: F401
 # `freezegun` inspects all attributes of all imported modules
 # to find `datetime` and `time` objects to patch.
 freezegun.configure(extend_ignore_list=['testcontainers', 'docker'])
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """
+    Use a fast password hasher for the whole test session.
+
+    The default ``PBKDF2`` hasher is intentionally slow (~100ms per hash),
+    and every ``create_user`` / ``authenticate`` call pays that price.
+    Nothing we test depends on the hashing algorithm itself,
+    so this only removes overhead from the auth tests.
+    See: https://docs.djangoproject.com/en/stable/topics/testing/overview/#password-hashing
+    """
+    from django.conf import settings as django_settings  # noqa: PLC0415
+
+    django_settings.PASSWORD_HASHERS = [
+        'django.contrib.auth.hashers.MD5PasswordHasher',
+    ]
 
 
 @pytest.fixture
@@ -34,13 +52,15 @@ def reset_language() -> Iterator[None]:
 
 
 @pytest.fixture
-def fill_csrf() -> Callable[[HttpRequest], HttpRequest]:
+def fill_csrf(
+    settings: LazySettings,  # noqa: F811
+) -> Callable[[HttpRequest], HttpRequest]:
     """Fill CSRF parameters for the prepared request."""
 
     def factory(request: HttpRequest) -> HttpRequest:
         csrf_token = get_token(request)
-        request.META['HTTP_X_CSRFTOKEN'] = csrf_token
-        request.COOKIES['csrftoken'] = csrf_token
+        request.META[settings.CSRF_HEADER_NAME] = csrf_token
+        request.COOKIES[settings.CSRF_COOKIE_NAME] = csrf_token
         return request
 
     return factory

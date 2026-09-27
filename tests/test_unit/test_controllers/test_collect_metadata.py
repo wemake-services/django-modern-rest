@@ -14,6 +14,7 @@ class _Controller(Controller[PydanticSerializer]):
 
     @modify(
         extra_responses=[
+            *responses,
             ResponseSpec(
                 complex,
                 status_code=HTTPStatus.NON_AUTHORITATIVE_INFORMATION,
@@ -44,10 +45,6 @@ def test_collected_responses() -> None:
         HTTPStatus.PARTIAL_CONTENT: ResponseSpec(
             return_type=float,
             status_code=HTTPStatus.PARTIAL_CONTENT,
-        ),
-        HTTPStatus.ACCEPTED: ResponseSpec(
-            return_type=int,
-            status_code=HTTPStatus.ACCEPTED,
         ),
         HTTPStatus.NOT_ACCEPTABLE: ResponseSpec(
             return_type=_Controller.error_model,

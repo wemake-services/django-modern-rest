@@ -13,11 +13,13 @@ from dmr.components import ComponentParser, Path
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.endpoint import Endpoint
 from dmr.errors import ErrorModel, ErrorType
+from dmr.metadata import EndpointMetadata
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
+from dmr.types import EMPTY
 
 
 class _ValidAPIError(Controller[PydanticSerializer]):
@@ -199,6 +201,7 @@ class _TestComponent(ComponentParser, Generic[_StrT]):
         controller: Controller[BaseSerializer],
         *,
         field_model: Any,
+        default: Any = EMPTY,
     ) -> Any:
         raise APIError(self.error_message, status_code=HTTPStatus.IM_A_TEAPOT)
 
@@ -240,14 +243,20 @@ class _TestSyncAuth(SyncAuth):
     ) -> Self | None:
         raise APIError(self.error_message, status_code=HTTPStatus.IM_A_TEAPOT)
 
-    @property
     @override
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> dict[str, SecurityScheme | Reference]:
         raise NotImplementedError
 
-    @property
     @override
-    def security_requirement(self) -> SecurityRequirement:
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> list[SecurityRequirement]:
         raise NotImplementedError
 
     @property
@@ -267,14 +276,20 @@ class _TestAsyncAuth(AsyncAuth):
     ) -> Self | None:
         raise APIError(self.error_message, status_code=HTTPStatus.IM_A_TEAPOT)
 
-    @property
     @override
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> dict[str, SecurityScheme | Reference]:
         raise NotImplementedError
 
-    @property
     @override
-    def security_requirement(self) -> SecurityRequirement:
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> list[SecurityRequirement]:
         raise NotImplementedError
 
     @property
@@ -430,7 +445,7 @@ def test_path_component_responses() -> None:
             HTTPStatus.OK,
             HTTPStatus.BAD_REQUEST,
             HTTPStatus.NOT_FOUND,
-            HTTPStatus.UNPROCESSABLE_ENTITY,
             HTTPStatus.NOT_ACCEPTABLE,
+            HTTPStatus.UNPROCESSABLE_ENTITY,
         ],
     )

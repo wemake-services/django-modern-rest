@@ -1,8 +1,8 @@
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from examples.reusable_code.reusable_controller import ReusableController
 
 
-class PydanticController(ReusableController[PydanticSerializer]):
+class PydanticController(ReusableController[PydanticFastSerializer]):
     """This controller will use pydantic for serialization."""
 
 

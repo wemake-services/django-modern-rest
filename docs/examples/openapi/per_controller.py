@@ -1,8 +1,8 @@
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
-class APIController(Controller[PydanticSerializer]):
+class APIController(Controller[PydanticFastSerializer]):
     semantic_responses = False
 
     async def get(self) -> str:

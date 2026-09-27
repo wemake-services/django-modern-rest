@@ -82,7 +82,10 @@ def test_empty_token() -> None:
         dt.datetime.now() - dt.timedelta(seconds=1),  # noqa: DTZ005
     ],
 )
-def test_exp_in_the_past(exp: dt.datetime) -> None:
+def test_exp_in_the_past(
+    *,
+    exp: dt.datetime,
+) -> None:
     """Ensures that we can't issue a token with an exp date in the past."""
     with pytest.raises(JWTokenError, match='datetime in the future'):
         JWToken('a', exp).encode(secrets.token_hex(), 'HS256')
@@ -289,7 +292,10 @@ def test_encode_unserializable_extras() -> None:
 
 
 @pytest.mark.parametrize('issuer', [None, 'text', ['list', 'of', 'values']])
-def test_token_issuer(issuer: str | list[str] | None) -> None:
+def test_token_issuer(
+    *,
+    issuer: str | list[str] | None,
+) -> None:
     """Ensure that issue validation works."""
     iss = issuer[0] if isinstance(issuer, list) else issuer
     secret = secrets.token_hex()
@@ -491,7 +497,10 @@ def test_future_iat_can_skip_iat_verification() -> None:
 
 
 @pytest.mark.parametrize('seconds', [_LEEWAY - 1, _LEEWAY])
-def test_leeway_applies_to_iat(seconds: int) -> None:
+def test_leeway_applies_to_iat(
+    *,
+    seconds: int,
+) -> None:
     """Ensure `leeway` tolerates an `iat` from the near future."""
     secret = secrets.token_hex()
     issued_at = dt.datetime.now(dt.UTC) + dt.timedelta(seconds=seconds)

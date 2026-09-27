@@ -10,6 +10,7 @@ from dmr import Controller, ResponseSpec, modify, validate
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
+from dmr.types import EMPTY
 
 
 class _SimpleModel(pydantic.BaseModel):
@@ -36,20 +37,14 @@ class _TaggedController(Controller[PydanticSerializer]):
 
 
 def test_controller_tags() -> None:
-    """Controller tags are applied to all endpoints of this controller."""
+    """Controller tags are applied to all endpoints without own tags."""
     assert _TaggedController.api_endpoints['GET'].metadata.tags == ['users']
-    assert _TaggedController.api_endpoints['POST'].metadata.tags == [
-        'users',
-        'admin',
-    ]
-    assert _TaggedController.api_endpoints['PUT'].metadata.tags == [
-        'users',
-        'admin',
-    ]
+    assert _TaggedController.api_endpoints['POST'].metadata.tags == ['admin']
+    assert _TaggedController.api_endpoints['PUT'].metadata.tags == ['admin']
 
 
 def test_controller_tags_schema(snapshot: SnapshotAssertion) -> None:
-    """Router, controller, and endpoint tags are merged in this order."""
+    """Endpoint tags override controller tags, which override router ones."""
     assert (
         json.dumps(
             build_schema(
@@ -76,8 +71,46 @@ class _UntaggedController(Controller[PydanticSerializer]):
 
 def test_no_controller_tags() -> None:
     """Endpoint tags are not affected when a controller has no tags."""
-    assert _UntaggedController.api_endpoints['GET'].metadata.tags is None
+    assert _UntaggedController.api_endpoints['GET'].metadata.tags is EMPTY
     assert _UntaggedController.api_endpoints['POST'].metadata.tags == ['admin']
+
+
+class _ExplicitTags(Controller[PydanticSerializer]):
+    tags = ('users',)
+
+    @modify(tags=[*tags, 'admin'])
+    def get(self) -> _SimpleModel:
+        raise NotImplementedError
+
+    @modify(tags=None)
+    def post(self) -> _SimpleModel:
+        raise NotImplementedError
+
+
+def test_explicit_tags() -> None:
+    """Tags can be merged explicitly or disabled with `None`."""
+    assert _ExplicitTags.api_endpoints['GET'].metadata.tags == [
+        'users',
+        'admin',
+    ]
+    assert _ExplicitTags.api_endpoints['POST'].metadata.tags is None
+
+
+def test_none_tags_schema(snapshot: SnapshotAssertion) -> None:
+    """Router tags are not applied when endpoint tags are `None`."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/users/',
+                    [path('', _ExplicitTags.as_view())],
+                    tags=['v1'],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
 
 
 class _SubTaggedController(_TaggedController):
@@ -87,7 +120,4 @@ class _SubTaggedController(_TaggedController):
 def test_subclass_controller_tags() -> None:
     """Subclasses can redefine tags of the base controller."""
     assert _SubTaggedController.api_endpoints['GET'].metadata.tags == ['admins']
-    assert _SubTaggedController.api_endpoints['POST'].metadata.tags == [
-        'admins',
-        'admin',
-    ]
+    assert _SubTaggedController.api_endpoints['POST'].metadata.tags == ['admin']

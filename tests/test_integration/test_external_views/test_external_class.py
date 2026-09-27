@@ -1,13 +1,11 @@
 from http import HTTPStatus
 
-import pytest
 from django.urls import reverse
 from faker import Faker
 
 from dmr.test import DMRClient
 
 
-@pytest.mark.django_db
 def test_external_class_success(
     dmr_client: DMRClient,
     faker: Faker,
@@ -25,7 +23,6 @@ def test_external_class_success(
     assert response.json() == request_data
 
 
-@pytest.mark.django_db
 def test_external_class_bad_method(
     dmr_client: DMRClient,
     faker: Faker,
@@ -45,11 +42,7 @@ def test_external_class_bad_method(
     assert response.json() == {}
 
 
-@pytest.mark.django_db
-def test_external_class_bad_request(
-    dmr_client: DMRClient,
-    faker: Faker,
-) -> None:
+def test_external_class_bad_request(dmr_client: DMRClient) -> None:
     """Ensure that wrong data raises 400."""
     request_data = {'wrong': 'data'}
 

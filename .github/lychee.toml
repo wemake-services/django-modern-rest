@@ -9,6 +9,12 @@ verbose = "warn"
 # public documentation hosts.
 max_concurrency = 4
 
+# Those hosts still reset connections from CI runners now and then, which has
+# failed this job on links that are reachable from everywhere else. Retry more
+# than the default of 3, and wait long enough for the host to let us back in.
+max_retries = 5
+retry_wait_time = 4
+
 
 # Require all checked web links to use HTTPS.
 require_https = true

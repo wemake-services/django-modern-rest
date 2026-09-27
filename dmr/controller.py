@@ -3,7 +3,6 @@ from http import HTTPMethod, HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, Final, Generic, TypeVar
 
 from django.http import HttpRequest, HttpResponse, HttpResponseBase
-from django.urls import URLPattern
 from django.utils.functional import classproperty
 from django.utils.translation import gettext_lazy as _
 from django.views import View
@@ -11,13 +10,15 @@ from typing_extensions import Sentinel, deprecated, override
 
 from dmr import throttling as dmr_throttling
 from dmr.cookies import NewCookie
-from dmr.endpoint import Endpoint
+from dmr.endpoint import Endpoint, Extras
 from dmr.errors import ErrorModel, ErrorType, format_error
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.internal.docstrings import resolve_summary_and_description
 from dmr.internal.io import identity
+from dmr.internal.types import EMPTY, StrOrPromise
 from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
+from dmr.openapi.collector import InternalRouteMetadata
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import Operation, PathItem, Server
 from dmr.parsers import Parser
@@ -26,14 +27,10 @@ from dmr.response import build_response
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
-from dmr.types import EMPTY, AnnotationsContext, infer_type_args
+from dmr.types import AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
 if TYPE_CHECKING:
-    from django.utils.functional import (
-        _StrOrPromise,  # pyright: ignore[reportPrivateUsage]
-    )
-
     from dmr.routing import Router
 
 _METHOD_NOT_ALLOWED_MSG: Final = _(
@@ -71,31 +68,43 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             once the first controller is created.
         no_validate_http_spec: Set of http spec validation checks
             that we disable for this class.
+            Overrides the settings value, can be overridden per endpoint.
+            Set it to ``None`` to enable all checks back.
         validate_responses: Boolean whether or not validating responses.
             Works in runtime, can be disabled for better performance.
         exclude_validate_responses: Set of status codes that we don't
             validate, even when ``validate_responses`` is enabled.
             Useful for errors like ``500`` that can be raised
             from anywhere and that you might not want to describe.
+            Overrides the settings value, can be overridden per endpoint.
+            Set it to ``None`` to validate all status codes back.
+        semantic_schema: Should we generate any semantic schema
+            for endpoints in this controller?
         semantic_responses: Should semantic responses be collected
             from different providers for all endpoints in this class.
         exclude_semantic_responses: Set of semantic responses
             that user wants to disable.
-        validate_events: Should this endpoint validate events?
-            If not set, defaults to the ``validate_responses`` value.
-            This value only matters if the response
-            will be a streaming response that supports event validation.
+            Overrides the settings value, can be overridden per endpoint.
+            Set it to ``None`` to enable all semantic responses back.
+        semantic_auth: Should semantic auth be collected
+            from different providers for this endpoint.
+            Overrides settings value.
+        exclude_semantic_auth: Set of semantic security requirements names
+            that should not be collected. Overrides settings value.
         responses: List of responses schemas that this controller can return.
-            Also customizable in endpoints and globally with ``'responses'``
-            key in the settings.
+            Overrides ``'responses'`` key in the settings,
+            can be overridden per endpoint.
+            Set it to ``None`` to not use any responses from the settings.
         allowed_http_methods: Set of names to be treated as names for endpoints.
             Does not include ``options``, but includes ``meta``.
         parsers: Sequence of parsers to be used for this controller
             to parse incoming request's body. All instances must be of subtypes
             of :class:`~dmr.parsers.Parser`.
+            Overrides the settings value, can be overridden per endpoint.
         renderers: Sequence of renderers to be used for this controller
             to render response's body. All instances must be of subtypes
             of :class:`~dmr.renderers.Renderer`.
+            Overrides the settings value, can be overridden per endpoint.
         validate_negotiation: Should we validate that returned response's
             ``Content-Type`` header matches the one
             that we inferred in the negotiation process?
@@ -104,30 +113,49 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             of :class:`dmr.security.SyncAuth`.
             Async controllers must use instances
             of :class:`dmr.security.AsyncAuth`.
+            Overrides the settings value, can be overridden per endpoint.
             Set it to ``None`` to disable auth of this controller.
         throttling: Sequence of throttle instances to be used.
             Sync controllers must use instances
             of :class:`dmr.throttling.SyncThrottle`.
             Async controllers must use instances
             of :class:`dmr.throttling.AsyncThrottle`.
+            Overrides the settings value, can be overridden per endpoint.
             Set it to ``None`` to disable throttling of this controller.
-        throttling_allow_unsafe_cache: Should this controller allow
-            unsafe throttle Django cache backends?
         error_model: Schema type that represents
             and validates common error responses.
         is_abstract: Whether or not this controller is abstract.
             We consider controller "abstract" when it does not have
             exact serializer type or exact ``api_endpoints`` instances.
+            You can also set it to ``True`` explicitly to make
+            a controller with an exact serializer reusable
+            without routing it: it does not build any endpoints,
+            only its subclasses do. Subclasses that don't declare
+            ``is_abstract`` themselves become concrete again.
             Abstract controllers cannot be routed, ``as_view`` raises
             :class:`~dmr.exceptions.EndpointMetadataError` for them.
         is_async: Whether or not this controller is async.
         streaming: Does this controller work with streaming responses like SSE?
+        extras: Default extras instance for this controller.
+            Setting it enables ``extras=`` in ``@modify`` and ``@validate``
+            for all endpoints and provides controller-level defaults.
+            ``EMPTY`` means that extras are not supported.
+            See :ref:`modify-and-validate-with-extras` to learn more.
         controller_validator_cls: Runs full controller validation on definition.
         annotations_context: Inference context to call
             :func:`typing.get_type_hints` for this controller.
         api_endpoints: Dictionary of HTTPMethod name to controller instance.
         csrf_exempt: Should this controller be exempted from the CSRF check?
-            Is ``True`` by default.
+            Is ``True`` by default. See :ref:`controller-csrf`
+            to configure the CSRF correctly to support REST responses.
+            It is only supported on the controller level, because
+            it has its own per-method logic
+            inside Django's original CSRF middleware.
+        login_required: Whether this controller should be handled by
+            Django's ``LoginRequiredMiddleware``.
+            Is ``False`` by default.
+            Users should make use of authentication in ``django-modern-rest``.
+            See :doc:`/pages/auth/common` for more details.
         summary: A short summary of what this path item does.
             Defaults to the first paragraph of the controller's docstring.
             Set it to ``None`` to have no summary at all.
@@ -137,13 +165,18 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             Set it to ``None`` to have no description at all.
         tags: A list of tags to group all operations
             from this controller in OpenAPI documentation.
-            These are merged with router-level and endpoint-level tags.
+            Overrides router-level tags, can be overridden per endpoint.
+            Set it to ``None`` to have no tags at all.
         servers: An alternative servers array to service this path item.
         ignore_from_spec: If set to ``True``, all endpoints from this controller
             would not be added to the final OpenAPI spec.
         request: Current :class:`~django.http.HttpRequest` instance.
         args: Path positional parameters of the request.
         kwargs: Path named parameters of the request.
+
+    .. versionchanged:: 0.16.0
+        Explicit ``is_abstract`` definitions are now respected:
+        abstract controllers do not build any endpoints.
 
     """
 
@@ -156,40 +189,50 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     )
     api_endpoints: ClassVar[Mapping[str, Endpoint]]
     csrf_exempt: ClassVar[bool] = True
+    login_required: ClassVar[bool] = False
     serializer: ClassVar[type[BaseSerializer]]
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
-    no_validate_http_spec: ClassVar[Set[HttpSpec] | None] = frozenset()
-    validate_responses: ClassVar[bool | None] = None
-    exclude_validate_responses: ClassVar[Set[HTTPStatus] | None] = frozenset()
-    semantic_responses: ClassVar[bool | None] = None
-    exclude_semantic_responses: ClassVar[Set[HTTPStatus] | None] = frozenset()
-    validate_events: ClassVar[bool | None] = None
-    responses: ClassVar[Sequence[ResponseSpec]] = []
+    no_validate_http_spec: ClassVar[Set[HttpSpec] | Sentinel | None] = EMPTY
+    validate_responses: ClassVar[bool | Sentinel] = EMPTY
+    exclude_validate_responses: ClassVar[Set[HTTPStatus] | Sentinel | None] = (
+        EMPTY
+    )
+    semantic_schema: ClassVar[bool | Sentinel] = EMPTY
+    semantic_responses: ClassVar[bool | Sentinel] = EMPTY
+    exclude_semantic_responses: ClassVar[Set[HTTPStatus] | Sentinel | None] = (
+        EMPTY
+    )
+    semantic_auth: bool | Sentinel = EMPTY
+    exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY
+    responses: ClassVar[Sequence[ResponseSpec] | Sentinel | None] = EMPTY
     allowed_http_methods: ClassVar[Set[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:
         {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
     )
-    parsers: ClassVar[Sequence[Parser]] = ()
-    renderers: ClassVar[Sequence[Renderer]] = ()
-    validate_negotiation: ClassVar[bool | None] = None
-    auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | None] = ()
+    parsers: ClassVar[Sequence[Parser] | Sentinel] = EMPTY
+    renderers: ClassVar[Sequence[Renderer] | Sentinel] = EMPTY
+    validate_negotiation: ClassVar[bool | Sentinel] = EMPTY
+    auth: ClassVar[
+        Sequence[SyncAuth] | Sequence[AsyncAuth] | Sentinel | None
+    ] = EMPTY
     throttling: ClassVar[
         Sequence[dmr_throttling.SyncThrottle]
         | Sequence[dmr_throttling.AsyncThrottle]
+        | Sentinel
         | None
-    ] = ()
-    throttling_allow_unsafe_cache: ClassVar[bool | Sentinel | None] = EMPTY
+    ] = EMPTY
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
     is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
     streaming: ClassVar[bool] = False
+    extras: ClassVar[Extras[Any] | Sentinel] = EMPTY
     annotations_context: ClassVar[AnnotationsContext] = AnnotationsContext()
 
     # OpenAPI:
-    summary: ClassVar['_StrOrPromise | Sentinel | None'] = EMPTY
-    description: ClassVar['_StrOrPromise | Sentinel | None'] = EMPTY
-    tags: ClassVar[Sequence[str] | None] = None
-    servers: ClassVar[Sequence[Server] | None] = None
+    summary: ClassVar[StrOrPromise | Sentinel | None] = EMPTY
+    description: ClassVar[StrOrPromise | Sentinel | None] = EMPTY
+    tags: ClassVar[Sequence[str] | Sentinel | None] = EMPTY
+    servers: ClassVar[Sequence[Server] | Sentinel | None] = EMPTY
     ignore_from_spec: ClassVar[bool] = False
 
     # Public instance API:
@@ -206,15 +249,27 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         cls.serializer = serializer
         cls.settings_validator_cls(serializer=cls.serializer)()
 
-        # Now it is validated that we don't have intersections.
-        cls.api_endpoints = {
-            canonical: cls.endpoint_cls(
-                meth,
-                controller_cls=cls,
-            )
-            for canonical, meth in cls._find_existing_http_methods().items()
-        }
-        cls.is_abstract = not bool(cls.api_endpoints)
+        # Explicit `is_abstract` definitions always win. We don't use
+        # `getattr`, because subclasses of explicitly abstract controllers
+        # must become concrete again,
+        # unless they declare `is_abstract` themselves.
+        explicit_is_abstract = cls.__dict__.get('is_abstract', False)
+        if explicit_is_abstract:
+            # Abstract controllers have nothing to serve,
+            # so endpoints are only built in a concrete context:
+            cls.api_endpoints = {}
+            cls.is_abstract = True
+        else:
+            # Now it is validated that we don't have intersections.
+            cls.api_endpoints = {
+                canonical: cls.endpoint_cls(
+                    meth,
+                    controller_cls=cls,
+                )
+                for canonical, meth in cls._find_existing_http_methods().items()
+            }
+            # A controller that has no endpoints is abstract either way:
+            cls.is_abstract = not bool(cls.api_endpoints)
         cls.is_async = cls.controller_validator_cls()(cls)
 
     @override
@@ -227,6 +282,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         authentication will still be explicitly validated for CSRF,
         while all other authentication methods will be CSRF-exempt.
 
+        This override also applies whether a login is required or not.
+        By default, login is not required
+        to exempt the view from Django's ``LoginRequiredMiddleware``.
+        Users should make use of authentication in ``django-modern-rest``.
+        See :doc:`/pages/auth/common` for more details.
+
         Raises:
             EndpointMetadataError: When called on an abstract controller,
                 because it has nothing to serve.
@@ -236,6 +297,10 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             Abstract controllers now raise
             :class:`~dmr.exceptions.EndpointMetadataError`
             instead of silently returning a broken view.
+
+            Controllers now set ``login_required`` to ``False`` by default
+            in order to exempt controllers from
+            Django's ``LoginRequiredMiddleware``.
 
         """
         if cls.is_abstract:
@@ -248,9 +313,13 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             )
         # We don't use `csrf_exempt()` decorator here, because it is slow:
         view = super().as_view(**initkwargs)
-        # TODO: add tests and docs for this feature.
-        if cls.csrf_exempt:  # pragma: no cover
+        if cls.csrf_exempt:
             view.csrf_exempt = True  # type: ignore[attr-defined]
+        # Apply login requirement to the view.
+        # By default, login is not required to exempt the view
+        # from Django's `LoginRequiredMiddleware`.
+        view.login_required = cls.login_required  # type: ignore[attr-defined]
+
         return view
 
     @override
@@ -547,8 +616,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     @classmethod
     def get_schema(  # noqa: WPS210
         cls,
-        path: str,
-        pattern: URLPattern,
+        route_metadata: InternalRouteMetadata,
         context: OpenAPIContext,
         router: 'Router',
     ) -> PathItem | None:
@@ -565,18 +633,19 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
 
             ``summary`` and ``description`` are now parsed
             from the controller's docstring when they are not set explicitly.
+            Changed *path* and *pattern* parameters
+            to be *route_metadata* instead.
 
         """
+        assert not cls.is_abstract, f"Can't include abstract controller: {cls}"  # noqa: S101
         operations: dict[str, Operation] = {}
         for method, endpoint in cls.api_endpoints.items():
             if endpoint.metadata.ignore_from_spec:
                 continue
 
             operations[method.lower()] = endpoint.get_schema(
-                path,
-                pattern,
-                cls.__qualname__,
-                cls.serializer,
+                route_metadata,
+                cls,
                 context,
                 router,
             )
@@ -596,7 +665,11 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             additional_operations=additional_ops,
             summary=summary,
             description=description,
-            servers=None if cls.servers is None else list(cls.servers),
+            servers=(
+                None
+                if cls.servers is None or isinstance(cls.servers, Sentinel)
+                else list(cls.servers)
+            ),
         )
 
     @classproperty
@@ -658,6 +731,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         return {
             # Rename `meta` back to `options`:
             ('OPTIONS' if dsl_method == 'meta' else dsl_method.upper()): method
-            for dsl_method in cls.allowed_http_methods
+            # Sorted, because set order depends on `PYTHONHASHSEED`,
+            # and endpoints must have the same order in every process:
+            for dsl_method in sorted(cls.allowed_http_methods)
             if (method := getattr(cls, dsl_method, None)) is not None
         }

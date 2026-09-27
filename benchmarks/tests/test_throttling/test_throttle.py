@@ -8,6 +8,7 @@ from typing_extensions import override
 
 from dmr import Controller
 from dmr.endpoint import Endpoint
+from dmr.metadata import EndpointMetadata
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.security import AsyncAuth, SyncAuth
@@ -36,15 +37,21 @@ class _Auth(SyncAuth):
     ) -> Self:
         return self
 
-    @property
     @override
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> dict[str, SecurityScheme | Reference]:
         return {}
 
-    @property
     @override
-    def security_requirement(self) -> SecurityRequirement:
-        return {}
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> list[SecurityRequirement]:
+        return []
 
     @property
     @override
@@ -93,15 +100,21 @@ class _AsyncAuth(AsyncAuth):
     ) -> Self:
         return self
 
-    @property
     @override
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
+    def security_schemes(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> dict[str, SecurityScheme | Reference]:
         return {}
 
-    @property
     @override
-    def security_requirement(self) -> SecurityRequirement:
-        return {}
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+    ) -> list[SecurityRequirement]:
+        return []
 
     @property
     @override

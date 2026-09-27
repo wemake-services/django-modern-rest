@@ -1,36 +1,11 @@
 import dataclasses
-from typing import TYPE_CHECKING, Self, final
+from typing import TYPE_CHECKING, Any, Self, TypeAlias, final
 
-from django.urls.resolvers import URLPattern
-
-from dmr.openapi.objects import PathItem
+from django.urls.resolvers import RoutePattern
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from dmr.routing import Router
-
-
-@final
-@dataclasses.dataclass(slots=True, frozen=True)
-class URLExternal:
-    """
-    Represents an external URL that was added to the routing of DMR.
-
-    Prefer :func:`external_path` over using this class directly.
-    See :ref:`external-views` for more info.
-
-    .. versionadded:: 0.13.0
-    .. versionchanged:: 0.14.0
-        Moved to internal and made protected.
-
-    """
-
-    url: URLPattern
-    openapi: PathItem | None = dataclasses.field(kw_only=True)
-
-    def get_url_with_metadata(self) -> URLPattern:
-        """Get the url pattern with attached OpenAPI metadata."""
-        self.url.callback.__dmr_external_openapi__ = self.openapi  # type: ignore[attr-defined]
-        return self.url
 
 
 @final
@@ -67,3 +42,44 @@ class RouterMetadata:
                 router.ignore_from_spec or included.ignore_from_spec
             ),
         )
+
+
+_CapturedArgs: TypeAlias = tuple[Any, ...]
+_CapturedKwargs: TypeAlias = dict[str, int | str]
+_RouteMatch: TypeAlias = tuple[str, _CapturedArgs, _CapturedKwargs]
+
+
+@final
+class PrefixRoutePattern(RoutePattern):
+    """Custom route pattern for better speed."""
+
+    def __init__(
+        self,
+        route: str,
+        name: str | None = None,
+        is_endpoint: bool = False,  # noqa: FBT001, FBT002
+    ) -> None:
+        """Static patterns would work faster."""
+        idx = route.find('<')
+        if idx == -1:
+            self._prefix = route
+            self._is_static = True
+        else:
+            self._is_static = False
+            self._prefix = route[:idx]
+        self._is_endpoint = is_endpoint
+        super().__init__(route, name, is_endpoint)
+
+    @override
+    def match(
+        self,
+        path: str,
+    ) -> _RouteMatch | None:
+        if self._is_static:
+            if self._is_endpoint and path == self._prefix:
+                return '', (), {}
+            if not self._is_endpoint and path.startswith(self._prefix):
+                return path[len(self._prefix) :], (), {}
+        elif path.startswith(self._prefix):
+            return super().match(path)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        return None

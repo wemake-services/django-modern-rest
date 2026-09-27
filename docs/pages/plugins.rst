@@ -57,6 +57,15 @@ We use :class:`dmr.endpoint.SerializerContext` type
 to deserialize all components from a single model, so it would be much faster
 than parsing each component separately.
 
+The model itself is built by the serializer
+in :meth:`~dmr.serializer.BaseSerializer.build_context_model`,
+each serializer picks the fastest model type it can validate:
+:class:`~dmr.plugins.pydantic.PydanticSerializer`
+uses a :class:`typing.TypedDict` or a :func:`dataclasses.dataclass`
+when there are :ref:`default values <component-defaults>`,
+:class:`~dmr.plugins.msgspec.MsgspecSerializer`
+always uses a :class:`msgspec.Struct` with ``gc=False``.
+
 This class can be customized for several reasons.
 
 Change the default strictness

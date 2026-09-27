@@ -6,6 +6,14 @@ How authentication works
 1. Checking that user requests contain the required authentication credentials
 2. Boilerplate code for views that provide authentication credentials for users
 
+.. note::
+
+  Controllers set :attr:`login_required <dmr.controller.Controller.login_required>`
+  to ``False`` by default to exempt endpoints from Django's
+  :class:`LoginRequiredMiddleware <django.contrib.auth.middleware.LoginRequiredMiddleware>`.
+  The middleware redirects unauthenticated requests to the login page
+  which is not what we want for API endpoints.
+
 
 Enabling authentication
 -----------------------
@@ -37,7 +45,7 @@ All of them have a unified API:
   Async auth has an async ``__call__``, sync auth has a sync one.
 - :meth:`~dmr.security.SyncAuth.security_schemes`
   provides the OpenAPI spec to define this auth method in the spec.
-- :meth:`~dmr.security.SyncAuth.security_requirement`
+- :meth:`~dmr.security.SyncAuth.security_requirements`
   provides the OpenAPI spec to indicate what kind of auth will
   be required for each endpoint using this auth.
 
@@ -104,6 +112,14 @@ There are 4 ways to provide auth classes for an endpoint:
 
 Providing several auth instances means that at least one of them must succeed.
 
+Auth instances from different levels are not merged:
+endpoint ``auth`` overrides controller ``auth``,
+controller ``auth`` overrides :data:`~dmr.settings.Settings.auth`.
+See :ref:`configuration-levels`.
+
+.. versionchanged:: 0.16.0
+  Auth instances from different levels used to be merged.
+
 
 Disabling auth
 ~~~~~~~~~~~~~~
@@ -115,8 +131,9 @@ like ``/registration`` and ``/login``.
 To do so, set ``auth=None`` for the specific
 endpoints / controllers that should not have auth.
 
-Setting ``None`` as ``auth`` in any place will always disable
-all auth in further layers.
+Setting ``None`` as ``auth`` on a controller disables
+auth from the settings for all its endpoints,
+unless an endpoint provides its own ``auth``.
 
 .. note::
 
@@ -325,10 +342,10 @@ that are shown to admins in error reporting middlewares:
 
   >>> from dmr import Body, Controller, modify
   >>> from dmr.decorators import endpoint_decorator
-  >>> from dmr.plugins.pydantic import PydanticSerializer
+  >>> from dmr.plugins.pydantic import PydanticFastSerializer
   >>> from dmr.security import NO_STORE_HEADERS
 
-  >>> class MyLoginController(Controller[PydanticSerializer]):
+  >>> class MyLoginController(Controller[PydanticFastSerializer]):
   ...     @sensitive_variables()
   ...     @endpoint_decorator(sensitive_post_parameters())
   ...     @modify(headers=NO_STORE_HEADERS)

@@ -28,7 +28,7 @@ from contextlib import contextmanager, redirect_stderr, suppress
 from functools import partial
 from pathlib import Path
 from types import MappingProxyType, ModuleType
-from typing import TYPE_CHECKING, Any, ClassVar, Final, Literal, TypeAlias, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Final, Literal, TypeAlias
 from urllib.parse import urlencode
 
 import django
@@ -66,7 +66,10 @@ from typing_extensions import override
 from dmr.openapi import OpenAPIConfig
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import build_404_handler, build_500_handler
+from dmr.security.csrf import build_csrf_handler
 from dmr.settings import Settings, clear_settings_cache
+from dmr.types import EMPTY
+from tools.sphinx_ext.markdown import skip_node
 
 if TYPE_CHECKING:
     from sphinx.writers.html5 import HTML5Translator
@@ -249,7 +252,7 @@ def _get_available_port() -> int:
         except OSError as error:
             raise _StartupError('Could not find an open port') from error
         else:
-            return cast(int, sock.getsockname()[1])
+            return sock.getsockname()[1]  # type: ignore[no-any-return]
 
 
 def _ensure_project_import_paths() -> None:
@@ -352,6 +355,11 @@ class _BaseBuilder:  # noqa: WPS214
             # Needed for HTTP Basic auth example:
             HTTP_BASIC_USERNAME='admin',
             HTTP_BASIC_PASSWORD='pass',  # noqa: S106
+            # Needed for CSRF integration example:
+            CSRF_FAILURE_VIEW=build_csrf_handler(
+                'api/',
+                serializer=PydanticSerializer,
+            ),
         )
         django.setup()
 
@@ -462,7 +470,7 @@ class _BaseBuilder:  # noqa: WPS214
         controller = self._find_controller(module)
         url_path = _get_route_path_from_run_args(
             self.config,
-        ).lstrip('/')  # noqa: WPS226
+        ).lstrip('/')
         return [
             path(url_path, controller),
             *_build_named_urls(self.config, controller),
@@ -489,7 +497,7 @@ class _OpenAPIBuilder(_BaseBuilder):
         controller = self._find_controller(module)
         url_path = _get_route_path_from_run_args(
             self.config,
-        ).lstrip('/')  # noqa: WPS226
+        ).lstrip('/')
 
         router = Router(
             '',
@@ -742,7 +750,7 @@ def _extract_comment_config(
     if '# noqa' in run_stmt:
         run_stmt = run_stmt.split('# noqa')[0]
     try:
-        return cast(dict[str, Any], json.loads(run_stmt))
+        return json.loads(run_stmt)  # type: ignore[no-any-return]
     except Exception as exc:
         raise _StartupError(
             f'Cannot parse {config_type} in {file_path!s}',
@@ -789,7 +797,7 @@ def _exec_openapi_examples(
     openapi_results = []
 
     for openapi_args in openapi_configs:
-        url_path = cast(str, openapi_args['openapi_url'])
+        url_path: str = openapi_args['openapi_url']
         # Settings must already be configured before `override_settings`
         # wraps them. Otherwise it wraps an unconfigured lazy object,
         # and `_configure_settings()` inside `_run_app` sees
@@ -805,6 +813,7 @@ def _exec_openapi_examples(
                     ),
                     Settings.openapi_examples_seed: openapi_args.get(
                         'openapi_examples_seed',
+                        EMPTY,
                     ),
                 },
             ),
@@ -919,7 +928,9 @@ def _create_openapi_admonition(result_content: str) -> Node:
         '',
         title('', 'OpenAPI Schema'),
         result_toggle,
-        classes=['hint'],
+        # The generated schema is large and follows from the example code,
+        # it is left out of the Markdown output to save LLMs tokens:
+        classes=['hint', 'llm-friendly-exclude'],
     )
 
 
@@ -1304,7 +1315,7 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
         first_node = rendered_nodes[0]
 
         if self._is_literal_block_wrapper(first_node):
-            wrapper_node = cast(container, first_node)
+            wrapper_node: container = first_node  # type: ignore[assignment]
             self._add_wrapper_class(wrapper_node, 'imports-inline-enabled')
             self._insert_spoiler_before_literal_block(
                 wrapper_node,
@@ -1435,7 +1446,7 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
 
         first_node = rendered_nodes[0]
         if self._is_literal_block_wrapper(first_node):
-            wrapper_node = cast(container, first_node)
+            wrapper_node: container = first_node  # type: ignore[assignment]
             self._add_wrapper_class(wrapper_node, 'github-link-enabled')
             self._insert_source_link(
                 wrapper_node,
@@ -1514,9 +1525,12 @@ def setup(app: Sphinx) -> None:
     """Register Sphinx extension directives."""
     tmp_examples_path = Path.cwd() / _PATH_TO_TMP_EXAMPLES
     tmp_examples_path.mkdir(exist_ok=True, parents=True)
+    # In Markdown, imports are shown in full, and the example code
+    # is already there, so there is nothing to toggle or to link to:
     app.add_node(
         _ImportsSpoiler,
         html=(_visit_imports_spoiler, _depart_imports_spoiler),
+        llm_markdown=(skip_node, None),
     )
     app.add_node(
         _ImportsSpoilerSummary,
@@ -1528,6 +1542,7 @@ def setup(app: Sphinx) -> None:
     app.add_node(
         _GithubSourceLink,
         html=(_visit_github_source_link, _depart_github_source_link),
+        llm_markdown=(skip_node, None),
     )
     app.add_node(
         _OpenAPIResultToggle,

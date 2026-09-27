@@ -77,7 +77,10 @@ def _native_backend(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.mark.parametrize('algorithm', _ALGORITHMS)
-def test_encode_matches_pyjwt(algorithm: str) -> None:
+def test_encode_matches_pyjwt(
+    *,
+    algorithm: str,
+) -> None:
     """Ensures that we produce byte-identical tokens to ``pyjwt``."""
     secret = secrets.token_hex()
     payload = _make_payload()
@@ -91,7 +94,10 @@ def test_encode_matches_pyjwt(algorithm: str) -> None:
 
 @pytest.mark.usefixtures('_native_backend')
 @pytest.mark.parametrize('algorithm', _ALGORITHMS)
-def test_native_encode_matches_pyjwt(algorithm: str) -> None:
+def test_native_encode_matches_pyjwt(
+    *,
+    algorithm: str,
+) -> None:
     """Ensures the same for the backend used without ``msgspec``."""
     secret = secrets.token_hex()
     payload = _make_payload()
@@ -104,7 +110,10 @@ def test_native_encode_matches_pyjwt(algorithm: str) -> None:
 
 
 @pytest.mark.parametrize('algorithm', _ALGORITHMS)
-def test_cross_decode(algorithm: str) -> None:
+def test_cross_decode(
+    *,
+    algorithm: str,
+) -> None:
     """Ensures that both implementations read each other's tokens."""
     secret = secrets.token_hex()
     payload = _make_payload()
@@ -135,7 +144,10 @@ def test_jwtoken_roundtrip_with_extras() -> None:
 
 
 @pytest.mark.parametrize('algorithm', _ALGORITHMS)
-def test_extras_nested_dataclass_is_converted(algorithm: str) -> None:
+def test_extras_nested_dataclass_is_converted(
+    *,
+    algorithm: str,
+) -> None:
     """Ensures nested dataclasses in ``extras`` are encoded as objects."""
     secret = secrets.token_hex()
     extras = {'profile': {'name': 'test', 'roles': ['admin']}}
@@ -194,7 +206,10 @@ def test_encode_payload_honours_json_encoder() -> None:
 
 
 @pytest.mark.parametrize('raw_payload', [b'{invalid', b'123'])
-def test_decode_payload_errors(raw_payload: bytes) -> None:
+def test_decode_payload_errors(
+    *,
+    raw_payload: bytes,
+) -> None:
     """Ensures that a broken payload raises ``DecodeError``."""
     secret = secrets.token_hex()
     token = jwt.PyJWS().encode(raw_payload, secret, algorithm='HS256')
@@ -208,7 +223,10 @@ def test_decode_payload_errors(raw_payload: bytes) -> None:
 
 @pytest.mark.usefixtures('_native_backend')
 @pytest.mark.parametrize('raw_payload', [b'{invalid', b'123'])
-def test_native_decode_payload_errors(raw_payload: bytes) -> None:
+def test_native_decode_payload_errors(
+    *,
+    raw_payload: bytes,
+) -> None:
     """Ensures the same for the backend used without ``msgspec``."""
     secret = secrets.token_hex()
     token = jwt.PyJWS().encode(raw_payload, secret, algorithm='HS256')
@@ -221,7 +239,10 @@ def test_native_decode_payload_errors(raw_payload: bytes) -> None:
 
 
 @pytest.mark.parametrize('claim', _MATCHING_VALUES)
-def test_backends_agree_on_extended_types(claim: Any) -> None:
+def test_backends_agree_on_extended_types(
+    *,
+    claim: Any,
+) -> None:
     """Ensures both backends encode these extra types identically."""
     assert NativeJson.dumps({'v': claim}) == json_dumps_bytes({'v': claim})
 
@@ -229,6 +250,7 @@ def test_backends_agree_on_extended_types(claim: Any) -> None:
 @_msgspec_only
 @pytest.mark.parametrize(('claim', 'native', 'msgspec_json'), _DIVERGING_VALUES)
 def test_backends_diverge_on_extended_types(
+    *,
     claim: Any,
     native: bytes,
     msgspec_json: bytes,
@@ -244,6 +266,7 @@ def test_backends_diverge_on_extended_types(
     _MSGSPEC_ONLY_VALUES,
 )
 def test_native_rejects_msgspec_only_types(
+    *,
     claim: Any,
     msgspec_json: bytes,
     message: str,

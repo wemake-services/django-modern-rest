@@ -1,7 +1,10 @@
 import dataclasses
 from http import HTTPStatus
+from operator import attrgetter
 from typing import TYPE_CHECKING, Literal
 
+from dmr.internal.types import EMPTY
+from dmr.openapi.mappers.example import generate_example, set_generated_example
 from dmr.openapi.objects import (
     Header,
     MediaType,
@@ -12,6 +15,8 @@ from dmr.openapi.objects import (
 )
 
 if TYPE_CHECKING:
+    from dmr.controller import Controller
+    from dmr.headers import HeaderSpec
     from dmr.metadata import EndpointMetadata, ResponseSpec
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.serializer import BaseSerializer
@@ -26,25 +31,34 @@ class ResponseGenerator:
     def __call__(
         self,
         metadata: 'EndpointMetadata',
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
     ) -> Responses:
-        """Generate responses from response specs."""
+        """
+        Generate responses from response specs.
+
+        .. versionchanged:: 0.16.0
+            Now accepts *controller_cls* parameter instead of *serializer*.
+
+        """
         return {
             # Delegate call to `ResponseSpec`, so it can change
             # how the spec is generated.
             str(status_code.value): response_spec.get_schema(
                 metadata,
-                serializer,
+                controller_cls,
                 self._context,
             )
-            for status_code, response_spec in metadata.responses.items()
+            # Sorted by status code, not by the definition order:
+            for status_code, response_spec in sorted(
+                metadata.responses.items(),
+            )
         }
 
     def get_schema(
         self,
         response_spec: 'ResponseSpec',
         metadata: 'EndpointMetadata',
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
         *,
         schema_field_name: Literal['schema', 'item_schema'] = 'schema',
@@ -56,8 +70,22 @@ class ResponseGenerator:
         Can be customized in ``ResponseSpec`` subclasses.
         """
         headers: dict[str, Header | Reference] = {}
-        headers.update(self._get_headers(response_spec, serializer, context))
-        headers.update(self._get_cookies(response_spec, serializer, context))
+        headers.update(
+            self._get_headers(
+                response_spec,
+                metadata,
+                controller_cls,
+                context,
+            ),
+        )
+        headers.update(
+            self._get_cookies(
+                response_spec,
+                metadata,
+                controller_cls,
+                context,
+            ),
+        )
 
         return Response(
             description=(
@@ -65,13 +93,23 @@ class ResponseGenerator:
                 if response_spec.description is None
                 else str(response_spec.description)
             ),
-            links=response_spec.links,
-            headers=headers or None,
+            summary=(
+                None
+                if response_spec.summary is None
+                else str(response_spec.summary)
+            ),
+            links=(
+                None
+                if response_spec.links is None
+                else dict(response_spec.links)
+            ),
+            # Sorted by header name, not by the definition order:
+            headers=dict(sorted(headers.items())) or None,
             content=self._get_content(
                 response_spec,
-                serializer,
-                context,
                 metadata,
+                controller_cls,
+                context,
                 schema_field_name=schema_field_name,
                 used_for_response=used_for_response,
             ),
@@ -80,42 +118,66 @@ class ResponseGenerator:
     def _get_headers(
         self,
         response_spec: 'ResponseSpec',
-        serializer: type['BaseSerializer'],
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> dict[str, Header | Reference]:
         if not response_spec.headers:
             return {}
 
         return {
-            name: Header(
-                description=(
-                    None
-                    if header_spec.description is None
-                    else str(header_spec.description)
-                ),
-                deprecated=header_spec.deprecated or None,
-                required=header_spec.required or None,
-                schema=context.generators.schema(str, serializer),
-            )
+            name: self._get_header(header_spec, controller_cls, context)
             for name, header_spec in response_spec.headers.items()
         }
+
+    def _get_header(
+        self,
+        header_spec: 'HeaderSpec',
+        controller_cls: type['Controller[BaseSerializer]'],
+        context: 'OpenAPIContext',
+    ) -> Header:
+        schema = context.generators.schema(str, controller_cls.serializer)
+        header = Header(
+            description=(
+                None
+                if header_spec.description is None
+                else str(header_spec.description)
+            ),
+            deprecated=header_spec.deprecated or None,
+            required=header_spec.required or None,
+            schema=schema,
+        )
+        if header_spec.example is not None:
+            # for mypy: `str` cannot return a reference, it is a primitive
+            assert isinstance(schema, Schema)  # noqa: S101
+            # Examples written by hand replace the generated ones:
+            header.example = header_spec.example
+            header.schema = dataclasses.replace(schema, examples=None)
+        return header
 
     def _get_cookies(
         self,
         response_spec: 'ResponseSpec',
-        serializer: type['BaseSerializer'],
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> dict[str, Header | Reference]:
-        # Import cycle:
         if not response_spec.cookies:
             return {}
 
         cookies: dict[str, Header | Reference] = {}
         for name, cookie_spec in response_spec.cookies.items():
-            schema = context.generators.schema(str, serializer)
+            schema = context.generators.schema(str, controller_cls.serializer)
             # for mypy: `str` cannot return a reference, it is a primitive
             assert isinstance(schema, Schema)  # noqa: S101
-            schema = dataclasses.replace(schema, example=f'{name}=123')
+            # A `Set-Cookie` value is `name=value`, so we only generate
+            # the value part. `replace` copies the schema, so the example
+            # does not land on the shared `str` one:
+            cookie_value = generate_example(str, controller_cls.serializer)
+            schema = set_generated_example(
+                dataclasses.replace(schema),
+                EMPTY if cookie_value is EMPTY else f'{name}={cookie_value}',
+            )
 
             cookies[f'Set-Cookie: {name}'] = Header(
                 description=(
@@ -131,13 +193,13 @@ class ResponseGenerator:
     def _get_content(
         self,
         response_spec: 'ResponseSpec',
-        serializer: type['BaseSerializer'],
-        context: 'OpenAPIContext',
         metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
+        context: 'OpenAPIContext',
         *,
         schema_field_name: str,
         used_for_response: bool,
-    ) -> dict[str, MediaType]:
+    ) -> dict[str, MediaType | Reference]:
         # Import cycle:
         from dmr.internal.negotiation import (  # noqa: PLC0415
             get_conditional_types,
@@ -147,6 +209,7 @@ class ResponseGenerator:
             get_conditional_types(response_spec.return_type, ()) or {}
         )
         return {
+            # Sorted by content type, not by the renderers order:
             renderer.content_type: MediaType(
                 **{  # type: ignore[arg-type]
                     schema_field_name: context.generators.schema(
@@ -154,12 +217,15 @@ class ResponseGenerator:
                             renderer.content_type,
                             response_spec.return_type,
                         ),
-                        serializer,
+                        controller_cls.serializer,
                         used_for_response=used_for_response,
                     ),
                 },
             )
-            for renderer in metadata.renderers.values()
+            for renderer in sorted(
+                metadata.renderers.values(),
+                key=attrgetter('content_type'),
+            )
             if (
                 not response_spec.limit_to_content_types
                 or renderer.content_type in response_spec.limit_to_content_types

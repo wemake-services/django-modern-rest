@@ -4,7 +4,6 @@ import json
 from typing import Annotated, Any
 
 import pydantic
-import pytest
 from django.conf import LazySettings
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
@@ -12,7 +11,7 @@ from syrupy.assertion import SnapshotAssertion
 from dmr import Body, Controller
 from dmr.openapi import build_schema
 from dmr.openapi.objects import Example, MediaTypeMetadata
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.routing import Router
 from dmr.settings import Settings
 
@@ -40,7 +39,6 @@ class _UserController(
         raise NotImplementedError
 
 
-@pytest.mark.freeze_time('02-11-2025 10:15:00')
 def test_user_schema_with_examples(
     snapshot: SnapshotAssertion,
     settings: LazySettings,
@@ -143,6 +141,43 @@ def test_schema_with_body_existing_examples(
                 Router(
                     'api/v1/',
                     [path('point/', _ExistingBodyExamplesController.as_view())],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
+class _Profile(pydantic.BaseModel):
+    setting: int
+
+
+class _NestedModel(pydantic.BaseModel):
+    username: str
+    profile: _Profile
+
+
+class _NestedModelController(Controller[PydanticFastSerializer]):
+    def post(self, parsed_body: Body[_NestedModel]) -> str:
+        raise NotImplementedError
+
+
+def test_nested_schemas_with_examples(
+    snapshot: SnapshotAssertion,
+    settings: LazySettings,
+) -> None:
+    """Ensure that schema is correct for nested schemas."""
+    settings.DMR_SETTINGS = {
+        Settings.openapi_examples_seed: 5,
+    }
+
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [path('nested/', _NestedModelController.as_view())],
                 ),
             ).convert(),
             indent=2,

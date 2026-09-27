@@ -6,9 +6,18 @@ from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Generic, Self, TypeAlias, TypeVar, final
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    Literal,
+    Self,
+    TypeAlias,
+    final,
+    overload,
+)
 
-from typing_extensions import override
+from typing_extensions import TypeVar, override
 
 from dmr.exceptions import TooManyRequestsError
 from dmr.headers import HeaderSpec
@@ -128,6 +137,18 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
         )
         # Run check and early initializations:
         self._backend.initialize_algorithm(self._algorithm)
+
+    def validate(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: EndpointMetadata,
+    ) -> None:
+        """
+        Validate throttling configuration at import time.
+
+        .. versionadded:: 0.16.0
+        """
+        self._backend.validate(controller_cls, metadata)
 
     def full_cache_key(
         self,
@@ -376,9 +397,13 @@ class AsyncThrottle(_BaseThrottle[BaseThrottleAsyncBackend]):
         )
 
 
+_SyncThrottleT = TypeVar('_SyncThrottleT', bound='SyncThrottle')
+_AsyncThrottleT = TypeVar('_AsyncThrottleT', bound='AsyncThrottle')
+
+
 @final
 @dataclasses.dataclass(slots=True, frozen=True)
-class SyncOrAsyncThrottle:
+class SyncOrAsyncThrottle(Generic[_SyncThrottleT, _AsyncThrottleT]):
     """
     Throttle that selects between a sync and async instance.
 
@@ -386,19 +411,42 @@ class SyncOrAsyncThrottle:
     sync and async endpoints. Not allowed on controller or endpoint level.
 
     .. versionadded:: 0.11.0
+    .. versionchanged:: 0.16.0
+        Now it is generic.
+
     """
 
-    _sync_throttle: SyncThrottle
-    _async_throttle: AsyncThrottle
+    _sync_throttle: _SyncThrottleT
+    _async_throttle: _AsyncThrottleT
+
+    @overload
+    def resolve(self, *, is_async: Literal[True]) -> _AsyncThrottleT: ...
+
+    @overload
+    def resolve(self, *, is_async: Literal[False]) -> _SyncThrottleT: ...
+
+    @overload
+    def resolve(
+        self,
+        *,
+        is_async: bool,
+    ) -> _AsyncThrottleT | _SyncThrottleT: ...
 
     def resolve(
         self,
-        throttle_cls: type[SyncThrottle] | type[AsyncThrottle],
-    ) -> SyncThrottle | AsyncThrottle:
-        """Return the throttle instance matching *throttle_cls*."""
-        if issubclass(throttle_cls, SyncThrottle):
-            return self._sync_throttle
-        return self._async_throttle
+        *,
+        is_async: bool,
+    ) -> _AsyncThrottleT | _SyncThrottleT:
+        """
+        Return the throttle instance matching *is_async* requirement.
+
+        .. versionchanged:: 0.16.0
+            Replaced *throttle_cls* parameter with simpler *is_async*.
+
+        """
+        if is_async:
+            return self._async_throttle
+        return self._sync_throttle
 
 
 @dataclasses.dataclass(slots=True, frozen=True)

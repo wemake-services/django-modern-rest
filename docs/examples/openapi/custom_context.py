@@ -2,6 +2,7 @@ from typing import ClassVar
 
 from typing_extensions import override
 
+from dmr import Controller
 from dmr.metadata import EndpointMetadata
 from dmr.openapi import OpenAPIConfig, OpenAPIContext, build_schema
 from dmr.openapi.generators import OperationIdGenerator
@@ -15,15 +16,14 @@ class PathOperationIdGenerator(OperationIdGenerator):
     """Generate IDs from the HTTP method and path, without controller names."""
 
     @override
-    def __call__(
+    def generate_suffix(
         self,
         path: str,
-        suffix: str,
         metadata: EndpointMetadata,
-        serializer: type[BaseSerializer],
+        controller_cls: type[Controller[BaseSerializer]],
     ) -> str:
         # Keep explicit IDs and duplicate detection from the base generator:
-        return super().__call__(path, '', metadata, serializer)
+        return ''
 
 
 class CustomContext(OpenAPIContext):

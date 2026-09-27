@@ -1,14 +1,17 @@
 import dataclasses
+import types
 from collections.abc import Sequence
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar, Final, TypeAlias
 
 from dmr.exceptions import EndpointMetadataError
 from dmr.internal.enums import stringify
-from dmr.metadata import ResponseSpec
+from dmr.internal.types import EMPTY
+from dmr.metadata import ResponseSpec, ResponseSpecProvider
 from dmr.openapi import OpenAPIConfig
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.security import AsyncAuth, SyncAuth, SyncOrAsyncAuth
+from dmr.semantic_schema import AuthProvider
 from dmr.serializer import BaseSerializer
 from dmr.settings import (
     Settings,
@@ -16,7 +19,6 @@ from dmr.settings import (
     _resolve_defaults,  # pyright: ignore[reportPrivateUsage]
 )
 from dmr.throttling import AsyncThrottle, SyncOrAsyncThrottle, SyncThrottle
-from dmr.types import EMPTY
 
 
 class _SettingsModel(SettingsDict, total=False):
@@ -31,13 +33,32 @@ class _SettingsModel(SettingsDict, total=False):
     auth: Sequence[Any]
     throttling: Sequence[Any]
     responses: Sequence[Any]
+    semantic_schema_providers: Sequence[Any]
     openapi_config: Any
     global_error_handler: Any
+    # `EMPTY` sentinel is not supported by serializers:
+    semantic_responses: Any
+    semantic_auth: Any
+    validate_negotiation: Any
+    validate_events: Any
+    openapi_examples_seed: Any
 
 
 assert _SettingsModel.__optional_keys__ == set(Settings), (  # noqa: S101
     'Settings enum and its type _SettingsModel have different keys'
 )
+
+_AllowedTypes: TypeAlias = tuple[type, ...]
+
+# Sequence settings and the types their items are allowed to have:
+_SEQUENCE_TYPES: Final = types.MappingProxyType({
+    'parsers': (Parser,),
+    'renderers': (Renderer,),
+    'auth': (SyncAuth, AsyncAuth, SyncOrAsyncAuth),
+    'throttling': (SyncThrottle, AsyncThrottle, SyncOrAsyncThrottle),
+    'responses': (ResponseSpec,),
+    'semantic_schema_providers': (ResponseSpecProvider, AuthProvider),
+})
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
@@ -78,7 +99,7 @@ class SettingsValidator:
             )
         except self.serializer.validation_error as exc:
             raise EndpointMetadataError('Settings validation failed') from exc
-        return cast('_SettingsModel', settings)
+        return settings  # type: ignore[return-value]
 
     def _validate_types(
         self,
@@ -89,60 +110,22 @@ class SettingsValidator:
         self._validate_sequence_types(settings)
         self._validate_scalar_types(settings)
 
-    def _validate_sequence_types(  # noqa: WPS231, WPS238
+    def _validate_sequence_types(
         self,
         settings: _SettingsModel,
     ) -> None:
-        if not all(
-            isinstance(parser, Parser) for parser in settings.get('parsers', [])
-        ):
-            raise EndpointMetadataError(
-                'Settings.parsers must all be Parser instances',
-            )
-
-        # Renderers:
-        if not all(
-            isinstance(renderer, Renderer)
-            for renderer in settings.get('renderers', [])
-        ):
-            raise EndpointMetadataError(
-                'Settings.renderers must all be Renderer instances',
-            )
-
-        # Auth:
-        if not all(
-            isinstance(auth, (SyncAuth, AsyncAuth, SyncOrAsyncAuth))
-            for auth in settings.get('auth', [])
-        ):
-            raise EndpointMetadataError(
-                'Settings.auth must all be SyncAuth, AsyncAuth, '
-                'or SyncOrAsyncAuth instances',
-            )
-
-        # Throttling:
-        if not all(
-            isinstance(
-                throttling,
-                (SyncThrottle, AsyncThrottle, SyncOrAsyncThrottle),
-            )
-            for throttling in settings.get('throttling', [])
-        ):
-            raise EndpointMetadataError(
-                (
-                    'Settings.throttling must all be '
-                    'SyncThrottle, AsyncThrottle, or '
-                    'SyncOrAsyncThrottle instances'
-                ),
-            )
-
-        # Responses:
-        if not all(
-            isinstance(response, ResponseSpec)
-            for response in settings.get('responses', [])
-        ):
-            raise EndpointMetadataError(
-                'Settings.responses must all be ResponseSpec instances',
-            )
+        for setting_name, allowed_types in _SEQUENCE_TYPES.items():
+            sequence: Sequence[Any] = settings.get(setting_name, ())  # type: ignore[assignment]
+            if not all(
+                isinstance(element, allowed_types) for element in sequence
+            ):
+                type_names = ', '.join(
+                    allowed_type.__name__ for allowed_type in allowed_types
+                )
+                raise EndpointMetadataError(
+                    f'Settings.{setting_name} must all be instances of: '
+                    f'{type_names}',
+                )
 
     def _validate_scalar_types(
         self,
@@ -164,4 +147,29 @@ class SettingsValidator:
         ):
             raise EndpointMetadataError(
                 'Settings.global_error_handler must be a string or callable',
+            )
+
+        self._validate_empty_scalars(settings)
+
+    def _validate_empty_scalars(
+        self,
+        settings: _SettingsModel,
+    ) -> None:
+        # These values can be `EMPTY`, which serializers do not understand:
+        for flag_name in (
+            'semantic_responses',
+            'semantic_auth',
+            'validate_negotiation',
+            'validate_events',
+        ):
+            flag = settings.get(flag_name, EMPTY)
+            if flag is not EMPTY and not isinstance(flag, bool):
+                raise EndpointMetadataError(
+                    f'Settings.{flag_name} must be a bool or EMPTY',
+                )
+
+        examples_seed = settings.get('openapi_examples_seed', EMPTY)
+        if examples_seed is not EMPTY and not isinstance(examples_seed, int):
+            raise EndpointMetadataError(
+                'Settings.openapi_examples_seed must be an int or EMPTY',
             )

@@ -29,7 +29,8 @@ async def test_jsonl_all_events_render(
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that we can render all possible event types."""
-    assert _JsonLinesEvents.streaming_ping_seconds is None
+    endpoint = next(iter(_JsonLinesEvents.api_endpoints.values()))
+    assert endpoint.metadata.extras.ping_seconds is None
 
     request = dmr_async_rf.get('/whatever/')
 

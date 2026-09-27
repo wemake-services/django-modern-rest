@@ -1,5 +1,12 @@
 from dmr.openapi.mappers.schema_loader import load_schema
-from dmr.openapi.objects import OpenAPIType, Schema
+from dmr.openapi.objects import (
+    XML,
+    Discriminator,
+    OpenAPIFormat,
+    OpenAPIType,
+    Schema,
+)
+from dmr.types import EMPTY
 
 
 def test_load_schema_issue1490() -> None:
@@ -30,3 +37,63 @@ def test_load_schema() -> None:
     assert loaded.anchor is None
     assert loaded.comment is None
     assert loaded.schema_uri is None
+
+
+def test_load_schema_openapi_v32_fields() -> None:
+    """Keep the OpenAPI 3.2 additions of ``xml`` and ``discriminator``."""
+    loaded = load_schema(
+        {
+            'type': 'object',
+            'xml': {'name': 'pet', 'nodeType': 'element'},
+            'discriminator': {
+                'propertyName': 'petType',
+                'defaultMapping': 'OtherPet',
+            },
+        },
+    )
+
+    assert loaded.xml == XML(name='pet', node_type='element')
+    assert loaded.discriminator == Discriminator(
+        property_name='petType',
+        default_mapping='OtherPet',
+    )
+
+
+def test_load_schema_without_xml_node_type() -> None:
+    """Deprecated ``attribute`` and ``wrapped`` are not defaulted anymore."""
+    loaded = load_schema({'type': 'string', 'xml': {'attribute': True}})
+
+    # `wrapped` stays unset, it used to be loaded as `False`:
+    assert loaded.xml == XML(attribute=True, wrapped=None)
+
+
+def test_load_schema_format_preserve_type() -> None:
+    """Known formats load as enum members, custom ones stay strings."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1489
+    known = load_schema({'type': 'string', 'format': 'date'})
+    assert known.format is OpenAPIFormat.DATE
+
+    custom = load_schema({'type': 'string', 'format': 'cool-format'})
+    assert custom.format == 'cool-format'
+    assert not isinstance(custom.format, OpenAPIFormat)
+
+
+def test_load_schema_none_values() -> None:
+    """Keep ``None`` values of ``const``, ``default``, and ``example``."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1619
+    loaded = load_schema({'const': None, 'default': None, 'example': None})
+
+    assert loaded.const is None
+    assert loaded.default is None
+    assert loaded.example is None
+
+
+def test_load_schema_unset_values() -> None:
+    """Missing ``const``, ``default``, and ``example`` are ``EMPTY``."""
+    loaded = load_schema({'type': 'string'})
+
+    assert loaded.const is EMPTY
+    assert loaded.default is EMPTY
+    assert loaded.example is EMPTY

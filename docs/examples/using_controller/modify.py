@@ -3,14 +3,14 @@ from http import HTTPStatus
 import pydantic
 
 from dmr import Body, Controller, modify
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class UserModel(pydantic.BaseModel):
     email: str
 
 
-class UserController(Controller[PydanticSerializer]):
+class UserController(Controller[PydanticFastSerializer]):
     @modify(status_code=HTTPStatus.OK)
     def post(self, parsed_body: Body[UserModel]) -> UserModel:
         # This response would have an explicit status code `200`:
