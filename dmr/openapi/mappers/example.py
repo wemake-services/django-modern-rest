@@ -53,7 +53,7 @@ else:
     #: Faker's defaults for dates and times end at the current time,
     #: so seeded examples would change with the clock. We use fixed bounds.
     _EXAMPLES_START: Final = dt.datetime.fromisoformat('2000-01-01T00:00Z')
-    _EXAMPLES_END: Final = dt.datetime.fromisoformat('2025-01-01T00:00Z')
+    _EXAMPLES_END: Final = dt.datetime.fromisoformat('2026-01-01T00:00Z')
     _MAX_TIMEDELTA_SECONDS: Final = 7 * 24 * 60 * 60  # a week
     _EPOCH: Final = dt.datetime.fromisoformat('1970-01-01T00:00')
 
