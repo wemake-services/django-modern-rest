@@ -89,5 +89,5 @@ def test_pydantic_fast_parse_and_validate(
 
     @benchmark
     def factory() -> None:
-        for _ in range(10):
+        for _ in range(100):
             controller.dispatch(request)

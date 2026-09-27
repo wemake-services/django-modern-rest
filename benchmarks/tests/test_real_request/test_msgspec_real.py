@@ -68,5 +68,5 @@ def test_msgspec_parse_and_validate(
 
     @benchmark
     def factory() -> None:
-        for _ in range(10):
+        for _ in range(100):
             controller.dispatch(request)
