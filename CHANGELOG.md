@@ -344,6 +344,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   are not documented as path parameters anymore.
   `Path` fields with default values are documented only for the URLs
   that have them, and always with `required: true`, #1616
+- Fixed `example` of `NewHeader` and `HeaderSpec` not being
+  in the OpenAPI schema. Now it is set on the `Header` object,
+  and such headers don't get generated examples, #1627
 - Fixed generated OpenAPI examples that are `None` being dropped,
   for example, for `-> None` and `-> int | None` responses.
   `dmr.openapi.mappers.example.generate_example` now returns `EMPTY`

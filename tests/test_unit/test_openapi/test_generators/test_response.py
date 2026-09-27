@@ -9,6 +9,7 @@ from dmr.controller import Controller
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.endpoint import modify
 from dmr.headers import HeaderSpec, NewHeader
+from dmr.openapi import build_schema
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.response import ResponseGenerator
@@ -22,6 +23,7 @@ from dmr.openapi.objects import (
 )
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer, JsonRenderer
+from dmr.routing import Router, path
 from dmr.settings import Settings
 
 _SCHEMA_ONLY_HEADER: Final = HeaderSpec(
@@ -220,3 +222,88 @@ def test_response_generator_cookie_examples(settings: LazySettings) -> None:
         example.split('=', 1)[0] == header_name.removeprefix('Set-Cookie: ')
         for header_name, example in examples.items()
     )
+
+
+class _ControllerWithHeaderExamples(Controller[PydanticSerializer]):
+    @modify(
+        headers={
+            'X-Request-Id': NewHeader(value='abc', example='abc'),
+            'X-Token': HeaderSpec(example='secret', skip_validation=True),
+            'X-Other-Test-Header': _HEADER,
+        },
+    )
+    def get(self) -> str:
+        raise NotImplementedError
+
+
+def test_header_examples_replace_generated(
+    *,
+    settings: LazySettings,
+) -> None:
+    """Ensure that header examples replace the generated ones."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1627
+    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
+    # A context seeds the examples when it is created, so it cannot come
+    # from a fixture here: the seed must be set before that happens.
+    context = OpenAPIContext(OpenAPIConfig(title='tests', version='0.0.1'))
+
+    response = context.generators.response(
+        _ControllerWithHeaderExamples.api_endpoints[HTTPMethod.GET].metadata,
+        _ControllerWithHeaderExamples,
+    )['200']
+
+    assert isinstance(response, Response)
+    assert response.headers is not None
+    assert len(response.headers) == 3
+    assert response.headers['X-Request-Id'] == snapshot(
+        Header(
+            schema=Schema(type=OpenAPIType.STRING),
+            required=True,
+            example='abc',
+        ),
+    )
+    assert response.headers['X-Token'] == snapshot(
+        Header(
+            schema=Schema(type=OpenAPIType.STRING),
+            required=True,
+            example='secret',
+        ),
+    )
+    # Headers without an example still get a generated one:
+    assert _single_example(response.headers['X-Other-Test-Header'])
+
+
+@pytest.mark.parametrize('openapi_version', ['3.1.0', '3.2.0'])
+def test_header_examples_schema(*, openapi_version: str) -> None:
+    """Ensure that header examples pass the OpenAPI validation."""
+    schema = build_schema(
+        Router(
+            'api/',
+            [path('user/', _ControllerWithHeaderExamples.as_view())],
+        ),
+        config=OpenAPIConfig(
+            title='tests',
+            version='0.0.1',
+            openapi_version=openapi_version,
+        ),
+    ).convert()
+
+    operation = schema['paths']['/api/user/']['get']
+    assert operation['responses']['200']['headers'] == snapshot({
+        'X-Other-Test-Header': {
+            'schema': {'type': 'string'},
+            'description': 'Other Test Header',
+            'required': True,
+        },
+        'X-Request-Id': {
+            'schema': {'type': 'string'},
+            'required': True,
+            'example': 'abc',
+        },
+        'X-Token': {
+            'schema': {'type': 'string'},
+            'required': True,
+            'example': 'secret',
+        },
+    })
