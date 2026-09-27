@@ -7,7 +7,6 @@ from dmr.openapi.mappers.example import (
     generate_example,
     set_generated_example,
 )
-from dmr.openapi.mappers.field_examples import apply_field_examples
 from dmr.openapi.mappers.schema_loader import load_schema
 from dmr.openapi.objects import Reference, Schema
 
@@ -150,12 +149,7 @@ class SchemaGenerator:
             )
 
         schema_obj = load_schema(schema)
-        self._maybe_generate_example(
-            schema_obj,
-            annotation,
-            loaded_components,
-            serializer,
-        )
+        self._maybe_generate_example(schema_obj, annotation, serializer)
         if not skip_registration and schema_obj.title:
             return self._context.registries.schema.register(
                 schema_name=schema_obj.title,
@@ -215,7 +209,6 @@ class SchemaGenerator:
         self._maybe_generate_example(
             registry.maybe_resolve_reference(reference),
             annotation,
-            components,
             serializer,
         )
         return reference
@@ -224,17 +217,10 @@ class SchemaGenerator:
         self,
         schema: Schema,
         annotation: Any,
-        components: dict[str, Schema],
         serializer: type['BaseSerializer'],
     ) -> None:
         if schema.example is EMPTY and not schema.examples:  # pragma: no branch
             set_generated_example(
                 schema,
-                # Hand-written field examples replace generated values:
-                apply_field_examples(
-                    schema,
-                    generate_example(annotation, serializer),
-                    components,
-                    self._context.registries.schema.schema_prefix,
-                ),
+                generate_example(annotation, serializer),
             )
