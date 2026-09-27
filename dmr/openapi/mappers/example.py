@@ -1,6 +1,8 @@
-from typing import TYPE_CHECKING, Any
+import datetime as dt
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Final
 
-from typing_extensions import Sentinel
+from typing_extensions import Sentinel, override
 
 from dmr.internal.types import EMPTY
 from dmr.openapi.objects import Example, Schema
@@ -48,12 +50,48 @@ else:
     # https://github.com/litestar-org/litestar/blob/main/litestar/_openapi/schema_generation/examples.py
     from polyfactory.field_meta import FieldMeta
 
+    #: Faker's defaults for dates and times end at the current time,
+    #: so seeded examples would change with the clock. We use fixed bounds.
+    _EXAMPLES_START: Final = dt.datetime.fromisoformat('2000-01-01T00:00Z')
+    _EXAMPLES_END: Final = dt.datetime.fromisoformat('2025-01-01T00:00Z')
+    _MAX_TIMEDELTA_SECONDS: Final = 7 * 24 * 60 * 60  # a week
+
     class _ExampleFactory(DataclassFactory[Example]):
         # NOTE: don't set `__random_seed__` here, it only seeds the factory
         # once, when this class is created. `seed_examples` does the seeding,
         # because the seed comes from settings.
         __model__ = Example
         __check_model__ = True
+
+        @override
+        @classmethod
+        def get_provider_map(cls) -> dict[Any, Callable[[], Any]]:
+            """
+            Generate dates and times in fixed bounds.
+
+            Factories that are created for nested models
+            get these providers too.
+            """
+            faker = cls.__faker__
+            return {
+                **super().get_provider_map(),
+                # Examples stay naive, like the Faker's ones:
+                dt.datetime: lambda: faker.date_time_between(
+                    _EXAMPLES_START,
+                    _EXAMPLES_END,
+                ),
+                dt.date: lambda: faker.date_between_dates(
+                    _EXAMPLES_START.date(),
+                    _EXAMPLES_END.date(),
+                ),
+                dt.time: lambda: faker.date_time_between(
+                    _EXAMPLES_START,
+                    _EXAMPLES_END,
+                ).time(),
+                dt.timedelta: lambda: dt.timedelta(
+                    seconds=faker.random_int(0, _MAX_TIMEDELTA_SECONDS),
+                ),
+            }
 
     def seed_example_factory() -> None:
         """

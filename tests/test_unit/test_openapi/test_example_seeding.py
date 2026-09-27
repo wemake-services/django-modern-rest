@@ -1,3 +1,4 @@
+import datetime as dt
 from typing import Any
 
 import pydantic
@@ -118,3 +119,38 @@ def test_examples_do_not_depend_on_methods_order(
     assert _build_examples(_ReversedMethodsController) == _build_examples(
         _SortedMethodsController,
     )
+
+
+class _Event(pydantic.BaseModel):
+    created_at: dt.datetime
+    day: dt.date
+    at: dt.time
+    duration: dt.timedelta
+
+
+class _EventController(Controller[PydanticSerializer]):
+    def get(self) -> _Event:
+        raise NotImplementedError
+
+
+def test_date_examples_do_not_depend_on_now(
+    *,
+    settings: LazySettings,
+) -> None:
+    """Ensure that date and time examples don't change with the clock."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1632
+    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
+
+    schema = build_schema(
+        Router('api/v1/', [path('event/', _EventController.as_view())]),
+    ).convert()
+
+    assert schema['components']['schemas']['_Event']['examples'] == snapshot([
+        {
+            'created_at': '2015-07-29T08:07:07.196110',
+            'day': '2018-07-18',
+            'at': '16:59:00.160450',
+            'duration': 'P6DT10H23M7S',
+        },
+    ])

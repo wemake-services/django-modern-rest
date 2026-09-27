@@ -474,9 +474,9 @@
             {
               "detail": [
                 {
-                  "msg": "hVGiBXJqoyUfQBjWTjzA",
+                  "msg": "VGiBXJqoyUfQBjWTjzAC",
                   "loc": [
-                    8980
+                    8238
                   ]
                 }
               ]
@@ -545,7 +545,23 @@
             "metadata",
             "created_at"
           ],
-          "title": "_UserModel"
+          "title": "_UserModel",
+          "examples": [
+            {
+              "age": 47,
+              "username": "NiPhGgaTklZTpXCJkWJY",
+              "status": "active",
+              "email": "UpsihdpFaJrqQyqzKcYb",
+              "salary": -865.18916299065,
+              "tags": [
+                "CvtRxKGXgmQyAUnyEOtp"
+              ],
+              "metadata": {
+                "wYkAshoKeJpPGLqzLeFW": "bMrnHhYHPrkZDgUvitdv"
+              },
+              "created_at": "2003-07-13T11:02:58.055470"
+            }
+          ]
         }
       }
     }
