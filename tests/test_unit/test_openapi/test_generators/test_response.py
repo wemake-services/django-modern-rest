@@ -236,43 +236,13 @@ class _ControllerWithHeaderExamples(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def test_response_generator_header_examples(
-    *,
-    generator: ResponseGenerator,
-) -> None:
-    """Ensure that header examples are in the schema."""
-    # Regression test for
-    # https://github.com/wemake-services/django-modern-rest/issues/1627
-    response = generator(
-        _ControllerWithHeaderExamples.api_endpoints[HTTPMethod.GET].metadata,
-        _ControllerWithHeaderExamples,
-    )['200']
-
-    assert isinstance(response, Response)
-    assert response.headers == snapshot({
-        'X-Other-Test-Header': Header(
-            schema=Schema(type=OpenAPIType.STRING),
-            description='Other Test Header',
-            required=True,
-        ),
-        'X-Request-Id': Header(
-            schema=Schema(type=OpenAPIType.STRING),
-            required=True,
-            example='abc',
-        ),
-        'X-Token': Header(
-            schema=Schema(type=OpenAPIType.STRING),
-            required=True,
-            example='secret',
-        ),
-    })
-
-
 def test_header_examples_replace_generated(
     *,
     settings: LazySettings,
 ) -> None:
     """Ensure that header examples replace the generated ones."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1627
     settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
     # A context seeds the examples when it is created, so it cannot come
     # from a fixture here: the seed must be set before that happens.
@@ -285,6 +255,7 @@ def test_header_examples_replace_generated(
 
     assert isinstance(response, Response)
     assert response.headers is not None
+    assert len(response.headers) == 3
     assert response.headers['X-Request-Id'] == snapshot(
         Header(
             schema=Schema(type=OpenAPIType.STRING),
