@@ -19,5 +19,5 @@ async def wrong_events() -> AsyncIterator[Json]:
     yield object()  # type: ignore[misc]  # ty: ignore[invalid-yield]
     yield 1j  # type: ignore[misc]  # ty: ignore[invalid-yield]
     yield b''  # type: ignore[misc]  # ty: ignore[invalid-yield]
-    yield [b'']  # type: ignore[list-item]
+    yield [b'']  # type: ignore[list-item]  # ty: ignore[invalid-yield]
     yield {1: 2}  # type: ignore[dict-item]  # ty: ignore[invalid-yield]

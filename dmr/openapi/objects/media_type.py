@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Any, final
 
 from typing_extensions import override
 
+from dmr.internal.empty import EMPTY
+
 if TYPE_CHECKING:
     from dmr.openapi.objects.encoding import Encoding
     from dmr.openapi.objects.example import Example
@@ -14,16 +16,26 @@ if TYPE_CHECKING:
 @final
 @dataclass(kw_only=True, slots=True, frozen=True)
 class MediaTypeMetadata:
-    """Media type metadata to be set on a request body."""
+    """
+    Media type metadata to be set on a request body.
+
+    .. versionchanged:: 0.16.0
+        Added ``description`` from OpenAPI 3.2.
+        ``prefix_encoding`` is now a list, as the spec requires.
+        ``example`` now defaults to :data:`~dmr.types.EMPTY`
+        instead of ``None``, because ``None`` is a valid value for it.
+
+    """
 
     # NOTE: defaults here must match defaults of `MediaType`:
-    example: Any | None = None
+    example: Any = EMPTY
     examples: dict[str, 'Example | Reference'] | None = None
     encoding: dict[str, 'Encoding'] | None = None
 
     # OpenAPI 3.2+ fields:
+    description: str | None = None
     item_encoding: 'Encoding | None' = None
-    prefix_encoding: 'Encoding | None' = None
+    prefix_encoding: list['Encoding'] | None = None
 
     @override
     def __hash__(self) -> int:
@@ -42,25 +54,25 @@ class MediaType:
 
     Each Media Type Object provides schema and examples for the media
     type identified by its key.
+
+    .. versionchanged:: 0.16.0
+        Added ``description`` from OpenAPI 3.2.
+        ``prefix_encoding`` is now a list, as the spec requires.
+        ``example`` now defaults to :data:`~dmr.types.EMPTY`
+        instead of ``None``, because ``None`` is a valid value for it.
+
     """
 
     # Can be `None` only when `item_schema` is set:
     schema: 'Reference | Schema | None' = None
-    example: Any | None = None
+    example: Any = EMPTY
     examples: dict[str, 'Example | Reference'] | None = None
     encoding: dict[str, 'Encoding'] | None = None
 
     # OpenAPI 3.2+ fields:
+    # NOTE: `encoding` is mutually exclusive with the two `*_encoding` ones,
+    # we let `openapi-spec-validator` report that.
+    description: str | None = None
     item_schema: 'Reference | Schema | None' = None
     item_encoding: 'Encoding | None' = None
-    prefix_encoding: 'Encoding | None' = None
-
-    def __post_init__(self) -> None:
-        """Validate the object."""
-        if self.schema is None and self.item_schema is None:
-            raise ValueError('Both `schema` and `item_schema` cannot be None')
-        if self.encoding and (self.item_encoding or self.prefix_encoding):
-            raise ValueError(
-                'Both `encoding` and `item_encoding` or `prefix_encoding` '
-                'cannot be set',
-            )
+    prefix_encoding: list['Encoding'] | None = None

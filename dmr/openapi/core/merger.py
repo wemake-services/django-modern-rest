@@ -25,6 +25,8 @@ class ConfigMerger:
         config = self.context.config
         return OpenAPI(
             openapi=config.openapi_version,
+            self_uri=config.self_uri,
+            json_schema_dialect=config.json_schema_dialect,
             info=Info(
                 title=config.title,
                 version=config.version,
@@ -76,6 +78,10 @@ class ConfigMerger:
             links=_merge_unique(existing.links, to_merge.links),
             callbacks=_merge_unique(existing.callbacks, to_merge.callbacks),
             path_items=_merge_unique(existing.path_items, to_merge.path_items),
+            media_types=_merge_unique(
+                existing.media_types,
+                to_merge.media_types,
+            ),
         )
 
 
@@ -87,13 +93,22 @@ def _merge_unique(
     to_merge: dict[str, _ThingT] | None,
 ) -> dict[str, _ThingT] | None:
     if existing is None:
-        return to_merge or None
+        return _sorted_or_none(to_merge)
     if to_merge is None:
-        return existing or None
+        return _sorted_or_none(existing)
 
     shared_keys = existing.keys() & to_merge.keys()
     if shared_keys:
         raise ValueError(
             f'Trying to merge components with shared keys: {shared_keys}',
         )
-    return {**existing, **to_merge} or None
+    return _sorted_or_none({**existing, **to_merge})
+
+
+def _sorted_or_none(
+    components: dict[str, _ThingT] | None,
+) -> dict[str, _ThingT] | None:
+    if not components:
+        return None
+    # Sorted by name, so the schema does not depend on the definition order:
+    return dict(sorted(components.items()))

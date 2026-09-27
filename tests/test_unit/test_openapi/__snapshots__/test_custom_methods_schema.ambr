@@ -11,7 +11,7 @@
       "/api/v1/items/": {
         "additionalOperations": {
           "PURGE": {
-            "operationId": "purgePurgecontrollerApiV1Items",
+            "operationId": "purgePurgeControllerApiV1Items",
             "responses": {
               "200": {
                 "description": "OK",
@@ -19,16 +19,6 @@
                   "application/json": {
                     "schema": {
                       "type": "null"
-                    }
-                  }
-                }
-              },
-              "422": {
-                "description": "Raised when returned response does not match the response schema",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "$ref": "#/components/schemas/ErrorModel"
                     }
                   }
                 }
@@ -42,9 +32,18 @@
                     }
                   }
                 }
+              },
+              "422": {
+                "description": "Raised when returned response does not match the response schema",
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/ErrorModel"
+                    }
+                  }
+                }
               }
-            },
-            "deprecated": false
+            }
           }
         }
       }
@@ -100,8 +99,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -115,92 +113,9 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/v1/standard/": {
-        "get": {
-          "operationId": "getStandardcontrollerApiV1Standard",
-          "responses": {
-            "200": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "items": {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            }
-          },
-          "deprecated": false
-        },
-        "post": {
-          "operationId": "postStandardcontrollerApiV1Standard",
-          "responses": {
-            "201": {
-              "description": "Created",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            }
-          },
-          "deprecated": false
-        }
-      },
       "/api/v1/meta/": {
         "get": {
-          "operationId": "getMetacontrollerApiV1Meta",
+          "operationId": "getMetaControllerApiV1Meta",
           "responses": {
             "200": {
               "description": "OK",
@@ -218,16 +133,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -237,13 +142,22 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         },
         "options": {
           "summary": "Default sync implementation for ``OPTIONS`` http method.",
-          "operationId": "optionsMetacontrollerApiV1Meta",
+          "operationId": "optionsMetaControllerApiV1Meta",
           "responses": {
             "204": {
               "description": "No Content",
@@ -263,12 +177,45 @@
                 }
               }
             },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
             "422": {
               "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
                     "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/standard/": {
+        "get": {
+          "operationId": "getStandardControllerApiV1Standard",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "items": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
                   }
                 }
               }
@@ -282,9 +229,56 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
+        },
+        "post": {
+          "operationId": "postStandardControllerApiV1Standard",
+          "responses": {
+            "201": {
+              "description": "Created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -339,8 +333,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

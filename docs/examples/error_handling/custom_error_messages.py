@@ -4,7 +4,7 @@ from typing_extensions import TypedDict, override
 
 from dmr import APIError, Body, Controller, ResponseSpec, modify
 from dmr.errors import ErrorType, format_error
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class CustomErrorDetail(TypedDict):
@@ -15,7 +15,7 @@ class CustomErrorModel(TypedDict):
     errors: list[CustomErrorDetail]
 
 
-class ApiController(Controller[PydanticSerializer]):
+class ApiController(Controller[PydanticFastSerializer]):
     error_model = CustomErrorModel
 
     @override

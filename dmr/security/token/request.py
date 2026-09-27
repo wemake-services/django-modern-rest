@@ -70,16 +70,12 @@ def request_token(
             raise AttributeError('__dmr_token__')
         return None
 
-    wrong_sync = (
-        not isinstance(token, TokenLikeSync)
-        if sync
-        else not isinstance(token, TokenLikeAsync)
-    )
-    if wrong_sync:
+    token_cls = TokenLikeSync if sync else TokenLikeAsync
+    if not isinstance(token, token_cls):
         raise TypeError(
             'Token interface does not match the requested sync mode',
         )
-    return token  # type: ignore[no-any-return]
+    return token  # pyright: ignore[reportUnknownVariableType]
 
 
 def set_request_attrs(

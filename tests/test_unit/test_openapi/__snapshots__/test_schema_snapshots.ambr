@@ -10,11 +10,10 @@
     "paths": {
       "/api/cookies/": {
         "get": {
-          "operationId": "getAuthedandcookiescontrollerApiCookies",
+          "operationId": "getAuthedAndCookiesControllerApiCookies",
           "parameters": [
             {
               "description": "Cookies metadata",
-              "deprecated": false,
               "examples": {},
               "name": "session_id",
               "in": "cookie",
@@ -26,7 +25,6 @@
             },
             {
               "description": "Override",
-              "deprecated": false,
               "examples": {},
               "name": "CSRF",
               "in": "cookie",
@@ -39,7 +37,6 @@
             },
             {
               "description": "Short summary.\n\nAnd some other description text.",
-              "deprecated": false,
               "style": "deepObject",
               "explode": true,
               "examples": {
@@ -68,7 +65,6 @@
             },
             {
               "description": "Short summary.\n\nAnd some other description text.",
-              "deprecated": false,
               "style": "deepObject",
               "explode": true,
               "examples": {
@@ -101,7 +97,6 @@
             },
             {
               "description": "Short summary.\n\nAnd some other description text.",
-              "deprecated": false,
               "style": "deepObject",
               "explode": true,
               "examples": {
@@ -150,26 +145,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "401": {
               "description": "Raised when auth was not successful",
               "headers": {
@@ -188,9 +163,28 @@
                   }
                 }
               }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
           },
-          "deprecated": false,
           "security": [
             {
               "jwt": []
@@ -274,7 +268,7 @@
     "paths": {
       "/api/types/": {
         "post": {
-          "operationId": "postConditionaltypescontrollerApiTypes",
+          "operationId": "postConditionalTypesControllerApiTypes",
           "requestBody": {
             "content": {
               "application/json": {
@@ -291,16 +285,6 @@
             "required": true
           },
           "responses": {
-            "409": {
-              "description": "Conflict",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              }
-            },
             "201": {
               "description": "Created",
               "content": {
@@ -331,21 +315,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                },
-                "application/xml": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -360,9 +329,33 @@
                   }
                 }
               }
+            },
+            "409": {
+              "description": "Conflict",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                },
+                "application/xml": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -495,8 +488,7 @@
           ],
           "title": "_XmlResponseModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -512,7 +504,7 @@
     "paths": {
       "/api/types-with-example/": {
         "post": {
-          "operationId": "postConditionaltypeswithexamplecontrollerApiTypesWithExample",
+          "operationId": "postConditionalTypesWithExampleControllerApiTypesWithExample",
           "requestBody": {
             "content": {
               "application/json": {
@@ -530,16 +522,6 @@
             "required": true
           },
           "responses": {
-            "409": {
-              "description": "Conflict",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              }
-            },
             "201": {
               "description": "Created",
               "content": {
@@ -570,21 +552,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                },
-                "application/xml": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -599,9 +566,33 @@
                   }
                 }
               }
+            },
+            "409": {
+              "description": "Conflict",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                },
+                "application/xml": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -734,8 +725,7 @@
           ],
           "title": "_XmlResponseModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -749,83 +739,11 @@
     },
     "openapi": "3.1.0",
     "paths": {
-      "/api/v1/user/{user_id}/post/{post_id}/": {
-        "get": {
-          "operationId": "getGetpostcontrollerApiV1UserUserIdPostPostId",
-          "parameters": [
-            {
-              "deprecated": false,
-              "name": "user_id",
-              "in": "path",
-              "schema": {
-                "type": "integer",
-                "title": "User Id"
-              },
-              "required": true
-            },
-            {
-              "deprecated": false,
-              "name": "post_id",
-              "in": "path",
-              "schema": {
-                "type": "string",
-                "format": "uuid",
-                "title": "Post Id"
-              },
-              "required": true
-            }
-          ],
-          "responses": {
-            "404": {
-              "description": "Not Found",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "200": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            }
-          },
-          "deprecated": false
-        }
-      },
       "/api/v1/articles/{year}/{slug}/": {
         "get": {
-          "operationId": "getGetpostcontrollerApiV1ArticlesYearSlug",
+          "operationId": "getGetPostControllerApiV1ArticlesYearSlug",
           "parameters": [
             {
-              "deprecated": false,
               "name": "year",
               "in": "path",
               "schema": {
@@ -836,7 +754,6 @@
               "required": true
             },
             {
-              "deprecated": false,
               "name": "slug",
               "in": "path",
               "schema": {
@@ -848,16 +765,6 @@
             }
           ],
           "responses": {
-            "404": {
-              "description": "Not Found",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "200": {
               "description": "OK",
               "content": {
@@ -868,8 +775,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "404": {
+              "description": "Not Found",
               "content": {
                 "application/json": {
                   "schema": {
@@ -887,9 +794,86 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
+        }
+      },
+      "/api/v1/user/{user_id}/post/{post_id}/": {
+        "get": {
+          "operationId": "getGetPostControllerApiV1UserUserIdPostPostId",
+          "parameters": [
+            {
+              "name": "user_id",
+              "in": "path",
+              "schema": {
+                "type": "integer",
+                "title": "User Id"
+              },
+              "required": true
+            },
+            {
+              "name": "post_id",
+              "in": "path",
+              "schema": {
+                "type": "string",
+                "format": "uuid",
+                "title": "Post Id"
+              },
+              "required": true
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Not Found",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -944,8 +928,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -961,7 +944,7 @@
     "paths": {
       "/api/v1/user/": {
         "get": {
-          "operationId": "getUsercontrollerApiV1User",
+          "operationId": "getUserControllerApiV1User",
           "responses": {
             "200": {
               "description": "OK",
@@ -976,16 +959,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -995,12 +968,21 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
-          "operationId": "postUsercontrollerApiV1User",
+          "operationId": "postUserControllerApiV1User",
           "requestBody": {
             "content": {
               "application/json": {
@@ -1035,16 +1017,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -1054,17 +1026,25 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/api/v1/user/{id}/": {
         "get": {
-          "operationId": "getGetusercontrollerApiV1UserId",
+          "operationId": "getGetUserControllerApiV1UserId",
           "parameters": [
             {
-              "deprecated": false,
               "name": "id",
               "in": "path",
               "schema": {
@@ -1105,16 +1085,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -1124,9 +1094,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -1233,8 +1212,7 @@
           ],
           "title": "CustomUserModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

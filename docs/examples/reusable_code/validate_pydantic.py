@@ -1,7 +1,7 @@
 import pydantic
 from typing_extensions import override
 
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from examples.reusable_code.validate_reusable import ReusableController
 
 
@@ -15,7 +15,7 @@ class _ResponseBody(pydantic.BaseModel):
 
 
 class PydanticController(
-    ReusableController[PydanticSerializer, _RequestModel, _ResponseBody],
+    ReusableController[PydanticFastSerializer, _RequestModel, _ResponseBody],
 ):
     @override
     def convert(self, parsed_body: _RequestModel) -> _ResponseBody:

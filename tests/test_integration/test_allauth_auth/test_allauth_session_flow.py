@@ -5,7 +5,6 @@ import pytest
 from django.contrib.auth.models import User
 from django.urls import reverse
 from faker import Faker
-from inline_snapshot import snapshot
 
 from dmr.test import DMRClient
 
@@ -63,14 +62,13 @@ def test_allauth_session_flow(
     response = dmr_client.get(url, headers={'X-Session-Token': session_token})
 
     assert response.status_code == HTTPStatus.OK, response.content
-    assert response.json() == snapshot({
+    assert response.json() == {
         'username': user.username,
         'email': user.email,
         'is_active': True,
-    })
+    }
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize('url', _PROTECTED_URLS)
 def test_allauth_session_missing_token(
     dmr_client: DMRClient,

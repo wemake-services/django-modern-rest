@@ -12,7 +12,7 @@
         "summary": "Summary from docstring.",
         "description": "Description from docstring.",
         "get": {
-          "operationId": "getDocstringcontrollerApiV1Users",
+          "operationId": "getDocstringControllerApiV1Users",
           "responses": {
             "200": {
               "description": "OK",
@@ -20,16 +20,6 @@
                 "application/json": {
                   "schema": {
                     "$ref": "#/components/schemas/_SimpleModel"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
                   }
                 }
               }
@@ -43,9 +33,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -118,8 +117,7 @@
           ],
           "title": "_SimpleModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

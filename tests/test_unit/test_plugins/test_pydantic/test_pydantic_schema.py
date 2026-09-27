@@ -1,20 +1,37 @@
 # NOTE: when editing this file, also edit `test_msgspec_schema.py`
 
+import dataclasses
 import enum
 from collections.abc import Iterable, Mapping
-from typing import Annotated, Any, Literal, Optional, Union
+from typing import (
+    Annotated,
+    Any,
+    ClassVar,
+    Literal,
+    NotRequired,
+    Optional,
+    Union,
+    final,
+)
 
 import pydantic
 import pytest
-from typing_extensions import TypedDict
+from inline_snapshot import snapshot
+from pydantic.json_schema import GenerateJsonSchema
+from pydantic_core import core_schema
+from typing_extensions import TypedDict, override
 
-from dmr import Controller, Cookies, Headers, Path, Query
+from dmr import Body, Controller, Cookies, Headers, Path, Query
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators import SchemaGenerator
 from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Reference, Schema
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
+from dmr.plugins.pydantic.schema import (
+    JsonSchemaKwargs,
+    PydanticSchemaGenerator,
+)
 from dmr.routing import Router, path
 
 
@@ -415,6 +432,99 @@ def test_parameter_schema_with_str_enum() -> None:
     )
 
 
+class _OptionalPathModel(pydantic.BaseModel):
+    user_id: int
+    opt: str = ''
+
+
+class _OptionalPathTypedDict(TypedDict):
+    user_id: int
+    opt: NotRequired[str]
+
+
+@dataclasses.dataclass
+class _OptionalPathDataclass:
+    user_id: int
+    opt: str = ''
+
+
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+@pytest.mark.parametrize(
+    'path_model',
+    [_OptionalPathModel, _OptionalPathTypedDict, _OptionalPathDataclass],
+)
+def test_optional_path_fields(
+    *,
+    serializer: type[PydanticSerializer],
+    path_model: Any,
+) -> None:
+    """Ensure that path parameters are always required, even with defaults."""
+
+    class _OptionalPathController(Controller[serializer]):  # type: ignore[valid-type]
+        def get(self, parsed_path: Path[path_model]) -> None:  # pyright: ignore[reportInvalidTypeForm]
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router(
+            'api/',
+            [
+                path(
+                    'user/<int:user_id>/<str:opt>/',
+                    _OptionalPathController.as_view(),
+                ),
+            ],
+        ),
+    ).convert()
+
+    operation = schema['paths']['/api/user/{user_id}/{opt}/']['get']
+    assert {
+        parameter['name']: parameter['required']
+        for parameter in operation['parameters']
+    } == {'user_id': True, 'opt': True}
+
+
+class _NoneDefaultModel(pydantic.BaseModel):
+    first: int
+    second: str = ''
+    third: str | None = None
+
+
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+def test_none_default(*, serializer: type[PydanticSerializer]) -> None:
+    """Ensure that ``None`` defaults are dumped into the schema."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1619
+
+    class _NoneDefaultController(Controller[serializer]):  # type: ignore[valid-type]
+        def post(self, parsed_body: Body[_NoneDefaultModel]) -> str:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('user/', _NoneDefaultController.as_view())]),
+    ).convert()
+
+    assert schema['components']['schemas']['_NoneDefaultModel'] == snapshot({
+        'properties': {
+            'first': {'type': 'integer', 'title': 'First'},
+            'second': {'type': 'string', 'title': 'Second', 'default': ''},
+            'third': {
+                'anyOf': [{'type': 'string'}, {'type': 'null'}],
+                'title': 'Third',
+                'default': None,
+            },
+        },
+        'type': 'object',
+        'required': ['first'],
+        'title': '_NoneDefaultModel',
+    })
+
+
 def test_root_model(
     schema_generator: SchemaGenerator,
     openapi_context: OpenAPIContext,
@@ -498,10 +608,169 @@ class _TestClass:
     attr: int
 
 
-def test_unsupported_type(schema_generator: SchemaGenerator) -> None:
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+def test_unsupported_type(
+    schema_generator: SchemaGenerator,
+    *,
+    serializer: type[PydanticSerializer],
+) -> None:
     """Ensures that unsupported types raise."""
     with pytest.raises(
         UnsolvableAnnotationsError,
         match='Cannot generate OpenAPI schema',
     ):
-        schema_generator(_TestClass, PydanticSerializer)
+        schema_generator(_TestClass, serializer)
+
+
+class _CustomType(pydantic.BaseModel):
+    """Custom model with an explicitly defined JSON schema."""
+
+
+class _OtherCustomType(pydantic.BaseModel):
+    """Another model without custom schema support."""
+
+
+class _CustomJsonSchema(GenerateJsonSchema):
+    """Describe custom types for the JSON schema generation."""
+
+    @override
+    def model_schema(self, schema: core_schema.ModelSchema) -> dict[str, Any]:
+        """Describe the supported type or reject unsupported models."""
+        if schema['cls'] is _CustomType:
+            return {'type': 'string'}
+        raise NotImplementedError(schema['cls'])
+
+
+@final
+class _CustomSchemaGenerator(PydanticSchemaGenerator):
+    json_schema_kwargs: ClassVar[JsonSchemaKwargs] = {
+        'schema_generator': _CustomJsonSchema,
+    }
+
+
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+def test_custom_schema_generator(
+    schema_generator: SchemaGenerator,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    serializer: type[PydanticSerializer],
+) -> None:
+    """Ensure custom ``schema_generator`` option is respected."""
+    monkeypatch.setattr(serializer, 'schema_generator', _CustomSchemaGenerator)
+    schema = schema_generator(_CustomType, serializer)
+
+    assert schema == Schema(type=OpenAPIType.STRING)
+
+
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+def test_schema_generator_fallback(
+    schema_generator: SchemaGenerator,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    serializer: type[PydanticSerializer],
+) -> None:
+    """Ensure types a custom generator does not support still raise."""
+    monkeypatch.setattr(serializer, 'schema_generator', _CustomSchemaGenerator)
+    with pytest.raises(
+        UnsolvableAnnotationsError,
+        match='Cannot generate OpenAPI schema',
+    ):
+        schema_generator(_OtherCustomType, serializer)
+
+
+@final
+class _AliasedModel(pydantic.BaseModel):
+    field_name: str = pydantic.Field(alias='fieldAlias')
+
+
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+@pytest.mark.parametrize(
+    ('schema_kwargs', 'field_name', 'field_title'),
+    [
+        pytest.param({}, 'fieldAlias', 'Fieldalias', id='default'),
+        pytest.param(
+            {'by_alias': True},
+            'fieldAlias',
+            'Fieldalias',
+            id='alias',
+        ),
+        pytest.param(
+            {'by_alias': False},
+            'field_name',
+            'Field Name',
+            id='no-alias',
+        ),
+    ],
+)
+def test_custom_by_alias(
+    openapi_context: OpenAPIContext,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    serializer: type[PydanticSerializer],
+    schema_kwargs: JsonSchemaKwargs,
+    field_name: str,
+    field_title: str,
+) -> None:
+    """Ensure default and explicit alias options produce the full schema."""
+    monkeypatch.setattr(
+        serializer.schema_generator,
+        'json_schema_kwargs',
+        schema_kwargs,
+    )
+    reference = openapi_context.generators.schema(_AliasedModel, serializer)
+    assert isinstance(reference, Reference)
+    schema = openapi_context.registries.schema.maybe_resolve_reference(
+        reference,
+    )
+
+    assert schema == Schema(
+        type=OpenAPIType.OBJECT,
+        title=_AliasedModel.__qualname__,
+        required=[field_name],
+        properties={
+            field_name: Schema(type=OpenAPIType.STRING, title=field_title),
+        },
+    )
+
+
+@final
+class _PrimitiveUnionSchemaGenerator(PydanticSchemaGenerator):
+    json_schema_kwargs: ClassVar[JsonSchemaKwargs] = {
+        'union_format': 'primitive_type_array',
+    }
+
+
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+def test_custom_union_format(
+    schema_generator: SchemaGenerator,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    serializer: type[PydanticSerializer],
+) -> None:
+    """Ensure custom ``union_format`` option is respected."""
+    monkeypatch.setattr(
+        serializer,
+        'schema_generator',
+        _PrimitiveUnionSchemaGenerator,
+    )
+    schema = schema_generator(int | str, serializer)
+
+    assert isinstance(schema, Schema)
+    assert isinstance(schema.type, list)
+    schema.type = sorted(schema.type)
+    assert schema == Schema(type=[OpenAPIType.INTEGER, OpenAPIType.STRING])

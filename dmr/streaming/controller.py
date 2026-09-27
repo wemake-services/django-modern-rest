@@ -1,11 +1,9 @@
-# pyright: reportUnknownArgumentType=false, reportUnknownMemberType=false
 import abc
 from collections.abc import AsyncIterator, Iterable, Mapping
 from http import HTTPStatus
-from typing import Any, ClassVar, TypeVar, cast
+from typing import Any, ClassVar, TypeVar
 
-from django.http import HttpResponseBase
-from typing_extensions import override
+from typing_extensions import Sentinel, override
 
 from dmr.controller import Controller
 from dmr.cookies import NewCookie, set_cookies
@@ -15,32 +13,21 @@ from dmr.negotiation import request_renderer
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings, default_renderer, resolve_setting
-from dmr.streaming.metadata import StreamResponseModification
+from dmr.streaming.endpoint import Streaming
+from dmr.streaming.metadata import StreamingResponseModification
 from dmr.streaming.renderer import StreamingRenderer
 from dmr.streaming.stream import StreamingResponse
-from dmr.streaming.validation import StreamingValidator
-from dmr.validation.response import ValidatedModification
+from dmr.streaming.validation import (
+    StreamingResponseValidator,
+    StreamingValidator,
+)
 
 
 class _StreamingEndpoint(Endpoint):
-    response_modification_cls = StreamResponseModification
+    response_modification_cls = StreamingResponseModification
+    response_validator_cls = StreamingResponseValidator
 
     __slots__ = ()
-
-    @override
-    def _build_new_response(
-        self,
-        controller: 'Controller[BaseSerializer]',
-        validated: 'ValidatedModification',
-    ) -> HttpResponseBase:
-        # for mypy: we only use `_StreamingEndpoint` with `StreamingController`
-        assert isinstance(controller, StreamingController)  # noqa: S101
-        return controller.to_stream(
-            validated.raw_data,
-            status_code=validated.status_code,
-            headers=validated.headers,
-            cookies=validated.cookies,
-        )
 
 
 _SerializerT_co = TypeVar(
@@ -64,17 +51,16 @@ class StreamingController(Controller[_SerializerT_co]):
     endpoint_cls = _StreamingEndpoint
 
     # Customizable attributes for subclasses:
-    streaming_ping_seconds: ClassVar[float | None] = None
+    extras: ClassVar[Streaming] = Streaming()  # pyright: ignore[reportIncompatibleVariableOverride]
     """
-    Optional ping keep alive event support.
+    Streaming settings for all endpoints of this controller.
 
-    Some servers might close long living connections with no activity.
-    Specify number in second how long should we wait between events.
-    If we wait longer, we will send a ping event.
-    The payload of the ping event is defined in
-    :meth:`~dmr.streaming.controller.StreamingController.ping_event`.
-
-    By default it is disabled. It is only enabled in the SSE streaming.
+    Override it to change controller-level defaults,
+    for example: ``extras = Streaming(validate_events=False)``
+    or ``extras = Streaming(ping_seconds=30)``.
+    Per-endpoint values are passed as ``extras=``
+    to :data:`~dmr.streaming.modify` and :data:`~dmr.streaming.validate`.
+    Use ``Streaming.of(self)`` to read the resolved values.
     """
 
     streaming_response_cls: ClassVar[type[StreamingResponse]] = (
@@ -88,15 +74,16 @@ class StreamingController(Controller[_SerializerT_co]):
         if serializer is None:
             return  # this is an abstract controller
 
+        renderers = cls.renderers
+        if isinstance(renderers, Sentinel) or not renderers:
+            renderers = resolve_setting(Settings.renderers)
         cls.renderers = (
             *cls.streaming_renderers(serializer),
-            *(cls.renderers or resolve_setting(Settings.renderers)),
+            *renderers,
         )
 
         # Now we have everything and we can create `api_endpoints`:
         call_init_subclass(Controller, cls)
-        # TODO: run extra validation?
-        # TODO: validate that endpoints can't contain `yield event` themself.
 
     @classmethod
     @abc.abstractmethod
@@ -147,9 +134,8 @@ class StreamingController(Controller[_SerializerT_co]):
 
         """
         # We are sure that it is a `StreamingRenderer` at this point
-        streaming_renderer = cast(  # type: ignore[assignment]
-            StreamingResponse,  # TODO: provide a new api?
-            streaming_renderer or request_renderer(self.request),
+        streaming_renderer = (
+            streaming_renderer or request_renderer(self.request)  # type: ignore[assignment]
         )
         # for mypy: we are sure it is not `None` here.
         assert streaming_renderer is not None  # noqa: S101
@@ -169,7 +155,8 @@ class StreamingController(Controller[_SerializerT_co]):
                 )
             ),
         )
-        set_cookies(streaming_response, cookies)
+        if cookies:
+            set_cookies(streaming_response, cookies)
         return streaming_response
 
     def ping_event(self) -> Any | None:
@@ -179,5 +166,6 @@ class StreamingController(Controller[_SerializerT_co]):
         By default pings are disabled for ``StreamingController`` types.
         Pings must be explicitly enabled in subclasses.
 
-        If ``streaming_ping_seconds`` is set, this method will be called.
+        If ``ping_seconds`` is set in :class:`~dmr.streaming.Streaming`
+        extras, this method will be called.
         """

@@ -49,7 +49,7 @@ Then any requests with ``Accept-Language`` header will set
 the required language for this specific response.
 
 .. literalinclude:: /examples/internationalization/accept_language.py
-  :caption: middleware.py
+  :caption: views.py
   :language: python
   :linenos:
 

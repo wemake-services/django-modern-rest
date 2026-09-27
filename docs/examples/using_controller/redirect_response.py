@@ -4,10 +4,10 @@ from django.http import HttpResponse, HttpResponseRedirect
 
 from dmr import Controller, HeaderSpec, validate
 from dmr.metadata import ResponseSpec
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
-class UserController(Controller[PydanticSerializer]):
+class UserController(Controller[PydanticFastSerializer]):
     @validate(
         ResponseSpec(
             None,

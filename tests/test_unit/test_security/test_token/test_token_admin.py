@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import datetime as dt
-from typing import Any, cast
 from unittest.mock import Mock
 
 import pytest
@@ -13,14 +12,12 @@ from dmr.security.token.app.admin import TokenAdmin
 from dmr.security.token.app.models import Token
 
 
-@pytest.mark.django_db
 def test_token_admin_is_registered() -> None:
     """Test token admin is registered with Django admin site."""
     assert isinstance(admin.site._registry[Token], TokenAdmin)
 
 
-@pytest.mark.django_db
-def test_token_admin_has_no_add_permission(admin_user: User) -> None:
+def test_token_admin_has_no_add_permission() -> None:
     """Test tokens cannot be added from the admin."""
     token_admin = TokenAdmin(Token, admin.site)
     request = RequestFactory().get('/admin/')
@@ -52,7 +49,7 @@ def test_token_admin_revoke_selected(admin_user: User) -> None:
 
     token_admin = TokenAdmin(Token, admin.site)
     message_user = Mock()
-    cast(Any, token_admin).message_user = message_user
+    token_admin.message_user = message_user  # type: ignore[method-assign]
     request = RequestFactory().post('/admin/')
 
     token_admin.revoke_selected(

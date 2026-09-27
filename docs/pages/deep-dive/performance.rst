@@ -140,19 +140,19 @@ Sync
 Why so fast?
 
 - We utilize :func:`msgspec.json.decode` and :func:`msgspec.json.encode`
-  to parse json, it is the fastest json parsing tool in Python land
-- We can support :class:`msgspec.Struct` models, which are faster than pydantic
+  to parse JSON. It is the fastest JSON parsing tool in Python land.
+- We can support :class:`msgspec.Struct` models which are faster than Pydantic
 - We :ref:`compile <mypyc>` some hot paths of the framework
   with `mypyc <https://mypyc.readthedocs.io/en/latest/>`_ to C code,
   while keeping fallback Python code in-place
-- We provide :func:`django.urls.path` drop-in :doc:`../routing` replacement
+- We provide a :func:`django.urls.path` drop-in :doc:`../routing` replacement
   which is `x51 times <https://habr.com/ru/companies/tochka/articles/822431/>`_
   as fast as the default one
 - We validate data smartly: we prepare models for validation in advance,
   so no runtime magic ever happens
-- We have special :ref:`"production mode" <response_validation>`
+- We have a special :ref:`"production mode" <response_validation>`
   with fewer checks, so we can have the best of two worlds:
-  strict development workflow and fast runtime for real users
+  a strict development workflow and a fast runtime for real users
 
 We also support `PyPy <https://github.com/pypy/pypy>`_, which can be several
 orders of magnitude faster that CPython.
@@ -293,7 +293,7 @@ Async
 While ``fastapi`` is faster at the moment, we have several ideas
 to optimize ``django-modern-rest`` even further,
 so it can be on par (or even faster!)
-with the fastest python web frameworks in existence.
+with the fastest Python web frameworks in existence.
 
 While keeping 100% of compatibility with the older libs and tools.
 
@@ -367,7 +367,7 @@ Run ``make wheel`` to run the compilation.
 Technical details
 -----------------
 
-See source code for our
+See the source code for our
 `benchmark suite <https://github.com/wemake-services/django-modern-rest/tree/master/benchmarks>`_.
 
 .. include:: ../../../benchmarks/README.md

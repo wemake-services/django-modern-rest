@@ -1,5 +1,5 @@
 import dataclasses
-from collections.abc import Iterable, Mapping
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any, Final, final
 
 from django.http.request import HttpRequest, MediaType
@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from dmr.compiled import accepted_type
 from dmr.exceptions import NotAcceptableError, ResponseSchemaError
-from dmr.internal.media_compat import media_quality, media_specificity
+from dmr.internal.media_compat import media_match
 from dmr.metadata import get_annotated_metadata
 
 if TYPE_CHECKING:
@@ -106,16 +106,95 @@ def negotiatiate_response_validation(
     )
 
 
-def media_by_precedence(content_types: Iterable[str]) -> list[MediaType]:
-    """Return sorted content types based on specificity and quality."""
-    return sorted(
-        (
-            media_type
-            for content_type in content_types
-            if media_quality((media_type := MediaType(content_type))) != 0
+def find_parser(
+    content_type: str | None,
+    *,
+    parsers: Mapping[str, 'Parser'],
+    exact_parsers: Mapping[str, 'Parser'],
+    media_by_precedence: Sequence[MediaType],
+    default: 'Parser',
+) -> 'Parser | None':
+    """
+    Choose a parser by the raw ``Content-Type`` header value.
+
+    When *content_type* is missing, returns *default* (or the first parser).
+    Returns ``None`` when *content_type* is set
+    and does not match any of *parsers*.
+
+    The result only depends on *content_type*, everything else is fixed
+    for an endpoint in import time. That's why callers are free
+    to cache it by the header value.
+
+    All the state is passed explicitly, so this function can be bound
+    with :func:`functools.partial` without keeping
+    the negotiator object itself alive.
+    """
+    # TODO: compile this code
+    if content_type is None:
+        return default
+
+    # Try the exact match first, since it is faster, O(1):
+    parser = exact_parsers.get(content_type)
+    if parser is not None:
+        # Do not allow invalid content types to be matched exactly.
+        return parser
+
+    # Now, try to find parser types based on `*/*` patterns, O(n):
+    for media in media_by_precedence:
+        # TODO: replace this with a compiled implementation:
+        if media_match(media, content_type):
+            return parsers[str(media)]
+
+    # No parsers found, the caller raises the error:
+    return None
+
+
+def find_renderer(
+    accept: str | None,
+    *,
+    renderers: Mapping[str, 'Renderer'],
+    default: 'Renderer',
+) -> 'Renderer | None':
+    """
+    Choose a renderer by the raw ``Accept`` header value.
+
+    When *accept* is missing, returns *default* (or the first renderer).
+    Returns ``None`` when *accept* is set
+    and does not match any of *renderers*.
+
+    The result only depends on *accept*, because *renderers* and *default*
+    are fixed for an endpoint in import time. That's why callers are free
+    to cache it by the header value.
+
+    All the state is passed explicitly, so this function can be bound
+    with :func:`functools.partial` without keeping
+    the negotiator object itself alive.
+    """
+    if accept is None:
+        return default
+
+    # Exact match is the overwhelmingly common case for API clients
+    # (`Accept: application/json`):
+    renderer = renderers.get(accept)
+    if renderer is not None:
+        return renderer
+
+    renderer_type = accepted_type(accept, renderers)
+    if renderer_type is None:
+        return None
+    return renderers[renderer_type]
+
+
+def not_acceptable_error(
+    request: HttpRequest,
+    renderers: Mapping[str, 'Renderer'],
+) -> NotAcceptableError:
+    """Build an error for an ``Accept`` header that we cannot satisfy."""
+    return NotAcceptableError(
+        _CANNOT_SERIALIZE_MSG.format(
+            accepted_types=repr(request.accepted_types),
+            supported=repr(list(renderers)),
         ),
-        key=lambda media: (media_specificity(media), media_quality(media)),
-        reverse=True,
     )
 
 
@@ -132,16 +211,14 @@ def negotiate_renderer(
     Raises :exc:`~dmr.exceptions.NotAcceptableError` when Accept is set
     and does not match any of *renderers*.
     """
-    accept = request.headers.get('Accept')
-    if accept is None:
-        return default
-
-    renderer_type = accepted_type(accept, renderers)
-    if renderer_type is None:
-        raise NotAcceptableError(
-            _CANNOT_SERIALIZE_MSG.format(
-                accepted_types=repr(request.accepted_types),
-                supported=repr(list(renderers)),
-            ),
-        )
-    return renderers[renderer_type]
+    # `META` is the raw environ dict, `request.headers` is a lazily built
+    # case-insensitive copy of it, it might still not exist.
+    # Let's not trigger it just yet:
+    renderer = find_renderer(
+        request.META.get('HTTP_ACCEPT'),
+        renderers=renderers,
+        default=default,
+    )
+    if renderer is None:
+        raise not_acceptable_error(request, renderers)
+    return renderer

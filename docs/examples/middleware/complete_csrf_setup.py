@@ -5,7 +5,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from dmr import Controller, ResponseSpec
 from dmr.decorators import wrap_middleware
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from examples.middleware.csrf_protect_json import csrf_protect_json
 
 
@@ -23,7 +23,7 @@ def ensure_csrf_cookie_json(response: HttpResponse) -> HttpResponse:
 
 
 @csrf_protect_json
-class ProtectedController(Controller[PydanticSerializer]):
+class ProtectedController(Controller[PydanticFastSerializer]):
     """Protected API controller requiring CSRF token."""
 
     responses = csrf_protect_json.responses
@@ -38,7 +38,7 @@ class ProtectedController(Controller[PydanticSerializer]):
 
 
 @ensure_csrf_cookie_json
-class PublicController(Controller[PydanticSerializer]):
+class PublicController(Controller[PydanticFastSerializer]):
     responses = ensure_csrf_cookie_json.responses
 
     def get(self) -> dict[str, str]:

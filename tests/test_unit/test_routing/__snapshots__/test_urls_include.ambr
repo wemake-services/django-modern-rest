@@ -13,7 +13,7 @@
           "tags": [
             "level3"
           ],
-          "operationId": "getOthercontrollerApiOther",
+          "operationId": "getOtherControllerApiOther",
           "responses": {
             "200": {
               "description": "OK",
@@ -21,16 +21,6 @@
                 "application/json": {
                   "schema": {
                     "type": "string"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
                   }
                 }
               }
@@ -44,27 +34,6 @@
                   }
                 }
               }
-            }
-          },
-          "deprecated": false
-        }
-      },
-      "/api/users/user/": {
-        "get": {
-          "tags": [
-            "level3"
-          ],
-          "operationId": "getUsercontrollerApiUsersUser",
-          "responses": {
-            "200": {
-              "description": "OK",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              }
             },
             "422": {
               "description": "Raised when returned response does not match the response schema",
@@ -75,19 +44,8 @@
                   }
                 }
               }
-            },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
             }
-          },
-          "deprecated": false
+          }
         }
       },
       "/api/users/old/user/": {
@@ -96,7 +54,7 @@
             "level3",
             "level1"
           ],
-          "operationId": "getUsercontrollerApiUsersOldUser",
+          "operationId": "getUserControllerApiUsersOldUser",
           "responses": {
             "200": {
               "description": "OK",
@@ -108,8 +66,8 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
                 "application/json": {
                   "schema": {
@@ -118,8 +76,8 @@
                 }
               }
             },
-            "406": {
-              "description": "Raised when provided `Accept` header cannot be satisfied",
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
               "content": {
                 "application/json": {
                   "schema": {
@@ -130,6 +88,46 @@
             }
           },
           "deprecated": true
+        }
+      },
+      "/api/users/user/": {
+        "get": {
+          "tags": [
+            "level3"
+          ],
+          "operationId": "getUserControllerApiUsersUser",
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -184,8 +182,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

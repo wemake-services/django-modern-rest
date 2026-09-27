@@ -8,10 +8,7 @@
     },
     "openapi": "3.1.0",
     "paths": {},
-    "components": {
-      "schemas": {},
-      "securitySchemes": {}
-    }
+    "components": {}
   }
   '''
 # ---
@@ -27,7 +24,7 @@
       "/api/hidden/partially/": {
         "put": {
           "description": "Put",
-          "operationId": "putPartiallyhiddencontrollerApiHiddenPartially",
+          "operationId": "putPartiallyHiddenControllerApiHiddenPartially",
           "responses": {
             "200": {
               "description": "OK",
@@ -35,16 +32,6 @@
                 "application/json": {
                   "schema": {
                     "type": "string"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
                   }
                 }
               }
@@ -58,13 +45,22 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         },
         "patch": {
           "description": "Patch",
-          "operationId": "patchPartiallyhiddencontrollerApiHiddenPartially",
+          "operationId": "patchPartiallyHiddenControllerApiHiddenPartially",
           "responses": {
             "200": {
               "description": "OK",
@@ -72,16 +68,6 @@
                 "application/json": {
                   "schema": {
                     "type": "string"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
                   }
                 }
               }
@@ -95,9 +81,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -152,8 +147,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''
@@ -169,7 +163,7 @@
     "paths": {
       "/api/hidden/endpoints/": {
         "get": {
-          "operationId": "getPartiallyhiddenendpointsApiHiddenEndpoints",
+          "operationId": "getPartiallyHiddenEndpointsApiHiddenEndpoints",
           "responses": {
             "200": {
               "description": "OK",
@@ -184,16 +178,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -203,12 +187,21 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         },
         "post": {
-          "operationId": "postPartiallyhiddenendpointsApiHiddenEndpoints",
+          "operationId": "postPartiallyHiddenEndpointsApiHiddenEndpoints",
           "requestBody": {
             "content": {
               "application/json": {
@@ -243,16 +236,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -262,9 +245,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -332,8 +324,7 @@
           ],
           "title": "_UserModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

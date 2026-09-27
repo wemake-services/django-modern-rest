@@ -16,7 +16,12 @@ mod _docs 'docs/justfile'
 
 # Install dependencies
 [group('dev')]
-install:
+install *args='':
+    uv sync --all-groups --all-extras --no-group integration-drivers {{args}}
+
+# Install dependencies
+[group('dev')]
+install-integration:
     uv sync --all-groups --all-extras
 
 # Format code with ruff
@@ -33,10 +38,40 @@ lint:
     uv run python -m flake8 .
     uv run python -m slotscheck -v -m dmr
     uv run import-linter lint
+    just skills
 
-# Run all checks
+# Validate agent skills against https://agentskills.io/specification
 [group('dev')]
-test: lint type-check example benchmarks-type-check package (smoke 'jwt' 'allauth' 'msgspec' 'pydantic') translations unit
+skills:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for skill in dmr/.agents/skills/*/; do
+      uv run agentskills validate "$skill"
+    done
+
+# Run all checks (with sqlite as db)
+[group('dev')]
+test *args='': lint type-check example benchmarks-type-check package (smoke 'jwt' 'allauth' 'msgspec' 'pydantic') translations (unit args)
+
+# Run full test suite with MySQL database
+[group('dev')]
+[env('TEST_DATABASE_URL', 'mysql://root:dmr_test@127.0.0.1:10000/root')]
+test_mysql *args='': (integration_db_start 'mysql')
+  # We need to execute commands explicitly, because
+  # just doesn't export environment variables to dependent recipes,
+  # so `uv` doesn't see `TEST_DATABASE_URL`.
+  just install-integration
+  just test {{args}}
+
+# Run full test suite with PostgreSQL database
+[group('dev')]
+[env('TEST_DATABASE_URL', 'postgres://dmr_test:dmr_test@localhost:10001/dmr_test')]
+test_postgres *args='': (integration_db_start 'postgres')
+  # We need to execute commands explicitly, because
+  # just doesn't export environment variables to dependent recipes,
+  # so `uv` doesn't see `TEST_DATABASE_URL`.
+  just install-integration
+  just test {{args}}
 
 # Run all type checkers
 [group('type-check')]
@@ -52,7 +87,8 @@ unit *args='':
     uv run python -m pytest -n auto --max-worker-restart=1 \
       --inline-snapshot=disable {{ args }}
 
-# Check package imports without django.setup(); extras are optional, e.g. `just smoke jwt msgspec`
+# Check package imports without django.setup();
+# extras are optional, e.g. `just smoke jwt msgspec`
 [group('testing')]
 smoke *extras='':
     uv run python -c 'from dmr import Controller'
@@ -64,6 +100,8 @@ smoke *extras='':
     uv run python -c 'from dmr.security import *'
     uv run python -c 'from dmr.security.django_session import *'
     uv run python -c 'from dmr.security.token import *'
+    uv run python -c 'from dmr.security.csrf import *'
+    uv run python -c 'from dmr.semantic_schema import *'
     uv run python -c 'from dmr.throttling import *'
     uv run python -c 'from dmr.throttling.backends import *'
     uv run python -c 'from dmr.throttling.algorithms import *'
@@ -107,8 +145,9 @@ example:
 
 # Start Django + DRM example app
 [group('testing')]
+[working-directory('django_test_app')]
 example-run:
-    cd django_test_app && uv run python manage.py runserver
+    uv run python manage.py runserver
 
 # Validate package dependencies and run security audit
 [group('testing')]
@@ -119,14 +158,19 @@ package:
     # Validates the environment against `uv.lock`.
     # TODO: remove `-` once we can support `orjson` in `pyproject.toml`,
     # until then we install it on top of the lock and this always differs.
-    -uv sync --all-groups --all-extras --locked --check
+    -uv sync --all-groups --all-extras --locked --check --no-group integration-drivers
     uv pip check
     uv --preview-features audit audit
 
+[group('testing')]
+integration_db_start *containers:
+  docker compose up --wait {{containers}}
+
 # Type-check benchmark code
 [group('benchmarks')]
+[working-directory('benchmarks')]
 benchmarks-type-check:
-    cd benchmarks && uv run python -m mypy tests/
+    uv run python -m mypy tests/
 
 # Compile with mypyc then run feature benchmarks
 [group('benchmarks')]
@@ -150,7 +194,7 @@ docs +targets='clean html': (_docs::build targets)
 
 # Add new translation strings
 [group('i18n')]
-[working-directory: 'dmr']
+[working-directory('dmr')]
 makemessages:
     #!/usr/bin/env bash
     for target in $(find locale -mindepth 1 -maxdepth 1 -type d); do
@@ -164,3 +208,16 @@ translations:
     uv run dennis-cmd lint dmr/locale
     uv run django-admin compilemessages --ignore dmr || true
     uv run django-admin compilemessages
+
+# Check that committed `.mo` files match their `.po` files
+[group('i18n')]
+[working-directory('dmr')]
+translations-check:
+    # `compilemessages` skips `.po` files that are not newer than their `.mo`:
+    find locale -name '*.po' -exec touch {} +
+    uv run django-admin compilemessages
+    if [ -n "$(git status --porcelain -- locale)" ]; then \
+      git status --short -- locale; \
+      echo 'Compiled translations are out of date, run `just translations` and commit `.mo` files'; \
+      exit 1; \
+    fi

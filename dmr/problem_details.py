@@ -54,6 +54,7 @@ class ProblemDetailsError(APIError[ProblemDetailsModel]):
     """
 
     content_type: ClassVar[str] = ContentType.json_problem_details
+    problem_details_model: ClassVar[Any] = ProblemDetailsModel
 
     def __init__(
         self,
@@ -172,11 +173,11 @@ class ProblemDetailsError(APIError[ProblemDetailsModel]):
         use ``ProblemDetailsModel`` directly.
         """
         return Annotated[
-            *(ProblemDetailsModel, *existing_errors.values()),  # pyrefly: ignore[not-a-type]
+            *(cls.problem_details_model, *existing_errors.values()),  # pyrefly: ignore[not-a-type]
             conditional_type({
                 (
                     content_type or ContentType.json_problem_details
-                ): ProblemDetailsModel,
+                ): cls.problem_details_model,
                 **existing_errors,
             }),
         ]

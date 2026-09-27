@@ -38,6 +38,7 @@ from dmr.internal.regex import parse_named_groups
     ],
 )
 def test_parse_named_groups(
+    *,
     source: str,
     named_groups: dict[str, str],
 ) -> None:

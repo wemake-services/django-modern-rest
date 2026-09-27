@@ -4,7 +4,7 @@ import pydantic
 from django.urls import reverse_lazy
 from typing_extensions import override
 
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.jwt.views import (
     CookieObtainTokensSyncController,
     ObtainTokensPayload,
@@ -17,7 +17,7 @@ class UserModel(pydantic.BaseModel):
 
 class ObtainCookiesWithBodyController(
     CookieObtainTokensSyncController[
-        PydanticSerializer,
+        PydanticFastSerializer,
         ObtainTokensPayload,
         UserModel,  # the response body type
     ],

@@ -1,10 +1,10 @@
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.throttling import AsyncThrottle, Rate
 from dmr.throttling.headers import XRateLimit
 
 
-class AsyncController(Controller[PydanticSerializer]):
+class AsyncController(Controller[PydanticFastSerializer]):
     throttling = (
         AsyncThrottle(1, Rate.minute, response_headers=[XRateLimit()]),
     )

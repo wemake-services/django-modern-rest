@@ -4,14 +4,12 @@ import pytest
 from pydantic import BaseModel, Field
 
 from dmr.exceptions import UnsolvableAnnotationsError
-from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.schema import SchemaGenerator
 from dmr.openapi.objects import OpenAPIType, Reference, Schema
 from dmr.plugins.pydantic import PydanticSerializer
 
 _MAXIMUM: Final = 100
-_CONFIG: Final = OpenAPIConfig(title='Test config', version='0.1')
 
 
 @pytest.fixture

@@ -19,6 +19,12 @@ extract_selector = '/access_token'
 # We don't have any real data to hide, but it is easier to debug:
 enabled = false
 
+[generation]
+# Don't generate `\x00` (NULL) bytes in strings:
+# this thing fails tests against real databases,
+# because \x00 is not accepted by databases by default.
+allow-x00 = false
+
 # Cursor-paginated endpoints answer `400`, when
 [[operations]]
 include-tag = 'model_cursor'

@@ -1,6 +1,6 @@
 import abc
 from contextlib import AbstractAsyncContextManager, AbstractContextManager
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, NotRequired
 
 from typing_extensions import TypedDict
 
@@ -9,6 +9,7 @@ from dmr.exceptions import EndpointMetadataError
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
+    from dmr.metadata import EndpointMetadata
     from dmr.serializer import BaseSerializer
     from dmr.throttling import AsyncThrottle, SyncThrottle
     from dmr.throttling.algorithms import BaseThrottleAlgorithm
@@ -17,7 +18,12 @@ if TYPE_CHECKING:
 class CachedRateLimit(TypedDict):
     """Representation of a cached object's metadata."""
 
-    # We usually store `int(time.time())` result here:
+    # When ``True``, ``time`` stores the remaining ``ttl``
+    # returned by the backend (e.g. from Redis ``TTL`` command).
+    # When ``False`` (default), ``time`` stores an absolute
+    # expiry timestamp (``expire_at``).
+    is_ttl: NotRequired[bool]
+    # We usually store ``expire_at`` or ``ttl`` here:
     time: int
     # We overly complicate the storage a bit, because this design
     # allows future potential algorithms to store requests as lists,
@@ -54,6 +60,13 @@ class _BaseThrottleBackend:
                 f'because backend requires {script_format} transactional '
                 'script support, while algorithm does not provide it',
             )
+
+    def validate(
+        self,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: 'EndpointMetadata',
+    ) -> None:
+        """Validate the backend definition."""
 
 
 class BaseThrottleSyncBackend(_BaseThrottleBackend):

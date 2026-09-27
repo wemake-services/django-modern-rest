@@ -18,6 +18,96 @@ Python REST frameworks is code re-usability.
 What does ``django-modern-rest`` offer instead?
 
 
+Explicitly abstract controllers
+-------------------------------
+
+A controller can have an exact serializer and endpoints,
+but you might still not want to route it: you only want to reuse it.
+Declare ``is_abstract = True`` explicitly for this:
+
+.. literalinclude:: /examples/reusable_code/explicit_abstract.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+Such a controller does not build any endpoints,
+they are only created in a concrete context.
+Subclasses that don't declare ``is_abstract`` themselves
+are concrete again, even when their base controller is explicitly abstract.
+So, ``MyController`` from the example above does the same
+``GET`` request as its base, but it can be routed.
+
+.. versionadded:: 0.16.0
+
+
+.. _modify-and-validate-with-extras:
+
+Providing extras for ``@modify`` and ``@validate``
+--------------------------------------------------
+
+Your custom controllers might require custom parameters that users can provide
+to :data:`~dmr.endpoint.validate` and :data:`~dmr.endpoint.modify`.
+
+To do so, we utilize ``extras=`` parameter. By default it is always typed
+as empty sentinel, because default controller do not allow any extra parameters.
+
+Three steps are needed:
+
+1. Define a subclass of :class:`~dmr.endpoint.Extras`.
+   Its fields can default to ``EMPTY`` if some arguments can be missing
+2. Define :attr:`~dmr.endpoint.Extras.build` with how to build your value
+   from several configuration layers, you can use global settings there as well
+3. Create typed decorators by passing this class
+   to :class:`~dmr.endpoint.ModifyEndpoint`
+   and :class:`~dmr.endpoint.ValidateEndpoint`
+4. Assign an instance of this class to ``extras`` attribute
+   of your controller. It enables ``extras=`` for all endpoints
+   of this controller and provides controller-level defaults
+
+:meth:`~dmr.endpoint.Extras.build` receives the endpoint layer,
+which is ``EMPTY`` when ``extras=`` is not passed,
+and the controller layer as instances of your class,
+and returns the resolved value.
+It is stored inside :attr:`~dmr.metadata.EndpointMetadata.extras`
+and can be read with :meth:`~dmr.endpoint.Extras.of` in a typed way.
+
+First, define the extras model itself:
+
+.. literalinclude:: /examples/reusable_code/extras_model.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+Then define and use new endpoint decorators:
+
+.. tabs::
+
+  .. tab:: modify
+
+    Real world example: :data:`dmr.streaming.modify`
+
+    .. literalinclude:: /examples/reusable_code/extras_modify.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: validate
+
+    Real world example: :data:`dmr.streaming.validate`
+
+    .. literalinclude:: /examples/reusable_code/extras_validate.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+This way your controller subtypes can have any extras that you need!
+
+These definitions would only differ in terms of typing.
+Everything else would work the same way.
+
+.. versionadded:: 0.16.0
+
+
 .. _reusable-controllers:
 
 Reusable controllers
@@ -41,19 +131,19 @@ Let's try to create two exact controllers with exact serializers:
 
 .. tabs::
 
-    .. tab:: msgspec
+  .. tab:: msgspec
 
-      .. literalinclude:: /examples/reusable_code/msgspec_controller.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/reusable_code/msgspec_controller.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
-    .. tab:: pydantic
+  .. tab:: pydantic
 
-      .. literalinclude:: /examples/reusable_code/pydantic_controller.py
-        :caption: views.py
-        :linenos:
-        :language: python
+    .. literalinclude:: /examples/reusable_code/pydantic_controller.py
+      :caption: views.py
+      :linenos:
+      :language: python
 
 Basically - we just specify what kind of serializer to use. And that's it.
 But, this is just the first step. We can do much more!
@@ -145,7 +235,7 @@ Real endpoints support
 .. versionadded:: 0.14.0
 
 The same would work with endpoints defined
-with :func:`~dmr.endpoint.validate` function.
+with :data:`~dmr.endpoint.validate` decorator.
 
 The logic is the same, but syntax is a bit different.
 
@@ -188,6 +278,77 @@ And then - implementations:
 This way offers you more control over the response headers, cookies, etc.
 Choose the one that fits best of the job.
 
+.. _type-variable-defaults:
+
+Type variable defaults
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 0.16.0
+
+Type variables can have defaults, as described in :pep:`696`.
+We use them when a subclass does not provide some of the type args.
+
+There are three ways to define them:
+
+- ``typing_extensions.TypeVar('_ModelT', default=MyModel)`` on any version
+- :class:`typing.TypeVar` with the same ``default=`` argument on 3.13 and above
+- the native ``class Reusable[_ModelT = MyModel]`` syntax on 3.13 and above
+
+.. literalinclude:: /examples/reusable_code/reusable_defaults.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+The request model is now optional for the subclasses:
+
+.. tabs::
+
+  .. tab:: with default
+
+    .. literalinclude:: /examples/reusable_code/defaults_pydantic.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+  .. tab:: substituting default
+
+    .. literalinclude:: /examples/reusable_code/defaults_exact.py
+      :caption: views.py
+      :linenos:
+      :language: python
+
+Defaults can also point to other type variables:
+``_ResponseBodyT = TypeVar('_ResponseBodyT', default=_RequestModelT)``
+means "the response body is the request model, unless told otherwise".
+
+Serializers can have defaults as well. Then a subclass
+that passes no type args at all is a concrete controller,
+because it has an exact serializer:
+
+.. literalinclude:: /examples/reusable_code/defaults_serializer.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+.. important::
+
+  A default only applies to the subclasses, never to the reusable
+  controller that declares it. ``ReusableController`` above still has
+  ``is_abstract`` set to ``True`` and cannot be routed,
+  even though every one of its type variables has a default.
+
+  This is the same rule as everywhere else: we only build endpoints
+  for concrete controllers, and a type variable is not an exact type.
+
+.. note::
+
+  A type variable without a default is still required.
+  Controllers that don't have an exact serializer
+  stay abstract, as always.
+
+Write the subclass when you have anything else to say: a setting
+to change, a hook to redefine, or a name to route several times.
+
 
 .. _lazy-reusable-endpoints:
 
@@ -207,11 +368,11 @@ maybe even auth or throttling definitions.
 
 To use the full customization, we provide:
 
-- :func:`dmr.endpoint.modify.lazy` function to work
-  with :func:`~dmr.endpoint.modify`. It accepts
+- :meth:`dmr.endpoint.ModifyEndpoint.lazy` method to work
+  with :data:`~dmr.endpoint.modify`. It accepts
   a function or a :class:`classmethod` to lazily provide a spec in the future
-- :func:`dmr.endpoint.validate.lazy` function to work
-  with :func:`~dmr.endpoint.validate`. It accepts
+- :meth:`dmr.endpoint.ValidateEndpoint.lazy` method to work
+  with :data:`~dmr.endpoint.validate`. It accepts
   a function or a :class:`classmethod` to lazily provide a spec in the future
 
 Here's how it works:
@@ -235,14 +396,14 @@ Here's how it works:
 What happens here?
 
 1. We define a reusable controller with lazy endpoint specification
-2. We define ``_lazy_spec`` classmethod that will provide the actual decorator
+2. We define ``lazy_spec`` classmethod that will provide the actual decorator
    during the child - final - controller build time
 3. We use class-level API to define constants that people
    can modify in their child - final - controllers if needed.
    But, the default implementation would work the way we described it
 
 Notice that we use special types to define
-the return type from the ``_lazy_spec`` classmethod.
+the return type from the ``lazy_spec`` classmethod.
 Here are all of them, choose the one for your task:
 
 .. list-table::
@@ -253,23 +414,23 @@ Here are all of them, choose the one for your task:
     - What it does
 
   * - :class:`~dmr.endpoint.ModifyAnyCallable`
-    - :func:`~dmr.endpoint.modify`
+    - :data:`~dmr.endpoint.modify`
     - Creates a decorator for endpoints without sync / async specifics
   * - :class:`~dmr.endpoint.ModifySyncCallable`
-    - :func:`~dmr.endpoint.modify`
+    - :data:`~dmr.endpoint.modify`
     - Creates a decorator for sync endpoints
   * - :class:`~dmr.endpoint.ModifyAsyncCallable`
-    - :func:`~dmr.endpoint.modify`
+    - :data:`~dmr.endpoint.modify`
     - Creates a decorator for async endpoints
 
   * - :class:`~dmr.endpoint.ValidateAnyCallable`
-    - :func:`~dmr.endpoint.validate`
+    - :data:`~dmr.endpoint.validate`
     - Creates a decorator for endpoints without sync / async specifics
   * - :class:`~dmr.endpoint.ValidateSyncCallable`
-    - :func:`~dmr.endpoint.validate`
+    - :data:`~dmr.endpoint.validate`
     - Creates a decorator for sync endpoints
   * - :class:`~dmr.endpoint.ValidateAsyncCallable`
-    - :func:`~dmr.endpoint.validate`
+    - :data:`~dmr.endpoint.validate`
     - Creates a decorator for async endpoints
 
 Basically, there are several major rules:
@@ -336,12 +497,13 @@ But, user is free to modify any parts of the spec, if needed.
 
 .. note::
 
-  Notice that ``_lazy_spec`` classmethod is resolve from the final controller,
+  Notice that ``lazy_spec`` classmethod is resolve from the final controller,
   not the one that was used during the decoration time.
 
   ``@classmethod`` is preferable over ``lambda`` functions,
-  because they provide easier override API and they are fully typed,
-  unlike ``lambda`` functions.
+  because they provide easier override API and they are fully typed.
+  The ``controller`` argument of a ``lambda`` is typed as ``type[Any]``,
+  so attribute access on it is not checked by type checkers.
 
 
 Where is it actually helpful in practice?

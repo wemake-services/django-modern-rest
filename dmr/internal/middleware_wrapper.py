@@ -2,7 +2,7 @@ import inspect
 from collections.abc import Callable
 from dataclasses import dataclass
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, TypeVar
 
 from django.http import HttpRequest, HttpResponse
 
@@ -21,16 +21,20 @@ _ConverterSpec: TypeAlias = tuple[
 ]
 
 
+class _ClassDecorator(Protocol):
+    def __call__(self, klass: _TypeT, /) -> _TypeT: ...
+
+
 @dataclass(frozen=True, slots=True, kw_only=True)
 class DecoratorWithResponses:
     """Type for decorator with responses attribute."""
 
-    decorator: Callable[[_TypeT], _TypeT]  # pyright: ignore[reportGeneralTypeIssues]
+    decorator: _ClassDecorator
     responses: list['ResponseSpec']
 
     def __call__(self, klass: _TypeT) -> _TypeT:
         """Apply the decorator to the class."""
-        return self.decorator(klass)  # pyright: ignore[reportReturnType]  # pyrefly: ignore[bad-argument-type, bad-return]
+        return self.decorator(klass)
 
 
 def apply_converter(

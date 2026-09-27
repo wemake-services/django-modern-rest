@@ -50,6 +50,9 @@ from dmr.openapi.objects.oauth_flow import OAuthFlow as OAuthFlow
 from dmr.openapi.objects.oauth_flows import OAuthFlows as OAuthFlows
 from dmr.openapi.objects.operation import Operation as Operation
 from dmr.openapi.objects.parameter import Parameter as Parameter
+from dmr.openapi.objects.parameter import (
+    ParameterLocation as ParameterLocation,
+)
 from dmr.openapi.objects.parameter import ParameterMetadata as ParameterMetadata
 from dmr.openapi.objects.path_item import PathItem as PathItem
 from dmr.openapi.objects.paths import Paths as Paths
@@ -66,3 +69,4 @@ from dmr.openapi.objects.server import Server as Server
 from dmr.openapi.objects.server_variable import ServerVariable as ServerVariable
 from dmr.openapi.objects.tag import Tag as Tag
 from dmr.openapi.objects.xml import XML as XML
+from dmr.openapi.objects.xml import XMLNodeType as XMLNodeType

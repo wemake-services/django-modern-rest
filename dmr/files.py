@@ -24,6 +24,7 @@ from dmr.openapi.objects import (
 from dmr.parsers import Parser
 
 if TYPE_CHECKING:
+    from dmr.controller import Controller
     from dmr.serializer import BaseSerializer
 
 
@@ -53,15 +54,23 @@ class FileBodyLike:
 
     @classmethod
     @abc.abstractmethod
-    def media_type(
+    def media_type(  # noqa: WPS211
         cls,
         schema: Reference | Schema,
         model: Any,
         model_meta: tuple[Any, ...],
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
         parser: Parser,
-        context: 'OpenAPIContext',
+        context: OpenAPIContext,
     ) -> MediaType:
-        """Provides file request schema for this parser."""
+        """
+        Provides file request schema for this parser.
+
+        .. versionchanged:: 0.16.0
+            Now accepts *metadata* and *controller_cls* parameters.
+
+        """
         raise NotImplementedError
 
     @classmethod
@@ -69,7 +78,7 @@ class FileBodyLike:
     def get_schema(
         cls,
         schema: Reference | Schema,
-        context: 'OpenAPIContext',
+        context: OpenAPIContext,
     ) -> Schema:
         """Return the OpenAPI schema for this file body."""
         raise NotImplementedError
@@ -81,13 +90,15 @@ class FileBody(FileBodyLike):
 
     @override
     @classmethod
-    def media_type(
+    def media_type(  # noqa: WPS211
         cls,
         schema: Reference | Schema,
         model: Any,
         model_meta: tuple[Any, ...],
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
         parser: Parser,
-        context: 'OpenAPIContext',
+        context: OpenAPIContext,
     ) -> MediaType:
         """Returns the media type for the given file."""
         schema = cls.replace_schema(schema, context)
@@ -102,6 +113,7 @@ class FileBody(FileBodyLike):
         )
         return MediaType(
             schema=schema,
+            description=media_type_meta.description,
             encoding=media_type_meta.encoding or cls._encoding(model, schema),
             example=media_type_meta.example,
             examples=media_type_meta.examples,
@@ -114,7 +126,7 @@ class FileBody(FileBodyLike):
     def get_schema(
         cls,
         schema: Reference | Schema,
-        context: 'OpenAPIContext',
+        context: OpenAPIContext,
     ) -> Schema:
         """Returns the openapi schema that this object represents."""
         file_schema = Schema(
@@ -133,7 +145,7 @@ class FileBody(FileBodyLike):
     def replace_schema(
         cls,
         schema: Reference | Schema,
-        context: 'OpenAPIContext',
+        context: OpenAPIContext,
     ) -> Schema:
         """
         Replaces existing generated schema with file-like schema.
@@ -223,18 +235,27 @@ class FileResponseSpec(ResponseSpec):
     def get_schema(
         self,
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: OpenAPIContext,
     ) -> Response:
         """Customize schema for the file response."""
-        response = ResponseSpec.get_schema(self, metadata, serializer, context)
+        response = ResponseSpec.get_schema(
+            self,
+            metadata,
+            controller_cls,
+            context,
+        )
         # We know that we return files:
         for media in (response.content or {}).values():
-            # for mypy: it can't be `None` here
+            # for mypy: we've just built this response ourselves,
+            # so its media types are inline and their schemas are set
+            assert isinstance(media, MediaType)  # noqa: S101
             assert media.schema  # noqa: S101
             media.schema = self.return_type.get_schema(Schema(), context)
         # We know that `FileBody` was a fake model, remove it:
         context.registries.schema.try_unregister(
-            serializer.schema_generator.schema_name(self.return_type),
+            controller_cls.serializer.schema_generator.schema_name(
+                self.return_type,
+            ),
         )
         return response

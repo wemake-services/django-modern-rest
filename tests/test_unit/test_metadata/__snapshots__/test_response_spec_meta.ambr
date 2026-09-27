@@ -10,7 +10,7 @@
     "paths": {
       "/api/v1/header-and-cookie": {
         "put": {
-          "operationId": "putHeaderandcookiecontrollerApiV1HeaderAndCookie",
+          "operationId": "putHeaderAndCookieControllerApiV1HeaderAndCookie",
           "requestBody": {
             "content": {
               "application/json": {
@@ -25,6 +25,12 @@
             "200": {
               "description": "OK",
               "headers": {
+                "Set-Cookie: x-test": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
                 "X-Reply": {
                   "schema": {
                     "type": "string"
@@ -34,13 +40,6 @@
                 "X-Success": {
                   "schema": {
                     "type": "string"
-                  },
-                  "required": true
-                },
-                "Set-Cookie: x-test": {
-                  "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
                   },
                   "required": true
                 }
@@ -56,41 +55,15 @@
             "400": {
               "description": "Raised when request components cannot be parsed",
               "headers": {
-                "X-Reply": {
+                "Set-Cookie: x-test": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Set-Cookie: x-test": {
-                  "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
-                  },
-                  "required": true
-                }
-              },
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "headers": {
                 "X-Reply": {
                   "schema": {
                     "type": "string"
-                  },
-                  "required": true
-                },
-                "Set-Cookie: x-test": {
-                  "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
                   },
                   "required": true
                 }
@@ -106,16 +79,39 @@
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "headers": {
-                "X-Reply": {
+                "Set-Cookie: x-test": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
+                "X-Reply": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "headers": {
                 "Set-Cookie: x-test": {
                   "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "X-Reply": {
+                  "schema": {
+                    "type": "string"
                   },
                   "required": true
                 }
@@ -128,11 +124,10 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         },
         "patch": {
-          "operationId": "patchHeaderandcookiecontrollerApiV1HeaderAndCookie",
+          "operationId": "patchHeaderAndCookieControllerApiV1HeaderAndCookie",
           "requestBody": {
             "content": {
               "application/json": {
@@ -147,6 +142,12 @@
             "200": {
               "description": "OK",
               "headers": {
+                "Set-Cookie: x-test": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                },
                 "X-Reply": {
                   "schema": {
                     "type": "string"
@@ -156,13 +157,6 @@
                 "X-Success": {
                   "schema": {
                     "type": "string"
-                  },
-                  "required": true
-                },
-                "Set-Cookie: x-test": {
-                  "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
                   },
                   "required": true
                 }
@@ -178,41 +172,15 @@
             "400": {
               "description": "Raised when request components cannot be parsed",
               "headers": {
-                "X-Reply": {
+                "Set-Cookie: x-test": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
-                "Set-Cookie: x-test": {
-                  "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
-                  },
-                  "required": true
-                }
-              },
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "headers": {
                 "X-Reply": {
                   "schema": {
                     "type": "string"
-                  },
-                  "required": true
-                },
-                "Set-Cookie: x-test": {
-                  "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
                   },
                   "required": true
                 }
@@ -228,16 +196,39 @@
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "headers": {
-                "X-Reply": {
+                "Set-Cookie: x-test": {
                   "schema": {
                     "type": "string"
                   },
                   "required": true
                 },
+                "X-Reply": {
+                  "schema": {
+                    "type": "string"
+                  },
+                  "required": true
+                }
+              },
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "headers": {
                 "Set-Cookie: x-test": {
                   "schema": {
-                    "type": "string",
-                    "example": "x-test=123"
+                    "type": "string"
+                  },
+                  "required": true
+                },
+                "X-Reply": {
+                  "schema": {
+                    "type": "string"
                   },
                   "required": true
                 }
@@ -250,8 +241,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -319,8 +309,7 @@
           ],
           "title": "_BodyModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

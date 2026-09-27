@@ -126,6 +126,7 @@ def _assert_walk(
 def test_cursor_pagination_walk(
     dmr_client: DMRClient,
     seeded_entries: list[Entry],
+    *,
     view_name: str,
     order_by: list[str],
     limit: int,
@@ -147,6 +148,7 @@ def test_cursor_pagination_walk(
 async def test_cursor_pagination_walk_async(
     dmr_async_client: DMRAsyncClient,
     seeded_entries: list[Entry],
+    *,
     view_name: str,
     order_by: list[str],
     limit: int,

@@ -1,4 +1,6 @@
+from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router, path
+from dmr.security.jwt import concrete_views
 from server.apps.jwt_auth import views
 
 router = Router(
@@ -88,6 +90,90 @@ router = Router(
             'jwt-cookie-logout-async/',
             views.CookieLogoutAsyncView.as_view(),
             name='jwt_cookie_logout_async',
+        ),
+        path(
+            'jwt-concrete-obtain-sync/',
+            concrete_views.ObtainTokensSyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='jwt_concrete_obtain_sync',
+        ),
+        path(
+            'jwt-concrete-obtain-async/',
+            concrete_views.ObtainTokensAsyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='jwt_concrete_obtain_async',
+        ),
+        path(
+            'jwt-concrete-refresh-sync/',
+            concrete_views.RefreshTokenSyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='jwt_concrete_refresh_sync',
+        ),
+        path(
+            'jwt-concrete-refresh-async/',
+            concrete_views.RefreshTokenAsyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='jwt_concrete_refresh_async',
+        ),
+        path(
+            'jwt-concrete-verify-sync/',
+            concrete_views.VerifyTokenSyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='jwt_concrete_verify_sync',
+        ),
+        path(
+            'jwt-concrete-verify-async/',
+            concrete_views.VerifyTokenAsyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='jwt_concrete_verify_async',
+        ),
+        path(
+            'jwt-concrete-cookie-obtain-sync/',
+            concrete_views.CookieObtainTokensSyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='jwt_concrete_cookie_obtain_sync',
+        ),
+        path(
+            'jwt-concrete-cookie-obtain-async/',
+            concrete_views.CookieObtainTokensAsyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='jwt_concrete_cookie_obtain_async',
+        ),
+        path(
+            'jwt-concrete-cookie-refresh-sync/',
+            concrete_views.CookieRefreshTokensSyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='jwt_concrete_cookie_refresh_sync',
+        ),
+        path(
+            'jwt-concrete-cookie-refresh-async/',
+            concrete_views.CookieRefreshTokensAsyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='jwt_concrete_cookie_refresh_async',
+        ),
+        path(
+            'jwt-concrete-cookie-logout-sync/',
+            concrete_views.CookieLogoutSyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='jwt_concrete_cookie_logout_sync',
+        ),
+        path(
+            'jwt-concrete-cookie-logout-async/',
+            concrete_views.CookieLogoutAsyncController.as_view(
+                serializer=PydanticSerializer,
+            ),
+            name='jwt_concrete_cookie_logout_async',
         ),
     ],
     tags=['jwt_auth'],

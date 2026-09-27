@@ -10,11 +10,12 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
+import os
 import sys
 import tomllib
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Final, cast
+from typing import Final
 
 from docutils.nodes import Node
 from sphinx.addnodes import pending_xref
@@ -31,10 +32,7 @@ sys.path.insert(1, str(Path().resolve(strict=True)))
 
 def _get_project_meta() -> dict[str, str]:
     pyproject = _ROOT / 'pyproject.toml'
-    return cast(
-        dict[str, str],
-        tomllib.loads(pyproject.read_text())['project'],
-    )
+    return tomllib.loads(pyproject.read_text())['project']  # type: ignore[no-any-return]
 
 
 pkg_meta = _get_project_meta()
@@ -72,7 +70,7 @@ extensions = [
     'sphinx_tabs.tabs',
     'sphinx_iconify',
     'sphinxcontrib.mermaid',
-    'sphinx_llms_txt',
+    'sphinx_llm_friendly',
     # custom extensions
     'docs.tools.sphinx_ext',
 ]
@@ -123,6 +121,13 @@ nitpick_ignore = [
     # internal type helpers
     (_PY_CLASS, 'FromJson'),
     (_PY_CLASS, 'dmr.endpoint._ResponseT'),
+    (_PY_CLASS, 'dmr.metadata._ExtrasT'),
+    (_PY_CLASS, 'dmr.internal.endpoint._ExtrasT'),
+    (_PY_CLASS, '_BuiltExtrasT_co'),
+    (_PY_CLASS, '_CallableOrClassmethod'),
+    (_PY_CLASS, '_ControllerT'),
+    (_PY_CLASS, '_ModifyDecoratorT'),
+    (_PY_CLASS, '_ValidateDecoratorT'),
     (_PY_CLASS, 'dmr.internal.endpoint.ModifyAsyncCallable'),
     (_PY_CLASS, 'dmr.internal.endpoint.ModifySyncCallable'),
     (_PY_CLASS, 'dmr.internal.endpoint.ModifyAnyCallable'),
@@ -139,17 +144,22 @@ nitpick_ignore = [
     (_PY_CLASS, 'SessionBase'),
     (_PY_CLASS, '_BaseThrottle'),
     (_PY_CLASS, 'dmr.throttling.base._BackendT'),
+    (_PY_CLASS, 'dmr.throttling.base._SyncThrottleT'),
+    (_PY_CLASS, 'dmr.throttling.base._AsyncThrottleT'),
     (_PY_CLASS, 'redis.Redis'),
     (_PY_CLASS, 'aioredis.Redis'),
-    (_PY_CLASS, '_StrOrPromise'),
     (_PY_CLASS, 'dmr.validation.endpoint_metadata._ResponseListValidator'),
     (_PY_CLASS, 'dmr.validation.response._ResponseT'),
+    (_PY_CLASS, 'dmr.validation.metadata_merger._LayerT'),
     (_PY_CLASS, 'dmr.decorators._ReturnT'),
     (_PY_CLASS, 'dmr.decorators._ViewT'),
     (_PY_CLASS, 'dmr.decorators._TypeT'),
     (_PY_CLASS, 'dmr.internal.routing.URLExternal'),
     (_PY_CLASS, '_URLExternal'),
     (_PY_CLASS, 'dmr.internal.negotiation.ConditionalType'),
+    (_PY_CLASS, 'dmr.internal.middleware_wrapper._ClassDecorator'),
+    (_PY_CLASS, 'dmr.security.base._SyncAuthT'),
+    (_PY_CLASS, 'dmr.security.base._AsyncAuthT'),
     (_PY_CLASS, 'dmr.security.jwt.views.base._SerializerT'),
     (_PY_CLASS, 'dmr.security.jwt.views.body._ObtainTokensT'),
     (_PY_CLASS, 'dmr.security.jwt.views.body._RefreshTokensT'),
@@ -166,6 +176,8 @@ nitpick_ignore = [
     (_PY_CLASS, 'dmr.security.token.views._ObtainTokenT'),
     (_PY_CLASS, 'dmr.security.token.views._TokenResponseT'),
     (_PY_CLASS, 'dmr.security.token.views._UserT'),
+    (_PY_CLASS, 'dmr.security.token.concrete_views._UserT'),
+    (_PY_CLASS, 'dmr.security.csrf._CSRFViewProtocol'),
     (_PY_OBJ, 'dmr.components._HeadersT'),
     (_PY_OBJ, 'dmr.components._QueryT'),
     (_PY_OBJ, 'dmr.components._PathT'),
@@ -285,6 +297,9 @@ html_theme_options = {
         },
     ],
     'accent_color': 'green',
+    # `sphinx_llm_friendly` adds its own button that copies the page
+    # as Markdown, Shibuya's "Copy page" would be a second one:
+    'show_ai_links': False,
     'light_logo': '_static/images/logo-light.svg',
     'dark_logo': '_static/images/logo-dark.svg',
     'og_image_url': 'https://repository-images.githubusercontent.com/1072817092/f0ab70e3-c165-485b-b591-e860c16f7c4f',
@@ -309,7 +324,27 @@ html_js_files = [
 
 html_show_sourcelink = False
 html_sourcelink_suffix = ''
-llms_txt_uri_template = '{base_url}{docname}.html'
+
+# `sphinx_llm_friendly` writes a Markdown version of every page
+# next to its HTML one (`pages/routing.md` for `pages/routing.html`),
+# `llms.txt` and `llms-full.txt`, all during the HTML build.
+# Read the Docs exports the canonical URL of the version being built.
+# Its path prefixes the links in `llms.txt`, so they also work when
+# `llms.txt` is served from the root of the domain:
+html_baseurl = os.environ.get(
+    'READTHEDOCS_CANONICAL_URL',
+    'https://django-modern-rest.readthedocs.io/en/latest/',
+)
+llm_friendly_llms_txt_summary = (
+    f'Documentation for django-modern-rest version {release}. '
+    'The complete documentation in one file is `llms-full.txt` '
+    'next to this file.'
+)
+# A token budget, not a hard requirement: going over it is a warning,
+# which fails our build. `llms-full.txt` has about 296k tokens now.
+# When it grows past the budget, decide between raising it and leaving
+# some pages out with `llm_friendly_llms_full_txt_exclude`:
+llm_friendly_llms_full_txt_max_tokens = 350_000
 
 
 def resolve_canonical_names(app: Sphinx, doctree: Node) -> None:

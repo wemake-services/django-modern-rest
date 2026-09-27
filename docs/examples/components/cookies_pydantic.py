@@ -1,7 +1,7 @@
 import pydantic
 
 from dmr import Controller, Cookies
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class _CookiesModel(pydantic.BaseModel):
@@ -9,7 +9,7 @@ class _CookiesModel(pydantic.BaseModel):
     client_id: int
 
 
-class ApiController(Controller[PydanticSerializer]):
+class ApiController(Controller[PydanticFastSerializer]):
     def get(self, parsed_cookies: Cookies[_CookiesModel]) -> _CookiesModel:
         return parsed_cookies
 

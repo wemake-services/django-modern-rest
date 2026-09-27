@@ -1,5 +1,4 @@
 from http import HTTPStatus
-from typing import cast
 
 from django.http import HttpResponse
 
@@ -25,7 +24,8 @@ def test_query_method(dmr_rf: DMRRequestFactory) -> None:
     """Ensure that `query` method is supported."""
     request = dmr_rf.generic('query', '/whatever/')
 
-    response = cast(HttpResponse, _QueryController.as_view()(request))
+    response = _QueryController.as_view()(request)
 
+    assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
     assert response.content == b''

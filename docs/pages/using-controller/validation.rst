@@ -8,7 +8,7 @@ are validated at runtime to match the schema.
 This allows us to be super strict about schema generation as a pro,
 but as a con, it is slower than it could possibly be.
 
-So, you can disable response validation via configuration:
+So, you can disable response validation via the configuration:
 
 .. warning::
 
@@ -86,7 +86,7 @@ to let such responses through:
 The same works per-controller with
 :attr:`~dmr.controller.Controller.exclude_validate_responses`
 and per-endpoint with the argument of the same name
-to :func:`~dmr.endpoint.modify` and :func:`~dmr.endpoint.validate`.
+to :data:`~dmr.endpoint.modify` and :data:`~dmr.endpoint.validate`.
 Setting it to ``None`` on any level resets all the other levels.
 
 All other status codes are still validated as usual.

@@ -1,14 +1,11 @@
-from collections.abc import Mapping, Sequence
-from http import HTTPStatus
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Final, Self
 
 from django.http import HttpRequest
 from typing_extensions import override
 
-from dmr.internal.csrf import ensure_csrf
-from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
-from dmr.openapi.objects import Reference, SecurityScheme
-from dmr.security.base import unauth_response_spec
+from dmr.openapi.objects import SecurityScheme
+from dmr.security.csrf import CSRF_SCHEME_NAME, CSRFAuthMixin
 from dmr.security.jwt.auth.base import BaseJWTAsyncAuth, BaseJWTSyncAuth
 from dmr.security.jwt.token import JWToken
 
@@ -23,7 +20,7 @@ DEFAULT_ACCESS_COOKIE: Final = 'access_token'
 DEFAULT_REFRESH_COOKIE: Final = 'refresh_token'
 
 
-class _BaseCookieJWTAuth(ResponseSpecProvider):
+class _BaseCookieJWTAuth(CSRFAuthMixin):
     """Reads jwt tokens from a request cookie."""
 
     # Slots are declared on the concrete classes below,
@@ -31,51 +28,16 @@ class _BaseCookieJWTAuth(ResponseSpecProvider):
     __slots__ = ()
 
     cookie_name: str
-    security_scheme_name: str
-
-    @property
-    def www_authenticate_challenge(self) -> str | None:
-        """
-        Cookie auth has no challenge to advertise, so this returns ``None``.
-
-        A challenge asks the client for the ``Authorization`` header,
-        and this auth reads a cookie instead.
-        """
-
-    @property
-    def security_schemes(self) -> dict[str, SecurityScheme | Reference]:
-        """Provides a security schema definition."""
-        return {
-            self.security_scheme_name: SecurityScheme(
-                type='apiKey',
-                name=self.cookie_name,
-                security_scheme_in='cookie',
-                description='JWT token auth via cookie',
-            ),
-        }
 
     @override
-    def provide_response_specs(
-        self,
-        metadata: EndpointMetadata,
-        controller_cls: type['Controller[BaseSerializer]'],
-        existing_responses: Mapping[HTTPStatus, ResponseSpec],
-    ) -> list[ResponseSpec]:
-        """Declare extra responses for cookie auth + CSRF checks."""
-        return [
-            *self._add_new_response(
-                unauth_response_spec(controller_cls, metadata),
-                existing_responses,
-            ),
-            *self._add_new_response(
-                ResponseSpec(
-                    controller_cls.error_model,
-                    status_code=HTTPStatus.FORBIDDEN,
-                    description='Raised when CSRF check failed',
-                ),
-                existing_responses,
-            ),
-        ]
+    def auth_security_scheme(self) -> SecurityScheme:
+        """Provides a security schema definition."""
+        return SecurityScheme(
+            type='apiKey',
+            name=self.cookie_name,
+            security_scheme_in='cookie',
+            description='JWT token auth via cookie',
+        )
 
     def get_token_from_request(self, request: HttpRequest) -> str | None:
         """Read the raw jwt token from a cookie."""
@@ -90,12 +52,13 @@ class _BaseCookieJWTAuth(ResponseSpecProvider):
         """
         return header or None
 
+    @override
     def _ensure_csrf(self, controller: 'Controller[BaseSerializer]') -> None:
         # CSRF is only enforced when the cookie is actually present.
         # Otherwise a request that carries no cookie at all could not
         # fall through to the next auth in the chain.
         if self.get_token_from_request(controller.request):
-            ensure_csrf(controller)
+            super()._ensure_csrf(controller)
 
 
 class CookieJWTSyncAuth(_BaseCookieJWTAuth, BaseJWTSyncAuth):
@@ -106,21 +69,17 @@ class CookieJWTSyncAuth(_BaseCookieJWTAuth, BaseJWTSyncAuth):
 
     .. warning::
 
-        Cookie-based authentication is vulnerable to CSRF attacks in
-        browser-facing contexts. Ensure that
-        ``django.middleware.csrf.CsrfViewMiddleware`` is active whenever
-        this auth class is used in a browser-facing application.
-
-    .. warning::
-
         Always issue this cookie with ``httponly=True`` and ``secure=True``
         in production, otherwise the token is readable by any script
         running on the page and can leak over plain HTTP.
 
     .. versionadded:: 0.15.0
+    .. versionchanged:: 0.16.0
+        Fixed how CSRF schema is generated.
+        Default *security_scheme_name* is now ``jwt_cookie``.
     """
 
-    __slots__ = ('cookie_name',)
+    __slots__ = ('cookie_name', 'csrf_scheme_name')
 
     def __init__(  # noqa: WPS211
         self,
@@ -128,7 +87,8 @@ class CookieJWTSyncAuth(_BaseCookieJWTAuth, BaseJWTSyncAuth):
         cookie_name: str = DEFAULT_ACCESS_COOKIE,
         user_id_field: str = 'pk',
         algorithm: str = 'HS256',
-        security_scheme_name: str = 'jwt',
+        security_scheme_name: str = 'jwt_cookie',
+        csrf_scheme_name: str = CSRF_SCHEME_NAME,
         secret: str | None = None,
         token_cls: type[JWToken] = JWToken,
         leeway: int = 0,  # seconds
@@ -169,6 +129,7 @@ class CookieJWTSyncAuth(_BaseCookieJWTAuth, BaseJWTSyncAuth):
             enforce_minimum_key_length=enforce_minimum_key_length,
         )
         self.cookie_name = cookie_name
+        self.csrf_scheme_name = csrf_scheme_name
 
     @override
     def __call__(
@@ -189,21 +150,16 @@ class CookieJWTAsyncAuth(_BaseCookieJWTAuth, BaseJWTAsyncAuth):
 
     .. warning::
 
-        Cookie-based authentication is vulnerable to CSRF attacks in
-        browser-facing contexts. Ensure that
-        ``django.middleware.csrf.CsrfViewMiddleware`` is active whenever
-        this auth class is used in a browser-facing application.
-
-    .. warning::
-
         Always issue this cookie with ``httponly=True`` and ``secure=True``
         in production, otherwise the token is readable by any script
         running on the page and can leak over plain HTTP.
 
     .. versionadded:: 0.15.0
+    .. versionchanged:: 0.16.0
+        Default *security_scheme_name* is now ``jwt_cookie``.
     """
 
-    __slots__ = ('cookie_name',)
+    __slots__ = ('cookie_name', 'csrf_scheme_name')
 
     def __init__(  # noqa: WPS211
         self,
@@ -211,7 +167,8 @@ class CookieJWTAsyncAuth(_BaseCookieJWTAuth, BaseJWTAsyncAuth):
         cookie_name: str = DEFAULT_ACCESS_COOKIE,
         user_id_field: str = 'pk',
         algorithm: str = 'HS256',
-        security_scheme_name: str = 'jwt',
+        security_scheme_name: str = 'jwt_cookie',
+        csrf_scheme_name: str = CSRF_SCHEME_NAME,
         secret: str | None = None,
         token_cls: type[JWToken] = JWToken,
         leeway: int = 0,  # seconds
@@ -252,6 +209,7 @@ class CookieJWTAsyncAuth(_BaseCookieJWTAuth, BaseJWTAsyncAuth):
             enforce_minimum_key_length=enforce_minimum_key_length,
         )
         self.cookie_name = cookie_name
+        self.csrf_scheme_name = csrf_scheme_name
 
     @override
     async def __call__(

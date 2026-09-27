@@ -72,6 +72,9 @@ which needs to be split by a ``','`` char:
 We don't infer ``__dmr_split_commas__`` value in any way,
 it is up to users to set.
 
+Each part is stripped of surrounding whitespace,
+so ``X-Tag: a, b`` and ``X-Tag: a,b`` both give ``{'X-Tag': ['a', 'b']}``.
+
 .. danger::
 
   Some headers like

@@ -1,7 +1,5 @@
 import json
-from typing import final
 
-import pydantic
 import pytest
 from django.conf import LazySettings
 from django.urls import path
@@ -21,11 +19,6 @@ def _disable_semantic_responses(
     settings.DMR_SETTINGS = {
         Settings.semantic_responses: False,
     }
-
-
-@final
-class _MyPydanticModel(pydantic.BaseModel):
-    email: str
 
 
 def test_openapi_spec_no_semantic_responses(

@@ -28,7 +28,7 @@ class _StrictParser(Parser):
     @override
     def validate(
         self,
-        controller_cls: type['Controller[BaseSerializer]'],
+        controller_cls: type[Controller[BaseSerializer]],
         metadata: EndpointMetadata,
     ) -> None:
         """Only allow this parser on GET endpoints."""

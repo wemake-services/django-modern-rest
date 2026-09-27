@@ -279,3 +279,37 @@ def test_several_parsers_schema(snapshot: SnapshotAssertion) -> None:
         )
         == snapshot
     )
+
+
+class _BodyAndFileNoDocsController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(),)
+
+    async def post(
+        self,
+        parsed_body: Body[dict[str, str]],
+        parsed_file_metadata: FileMetadata[_SeveralSimpleFiles],
+    ) -> str:
+        raise NotImplementedError
+
+
+def test_merged_body_without_description_schema(
+    snapshot: SnapshotAssertion,
+) -> None:
+    """Ensure that merged request body does not have an empty description."""
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    '',
+                    [
+                        path(
+                            'merged-no-description/',
+                            _BodyAndFileNoDocsController.as_view(),
+                        ),
+                    ],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )

@@ -7,6 +7,7 @@ from dmr import Controller
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.serializer import BaseSerializer
+from dmr.types import EMPTY
 from dmr.validation import SettingsValidator
 
 _Serializes: TypeAlias = list[type[BaseSerializer]]
@@ -24,8 +25,12 @@ else:  # pragma: no cover
 
 
 @pytest.fixture(autouse=True)
-def _reset_settings_validation(dmr_clean_settings: None) -> None:
-    SettingsValidator.is_validated = False
+def _reset_settings_validation(
+    dmr_clean_settings: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Restore the original state after the test, so it does not leak:
+    monkeypatch.setattr(SettingsValidator, 'is_validated', False)
 
 
 @pytest.mark.parametrize(
@@ -38,9 +43,17 @@ def _reset_settings_validation(dmr_clean_settings: None) -> None:
         {'parsers': [1]},
         {'renderers': [None]},
         {'validate_negotiation': 'true'},
+        {'validate_events': 1},
+        {'semantic_responses': 'yes'},
+        {'semantic_schema': EMPTY},
+        {'semantic_auth': None},
+        {'exclude_semantic_auth': frozenset((1, 2))},
+        {'openapi_examples_seed': 'abc'},
+        {'openapi_examples_seed': None},
         {'auth': ['auth']},
         {'throttling': ['throttling']},
         {'responses': [{}]},
+        {'semantic_schema_providers': [None]},
         {'openapi_config': []},
         {'global_error_handler': None},
         {'exclude_semantic_responses': 1},
@@ -59,7 +72,9 @@ def test_wrong_settings_validation(
 
     with pytest.raises(EndpointMetadataError, match='Settings'):
 
-        class _ValidController(Controller[serializer]):  # type: ignore[valid-type]
+        class _InvalidController(
+            Controller[serializer],  # type: ignore[valid-type]
+        ):
             def post(self) -> int:
                 raise NotImplementedError
 
@@ -77,6 +92,8 @@ def test_wrong_settings_validation(
         {'exclude_semantic_responses': frozenset()},
         {'exclude_validate_responses': set()},
         {'exclude_validate_responses': frozenset()},
+        {'exclude_semantic_auth': set()},
+        {'exclude_semantic_auth': frozenset()},
     ],
 )
 @pytest.mark.parametrize('serializer', serializers)

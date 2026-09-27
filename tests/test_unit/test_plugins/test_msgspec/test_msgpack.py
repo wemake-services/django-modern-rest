@@ -234,3 +234,41 @@ def test_msgpack_explicit_none(
     assert response.status_code == HTTPStatus.NO_CONTENT, response.content
     assert response.headers == {'Content-Type': 'application/msgpack'}
     assert response.content == b''
+
+
+def test_msgpack_with_pydantic_model(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+) -> None:
+    """Ensures ``msgpack`` handles ``pydantic`` models."""
+    pytest.importorskip('pydantic')
+
+    import pydantic  # noqa: PLC0415
+
+    from dmr.plugins.pydantic import PydanticSerializer  # noqa: PLC0415
+
+    class _Model(pydantic.BaseModel):
+        username: str
+        age: int
+
+    class _PydanticController(Controller[PydanticSerializer]):
+        @modify(
+            parsers=[MsgpackParser()],
+            renderers=[MsgpackRenderer()],
+        )
+        def post(self, parsed_body: Body[_Model]) -> _Model:
+            return parsed_body
+
+    request_data = {'username': faker.name(), 'age': faker.pyint()}
+    request = dmr_rf.post(
+        '/whatever/',
+        headers={'Content-Type': 'application/msgpack'},
+        data=msgspec.msgpack.encode(request_data),
+    )
+
+    response = _PydanticController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.headers == {'Content-Type': 'application/msgpack'}
+    assert msgspec.msgpack.decode(response.content) == request_data

@@ -289,20 +289,6 @@ def test_modify_modified_in_responses() -> None:
             def get(self) -> int:
                 raise NotImplementedError
 
-    with pytest.raises(EndpointMetadataError, match='different metadata'):
-
-        class _DuplicateDifferentHeaders(Controller[PydanticSerializer]):
-            @modify(
-                extra_responses=[
-                    ResponseSpec(
-                        str,
-                        status_code=HTTPStatus.OK,
-                    ),
-                ],
-            )
-            def get(self) -> int:
-                raise NotImplementedError
-
 
 @final
 class _CustomHeadersController(Controller[PydanticSerializer]):
@@ -379,7 +365,10 @@ def test_modify_async_endpoint_error_for_sync() -> None:
         'SET-COOKIE',
     ],
 )
-def test_modify_with_set_cookie(header_name: str) -> None:
+def test_modify_with_set_cookie(
+    *,
+    header_name: str,
+) -> None:
     """@modify with Set-Cookie in headers= raise EndpointMetadataError."""
     with pytest.raises(EndpointMetadataError, match=header_name):
 

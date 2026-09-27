@@ -1,16 +1,46 @@
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Final, final
+from typing import TYPE_CHECKING, final
 
 from django.conf import settings
 from django.http import HttpRequest
+from django.http.request import HttpHeaders
 from django.middleware.csrf import CsrfViewMiddleware
-from django.utils.translation import gettext_lazy as _
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.serializer import BaseSerializer
 
-_CSRF_FAILED_MSG: Final = _('CSRF Failed: {reason}')
+
+def ensure_csrf(controller: 'Controller[BaseSerializer]') -> None:
+    """
+    Raise ``APIError`` (403) if the CSRF check fails.
+
+    Does not perform the second CSRF check if it was processed before.
+    Since it uses the standard Django tooling, the default middleware
+    checks ``csrf_processing_done`` which is set on each successful check.
+    """
+    from dmr.response import APIError  # noqa: PLC0415
+
+    reason = _check_csrf_failure(controller.request)
+
+    if reason is not None:
+        raise APIError(
+            controller.format_error(reason),
+            status_code=HTTPStatus.FORBIDDEN,
+        )
+
+
+def csrf_header_name() -> str:
+    """
+    Convert ``CSRF_HEADER_NAME`` from the ``META`` form to the HTTP form.
+
+    Django stores this setting as a ``request.META`` key,
+    like ``HTTP_X_CSRFTOKEN``, while OpenAPI needs the header name
+    that a client sends, like ``X-Csrftoken``. HTTP header names
+    are case-insensitive, so the exact casing does not matter.
+    """
+    header_name = HttpHeaders.parse_header_name(settings.CSRF_HEADER_NAME)
+    return settings.CSRF_HEADER_NAME if header_name is None else header_name
 
 
 @final
@@ -22,14 +52,12 @@ class _EnsureCsrfToken(CsrfViewMiddleware):
     """
 
     def _reject(self, request: HttpRequest, reason: str) -> str:
+        from dmr.security.csrf import csrf_message  # noqa: PLC0415
+
         # Return the failure reason instead of an ``HttpResponse``.
         # Expose detailed csrf failure reason on DEBUG mode.
         # Otherwise, provide default placeholder reason.
-
-        if settings.DEBUG:
-            return _CSRF_FAILED_MSG.format(reason=reason)  # type: ignore[no-any-return]
-
-        return 'CSRF Failed.'
+        return csrf_message(reason)
 
 
 def _check_csrf_failure(request: HttpRequest) -> str | None:
@@ -37,16 +65,3 @@ def _check_csrf_failure(request: HttpRequest) -> str | None:
     check = _EnsureCsrfToken(lambda _: None)  # type: ignore[arg-type]
     check.process_request(request)
     return check.process_view(request, None, (), {})  # type: ignore[arg-type, return-value]
-
-
-def ensure_csrf(controller: 'Controller[BaseSerializer]') -> None:
-    """Raise ``APIError`` (403) if the CSRF check fails."""
-    from dmr.response import APIError  # noqa: PLC0415
-
-    reason = _check_csrf_failure(controller.request)
-
-    if reason is not None:
-        raise APIError(
-            controller.format_error(reason),
-            status_code=HTTPStatus.FORBIDDEN,
-        )

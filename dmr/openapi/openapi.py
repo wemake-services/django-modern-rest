@@ -1,6 +1,7 @@
 import dataclasses
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Annotated, Protocol
 
+from dmr.internal.dataclass_aliases import Field
 from dmr.openapi.mappers.schema_normalization import DumpedSchema, dump_schema
 from dmr.openapi.objects.components import Components
 from dmr.openapi.objects.external_documentation import ExternalDocumentation
@@ -45,10 +46,16 @@ class OpenAPI:
         Moved from ``dmr.openapi.objects.OpenAPI``
         to ``dmr.openapi.openapi.OpenAPI``.
 
+    .. versionchanged:: 0.16.0
+        Added ``self_uri`` for the ``$self`` field from OpenAPI 3.2.
+
     """
 
     info: Info  # noqa: WPS110
     openapi: str
+    #: OpenAPI 3.2+ ``$self``: the self-assigned URI of this document,
+    #: it also serves as the base URI to resolve references against.
+    self_uri: Annotated[str | None, Field(alias='$self')] = None
     json_schema_dialect: str | None = None
     servers: list[Server] | None = None
     paths: Paths | None = None

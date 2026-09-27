@@ -2,8 +2,8 @@ from typing import Any, ClassVar, Protocol
 
 from typing_extensions import Sentinel
 
+from dmr.internal.types import EMPTY
 from dmr.openapi.objects import Reference, Schema, SecurityScheme
-from dmr.types import EMPTY
 
 
 class SchemaCallback(Protocol):
@@ -50,14 +50,13 @@ class OperationIdRegistry:
 class SchemaRegistry:
     """Registry for ``Schemas``."""
 
-    __slots__ = ('_schemas', 'overrides')
+    __slots__ = ('_schemas',)
 
     schema_prefix: ClassVar[str] = '#/components/schemas/'
 
     def __init__(self) -> None:
         """Initialize empty schema and type registers."""
         self._schemas: dict[str, tuple[Schema, int | None]] = {}
-        self.overrides: dict[Any, Reference | Schema | SchemaCallback] = {}
 
     @property
     def schemas(self) -> dict[str, Schema]:
@@ -125,13 +124,28 @@ class SchemaRegistry:
 
 
 class SecuritySchemeRegistry:
-    """Registry for ``SecuritySchemes``."""
+    """
+    Registry for ``SecuritySchemes``.
 
-    __slots__ = ('schemes',)
+    .. versionchanged:: 0.16.0
+        ``schemes`` is now a property that returns
+        security schemes sorted by name.
+
+    """
+
+    __slots__ = ('_schemes',)
 
     def __init__(self) -> None:
         """Initialize empty security schemes registry."""
-        self.schemes: dict[str, SecurityScheme | Reference] = {}
+        self._schemes: dict[str, SecurityScheme | Reference] = {}
+
+    @property
+    def schemes(self) -> dict[str, SecurityScheme | Reference]:
+        """Return security schemes by name."""
+        return {
+            scheme_name: self._schemes[scheme_name]
+            for scheme_name in sorted(self._schemes)
+        }
 
     def register(
         self,
@@ -139,7 +153,7 @@ class SecuritySchemeRegistry:
         scheme: SecurityScheme | Reference,
     ) -> None:
         """Register security scheme in registry."""
-        existing = self.schemes.get(name)
+        existing = self._schemes.get(name)
         if existing is not None:
             if existing != scheme:
                 raise ValueError(
@@ -150,7 +164,7 @@ class SecuritySchemeRegistry:
                 )
             return
 
-        self.schemes[name] = scheme
+        self._schemes[name] = scheme
 
 
 def _check_hashes(

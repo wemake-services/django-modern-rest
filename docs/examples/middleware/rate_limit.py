@@ -6,7 +6,7 @@ from django.http import HttpRequest, HttpResponse
 from dmr import Controller, ResponseSpec
 from dmr.decorators import wrap_middleware
 from dmr.errors import ErrorModel, format_error
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.response import build_response
 
 
@@ -18,7 +18,7 @@ def rate_limit_middleware(
     def decorator(request: HttpRequest) -> HttpResponse:
         if request.headers.get('X-Rate-Limited') == 'true':
             return build_response(
-                PydanticSerializer,
+                PydanticFastSerializer,
                 raw_data=format_error('Rate limit exceeded'),
                 status_code=HTTPStatus.TOO_MANY_REQUESTS,
             )
@@ -40,7 +40,7 @@ def rate_limit_json(response: HttpResponse) -> HttpResponse:
 
 
 @rate_limit_json
-class RateLimitedController(Controller[PydanticSerializer]):
+class RateLimitedController(Controller[PydanticFastSerializer]):
     """Example controller with custom rate limit middleware."""
 
     responses = rate_limit_json.responses

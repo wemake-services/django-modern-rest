@@ -1,6 +1,7 @@
 import abc
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
+from operator import attrgetter
 from typing import (
     TYPE_CHECKING,
     Annotated,
@@ -101,7 +102,7 @@ class ComponentParserBuilder:
     def _find_components(  # noqa: WPS231
         self,
         type_annotations: dict[str, Any],
-    ) -> list[ComponentParserSpec]:  # noqa: WPS231
+    ) -> list[ComponentParserSpec]:
         components: list[ComponentParserSpec] = []
         for context_name, component in type_annotations.items():
             if context_name == 'return':
@@ -191,7 +192,7 @@ class ComponentParser(ResponseSpecProvider):
     @override
     def provide_response_specs(
         self,
-        metadata: 'EndpointMetadata',
+        metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
@@ -244,10 +245,16 @@ class ComponentParser(ResponseSpecProvider):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
-        """Generate OpenAPI spec for component."""
+        """
+        Generate OpenAPI spec for component.
+
+        .. versionchanged:: 0.16.0
+            *serializer* parameter was changed to be *controller_cls*.
+
+        """
         raise NotImplementedError
 
 
@@ -310,14 +317,14 @@ class QueryComponent(ComponentParser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
             model_meta,
-            serializer,
-            context,
+            metadata,
+            controller_cls,
             param_in='query',
         )
 
@@ -437,20 +444,24 @@ class BodyComponent(ComponentParser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
-        schema = context.generators.schema(model, serializer)
+        schema = context.generators.schema(model, controller_cls.serializer)
         conditional_types = self.conditional_types(model, model_meta)
         conditional_schemas = {
             content_type: context.generators.schema(
                 conditional_model,
-                serializer,
+                controller_cls.serializer,
             )
             for content_type, conditional_model in conditional_types.items()
         }
-        media_types: dict[str, MediaType] = {}
-        for parser in metadata.parsers.values():
+        media_types: dict[str, MediaType | Reference] = {}
+        # Sorted by content type, not by the parsers order:
+        for parser in sorted(
+            metadata.parsers.values(),
+            key=attrgetter('content_type'),
+        ):
             media_type_meta = (
                 get_annotated_metadata(
                     conditional_types.get(parser.content_type, model),
@@ -461,6 +472,7 @@ class BodyComponent(ComponentParser):
             )
             media_types[parser.content_type] = MediaType(
                 schema=conditional_schemas.get(parser.content_type, schema),
+                description=media_type_meta.description,
                 example=media_type_meta.example,
                 examples=media_type_meta.examples,
                 encoding=media_type_meta.encoding,
@@ -535,14 +547,14 @@ class HeadersComponent(ComponentParser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
             model_meta,
-            serializer,
-            context,
+            metadata,
+            controller_cls,
             param_in='header',
         )
 
@@ -612,7 +624,7 @@ class PathComponent(ComponentParser):
     @override
     def provide_response_specs(
         self,
-        metadata: 'EndpointMetadata',
+        metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
         existing_responses: Mapping[HTTPStatus, ResponseSpec],
     ) -> list[ResponseSpec]:
@@ -662,14 +674,14 @@ class PathComponent(ComponentParser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
             model_meta,
-            serializer,
-            context,
+            metadata,
+            controller_cls,
             param_in='path',
         )
 
@@ -727,14 +739,14 @@ class CookiesComponent(ComponentParser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         return context.generators.parameter(
             model,
             model_meta,
-            serializer,
-            context,
+            metadata,
+            controller_cls,
             param_in='cookie',
         )
 
@@ -910,18 +922,18 @@ class FileMetadataComponent(ComponentParser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
+        controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
         schema = context.generators.schema(
             model,
-            serializer,
+            controller_cls.serializer,
             skip_registration=True,
         )
         conditional_schemas = {
             content_type: context.generators.schema(
                 conditional_model,
-                serializer,
+                controller_cls.serializer,
             )
             for content_type, conditional_model in self.conditional_types(
                 model,
@@ -930,20 +942,26 @@ class FileMetadataComponent(ComponentParser):
         }
         return RequestBody(
             content={
+                # Sorted by content type, not by the parsers order:
                 parser.content_type: parser.schema_metadata(
                     model,
                     model_meta,
                     metadata,
-                    serializer,
+                    controller_cls,
                     context,
                 ).media_type(
                     conditional_schemas.get(parser.content_type, schema),
                     model,
                     model_meta,
+                    metadata,
+                    controller_cls,
                     parser,
                     context,
                 )
-                for parser in metadata.parsers.values()
+                for parser in sorted(
+                    metadata.parsers.values(),
+                    key=attrgetter('content_type'),
+                )
                 if isinstance(parser, SupportsFileParsing)
             },
             required=True,

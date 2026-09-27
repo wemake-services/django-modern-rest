@@ -2,7 +2,6 @@ import re
 from http import HTTPStatus
 from typing import Final
 
-import pydantic
 import pytest
 from django.http import HttpResponse
 
@@ -14,10 +13,6 @@ from dmr.settings import HttpSpec
 _MATCH_PATTERN: Final = re.compile(
     r'Header .+ is not allowed in responses from endpoint .+',
 )
-
-
-class _BodyModel(pydantic.BaseModel):
-    name: str
 
 
 @pytest.mark.parametrize(
@@ -36,6 +31,7 @@ class _BodyModel(pydantic.BaseModel):
     ],
 )
 def test_header_name_server_managed(
+    *,
     header: str,
 ) -> None:
     """Ensure that responses must not have server managed headers."""

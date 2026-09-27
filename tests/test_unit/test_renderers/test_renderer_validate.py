@@ -34,7 +34,7 @@ class _StrictRenderer(Renderer):
     @override
     def validate(
         self,
-        controller_cls: type['Controller[BaseSerializer]'],
+        controller_cls: type[Controller[BaseSerializer]],
         metadata: EndpointMetadata,
     ) -> None:
         """Only allow this renderer on GET endpoints."""

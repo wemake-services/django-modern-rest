@@ -6,19 +6,21 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Final, final
 
 from django.utils import module_loading
-from typing_extensions import TypedDict
+from typing_extensions import Sentinel, TypedDict
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.internal.cache import clear_settings_cache as clear_settings_cache
+from dmr.internal.types import EMPTY
 from dmr.openapi.config import OpenAPIConfig
 
 if TYPE_CHECKING:
-    from dmr.metadata import ResponseSpec
+    from dmr.metadata import ResponseSpec, ResponseSpecProvider
     from dmr.openapi import OpenAPIConfig
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
-    from dmr.security import AsyncAuth, SyncAuth
-    from dmr.throttling import AsyncThrottle, SyncThrottle
+    from dmr.security import AsyncAuth, SyncAuth, SyncOrAsyncAuth
+    from dmr.semantic_schema import AuthProvider
+    from dmr.throttling import AsyncThrottle, SyncOrAsyncThrottle, SyncThrottle
 
 try:
     import msgspec  # noqa: F401  # pyright: ignore[reportUnusedImport]
@@ -58,12 +60,15 @@ class Settings(enum.StrEnum):
     validate_negotiation = 'validate_negotiation'
     auth = 'auth'
     throttling = 'throttling'
-    throttling_allow_unsafe_cache = 'throttling_allow_unsafe_cache'
     no_validate_http_spec = 'no_validate_http_spec'
     validate_responses = 'validate_responses'
     exclude_validate_responses = 'exclude_validate_responses'
+    semantic_schema = 'semantic_schema'
     semantic_responses = 'semantic_responses'
     exclude_semantic_responses = 'exclude_semantic_responses'
+    semantic_schema_providers = 'semantic_schema_providers'
+    semantic_auth = 'semantic_auth'
+    exclude_semantic_auth = 'exclude_semantic_auth'
     validate_events = 'validate_events'
     responses = 'responses'
     global_error_handler = 'global_error_handler'
@@ -103,6 +108,9 @@ class HttpSpec(enum.StrEnum):
         cookie_name_syntax: Disables validation that check
             name syntax for cookie names to avoid disallowed
             characters.
+        cookie_semantics: Disables validation that check if cookies
+            semantix container proper values, like `max_age` must not be
+            negative, or `samesite='none'` requires `secure=True`, etc
     """
 
     empty_request_body = 'empty_request_body'
@@ -110,6 +118,7 @@ class HttpSpec(enum.StrEnum):
     header_name_server_managed = 'header_name_server_managed'
     header_name_syntax = 'header_name_syntax'
     cookie_name_syntax = 'cookie_name_syntax'
+    cookie_semantics = 'cookie_semantics'
 
 
 class SettingsDict(TypedDict, total=False):
@@ -117,21 +126,30 @@ class SettingsDict(TypedDict, total=False):
 
     parsers: Sequence['Parser']
     renderers: Sequence['Renderer']
-    validate_negotiation: bool | None
-    auth: Sequence['AsyncAuth | SyncAuth']
-    throttling: Sequence['AsyncThrottle | SyncThrottle']
-    throttling_allow_unsafe_cache: bool | None
+    validate_negotiation: bool | Sentinel
+    auth: (
+        Sequence['AsyncAuth | SyncOrAsyncAuth[Any, Any]']
+        | Sequence['SyncAuth | SyncOrAsyncAuth[Any, Any]']
+    )
+    throttling: (
+        Sequence['AsyncThrottle | SyncOrAsyncThrottle[Any, Any]']
+        | Sequence['SyncThrottle | SyncOrAsyncThrottle[Any, Any]']
+    )
     no_validate_http_spec: Set[HttpSpec]
     validate_responses: bool
     exclude_validate_responses: Set[HTTPStatus]
-    semantic_responses: bool
+    semantic_schema: bool
+    semantic_responses: bool | Sentinel
     exclude_semantic_responses: Set[HTTPStatus]
-    validate_events: bool | None
+    semantic_schema_providers: Sequence['ResponseSpecProvider | AuthProvider']
+    semantic_auth: bool | Sentinel
+    exclude_semantic_auth: Set[str]
+    validate_events: bool | Sentinel
     responses: Sequence['ResponseSpec']
     global_error_handler: Callable[[Any, Any, Any], Any] | str
-    openapi_config: 'OpenAPIConfig'
-    openapi_examples_seed: int | None
-    openapi_static_cdn: dict[str, str]
+    openapi_config: OpenAPIConfig
+    openapi_examples_seed: int | Sentinel
+    openapi_static_cdn: Mapping[str, str]
     django_treat_as_post: Set[str]
 
 
@@ -144,29 +162,41 @@ assert SettingsDict.__optional_keys__ == set(Settings), (  # noqa: S101
 _DEFAULTS: Final[Mapping[str, Any]] = {  # noqa: WPS407
     Settings.parsers: [default_parser],
     Settings.renderers: [default_renderer],
-    # Defaults to the `validate_responses` setting if `None`:
-    Settings.validate_negotiation: None,
+    # Defaults to the `validate_responses` setting if `EMPTY`:
+    Settings.validate_negotiation: EMPTY,
     Settings.auth: [],
     Settings.throttling: [],
-    Settings.throttling_allow_unsafe_cache: True,
     # OpenAPI settings:
     Settings.openapi_config: OpenAPIConfig(
         title='Your Awesome Project',
         version='0.1.0',
     ),
-    Settings.openapi_examples_seed: None,  # turned off by default
+    Settings.openapi_examples_seed: EMPTY,  # turned off by default
     # OpenAPI static CDN configuration:
     Settings.openapi_static_cdn: {},
     # We validate some HTTP spec things by default to be strict,
     # can be disabled:
     Settings.no_validate_http_spec: frozenset(),
-    # Means that we would run extra validation on the response object.
+    # Semantic schema generation:
     Settings.validate_responses: True,
+    Settings.semantic_schema: True,
     Settings.exclude_validate_responses: frozenset(),
-    Settings.semantic_responses: True,
+    Settings.semantic_responses: EMPTY,
     Settings.exclude_semantic_responses: frozenset(),
-    # Defaults to the `validate_responses` setting if `None`:
-    Settings.validate_events: None,
+    Settings.semantic_auth: EMPTY,
+    Settings.exclude_semantic_auth: frozenset(),
+    Settings.semantic_schema_providers: [  # Fooling `importlinter`:
+        # Optional response validation:
+        module_loading.import_string(
+            'dmr.semantic_schema.ResponseValidationSpecProvider',
+        )(),
+        # CSRF:
+        module_loading.import_string(
+            'dmr.security.csrf.CSRFSemanticSchemaProvider',
+        )(),
+    ],
+    # Defaults to the `validate_responses` setting if `EMPTY`:
+    Settings.validate_events: EMPTY,
     Settings.responses: [],  # global responses, for response validation
     Settings.global_error_handler: 'dmr.errors.global_error_handler',
     # Settings for middleware:

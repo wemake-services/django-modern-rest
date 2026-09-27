@@ -10,7 +10,7 @@
     "paths": {
       "/api/msgpack": {
         "post": {
-          "operationId": "postMsgpackcontrollerApiMsgpack",
+          "operationId": "postMsgpackControllerApiMsgpack",
           "requestBody": {
             "content": {
               "application/msgpack": {
@@ -42,16 +42,6 @@
                 }
               }
             },
-            "422": {
-              "description": "Raised when returned response does not match the response schema",
-              "content": {
-                "application/msgpack": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ErrorModel"
-                  }
-                }
-              }
-            },
             "406": {
               "description": "Raised when provided `Accept` header cannot be satisfied",
               "content": {
@@ -61,9 +51,18 @@
                   }
                 }
               }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/msgpack": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -161,8 +160,7 @@
           ],
           "title": "_ResponseModel"
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

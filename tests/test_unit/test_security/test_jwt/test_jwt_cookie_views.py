@@ -8,6 +8,7 @@ import pytest
 from django.conf import LazySettings
 from django.contrib.auth.models import User
 from django.http import HttpRequest, HttpResponse
+from inline_snapshot import snapshot
 from typing_extensions import override
 
 from dmr import ResponseSpec, validate
@@ -16,7 +17,7 @@ from dmr.endpoint import ValidateAnyCallable
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.jwt.token import JWToken
-from dmr.security.jwt.views import (  # noqa: WPS235
+from dmr.security.jwt.views import (
     CookieLogoutSyncController,
     CookieObtainTokensSyncController,
     CookieRefreshTokensAsyncController,
@@ -73,10 +74,6 @@ class _LogoutController(CookieLogoutSyncController[PydanticFastSerializer]):
     jwt_refresh_cookie_path = _REFRESH_PATH
 
 
-class _NoCsrfLogoutController(_LogoutController):
-    jwt_ensure_csrf = False
-
-
 class _CustomSpecLogoutController(
     CookieLogoutSyncController[PydanticFastSerializer, str],
 ):
@@ -84,7 +81,6 @@ class _CustomSpecLogoutController(
 
     response_status_code = HTTPStatus.OK
     jwt_refresh_cookie_path = _REFRESH_PATH
-    jwt_ensure_csrf = False
 
     @classmethod
     @override
@@ -96,6 +92,7 @@ class _CustomSpecLogoutController(
                 headers=cls.response_headers_spec(),
                 cookies=cls.discarded_cookies_spec(),
             ),
+            *cls.csrf_response_specs(),
             tags=['auth'],
         )
 
@@ -174,8 +171,8 @@ def test_discarded_cookies_expire_right_away() -> None:
     ('controller', 'has_csrf_response'),
     [
         (_RefreshController, True),
+        (_AsyncRefreshController, True),
         (_LogoutController, True),
-        (_NoCsrfLogoutController, False),
         (_ObtainController, False),
     ],
 )
@@ -285,9 +282,9 @@ async def test_async_refresh(
     assert response.cookies.keys() == expected_cookies
 
 
-@pytest.mark.django_db
 def test_logout_checks_csrf(
     dmr_rf: DMRRequestFactory,
+    fill_csrf: Callable[[HttpRequest], HttpRequest],
     assert_csrf_failure_message: 'CsrfFailureAssertion',
 ) -> None:
     """Ensures that logout does not act on cookies of a forged request."""
@@ -300,20 +297,29 @@ def test_logout_checks_csrf(
     assert not response.cookies
     assert_csrf_failure_message(response)
 
-
-@pytest.mark.django_db
-def test_logout_without_csrf_check(dmr_rf: DMRRequestFactory) -> None:
-    """Ensures that the CSRF check can be turned off."""
     request = dmr_rf.post('/whatever/')
+    fill_csrf(request)
 
-    response = _NoCsrfLogoutController.as_view()(request)
+    response = _LogoutController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.NO_CONTENT, response.content
-    assert response.cookies.keys() == {'access_token', 'refresh_token'}
-    for cookie in response.cookies.values():
-        assert not cookie.value
-        assert cookie['max-age'] == 0
+    assert response.cookies['access_token'].OutputString([
+        'max-age',
+        'secure',
+        'samesite',
+        'path',
+    ]) == snapshot('access_token=""; Max-Age=0; Path=/; SameSite=lax; Secure')
+    assert response.cookies['refresh_token'].OutputString([
+        'max-age',
+        'secure',
+        'samesite',
+        'path',
+    ]) == snapshot(
+        'refresh_token=""; Max-Age=0; Path=/api/auth/refresh/; '
+        'SameSite=lax; Secure',
+    )
+    assert response.content == b''
 
 
 @pytest.mark.parametrize(
@@ -334,8 +340,10 @@ def test_refresh_cookie_path_is_required(
             """Missing `jwt_refresh_cookie_path` here."""
 
 
-@pytest.mark.django_db
-def test_redefined_validate_spec(dmr_rf: DMRRequestFactory) -> None:
+def test_redefined_validate_spec(
+    dmr_rf: DMRRequestFactory,
+    fill_csrf: Callable[[HttpRequest], HttpRequest],
+) -> None:
     """Ensures that a final controller can replace the whole spec."""
     metadata = _CustomSpecLogoutController.api_endpoints['POST'].metadata
     spec = metadata.responses[HTTPStatus.OK]
@@ -345,9 +353,11 @@ def test_redefined_validate_spec(dmr_rf: DMRRequestFactory) -> None:
     assert spec.cookies is not None
     assert spec.cookies.keys() == {'access_token', 'refresh_token'}
     assert HTTPStatus.NO_CONTENT not in metadata.responses
-    assert HTTPStatus.FORBIDDEN not in metadata.responses
+    assert HTTPStatus.FORBIDDEN in metadata.responses
 
-    response = _CustomSpecLogoutController.as_view()(dmr_rf.post('/whatever/'))
+    request = dmr_rf.post('/whatever/')
+    fill_csrf(request)
+    response = _CustomSpecLogoutController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content

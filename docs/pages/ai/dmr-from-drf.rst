@@ -2,7 +2,7 @@ Django REST Framework migration
 ===============================
 
 By example, you can use agent skill
-`dmr-from-drf <https://github.com/wemake-services/django-modern-rest/tree/master/.agents/skills/dmr-from-drf>`_
+`dmr-from-drf <https://github.com/wemake-services/django-modern-rest/tree/master/dmr/.agents/skills/dmr-from-drf>`_
 when you already have an existing ``django-rest-framework`` API
 and want to migrate transport layer to ``django-modern-rest``.
 
@@ -58,6 +58,8 @@ How to use in Claude Code
    /dmr-from-drf
 
 4. Then describe migration scope and constraints in a normal prompt.
+
+See :doc:`agent-skills` for other agents.
 
 
 What is migrated

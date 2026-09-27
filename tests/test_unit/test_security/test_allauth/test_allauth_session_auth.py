@@ -239,7 +239,6 @@ def test_session_token_auth_falls_through(
     assert json.loads(response.content) == 'authed'
 
 
-@pytest.mark.django_db
 def test_request_allauth_session_absent(dmr_rf: DMRRequestFactory) -> None:
     """Ensures the session accessor behaves without any auth."""
     request = dmr_rf.get('/whatever/')

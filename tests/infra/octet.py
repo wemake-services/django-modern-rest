@@ -14,6 +14,7 @@ from django.http import HttpRequest
 from django.utils.http import parse_header_parameters
 from typing_extensions import override
 
+from dmr.controller import Controller
 from dmr.files import FileBody, FileBodyLike
 from dmr.metadata import EndpointMetadata
 from dmr.openapi import OpenAPIContext
@@ -78,7 +79,7 @@ class OctetStreamParser(SupportsFileParsing, Parser):
         model: Any,
     ) -> None:
         """Populate ``request.FILES`` from raw request body."""
-        content_disposition = request.headers.get('Content-Disposition')
+        content_disposition = request.META.get('HTTP_CONTENT_DISPOSITION')
         if content_disposition:
             _, disposition_params = parse_header_parameters(content_disposition)
         else:
@@ -101,9 +102,9 @@ class OctetStreamParser(SupportsFileParsing, Parser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type['BaseSerializer'],
-        context: 'OpenAPIContext',
-    ) -> type['FileBodyLike']:
+        controller_cls: type[Controller[BaseSerializer]],
+        context: OpenAPIContext,
+    ) -> type[FileBodyLike]:
         """Provide schema for the file request spec."""
         return _ByteStreamFileBody
 

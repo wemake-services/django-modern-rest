@@ -8,7 +8,7 @@ import pytest
 from dmr.exceptions import ValidationError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
-from dmr.streaming import StreamingResponse
+from dmr.streaming import Streaming, StreamingResponse
 from dmr.streaming.sse import SSEController, SSEvent
 from dmr.streaming.sse.validation import check_event_field
 from dmr.test import DMRAsyncRequestFactory
@@ -59,7 +59,11 @@ def _custom_event_with_event(event_field: str) -> _CustomEvent:
 
 @pytest.mark.parametrize('char', _WRONG_CHARS)
 @pytest.mark.parametrize('field_name', ['id', 'event'])
-def test_check_event_field_wrong_chars(char: str, field_name: str) -> None:
+def test_check_event_field_wrong_chars(
+    *,
+    char: str,
+    field_name: str,
+) -> None:
     """Ensures that wrong chars are reported as validation errors."""
     with pytest.raises(ValidationError) as exc_info:
         check_event_field(f'prefix{char}suffix', field_name=field_name)
@@ -69,7 +73,10 @@ def test_check_event_field_wrong_chars(char: str, field_name: str) -> None:
 
 
 @pytest.mark.parametrize('event_field', ['correct', 1, None, object()])
-def test_check_event_field_correct(event_field: Any) -> None:
+def test_check_event_field_correct(
+    *,
+    event_field: Any,
+) -> None:
     """Ensures that correct fields and non-str fields are allowed."""
     check_event_field(event_field, field_name='id')
 
@@ -186,7 +193,7 @@ async def test_wrong_chars_skipped_when_disabled(
     class _ClassBasedSSE(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
-        validate_events = False
+        extras = Streaming(validate_events=False)
 
         async def get(self) -> AsyncIterator[SSEvent[int]]:
             return self._events()
@@ -201,10 +208,7 @@ async def test_wrong_chars_skipped_when_disabled(
     assert isinstance(response, StreamingResponse)
     assert response.status_code == HTTPStatus.OK
     assert await get_streaming_content(response) == (
-        b'id: wrong\nid\r\n'  # noqa: WPS342
-        b'event: wrong\nevent\r\n'  # noqa: WPS342
-        b'data: 1\r\n'
-        b'\r\n'
+        b'id: wrong\nid\r\nevent: wrong\nevent\r\ndata: 1\r\n\r\n'
     )
 
 
@@ -215,7 +219,7 @@ async def test_custom_event_skipped_when_disabled(
     """Ensures that custom types are not validated when disabled either."""
 
     class _ClassBasedSSE(SSEController[PydanticSerializer]):
-        validate_events = False
+        extras = Streaming(validate_events=False)
 
         async def get(self) -> AsyncIterator[_CustomEvent]:
             return self._events()
@@ -230,8 +234,5 @@ async def test_custom_event_skipped_when_disabled(
     assert isinstance(response, StreamingResponse)
     assert response.status_code == HTTPStatus.OK
     assert await get_streaming_content(response) == (
-        b'id: wrong\nid\r\n'  # noqa: WPS342
-        b'event: wrong\nevent\r\n'  # noqa: WPS342
-        b'data: 1\r\n'
-        b'\r\n'
+        b'id: wrong\nid\r\nevent: wrong\nevent\r\ndata: 1\r\n\r\n'
     )

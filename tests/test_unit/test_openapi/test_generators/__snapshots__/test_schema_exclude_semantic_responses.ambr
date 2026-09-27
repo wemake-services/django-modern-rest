@@ -10,7 +10,7 @@
     "paths": {
       "/api/items": {
         "get": {
-          "operationId": "getSimplecontrollerApiItems",
+          "operationId": "getSimpleControllerApiItems",
           "responses": {
             "200": {
               "description": "OK",
@@ -35,8 +35,7 @@
                 }
               }
             }
-          },
-          "deprecated": false
+          }
         }
       }
     },
@@ -91,8 +90,7 @@
           "title": "ErrorModel",
           "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
         }
-      },
-      "securitySchemes": {}
+      }
     }
   }
   '''

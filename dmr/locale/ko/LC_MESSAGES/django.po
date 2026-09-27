@@ -1,0 +1,123 @@
+# Korean translation for django-modern-rest.
+# Copyright (C) 2026, wemake.services
+# This file is distributed under the same license as django-modern-rest.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: django-modern-rest\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-14 13:56+0900\n"
+"PO-Revision-Date: 2026-09-14 13:56+0900\n"
+"Last-Translator: soil0119\n"
+"Language-Team: Korean\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#, python-brace-format
+msgid ""
+"Path {cls} with field_model={field_model} does not allow unnamed path "
+"parameters args={args}"
+msgstr ""
+"field_model={field_model}로 설정된 Path {cls}에서는 이름 없는 경로 매개변수 "
+"args={args}를 허용하지 않습니다."
+
+#, python-brace-format
+msgid ""
+"Trying to parse files with {parser_name} that does not support "
+"SupportsFileParsing protocol"
+msgstr ""
+"SupportsFileParsing 프로토콜을 지원하지 않는 {parser_name} 파서로 파일을 "
+"파싱하려고 했습니다."
+
+#, python-brace-format
+msgid "Method {method} is not allowed, allowed: {allowed}"
+msgstr "{method} 메서드는 허용되지 않습니다. 허용된 메서드: {allowed}"
+
+msgid "Not authenticated"
+msgstr "인증되지 않았습니다."
+
+msgid "Too many requests"
+msgstr "요청이 너무 많습니다."
+
+msgid "Internal server error"
+msgstr "서버 내부 오류가 발생했습니다."
+
+#, python-brace-format
+msgid "CSRF Failed: {reason}"
+msgstr "CSRF 검증에 실패했습니다: {reason}"
+
+msgid ""
+"HTTP requests with the 'application/x-www-form-urlencoded' content type must "
+"be UTF-8 encoded."
+msgstr ""
+"콘텐츠 유형이 'application/x-www-form-urlencoded'인 HTTP 요청은 UTF-8로 "
+"인코딩해야 합니다."
+
+#, python-brace-format
+msgid ""
+"Negotiated renderer {renderer_type} does not match returned content-type "
+"{content_type}"
+msgstr ""
+"콘텐츠 협상으로 선택된 렌더러의 콘텐츠 유형({renderer_type})과 반환된 응답의 "
+"콘텐츠 유형({content_type})이 일치하지 않습니다."
+
+#, python-brace-format
+msgid ""
+"Cannot serialize response body with accepted types {accepted_types}, "
+"supported={supported}"
+msgstr ""
+"응답 본문을 클라이언트가 허용한 콘텐츠 유형({accepted_types})으로 직렬화할 수 "
+"없습니다. 지원하는 콘텐츠 유형: {supported}"
+
+#, python-brace-format
+msgid ""
+"Cannot parse request body with content type {content_type}, "
+"expected={expected}"
+msgstr ""
+"콘텐츠 유형이 {content_type}인 요청 본문을 파싱할 수 없습니다. 예상되는 콘텐츠 "
+"유형: {expected}"
+
+msgid "Invalid cursor"
+msgstr "유효하지 않은 커서입니다."
+
+msgid "BlocklistedJWToken"
+msgstr "차단된 JWT 토큰"
+
+msgid "BlocklistedJWTokens"
+msgstr "차단된 JWT 토큰"
+
+msgid "Name"
+msgstr "이름"
+
+msgid "Token hash"
+msgstr "토큰 해시"
+
+msgid "Expires at"
+msgstr "만료 일시"
+
+msgid "Revoked at"
+msgstr "폐기 일시"
+
+msgid "Last used at"
+msgstr "마지막 사용 일시"
+
+msgid "Created at"
+msgstr "생성 일시"
+
+msgid "Updated at"
+msgstr "수정 일시"
+
+msgid "Token"
+msgstr "토큰"
+
+msgid "Tokens"
+msgstr "토큰"
+
+#, python-brace-format
+msgid "Value {value} of type {type} is not supported for {target_type}"
+msgstr ""
+"대상 자료형 {target_type}에서 지원하지 않는 값입니다: {value} "
+"(자료형: {type})"

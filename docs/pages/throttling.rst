@@ -83,10 +83,11 @@ We can define throttling on three different levels:
       raises :exc:`~dmr.exceptions.EndpointMetadataError`.
 
 Providing several throttling instances means that all of them must succeed.
-When multiple throttling rules are defined
-on different levels, their rules are joined.
 
-For example:
+Throttling rules from different levels are not merged:
+endpoint ``throttling`` overrides controller ``throttling``,
+controller ``throttling`` overrides :data:`~dmr.settings.Settings.throttling`.
+To combine them, do it explicitly:
 
 .. literalinclude:: /examples/throttling/multiple.py
   :caption: views.py
@@ -97,6 +98,11 @@ Will guard ``GET`` method with 2 throttling checks:
 
 1. Not more ``<=`` than 1 request per minute
 2. And not more ``<=`` than 5 requests per hour
+
+While ``POST`` method will only have the controller-level check.
+
+.. versionchanged:: 0.16.0
+  Throttling rules from different levels used to be merged.
 
 
 Customizing throttling
@@ -227,18 +233,27 @@ By default, ``django-modern-rest`` emits
 a :class:`~dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning`
 warning when detecting an unsafe cache backend for throttling.
 
-You can configure this check on three levels as usual:
+You can configure this check with the ``allow_unsafe_cache``
+parameter of :class:`~dmr.throttling.backends.SyncDjangoCache`
+and :class:`~dmr.throttling.backends.AsyncDjangoCache`:
 
-1. Per endpoint: pass ``throttling_allow_unsafe_cache`` parameter
-2. Per controller: by setting ``throttling_allow_unsafe_cache`` attribute
-3. In settings, see :data:`~dmr.settings.Settings.throttling_allow_unsafe_cache`
+.. code-block:: python
 
-When ``throttling_allow_unsafe_cache`` is set to ``False``,
+  >>> from dmr.throttling import Rate, SyncThrottle
+  >>> from dmr.throttling.backends import SyncDjangoCache
+
+  >>> throttle = SyncThrottle(
+  ...     10,
+  ...     Rate.minute,
+  ...     backend=SyncDjangoCache(allow_unsafe_cache=False),
+  ... )
+
+When ``allow_unsafe_cache`` is set to ``False``,
 we raise a :exc:`dmr.exceptions.EndpointMetadataError`
-exception instead of a warning. This setting will ensure the maximum safety.
+exception instead of a warning. This will ensure the maximum safety.
 
 To suppress this check completely and run throttling at your own risk,
-set :data:`~dmr.settings.Settings.throttling_allow_unsafe_cache` to ``None``.
+set ``allow_unsafe_cache`` to ``None``.
 
 
 Algorithms
@@ -307,12 +322,8 @@ Choosing an algorithm
      - Auth endpoints (login, OTP, password reset), public APIs
 
 For auth and abuse-sensitive endpoints, use
-:class:`~dmr.throttling.algorithms.LeakyBucket`:
-
-.. literalinclude:: /examples/throttling/auth_leaky_bucket.py
-  :caption: views.py
-  :linenos:
-  :language: python
+:class:`~dmr.throttling.algorithms.LeakyBucket`,
+see the algorithm customization example above.
 
 Cache keys
 ~~~~~~~~~~
@@ -499,7 +510,7 @@ All our regular rules apply:
 
 - All new headers must be added to the corresponding
   :class:`~dmr.metadata.ResponseSpec` definitions
-- When settings headers, you would need to use :func:`~dmr.endpoint.validate`
+- When settings headers, you would need to use :data:`~dmr.endpoint.validate`
 
 .. literalinclude:: /examples/throttling/reports.py
   :caption: views.py

@@ -34,6 +34,9 @@ What happens here?
 Django supports multiple pre-defined path converter types:
 ``int``, ``uuid``, ``str``, ``slug``, ``path``.
 
+We have first-class support for all of them, showing all
+the possible metadata we possibly can for these converters.
+
 .. seealso::
 
   - https://docs.djangoproject.com/en/stable/topics/http/urls/
@@ -54,6 +57,12 @@ use :data:`~dmr.components.Path` component with a model.
   However, if you are using a different converter schema type,
   you can use set ``__dmr_converter_schema__`` attribute
   with the specific type that you need in the schema.
+  It can be any annotation that is supported by the controller's serializer
+  that is using this URL.
+
+  Setting ``__dmr_converter_schema__``
+  to :class:`dmr.openapi.generators.component_parsers.ConverterSchema`
+  will allow you to add ``pattern`` or ``description`` metadata to the schema.
 
 .. note::
 
@@ -92,19 +101,19 @@ This is how you can parse ``Path`` parameters into a model:
 
 .. tabs::
 
-    .. tab:: msgspec
+  .. tab:: msgspec
 
-      .. literalinclude:: /examples/components/path_msgspec.py
-        :caption: views.py
-        :language: python
-        :linenos:
+    .. literalinclude:: /examples/components/path_msgspec.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
-    .. tab:: pydantic
+  .. tab:: pydantic
 
-      .. literalinclude:: /examples/components/path_pydantic.py
-        :caption: views.py
-        :language: python
-        :linenos:
+    .. literalinclude:: /examples/components/path_pydantic.py
+      :caption: views.py
+      :language: python
+      :linenos:
 
 What happens in this example?
 
@@ -118,7 +127,8 @@ What happens in this example?
 
 What is the difference from the raw ``path()`` model?
 
-1. ``Path`` component automatically injects ``404`` error into the final schema
+1. ``Path`` component automatically injects ``404`` error into the final schema,
+   no need to manually defined ``404`` :class:`~dmr.metadata.ResponseSpec`
 2. It performs a second validation of the ``self.kwargs``
    with new extra metadata from the ``Path`` model
 3. It adds ``self.parsed_path`` attribute
@@ -127,6 +137,28 @@ What is the difference from the raw ``path()`` model?
 
   Make sure that your ``path()`` URL pattern and ``Path`` model fields match.
   We don't automatically validate it.
+
+.. note::
+
+  ``Path`` model fields can have default values.
+  Frameworks like FastAPI route each view with a single ``@app.get(url)``,
+  so path parameters with defaults make no sense there.
+  But a single controller can be routed to several URLs,
+  and these URLs can differ in a single URL parameter:
+
+  .. code:: python
+
+    urlpatterns = [
+        path('users/', UserController.as_view()),
+        path('users/<int:user_id>/', UserController.as_view()),
+    ]
+
+  A default value, like ``user_id: int | None = None``,
+  makes the same ``Path`` model work for both URLs.
+
+  OpenAPI requires all path parameters to be required,
+  so they always have ``required: true`` in the schema,
+  even when they have default values.
 
 
 Customizing OpenAPI metadata for Path

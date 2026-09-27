@@ -149,10 +149,7 @@ class _ResponseValidationController(Controller[MsgspecSerializer]):
         return 1  # type: ignore[return-value]
 
 
-def test_wrong_response_validation(
-    dmr_rf: DMRRequestFactory,
-    faker: Faker,
-) -> None:
+def test_wrong_response_validation(dmr_rf: DMRRequestFactory) -> None:
     """Ensures the wrong types raise."""
     request = dmr_rf.get('/whatever/')
     response = _ResponseValidationController.as_view()(request)

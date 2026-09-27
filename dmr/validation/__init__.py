@@ -8,6 +8,7 @@ from dmr.validation.endpoint_metadata import (
 from dmr.validation.endpoint_metadata import (
     validate_method_name as validate_method_name,
 )
+from dmr.validation.metadata_merger import MetadataMerger as MetadataMerger
 from dmr.validation.payload import (
     ModifyEndpointPayload as ModifyEndpointPayload,
 )
