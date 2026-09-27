@@ -333,6 +333,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   changing with the current time. Faker's defaults end at the current time,
   now these examples are generated between `2000-01-01` and `2025-01-01`.
   `timedelta` examples are not always `P0D` anymore, #1632
+- Fixed `example` of `NewHeader` and `HeaderSpec` not being
+  in the OpenAPI schema. Now it is set on the `Header` object,
+  and such headers don't get generated examples, #1627
 - Fixed generated OpenAPI examples that are `None` being dropped,
   for example, for `-> None` and `-> int | None` responses.
   `dmr.openapi.mappers.example.generate_example` now returns `EMPTY`
