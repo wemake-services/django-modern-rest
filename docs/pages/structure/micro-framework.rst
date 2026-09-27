@@ -72,7 +72,7 @@ But if you are reaching for one of the popular microframework styles,
     .. code:: python
 
       @app.path('user/')
-      class UserController(Controller[PydanticSerializer]): ...
+      class UserController(Controller[PydanticFastSerializer]): ...
 
     But you lose the OpenAPI schema this way,
     because it is built from a :class:`~dmr.routing.Router`.

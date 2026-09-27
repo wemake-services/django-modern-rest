@@ -145,8 +145,9 @@ example:
 
 # Start Django + DRM example app
 [group('testing')]
+[working-directory('django_test_app')]
 example-run:
-    cd django_test_app && uv run python manage.py runserver
+    uv run python manage.py runserver
 
 # Validate package dependencies and run security audit
 [group('testing')]
@@ -167,8 +168,9 @@ integration_db_start *containers:
 
 # Type-check benchmark code
 [group('benchmarks')]
+[working-directory('benchmarks')]
 benchmarks-type-check:
-    cd benchmarks && uv run python -m mypy tests/
+    uv run python -m mypy tests/
 
 # Compile with mypyc then run feature benchmarks
 [group('benchmarks')]

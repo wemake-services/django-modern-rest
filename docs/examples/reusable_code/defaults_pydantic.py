@@ -1,8 +1,8 @@
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from examples.reusable_code.reusable_defaults import ReusableController
 
 
-class PydanticController(ReusableController[PydanticSerializer]):
+class PydanticController(ReusableController[PydanticFastSerializer]):
     """The request model is not given, so it is `DefaultRequestModel`."""
 
 

@@ -9,7 +9,7 @@ from django.core.management import execute_from_command_line
 from dmr import Body, Controller
 from dmr.openapi import build_schema
 from dmr.openapi.views import OpenAPIJsonView, SwaggerView
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import Router, path
 
 if not settings.configured:
@@ -42,7 +42,7 @@ class UserResponseModel(UserCreateModel):
     uid: uuid.UUID
 
 
-class UserController(Controller[PydanticSerializer]):
+class UserController(Controller[PydanticFastSerializer]):
     async def post(
         self,
         parsed_body: Body[UserCreateModel],

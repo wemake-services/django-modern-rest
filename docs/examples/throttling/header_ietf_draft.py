@@ -1,10 +1,10 @@
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.throttling import Rate, SyncThrottle
 from dmr.throttling.headers import RateLimitIETFDraft
 
 
-class SyncController(Controller[PydanticSerializer]):
+class SyncController(Controller[PydanticFastSerializer]):
     throttling = (
         SyncThrottle(1, Rate.minute, response_headers=[RateLimitIETFDraft()]),
     )

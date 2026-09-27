@@ -1,11 +1,11 @@
 from http import HTTPStatus
 
 from dmr import Controller, modify
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.settings import HttpSpec
 
 
-class JobController(Controller[PydanticSerializer]):
+class JobController(Controller[PydanticFastSerializer]):
     no_validate_http_spec = frozenset((HttpSpec.empty_response_body,))
 
     @modify(status_code=HTTPStatus.NO_CONTENT)

@@ -13,10 +13,10 @@ from dmr.files import FileBody
 from dmr.internal.enums import stringify
 from dmr.internal.media_compat import media_by_precedence
 from dmr.internal.negotiation import negotiatiate_response_validation
+from dmr.internal.types import EMPTY
 from dmr.metadata import EndpointMetadata, ResponseModification, ResponseSpec
 from dmr.negotiation import get_conditional_types, request_renderer
 from dmr.serializer import BaseSerializer
-from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from dmr.controller import Controller

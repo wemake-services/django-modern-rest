@@ -3,7 +3,7 @@ import uuid
 import pydantic
 
 from dmr import Body, Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class UserCreateModel(pydantic.BaseModel):
@@ -15,7 +15,7 @@ class UserModel(UserCreateModel):
     uid: uuid.UUID
 
 
-class UserController(Controller[PydanticSerializer]):
+class UserController(Controller[PydanticFastSerializer]):
     def post(self, parsed_body: Body[UserCreateModel]) -> UserModel:
         return UserModel(
             uid=uuid.uuid4(),

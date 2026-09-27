@@ -2,10 +2,10 @@ from django.utils.translation import gettext_lazy as _
 
 from dmr import Controller, ResponseSpec
 from dmr.exceptions import NotAuthenticatedError
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
-class UsersController(Controller[PydanticSerializer]):
+class UsersController(Controller[PydanticFastSerializer]):
     responses = (
         ResponseSpec(
             Controller.error_model,

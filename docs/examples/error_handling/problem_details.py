@@ -6,7 +6,7 @@ from typing_extensions import override
 
 from dmr import Controller, Query, ResponseSpec
 from dmr.errors import ErrorType
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.problem_details import ProblemDetailsError, ProblemDetailsModel
 
 
@@ -14,7 +14,7 @@ class _QueryModel(pydantic.BaseModel):
     number: int = 0
 
 
-class ProblemDetailsController(Controller[PydanticSerializer]):
+class ProblemDetailsController(Controller[PydanticFastSerializer]):
     error_model = ProblemDetailsModel
 
     responses = (

@@ -15,13 +15,13 @@ from dmr.internal.model_fields import (
     DateTimeFieldNullable,
     UserForeignKey,
 )
+from dmr.internal.types import EMPTY
 from dmr.security.token.token import (
     TokenLikeAsync,
     TokenLikeSync,
     get_token_hash,
     resolve_expiry,
 )
-from dmr.types import EMPTY
 
 _REVOKE_FIELDS: Final = ('revoked_at', 'updated_at')
 _LAST_USED_FIELDS: Final = ('last_used_at', 'updated_at')

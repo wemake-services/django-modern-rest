@@ -342,10 +342,10 @@ that are shown to admins in error reporting middlewares:
 
   >>> from dmr import Body, Controller, modify
   >>> from dmr.decorators import endpoint_decorator
-  >>> from dmr.plugins.pydantic import PydanticSerializer
+  >>> from dmr.plugins.pydantic import PydanticFastSerializer
   >>> from dmr.security import NO_STORE_HEADERS
 
-  >>> class MyLoginController(Controller[PydanticSerializer]):
+  >>> class MyLoginController(Controller[PydanticFastSerializer]):
   ...     @sensitive_variables()
   ...     @endpoint_decorator(sensitive_post_parameters())
   ...     @modify(headers=NO_STORE_HEADERS)

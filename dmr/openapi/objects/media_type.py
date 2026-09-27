@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Any, final
 
 from typing_extensions import override
 
+from dmr.internal.empty import EMPTY
+
 if TYPE_CHECKING:
     from dmr.openapi.objects.encoding import Encoding
     from dmr.openapi.objects.example import Example
@@ -20,11 +22,13 @@ class MediaTypeMetadata:
     .. versionchanged:: 0.16.0
         Added ``description`` from OpenAPI 3.2.
         ``prefix_encoding`` is now a list, as the spec requires.
+        ``example`` now defaults to :data:`~dmr.types.EMPTY`
+        instead of ``None``, because ``None`` is a valid value for it.
 
     """
 
     # NOTE: defaults here must match defaults of `MediaType`:
-    example: Any | None = None
+    example: Any = EMPTY
     examples: dict[str, 'Example | Reference'] | None = None
     encoding: dict[str, 'Encoding'] | None = None
 
@@ -54,12 +58,14 @@ class MediaType:
     .. versionchanged:: 0.16.0
         Added ``description`` from OpenAPI 3.2.
         ``prefix_encoding`` is now a list, as the spec requires.
+        ``example`` now defaults to :data:`~dmr.types.EMPTY`
+        instead of ``None``, because ``None`` is a valid value for it.
 
     """
 
     # Can be `None` only when `item_schema` is set:
     schema: 'Reference | Schema | None' = None
-    example: Any | None = None
+    example: Any = EMPTY
     examples: dict[str, 'Example | Reference'] | None = None
     encoding: dict[str, 'Encoding'] | None = None
 

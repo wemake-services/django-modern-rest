@@ -15,7 +15,7 @@ from dmr.errors import ErrorModel, ErrorType, format_error
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.internal.docstrings import resolve_summary_and_description
 from dmr.internal.io import identity
-from dmr.internal.types import StrOrPromise
+from dmr.internal.types import EMPTY, StrOrPromise
 from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.collector import InternalRouteMetadata
@@ -27,7 +27,7 @@ from dmr.response import build_response
 from dmr.security.base import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
-from dmr.types import EMPTY, AnnotationsContext, infer_type_args
+from dmr.types import AnnotationsContext, infer_type_args
 from dmr.validation import ControllerValidator, SettingsValidator
 
 if TYPE_CHECKING:
@@ -731,6 +731,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         return {
             # Rename `meta` back to `options`:
             ('OPTIONS' if dsl_method == 'meta' else dsl_method.upper()): method
-            for dsl_method in cls.allowed_http_methods
+            # Sorted, because set order depends on `PYTHONHASHSEED`,
+            # and endpoints must have the same order in every process:
+            for dsl_method in sorted(cls.allowed_http_methods)
             if (method := getattr(cls, dsl_method, None)) is not None
         }

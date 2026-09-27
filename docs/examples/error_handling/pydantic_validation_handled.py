@@ -7,14 +7,14 @@ from typing_extensions import override
 
 from dmr import Controller, ResponseSpec
 from dmr.endpoint import Endpoint
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class Pong(pydantic.BaseModel):
     message: Literal['pong']
 
 
-class PongController(Controller[PydanticSerializer]):
+class PongController(Controller[PydanticFastSerializer]):
     responses = (
         ResponseSpec(
             Controller.error_model,
@@ -31,7 +31,7 @@ class PongController(Controller[PydanticSerializer]):
     def handle_error(
         self,
         endpoint: Endpoint,
-        controller: Controller[PydanticSerializer],
+        controller: Controller[PydanticFastSerializer],
         exc: Exception,
     ) -> HttpResponse:
         if isinstance(exc, pydantic.ValidationError):

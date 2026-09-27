@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated, Any
 
 from dmr.internal.dataclass_aliases import Field
+from dmr.internal.empty import EMPTY
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.discriminator import Discriminator
@@ -22,6 +23,12 @@ class Schema:
     behavior is defined by the application (e.g. for annotations),
     OAS also defers the definition of semantics to the application consuming
     the OpenAPI document.
+
+    .. versionchanged:: 0.16.0
+        ``const``, ``default``, and ``example`` now default to
+        :data:`~dmr.types.EMPTY` instead of ``None``,
+        because ``None`` is a valid value for them.
+
     """
 
     all_of: list['Reference | Schema'] | None = None
@@ -49,7 +56,7 @@ class Schema:
     unevaluated_properties: 'Reference | Schema | None' = None
     type: 'OpenAPIType | list[OpenAPIType] | None' = None
     enum: list[Any] | None = None
-    const: Any | None = None
+    const: Any = EMPTY
     multiple_of: float | None = None
     maximum: float | None = None
     exclusive_maximum: float | None = None
@@ -73,7 +80,7 @@ class Schema:
     content_schema: 'Reference | Schema | None' = None
     title: str | None = None
     description: str | None = None
-    default: Any | None = None
+    default: Any = EMPTY
     deprecated: bool | None = None
     read_only: bool | None = None
     write_only: bool | None = None
@@ -81,7 +88,7 @@ class Schema:
     discriminator: 'Discriminator | None' = None
     xml: 'XML | None' = None
     external_docs: 'ExternalDocumentation | None' = None
-    example: Any | None = None
+    example: Any = EMPTY
     dynamic_anchor: Annotated[str | None, Field(alias='$dynamicAnchor')] = None
     dynamic_ref: Annotated[str | None, Field(alias='$dynamicRef')] = None
     ref: Annotated[str | None, Field(alias='$ref')] = None

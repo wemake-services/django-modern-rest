@@ -160,6 +160,13 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   use `extras = Streaming(ping_seconds=...)` on streaming controllers
   or `extras=Streaming(ping_seconds=...)` per endpoint instead.
   `SSEController` still sends pings every 15 seconds by default, #1623
+- OpenAPI object fields that can have `None` as a real value
+  now default to `EMPTY` instead of `None`: `Schema.const`, `Schema.default`,
+  `Schema.example`, `Example.value`, `Example.data_value`, `Header.example`,
+  `MediaType.example`, `MediaTypeMetadata.example`,
+  `ParameterMetadata.example`, `Parameter.example`,
+  and `Link.request_body`. Passing `None` to them explicitly
+  now dumps `null` into the schema, #1619
 
 ### Performance improvements
 
@@ -219,6 +226,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   `AND` and `OR` auth strategies, previously
   it was only possible to represent `OR` strategy, #1521
 - Added `CursorPagination` support to `drm.pagination`, #1428
+- Added `HttpSpec.cookie_semantics` validation rule, #1555
 - Added `clear_cache` method to `RequestNegotiator` and `ResponseNegotiator`
   to drop the memoized negotiation results. Needed when parsers
   or renderers of an endpoint are modified in place, #1455
@@ -324,6 +332,18 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Fixed `example` of `NewHeader` and `HeaderSpec` not being
   in the OpenAPI schema. Now it is set on the `Header` object,
   and such headers don't get generated examples, #1627
+- Fixed generated OpenAPI examples that are `None` being dropped,
+  for example, for `-> None` and `-> int | None` responses.
+  `dmr.openapi.mappers.example.generate_example` now returns `EMPTY`
+  instead of `None` when there's no example, #1626
+- Fixed seeded OpenAPI examples depending on `PYTHONHASHSEED`.
+  `Controller.api_endpoints` was built in the iteration order
+  of `allowed_http_methods`, which is a `frozenset`,
+  so endpoints got their examples in a different order in every process.
+  Now `api_endpoints` is sorted by controller method names, #1629
+- Fixed `default: null` being dropped from the OpenAPI schema,
+  for example, for `field: str | None = None` model fields.
+  The same was true for `const: null` and `example: null`, #1619
 - Path parameters now always have `required: true` in the OpenAPI schema,
   even when their `Path` model fields have default values.
   Previously, such parameters generated an invalid schema, #1610

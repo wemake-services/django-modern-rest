@@ -1,14 +1,14 @@
 import pydantic
 
 from dmr import Body, Controller, NewCookie, modify
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class UserModel(pydantic.BaseModel):
     email: str
 
 
-class UserController(Controller[PydanticSerializer]):
+class UserController(Controller[PydanticFastSerializer]):
     @modify(
         # Add explicit cookie:
         cookies={'user_created': NewCookie(value='true', max_age=1000)},

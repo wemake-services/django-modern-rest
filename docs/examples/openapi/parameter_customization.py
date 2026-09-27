@@ -12,9 +12,7 @@ class QueryModel(msgspec.Struct):
     max_items: int
 
 
-class UserController(
-    Controller[MsgspecSerializer],
-):
+class UserController(Controller[MsgspecSerializer]):
     def post(
         self,
         parsed_query: Query[
