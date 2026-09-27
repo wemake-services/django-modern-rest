@@ -1,6 +1,8 @@
-from typing import TYPE_CHECKING, Any
+import datetime as dt
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Final
 
-from typing_extensions import Sentinel
+from typing_extensions import Sentinel, override
 
 from dmr.internal.types import EMPTY
 from dmr.openapi.objects import Example, Schema
@@ -48,12 +50,50 @@ else:
     # https://github.com/litestar-org/litestar/blob/main/litestar/_openapi/schema_generation/examples.py
     from polyfactory.field_meta import FieldMeta
 
+    #: Faker's defaults for dates and times end at the current time,
+    #: so seeded examples would change with the clock. We use fixed bounds.
+    _EXAMPLES_START: Final = dt.datetime.fromisoformat('2000-01-01T00:00Z')
+    _EXAMPLES_END: Final = dt.datetime.fromisoformat('2026-01-01T00:00Z')
+    _MAX_TIMEDELTA_SECONDS: Final = 7 * 24 * 60 * 60  # a week
+    _EPOCH: Final = dt.datetime.fromisoformat('1970-01-01T00:00')
+
     class _ExampleFactory(DataclassFactory[Example]):
         # NOTE: don't set `__random_seed__` here, it only seeds the factory
         # once, when this class is created. `seed_examples` does the seeding,
         # because the seed comes from settings.
         __model__ = Example
         __check_model__ = True
+
+        @override
+        @classmethod
+        def get_provider_map(cls) -> dict[Any, Callable[[], Any]]:
+            """
+            Generate dates and times in fixed bounds.
+
+            Factories that are created for nested models
+            get these providers too.
+            """
+            return {
+                **super().get_provider_map(),
+                dt.datetime: cls._random_datetime,
+                dt.date: lambda: cls._random_datetime().date(),
+                dt.time: lambda: cls._random_datetime().time(),
+                dt.timedelta: lambda: dt.timedelta(
+                    seconds=cls.__faker__.random_int(0, _MAX_TIMEDELTA_SECONDS),
+                ),
+            }
+
+        @classmethod
+        def _random_datetime(cls) -> dt.datetime:
+            # We don't use Faker's date and time providers: on Windows
+            # they only have second precision and they use the local timezone,
+            # so the same seed gives different examples on different platforms.
+            timestamp = cls.__faker__.random.uniform(
+                _EXAMPLES_START.timestamp(),
+                _EXAMPLES_END.timestamp(),
+            )
+            # Examples stay naive, like the Faker's ones:
+            return _EPOCH + dt.timedelta(seconds=timestamp)
 
     def seed_example_factory() -> None:
         """

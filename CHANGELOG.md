@@ -359,6 +359,10 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Bugfixes
 
+- Fixed seeded OpenAPI examples of `datetime`, `date`, and `time`
+  changing with the current time. Faker's defaults end at the current time,
+  now these examples are generated between `2000-01-01` and `2026-01-01`.
+  `timedelta` examples are not always `P0D` anymore, #1632
 - Fixed `example` of `NewHeader` and `HeaderSpec` not being
   in the OpenAPI schema. Now it is set on the `Header` object,
   and such headers don't get generated examples, #1627
