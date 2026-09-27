@@ -55,6 +55,7 @@ else:
     _EXAMPLES_START: Final = dt.datetime.fromisoformat('2000-01-01T00:00Z')
     _EXAMPLES_END: Final = dt.datetime.fromisoformat('2025-01-01T00:00Z')
     _MAX_TIMEDELTA_SECONDS: Final = 7 * 24 * 60 * 60  # a week
+    _EPOCH: Final = dt.datetime.fromisoformat('1970-01-01T00:00')
 
     class _ExampleFactory(DataclassFactory[Example]):
         # NOTE: don't set `__random_seed__` here, it only seeds the factory
@@ -72,26 +73,27 @@ else:
             Factories that are created for nested models
             get these providers too.
             """
-            faker = cls.__faker__
             return {
                 **super().get_provider_map(),
-                # Examples stay naive, like the Faker's ones:
-                dt.datetime: lambda: faker.date_time_between(
-                    _EXAMPLES_START,
-                    _EXAMPLES_END,
-                ),
-                dt.date: lambda: faker.date_between_dates(
-                    _EXAMPLES_START.date(),
-                    _EXAMPLES_END.date(),
-                ),
-                dt.time: lambda: faker.date_time_between(
-                    _EXAMPLES_START,
-                    _EXAMPLES_END,
-                ).time(),
+                dt.datetime: cls._random_datetime,
+                dt.date: lambda: cls._random_datetime().date(),
+                dt.time: lambda: cls._random_datetime().time(),
                 dt.timedelta: lambda: dt.timedelta(
-                    seconds=faker.random_int(0, _MAX_TIMEDELTA_SECONDS),
+                    seconds=cls.__faker__.random_int(0, _MAX_TIMEDELTA_SECONDS),
                 ),
             }
+
+        @classmethod
+        def _random_datetime(cls) -> dt.datetime:
+            # We don't use Faker's date and time providers: on Windows
+            # they only have second precision and they use the local timezone,
+            # so the same seed gives different examples on different platforms.
+            timestamp = cls.__faker__.random.uniform(
+                _EXAMPLES_START.timestamp(),
+                _EXAMPLES_END.timestamp(),
+            )
+            # Examples stay naive, like the Faker's ones:
+            return _EPOCH + dt.timedelta(seconds=timestamp)
 
     def seed_example_factory() -> None:
         """
