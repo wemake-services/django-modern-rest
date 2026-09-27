@@ -174,8 +174,8 @@ benchmarks-type-check:
 
 # Compile with mypyc then run feature benchmarks
 [group('benchmarks')]
-benchmarks: mypyc
-    uv run python -m pytest benchmarks/tests -o 'addopts="--codspeed"'
+benchmarks *args='benchmarks/tests': mypyc
+    uv run python -m pytest -o 'addopts="--codspeed"' {{args}}
 
 # Compile code with mypyc
 [group('build')]

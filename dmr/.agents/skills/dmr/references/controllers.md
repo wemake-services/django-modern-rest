@@ -360,6 +360,36 @@ class UserController(Controller[MsgspecSerializer]):
 
 Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/components/index.html
 
+### Keep `None` inside the component annotation for optional components
+
+Components can have defaults. When a request has no data for a component (no body, no query parameters, no cookies, etc.), the endpoint receives the default as-is. The `| None` part must be inside the component: `Body[Model] | None` hides the component behind a union and raises `UnsolvableAnnotationsError` at import time.
+
+Wrong:
+
+```python
+class ProductController(Controller[MsgspecSerializer]):
+    def post(
+        self,
+        parsed_body: Body[FilterModel] | None = None,  # import-time error!
+    ) -> str:
+        return 'all' if parsed_body is None else parsed_body.category
+```
+
+Correct:
+
+```python
+class ProductController(Controller[MsgspecSerializer]):
+    def post(
+        self,
+        parsed_body: Body[FilterModel | None] = None,
+    ) -> str:
+        return 'all' if parsed_body is None else parsed_body.category
+```
+
+**Limitations:** bodies with defaults are documented with `required: false`, parameters of other components with defaults are documented as not required. Provided data is always validated, a default never replaces an invalid body. Defaults are passed as-is, so use `None` or frozen model instances (`msgspec.Struct` with `frozen=True`, `pydantic.ConfigDict(frozen=True)`), mutable defaults are rejected at import time.
+
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/components/index.html#default-values
+
 
 ## Redirects
 

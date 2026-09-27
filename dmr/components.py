@@ -1,15 +1,18 @@
 import abc
+import inspect
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
 from operator import attrgetter
-from typing import (
+from typing import (  # noqa: WPS235
     TYPE_CHECKING,
     Annotated,
     Any,
     ClassVar,
     Final,
+    NamedTuple,
     TypeAlias,
     TypeVar,
+    final,
 )
 
 from django.utils.translation import gettext_lazy as _
@@ -26,8 +29,8 @@ from dmr.internal.django import (
     extract_files_metadata,
     parse_headers,
 )
+from dmr.internal.types import has_nested_annotated_metadata
 from dmr.metadata import (
-    ComponentParserSpec,
     EndpointMetadata,
     ResponseSpec,
     ResponseSpecProvider,
@@ -42,9 +45,11 @@ from dmr.openapi.objects import (
     RequestBody,
 )
 from dmr.parsers import SupportsDjangoDefaultParsing, SupportsFileParsing
-from dmr.types import TypeVarInference
+from dmr.types import EMPTY, TypeVarInference
 
 if TYPE_CHECKING:
+    from django.http import HttpRequest
+
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.openapi.core.context import OpenAPIContext
@@ -69,17 +74,92 @@ _CookiesT = TypeVar('_CookiesT')
 _FileMetadataT = TypeVar('_FileMetadataT')
 
 
+@final
+class ComponentParserSpec(NamedTuple):
+    """
+    Describes a single component parser of an endpoint.
+
+    .. versionchanged:: 0.16.0
+        Now it is a named tuple with the *default* field,
+        previously it was a regular tuple of three elements.
+        Moved from ``dmr.metadata`` to ``dmr.components``.
+
+    """
+
+    parser: 'ComponentParser'
+    """Component parser instance, like :class:`BodyComponent`."""
+
+    model: Any
+    """Model to parse the component data into."""
+
+    model_meta: tuple[Any, ...]
+    """Extra :data:`typing.Annotated` metadata of the component."""
+
+    default: Any = EMPTY
+    """
+    Default value of the endpoint parameter for this component.
+
+    :data:`~dmr.types.EMPTY` means that there's no default value,
+    so the component data must be present in every request.
+    """
+
+
+class FunctionDefaults:
+    """
+    Find default values of all function parameters.
+
+    Both regular and keyword-only defaults are supported.
+    Component parameters with defaults are optional:
+    when a request has no data for such a component,
+    the default value is used as-is, without any parsing.
+
+    .. versionadded:: 0.16.0
+    """
+
+    __slots__ = ('_func',)
+
+    def __init__(self, func: Callable[..., Any]) -> None:
+        """Initialize the defaults finder."""
+        self._func = func
+
+    def __call__(self) -> Mapping[str, Any]:
+        """
+        Return a mapping of parameter names to their defaults.
+
+        Parameters without defaults map to :data:`~dmr.types.EMPTY`.
+        """
+        return {
+            name: (
+                EMPTY
+                if parameter.default is inspect.Parameter.empty
+                else parameter.default
+            )
+            for name, parameter in self.get_signature().parameters.items()
+        }
+
+    def get_signature(self) -> inspect.Signature:
+        """Method that can be easily customized to change the signature."""
+        return inspect.signature(self._func)
+
+
 class ComponentParserBuilder:
     """
     Find the component parser types in the MRO and find model types for them.
 
     Validates that component parsers can't have
     type vars as models at this point.
+
+    .. versionchanged:: 0.16.0
+        Now also finds default values of component parameters.
+        Component annotations hidden inside other types,
+        like ``Body[Model] | None``, are now rejected.
+
     """
 
     __slots__ = ('_controller_cls', '_func')
 
     type_var_inference_cls: ClassVar[type[TypeVarInference]] = TypeVarInference
+    defaults_cls: ClassVar[type[FunctionDefaults]] = FunctionDefaults
 
     def __init__(
         self,
@@ -104,6 +184,7 @@ class ComponentParserBuilder:
         type_annotations: dict[str, Any],
     ) -> list[ComponentParserSpec]:
         components: list[ComponentParserSpec] = []
+        defaults = self.defaults_cls(self._func)()
         for context_name, component in type_annotations.items():
             if context_name == 'return':
                 continue
@@ -113,6 +194,7 @@ class ComponentParserBuilder:
                 ComponentParser,  # type: ignore[type-abstract]
             )
             if metadata is None:
+                self._validate_no_hidden_component(context_name, component)
                 continue
 
             if context_name != metadata.context_name:
@@ -122,13 +204,34 @@ class ComponentParserBuilder:
                     f'in {self._controller_cls!r}',
                 )
 
-            components.append((
-                metadata,
-                component.__origin__,
-                component.__metadata__,
-            ))
+            components.append(
+                ComponentParserSpec(
+                    metadata,
+                    component.__origin__,
+                    component.__metadata__,
+                    defaults.get(context_name, EMPTY),
+                ),
+            )
 
         return components
+
+    def _validate_no_hidden_component(
+        self,
+        context_name: str,
+        annotation: Any,
+    ) -> None:
+        # Things like `parsed_body: Body[Model] | None` are not components,
+        # because `Union` hides the component annotation from us.
+        # They would be silently ignored, so we raise instead.
+        # Regular parameters like `help_text: str = 'default'` are fine.
+        if has_nested_annotated_metadata(annotation, ComponentParser):
+            raise UnsolvableAnnotationsError(
+                f'Parameter {context_name!r} in {self._controller_cls!r} '
+                f'has a component hidden inside {annotation!r}. '
+                'Make sure that component is the top-most annotation, '
+                'for example: `Body[Model | None] = None`, '
+                'not `Body[Model] | None = None`',
+            )
 
     def _resolve_type_vars(
         self,
@@ -140,18 +243,19 @@ class ComponentParserBuilder:
         self,
         component_spec: ComponentParserSpec,
     ) -> ComponentParserSpec:
-        if not isinstance(component_spec[1], TypeVar):
+        if not isinstance(component_spec.model, TypeVar):
             # Component is not generic, just return whatever it has.
             return component_spec
 
         type_map = self.type_var_inference_cls(
-            component_spec[1],
+            component_spec.model,
             self._controller_cls,
         )()
-        return (
-            component_spec[0],
-            type_map[component_spec[1]],
-            component_spec[2],
+        return ComponentParserSpec(
+            component_spec.parser,
+            type_map[component_spec.model],
+            component_spec.model_meta,
+            component_spec.default,
         )
 
 
@@ -176,6 +280,7 @@ class ComponentParser(ResponseSpecProvider):
         controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
+        default: Any = EMPTY,
     ) -> Any | tuple[Any, ...]:
         """
         Return unstructured raw values for ``serializer.from_python()``.
@@ -186,6 +291,15 @@ class ComponentParser(ResponseSpecProvider):
 
         When this method returns not a tuple and there's only one type variable,
         it also works.
+
+        *default* is the default value of the endpoint parameter,
+        like ``parsed_body: Body[Model | None] = None``.
+        When it is not :data:`~dmr.types.EMPTY` and the request
+        has no data for this component, return *default* as-is.
+
+        .. versionchanged:: 0.16.0
+            Added *default* parameter.
+
         """
         raise NotImplementedError
 
@@ -294,7 +408,11 @@ class QueryComponent(ComponentParser):
         controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
+        default: Any = EMPTY,
     ) -> dict[str, Any]:
+        query = controller.request.GET
+        if default is not EMPTY and not query:
+            return default  # type: ignore[no-any-return]
         force_list: frozenset[str] = getattr(
             field_model,
             '__dmr_force_list__',
@@ -306,7 +424,7 @@ class QueryComponent(ComponentParser):
             frozenset(),
         )
         return convert_multi_value_dict(
-            controller.request.GET,
+            query,
             force_list=force_list,
             cast_null=cast_null,
         )
@@ -377,7 +495,11 @@ class BodyComponent(ComponentParser):
         controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
+        default: Any = EMPTY,
     ) -> Any:
+        if default is not EMPTY and not self._has_body(controller.request):
+            return default
+
         parser = endpoint.request_negotiator(controller.request)
         if isinstance(parser, SupportsDjangoDefaultParsing):
             # Special case, since this is the default content type
@@ -488,6 +610,15 @@ class BodyComponent(ComponentParser):
             ).description,
         )
 
+    def _has_body(self, request: 'HttpRequest') -> bool:
+        # Requests without bodies usually don't have any `Content-Type`,
+        # that's why we don't negotiate the parser here: it would fail.
+        if request.content_type == 'multipart/form-data':
+            # Reading `.body` of a multipart request loads all files
+            # into memory, Django parses this content type as a stream:
+            return bool(request.POST) or bool(request.FILES)
+        return bool(request.body)
+
 
 Body: TypeAlias = Annotated[_BodyT, BodyComponent()]
 """Annotated alias for parsing requests bodies."""
@@ -528,18 +659,19 @@ class HeadersComponent(ComponentParser):
         controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
+        default: Any = EMPTY,
     ) -> Any:
+        headers = controller.request.headers
+        if default is not EMPTY and not headers:
+            return default
         split_commas: frozenset[str] | None = getattr(
             field_model,
             '__dmr_split_commas__',
             None,
         )
         if not split_commas:
-            return controller.request.headers
-        return parse_headers(
-            controller.request.headers,
-            split_commas=split_commas,
-        )
+            return headers
+        return parse_headers(headers, split_commas=split_commas)
 
     @override
     def get_schema(
@@ -657,6 +789,7 @@ class PathComponent(ComponentParser):
         controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
+        default: Any = EMPTY,
     ) -> Any:
         if controller.args:
             raise RequestSerializationError(
@@ -666,6 +799,8 @@ class PathComponent(ComponentParser):
                     args=repr(controller.args),
                 ),
             )
+        if default is not EMPTY and not controller.kwargs:
+            return default
         return controller.kwargs
 
     @override
@@ -730,8 +865,12 @@ class CookiesComponent(ComponentParser):
         controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
+        default: Any = EMPTY,
     ) -> Any:
-        return controller.request.COOKIES
+        cookies = controller.request.COOKIES
+        if default is not EMPTY and not cookies:
+            return default
+        return cookies
 
     @override
     def get_schema(
@@ -843,7 +982,11 @@ class FileMetadataComponent(ComponentParser):
         controller: 'Controller[BaseSerializer]',
         *,
         field_model: Any,
+        default: Any = EMPTY,
     ) -> Mapping[str, Any]:
+        if default is not EMPTY and not controller.request.FILES:
+            return default  # type: ignore[no-any-return]
+
         parser = endpoint.request_negotiator(controller.request)
         if not isinstance(parser, SupportsFileParsing):
             raise RequestSerializationError(

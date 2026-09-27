@@ -23,7 +23,7 @@ from typing import (
 from django.http import HttpResponseBase
 from typing_extensions import ParamSpec, Sentinel
 
-from dmr.components import BodyComponent
+from dmr.components import BodyComponent, ComponentParserSpec
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.exceptions import EndpointMetadataError, UnsolvableAnnotationsError
 from dmr.headers import HeaderSpec, NewHeader
@@ -31,7 +31,6 @@ from dmr.internal.docstrings import resolve_summary_and_description
 from dmr.internal.enums import stringify
 from dmr.internal.types import EMPTY
 from dmr.metadata import (
-    ComponentParserSpec,
     EndpointMetadata,
     ResponseModification,
     ResponseSpec,
@@ -1315,8 +1314,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
         self,
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> None:
-        for component, _model, _metadata in self.metadata.component_parsers:
-            component.validate(controller_cls, self.metadata)
+        for spec in self.metadata.component_parsers:
+            spec.parser.validate(controller_cls, self.metadata)
 
     def _validate_parsers(
         self,
@@ -1352,8 +1351,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
             return
 
         has_body = any(
-            isinstance(component[0], BodyComponent)
-            for component in self.metadata.component_parsers
+            isinstance(spec.parser, BodyComponent)
+            for spec in self.metadata.component_parsers
         )
         if has_body:
             endpoint_name = self.metadata.endpoint_name

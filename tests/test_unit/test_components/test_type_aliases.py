@@ -136,8 +136,8 @@ _TOO_MANY_ALIASES: Final = 20
 
 def _parsed_components(endpoint: Endpoint) -> _ComponentTypes:
     return sorted(
-        (component.context_name, model, meta)
-        for component, model, meta in endpoint.metadata.component_parsers
+        (spec.parser.context_name, spec.model, spec.model_meta)
+        for spec in endpoint.metadata.component_parsers
     )
 
 

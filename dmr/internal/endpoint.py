@@ -270,14 +270,6 @@ class Extras(Generic[_BuiltExtrasT_co]):
 _ExtrasT = TypeVar('_ExtrasT', bound=Extras[Any] | Sentinel, default=Sentinel)
 
 
-def _payload_extras_cls(
-    extras_cls: type[object] | Sentinel,
-) -> type[Extras[Any]] | Sentinel:
-    if isinstance(extras_cls, Sentinel) or not issubclass(extras_cls, Extras):
-        return EMPTY
-    return extras_cls  # pyright: ignore[reportUnknownVariableType]
-
-
 @final
 @dataclasses.dataclass(frozen=True, slots=True)
 class ModifyEndpoint(Generic[_ExtrasT]):
@@ -605,7 +597,7 @@ class ModifyEndpoint(Generic[_ExtrasT]):
                 response_description=response_description,
                 ignore_from_spec=ignore_from_spec,
                 extras=extras,
-                extras_cls=_payload_extras_cls(self.extras_cls),
+                extras_cls=self.extras_cls,  # type: ignore[arg-type]
             ),
         )
 
@@ -1016,7 +1008,7 @@ class ValidateEndpoint(Generic[_ExtrasT]):
                 servers=servers,
                 ignore_from_spec=ignore_from_spec,
                 extras=extras,
-                extras_cls=_payload_extras_cls(self.extras_cls),
+                extras_cls=self.extras_cls,  # type: ignore[arg-type]
             ),
         )
 
