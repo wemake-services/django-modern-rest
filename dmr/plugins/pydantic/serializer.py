@@ -147,7 +147,8 @@ class PydanticSerializer(BaseSerializer):
     def serialize_hook(cls, to_serialize: Any) -> Any:
         """Customize how some objects are serialized into simple objects."""
         if isinstance(to_serialize, pydantic.BaseModel):
-            return to_serialize.model_dump(
+            return to_serialize.__pydantic_serializer__.to_python(
+                to_serialize,
                 mode=_JSON_MODE,
                 **cls.to_json_kwargs,
             )
