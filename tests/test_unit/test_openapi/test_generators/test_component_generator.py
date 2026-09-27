@@ -14,6 +14,7 @@ from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.objects import OpenAPIType, Parameter, Schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
+from dmr.types import EMPTY
 
 _FakeT = TypeVar('_FakeT')
 
@@ -28,6 +29,7 @@ class _FakeComponent(ComponentParser, Generic[_FakeT]):
         controller: Controller[BaseSerializer],
         *,
         field_model: Any,
+        default: Any = EMPTY,
     ) -> dict[str, Any]:
         raise NotImplementedError
 

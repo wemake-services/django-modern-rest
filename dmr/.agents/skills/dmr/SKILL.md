@@ -64,6 +64,10 @@ class UserController(Controller[MsgspecSerializer]):
         return parsed_body
 ```
 
+Optional components keep `None` inside the annotation:
+`parsed_body: Body[UserModel | None] = None`.
+`Body[UserModel] | None = None` is an import-time error.
+
 Return models, not Django responses. `HttpResponse` bypasses negotiation,
 headers, cookies, and validation. Raise `APIError` for errors,
 handle them in `handle_error` / `handle_async_error`, not in the endpoint body:
@@ -116,6 +120,7 @@ Every rule links to the documentation page that explains it.
 Flag these when reviewing `dmr` code:
 
 - A component parameter with a name other than `parsed_*`.
+- `Body[Model] | None = None` instead of `Body[Model | None] = None`.
 - `HttpResponse(...)` or `JsonResponse(...)` returned from an endpoint.
 - `try` / `except` returning error responses inside an endpoint body.
 - `@modify` or `@validate` that changes nothing compared to the defaults.

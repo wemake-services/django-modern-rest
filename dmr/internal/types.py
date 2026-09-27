@@ -116,6 +116,27 @@ def find_annotated_metadata(
     return None
 
 
+def has_nested_annotated_metadata(
+    annotation: Any,
+    metadata_type: type[Any],
+) -> bool:
+    """
+    Whether *metadata_type* is present anywhere inside *annotation*.
+
+    Unlike :func:`find_annotated_metadata`, it also looks
+    into unions, generics, and other nested types,
+    ``Annotated[Model, metadata] | None``
+    or ``list[Annotated[Model, metadata]]`` are found.
+    """
+    annotation = unwrap_type_alias(annotation)
+    if find_annotated_metadata(annotation, metadata_type) is not None:
+        return True
+    return any(
+        has_nested_annotated_metadata(arg, metadata_type)
+        for arg in get_args(annotation)
+    )
+
+
 class FormatError(Protocol):
     """Callable that converts an error into a structured Python object."""
 

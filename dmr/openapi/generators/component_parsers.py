@@ -7,6 +7,7 @@ from django.urls import converters
 from typing_extensions import TypedDict
 
 from dmr.internal.regex import parse_named_groups
+from dmr.internal.types import EMPTY
 from dmr.openapi.collector import InternalRouteMetadata
 from dmr.openapi.objects import (
     MediaType,
@@ -17,7 +18,7 @@ from dmr.openapi.objects import (
 )
 
 if TYPE_CHECKING:
-    from dmr.components import ComponentParser
+    from dmr.components import ComponentParserSpec
     from dmr.controller import Controller
     from dmr.metadata import EndpointMetadata
     from dmr.openapi.core.context import OpenAPIContext
@@ -28,6 +29,9 @@ _RequestBody: TypeAlias = RequestBody | Reference | None
 _RequestParameters: TypeAlias = list[Parameter | Reference] | None
 
 _SLUG_REGEX: Final = converters.SlugConverter.regex
+
+#: Path parameters are special: they are always required.
+_PATH_LOCATION: Final = 'path'
 
 # In json schema `pattern` is a search, but a url converter always matches
 # the whole value, so we anchor the regex on both sides.
@@ -83,30 +87,26 @@ class ComponentParserGenerator:  # noqa: WPS214
         """
         Generate parameters from parsers.
 
+        Components with default values are optional:
+        their request bodies are not required
+        and their parameters are not required as well.
+        Except for path parameters, they are always required by OpenAPI.
+
         .. versionchanged:: 0.16.0
             Now accepts *controller_cls* parameter instead of *serializer*.
             Now accepts *route_metadata* parameter instead of *pattern*.
+            Components with default values are now optional.
 
         """
         params_list: list[Parameter | Reference] = []
         request_body: RequestBody | None = None
 
-        for component in metadata.component_parsers:
-            schema = self._call_component(
-                *component,
-                metadata,
-                controller_cls,
-            )
-
+        for spec in metadata.component_parsers:
+            schema = self._call_component(spec, metadata, controller_cls)
             if isinstance(schema, RequestBody):
                 request_body = self._merge_bodies(schema, request_body)
-            elif isinstance(schema, list):  # pyright: ignore[reportUnnecessaryIsInstance]
-                params_list.extend(schema)
             else:
-                raise TypeError(
-                    f'Returning {type(schema)!r} '
-                    'from ComponentParser.get_schema is not supported',
-                )
+                params_list.extend(schema)
 
         pattern_param = self._parse_pattern(
             operation_id,
@@ -122,19 +122,41 @@ class ComponentParserGenerator:  # noqa: WPS214
 
     def _call_component(
         self,
-        parser: 'ComponentParser',
-        model: Any,
-        model_meta: tuple[Any, ...],
+        spec: 'ComponentParserSpec',
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> list[Parameter | Reference] | RequestBody:
-        return parser.get_schema(
-            model,
-            model_meta,
+        schema = spec.parser.get_schema(
+            spec.model,
+            spec.model_meta,
             metadata=metadata,
             controller_cls=controller_cls,
             context=self._context,
         )
+        if isinstance(schema, RequestBody):
+            if spec.default is not EMPTY:
+                schema.required = False
+            return schema
+        if isinstance(schema, list):  # pyright: ignore[reportUnnecessaryIsInstance]
+            if spec.default is not EMPTY:
+                self._mark_optional(schema)
+            return schema
+        raise TypeError(
+            f'Returning {type(schema)!r} '
+            'from ComponentParser.get_schema is not supported',
+        )
+
+    def _mark_optional(
+        self,
+        params_list: list[Parameter | Reference],
+    ) -> None:
+        for param_spec in params_list:
+            # OpenAPI requires all path parameters to be required:
+            if (
+                isinstance(param_spec, Parameter)
+                and param_spec.param_in != _PATH_LOCATION
+            ):
+                param_spec.required = None
 
     def _parse_pattern(
         self,
@@ -146,7 +168,7 @@ class ComponentParserGenerator:  # noqa: WPS214
     ) -> list[Parameter | Reference] | None:
         # TODO: support `parameter` references:
         if any(
-            param_spec.param_in == 'path'
+            param_spec.param_in == _PATH_LOCATION
             for param_spec in parameter_specs
             if isinstance(param_spec, Parameter)
         ):
@@ -219,7 +241,7 @@ class ComponentParserGenerator:  # noqa: WPS214
                 (),
                 metadata,
                 controller_cls,
-                param_in='path',
+                param_in=_PATH_LOCATION,
             ),
             prepared,
         )
@@ -241,7 +263,7 @@ class ComponentParserGenerator:  # noqa: WPS214
                     (),
                     metadata,
                     controller_cls,
-                    param_in='path',
+                    param_in=_PATH_LOCATION,
                 ),
                 regex.pattern,
             )

@@ -34,9 +34,18 @@ class ParameterGenerator:
         """
         Generate parameter spec for the OpenAPI.
 
+        Parameters are generated from the properties of object schemas.
+        Unions like ``Query[Model | None] = None``
+        or ``Query[Model | Literal['']] = ''`` are supported:
+        only their object members have properties, other members
+        can only come from defaults, not from the request.
+        When there are several object members, a parameter is required
+        only when it is required by all of them.
+
         .. versionchanged:: 0.16.0
             Now accepts *metadata* and *controller_cls* parameters.
             Removed *serializer* and *context* parameters.
+            Union models are now supported.
 
         """
         # Import cycle:
@@ -55,6 +64,7 @@ class ParameterGenerator:
             ParameterMetadata,
             model_meta=model_meta,
         )
+        object_schemas = self._object_schemas(schema)
         return [  # pyright: ignore[reportReturnType]
             Parameter(
                 name=property_name,
@@ -66,20 +76,64 @@ class ParameterGenerator:
                 # and not all of them might have this parameter:
                 required=(
                     param_in == 'path'
-                    or property_name in schema.required
+                    or all(
+                        property_name in object_schema.required
+                        for object_schema in object_schemas
+                    )
                     or None
                 ),
                 **self._compute_metadata(
                     annotated_meta,
                     property_name,
                     property_schema,
-                    schema,
+                    object_schema,
                 ),
             )
-            for property_name, property_schema in (
-                schema.properties or {}
+            for object_schema in object_schemas
+            for property_name, property_schema in self._new_properties(
+                object_schema,
+                object_schemas,
             ).items()
         ]
+
+    def _object_schemas(self, schema: Schema) -> list[Schema]:
+        """
+        Find all schemas with properties inside a schema.
+
+        Unions are represented with ``anyOf`` or ``oneOf``,
+        we look into their members recursively.
+        """
+        members = schema.any_of or schema.one_of
+        if not members:
+            return [schema] if schema.properties else []
+        object_schemas: list[Schema] = []
+        for member in members:
+            object_schemas.extend(
+                self._object_schemas(
+                    self._context.registries.schema.maybe_resolve_reference(
+                        member,
+                    ),
+                ),
+            )
+        return object_schemas
+
+    def _new_properties(
+        self,
+        object_schema: Schema,
+        object_schemas: list[Schema],
+    ) -> dict[str, Reference | Schema]:
+        """Properties of *object_schema* that previous schemas don't have."""
+        previous = object_schemas[: object_schemas.index(object_schema)]
+        return {
+            property_name: property_schema
+            for property_name, property_schema in (
+                object_schema.properties or {}
+            ).items()
+            if not any(
+                property_name in (schema.properties or {})
+                for schema in previous
+            )
+        }
 
     def _compute_metadata(
         self,
