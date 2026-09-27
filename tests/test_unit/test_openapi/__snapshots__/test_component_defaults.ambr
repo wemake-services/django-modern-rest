@@ -77,9 +77,31 @@
           ],
           "requestBody": {
             "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/_Model"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
               "multipart/form-data": {
                 "schema": {
                   "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/_Model"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     {
                       "anyOf": [
                         {
@@ -90,16 +112,6 @@
                         }
                       ],
                       "properties": {}
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/components/schemas/_Model"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
                     }
                   ]
                 }
@@ -165,9 +177,17 @@
           "operationId": "postRequiredBodyControllerApiRequired",
           "requestBody": {
             "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Model"
+                }
+              },
               "multipart/form-data": {
                 "schema": {
                   "allOf": [
+                    {
+                      "$ref": "#/components/schemas/_Model"
+                    },
                     {
                       "anyOf": [
                         {
@@ -178,9 +198,6 @@
                         }
                       ],
                       "properties": {}
-                    },
-                    {
-                      "$ref": "#/components/schemas/_Model"
                     }
                   ]
                 }

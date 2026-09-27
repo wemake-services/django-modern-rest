@@ -1,9 +1,10 @@
 import json
-from typing import Annotated, ClassVar, Literal, TypeAlias
+from typing import Annotated, Any, ClassVar, Final, Literal, TypeAlias
 
 import pydantic
 from django.http import FileResponse
 from django.urls import path
+from inline_snapshot import snapshot
 from syrupy.assertion import SnapshotAssertion
 
 from dmr import Body, Controller, FileMetadata, modify, validate
@@ -316,8 +317,6 @@ def test_merged_body_without_description_schema(
 
 
 class _FileFirstController(Controller[PydanticSerializer]):
-    # `JsonParser` cannot parse files, so `Body[]` alone would document
-    # `application/json`, while `FileMetadata[]` would not:
     parsers = (MultiPartParser(), JsonParser())
 
     async def post(
@@ -339,33 +338,124 @@ class _BodyFirstController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def _merged_body_content(
+class _OneFile(pydantic.BaseModel):
+    first_file: _FileModel
+
+
+class _OptionalFileController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(), JsonParser())
+
+    async def post(
+        self,
+        parsed_body: Body[dict[str, str]],
+        # A default makes this component optional, so a request without
+        # any files is valid. `JsonParser` cannot parse files, but an
+        # `application/json` request simply arrives without them:
+        parsed_file_metadata: FileMetadata[_OneFile | None] = None,
+    ) -> str:
+        raise NotImplementedError
+
+
+_MULTIPART: Final = str(ContentType.multipart_form_data)
+
+
+def _merged_request_body(
     controller: type[Controller[PydanticSerializer]],
-) -> dict[str, object]:
+) -> Any:
     schema = build_schema(
         Router('', [path('merged/', controller.as_view())]),
     ).convert()
-    operation = schema['paths']['/merged/']['post']
-    return operation['requestBody']['content']  # type: ignore[no-any-return]
+    return schema['paths']['/merged/']['post']['requestBody']
 
 
-def test_merged_body_content_types_ignore_order() -> None:
-    """Ensure that component order does not change the documented types."""
-    file_first = _merged_body_content(_FileFirstController)
-    body_first = _merged_body_content(_BodyFirstController)
+def test_required_file_merged_body() -> None:
+    """Ensure that a required file component rules out `application/json`."""
+    # `FileMetadata[]` is required here, so it has to parse every request,
+    # and `JsonParser` cannot parse files. Sending `application/json`
+    # to this endpoint is a `400`, so it is not documented.
+    assert _merged_request_body(_BodyFirstController) == snapshot({
+        'content': {
+            'multipart/form-data': {
+                'schema': {
+                    'allOf': [
+                        {
+                            'additionalProperties': {'type': 'string'},
+                            'type': 'object',
+                        },
+                        {
+                            'properties': {
+                                'first_file': {
+                                    'type': 'string',
+                                    'format': 'binary',
+                                },
+                                'second_file': {
+                                    'type': 'string',
+                                    'format': 'binary',
+                                },
+                            },
+                            'type': 'object',
+                            'required': ['first_file', 'second_file'],
+                            'title': '_SeveralSimpleFiles',
+                        },
+                    ],
+                },
+                'encoding': {
+                    'first_file': {
+                        'contentType': 'application/json, text/plain',
+                    },
+                    'second_file': {
+                        'contentType': 'application/json, text/plain',
+                    },
+                },
+            },
+        },
+        'required': True,
+    })
 
-    # `application/json` is dropped: `FileMetadata[]` rejects `JsonParser`
-    # at runtime, so such a request could never succeed.
-    assert list(file_first) == [str(ContentType.multipart_form_data)]
-    assert list(body_first) == list(file_first)
+
+def test_optional_file_merged_body() -> None:
+    """Ensure that an optional file component keeps `application/json`."""
+    assert _merged_request_body(_OptionalFileController) == snapshot({
+        'content': {
+            'application/json': {
+                'schema': {
+                    'additionalProperties': {'type': 'string'},
+                    'type': 'object',
+                },
+            },
+            'multipart/form-data': {
+                'schema': {
+                    'allOf': [
+                        {
+                            'additionalProperties': {'type': 'string'},
+                            'type': 'object',
+                        },
+                        {
+                            'anyOf': [
+                                {
+                                    '$ref': '#/components/schemas/_OneFile',
+                                },
+                                {'type': 'null'},
+                            ],
+                            'properties': {},
+                        },
+                    ],
+                },
+            },
+        },
+        'required': True,
+    })
 
 
-def test_merged_body_keeps_encoding_in_any_order() -> None:
-    """Ensure that no component loses its metadata to the merge."""
-    multipart = str(ContentType.multipart_form_data)
-    file_first = _merged_body_content(_FileFirstController)[multipart]
-    body_first = _merged_body_content(_BodyFirstController)[multipart]
+def test_merged_body_ignores_component_order() -> None:
+    """Ensure that component order does not change the merged body."""
+    file_first = _merged_request_body(_FileFirstController)
+    body_first = _merged_request_body(_BodyFirstController)
+    # `allOf` lists the component schemas in declaration order, and the
+    # order of its members does not change what it allows. Everything
+    # else used to depend on which component came last:
+    for body in (file_first, body_first):
+        multipart = body['content'][_MULTIPART]
+        multipart['schema']['allOf'].sort(key=repr)
 
-    # `encoding` is only set by `FileMetadata[]`, it used to be lost
-    # when `Body[]` was the one declared last:
-    assert file_first['encoding'] == body_first['encoding']  # type: ignore[index]
+    assert file_first == body_first

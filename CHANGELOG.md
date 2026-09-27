@@ -364,9 +364,12 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   With `Body[]` and `FileMetadata[]` on one endpoint, whichever came last
   decided the documented content types, and the other one silently lost
   both the types only it supported and its `encoding` metadata.
-  Now we document the content types that all body components support,
-  which is also what the endpoint really accepts: a request is parsed
-  by all of them at once, #1537
+  Now we document the content types that every *required* body component
+  supports, which is also what the endpoint really accepts. A component
+  with a default value is optional, so it no longer rules out the content
+  types it cannot parse: `FileMetadata[Files | None] = None` next to
+  a `Body[]` keeps `application/json` in the schema, and such a request
+  really does succeed, with no files, #1537
 - Fixed seeded OpenAPI examples of `datetime`, `date`, and `time`
   changing with the current time. Faker's defaults end at the current time,
   now these examples are generated between `2000-01-01` and `2026-01-01`.
