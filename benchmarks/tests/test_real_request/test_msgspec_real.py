@@ -67,5 +67,6 @@ def test_msgspec_parse_and_validate(
     controller.setup(request)
 
     @benchmark
-    def factory() -> HttpResponseBase:
-        return controller.dispatch(request)
+    def factory() -> None:
+        for _ in range(10):
+            controller.dispatch(request)
