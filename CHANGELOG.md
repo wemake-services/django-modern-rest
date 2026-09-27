@@ -233,6 +233,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   `AND` and `OR` auth strategies, previously
   it was only possible to represent `OR` strategy, #1521
 - Added `CursorPagination` support to `drm.pagination`, #1428
+- Added `HttpSpec.cookie_semantics` validation rule, #1555
 - Added `clear_cache` method to `RequestNegotiator` and `ResponseNegotiator`
   to drop the memoized negotiation results. Needed when parsers
   or renderers of an endpoint are modified in place, #1455
