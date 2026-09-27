@@ -329,6 +329,11 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Bugfixes
 
+- Fixed generated OpenAPI examples of models ignoring hand-written
+  examples of their fields, like `pydantic.Field(examples=[...])`
+  or `msgspec.Meta(examples=[...])`. Such fields used to get
+  random values in the model example, now they get their own examples.
+  It works for all serializers, #1639
 - Fixed `example` of `NewHeader` and `HeaderSpec` not being
   in the OpenAPI schema. Now it is set on the `Header` object,
   and such headers don't get generated examples, #1627
