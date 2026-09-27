@@ -79,7 +79,6 @@ class QuerySerializer(serializers.Serializer):
     per_page = serializers.IntegerField()
     count = serializers.IntegerField()
     page = serializers.IntegerField()
-    filter = serializers.ListField(child=serializers.CharField())
 
 
 class HeadersSerializer(serializers.Serializer):
@@ -91,9 +90,7 @@ class SyncUserView(APIView):
     def post(self, request):
         query_serializer = QuerySerializer(data=request.query_params)
         query_serializer.is_valid(raise_exception=True)
-        filters = query_serializer.validated_data
-
-        assert filters['filter'][0] == 'drf', filters['filter']
+        assert query_serializer.validated_data
 
         header_data = {
             'x_api_token': request.headers.get('x-api-token', ''),

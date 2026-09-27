@@ -3,24 +3,19 @@ from collections.abc import Callable
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
-from typing_extensions import TypedDict
-
 from dmr.components import ComponentParser, ComponentParserBuilder
 from dmr.exceptions import ValidationError
+from dmr.serializer import ContextField, ContextModel
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.endpoint import Endpoint
     from dmr.serializer import BaseSerializer
 
-
-_ComponentParserSpec: TypeAlias = dict[ComponentParser, Any]
+_ContextFields: TypeAlias = dict[str, ContextField]
 _ContentTypeOverrides: TypeAlias = dict[str, dict[str, Any]]
-_TypeMapResult: TypeAlias = tuple[
-    _ComponentParserSpec,
-    dict[str, Any],
-    _ContentTypeOverrides,
-]
+#: Component name, component, its model, and its default.
+_CollectPlan: TypeAlias = tuple[tuple[str, ComponentParser, Any, Any], ...]
 
 
 class SerializerContext:
@@ -28,8 +23,13 @@ class SerializerContext:
     Parse and bind request components for a controller.
 
     This context collects raw data for all registered components, validates
-    the combined payload in a single call using a cached TypedDict model,
-    and then binds the parsed values back to the controller.
+    the combined payload in a single call using a cached model
+    that the serializer builds, and then binds the parsed values
+    back to the controller.
+
+    Components with default values return them
+    when a request has no data for them, so the endpoint
+    receives their real python defaults.
 
     Attributes:
         strict_validation: Whether or not to validate payloads in strict mode.
@@ -37,6 +37,10 @@ class SerializerContext:
             not allow implicit type conversions.
             Defaults to ``None``, which means that we decide
             on a per-field basis if it is set, if not then on a per-model basis.
+
+    .. versionchanged:: 0.16.0
+        Models are now built by ``serializer.build_context_model``,
+        defaults of component parameters are now supported.
 
     """
 
@@ -49,19 +53,18 @@ class SerializerContext:
     )
 
     # Protected API:
-    _specs: _ComponentParserSpec
-    _default_combined_model: Any
-    _conditional_combined_models: dict[str, Any]
+    _collect_plan: _CollectPlan
+    _default_model: ContextModel
+    _conditional_models: dict[str, ContextModel]
 
     __slots__ = (
         '_collect_plan',
-        '_conditional_combined_models',
-        '_default_combined_model',
-        '_specs',
+        '_conditional_models',
+        '_default_model',
         'component_parsers',
     )
 
-    def __init__(  # noqa: WPS210
+    def __init__(
         self,
         func: Callable[..., Any],
         controller_cls: type['Controller[BaseSerializer]'],
@@ -74,23 +77,25 @@ class SerializerContext:
             controller_cls,
         )(type_annotations)
 
-        # Build specs and conditional models:
-        specs, type_map, content_mapping = self._build_type_map(func)
-        self._specs = specs
-        default_combined_model, conditional_combined_models = (
-            self._build_combined_models(
-                controller_cls,
-                type_map,
-                content_mapping,
-            )
+        # Build models and conditional models:
+        fields, content_type_overrides = self._build_fields()
+        default_model, conditional_models = self._build_models(
+            controller_cls,
+            fields,
+            content_type_overrides,
         )
-        self._default_combined_model = default_combined_model
-        self._conditional_combined_models = conditional_combined_models
+        self._default_model = default_model
+        self._conditional_models = conditional_models
 
         # Prepare values to collect the context from:
         self._collect_plan = tuple(
-            (component.context_name, component, submodel)
-            for component, submodel in specs.items()
+            (
+                spec.parser.context_name,
+                spec.parser,
+                spec.model,
+                spec.default,
+            )
+            for spec in self.component_parsers
         )
 
     def __call__(
@@ -104,66 +109,71 @@ class SerializerContext:
         Raises ``serializer.validation_error`` when provided
         data does not match the expected model.
         """
-        if not self._specs:
+        if not self._collect_plan:
             return {}
 
         context = self._collect_context(endpoint, controller)
         return self._validate_context(context, controller)
 
-    def _build_type_map(  # noqa: WPS210
+    def _build_fields(
         self,
-        func: Callable[..., Any],
-    ) -> _TypeMapResult:
+    ) -> tuple[_ContextFields, _ContentTypeOverrides]:
         """
         Build the type parsing spec.
 
         Called during import-time.
         """
-        specs: _ComponentParserSpec = {}
-        type_map: dict[str, Any] = {}
+        fields: _ContextFields = {}
         content_type_overrides: _ContentTypeOverrides = defaultdict(dict)
 
-        for component, model_type, model_meta in self.component_parsers:
-            type_map[component.context_name] = model_type
-            specs[component] = model_type
-            for content_type, model in component.conditional_types(
-                model_type,
-                model_meta,
+        for spec in self.component_parsers:
+            fields[spec.parser.context_name] = ContextField(
+                spec.model,
+                spec.default,
+            )
+            for content_type, model in spec.parser.conditional_types(
+                spec.model,
+                spec.model_meta,
             ).items():
                 content_type_overrides[content_type].update({
-                    component.context_name: model,
+                    spec.parser.context_name: model,
                 })
-        return specs, type_map, content_type_overrides
+        return fields, content_type_overrides
 
-    def _build_combined_models(
+    def _build_models(
         self,
         controller_cls: type['Controller[BaseSerializer]'],
-        type_map: dict[str, Any],
+        fields: _ContextFields,
         content_type_overrides: _ContentTypeOverrides,
-    ) -> tuple[Any, dict[str, Any]]:
+    ) -> tuple[ContextModel, dict[str, ContextModel]]:
         # Name is not really important,
         # we use `@` to identify that it is generated:
-        name_prefix = controller_cls.__qualname__  # pyright: ignore[reportUnusedVariable]
-
-        default_model = TypedDict(  # type: ignore[misc]
-            f'_{name_prefix}@ContextModel',  # pyright: ignore[reportArgumentType]  # pyrefly: ignore[name-mismatch]
-            type_map,
-            total=True,
+        name_prefix = controller_cls.__qualname__
+        default_model = controller_cls.serializer.build_context_model(
+            f'_{name_prefix}@ContextModel',
+            fields,
         )
-        if not content_type_overrides:
-            return default_model, {}
-
-        content_mapping: dict[str, Any] = {}
-        for content_type, overrides in content_type_overrides.items():  # pyright: ignore[reportUnusedVariable]
-            content_mapping[content_type] = TypedDict(  # type: ignore[operator]
-                f'_{name_prefix}@ContextModel#{content_type}',
-                {
-                    **type_map,  # pyright: ignore[reportGeneralTypeIssues]
-                    **overrides,  # pyright: ignore[reportGeneralTypeIssues]
-                },
-                total=True,
+        return default_model, {
+            content_type: controller_cls.serializer.build_context_model(
+                f'_{name_prefix}@ContextModel_{content_type}',
+                self._override_fields(fields, overrides),
             )
-        return default_model, content_mapping
+            for content_type, overrides in content_type_overrides.items()
+        }
+
+    def _override_fields(
+        self,
+        fields: _ContextFields,
+        overrides: dict[str, Any],
+    ) -> _ContextFields:
+        """Replace annotations of some fields, but keep their defaults."""
+        return {
+            **fields,
+            **{
+                field_name: ContextField(model, fields[field_name].default)
+                for field_name, model in overrides.items()
+            },
+        }
 
     def _collect_context(
         self,
@@ -172,11 +182,12 @@ class SerializerContext:
     ) -> dict[str, Any]:
         """Collect raw data for all components into a mapping."""
         context: dict[str, Any] = {}
-        for context_name, component, submodel in self._collect_plan:
+        for context_name, component, submodel, default in self._collect_plan:
             context[context_name] = component.provide_context_data(
                 endpoint,
                 controller,
                 field_model=submodel,  # just the exact field for the exact key
+                default=default,
             )
         return context
 
@@ -185,18 +196,18 @@ class SerializerContext:
         context: dict[str, Any],
         controller: 'Controller[BaseSerializer]',
     ) -> dict[str, Any]:
-        """Validate the combined payload using the cached TypedDict model."""
+        """Validate the combined payload using the cached model."""
         serializer = controller.serializer
-        model = self._default_combined_model
-        if self._conditional_combined_models:
-            model = self._conditional_combined_models.get(  # pyrefly: ignore[no-matching-overload]  # pyright: ignore[reportUnknownVariableType]
+        context_model = self._default_model
+        if self._conditional_models:
+            context_model = self._conditional_models.get(  # pyrefly: ignore[no-matching-overload]
                 controller.request.content_type,  # type: ignore[arg-type]
-                model,
+                context_model,
             )
         try:
-            return serializer.from_python(  # type: ignore[no-any-return]
+            parsed = serializer.from_python(
                 context,
-                model,
+                context_model.model,
                 strict=self.strict_validation,
             )
         except serializer.validation_error as exc:
@@ -204,3 +215,6 @@ class SerializerContext:
                 serializer.serialize_validation_error(exc),
                 status_code=HTTPStatus.BAD_REQUEST,
             ) from None
+        if context_model.to_kwargs is None:
+            return parsed  # type: ignore[no-any-return]
+        return context_model.to_kwargs(parsed)

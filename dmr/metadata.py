@@ -11,7 +11,6 @@ from typing import (  # noqa: WPS235
     Final,
     Generic,
     Self,
-    TypeAlias,
     get_args,
     get_origin,
 )
@@ -25,7 +24,7 @@ from dmr.internal.types import (
 )
 
 if TYPE_CHECKING:
-    from dmr.components import ComponentParser
+    from dmr.components import ComponentParserSpec
     from dmr.controller import Controller
     from dmr.cookies import CookieSpec, NewCookie
     from dmr.errors import AsyncErrorHandler, SyncErrorHandler
@@ -46,7 +45,6 @@ if TYPE_CHECKING:
     from dmr.settings import HttpSpec
     from dmr.throttling import AsyncThrottle, SyncThrottle
 
-ComponentParserSpec: TypeAlias = tuple['ComponentParser', Any, tuple[Any, ...]]
 
 _SpecT = TypeVar('_SpecT', 'HeaderSpec', 'CookieSpec')
 
@@ -524,8 +522,8 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
         error_handler: Callback function to be called
             when this endpoint faces an exception.
         component_parsers: List of component parser specifications
-            from the controller. Each spec is a tuple
-            of (ComponentParser class, type args).
+            from the controller. Each spec is a named tuple
+            of (ComponentParser instance, model, model meta, default).
         parsers: List of instances to be used for this endpoint
             to parse incoming request's body. All instances must be of subtypes
             of :class:`~dmr.parsers.Parser`.
@@ -614,7 +612,7 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
     method: str
     modification: ResponseModification | None
     error_handler: 'SyncErrorHandler | AsyncErrorHandler | None'
-    component_parsers: list[ComponentParserSpec]
+    component_parsers: list['ComponentParserSpec']
     parsers: dict[str, 'Parser']
     renderers: dict[str, 'Renderer']
     validate_negotiation: bool
@@ -731,7 +729,7 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
             return []
 
         return [
-            *[spec[0] for spec in self.component_parsers],
+            *[spec.parser for spec in self.component_parsers],
             *self.parsers.values(),
             *self.renderers.values(),
             *(self.auth or []),
