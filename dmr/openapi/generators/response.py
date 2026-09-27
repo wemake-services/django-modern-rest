@@ -16,6 +16,7 @@ from dmr.openapi.objects import (
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
+    from dmr.headers import HeaderSpec
     from dmr.metadata import EndpointMetadata, ResponseSpec
     from dmr.openapi.core.context import OpenAPIContext
     from dmr.serializer import BaseSerializer
@@ -125,21 +126,34 @@ class ResponseGenerator:
             return {}
 
         return {
-            name: Header(
-                description=(
-                    None
-                    if header_spec.description is None
-                    else str(header_spec.description)
-                ),
-                deprecated=header_spec.deprecated or None,
-                required=header_spec.required or None,
-                schema=context.generators.schema(
-                    str,
-                    controller_cls.serializer,
-                ),
-            )
+            name: self._get_header(header_spec, controller_cls, context)
             for name, header_spec in response_spec.headers.items()
         }
+
+    def _get_header(
+        self,
+        header_spec: 'HeaderSpec',
+        controller_cls: type['Controller[BaseSerializer]'],
+        context: 'OpenAPIContext',
+    ) -> Header:
+        schema = context.generators.schema(str, controller_cls.serializer)
+        header = Header(
+            description=(
+                None
+                if header_spec.description is None
+                else str(header_spec.description)
+            ),
+            deprecated=header_spec.deprecated or None,
+            required=header_spec.required or None,
+            schema=schema,
+        )
+        if header_spec.example is not None:
+            # for mypy: `str` cannot return a reference, it is a primitive
+            assert isinstance(schema, Schema)  # noqa: S101
+            # Examples written by hand replace the generated ones:
+            header.example = header_spec.example
+            header.schema = dataclasses.replace(schema, examples=None)
+        return header
 
     def _get_cookies(
         self,
