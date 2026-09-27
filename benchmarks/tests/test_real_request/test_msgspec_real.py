@@ -5,7 +5,6 @@ import uuid
 from typing import Final
 
 import msgspec
-from django.http import HttpResponseBase
 from pytest_codspeed import BenchmarkFixture
 
 from dmr import Body, Controller
