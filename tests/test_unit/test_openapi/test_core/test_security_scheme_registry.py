@@ -31,7 +31,7 @@ def test_register_unique_security_schemes() -> None:
     }
 
 
-def test_reregister_identical_security_scheme_is_allowed() -> None:
+def test_reregister_identical_security_schemes() -> None:
     """Same name with an equal scheme is idempotent (shared auth)."""
     registry = SecuritySchemeRegistry()
     first = _http_bearer()
@@ -43,7 +43,7 @@ def test_reregister_identical_security_scheme_is_allowed() -> None:
     assert registry.schemes == {'BearerAuth': first}
 
 
-def test_duplicate_security_scheme_name_raises_error() -> None:
+def test_duplicate_security_schemes() -> None:
     """Different schemes under one name must raise ``ValueError``."""
     registry = SecuritySchemeRegistry()
     registry.register('Auth', _http_bearer())
@@ -55,7 +55,7 @@ def test_duplicate_security_scheme_name_raises_error() -> None:
         registry.register('Auth', _api_key_header())
 
 
-def test_duplicate_reference_name_raises_error() -> None:
+def test_duplicate_references() -> None:
     """Different references under one name must raise ``ValueError``."""
     registry = SecuritySchemeRegistry()
     registry.register('Auth', Reference(ref='#/components/securitySchemes/A'))
