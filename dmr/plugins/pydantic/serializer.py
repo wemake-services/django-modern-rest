@@ -152,17 +152,12 @@ class PydanticSerializer(BaseSerializer):
                 **cls.to_json_kwargs,
             )
         # We support dataclasses here, because raw `JsonRenderer`
-        # does not support them, however, we use them in multiple places inside:
-        if is_dataclass(to_serialize):
-            return _get_cached_type_adapter(
-                type(to_serialize),  # type: ignore[arg-type]
-            ).dump_python(
-                to_serialize,
-                mode=_JSON_MODE,
-                **cls.to_json_kwargs,
-            )
-        # This is a pydantic field inside a `TypedDict`, `@dataclass`, etc:
-        if hasattr(to_serialize, '__get_pydantic_core_schema__'):
+        # does not support them, however, we use them in multiple places inside.
+        # Or this is a pydantic field inside a `TypedDict`, `@dataclass`, etc:
+        if is_dataclass(to_serialize) or hasattr(
+            to_serialize,
+            '__get_pydantic_core_schema__',
+        ):
             return _get_cached_type_adapter(
                 type(to_serialize),  # type: ignore[arg-type]
             ).dump_python(
