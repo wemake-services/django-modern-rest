@@ -126,6 +126,11 @@ class _Event(pydantic.BaseModel):
     day: dt.date
     at: dt.time
     duration: dt.timedelta
+    # Hand-written examples are kept, like for any other field.
+    # This one is outside of the generated range on purpose:
+    deadline: dt.datetime = pydantic.Field(
+        examples=[dt.datetime.fromisoformat('2030-01-01T00:00Z')],
+    )
 
 
 class _EventController(Controller[PydanticSerializer]):
@@ -145,11 +150,37 @@ def test_date_examples_do_not_depend_on_now(
         Router('api/v1/', [path('event/', _EventController.as_view())]),
     ).convert()
 
-    assert schema['components']['schemas']['_Event']['examples'] == snapshot([
-        {
-            'created_at': '2015-07-29T08:07:07.196110',
-            'day': '2018-07-18',
-            'at': '16:59:00.160450',
-            'duration': 'P6DT10H23M7S',
+    assert schema['components']['schemas']['_Event'] == snapshot({
+        'properties': {
+            'created_at': {
+                'type': 'string',
+                'format': 'date-time',
+                'title': 'Created At',
+            },
+            'day': {'type': 'string', 'format': 'date', 'title': 'Day'},
+            'at': {'type': 'string', 'format': 'time', 'title': 'At'},
+            'duration': {
+                'type': 'string',
+                'format': 'duration',
+                'title': 'Duration',
+            },
+            'deadline': {
+                'type': 'string',
+                'format': 'date-time',
+                'title': 'Deadline',
+                'examples': ['2030-01-01T00:00:00Z'],
+            },
         },
-    ])
+        'type': 'object',
+        'required': ['created_at', 'day', 'at', 'duration', 'deadline'],
+        'title': '_Event',
+        'examples': [
+            {
+                'created_at': '2016-03-12T16:44:15.046152',
+                'day': '2019-04-15',
+                'at': '22:52:44.444129',
+                'duration': 'P6DT10H23M7S',
+                'deadline': '2000-10-02T11:06:13.220020',
+            },
+        ],
+    })
