@@ -3,7 +3,7 @@ import inspect
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
 from operator import attrgetter
-from typing import (
+from typing import (  # noqa: WPS235
     TYPE_CHECKING,
     Annotated,
     Any,
