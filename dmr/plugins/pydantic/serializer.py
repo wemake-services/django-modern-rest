@@ -272,6 +272,7 @@ class PydanticSerializer(BaseSerializer):
                 name,  # pyright: ignore[reportArgumentType]  # pyrefly: ignore[name-mismatch]
                 annotations,  # pyright: ignore[reportArgumentType]
                 total=True,
+                closed=True,
             )
             _get_cached_type_adapter(typed_dict)  # prepare during import time
             return ContextModel(typed_dict)
