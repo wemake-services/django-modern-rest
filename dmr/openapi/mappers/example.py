@@ -1,4 +1,11 @@
-from typing import TYPE_CHECKING, Annotated, Any, get_args, get_origin
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    TypeAlias,
+    get_args,
+    get_origin,
+)
 
 from typing_extensions import Sentinel, override
 
@@ -53,7 +60,7 @@ else:
 
         # Type checkers need to know what `super()` is in this mixin,
         # but in runtime it must not be a real factory:
-        _MixinBase = BaseFactory[Any]
+        _MixinBase: TypeAlias = BaseFactory[Any]
     else:
         _MixinBase = object
 
