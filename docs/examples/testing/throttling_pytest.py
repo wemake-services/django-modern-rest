@@ -5,7 +5,7 @@ import pytest
 from django.core.cache import cache
 
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.test import DMRRequestFactory, assert_throttling
 from dmr.throttling import Rate, SyncThrottle
 from dmr.throttling.backends import SyncDjangoCache
@@ -13,7 +13,7 @@ from dmr.throttling.backends import SyncDjangoCache
 _URL: Final = '/reports/'
 
 
-class ReportsController(Controller[PydanticSerializer]):
+class ReportsController(Controller[PydanticFastSerializer]):
     # A large hourly budget: reaching it with real requests would be slow.
     throttling = (
         SyncThrottle(

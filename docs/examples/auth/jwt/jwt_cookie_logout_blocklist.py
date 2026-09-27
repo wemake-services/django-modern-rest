@@ -1,16 +1,13 @@
 from django.urls import reverse_lazy
 from typing_extensions import override
 
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.jwt import CookieJWTSyncAuth, request_jwt
 from dmr.security.jwt.blocklist import JWTokenBlocklistSyncMixin
 from dmr.security.jwt.views import CookieLogoutSyncController
 
 
-class CookieJWTAuthWithBlocklist(
-    JWTokenBlocklistSyncMixin,
-    CookieJWTSyncAuth,
-):
+class CookieJWTAuthWithBlocklist(JWTokenBlocklistSyncMixin, CookieJWTSyncAuth):
     """This class also checks that tokens are not blocklisted."""
 
 
@@ -18,7 +15,7 @@ cookie_blocklist_auth = CookieJWTAuthWithBlocklist()
 
 
 class LogoutAndBlocklistController(
-    CookieLogoutSyncController[PydanticSerializer],
+    CookieLogoutSyncController[PydanticFastSerializer],
 ):
     # Auth is required here: we can only blocklist a token we could read.
     # Which also means that this endpoint answers `401`

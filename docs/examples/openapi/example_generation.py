@@ -16,9 +16,7 @@ class UserModel(msgspec.Struct):
     username: str
 
 
-class UserController(
-    Controller[MsgspecSerializer],
-):
+class UserController(Controller[MsgspecSerializer]):
     def post(self, parsed_query: Query[QueryModel]) -> UserModel:
         return UserModel(uid=uuid.uuid4(), username='example')
 

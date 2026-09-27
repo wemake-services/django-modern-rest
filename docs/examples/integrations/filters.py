@@ -3,7 +3,7 @@ import pydantic
 from django.contrib.auth.models import User
 
 from dmr import Controller, Query
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class UserFilter(django_filters.FilterSet):
@@ -26,7 +26,7 @@ class UserModel(pydantic.BaseModel):
 _UserList = pydantic.TypeAdapter(list[UserModel])
 
 
-class UsersController(Controller[PydanticSerializer]):
+class UsersController(Controller[PydanticFastSerializer]):
     def get(self, parsed_query: Query[QueryModel]) -> list[UserModel]:
         # Still pass `.GET` for API compatibility:
         user_filter = UserFilter(

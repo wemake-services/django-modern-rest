@@ -1,9 +1,9 @@
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.jwt import HeaderJWTAsyncAuth
 
 
-class APIController(Controller[PydanticSerializer]):
+class APIController(Controller[PydanticFastSerializer]):
     auth = (HeaderJWTAsyncAuth(),)
 
     async def get(self) -> str:

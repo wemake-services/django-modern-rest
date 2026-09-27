@@ -19,9 +19,7 @@ class _CustomXmlErrorModel(TypedDict):
     xml_errors: dict[str, str]
 
 
-class ExampleController(
-    Controller[PydanticSerializer],
-):
+class ExampleController(Controller[PydanticSerializer]):
     renderers = (MsgspecJsonRenderer(), XmlRenderer())
     error_model = Annotated[
         ErrorModel | _CustomXmlErrorModel,

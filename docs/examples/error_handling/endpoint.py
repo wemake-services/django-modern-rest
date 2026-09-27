@@ -5,7 +5,7 @@ from django.http import HttpResponse
 
 from dmr import Body, Controller, modify
 from dmr.endpoint import Endpoint
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.serializer import BaseSerializer
 
 
@@ -30,7 +30,7 @@ def division_error(  # <- we define an error handler
     raise exc from None
 
 
-class MathController(Controller[PydanticSerializer]):
+class MathController(Controller[PydanticFastSerializer]):
     @modify(error_handler=division_error)  # <- and we pass the handler
     def patch(
         self,

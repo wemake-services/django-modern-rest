@@ -8,11 +8,11 @@ from typing_extensions import override
 from dmr import Body, Controller, HeaderSpec, NewCookie
 from dmr.errors import ErrorModel
 from dmr.metadata import ResponseSpecMetadata
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.renderers import Renderer
 
 
-class ApiController(Controller[PydanticSerializer]):
+class ApiController(Controller[PydanticFastSerializer]):
     error_model = Annotated[
         ErrorModel,
         ResponseSpecMetadata(headers={'X-Error-Id': HeaderSpec()}),

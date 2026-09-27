@@ -13,9 +13,7 @@ class _XMLRequestModel(pydantic.BaseModel):
     root: dict[str, str]
 
 
-class ExampleController(
-    Controller[PydanticSerializer],
-):
+class ExampleController(Controller[PydanticSerializer]):
     parsers = (MsgspecJsonParser(), XmlParser())
     renderers = (MsgspecJsonRenderer(), XmlRenderer())
 

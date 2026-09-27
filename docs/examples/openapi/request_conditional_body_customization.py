@@ -29,9 +29,7 @@ SearchModel: TypeAlias = Annotated[
 ]
 
 
-class UserController(
-    Controller[PydanticSerializer],
-):
+class UserController(Controller[PydanticSerializer]):
     parsers = (MsgspecJsonParser(), XmlParser())
 
     def post(

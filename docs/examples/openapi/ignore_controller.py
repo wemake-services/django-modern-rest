@@ -1,8 +1,8 @@
 from dmr import Controller, modify
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
-class BillController(Controller[PydanticSerializer]):
+class BillController(Controller[PydanticFastSerializer]):
     ignore_from_spec = True
 
     def get(self) -> str:

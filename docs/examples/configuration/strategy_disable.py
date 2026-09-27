@@ -1,9 +1,9 @@
 from dmr import Controller, modify
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.jwt import HeaderJWTSyncAuth
 
 
-class APIController(Controller[PydanticSerializer]):
+class APIController(Controller[PydanticFastSerializer]):
     auth = (HeaderJWTSyncAuth(),)
 
     @modify(auth=None)
