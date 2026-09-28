@@ -1,3 +1,5 @@
+from inline_snapshot import snapshot
+
 from dmr.openapi.mappers.schema_loader import load_schema
 from dmr.openapi.objects import (
     XML,
@@ -22,9 +24,13 @@ def test_load_schema_issue1491() -> None:
     )
 
     assert isinstance(loaded, Schema)
-    assert loaded.ref == '#/components/schemas/Address'
-    assert loaded.default == {'city': 'Moscow'}
-    assert loaded.description == 'Where the user lives'
+    assert loaded == snapshot(
+        Schema(
+            description='Where the user lives',
+            default={'city': 'Moscow'},
+            ref='#/components/schemas/Address',
+        ),
+    )
 
 
 def test_load_schema_pure_ref() -> None:
@@ -42,13 +48,20 @@ def test_load_schema_extensions() -> None:
             'x-display-name': 'Home address',
         },
     )
-    assert loaded.extensions == {'x-display-name': 'Home address'}
+    assert loaded == snapshot(
+        Schema(
+            ref='#/components/schemas/Address',
+            extensions={'x-display-name': 'Home address'},
+        ),
+    )
 
-    plain = load_schema({'type': 'string', 'x-range': {'min': 0}})
-    assert plain.extensions == {'x-range': {'min': 0}}
+    loaded = load_schema({'type': 'string', 'x-range': {'min': 0}})
+    assert loaded == snapshot(
+        Schema(type=OpenAPIType.STRING, extensions={'x-range': {'min': 0}}),
+    )
 
-    no_extensions = load_schema({'type': 'string'})
-    assert no_extensions.extensions is None
+    loaded = load_schema({'type': 'string'})
+    assert loaded == snapshot(Schema(type=OpenAPIType.STRING))
 
 
 def test_load_schema_issue1490() -> None:
@@ -65,9 +78,14 @@ def test_load_schema_issue1490() -> None:
     )
 
     assert isinstance(loaded, Schema)
-    assert loaded.anchor == 'tagged'
-    assert loaded.comment == 'kept for the next reader'
-    assert loaded.schema_uri == 'https://json-schema.org/draft/2020-12/schema'
+    assert loaded == snapshot(
+        Schema(
+            type=OpenAPIType.STRING,
+            anchor='tagged',
+            comment='kept for the next reader',
+            schema_uri='https://json-schema.org/draft/2020-12/schema',
+        ),
+    )
 
 
 def test_load_schema() -> None:
@@ -76,9 +94,6 @@ def test_load_schema() -> None:
 
     assert isinstance(loaded, Schema)
     assert loaded == Schema(type=OpenAPIType.STRING)
-    assert loaded.anchor is None
-    assert loaded.comment is None
-    assert loaded.schema_uri is None
 
 
 def test_load_schema_openapi_v32_fields() -> None:
@@ -94,10 +109,15 @@ def test_load_schema_openapi_v32_fields() -> None:
         },
     )
 
-    assert loaded.xml == XML(name='pet', node_type='element')
-    assert loaded.discriminator == Discriminator(
-        property_name='petType',
-        default_mapping='OtherPet',
+    assert loaded == snapshot(
+        Schema(
+            type=OpenAPIType.OBJECT,
+            discriminator=Discriminator(
+                property_name='petType',
+                default_mapping='OtherPet',
+            ),
+            xml=XML(name='pet', node_type='element'),
+        ),
     )
 
 
@@ -105,20 +125,26 @@ def test_load_schema_without_xml_node_type() -> None:
     """Deprecated ``attribute`` and ``wrapped`` are not defaulted anymore."""
     loaded = load_schema({'type': 'string', 'xml': {'attribute': True}})
 
-    # `wrapped` stays unset, it used to be loaded as `False`:
-    assert loaded.xml == XML(attribute=True, wrapped=None)
+    assert loaded == snapshot(
+        Schema(type=OpenAPIType.STRING, xml=XML(attribute=True)),
+    )
 
 
 def test_load_schema_format_preserve_type() -> None:
     """Known formats load as enum members, custom ones stay strings."""
     # Regression test for
     # https://github.com/wemake-services/django-modern-rest/issues/1489
-    known = load_schema({'type': 'string', 'format': 'date'})
-    assert known.format is OpenAPIFormat.DATE
+    loaded = load_schema({'type': 'string', 'format': 'date'})
+    assert loaded == snapshot(
+        Schema(type=OpenAPIType.STRING, format=OpenAPIFormat.DATE),
+    )
 
-    custom = load_schema({'type': 'string', 'format': 'cool-format'})
-    assert custom.format == 'cool-format'
-    assert not isinstance(custom.format, OpenAPIFormat)
+    loaded = load_schema({'type': 'string', 'format': 'cool-format'})
+    assert loaded == snapshot(
+        Schema(type=OpenAPIType.STRING, format='cool-format'),
+    )
+    assert loaded.format == 'cool-format'
+    assert not isinstance(loaded.format, OpenAPIFormat)
 
 
 def test_load_schema_none_values() -> None:

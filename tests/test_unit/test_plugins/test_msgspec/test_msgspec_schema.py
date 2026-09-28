@@ -633,10 +633,13 @@ def test_schema_ref_siblings_issue1491(
     # https://github.com/wemake-services/django-modern-rest/issues/1491
     generated = schema_generator(_RefCustomType, _HookedSerializer)
 
-    assert generated.ref == '#/components/schemas/_Placeholder'
-    assert generated.default == {'city': 'Moscow'}
-    assert generated.extensions == {'x-source': 'schema-hook'}
-    assert set(openapi_context.registries.schema.schemas) == {'_Placeholder'}
+    assert generated == snapshot(
+        Schema(
+            default={'city': 'Moscow'},
+            ref='#/components/schemas/_Placeholder',
+            extensions={'x-source': 'schema-hook'},
+        ),
+    )
 
 
 def test_ref_siblings_and_extensions_issue1491() -> None:
