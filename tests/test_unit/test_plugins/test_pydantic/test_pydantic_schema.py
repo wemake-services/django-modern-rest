@@ -777,3 +777,68 @@ def test_custom_union_format(
     assert isinstance(schema.type, list)
     schema.type = sorted(schema.type)
     assert schema == Schema(type=[OpenAPIType.INTEGER, OpenAPIType.STRING])
+
+
+def test_ref_siblings_and_extensions_issue1491() -> None:
+    """Keep ``$ref`` siblings and explicit extras in the final schema."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1491
+
+    class _Address(pydantic.BaseModel):
+        model_config = pydantic.ConfigDict(
+            json_schema_extra={
+                '$anchor': 'address',
+                '$comment': 'Postal address',
+                'x-category': 'contact',
+            },
+        )
+        city: str
+
+    class _User(pydantic.BaseModel):
+        model_config = pydantic.ConfigDict(
+            json_schema_extra={'x-api-version': 'v1'},
+        )
+        name: str = pydantic.Field(
+            default='unknown',
+            json_schema_extra={'x-display': 'Name'},
+        )
+        address: _Address = pydantic.Field(
+            default=_Address(city='Moscow'),
+            description='Where the user lives',
+        )
+
+    class _IssueController(Controller[PydanticSerializer]):
+        async def post(self, parsed_body: Body[_User]) -> None:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('test/', _IssueController.as_view())]),
+    ).convert()
+
+    assert schema['components']['schemas']['_User'] == snapshot({
+        'properties': {
+            'name': {
+                'type': 'string',
+                'title': 'Name',
+                'default': 'unknown',
+                'x-display': 'Name',
+            },
+            'address': {
+                'description': 'Where the user lives',
+                'default': {'city': 'Moscow'},
+                '$ref': '#/components/schemas/_Address',
+            },
+        },
+        'type': 'object',
+        'title': '_User',
+        'x-api-version': 'v1',
+    })
+    assert schema['components']['schemas']['_Address'] == snapshot({
+        'properties': {'city': {'type': 'string', 'title': 'City'}},
+        'type': 'object',
+        'required': ['city'],
+        'title': '_Address',
+        '$anchor': 'address',
+        '$comment': 'Postal address',
+        'x-category': 'contact',
+    })

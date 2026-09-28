@@ -1,3 +1,4 @@
+import dataclasses
 from typing import Any, ClassVar
 
 from typing_extensions import Sentinel
@@ -107,18 +108,25 @@ class SchemaRegistry:
         *resolution_context* holds components that are not registered yet,
         they are checked before the registered ones.
 
+        The keywords next to ``$ref``, like ``default``, only annotate
+        that one usage: they are put on top of the component's own schema,
+        but they never modify the component itself, #1491
+
         .. versionchanged:: 0.16.0
             Falls back to the registered schemas
             when *resolution_context* does not have the component.
             Accepts only ``Schema`` objects.
+            Keywords next to ``$ref`` are kept in the result.
 
         """
         if reference.ref is None:
             return reference
         schema_name = reference.ref.removeprefix(self.schema_prefix)
         if resolution_context and schema_name in resolution_context:
-            return resolution_context[schema_name]
-        return self._schemas[schema_name][0]
+            target = resolution_context[schema_name]
+        else:
+            target = self._schemas[schema_name][0]
+        return _overlay_ref_site(target, reference)
 
     def _make_reference(self, name: str) -> Schema:
         return Schema(ref=f'{self.schema_prefix}{name}')
@@ -166,6 +174,43 @@ class SecuritySchemeRegistry:
             return
 
         self._schemes[name] = scheme
+
+
+def _overlay_ref_site(target: Schema, ref_site: Schema) -> Schema:
+    """
+    Put the keywords next to ``$ref`` on top of the referenced schema.
+
+    The component the ``$ref`` points to owns the actual shape,
+    while the sibling keywords only annotate this one usage:
+    set sibling values win, and everything else stays untouched.
+    """
+    sibling_values = {
+        schema_field.name: field_value
+        for schema_field in dataclasses.fields(ref_site)
+        if (field_value := _is_sibling_set(ref_site, schema_field)) is not EMPTY
+    }
+    if not sibling_values:
+        return target
+    return dataclasses.replace(target, **sibling_values)  # type: ignore[arg-type]
+
+
+def _is_sibling_set(
+    ref_site: Schema,
+    schema_field: dataclasses.Field[Any],
+) -> Any | Sentinel:
+    """Check that a keyword next to ``$ref`` is really set on the schema."""
+    field_value = getattr(ref_site, schema_field.name)
+    # Ignore fields with default values and `ref` itself:
+    if (
+        schema_field.name == 'ref'
+        or field_value == schema_field.default
+        or (
+            schema_field.default_factory is not dataclasses.MISSING
+            and field_value == schema_field.default_factory()
+        )
+    ):
+        return EMPTY
+    return field_value
 
 
 def _check_hashes(

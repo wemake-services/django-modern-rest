@@ -278,14 +278,12 @@ class ComponentParserGenerator:  # noqa: WPS214
         for param_spec in params_list:
             # We've just built these parameters, one per converter:
             assert isinstance(param_spec, Parameter)  # noqa: S101
-            # TODO: this can be a reference in custom converter schemas:
-            assert isinstance(param_spec.schema, Schema)  # noqa: S101
+            schema = param_spec.schema
+            assert isinstance(schema, Schema)  # noqa: S101
             converter_schema = prepared[param_spec.name]
-            param_spec.schema.pattern = (
-                converter_schema.pattern or param_spec.schema.pattern
-            )
-            param_spec.schema.description = (
-                converter_schema.description or param_spec.schema.description
+            schema.pattern = converter_schema.pattern or schema.pattern
+            schema.description = (
+                converter_schema.description or schema.description
             )
         return params_list
 

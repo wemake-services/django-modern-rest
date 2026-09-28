@@ -95,3 +95,4 @@ class Schema:
         dict[str, 'Schema'] | None,
         Field(alias='$defs'),
     ] = None
+    extensions: dict[str, Any] | None = None

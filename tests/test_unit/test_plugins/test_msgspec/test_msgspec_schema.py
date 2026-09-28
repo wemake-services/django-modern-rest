@@ -572,10 +572,28 @@ class _OtherCustomType:
     """Another custom type without any schema support."""
 
 
+class _RefCustomType:
+    """Custom type that resolves to a ``$ref`` with sibling keywords."""
+
+
 def _schema_hook(typ: type[Any]) -> dict[str, Any]:
     """Describe custom types for the JSON schema generation."""
     if typ is _CustomType:
         return {'type': 'string'}
+    if typ is _RefCustomType:
+        return {
+            '$ref': '#/components/schemas/_Placeholder',
+            'default': {'city': 'Moscow'},
+            'x-source': 'schema-hook',
+            '$defs': {
+                '_Placeholder': {
+                    'title': '_Placeholder',
+                    'type': 'object',
+                    'properties': {'city': {'type': 'string'}},
+                    'required': ['city'],
+                },
+            },
+        }
     raise NotImplementedError(typ)
 
 
@@ -604,3 +622,61 @@ def test_schema_hook_fallback(schema_generator: SchemaGenerator) -> None:
         match='Cannot generate OpenAPI schema',
     ):
         schema_generator(_OtherCustomType, _HookedSerializer)
+
+
+def test_schema_ref_siblings_issue1491(
+    schema_generator: SchemaGenerator,
+    openapi_context: OpenAPIContext,
+) -> None:
+    """Keep the keywords that sit next to a top-level ``$ref``."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1491
+    generated = schema_generator(_RefCustomType, _HookedSerializer)
+
+    assert generated == snapshot(
+        Schema(
+            default={'city': 'Moscow'},
+            ref='#/components/schemas/_Placeholder',
+            extensions={'x-source': 'schema-hook'},
+        ),
+    )
+
+
+def test_ref_siblings_and_extensions_issue1491() -> None:
+    """Keep ``$ref`` siblings and explicit extras in the final schema."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1491
+
+    class _Address(msgspec.Struct, frozen=True):
+        city: str
+
+    class _User(msgspec.Struct, kw_only=True):
+        name: Annotated[
+            str,
+            msgspec.Meta(extra_json_schema={'x-display': 'Name'}),
+        ] = 'unknown'
+        address: _Address = _Address(city='Moscow')
+
+    class _IssueController(Controller[MsgspecSerializer]):
+        async def post(self, parsed_body: Body[_User]) -> None:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('test/', _IssueController.as_view())]),
+    ).convert()
+
+    assert schema['components']['schemas']['_User'] == snapshot({
+        'properties': {
+            'name': {
+                'type': 'string',
+                'default': 'unknown',
+                'x-display': 'Name',
+            },
+            'address': {
+                'default': {'city': 'Moscow'},
+                '$ref': '#/components/schemas/_Address',
+            },
+        },
+        'type': 'object',
+        'title': '_User',
+    })

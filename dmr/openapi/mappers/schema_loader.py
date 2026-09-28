@@ -35,6 +35,8 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         with :attr:`Schema.ref` set, keeping their sibling keywords,
         as OpenAPI 3.1 requires. They are not
         :class:`~dmr.openapi.objects.Reference` objects anymore.
+        Specification extensions, like ``x-thing``,
+        are now kept in :attr:`Schema.extensions`, #1491
 
     """
     return Schema(
@@ -101,6 +103,7 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         comment=raw_data.get('$comment'),
         schema_uri=raw_data.get('$schema'),
         defs=_try_dict(raw_data.get('$defs')),
+        extensions=_try_extensions(raw_data),
     )
 
 
@@ -116,6 +119,16 @@ def _try_optional_bool_type(raw_value: Any) -> Schema | bool | None:
 def _try_optional_type(raw_value: Any) -> Schema | None:
     """Load a raw_value as Schema, or None."""
     return None if raw_value is None else load_schema(raw_value)  # noqa: WPS204
+
+
+def _try_extensions(raw_data: dict[str, Any]) -> dict[str, Any] | None:
+    """Keep specification extensions, like ``x-thing``, as they are."""
+    extensions = {
+        raw_key: raw_value
+        for raw_key, raw_value in raw_data.items()
+        if raw_key.startswith('x-')
+    }
+    return extensions or None
 
 
 def _try_sequence(raw_value: Any) -> list[Schema] | None:

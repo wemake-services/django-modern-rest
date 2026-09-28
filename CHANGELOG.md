@@ -30,6 +30,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Breaking changes
 
+- `Components.path_items` is now typed as `dict[str, PathItem] | None`.
+  The spec only allows Path Item Objects there, `Reference` objects
+  are not permitted, #1491
 - Reworked how OpenAPI schema components are registered.
   `SchemaGenerator.__call__` lost `skip_registration`
   and `register_referenced_components` parameters,
@@ -371,6 +374,12 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Bugfixes
 
+- `SchemaRegistry.maybe_resolve_reference` now puts the keywords
+  that sit next to `$ref`, like `default` and `description`,
+  on top of the component's own schema without modifying
+  the component itself. Custom `x-` schema extensions
+  are now kept through loading and dumping, for both `pydantic`
+  and `msgspec`, #1491
 - Fixed models that are only used as `Query`, `Headers`, `Cookies`,
   `Path`, and `FileMetadata` components, being added to `components.schemas`
   of the OpenAPI schema. Such models are inlined and never referenced,
