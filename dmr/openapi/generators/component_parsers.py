@@ -278,11 +278,8 @@ class ComponentParserGenerator:  # noqa: WPS214
         for param_spec in params_list:
             # We've just built these parameters, one per converter:
             assert isinstance(param_spec, Parameter)  # noqa: S101
-            if not isinstance(param_spec.schema, Schema):
-                # A custom converter can declare a model, and such a model
-                # is generated as a component reference. There is no inline
-                # schema to override, so we keep the reference as it is:
-                continue
+            # TODO: this can be a reference in custom converter schemas:
+            assert isinstance(param_spec.schema, Schema)  # noqa: S101
             converter_schema = prepared[param_spec.name]
             param_spec.schema.pattern = (
                 converter_schema.pattern or param_spec.schema.pattern
