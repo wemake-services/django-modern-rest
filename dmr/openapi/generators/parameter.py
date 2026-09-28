@@ -113,7 +113,7 @@ class ParameterGenerator:
 
     def _object_schemas(
         self,
-        schema: Reference | Schema,
+        schema: Schema,
         defs: dict[str, Schema],
     ) -> list[Schema]:
         """
@@ -138,7 +138,7 @@ class ParameterGenerator:
         self,
         object_schema: Schema,
         object_schemas: list[Schema],
-    ) -> dict[str, Reference | Schema]:
+    ) -> dict[str, Schema]:
         """Properties of *object_schema* that previous schemas don't have."""
         previous = object_schemas[: object_schemas.index(object_schema)]
         return {
@@ -156,7 +156,7 @@ class ParameterGenerator:
         self,
         annotated_meta: ParameterMetadata | None,
         property_name: str,
-        property_schema: Reference | Schema,
+        property_schema: Schema,
         schema: Schema,
         defs: dict[str, Schema],
     ) -> dict[str, Any]:

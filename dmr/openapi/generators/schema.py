@@ -9,7 +9,7 @@ from dmr.openapi.mappers.example import (
 )
 from dmr.openapi.mappers.references import iter_references
 from dmr.openapi.mappers.schema_loader import load_schema
-from dmr.openapi.objects import Reference, Schema
+from dmr.openapi.objects import Schema
 
 if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext
@@ -32,8 +32,9 @@ class LoadedSchema:
     .. versionadded:: 0.16.0
     """
 
-    #: Schema of the annotation, it can reference :attr:`defs`.
-    schema: Reference | Schema
+    #: Schema of the annotation, it can reference :attr:`defs`
+    #: with its ``$ref``.
+    schema: Schema
     #: All components that :attr:`schema` might reference, by name.
     defs: dict[str, Schema]
     #: Annotation this schema was generated from.
@@ -55,6 +56,8 @@ class SchemaGenerator:
         from the final result. Calling the generator does both at once.
         Removed ``skip_registration``
         and ``register_referenced_components`` parameters.
+        References to components are returned as ``Schema`` objects
+        with ``$ref`` set, not as ``Reference`` objects.
 
     """
 
@@ -67,7 +70,7 @@ class SchemaGenerator:
         serializer: type['BaseSerializer'],
         *,
         used_for_response: bool = False,
-    ) -> Reference | Schema:
+    ) -> Schema:
         """
         Get schema for an annotation and register components it uses.
 
@@ -117,7 +120,7 @@ class SchemaGenerator:
             used_for_response: Whether this schema describes a response,
                 since some serializers generate different
                 schemas for inputs and outputs.
-            inline: Return a ``Schema`` instead of a ``Reference``:
+            inline: Resolve ``$ref`` in the result:
                 the schema itself and members of its unions
                 are replaced with their definitions.
                 Useful when a schema's properties are needed.
@@ -205,24 +208,18 @@ class SchemaGenerator:
         self,
         raw_schema: dict[str, Any],
         raw_defs: dict[str, Any],
-    ) -> tuple[Reference | Schema, dict[str, Schema]]:
+    ) -> tuple[Schema, dict[str, Schema]]:
         """Load raw schemas, the annotation's own model becomes a component."""
         defs = {
             component_name: load_schema(component)
             for component_name, component in raw_defs.items()
         }
-        if raw_schema.get('$ref'):
-            return Reference(
-                ref=raw_schema['$ref'],
-                summary=raw_schema.get('summary'),
-                description=raw_schema.get('description'),
-            ), defs
         schema = load_schema(raw_schema)
-        if not schema.title:
+        if schema.ref is not None or not schema.title:
             return schema, defs
         # Models are components, even when serializers inline them:
         defs[schema.title] = schema
-        return Reference(
+        return Schema(
             ref=self._context.registries.schema.schema_prefix + schema.title,
         ), defs
 
@@ -260,7 +257,7 @@ def _get_raw_schema(
 
 
 def _inline(
-    schema: Reference | Schema,
+    schema: Schema,
     defs: dict[str, Schema],
     registry: 'SchemaRegistry',
 ) -> Schema:
@@ -280,20 +277,20 @@ def _inline(
 
 
 def _inline_members(
-    members: list[Reference | Schema] | None,
+    members: list[Schema] | None,
     defs: dict[str, Schema],
     registry: 'SchemaRegistry',
-) -> list[Reference | Schema] | None:
+) -> list[Schema] | None:
     if not members:
         return members
     return [_inline(member, defs, registry) for member in members]
 
 
 def _reference_name(
-    schema: Reference | Schema,
+    schema: Schema,
     schema_prefix: str,
 ) -> str | None:
-    if isinstance(schema, Reference):
+    if schema.ref is not None:
         return schema.ref.removeprefix(schema_prefix)
     return None
 

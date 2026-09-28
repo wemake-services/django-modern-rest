@@ -325,7 +325,7 @@ class ComponentParserGenerator:  # noqa: WPS214
             # We've just built these bodies from component parsers,
             # so all of them have inline media types, never references:
             assert isinstance(media_type, MediaType)  # noqa: S101
-            media_items: list[Reference | Schema] = []
+            media_items: list[Schema] = []
             if media_type.schema:  # pragma: no cover:
                 media_items.append(media_type.schema)
             existing_content = schema.content.get(media_name)

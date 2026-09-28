@@ -36,6 +36,9 @@ class SchemaRegistry:
         Removed ``try_unregister``: components are now registered
         only when the final schema references them,
         see :meth:`dmr.openapi.generators.SchemaGenerator.register`.
+        References to schemas are now :class:`~dmr.openapi.objects.Schema`
+        objects with ``$ref`` set, not ``Reference`` objects,
+        because OpenAPI 3.1 defines ``$ref`` as a JSON Schema keyword.
 
     """
 
@@ -60,8 +63,8 @@ class SchemaRegistry:
         schema_name: str,
         schema: Schema,
         annotation: Any | Sentinel = EMPTY,
-    ) -> Reference:
-        """Register Schema in registry."""
+    ) -> Schema:
+        """Register Schema in registry, return a reference to it."""
         existing_schema = self._schemas.get(schema_name)
         if existing_schema:
             _check_hashes(
@@ -78,8 +81,8 @@ class SchemaRegistry:
         self,
         schema_name: str | None,
         annotation: Any | Sentinel = EMPTY,
-    ) -> Reference | None:
-        """Get registered reference."""
+    ) -> Schema | None:
+        """Get a reference to the registered schema, if it exists."""
         if schema_name:
             existing_schema = self._schemas.get(schema_name)
             if existing_schema:
@@ -93,30 +96,32 @@ class SchemaRegistry:
 
     def maybe_resolve_reference(
         self,
-        reference: Reference | Schema,
+        reference: Schema,
         *,
         resolution_context: dict[str, Schema] | None = None,
     ) -> Schema:
         """
-        Resolve reference and return a schema back.
+        Resolve a schema with ``$ref`` and return the referenced schema back.
 
+        Schemas without ``$ref`` are returned as is.
         *resolution_context* holds components that are not registered yet,
         they are checked before the registered ones.
 
         .. versionchanged:: 0.16.0
             Falls back to the registered schemas
             when *resolution_context* does not have the component.
+            Accepts only ``Schema`` objects.
 
         """
-        if isinstance(reference, Schema):
+        if reference.ref is None:
             return reference
         schema_name = reference.ref.removeprefix(self.schema_prefix)
         if resolution_context and schema_name in resolution_context:
             return resolution_context[schema_name]
         return self._schemas[schema_name][0]
 
-    def _make_reference(self, name: str) -> Reference:
-        return Reference(ref=f'{self.schema_prefix}{name}')
+    def _make_reference(self, name: str) -> Schema:
+        return Schema(ref=f'{self.schema_prefix}{name}')
 
 
 class SecuritySchemeRegistry:
