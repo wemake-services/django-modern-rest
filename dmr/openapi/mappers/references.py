@@ -1,5 +1,5 @@
 import dataclasses
-from collections.abc import Iterable, Iterator, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping
 
 from dmr.openapi.objects import Reference
 
