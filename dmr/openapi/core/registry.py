@@ -191,12 +191,12 @@ def _overlay_ref_site(target: Schema, ref_site: Schema) -> Schema:
     }
     if not sibling_values:
         return target
-    return dataclasses.replace(target, **sibling_values)
+    return dataclasses.replace(target, **sibling_values)  # type: ignore[arg-type]
 
 
 def _is_sibling_set(
     ref_site: Schema,
-    schema_field: dataclasses.Field,
+    schema_field: dataclasses.Field[Any],
 ) -> Any | Sentinel:
     """Check that a keyword next to ``$ref`` is really set on the schema."""
     field_value = getattr(ref_site, schema_field.name)
