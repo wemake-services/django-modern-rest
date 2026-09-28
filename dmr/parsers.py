@@ -16,6 +16,7 @@ from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
+    from dmr.endpoint import Endpoint
     from dmr.files import FileBodyLike
     from dmr.openapi import OpenAPIContext
     from dmr.serializer import BaseSerializer

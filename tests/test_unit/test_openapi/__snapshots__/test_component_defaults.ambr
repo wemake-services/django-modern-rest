@@ -83,13 +83,22 @@
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/components/schemas/_FileModel"
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "format": "binary"
+                            }
+                          },
+                          "type": "object",
+                          "required": [
+                            "name"
+                          ],
+                          "title": "_FileModel"
                         },
                         {
                           "type": "null"
                         }
-                      ],
-                      "properties": {}
+                      ]
                     },
                     {
                       "anyOf": [
@@ -171,13 +180,22 @@
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/components/schemas/_FileModel"
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "format": "binary"
+                            }
+                          },
+                          "type": "object",
+                          "required": [
+                            "name"
+                          ],
+                          "title": "_FileModel"
                         },
                         {
                           "type": "null"
                         }
-                      ],
-                      "properties": {}
+                      ]
                     },
                     {
                       "$ref": "#/components/schemas/_Model"
@@ -301,19 +319,6 @@
             "name"
           ],
           "title": "_Model"
-        },
-        "_PathModel": {
-          "properties": {
-            "user_id": {
-              "type": "integer",
-              "title": "User Id"
-            }
-          },
-          "type": "object",
-          "required": [
-            "user_id"
-          ],
-          "title": "_PathModel"
         }
       }
     }
@@ -604,29 +609,6 @@
             "name"
           ],
           "title": "_Model"
-        },
-        "_OtherModel": {
-          "properties": {
-            "name": {
-              "type": "string",
-              "title": "Name"
-            },
-            "other": {
-              "type": "string",
-              "title": "Other"
-            },
-            "age": {
-              "type": "integer",
-              "title": "Age",
-              "default": 0
-            }
-          },
-          "type": "object",
-          "required": [
-            "name",
-            "other"
-          ],
-          "title": "_OtherModel"
         }
       }
     }
