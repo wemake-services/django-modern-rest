@@ -192,16 +192,11 @@ class SchemaGenerator:
                 used_for_response=used_for_response,
             ),
         )
-        if schema.ref is None:
-            target = schema
-        else:
-            # The example belongs to the component itself, while this
-            # usage keeps the keywords next to its ``$ref`` as they are, #1491
-            target = registry.maybe_resolve_reference(
-                Schema(ref=schema.ref),
-                resolution_context=defs,
-            )
-        self._maybe_generate_example(target, annotation, serializer)
+        self._maybe_generate_example(
+            registry.maybe_resolve_reference(schema, resolution_context=defs),
+            annotation,
+            serializer,
+        )
         return LoadedSchema(
             schema,
             defs,
