@@ -8,7 +8,7 @@ from typing_extensions import override
 
 from dmr import Body, Controller, HeaderSpec, NewCookie
 from dmr.metadata import ResponseSpecMetadata
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.renderers import Renderer
 
 
@@ -16,7 +16,7 @@ class User(pydantic.BaseModel):
     username: str
 
 
-class ApiController(Controller[PydanticSerializer]):
+class ApiController(Controller[PydanticFastSerializer]):
     def post(
         self,
         parsed_body: Body[dict[str, str]],

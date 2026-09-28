@@ -4,7 +4,6 @@ import json
 from typing import Annotated, Any
 
 import pydantic
-import pytest
 from django.conf import LazySettings
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
@@ -40,7 +39,6 @@ class _UserController(
         raise NotImplementedError
 
 
-@pytest.mark.freeze_time('02-11-2025 10:15:00')
 def test_user_schema_with_examples(
     snapshot: SnapshotAssertion,
     settings: LazySettings,

@@ -13,6 +13,7 @@ from dmr.negotiation import request_renderer
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings, default_renderer, resolve_setting
+from dmr.streaming.endpoint import Streaming
 from dmr.streaming.metadata import StreamingResponseModification
 from dmr.streaming.renderer import StreamingRenderer
 from dmr.streaming.stream import StreamingResponse
@@ -50,17 +51,16 @@ class StreamingController(Controller[_SerializerT_co]):
     endpoint_cls = _StreamingEndpoint
 
     # Customizable attributes for subclasses:
-    streaming_ping_seconds: ClassVar[float | None] = None
+    extras: ClassVar[Streaming] = Streaming()  # pyright: ignore[reportIncompatibleVariableOverride]
     """
-    Optional ping keep alive event support.
+    Streaming settings for all endpoints of this controller.
 
-    Some servers might close long living connections with no activity.
-    Specify number in second how long should we wait between events.
-    If we wait longer, we will send a ping event.
-    The payload of the ping event is defined in
-    :meth:`~dmr.streaming.controller.StreamingController.ping_event`.
-
-    By default it is disabled. It is only enabled in the SSE streaming.
+    Override it to change controller-level defaults,
+    for example: ``extras = Streaming(validate_events=False)``
+    or ``extras = Streaming(ping_seconds=30)``.
+    Per-endpoint values are passed as ``extras=``
+    to :data:`~dmr.streaming.modify` and :data:`~dmr.streaming.validate`.
+    Use ``Streaming.of(self)`` to read the resolved values.
     """
 
     streaming_response_cls: ClassVar[type[StreamingResponse]] = (
@@ -166,5 +166,6 @@ class StreamingController(Controller[_SerializerT_co]):
         By default pings are disabled for ``StreamingController`` types.
         Pings must be explicitly enabled in subclasses.
 
-        If ``streaming_ping_seconds`` is set, this method will be called.
+        If ``ping_seconds`` is set in :class:`~dmr.streaming.Streaming`
+        extras, this method will be called.
         """

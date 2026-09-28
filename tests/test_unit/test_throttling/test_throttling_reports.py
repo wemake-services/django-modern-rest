@@ -18,6 +18,7 @@ from dmr.renderers import Renderer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle, ThrottlingReport
 from dmr.throttling.algorithms import LeakyBucket
+from dmr.throttling.backends import AsyncDjangoCache, SyncDjangoCache
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
 
@@ -36,8 +37,18 @@ class _ReportsController(Controller[PydanticSerializer]):
             },
         ),
         throttling=[
-            SyncThrottle(1, Rate.second, response_headers=[_draft_headers]),
-            SyncThrottle(5, Rate.minute, response_headers=[_ratelimit_headers]),
+            SyncThrottle(
+                1,
+                Rate.second,
+                response_headers=[_draft_headers],
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
+            SyncThrottle(
+                5,
+                Rate.minute,
+                response_headers=[_ratelimit_headers],
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
         ],
     )
     def get(self) -> HttpResponse:
@@ -80,11 +91,17 @@ class _AsyncReportsController(Controller[PydanticSerializer]):
             },
         ),
         throttling=[
-            AsyncThrottle(1, Rate.second, response_headers=[_draft_headers]),
+            AsyncThrottle(
+                1,
+                Rate.second,
+                response_headers=[_draft_headers],
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+            ),
             AsyncThrottle(
                 5,
                 Rate.minute,
                 response_headers=[_ratelimit_headers],
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
     )
@@ -133,12 +150,14 @@ class _MultipleThrottlesController(Controller[PydanticSerializer]):
                 Rate.second,
                 response_headers=[_draft_headers],
                 cache_key=RemoteAddr(name='one'),
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
             SyncThrottle(
                 5,
                 Rate.minute,
                 response_headers=[_draft_headers],
                 cache_key=RemoteAddr(name='two'),
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
     )
@@ -181,12 +200,14 @@ class _AsyncMultipleThrottlesController(Controller[PydanticSerializer]):
                 Rate.second,
                 response_headers=[_draft_headers],
                 cache_key=RemoteAddr(name='one'),
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
             ),
             AsyncThrottle(
                 5,
                 Rate.minute,
                 response_headers=[_draft_headers],
                 cache_key=RemoteAddr(name='two'),
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
     )
@@ -241,12 +262,14 @@ class _AllReportsController(Controller[PydanticSerializer]):
                 Rate.second,
                 response_headers=[_draft_headers],
                 cache_key=RemoteAddr(name='per-second'),
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
             SyncThrottle(
                 5,
                 Rate.minute,
                 response_headers=[_draft_headers],
                 cache_key=RemoteAddr(name='per-minute'),
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
     )
@@ -395,6 +418,7 @@ class _AsyncLeakyBucketController(Controller[PydanticSerializer]):
                 response_headers=[_draft_headers, _retry_after],
                 cache_key=RemoteAddr(name='one'),
                 algorithm=LeakyBucket(),
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
             ),
             AsyncThrottle(
                 5,
@@ -402,6 +426,7 @@ class _AsyncLeakyBucketController(Controller[PydanticSerializer]):
                 response_headers=[_draft_headers],
                 cache_key=RemoteAddr(name='two'),
                 algorithm=LeakyBucket(),
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
     )

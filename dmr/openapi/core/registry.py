@@ -1,29 +1,10 @@
 import dataclasses
-from typing import Any, ClassVar, Protocol
+from typing import Any, ClassVar
 
 from typing_extensions import Sentinel
 
+from dmr.internal.types import EMPTY
 from dmr.openapi.objects import Reference, Schema, SecurityScheme
-from dmr.types import EMPTY
-
-
-class SchemaCallback(Protocol):
-    """Callback protocol for the schema registration."""
-
-    def __call__(
-        self,
-        annotation: Any,
-        origin: Any,
-        type_args: Any,
-        *,
-        used_for_response: bool,
-        skip_registration: bool,
-    ) -> Reference | Schema | None:
-        """
-        Resolve the annotation into schema or into a reference.
-
-        Return ``None`` to fallback to the default resolution.
-        """
 
 
 class OperationIdRegistry:
@@ -49,7 +30,18 @@ class OperationIdRegistry:
 
 
 class SchemaRegistry:
-    """Registry for ``Schemas``."""
+    """
+    Registry for ``Schemas``.
+
+    .. versionchanged:: 0.16.0
+        Removed ``try_unregister``: components are now registered
+        only when the final schema references them,
+        see :meth:`dmr.openapi.generators.SchemaGenerator.register`.
+        References to schemas are now :class:`~dmr.openapi.objects.Schema`
+        objects with ``$ref`` set, not ``Reference`` objects,
+        because OpenAPI 3.1 defines ``$ref`` as a JSON Schema keyword.
+
+    """
 
     __slots__ = ('_schemas',)
 
@@ -72,8 +64,8 @@ class SchemaRegistry:
         schema_name: str,
         schema: Schema,
         annotation: Any | Sentinel = EMPTY,
-    ) -> Reference:
-        """Register Schema in registry."""
+    ) -> Schema:
+        """Register Schema in registry, return a reference to it."""
         existing_schema = self._schemas.get(schema_name)
         if existing_schema:
             _check_hashes(
@@ -90,8 +82,8 @@ class SchemaRegistry:
         self,
         schema_name: str | None,
         annotation: Any | Sentinel = EMPTY,
-    ) -> Reference | None:
-        """Get registered reference."""
+    ) -> Schema | None:
+        """Get a reference to the registered schema, if it exists."""
         if schema_name:
             existing_schema = self._schemas.get(schema_name)
             if existing_schema:
@@ -105,40 +97,39 @@ class SchemaRegistry:
 
     def maybe_resolve_reference(
         self,
-        reference: Reference | Schema,
+        reference: Schema,
         *,
         resolution_context: dict[str, Schema] | None = None,
     ) -> Schema:
         """
-        Resolve reference and return a flat schema back.
+        Resolve a schema with ``$ref`` and return the referenced schema back.
 
-        Both a :class:`dmr.openapi.objects.Reference` and
-        a :class:`dmr.openapi.objects.Schema` that carries
-        a ``$ref`` point to a registered component. The schema's sibling
-        keywords, like ``default``, only annotate that one usage:
-        they are put on top of the component's own schema,
+        Schemas without ``$ref`` are returned as is.
+        *resolution_context* holds components that are not registered yet,
+        they are checked before the registered ones.
+
+        The keywords next to ``$ref``, like ``default``, only annotate
+        that one usage: they are put on top of the component's own schema,
         but they never modify the component itself, #1491
 
+        .. versionchanged:: 0.16.0
+            Falls back to the registered schemas
+            when *resolution_context* does not have the component.
+            Accepts only ``Schema`` objects.
+            Keywords next to ``$ref`` are kept in the result.
+
         """
-        if isinstance(reference, Schema):
-            if reference.ref is None:
-                return reference
-            ref = reference.ref
+        if reference.ref is None:
+            return reference
+        schema_name = reference.ref.removeprefix(self.schema_prefix)
+        if resolution_context and schema_name in resolution_context:
+            target = resolution_context[schema_name]
         else:
-            ref = reference.ref
-        schema_name = ref.removeprefix(self.schema_prefix)
-        target = (resolution_context or self.schemas)[schema_name]
-        if isinstance(reference, Reference):
-            return target
+            target = self._schemas[schema_name][0]
         return _overlay_ref_site(target, reference)
 
-    def try_unregister(self, schema_name: str | None) -> None:
-        """Try to unregister the schema by name."""
-        if schema_name is not None:
-            self._schemas.pop(schema_name, None)
-
-    def _make_reference(self, name: str) -> Reference:
-        return Reference(ref=f'{self.schema_prefix}{name}')
+    def _make_reference(self, name: str) -> Schema:
+        return Schema(ref=f'{self.schema_prefix}{name}')
 
 
 class SecuritySchemeRegistry:
@@ -171,6 +162,17 @@ class SecuritySchemeRegistry:
         scheme: SecurityScheme | Reference,
     ) -> None:
         """Register security scheme in registry."""
+        existing = self._schemes.get(name)
+        if existing is not None:
+            if existing != scheme:
+                raise ValueError(
+                    f'Security scheme {name!r} is already registered in the '
+                    'OpenAPI specification. Security scheme names must be '
+                    'unique. Re-registering the same name with a different '
+                    'scheme is not allowed.',
+                )
+            return
+
         self._schemes[name] = scheme
 
 
@@ -180,19 +182,28 @@ def _overlay_ref_site(target: Schema, ref_site: Schema) -> Schema:
 
     The component the ``$ref`` points to owns the actual shape,
     while the sibling keywords only annotate this one usage:
-    non-empty sibling values win, and everything else stays untouched.
+    set sibling values win, and everything else stays untouched.
     """
-    overrides: dict[str, Any] = {}
-    for schema_field in dataclasses.fields(ref_site):
-        if schema_field.name == 'ref':
-            continue
-        field_value = getattr(ref_site, schema_field.name)
-        if field_value is None or field_value in ([], {}):
-            continue
-        overrides[schema_field.name] = field_value
+    sibling_values = (
+        (schema_field.name, getattr(ref_site, schema_field.name))
+        for schema_field in dataclasses.fields(ref_site)
+    )
+    overrides = {
+        field_name: field_value
+        for field_name, field_value in sibling_values
+        if _is_sibling_set(field_name, field_value)
+    }
     if not overrides:
         return target
     return dataclasses.replace(target, **overrides)
+
+
+def _is_sibling_set(field_name: str, field_value: Any) -> bool:
+    """Check that a keyword next to ``$ref`` is really set on the schema."""
+    if field_name == 'ref' or field_value is None or field_value is EMPTY:
+        return False
+    # Empty `required` is its default, not a sibling, like in `dump_schema`:
+    return field_name != 'required' or bool(field_value)
 
 
 def _check_hashes(

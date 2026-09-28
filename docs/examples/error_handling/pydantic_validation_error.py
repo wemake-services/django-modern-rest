@@ -3,14 +3,14 @@ from typing import Literal
 import pydantic
 
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class Pong(pydantic.BaseModel):
     message: Literal['pong']
 
 
-class PongController(Controller[PydanticSerializer]):
+class PongController(Controller[PydanticFastSerializer]):
     def get(self) -> Pong:
         # This will trigger `pydantic.ValidationError`,
         # because `message` must be `'pong'`, not `'wrong'`:

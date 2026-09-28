@@ -11,14 +11,20 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import Sentinel
 
-from dmr import APIError, ResponseSpec, modify, validate
+from dmr import APIError, ResponseSpec
 from dmr.errors import ErrorModel, format_error
 from dmr.exceptions import DataRenderingError, EndpointMetadataError
 from dmr.negotiation import ContentType
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
-from dmr.streaming import StreamingResponse, streaming_response_spec
+from dmr.streaming import (
+    Streaming,
+    StreamingResponse,
+    modify,
+    streaming_response_spec,
+    validate,
+)
 from dmr.streaming.sse import SSEController, SSEvent
 from dmr.test import DMRAsyncRequestFactory
 from dmr.types import EMPTY
@@ -136,7 +142,9 @@ async def test_wrong_event_type(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
         validate_responses = options.get('validate_responses', EMPTY)
-        validate_events = options.get('validate_events', EMPTY)
+        extras = Streaming(
+            validate_events=options.get('validate_events', EMPTY),
+        )
 
         async def get(self) -> AsyncIterator[_EventsType]:
             return _wrong_type_events()
@@ -189,7 +197,9 @@ async def test_wrong_event_type_endpoint(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
         @modify(
-            validate_events=options.get('validate_events', EMPTY),
+            extras=Streaming(
+                validate_events=options.get('validate_events', EMPTY),
+            ),
             validate_responses=options.get('validate_responses', EMPTY),
         )
         async def get(self) -> AsyncIterator[_EventsType]:
@@ -200,7 +210,9 @@ async def test_wrong_event_type_endpoint(
                 _EventsType,
                 content_type=ContentType.event_stream,
             ),
-            validate_events=options.get('validate_events', EMPTY),
+            extras=Streaming(
+                validate_events=options.get('validate_events', EMPTY),
+            ),
             validate_responses=options.get('validate_responses', EMPTY),
         )
         async def post(self) -> StreamingResponse:
@@ -538,7 +550,7 @@ async def test_missing_event_model(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
         validate_responses = False
-        validate_events = False
+        extras = Streaming(validate_events=False)
 
         @validate(
             streaming_response_spec(
@@ -582,7 +594,7 @@ async def test_missing_event_model_strict(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
         validate_responses = False
-        validate_events = True
+        extras = Streaming(validate_events=True)
 
         @validate(
             streaming_response_spec(

@@ -14,10 +14,11 @@ from django.http import HttpRequest
 from django.utils.http import parse_header_parameters
 from typing_extensions import override
 
+from dmr.controller import Controller
 from dmr.files import FileBody, FileBodyLike
 from dmr.metadata import EndpointMetadata
 from dmr.openapi import OpenAPIContext
-from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Reference, Schema
+from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Schema
 from dmr.parsers import DeserializeFunc, Parser, Raw, SupportsFileParsing
 from dmr.serializer import BaseSerializer
 
@@ -31,7 +32,7 @@ class _ByteStreamFileBody(FileBody):
     @classmethod
     def get_schema(
         cls,
-        schema: Reference | Schema,
+        schema: Schema,
         context: OpenAPIContext,
     ) -> Schema:
         return Schema(
@@ -43,7 +44,7 @@ class _ByteStreamFileBody(FileBody):
     @classmethod
     def replace_schema(
         cls,
-        schema: Reference | Schema,
+        schema: Schema,
         context: OpenAPIContext,
     ) -> Schema:
         return cls.get_schema(schema, context)
@@ -101,7 +102,7 @@ class OctetStreamParser(SupportsFileParsing, Parser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type[BaseSerializer],
+        controller_cls: type[Controller[BaseSerializer]],
         context: OpenAPIContext,
     ) -> type[FileBodyLike]:
         """Provide schema for the file request spec."""

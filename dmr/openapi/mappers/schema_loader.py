@@ -3,13 +3,13 @@
 from enum import Enum
 from typing import Any, TypeVar
 
+from dmr.internal.types import EMPTY
 from dmr.openapi.objects import (
     XML,
     Discriminator,
     ExternalDocumentation,
     OpenAPIFormat,
     OpenAPIType,
-    Reference,
     Schema,
 )
 
@@ -31,12 +31,12 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         they land on depends on the target OpenAPI version.
         :func:`dmr.openapi.mappers.example.set_generated_example`
         does that now.
-
-    .. versionchanged:: 0.16.0
-        ``$ref`` is now loaded as :class:`~dmr.openapi.objects.Schema.ref`,
-        not as a separate :class:`~dmr.openapi.objects.Reference`:
-        inside a schema position ``$ref`` is a regular JSON Schema keyword
-        and its siblings must survive, #1491
+        Subschemas with ``$ref`` are loaded as :class:`Schema` objects
+        with :attr:`Schema.ref` set, keeping their sibling keywords,
+        as OpenAPI 3.1 requires. They are not
+        :class:`~dmr.openapi.objects.Reference` objects anymore.
+        Specification extensions, like ``x-thing``,
+        are now kept in :attr:`Schema.extensions`, #1491
 
     """
     return Schema(
@@ -53,7 +53,7 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         contains=_try_optional_type(raw_data.get('contains')),
         properties=_try_dict(raw_data.get('properties')),
         pattern_properties=_try_dict(raw_data.get('patternProperties')),
-        additional_properties=_try_additional_properties(
+        additional_properties=_try_optional_bool_type(
             raw_data.get('additionalProperties'),
         ),
         property_names=_try_optional_type(raw_data.get('propertyNames')),
@@ -63,7 +63,7 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         ),
         type=_try_type_field(raw_data.get('type')),
         enum=raw_data.get('enum'),
-        const=raw_data.get('const'),
+        const=raw_data.get('const', EMPTY),
         multiple_of=raw_data.get('multipleOf'),
         maximum=raw_data.get('maximum'),
         exclusive_maximum=raw_data.get('exclusiveMaximum'),
@@ -87,7 +87,7 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         content_schema=_try_optional_type(raw_data.get('contentSchema')),
         title=raw_data.get('title'),
         description=raw_data.get('description'),
-        default=raw_data.get('default'),
+        default=raw_data.get('default', EMPTY),
         deprecated=raw_data.get('deprecated'),
         read_only=raw_data.get('readOnly'),
         write_only=raw_data.get('writeOnly'),
@@ -95,7 +95,7 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         xml=_try_xml(raw_data.get('xml')),
         external_docs=_try_external_documentation(raw_data.get('externalDocs')),
         examples=raw_data.get('examples'),
-        example=raw_data.get('example'),
+        example=raw_data.get('example', EMPTY),
         dynamic_ref=raw_data.get('$dynamicRef'),
         dynamic_anchor=raw_data.get('$dynamicAnchor'),
         ref=raw_data.get('$ref'),
@@ -107,8 +107,8 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
     )
 
 
-def _try_optional_bool_type(raw_value: Any) -> Reference | Schema | bool | None:
-    """Load a raw_value as Reference, or Schema, or bool, or None."""
+def _try_optional_bool_type(raw_value: Any) -> Schema | bool | None:
+    """Load a raw_value as Schema, or bool, or None."""
     return (
         raw_value
         if isinstance(raw_value, bool)
@@ -116,17 +116,9 @@ def _try_optional_bool_type(raw_value: Any) -> Reference | Schema | bool | None:
     )
 
 
-def _try_optional_type(raw_value: Any) -> Reference | Schema | None:
+def _try_optional_type(raw_value: Any) -> Schema | None:
     """Load a raw_value as Schema, or None."""
-    return None if raw_value is None else _try_type(raw_value)  # noqa: WPS204
-
-
-def _try_type(raw_value: Any) -> Reference | Schema:
-    """Load a raw_value as Schema, with ``$ref`` being just its keyword."""
-    # In a schema position, like ``properties`` or ``items``,
-    # ``$ref`` belongs to the Schema Object, not to the Reference Object:
-    # siblings next to it, like ``default``, are valid and must survive, #1491
-    return load_schema(raw_value)
+    return None if raw_value is None else load_schema(raw_value)  # noqa: WPS204
 
 
 def _try_extensions(raw_data: dict[str, Any]) -> dict[str, Any] | None:
@@ -139,35 +131,24 @@ def _try_extensions(raw_data: dict[str, Any]) -> dict[str, Any] | None:
     return extensions or None
 
 
-def _try_sequence(raw_value: Any) -> list[Reference | Schema] | None:
-    """Load a list of Reference | Schema values, or None."""
+def _try_sequence(raw_value: Any) -> list[Schema] | None:
+    """Load a list of Schema values, or None."""
     return (
         None
         if raw_value is None
-        else [_try_type(seq_item) for seq_item in raw_value]
+        else [load_schema(seq_item) for seq_item in raw_value]
     )
 
 
-def _try_dict(raw_value: Any) -> dict[str, Reference | Schema] | None:
-    """Load a dict of str -> Reference | Schema values, or None."""
+def _try_dict(raw_value: Any) -> dict[str, Schema] | None:
+    """Load a dict of str -> Schema values, or None."""
     return (
         None
         if raw_value is None
         else {
-            dict_key: _try_type(dict_value)
+            dict_key: load_schema(dict_value)
             for dict_key, dict_value in raw_value.items()
         }
-    )
-
-
-def _try_additional_properties(
-    raw_value: Any,
-) -> Reference | Schema | bool | None:
-    """Load additionalProperties which can also be a plain bool."""
-    return (
-        raw_value
-        if isinstance(raw_value, bool)
-        else _try_optional_type(raw_value)
     )
 
 
@@ -227,29 +208,15 @@ def _try_xml(raw_value: Any) -> XML | None:
 
 
 def _sort_null_last(
-    sequence: list[Reference | Schema] | None,
-) -> list[Reference | Schema] | None:
+    sequence: list[Schema] | None,
+) -> list[Schema] | None:
     # See https://github.com/wemake-services/django-modern-rest/issues/990
     # TODO: remove once solved: https://github.com/msgspec/msgspec/issues/1027
     return (
         None
         if sequence is None
         else (
-            [
-                schema
-                for schema in sequence
-                if (
-                    not isinstance(schema, Schema)
-                    or schema.type != OpenAPIType.NULL
-                )
-            ]
-            + [
-                schema
-                for schema in sequence
-                if (
-                    isinstance(schema, Schema)
-                    and schema.type == OpenAPIType.NULL
-                )
-            ]
+            [schema for schema in sequence if schema.type != OpenAPIType.NULL]
+            + [schema for schema in sequence if schema.type == OpenAPIType.NULL]
         )
     )

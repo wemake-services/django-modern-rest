@@ -31,6 +31,7 @@ class UnsafeCacheBackendWarning(UserWarning):
 @dataclasses.dataclass(slots=True, frozen=True)
 class _DjangoCache:
     cache_name: str = DEFAULT_CACHE_ALIAS
+    allow_unsafe_cache: bool | None = True
     _cache: BaseCache = dataclasses.field(init=False)
 
     def __post_init__(self) -> None:
@@ -47,7 +48,7 @@ class _DjangoCache:
 
         .. versionadded:: 0.16.0
         """
-        allow_cache = metadata.throttling_allow_unsafe_cache
+        allow_cache = self.allow_unsafe_cache
         if allow_cache is None or not isinstance(
             self._cache,
             (locmem.LocMemCache, dummy.DummyCache),
@@ -88,6 +89,14 @@ class _DjangoCache:
 class SyncDjangoCache(_DjangoCache, BaseThrottleSyncBackend):
     """
     Uses Django sync cache framework for storing the rate limiting state.
+
+    Unsafe cache backends (``LocMemCache``, ``DummyCache``) do not share
+    the throttling state between processes. Use ``allow_unsafe_cache``
+    to control what happens when such a backend is detected:
+    ``True`` (default) emits
+    :class:`~dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning`,
+    ``False`` raises :exc:`~dmr.exceptions.EndpointMetadataError`,
+    and ``None`` disables the check.
 
     .. seealso::
 
@@ -155,6 +164,14 @@ class SyncDjangoCache(_DjangoCache, BaseThrottleSyncBackend):
 class AsyncDjangoCache(_DjangoCache, BaseThrottleAsyncBackend):
     """
     Uses Django async cache framework for storing the rate limiting state.
+
+    Unsafe cache backends (``LocMemCache``, ``DummyCache``) do not share
+    the throttling state between processes. Use ``allow_unsafe_cache``
+    to control what happens when such a backend is detected:
+    ``True`` (default) emits
+    :class:`~dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning`,
+    ``False`` raises :exc:`~dmr.exceptions.EndpointMetadataError`,
+    and ``None`` disables the check.
 
     .. seealso::
 

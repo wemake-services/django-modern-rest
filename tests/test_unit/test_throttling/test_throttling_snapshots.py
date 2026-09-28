@@ -20,13 +20,18 @@ from dmr.throttling import (
     SyncOrAsyncThrottle,
     SyncThrottle,
 )
+from dmr.throttling.backends import AsyncDjangoCache, SyncDjangoCache
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
 
 
 class _DefaultController(Controller[PydanticSerializer]):
     throttling = [
-        SyncThrottle(1, Rate.second),
+        SyncThrottle(
+            1,
+            Rate.second,
+            backend=SyncDjangoCache(allow_unsafe_cache=None),
+        ),
     ]
 
     def get(self) -> str:
@@ -39,6 +44,7 @@ class _AllHeadersController(Controller[PydanticSerializer]):
             1,
             Rate.second,
             response_headers=(XRateLimit(), RateLimitIETFDraft(), RetryAfter()),
+            backend=SyncDjangoCache(allow_unsafe_cache=None),
         ),
     ]
 
@@ -52,6 +58,7 @@ class _NoHeadersController(Controller[PydanticSerializer]):
             1,
             Rate.second,
             response_headers=(),
+            backend=SyncDjangoCache(allow_unsafe_cache=None),
         ),
     ]
 
@@ -99,6 +106,7 @@ class _AllReportsController(Controller[PydanticSerializer]):
                 Rate.second,
                 response_headers=[RateLimitIETFDraft()],
                 cache_key=RemoteAddr(name='per-second'),
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
     )
@@ -137,8 +145,16 @@ def test_throttled_schema_with_sync_or_async(
     settings.DMR_SETTINGS = {
         Settings.throttling: [
             SyncOrAsyncThrottle(
-                SyncThrottle(1, Rate.second),
-                AsyncThrottle(1, Rate.second),
+                SyncThrottle(
+                    1,
+                    Rate.second,
+                    backend=SyncDjangoCache(allow_unsafe_cache=None),
+                ),
+                AsyncThrottle(
+                    1,
+                    Rate.second,
+                    backend=AsyncDjangoCache(allow_unsafe_cache=None),
+                ),
             ),
         ],
     }

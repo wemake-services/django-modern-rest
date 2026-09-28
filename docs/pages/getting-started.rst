@@ -76,6 +76,9 @@ knows our framework:
   for indexes with links to different pages and topics
 - https://django-modern-rest.readthedocs.io/llms-full.txt
   for complete docs
+- Every documentation page is also served as Markdown,
+  replace ``.html`` with ``.md`` in its URL,
+  or press ``M↓`` next to the title of any page
 
 We also support
 `Context7 <https://context7.com/wemake-services/django-modern-rest>`_
@@ -86,13 +89,21 @@ Use cases we officially support:
 - Learning ``django-modern-rest`` with the help
   of `DeepWiki <https://deepwiki.com/wemake-services/django-modern-rest>`_
 - AI-guided migrations for any API changes.
-  Did we break something? We provide a prompt for you, so you can automatically
-  upgrade to a newer version using an AI tool of your choice
+  Did we break something? Every breaking release ships a migration prompt,
+  so you can upgrade to a newer version
+  using an AI tool of your choice
 
-We support several custom agent skills:
+We ship several :doc:`agent skills <ai/agent-skills>` inside the package,
+install them into your project with a single command:
+
+.. code-block:: bash
+
+  uvx library-skills
 
 - ``$dmr`` to enforce ``django-modern-rest`` best practices
   with fast and secure approaches
+- ``$dmr-upgrade`` to :doc:`upgrade to a newer release <ai/dmr-upgrade>`
+  with the official migration prompts
 - ``$dmr-openapi-skeleton`` to generate
   a :doc:`working project boilerplate <ai/spec-first>`
   from a single ``openapi.json`` file (the "Spec First" approach)
@@ -124,13 +135,16 @@ Let's see the basics and learn how to use ``dmr`` in a single example:
   .. tab:: pydantic
 
     We support :class:`pydantic.BaseModel`
-    via :class:`~dmr.plugins.pydantic.PydanticSerializer`.
+    via :class:`~dmr.plugins.pydantic.PydanticSerializer`
+    and :class:`~dmr.plugins.pydantic.PydanticFastSerializer`.
 
     .. tip::
 
-      If you only use ``json`` :doc:`parsers and renderers <negotiation>`,
-      it is faster to use
-      :class:`~dmr.plugins.pydantic.PydanticFastSerializer` instead.
+      :class:`~dmr.plugins.pydantic.PydanticFastSerializer` is faster,
+      but it only works with ``json``
+      :doc:`parsers and renderers <negotiation>`.
+      If you need other formats, use
+      :class:`~dmr.plugins.pydantic.PydanticSerializer` instead.
 
     .. literalinclude:: /examples/getting_started/pydantic_controller.py
       :caption: views.py

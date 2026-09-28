@@ -7,6 +7,7 @@ from dmr.openapi import OpenAPIContext, build_schema
 from dmr.openapi.objects import OpenAPIType, Schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
+from dmr.types import EMPTY
 
 
 class _ResponseModel(pydantic.BaseModel):  # pyright: ignore[reportRedeclaration]
@@ -67,12 +68,6 @@ def test_renamed_schema() -> None:
     )
 
 
-def test_try_unregister_schema(openapi_context: OpenAPIContext) -> None:
-    """Ensure that removing non existent schema works."""
-    openapi_context.registries.schema.try_unregister('missing')
-    openapi_context.registries.schema.try_unregister(None)
-
-
 def test_resolve_ref_with_siblings(
     openapi_context: OpenAPIContext,
 ) -> None:
@@ -100,7 +95,7 @@ def test_resolve_ref_with_siblings(
 
     component = registry.schemas['Address']
     assert component.description == 'The component itself'
-    assert component.default is None
+    assert component.default is EMPTY
 
 
 def test_resolve_pure_ref(openapi_context: OpenAPIContext) -> None:

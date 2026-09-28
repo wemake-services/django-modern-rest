@@ -91,7 +91,7 @@ To disable all semantic schema generation you can disable it on several levels:
   .. tab:: disable per endpoint
 
     Pass ``semantic_schema`` parameter
-    to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
+    to :data:`~dmr.endpoint.modify` or :data:`~dmr.endpoint.validate`.
 
     .. literalinclude:: /examples/openapi/semantic_schema_per_endpoint.py
       :caption: views.py
@@ -134,7 +134,7 @@ You can disable some specific semantic responses generation by status code:
   .. tab:: exclude per endpoint
 
     Pass ``exclude_semantic_responses`` parameter
-    to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
+    to :data:`~dmr.endpoint.modify` or :data:`~dmr.endpoint.validate`.
 
     .. literalinclude:: /examples/openapi/exclude_per_endpoint.py
       :caption: views.py
@@ -170,7 +170,7 @@ Or disable semantic responses completely:
   .. tab:: per endpoint
 
     Pass ``semantic_responses`` parameter
-    to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
+    to :data:`~dmr.endpoint.modify` or :data:`~dmr.endpoint.validate`.
 
     .. literalinclude:: /examples/openapi/per_endpoint.py
       :caption: views.py
@@ -215,7 +215,7 @@ and security requirements generation by scheme name:
   .. tab:: exclude per endpoint
 
     Pass ``exclude_semantic_auth`` parameter
-    to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
+    to :data:`~dmr.endpoint.modify` or :data:`~dmr.endpoint.validate`.
 
     .. literalinclude:: /examples/openapi/exclude_auth_per_endpoint.py
       :caption: views.py
@@ -251,7 +251,7 @@ Or disable semantic auth completely:
   .. tab:: per endpoint
 
     Pass ``semantic_auth`` parameter
-    to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`.
+    to :data:`~dmr.endpoint.modify` or :data:`~dmr.endpoint.validate`.
 
     .. literalinclude:: /examples/openapi/semantic_auth_per_endpoint.py
       :caption: views.py
@@ -305,7 +305,7 @@ We support three levels of configuration with this feature:
   .. tab:: per endpoint
 
     Pass ``ignore_from_spec`` parameter
-    to :func:`~dmr.endpoint.modify` or :func:`~dmr.endpoint.validate`
+    to :data:`~dmr.endpoint.modify` or :data:`~dmr.endpoint.validate`
     on endpoints that you want to ignore.
 
     .. literalinclude:: /examples/openapi/ignore_endpoint.py

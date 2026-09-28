@@ -13,7 +13,9 @@ from typing import (  # noqa: WPS235
     get_origin,
 )
 
-from typing_extensions import Sentinel, TypeAliasType
+from typing_extensions import TypeAliasType
+
+from dmr.internal.empty import EMPTY as EMPTY
 
 if TYPE_CHECKING:
     from django.utils.functional import (
@@ -45,9 +47,6 @@ _UNION_TYPES: Final = frozenset((ty.Union, builtin_types.UnionType))
 #: How many nested type aliases we are willing to unwrap.
 #: Type aliases can be mutually recursive, we don't want to hang on them.
 _MAX_ALIAS_DEPTH: Final = 15
-
-#: Default singleton for empty values, re-exported as ``dmr.types.EMPTY``.
-EMPTY: Final = Sentinel('EMPTY')
 
 
 def unwrap_type_alias(annotation: Any) -> Any:
@@ -115,6 +114,27 @@ def find_annotated_metadata(
         if isinstance(metadata, metadata_type):
             return metadata
     return None
+
+
+def has_nested_annotated_metadata(
+    annotation: Any,
+    metadata_type: type[Any],
+) -> bool:
+    """
+    Whether *metadata_type* is present anywhere inside *annotation*.
+
+    Unlike :func:`find_annotated_metadata`, it also looks
+    into unions, generics, and other nested types,
+    ``Annotated[Model, metadata] | None``
+    or ``list[Annotated[Model, metadata]]`` are found.
+    """
+    annotation = unwrap_type_alias(annotation)
+    if find_annotated_metadata(annotation, metadata_type) is not None:
+        return True
+    return any(
+        has_nested_annotated_metadata(arg, metadata_type)
+        for arg in get_args(annotation)
+    )
 
 
 class FormatError(Protocol):

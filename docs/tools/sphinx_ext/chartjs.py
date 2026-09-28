@@ -6,6 +6,8 @@ from sphinx.application import Sphinx
 from sphinx.util.docutils import SphinxDirective
 from typing_extensions import override
 
+from tools.sphinx_ext.markdown import skip_node
+
 if TYPE_CHECKING:
     from sphinx.writers.html5 import HTML5Translator
 
@@ -83,5 +85,10 @@ def _depart_chartjs_html(self: 'HTML5Translator', node: ChartJSNode) -> None:
 
 def setup(app: Sphinx) -> None:
     """Setup Chart.js directive."""
-    app.add_node(ChartJSNode, html=(_visit_chartjs_html, _depart_chartjs_html))
+    # Charts are interactive, the Markdown output has no way to show them:
+    app.add_node(
+        ChartJSNode,
+        html=(_visit_chartjs_html, _depart_chartjs_html),
+        llm_markdown=(skip_node, None),
+    )
     app.add_js_file('js/chartjs.js')

@@ -1,66 +1,116 @@
 import dataclasses
-from typing import TYPE_CHECKING, Any, Literal, overload
+from typing import TYPE_CHECKING, Any, final
 
 from dmr.exceptions import UnsolvableAnnotationsError
+from dmr.internal.types import EMPTY
 from dmr.openapi.mappers.example import (
     generate_example,
     set_generated_example,
 )
+from dmr.openapi.mappers.references import iter_references
 from dmr.openapi.mappers.schema_loader import load_schema
-from dmr.openapi.objects import Reference, Schema
+from dmr.openapi.objects import Schema
 
 if TYPE_CHECKING:
     from dmr.openapi.core.context import OpenAPIContext
-    from dmr.serializer import BaseSerializer
+    from dmr.openapi.core.registry import SchemaRegistry
+    from dmr.serializer import BaseSerializer, SchemaDef
+
+
+@final
+@dataclasses.dataclass(frozen=True, slots=True)
+class LoadedSchema:
+    """
+    Schema of an annotation together with all components it might use.
+
+    Nothing from it is registered in the OpenAPI schema yet.
+    Callers transform :attr:`schema` however they need
+    and then pass the final result
+    to :meth:`dmr.openapi.generators.SchemaGenerator.register`,
+    which registers only the components that the result still references.
+
+    .. versionadded:: 0.16.0
+    """
+
+    #: Schema of the annotation, it can reference :attr:`defs`
+    #: with its ``$ref``.
+    schema: Schema
+    #: All components that :attr:`schema` might reference, by name.
+    defs: dict[str, Schema]
+    #: Annotation this schema was generated from.
+    annotation: Any
+    #: Name of the component in :attr:`defs`
+    #: that describes the annotation itself, if there's one.
+    name: str | None
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
 class SchemaGenerator:
-    """Generate OpenAPI schemas from different type annotations."""
+    """
+    Generate OpenAPI schemas from different type annotations.
+
+    .. versionchanged:: 0.16.0
+        Components are not registered while a schema is generated anymore.
+        :meth:`load` returns a schema with all its components kept locally,
+        :meth:`register` registers only the components that are referenced
+        from the final result. Calling the generator does both at once.
+        Removed ``skip_registration``
+        and ``register_referenced_components`` parameters.
+        References to components are returned as ``Schema`` objects
+        with ``$ref`` set, not as ``Reference`` objects.
+
+    """
 
     # Instance API:
     _context: 'OpenAPIContext'
 
-    @overload
     def __call__(
         self,
         annotation: Any,
         serializer: type['BaseSerializer'],
         *,
         used_for_response: bool = False,
-        skip_registration: Literal[True],
-        register_referenced_components: bool = False,
-    ) -> Schema: ...
-
-    @overload
-    def __call__(
-        self,
-        annotation: Any,
-        serializer: type['BaseSerializer'],
-        *,
-        used_for_response: bool = False,
-        skip_registration: bool = False,
-        register_referenced_components: bool = False,
-    ) -> Reference | Schema: ...
-
-    def __call__(
-        self,
-        annotation: Any,
-        serializer: type['BaseSerializer'],
-        *,
-        used_for_response: bool = False,
-        skip_registration: bool = False,
-        register_referenced_components: bool = False,
-    ) -> Reference | Schema:
+    ) -> Schema:
         """
-        Get schema for an annotation.
+        Get schema for an annotation and register components it uses.
+
+        Args:
+            annotation: Type annotation to generate the schema for.
+            serializer: Serializer that knows how to build
+                a raw JSON schema from the annotation.
+            used_for_response: Whether this schema describes a response,
+                since some serializers generate different
+                schemas for inputs and outputs.
+
+        Raises:
+            UnsolvableAnnotationsError: when we can't generate
+                an OpenAPI schema from an existing annotation.
+
+        """
+        loaded = self.load(
+            annotation,
+            serializer,
+            used_for_response=used_for_response,
+        )
+        self.register(loaded.schema, loaded)
+        return loaded.schema
+
+    def load(
+        self,
+        annotation: Any,
+        serializer: type['BaseSerializer'],
+        *,
+        used_for_response: bool = False,
+        inline: bool = False,
+    ) -> LoadedSchema:
+        """
+        Get schema for an annotation without registering anything.
 
         Here's the algorithm we use:
 
-        1. First, we try to find any existing schema references from cache
-        2. Next, we try to get a model schema from a serializer.
-           If it exists, we create an internal reference and return it.
-           The next time it will be returned as a reference, cached.
+        1. First, we try to find an existing reference in the registry
+        2. Next, we get a raw JSON schema from the serializer.
+           Models get their own components, so the result is a reference
         3. If nothing worked, we raise an error
 
         Args:
@@ -70,165 +120,113 @@ class SchemaGenerator:
             used_for_response: Whether this schema describes a response,
                 since some serializers generate different
                 schemas for inputs and outputs.
-            skip_registration: Do not register the resulting schema
-                in the registry, return an inlined ``Schema``
-                instead of a ``Reference``.
-            register_referenced_components: Still register
-                the nested components the schema refers to,
-                even when ``skip_registration`` is set.
-                Only makes sense together with ``skip_registration``.
+            inline: Resolve ``$ref`` in the result:
+                the schema itself and members of its unions
+                are replaced with their definitions.
+                Useful when a schema's properties are needed.
 
         Raises:
             UnsolvableAnnotationsError: when we can't generate
                 an OpenAPI schema from an existing annotation.
 
+        .. versionadded:: 0.16.0
         """
-        existing_reference = self._context.registries.schema.get_reference(
-            (
-                serializer.schema_generator.schema_name(annotation)
-                or getattr(annotation, '__qualname__', None)
-            ),
+        registry = self._context.registries.schema
+        name = serializer.schema_generator.schema_name(annotation) or getattr(
             annotation,
+            '__qualname__',
+            None,
         )
-        if existing_reference is not None:
-            return existing_reference
+        existing_reference = registry.get_reference(name, annotation)
+        if existing_reference is None:
+            loaded = self._load(annotation, serializer, used_for_response)
+        else:
+            loaded = LoadedSchema(existing_reference, {}, annotation, name)
 
-        try:
-            schemas = serializer.schema_generator.get_schema(
+        if inline:
+            return dataclasses.replace(
+                loaded,
+                schema=_inline(loaded.schema, loaded.defs, registry),
+            )
+        return loaded
+
+    def register(self, used: object, *loaded: LoadedSchema) -> None:
+        """
+        Register components of *loaded* schemas that are referenced from *used*.
+
+        *used* is any OpenAPI object built from the loaded schemas,
+        for example, the schema itself, a list of parameters,
+        or a request body. Components that it references directly
+        or through other referenced components are registered,
+        all other components are dropped.
+
+        .. versionadded:: 0.16.0
+        """
+        registry = self._context.registries.schema
+        pending = set(iter_references(used, registry.schema_prefix))
+        registered: set[str] = set()
+        while pending:
+            component_name = pending.pop()
+            component = _find_component(component_name, loaded)
+            if component is None or component_name in registered:
+                # Not ours: it is already registered or comes from outside.
+                continue
+            registered.add(component_name)
+            registry.register(component_name, *component)
+            pending.update(
+                iter_references(component[0], registry.schema_prefix),
+            )
+
+    def _load(
+        self,
+        annotation: Any,
+        serializer: type['BaseSerializer'],
+        used_for_response: bool,  # noqa: FBT001
+    ) -> LoadedSchema:
+        registry = self._context.registries.schema
+        schema, defs = self._as_components(
+            *_get_raw_schema(
                 annotation,
-                ref_template=self._context.registries.schema.schema_prefix,
+                serializer,
+                ref_template=registry.schema_prefix,
                 used_for_response=used_for_response,
+            ),
+        )
+        if schema.ref is None:
+            target = schema
+        else:
+            # The example belongs to the component itself, while this
+            # usage keeps the keywords next to its ``$ref`` as they are, #1491
+            target = registry.maybe_resolve_reference(
+                Schema(ref=schema.ref),
+                resolution_context=defs,
             )
-        except Exception as exc:
-            raise UnsolvableAnnotationsError(
-                f'Cannot generate OpenAPI schema from {annotation}, '
-                'consider registering it as described in your serializer',
-            ) from exc
-        return self._maybe_generate_reference(
+        self._maybe_generate_example(target, annotation, serializer)
+        return LoadedSchema(
+            schema,
+            defs,
             annotation,
-            *schemas,
-            serializer,
-            skip_registration=skip_registration,
-            register_referenced_components=register_referenced_components,
+            _reference_name(schema, registry.schema_prefix),
         )
 
-    def _maybe_generate_reference(
+    def _as_components(
         self,
-        annotation: Any,
-        schema: dict[str, Any],
-        components: dict[str, Any],
-        serializer: type['BaseSerializer'],
-        *,
-        skip_registration: bool,
-        register_referenced_components: bool,
-    ) -> Reference | Schema:
-        reference = schema.get('$ref')
-        loaded_components = {
+        raw_schema: dict[str, Any],
+        raw_defs: dict[str, Any],
+    ) -> tuple[Schema, dict[str, Schema]]:
+        """Load raw schemas, the annotation's own model becomes a component."""
+        defs = {
             component_name: load_schema(component)
-            for component_name, component in components.items()
+            for component_name, component in raw_defs.items()
         }
-        self._register_components(
-            loaded_components,
-            reference,
-            skip_registration=skip_registration,
-            register_referenced_components=register_referenced_components,
-        )
-
-        if reference and _has_schema_siblings(schema):
-            # ``$ref`` next to schema keywords, like ``default`` or ``x-``,
-            # stays a ``Schema``: a ``Reference`` would drop them, #1491
-            return self._resolve_reference(
-                annotation,
-                load_schema(schema),
-                loaded_components,
-                serializer,
-                skip_registration=skip_registration,
-            )
-        if reference:
-            return self._resolve_reference(
-                annotation,
-                Reference(
-                    ref=reference,
-                    summary=schema.get('summary'),
-                    description=schema.get('description'),
-                ),
-                loaded_components,
-                serializer,
-                skip_registration=skip_registration,
-            )
-
-        schema_obj = load_schema(schema)
-        self._maybe_generate_example(schema_obj, annotation, serializer)
-        if not skip_registration and schema_obj.title:
-            return self._context.registries.schema.register(
-                schema_name=schema_obj.title,
-                schema=schema_obj,
-                annotation=annotation,
-            )
-        return schema_obj
-
-    def _register_components(
-        self,
-        components: dict[str, Schema],
-        reference: str | None,
-        *,
-        skip_registration: bool,
-        register_referenced_components: bool,
-    ) -> None:
-        """
-        Register nested components of a schema.
-
-        Components are registered when the schema itself is registered,
-        or when explicitly asked for with ``register_referenced_components``.
-
-        When the schema is a reference and its registration is skipped,
-        the referenced component is inlined instead of being registered,
-        while all other nested components are still registered.
-        """
-        if skip_registration and not register_referenced_components:
-            return
-
-        registry = self._context.registries.schema
-        inlined_component = (
-            reference.removeprefix(registry.schema_prefix)
-            if skip_registration and reference
-            else None
-        )
-        for component_name, component in components.items():
-            if component_name != inlined_component:
-                registry.register(component_name, component)
-
-    def _resolve_reference(
-        self,
-        annotation: Any,
-        reference: Reference | Schema,
-        components: dict[str, Schema],
-        serializer: type['BaseSerializer'],
-        *,
-        skip_registration: bool,
-    ) -> Reference | Schema:
-        registry = self._context.registries.schema
-        if skip_registration:
-            return registry.maybe_resolve_reference(
-                reference,
-                resolution_context=components,
-            )
-        if isinstance(reference, Schema) and reference.ref:
-            # The example belongs to the component itself,
-            # while this schema keeps its siblings as they are, #1491
-            target = registry.schemas[
-                reference.ref.removeprefix(registry.schema_prefix)
-            ]
-            self._maybe_generate_example(target, annotation, serializer)
-            return reference
-        # If we got a reference from the start,
-        # it might still miss the examples:
-        self._maybe_generate_example(
-            registry.maybe_resolve_reference(reference),
-            annotation,
-            serializer,
-        )
-        return reference
+        schema = load_schema(raw_schema)
+        if schema.ref is not None or not schema.title:
+            return schema, defs
+        # Models are components, even when serializers inline them:
+        defs[schema.title] = schema
+        return Schema(
+            ref=self._context.registries.schema.schema_prefix + schema.title,
+        ), defs
 
     def _maybe_generate_example(
         self,
@@ -236,22 +234,83 @@ class SchemaGenerator:
         annotation: Any,
         serializer: type['BaseSerializer'],
     ) -> None:
-        if not schema.example and not schema.examples:  # pragma: no branch
+        if schema.example is EMPTY and not schema.examples:  # pragma: no branch
             set_generated_example(
                 schema,
                 generate_example(annotation, serializer),
             )
 
 
-#: Keys a plain ``Reference`` can carry next to ``$ref`` without losing them.
-_REFERENCE_ONLY_KEYS = frozenset(('$ref', 'summary', 'description'))
+def _get_raw_schema(
+    annotation: Any,
+    serializer: type['BaseSerializer'],
+    *,
+    ref_template: str,
+    used_for_response: bool,
+) -> 'SchemaDef':
+    try:
+        return serializer.schema_generator.get_schema(
+            annotation,
+            ref_template=ref_template,
+            used_for_response=used_for_response,
+        )
+    except Exception as exc:
+        raise UnsolvableAnnotationsError(
+            f'Cannot generate OpenAPI schema from {annotation}, '
+            'consider registering it as described in your serializer',
+        ) from exc
 
 
-def _has_schema_siblings(schema: dict[str, Any]) -> bool:
-    """
-    Check that ``$ref`` has keywords next to it that only a ``Schema`` holds.
+def _inline(
+    schema: Schema,
+    defs: dict[str, Schema],
+    registry: 'SchemaRegistry',
+) -> Schema:
+    """Resolve the schema and members of its unions from *defs*."""
+    resolved = registry.maybe_resolve_reference(
+        schema,
+        resolution_context=defs,
+    )
+    if not resolved.any_of and not resolved.one_of:
+        return resolved
+    # Copy the resolved schema, so the component itself is not changed:
+    return dataclasses.replace(
+        resolved,
+        any_of=_inline_members(resolved.any_of, defs, registry),
+        one_of=_inline_members(resolved.one_of, defs, registry),
+    )
 
-    ``summary`` and ``description`` are valid on a ``Reference``
-    and dump the same way, so they alone don't change the outcome.
-    """
-    return any(key not in _REFERENCE_ONLY_KEYS for key in schema)
+
+def _inline_members(
+    members: list[Schema] | None,
+    defs: dict[str, Schema],
+    registry: 'SchemaRegistry',
+) -> list[Schema] | None:
+    if not members:
+        return members
+    return [_inline(member, defs, registry) for member in members]
+
+
+def _reference_name(
+    schema: Schema,
+    schema_prefix: str,
+) -> str | None:
+    if schema.ref is not None:
+        return schema.ref.removeprefix(schema_prefix)
+    return None
+
+
+def _find_component(
+    component_name: str,
+    loaded: tuple[LoadedSchema, ...],
+) -> tuple[Schema, Any] | None:
+    """Find a component with its annotation, if it describes the annotation."""
+    for loaded_schema in loaded:
+        component = loaded_schema.defs.get(component_name)
+        if component is not None:
+            return component, (
+                loaded_schema.annotation
+                if component_name == loaded_schema.name
+                else EMPTY
+            )
+    return None

@@ -2,12 +2,12 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Annotated, Any
 
 from dmr.internal.dataclass_aliases import Field
+from dmr.internal.empty import EMPTY
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.discriminator import Discriminator
     from dmr.openapi.objects.enums import OpenAPIFormat, OpenAPIType
     from dmr.openapi.objects.external_documentation import ExternalDocumentation
-    from dmr.openapi.objects.reference import Reference
     from dmr.openapi.objects.xml import XML
 
 
@@ -22,34 +22,37 @@ class Schema:
     behavior is defined by the application (e.g. for annotations),
     OAS also defers the definition of semantics to the application consuming
     the OpenAPI document.
+
+    .. versionchanged:: 0.16.0
+        ``const``, ``default``, and ``example`` now default to
+        :data:`~dmr.types.EMPTY` instead of ``None``,
+        because ``None`` is a valid value for them.
+        Subschemas are always ``Schema`` objects,
+        since OpenAPI 3.1 a ``$ref`` inside a schema is a JSON Schema
+        keyword (see ``ref``), not a :class:`Reference` object.
+
     """
 
-    all_of: list['Reference | Schema'] | None = None
-    any_of: list['Reference | Schema'] | None = None
-    one_of: list['Reference | Schema'] | None = None
-    schema_not: Annotated['Reference | Schema | None', Field(alias='not')] = (
-        None
-    )
-    schema_if: Annotated['Reference | Schema | None', Field(alias='if')] = None
-    schema_then: Annotated['Reference | Schema | None', Field(alias='then')] = (
-        None
-    )
-    schema_else: Annotated['Reference | Schema | None', Field(alias='else')] = (
-        None
-    )
-    dependent_schemas: dict[str, 'Reference | Schema'] | None = None
-    prefix_items: list['Reference | Schema'] | None = None
-    items: 'Reference | Schema | bool | None' = None
-    contains: 'Reference | Schema | None' = None
-    properties: dict[str, 'Reference | Schema'] | None = None
-    pattern_properties: dict[str, 'Reference | Schema'] | None = None
-    additional_properties: 'Reference | Schema | bool | None' = None
-    property_names: 'Reference | Schema | None' = None
-    unevaluated_items: 'Reference | Schema | None' = None
-    unevaluated_properties: 'Reference | Schema | None' = None
+    all_of: list['Schema'] | None = None
+    any_of: list['Schema'] | None = None
+    one_of: list['Schema'] | None = None
+    schema_not: Annotated['Schema | None', Field(alias='not')] = None
+    schema_if: Annotated['Schema | None', Field(alias='if')] = None
+    schema_then: Annotated['Schema | None', Field(alias='then')] = None
+    schema_else: Annotated['Schema | None', Field(alias='else')] = None
+    dependent_schemas: dict[str, 'Schema'] | None = None
+    prefix_items: list['Schema'] | None = None
+    items: 'Schema | bool | None' = None
+    contains: 'Schema | None' = None
+    properties: dict[str, 'Schema'] | None = None
+    pattern_properties: dict[str, 'Schema'] | None = None
+    additional_properties: 'Schema | bool | None' = None
+    property_names: 'Schema | None' = None
+    unevaluated_items: 'Schema | None' = None
+    unevaluated_properties: 'Schema | None' = None
     type: 'OpenAPIType | list[OpenAPIType] | None' = None
     enum: list[Any] | None = None
-    const: Any | None = None
+    const: Any = EMPTY
     multiple_of: float | None = None
     maximum: float | None = None
     exclusive_maximum: float | None = None
@@ -70,10 +73,10 @@ class Schema:
     format: 'OpenAPIFormat | str | None' = None
     content_encoding: str | None = None
     content_media_type: str | None = None
-    content_schema: 'Reference | Schema | None' = None
+    content_schema: 'Schema | None' = None
     title: str | None = None
     description: str | None = None
-    default: Any | None = None
+    default: Any = EMPTY
     deprecated: bool | None = None
     read_only: bool | None = None
     write_only: bool | None = None
@@ -81,7 +84,7 @@ class Schema:
     discriminator: 'Discriminator | None' = None
     xml: 'XML | None' = None
     external_docs: 'ExternalDocumentation | None' = None
-    example: Any | None = None
+    example: Any = EMPTY
     dynamic_anchor: Annotated[str | None, Field(alias='$dynamicAnchor')] = None
     dynamic_ref: Annotated[str | None, Field(alias='$dynamicRef')] = None
     ref: Annotated[str | None, Field(alias='$ref')] = None
@@ -89,7 +92,7 @@ class Schema:
     comment: Annotated[str | None, Field(alias='$comment')] = None
     schema_uri: Annotated[str | None, Field(alias='$schema')] = None
     defs: Annotated[
-        dict[str, 'Reference | Schema'] | None,
+        dict[str, 'Schema'] | None,
         Field(alias='$defs'),
     ] = None
     extensions: dict[str, Any] | None = None

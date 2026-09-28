@@ -1,11 +1,22 @@
 # NOTE: when editing this file, also edit `test_msgspec_schema.py`
 
+import dataclasses
 import enum
 from collections.abc import Iterable, Mapping
-from typing import Annotated, Any, ClassVar, Literal, Optional, Union, final
+from typing import (
+    Annotated,
+    Any,
+    ClassVar,
+    Literal,
+    NotRequired,
+    Optional,
+    Union,
+    final,
+)
 
 import pydantic
 import pytest
+from inline_snapshot import snapshot
 from pydantic.json_schema import GenerateJsonSchema
 from pydantic_core import core_schema
 from typing_extensions import TypedDict, override
@@ -15,7 +26,7 @@ from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators import SchemaGenerator
-from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Reference, Schema
+from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Schema
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.plugins.pydantic.schema import (
     JsonSchemaKwargs,
@@ -261,7 +272,7 @@ def test_enum(
 ) -> None:
     """Ensure schema for enums is correct."""
     reference = schema_generator(_TestEnum, PydanticSerializer)
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
 
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
@@ -273,24 +284,11 @@ def test_enum(
     )
 
 
-def _expected_enum_parameter_schema(
-    component_name: str,
-    parameter_location: str,
-    expected_default: Any,
-) -> dict[str, Any]:
-    """Keep the query field's ``default`` next to ``$ref``, see #1491."""
-    expected = {'$ref': f'#/components/schemas/{component_name}'}
-    if parameter_location == 'query':
-        expected['default'] = expected_default
-    return expected
-
-
 def _assert_enum_parameter_schema(
     *,
     controller: type[Controller[PydanticSerializer]],
     component_name: str,
     expected_schema: dict[str, Any],
-    expected_default: Any,
 ) -> None:
     """Ensure enum parameter fields register referenced schemas."""
     schema = build_schema(
@@ -307,11 +305,12 @@ def _assert_enum_parameter_schema(
     }
 
     for parameter_location in ('path', 'query', 'header', 'cookie'):
-        parameter = parameter_specs['enum_value', parameter_location]
-        assert parameter['schema'] == _expected_enum_parameter_schema(
-            component_name,
-            parameter_location,
-            expected_default,
+        expected: dict[str, Any] = {
+            '$ref': f'#/components/schemas/{component_name}',
+        }
+        assert (
+            parameter_specs['enum_value', parameter_location]['schema']
+            == expected
         )
     assert schema['components']['schemas'][component_name] == expected_schema
 
@@ -327,7 +326,7 @@ def test_parameter_schema_with_enum() -> None:
         enum_value: _QueryEnum
 
     class _EnumQuery(pydantic.BaseModel):
-        enum_value: _QueryEnum = _QueryEnum.alpha
+        enum_value: _QueryEnum
 
     class _EnumHeaders(pydantic.BaseModel):
         enum_value: _QueryEnum
@@ -353,7 +352,6 @@ def test_parameter_schema_with_enum() -> None:
             'title': _QueryEnum.__name__,
             'type': 'string',
         },
-        expected_default='alpha',
     )
 
 
@@ -368,7 +366,7 @@ def test_parameter_schema_with_int_enum() -> None:
         enum_value: _QueryEnum
 
     class _EnumQuery(pydantic.BaseModel):
-        enum_value: _QueryEnum = _QueryEnum.alpha
+        enum_value: _QueryEnum
 
     class _EnumHeaders(pydantic.BaseModel):
         enum_value: _QueryEnum
@@ -394,7 +392,6 @@ def test_parameter_schema_with_int_enum() -> None:
             'title': _QueryEnum.__name__,
             'type': 'integer',
         },
-        expected_default=1,
     )
 
 
@@ -409,7 +406,7 @@ def test_parameter_schema_with_str_enum() -> None:
         enum_value: _QueryEnum
 
     class _EnumQuery(pydantic.BaseModel):
-        enum_value: _QueryEnum = _QueryEnum.alpha
+        enum_value: _QueryEnum
 
     class _EnumHeaders(pydantic.BaseModel):
         enum_value: _QueryEnum
@@ -435,8 +432,100 @@ def test_parameter_schema_with_str_enum() -> None:
             'title': _QueryEnum.__name__,
             'type': 'string',
         },
-        expected_default='alpha',
     )
+
+
+class _OptionalPathModel(pydantic.BaseModel):
+    user_id: int
+    opt: str = ''
+
+
+class _OptionalPathTypedDict(TypedDict):
+    user_id: int
+    opt: NotRequired[str]
+
+
+@dataclasses.dataclass
+class _OptionalPathDataclass:
+    user_id: int
+    opt: str = ''
+
+
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+@pytest.mark.parametrize(
+    'path_model',
+    [_OptionalPathModel, _OptionalPathTypedDict, _OptionalPathDataclass],
+)
+def test_optional_path_fields(
+    *,
+    serializer: type[PydanticSerializer],
+    path_model: Any,
+) -> None:
+    """Ensure that path parameters are always required, even with defaults."""
+
+    class _OptionalPathController(Controller[serializer]):  # type: ignore[valid-type]
+        def get(self, parsed_path: Path[path_model]) -> None:  # pyright: ignore[reportInvalidTypeForm]
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router(
+            'api/',
+            [
+                path(
+                    'user/<int:user_id>/<str:opt>/',
+                    _OptionalPathController.as_view(),
+                ),
+            ],
+        ),
+    ).convert()
+
+    operation = schema['paths']['/api/user/{user_id}/{opt}/']['get']
+    assert {
+        parameter['name']: parameter['required']
+        for parameter in operation['parameters']
+    } == {'user_id': True, 'opt': True}
+
+
+class _NoneDefaultModel(pydantic.BaseModel):
+    first: int
+    second: str = ''
+    third: str | None = None
+
+
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+def test_none_default(*, serializer: type[PydanticSerializer]) -> None:
+    """Ensure that ``None`` defaults are dumped into the schema."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1619
+
+    class _NoneDefaultController(Controller[serializer]):  # type: ignore[valid-type]
+        def post(self, parsed_body: Body[_NoneDefaultModel]) -> str:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('user/', _NoneDefaultController.as_view())]),
+    ).convert()
+
+    assert schema['components']['schemas']['_NoneDefaultModel'] == snapshot({
+        'properties': {
+            'first': {'type': 'integer', 'title': 'First'},
+            'second': {'type': 'string', 'title': 'Second', 'default': ''},
+            'third': {
+                'anyOf': [{'type': 'string'}, {'type': 'null'}],
+                'title': 'Third',
+                'default': None,
+            },
+        },
+        'type': 'object',
+        'required': ['first'],
+        'title': '_NoneDefaultModel',
+    })
 
 
 def test_root_model(
@@ -448,7 +537,7 @@ def test_root_model(
         pydantic.RootModel[list[int]],
         PydanticSerializer,
     )
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
 
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
@@ -497,7 +586,7 @@ def test_type_mapper_typeddict(
 ) -> None:
     """Ensure that schema for ``TypedDict`` returns ``None``."""
     reference = schema_generator(_TestTypedDict, PydanticSerializer)
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
 
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
@@ -644,7 +733,7 @@ def test_custom_by_alias(
         schema_kwargs,
     )
     reference = openapi_context.generators.schema(_AliasedModel, serializer)
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
     )

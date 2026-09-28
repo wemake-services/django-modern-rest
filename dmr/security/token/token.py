@@ -6,8 +6,8 @@ from django.utils.crypto import salted_hmac
 from django.views.decorators.debug import sensitive_variables
 from typing_extensions import Sentinel, TypeVar
 
+from dmr.internal.types import EMPTY
 from dmr.security.token.constants import TOKEN_DEFAULT_EXPIRY
-from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from django.contrib.auth.base_user import AbstractBaseUser

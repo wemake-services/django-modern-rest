@@ -2,6 +2,7 @@ from typing import Final
 
 from dmr.throttling import Rate, SyncThrottle
 from dmr.throttling.algorithms import SimpleRate
+from dmr.throttling.backends import SyncDjangoCache
 from dmr.throttling.backends.base import CachedRateLimit
 
 _MAX_REQUESTS: Final = 5
@@ -18,7 +19,12 @@ def test_ttl_reset_uses_ttl_directly() -> None:
     for the ``reset`` header without subtracting the current time.
     """
     algorithm = SimpleRate()
-    throttle = SyncThrottle(_MAX_REQUESTS, _WINDOW, algorithm=algorithm)
+    throttle = SyncThrottle(
+        _MAX_REQUESTS,
+        _WINDOW,
+        algorithm=algorithm,
+        backend=SyncDjangoCache(allow_unsafe_cache=None),
+    )
 
     cache_object: CachedRateLimit = {
         'history': [2],
@@ -47,7 +53,12 @@ def test_expire_at_subtracts_now() -> None:
     seconds for the ``reset`` header.
     """
     algorithm = SimpleRate()
-    throttle = SyncThrottle(_MAX_REQUESTS, _WINDOW, algorithm=algorithm)
+    throttle = SyncThrottle(
+        _MAX_REQUESTS,
+        _WINDOW,
+        algorithm=algorithm,
+        backend=SyncDjangoCache(allow_unsafe_cache=None),
+    )
 
     cache_object: CachedRateLimit = {
         'history': [1],
@@ -77,7 +88,12 @@ def test_ttl_skips_window_expiry() -> None:
     even if ``time`` is small.
     """
     algorithm = SimpleRate()
-    throttle = SyncThrottle(_MAX_REQUESTS, _WINDOW, algorithm=algorithm)
+    throttle = SyncThrottle(
+        _MAX_REQUESTS,
+        _WINDOW,
+        algorithm=algorithm,
+        backend=SyncDjangoCache(allow_unsafe_cache=None),
+    )
 
     cache_object: CachedRateLimit = {
         'history': [3],
@@ -98,7 +114,12 @@ def test_expire_at_resets_expired_window() -> None:
     expired and ``_process_cache`` creates a fresh cache object.
     """
     algorithm = SimpleRate()
-    throttle = SyncThrottle(_MAX_REQUESTS, _WINDOW, algorithm=algorithm)
+    throttle = SyncThrottle(
+        _MAX_REQUESTS,
+        _WINDOW,
+        algorithm=algorithm,
+        backend=SyncDjangoCache(allow_unsafe_cache=None),
+    )
 
     cache_object: CachedRateLimit = {
         'history': [3],

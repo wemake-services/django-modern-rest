@@ -5,6 +5,7 @@ from typing import Any, ClassVar, Final, TypeAlias
 
 from dmr.exceptions import EndpointMetadataError
 from dmr.internal.enums import stringify
+from dmr.internal.types import EMPTY
 from dmr.metadata import ResponseSpec, ResponseSpecProvider
 from dmr.openapi import OpenAPIConfig
 from dmr.parsers import Parser
@@ -18,7 +19,6 @@ from dmr.settings import (
     _resolve_defaults,  # pyright: ignore[reportPrivateUsage]
 )
 from dmr.throttling import AsyncThrottle, SyncOrAsyncThrottle, SyncThrottle
-from dmr.types import EMPTY
 
 
 class _SettingsModel(SettingsDict, total=False):

@@ -1,17 +1,20 @@
 # NOTE: when editing this file, also edit `test_pydantic_schema.py`
 
+import dataclasses
 import enum
 from collections.abc import Collection, Mapping
 from typing import (
     Annotated,
     Any,
     Literal,
+    NotRequired,
     Optional,
     Union,
     final,
 )
 
 import pytest
+from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
 from dmr import Body, Controller, Cookies, Headers, Path, Query
@@ -19,7 +22,7 @@ from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.schema import SchemaGenerator
-from dmr.openapi.objects import OpenAPIType, Reference, Schema
+from dmr.openapi.objects import OpenAPIType, Schema
 from dmr.routing import Router, path
 
 try:
@@ -276,7 +279,7 @@ def test_enum(
 ) -> None:
     """Ensure schema for enums is correct."""
     reference = schema_generator(_TestEnum, MsgspecSerializer)
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
 
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
@@ -284,24 +287,11 @@ def test_enum(
     assert schema == Schema(enum=[1, 2], title=_TestEnum.__qualname__)
 
 
-def _expected_enum_parameter_schema(
-    component_name: str,
-    parameter_location: str,
-    expected_default: Any,
-) -> dict[str, Any]:
-    """Keep the query field's ``default`` next to ``$ref``, see #1491."""
-    expected = {'$ref': f'#/components/schemas/{component_name}'}
-    if parameter_location == 'query':
-        expected['default'] = expected_default
-    return expected
-
-
 def _assert_enum_parameter_schema(
     *,
     controller: type[Controller[MsgspecSerializer]],
     component_name: str,
     expected_values: list[str | int],
-    expected_default: Any,
 ) -> None:
     """Ensure enum parameter fields register referenced schemas."""
     schema = build_schema(
@@ -318,11 +308,16 @@ def _assert_enum_parameter_schema(
     }
 
     for parameter_location in ('path', 'query', 'header', 'cookie'):
-        parameter = parameter_specs['enum_value', parameter_location]
-        assert parameter['schema'] == _expected_enum_parameter_schema(
-            component_name,
-            parameter_location,
-            expected_default,
+        expected: dict[str, Any] = {
+            '$ref': f'#/components/schemas/{component_name}',
+        }
+        if parameter_location == 'query':
+            # Since OpenAPI 3.1, `$ref` keeps its sibling keywords,
+            # only the query model has a default value:
+            expected['default'] = expected_values[0]
+        assert (
+            parameter_specs['enum_value', parameter_location]['schema']
+            == expected
         )
     assert schema['components']['schemas'][component_name] == {
         'enum': expected_values,
@@ -363,7 +358,6 @@ def test_parameter_schema_with_enum() -> None:
         controller=_EnumQueryController,
         component_name=_QueryEnum.__name__,
         expected_values=['alpha', 'beta'],
-        expected_default='alpha',
     )
 
 
@@ -400,7 +394,6 @@ def test_parameter_schema_with_int_enum() -> None:
         controller=_EnumQueryController,
         component_name=_QueryEnum.__name__,
         expected_values=[1, 2],
-        expected_default=1,
     )
 
 
@@ -437,8 +430,87 @@ def test_parameter_schema_with_str_enum() -> None:
         controller=_EnumQueryController,
         component_name=_QueryEnum.__name__,
         expected_values=['alpha', 'beta'],
-        expected_default='alpha',
     )
+
+
+class _OptionalPathStruct(msgspec.Struct):
+    user_id: int
+    opt: str = ''
+
+
+class _OptionalPathTypedDict(TypedDict):
+    user_id: int
+    opt: NotRequired[str]
+
+
+@dataclasses.dataclass
+class _OptionalPathDataclass:
+    user_id: int
+    opt: str = ''
+
+
+@pytest.mark.parametrize(
+    'path_model',
+    [_OptionalPathStruct, _OptionalPathTypedDict, _OptionalPathDataclass],
+)
+def test_optional_path_fields(path_model: Any) -> None:
+    """Ensure that path parameters are always required, even with defaults."""
+
+    class _OptionalPathController(Controller[MsgspecSerializer]):
+        def get(self, parsed_path: Path[path_model]) -> None:  # pyright: ignore[reportInvalidTypeForm]
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router(
+            'api/',
+            [
+                path(
+                    'user/<int:user_id>/<str:opt>/',
+                    _OptionalPathController.as_view(),
+                ),
+            ],
+        ),
+    ).convert()
+
+    operation = schema['paths']['/api/user/{user_id}/{opt}/']['get']
+    assert {
+        parameter['name']: parameter['required']
+        for parameter in operation['parameters']
+    } == {'user_id': True, 'opt': True}
+
+
+class _NoneDefaultStruct(msgspec.Struct):
+    first: int
+    second: str = ''
+    third: str | None = None
+
+
+def test_none_default() -> None:
+    """Ensure that ``None`` defaults are dumped into the schema."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1619
+
+    class _NoneDefaultController(Controller[MsgspecSerializer]):
+        def post(self, parsed_body: Body[_NoneDefaultStruct]) -> str:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('user/', _NoneDefaultController.as_view())]),
+    ).convert()
+
+    assert schema['components']['schemas']['_NoneDefaultStruct'] == snapshot({
+        'properties': {
+            'first': {'type': 'integer'},
+            'second': {'type': 'string', 'default': ''},
+            'third': {
+                'anyOf': [{'type': 'string'}, {'type': 'null'}],
+                'default': None,
+            },
+        },
+        'type': 'object',
+        'required': ['first'],
+        'title': '_NoneDefaultStruct',
+    })
 
 
 @pytest.mark.parametrize(
@@ -470,7 +542,7 @@ def test_type_mapper_typeddict(
 ) -> None:
     """Ensure that schema for ``TypedDict`` returns ``None``."""
     reference = schema_generator(_TestTypedDict, MsgspecSerializer)
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
 
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
@@ -561,7 +633,6 @@ def test_schema_ref_siblings_issue1491(
     # https://github.com/wemake-services/django-modern-rest/issues/1491
     generated = schema_generator(_RefCustomType, _HookedSerializer)
 
-    assert isinstance(generated, Schema)
     assert generated.ref == '#/components/schemas/_Placeholder'
     assert generated.default == {'city': 'Moscow'}
     assert generated.extensions == {'x-source': 'schema-hook'}

@@ -11,7 +11,6 @@ from typing import (  # noqa: WPS235
     Final,
     Generic,
     Self,
-    TypeAlias,
     get_args,
     get_origin,
 )
@@ -25,7 +24,7 @@ from dmr.internal.types import (
 )
 
 if TYPE_CHECKING:
-    from dmr.components import ComponentParser
+    from dmr.components import ComponentParserSpec
     from dmr.controller import Controller
     from dmr.cookies import CookieSpec, NewCookie
     from dmr.errors import AsyncErrorHandler, SyncErrorHandler
@@ -46,7 +45,6 @@ if TYPE_CHECKING:
     from dmr.settings import HttpSpec
     from dmr.throttling import AsyncThrottle, SyncThrottle
 
-ComponentParserSpec: TypeAlias = tuple['ComponentParser', Any, tuple[Any, ...]]
 
 _SpecT = TypeVar('_SpecT', 'HeaderSpec', 'CookieSpec')
 
@@ -499,9 +497,11 @@ _ThrottlingT = TypeVar(
     default='SyncThrottle | AsyncThrottle',
 )
 
+_ExtrasT = TypeVar('_ExtrasT', default=Any)
+
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
+class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
     """
     Base class for common endpoint metadata.
 
@@ -522,8 +522,8 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
         error_handler: Callback function to be called
             when this endpoint faces an exception.
         component_parsers: List of component parser specifications
-            from the controller. Each spec is a tuple
-            of (ComponentParser class, type args).
+            from the controller. Each spec is a named tuple
+            of (ComponentParser instance, model, model meta, default).
         parsers: List of instances to be used for this endpoint
             to parse incoming request's body. All instances must be of subtypes
             of :class:`~dmr.parsers.Parser`.
@@ -550,8 +550,6 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
             to be used before auth checks.
         throttling_after_auth: Sequence of throttle instances
             to be used after auth checks.
-        throttling_allow_unsafe_cache: Should this endpoint allow
-            unsafe throttle Django cache backends?
         exclude_validate_responses: Set of status codes that we don't
             validate, even when ``validate_responses`` is enabled.
         no_validate_http_spec: Set of checks that user wants
@@ -562,10 +560,6 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
             from different providers be collected?
         exclude_semantic_responses: Set of semantic responses
             that user wants to disable.
-        validate_events: Should this endpoint validate events?
-            If not set, defaults to the ``validate_responses`` value.
-            This value only matters if the response
-            will be a streaming response that supports event validation.
         summary: A short summary of what the operation does.
         description: A verbose explanation of the operation behavior.
         tags: A list of tags for API documentation control.
@@ -588,6 +582,11 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
             OpenAPI Object level, it will be overridden by this value.
         ignore_from_spec: If set to ``True``, this endpoint
             would not be added to the final OpenAPI spec.
+        extras: Extra settings for custom controllers,
+            built by :meth:`~dmr.endpoint.Extras.build`
+            of :attr:`~dmr.controller.Controller.extras`.
+            It is ``None`` when the controller does not support extras.
+            See :ref:`modify-and-validate-with-extras` to learn more.
 
     ``method`` can be a custom name, not specified
     in :class:`http.HTTPMethod` enum, when
@@ -600,6 +599,10 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
 
         https://www.ietf.org/archive/id/draft-ietf-httpbis-safe-method-w-body-05.html
 
+    .. versionchanged:: 0.16.0
+        It is now a generic class.
+        *extras* is added.
+
     """
 
     endpoint_name: str
@@ -609,7 +612,7 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     method: str
     modification: ResponseModification | None
     error_handler: 'SyncErrorHandler | AsyncErrorHandler | None'
-    component_parsers: list[ComponentParserSpec]
+    component_parsers: list['ComponentParserSpec']
     parsers: dict[str, 'Parser']
     renderers: dict[str, 'Renderer']
     validate_negotiation: bool
@@ -619,7 +622,6 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     throttling_before_auth: list[_ThrottlingT] | None
     # Second line of throttling:
     throttling_after_auth: list[_ThrottlingT] | None
-    throttling_allow_unsafe_cache: bool | None
 
     exclude_validate_responses: frozenset[HTTPStatus]
     no_validate_http_spec: frozenset['HttpSpec']
@@ -629,7 +631,6 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     exclude_semantic_responses: frozenset[HTTPStatus]
     semantic_auth: bool
     exclude_semantic_auth: frozenset[str]
-    validate_events: bool
 
     # OpenAPI documentation fields:
     summary: StrOrPromise | None
@@ -641,6 +642,9 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
     callbacks: dict[str, 'Callback | Reference'] | None
     servers: list['Server'] | None
     ignore_from_spec: bool
+
+    # Extras:
+    extras: _ExtrasT
 
     # Pre-computed fields:
     throttling: list[_ThrottlingT] | None = dataclasses.field(init=False)
@@ -725,7 +729,7 @@ class EndpointMetadata(Generic[_AuthT, _ThrottlingT]):
             return []
 
         return [
-            *[spec[0] for spec in self.component_parsers],
+            *[spec.parser for spec in self.component_parsers],
             *self.parsers.values(),
             *self.renderers.values(),
             *(self.auth or []),
