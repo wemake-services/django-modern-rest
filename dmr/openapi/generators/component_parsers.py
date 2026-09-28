@@ -326,7 +326,7 @@ class ComponentParserGenerator:  # noqa: WPS214
             if media_type.schema:  # pragma: no cover:
                 media_items.append(media_type.schema)
             existing_content = schema.content.get(media_name)
-            assert isinstance(existing_content, Schema)  # noqa: S101
+            assert not isinstance(existing_content, Reference)  # noqa: S101
             # TODO: remove pragma after implementing conditional types
             # for `FileMetadata[]` component
             if existing_content and existing_content.schema:  # pragma: no cover
