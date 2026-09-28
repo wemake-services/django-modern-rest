@@ -63,7 +63,7 @@ class ResponseGenerator:
         *,
         schema_field_name: Literal['schema', 'item_schema'] = 'schema',
         used_for_response: bool = True,
-        content_schema: Reference | Schema | None = None,
+        content_schema: Schema | None = None,
     ) -> Response:
         """
         Returns the OpenAPI schema for the response.
@@ -208,7 +208,7 @@ class ResponseGenerator:
         *,
         schema_field_name: str,
         used_for_response: bool,
-        content_schema: Reference | Schema | None,
+        content_schema: Schema | None,
     ) -> dict[str, MediaType | Reference]:
         # Import cycle:
         from dmr.internal.negotiation import (  # noqa: PLC0415

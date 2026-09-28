@@ -64,7 +64,7 @@ class MediaType:
     """
 
     # Can be `None` only when `item_schema` is set:
-    schema: 'Reference | Schema | None' = None
+    schema: 'Schema | None' = None
     example: Any = EMPTY
     examples: dict[str, 'Example | Reference'] | None = None
     encoding: dict[str, 'Encoding'] | None = None
@@ -73,6 +73,6 @@ class MediaType:
     # NOTE: `encoding` is mutually exclusive with the two `*_encoding` ones,
     # we let `openapi-spec-validator` report that.
     description: str | None = None
-    item_schema: 'Reference | Schema | None' = None
+    item_schema: 'Schema | None' = None
     item_encoding: 'Encoding | None' = None
     prefix_encoding: list['Encoding'] | None = None

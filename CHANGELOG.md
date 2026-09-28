@@ -72,6 +72,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - `OpenAPIConfig` now raises `ValueError` for `openapi_version` below `3.1.0`.
   OpenAPI `3.0.x` was never really supported: it predates JSON Schema,
   which is what `pydantic` and `msgspec` generate for our models, #1435
+- Removed OpenAPI `3.0` style `Reference` objects from schema positions, #1648
 - `summary` and `description` of `@modify` and `@validate` are now resolved
   one at a time. Passing just one of them used to drop the endpoint's
   docstring entirely, now the other one is still parsed from it.

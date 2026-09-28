@@ -17,7 +17,6 @@ from dmr.openapi.objects import (
     MediaTypeMetadata,
     OpenAPIFormat,
     OpenAPIType,
-    Reference,
     Response,
     Schema,
 )
@@ -56,7 +55,7 @@ class FileBodyLike:
     @abc.abstractmethod
     def media_type(  # noqa: WPS211
         cls,
-        schema: Reference | Schema,
+        schema: Schema,
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
@@ -77,7 +76,7 @@ class FileBodyLike:
     @abc.abstractmethod
     def get_schema(
         cls,
-        schema: Reference | Schema,
+        schema: Schema,
         context: OpenAPIContext,
     ) -> Schema:
         """Return the OpenAPI schema for this file body."""
@@ -92,7 +91,7 @@ class FileBody(FileBodyLike):
     @classmethod
     def media_type(  # noqa: WPS211
         cls,
-        schema: Reference | Schema,
+        schema: Schema,
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
@@ -125,7 +124,7 @@ class FileBody(FileBodyLike):
     @classmethod
     def get_schema(
         cls,
-        schema: Reference | Schema,
+        schema: Schema,
         context: OpenAPIContext,
     ) -> Schema:
         """Returns the openapi schema that this object represents."""
@@ -133,7 +132,7 @@ class FileBody(FileBodyLike):
             type=OpenAPIType.STRING,
             format=OpenAPIFormat.BINARY,
         )
-        if isinstance(schema, Schema) and schema.type == OpenAPIType.ARRAY:
+        if schema.type == OpenAPIType.ARRAY:
             return Schema(
                 type=OpenAPIType.ARRAY,
                 format=schema.format,
@@ -144,7 +143,7 @@ class FileBody(FileBodyLike):
     @classmethod
     def replace_schema(
         cls,
-        schema: Reference | Schema,
+        schema: Schema,
         context: OpenAPIContext,
     ) -> Schema:
         """
@@ -178,9 +177,9 @@ class FileBody(FileBodyLike):
     @classmethod
     def _replace_members(
         cls,
-        members: list[Reference | Schema] | None,
+        members: list[Schema] | None,
         context: OpenAPIContext,
-    ) -> list[Reference | Schema] | None:
+    ) -> list[Schema] | None:
         if not members:
             return members
         return [cls.replace_schema(member, context) for member in members]

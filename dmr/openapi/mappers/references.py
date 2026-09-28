@@ -1,7 +1,7 @@
 import dataclasses
 from collections.abc import Iterable, Iterator, Mapping
 
-from dmr.openapi.objects import Reference
+from dmr.openapi.objects import Schema
 
 
 def iter_references(node: object, schema_prefix: str) -> Iterator[str]:
@@ -10,12 +10,12 @@ def iter_references(node: object, schema_prefix: str) -> Iterator[str]:
 
     Walks any dataclass, list, or dict recursively
     and yields component names of all
-    :class:`~dmr.openapi.objects.Reference` objects it finds,
+    :class:`~dmr.openapi.objects.Schema` objects with ``$ref`` it finds,
     without the *schema_prefix*.
 
     .. versionadded:: 0.16.0
     """
-    if isinstance(node, Reference):
+    if isinstance(node, Schema) and node.ref is not None:
         yield node.ref.removeprefix(schema_prefix)
     for child in _children(node):
         yield from iter_references(child, schema_prefix)

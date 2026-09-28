@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.schema import SchemaGenerator
-from dmr.openapi.objects import OpenAPIType, Reference, Schema
+from dmr.openapi.objects import OpenAPIType, Schema
 from dmr.plugins.pydantic import PydanticSerializer
 
 _MAXIMUM: Final = 100
@@ -48,9 +48,8 @@ def test_schema_generator_unsupported_type(
         Schema(type=OpenAPIType.STRING),
     )
 
-    assert isinstance(
-        generator(_UnsupportedTestModel, PydanticSerializer),
-        Reference,
+    assert generator(_UnsupportedTestModel, PydanticSerializer).ref == (
+        f'#/components/schemas/{_UnsupportedTestModel.__qualname__}'
     )
 
 
@@ -58,7 +57,7 @@ def test_schema_generator_works(generator: SchemaGenerator) -> None:
     """Ensure ``SchemaGenerator`` generate reference."""
     ref = generator(_TestModel, PydanticSerializer)
 
-    assert isinstance(ref, Reference)
+    assert isinstance(ref, Schema)
     assert ref.ref == f'#/components/schemas/{_TestModel.__name__}'
     assert _TestModel.__name__ in generator._context.registries.schema.schemas
 
@@ -71,8 +70,7 @@ def test_schema_generator_caching(
     ref1 = generator(_TestModel, PydanticSerializer)
     ref2 = generator(_TestModel, PydanticSerializer)
 
-    assert isinstance(ref1, Reference)
-    assert isinstance(ref2, Reference)
+    assert ref1.ref is not None
     assert ref1.ref == ref2.ref
     assert len(openapi_context.registries.schema.schemas) == 1
 

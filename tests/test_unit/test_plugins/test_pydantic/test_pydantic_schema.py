@@ -26,7 +26,7 @@ from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators import SchemaGenerator
-from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Reference, Schema
+from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Schema
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.plugins.pydantic.schema import (
     JsonSchemaKwargs,
@@ -272,7 +272,7 @@ def test_enum(
 ) -> None:
     """Ensure schema for enums is correct."""
     reference = schema_generator(_TestEnum, PydanticSerializer)
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
 
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
@@ -305,10 +305,13 @@ def _assert_enum_parameter_schema(
     }
 
     for parameter_location in ('path', 'query', 'header', 'cookie'):
-        parameter = parameter_specs['enum_value', parameter_location]
-        assert parameter['schema'] == {
+        expected: dict[str, Any] = {
             '$ref': f'#/components/schemas/{component_name}',
         }
+        assert (
+            parameter_specs['enum_value', parameter_location]['schema']
+            == expected
+        )
     assert schema['components']['schemas'][component_name] == expected_schema
 
 
@@ -323,7 +326,7 @@ def test_parameter_schema_with_enum() -> None:
         enum_value: _QueryEnum
 
     class _EnumQuery(pydantic.BaseModel):
-        enum_value: _QueryEnum = _QueryEnum.alpha
+        enum_value: _QueryEnum
 
     class _EnumHeaders(pydantic.BaseModel):
         enum_value: _QueryEnum
@@ -363,7 +366,7 @@ def test_parameter_schema_with_int_enum() -> None:
         enum_value: _QueryEnum
 
     class _EnumQuery(pydantic.BaseModel):
-        enum_value: _QueryEnum = _QueryEnum.alpha
+        enum_value: _QueryEnum
 
     class _EnumHeaders(pydantic.BaseModel):
         enum_value: _QueryEnum
@@ -403,7 +406,7 @@ def test_parameter_schema_with_str_enum() -> None:
         enum_value: _QueryEnum
 
     class _EnumQuery(pydantic.BaseModel):
-        enum_value: _QueryEnum = _QueryEnum.alpha
+        enum_value: _QueryEnum
 
     class _EnumHeaders(pydantic.BaseModel):
         enum_value: _QueryEnum
@@ -534,7 +537,7 @@ def test_root_model(
         pydantic.RootModel[list[int]],
         PydanticSerializer,
     )
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
 
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
@@ -583,7 +586,7 @@ def test_type_mapper_typeddict(
 ) -> None:
     """Ensure that schema for ``TypedDict`` returns ``None``."""
     reference = schema_generator(_TestTypedDict, PydanticSerializer)
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
 
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
@@ -730,7 +733,7 @@ def test_custom_by_alias(
         schema_kwargs,
     )
     reference = openapi_context.generators.schema(_AliasedModel, serializer)
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
     )

@@ -19,7 +19,6 @@ from dmr.openapi.objects import (  # noqa: WPS235
     OpenAPIType,
     Parameter,
     ParameterMetadata,
-    Reference,
     Schema,
     Tag,
 )
@@ -229,7 +228,7 @@ def test_dump_value_dict(
                 'items': {'$dynamicRef': '#T'},
             },
         ),
-        # Concrete List<string> referencing the generic via Reference:
+        # Concrete List<string> referencing the generic via `$ref`:
         (
             Schema(
                 defs={
@@ -238,7 +237,7 @@ def test_dump_value_dict(
                         type=OpenAPIType.STRING,
                     ),
                 },
-                any_of=[Reference(ref='list-of-t')],
+                any_of=[Schema(ref='list-of-t')],
             ),
             {
                 '$defs': {

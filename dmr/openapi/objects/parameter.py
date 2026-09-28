@@ -57,6 +57,6 @@ class Parameter(ParameterMetadata):
     param_in: Annotated[ParameterLocation, Field(alias='in')]
     # NOTE: `'querystring'` parameters must use `content`, not `schema`,
     # we let `openapi-spec-validator` report that.
-    schema: 'Reference | Schema | None' = None
+    schema: 'Schema | None' = None
     content: dict[str, 'MediaType | Reference'] | None = None
     required: bool | None = None
