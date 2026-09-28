@@ -491,9 +491,6 @@ OpenAPI Core
 .. autoclass:: dmr.openapi.core.registry.SchemaRegistry
   :members:
 
-.. autoclass:: dmr.openapi.core.registry.SchemaCallback
-  :members:
-
 .. autoclass:: dmr.openapi.core.registry.SecuritySchemeRegistry
   :members:
 
@@ -508,6 +505,9 @@ OpenAPI Generators
    :members:
 
 .. autoclass:: dmr.openapi.generators.ResponseGenerator
+   :members:
+
+.. autoclass:: dmr.openapi.generators.schema.LoadedSchema
    :members:
 
 .. autoclass:: dmr.openapi.generators.SchemaGenerator

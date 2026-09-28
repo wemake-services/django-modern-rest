@@ -1068,22 +1068,25 @@ class FileMetadataComponent(ComponentParser):
         controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> list[Parameter | Reference] | RequestBody:
-        schema = context.generators.schema(
+        # File models are not real models, they are replaced with files.
+        # So, we load them without registering anything:
+        loaded = context.generators.schema.load(
             model,
             controller_cls.serializer,
-            skip_registration=True,
+            inline=True,
         )
         conditional_schemas = {
-            content_type: context.generators.schema(
+            content_type: context.generators.schema.load(
                 conditional_model,
                 controller_cls.serializer,
+                inline=True,
             )
             for content_type, conditional_model in self.conditional_types(
                 model,
                 model_meta,
             ).items()
         }
-        return RequestBody(
+        request_body = RequestBody(
             content={
                 # Sorted by content type, not by the parsers order:
                 parser.content_type: parser.schema_metadata(
@@ -1093,7 +1096,10 @@ class FileMetadataComponent(ComponentParser):
                     controller_cls,
                     context,
                 ).media_type(
-                    conditional_schemas.get(parser.content_type, schema),
+                    conditional_schemas.get(
+                        parser.content_type,
+                        loaded,
+                    ).schema,
                     model,
                     model_meta,
                     metadata,
@@ -1108,10 +1114,14 @@ class FileMetadataComponent(ComponentParser):
                 if isinstance(parser, SupportsFileParsing)
             },
             required=True,
-            description=context.registries.schema.maybe_resolve_reference(
-                schema,
-            ).description,
+            description=loaded.schema.description,
         )
+        context.generators.schema.register(
+            request_body,
+            loaded,
+            *conditional_schemas.values(),
+        )
+        return request_body
 
 
 FileMetadata: TypeAlias = Annotated[

@@ -1,28 +1,9 @@
-from typing import Any, ClassVar, Protocol
+from typing import Any, ClassVar
 
 from typing_extensions import Sentinel
 
 from dmr.internal.types import EMPTY
 from dmr.openapi.objects import Reference, Schema, SecurityScheme
-
-
-class SchemaCallback(Protocol):
-    """Callback protocol for the schema registration."""
-
-    def __call__(
-        self,
-        annotation: Any,
-        origin: Any,
-        type_args: Any,
-        *,
-        used_for_response: bool,
-        skip_registration: bool,
-    ) -> Reference | Schema | None:
-        """
-        Resolve the annotation into schema or into a reference.
-
-        Return ``None`` to fallback to the default resolution.
-        """
 
 
 class OperationIdRegistry:
@@ -48,7 +29,15 @@ class OperationIdRegistry:
 
 
 class SchemaRegistry:
-    """Registry for ``Schemas``."""
+    """
+    Registry for ``Schemas``.
+
+    .. versionchanged:: 0.16.0
+        Removed ``try_unregister``: components are now registered
+        only when the final schema references them,
+        see :meth:`dmr.openapi.generators.SchemaGenerator.register`.
+
+    """
 
     __slots__ = ('_schemas',)
 
@@ -108,16 +97,23 @@ class SchemaRegistry:
         *,
         resolution_context: dict[str, Schema] | None = None,
     ) -> Schema:
-        """Resolve reference and return a schema back."""
+        """
+        Resolve reference and return a schema back.
+
+        *resolution_context* holds components that are not registered yet,
+        they are checked before the registered ones.
+
+        .. versionchanged:: 0.16.0
+            Falls back to the registered schemas
+            when *resolution_context* does not have the component.
+
+        """
         if isinstance(reference, Schema):
             return reference
         schema_name = reference.ref.removeprefix(self.schema_prefix)
-        return (resolution_context or self.schemas)[schema_name]
-
-    def try_unregister(self, schema_name: str | None) -> None:
-        """Try to unregister the schema by name."""
-        if schema_name is not None:
-            self._schemas.pop(schema_name, None)
+        if resolution_context and schema_name in resolution_context:
+            return resolution_context[schema_name]
+        return self._schemas[schema_name][0]
 
     def _make_reference(self, name: str) -> Reference:
         return Reference(ref=f'{self.schema_prefix}{name}')
