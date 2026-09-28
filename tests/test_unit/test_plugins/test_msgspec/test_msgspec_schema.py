@@ -665,9 +665,18 @@ def test_ref_siblings_and_extensions_issue1491() -> None:
         Router('api/', [path('test/', _IssueController.as_view())]),
     ).convert()
 
-    user_schema = schema['components']['schemas']['_User']
-    assert user_schema['properties']['address'] == {
-        '$ref': '#/components/schemas/_Address',
-        'default': {'city': 'Moscow'},
-    }
-    assert user_schema['properties']['name']['x-display'] == 'Name'
+    assert schema['components']['schemas']['_User'] == snapshot({
+        'properties': {
+            'name': {
+                'type': 'string',
+                'default': 'unknown',
+                'x-display': 'Name',
+            },
+            'address': {
+                'default': {'city': 'Moscow'},
+                '$ref': '#/components/schemas/_Address',
+            },
+        },
+        'type': 'object',
+        'title': '_User',
+    })

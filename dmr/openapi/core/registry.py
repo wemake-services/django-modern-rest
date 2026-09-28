@@ -184,26 +184,33 @@ def _overlay_ref_site(target: Schema, ref_site: Schema) -> Schema:
     while the sibling keywords only annotate this one usage:
     set sibling values win, and everything else stays untouched.
     """
-    sibling_values = (
-        (schema_field.name, getattr(ref_site, schema_field.name))
+    sibling_values = {
+        schema_field.name: field_value
         for schema_field in dataclasses.fields(ref_site)
-    )
-    overrides = {
-        field_name: field_value
-        for field_name, field_value in sibling_values
-        if _is_sibling_set(field_name, field_value)
+        if (field_value := _is_sibling_set(ref_site, schema_field)) is not EMPTY
     }
-    if not overrides:
+    if not sibling_values:
         return target
-    return dataclasses.replace(target, **overrides)
+    return dataclasses.replace(target, **sibling_values)
 
 
-def _is_sibling_set(field_name: str, field_value: Any) -> bool:
+def _is_sibling_set(
+    ref_site: Schema,
+    schema_field: dataclasses.Field,
+) -> Any | Sentinel:
     """Check that a keyword next to ``$ref`` is really set on the schema."""
-    if field_name == 'ref' or field_value is None or field_value is EMPTY:
-        return False
-    # Empty `required` is its default, not a sibling, like in `dump_schema`:
-    return field_name != 'required' or bool(field_value)
+    field_value = getattr(ref_site, schema_field.name)
+    # Ignore fields with default values and `ref` itself:
+    if (
+        schema_field.name == 'ref'
+        or field_value == schema_field.default
+        or (
+            schema_field.default_factory is not dataclasses.MISSING
+            and field_value == schema_field.default_factory()
+        )
+    ):
+        return EMPTY
+    return field_value
 
 
 def _check_hashes(

@@ -815,16 +815,30 @@ def test_ref_siblings_and_extensions_issue1491() -> None:
         Router('api/', [path('test/', _IssueController.as_view())]),
     ).convert()
 
-    user_schema = schema['components']['schemas']['_User']
-    assert user_schema['properties']['address'] == {
-        '$ref': '#/components/schemas/_Address',
-        'default': {'city': 'Moscow'},
-        'description': 'Where the user lives',
-    }
-    assert user_schema['x-api-version'] == 'v1'
-    assert user_schema['properties']['name']['x-display'] == 'Name'
-
-    address_schema = schema['components']['schemas']['_Address']
-    assert address_schema['$anchor'] == 'address'
-    assert address_schema['$comment'] == 'Postal address'
-    assert address_schema['x-category'] == 'contact'
+    assert schema['components']['schemas']['_User'] == snapshot({
+        'properties': {
+            'name': {
+                'type': 'string',
+                'title': 'Name',
+                'default': 'unknown',
+                'x-display': 'Name',
+            },
+            'address': {
+                'description': 'Where the user lives',
+                'default': {'city': 'Moscow'},
+                '$ref': '#/components/schemas/_Address',
+            },
+        },
+        'type': 'object',
+        'title': '_User',
+        'x-api-version': 'v1',
+    })
+    assert schema['components']['schemas']['_Address'] == snapshot({
+        'properties': {'city': {'type': 'string', 'title': 'City'}},
+        'type': 'object',
+        'required': ['city'],
+        'title': '_Address',
+        '$anchor': 'address',
+        '$comment': 'Postal address',
+        'x-category': 'contact',
+    })

@@ -1,13 +1,13 @@
 import pydantic
 import pytest
 from django.urls import path
+from inline_snapshot import snapshot
 
 from dmr.controller import Controller
 from dmr.openapi import OpenAPIContext, build_schema
 from dmr.openapi.objects import OpenAPIType, Schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
-from dmr.types import EMPTY
 
 
 class _ResponseModel(pydantic.BaseModel):  # pyright: ignore[reportRedeclaration]
@@ -74,11 +74,14 @@ def test_resolve_ref_with_siblings(
     """Keywords next to ``$ref`` annotate one usage, not the component."""
     # Regression test for
     # https://github.com/wemake-services/django-modern-rest/issues/1491
-    registry = openapi_context.registries.schema
-    registry.register(
-        'Address',
-        Schema(type=OpenAPIType.OBJECT, description='The component itself'),
+    title = 'Address'
+    component = Schema(
+        type=OpenAPIType.OBJECT,
+        description='The component itself',
+        title=title,
     )
+    registry = openapi_context.registries.schema
+    registry.register(title, component)
 
     resolved = registry.maybe_resolve_reference(
         Schema(
@@ -88,14 +91,15 @@ def test_resolve_ref_with_siblings(
         ),
     )
 
-    assert resolved.ref is None
-    assert resolved.description == 'Where the user lives'
-    assert resolved.default == {'city': 'Moscow'}
-    assert resolved.type is OpenAPIType.OBJECT
-
-    component = registry.schemas['Address']
-    assert component.description == 'The component itself'
-    assert component.default is EMPTY
+    assert resolved == snapshot(
+        Schema(
+            type=OpenAPIType.OBJECT,
+            title=title,
+            description='Where the user lives',
+            default={'city': 'Moscow'},
+        ),
+    )
+    assert registry.schemas[title] is component
 
 
 def test_resolve_pure_ref(openapi_context: OpenAPIContext) -> None:
