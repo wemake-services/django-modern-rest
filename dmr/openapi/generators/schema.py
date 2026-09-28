@@ -26,7 +26,7 @@ class LoadedSchema:
     Nothing from it is registered in the OpenAPI schema yet.
     Callers transform :attr:`schema` however they need
     and then pass the final result
-    to :meth:`dmr.openapie.generators.SchemaGenerator.register`,
+    to :meth:`dmr.openapi.generators.SchemaGenerator.register`,
     which registers only the components that the result still references.
 
     .. versionadded:: 0.16.0
