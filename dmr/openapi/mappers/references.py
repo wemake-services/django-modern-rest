@@ -25,7 +25,7 @@ def _children(node: object) -> Iterable[object]:
     if dataclasses.is_dataclass(node) and not isinstance(node, type):
         return (getattr(node, field.name) for field in dataclasses.fields(node))
     if isinstance(node, Mapping):
-        return node.values()
+        return node.values()  # pyright: ignore[reportUnknownVariableType]
     if isinstance(node, (list, tuple)):
-        return node
+        return node  # pyright: ignore[reportUnknownVariableType]
     return ()
