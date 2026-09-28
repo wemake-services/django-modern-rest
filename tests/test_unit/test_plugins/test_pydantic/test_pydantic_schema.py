@@ -308,10 +308,6 @@ def _assert_enum_parameter_schema(
         expected: dict[str, Any] = {
             '$ref': f'#/components/schemas/{component_name}',
         }
-        if parameter_location == 'query':
-            # Since OpenAPI 3.1, `$ref` keeps its sibling keywords,
-            # only the query model has a default value:
-            expected['default'] = expected_schema['enum'][0]
         assert (
             parameter_specs['enum_value', parameter_location]['schema']
             == expected
@@ -330,7 +326,7 @@ def test_parameter_schema_with_enum() -> None:
         enum_value: _QueryEnum
 
     class _EnumQuery(pydantic.BaseModel):
-        enum_value: _QueryEnum = _QueryEnum.alpha
+        enum_value: _QueryEnum
 
     class _EnumHeaders(pydantic.BaseModel):
         enum_value: _QueryEnum
@@ -370,7 +366,7 @@ def test_parameter_schema_with_int_enum() -> None:
         enum_value: _QueryEnum
 
     class _EnumQuery(pydantic.BaseModel):
-        enum_value: _QueryEnum = _QueryEnum.alpha
+        enum_value: _QueryEnum
 
     class _EnumHeaders(pydantic.BaseModel):
         enum_value: _QueryEnum
@@ -410,7 +406,7 @@ def test_parameter_schema_with_str_enum() -> None:
         enum_value: _QueryEnum
 
     class _EnumQuery(pydantic.BaseModel):
-        enum_value: _QueryEnum = _QueryEnum.alpha
+        enum_value: _QueryEnum
 
     class _EnumHeaders(pydantic.BaseModel):
         enum_value: _QueryEnum
