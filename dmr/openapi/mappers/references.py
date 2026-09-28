@@ -26,6 +26,6 @@ def _children(node: object) -> Iterable[object]:
         return (getattr(node, field.name) for field in dataclasses.fields(node))
     if isinstance(node, Mapping):
         return node.values()
-    if isinstance(node, Sequence) and not isinstance(node, str):
+    if isinstance(node, (list, tuple)):
         return node
     return ()

@@ -159,8 +159,6 @@ class FileBody(FileBodyLike):
         Unions like ``Model | None`` have their members replaced.
 
         .. versionadded:: 0.15.0
-        .. versionchanged:: 0.16.0
-            Now replaces members of unions as well.
         """
         schema = context.registries.schema.maybe_resolve_reference(schema)
         return dataclasses.replace(

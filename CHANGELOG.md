@@ -40,7 +40,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   `dmr.openapi.core.registry.SchemaCallback` protocol.
   `ResponseGenerator.get_schema` accepts `content_schema`
   to skip generating a schema from the return type,
-  `FileResponseSpec` uses it instead of removing `FileBody` afterwards, 
+  `FileResponseSpec` uses it instead of removing `FileBody` afterwards, #1647
 - `auth`, `throttling`, `parsers`, `renderers`, `responses`, `tags`,
   `exclude_validate_responses`, `exclude_semantic_responses`,
   and `no_validate_http_spec` are not merged anymore
@@ -374,7 +374,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   `Path`, and `FileMetadata` components, being added to `components.schemas`
   of the OpenAPI schema. Such models are inlined and never referenced,
   now only components that are referenced
-  from the final schema are registered,
+  from the final schema are registered, #1647
 - Fixed seeded OpenAPI examples of `datetime`, `date`, and `time`
   changing with the current time. Faker's defaults end at the current time,
   now these examples are generated between `2000-01-01` and `2026-01-01`.
