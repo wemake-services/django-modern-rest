@@ -116,6 +116,34 @@ The only visible difference from parsing JSON is specifying a different
   :linenos:
 
 
+Optional body
+-------------
+
+Request body can have a default value, in this case it is optional:
+
+.. tabs::
+
+  .. tab:: msgspec
+
+    .. literalinclude:: /examples/components/body_default_msgspec.py
+      :caption: views.py
+      :language: python
+      :linenos:
+
+  .. tab:: pydantic
+
+    .. literalinclude:: /examples/components/body_default_pydantic.py
+      :caption: views.py
+      :language: python
+      :linenos:
+
+Requests without a body get ``parsed_body=None``,
+such bodies are documented with ``required: false`` in the OpenAPI schema.
+Requests with a body are always validated, even when there's a default.
+
+See :ref:`component-defaults` to learn more.
+
+
 Customizing the OpenAPI metadata for Body
 -----------------------------------------
 

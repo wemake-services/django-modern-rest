@@ -7,12 +7,9 @@ from django.http import HttpResponse
 from dmr import Controller, ResponseSpec, modify, validate
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.test import DMRRequestFactory
 
 
-def test_modify_decorator_method_name(
-    dmr_rf: DMRRequestFactory,
-) -> None:
+def test_modify_decorator_method_name() -> None:
     """Ensures that `modify` requires correct endpoint name."""
     with pytest.raises(EndpointMetadataError, match='_get'):
 
@@ -22,9 +19,7 @@ def test_modify_decorator_method_name(
                 raise NotImplementedError
 
 
-def test_modify_decorator_mixed_case(
-    dmr_rf: DMRRequestFactory,
-) -> None:
+def test_modify_decorator_mixed_case() -> None:
     """Ensures that `modify` requires correct endpoint name."""
     with pytest.raises(EndpointMetadataError, match='GET'):
 
@@ -41,9 +36,7 @@ def test_modify_decorator_mixed_case(
                 raise NotImplementedError
 
 
-def test_verify_decorator_method_name(
-    dmr_rf: DMRRequestFactory,
-) -> None:
+def test_verify_decorator_method_name() -> None:
     """Ensures that `modify` requires correct endpoint name."""
     with pytest.raises(EndpointMetadataError, match='query'):
 

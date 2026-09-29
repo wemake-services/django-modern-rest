@@ -9,11 +9,16 @@ from dmr.openapi.mappers.schema_normalization import (
     _dump_value,
     dump_schema,
 )
-from dmr.openapi.objects import (
+from dmr.openapi.objects import (  # noqa: WPS235
+    Example,
     Header,
+    Link,
+    MediaType,
+    MediaTypeMetadata,
     OpenAPIFormat,
     OpenAPIType,
-    Reference,
+    Parameter,
+    ParameterMetadata,
     Schema,
     Tag,
 )
@@ -223,7 +228,7 @@ def test_dump_value_dict(
                 'items': {'$dynamicRef': '#T'},
             },
         ),
-        # Concrete List<string> referencing the generic via Reference:
+        # Concrete List<string> referencing the generic via `$ref`:
         (
             Schema(
                 defs={
@@ -232,7 +237,7 @@ def test_dump_value_dict(
                         type=OpenAPIType.STRING,
                     ),
                 },
-                any_of=[Reference(ref='list-of-t')],
+                any_of=[Schema(ref='list-of-t')],
             ),
             {
                 '$defs': {
@@ -248,6 +253,27 @@ def test_dump_value_dict(
             Header(description='test', required=False),
             {'description': 'test'},
         ),
+        # A schema with `$ref` and its siblings, #1491:
+        (
+            Schema(
+                ref='#/components/schemas/Address',
+                default={'city': 'Moscow'},
+                description='Where the user lives',
+            ),
+            {
+                '$ref': '#/components/schemas/Address',
+                'default': {'city': 'Moscow'},
+                'description': 'Where the user lives',
+            },
+        ),
+        # Extensions are flattened next to the schema's own keys, #1491:
+        (
+            Schema(
+                type=OpenAPIType.STRING,
+                extensions={'x-range': {'min': 0}},
+            ),
+            {'type': 'string', 'x-range': {'min': 0}},
+        ),
     ],
 )
 def test_dump_schema_base_objects(
@@ -258,3 +284,50 @@ def test_dump_schema_base_objects(
     """Ensure that ``_dump_value`` calls ``dump_schema`` correctly."""
     assert dump_schema(input_value) == expected_output
     assert _dump_value(input_value) == expected_output
+
+
+@pytest.mark.parametrize(
+    ('input_value', 'expected_output'),
+    [
+        (Schema(const=None), {'const': None}),
+        (Schema(default=None), {'default': None}),
+        (Schema(example=None), {'example': None}),
+        (Example(value=None), {'value': None}),
+        (Example(data_value=None), {'dataValue': None}),
+        (Header(example=None), {'example': None}),
+        (MediaType(example=None), {'example': None}),
+        (MediaTypeMetadata(example=None), {'example': None}),
+        (
+            Parameter(name='test', param_in='query', example=None),
+            {'name': 'test', 'in': 'query', 'example': None},
+        ),
+        (ParameterMetadata(example=None), {'example': None}),
+        (Link(request_body=None), {'requestBody': None}),
+    ],
+)
+def test_dump_schema_none_values(
+    *,
+    input_value: Any,
+    expected_output: Any,
+) -> None:
+    """Ensure that ``None`` is dumped for fields where it is a real value."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1619
+    assert dump_schema(input_value) == expected_output
+
+
+@pytest.mark.parametrize(
+    'input_value',
+    [
+        Schema(),
+        Example(),
+        Header(),
+        MediaType(),
+        MediaTypeMetadata(),
+        ParameterMetadata(),
+        Link(),
+    ],
+)
+def test_dump_schema_unset_values(*, input_value: Any) -> None:
+    """Ensure that unset fields are not dumped."""
+    assert dump_schema(input_value) == {}

@@ -289,20 +289,6 @@ def test_modify_modified_in_responses() -> None:
             def get(self) -> int:
                 raise NotImplementedError
 
-    with pytest.raises(EndpointMetadataError, match='different metadata'):
-
-        class _DuplicateDifferentHeaders(Controller[PydanticSerializer]):
-            @modify(
-                extra_responses=[
-                    ResponseSpec(
-                        str,
-                        status_code=HTTPStatus.OK,
-                    ),
-                ],
-            )
-            def get(self) -> int:
-                raise NotImplementedError
-
 
 @final
 class _CustomHeadersController(Controller[PydanticSerializer]):

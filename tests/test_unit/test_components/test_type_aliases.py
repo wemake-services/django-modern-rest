@@ -11,7 +11,7 @@ from dirty_equals import IsInstance
 from django.http import HttpResponse
 from typing_extensions import TypeAliasType, TypedDict
 
-from dmr import (  # noqa: WPS235
+from dmr import (
     Body,
     Controller,
     Cookies,
@@ -20,7 +20,7 @@ from dmr import (  # noqa: WPS235
     Path,
     Query,
 )
-from dmr.components import (  # noqa: WPS235
+from dmr.components import (
     BodyComponent,
     CookiesComponent,
     FileMetadataComponent,
@@ -136,8 +136,8 @@ _TOO_MANY_ALIASES: Final = 20
 
 def _parsed_components(endpoint: Endpoint) -> _ComponentTypes:
     return sorted(
-        (component.context_name, model, meta)
-        for component, model, meta in endpoint.metadata.component_parsers
+        (spec.parser.context_name, spec.model, spec.model_meta)
+        for spec in endpoint.metadata.component_parsers
     )
 
 

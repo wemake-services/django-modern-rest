@@ -183,7 +183,7 @@ def test_cookie_token_schema_csrf_session(
     *,
     typ: type[CookieTokenSyncAuth] | type[CookieTokenAsyncAuth],
 ) -> None:
-    """Ensures CookieToken auth emits an apiKey cookie security scheme."""
+    """Ensures CookieToken auth emits a CSRF header scheme with sessions."""
     settings.CSRF_USE_SESSIONS = True
     instance = typ()
     controller = _make_controller(instance)
@@ -198,7 +198,19 @@ def test_cookie_token_schema_csrf_session(
             security_scheme_in='cookie',
             description='Opaque token authentication via cookie',
         ),
+        'csrf': SecurityScheme(
+            type='apiKey',
+            name='X-Csrftoken',
+            security_scheme_in='header',
+            description='CSRF protection, the secret is stored in the session',
+        ),
     }
     assert instance.security_requirements(metadata, controller) == [
         {'token': []},
+    ]
+
+    unsafe_metadata = controller.api_endpoints['POST'].metadata
+    assert HTTPStatus.FORBIDDEN in unsafe_metadata.responses
+    assert instance.security_requirements(unsafe_metadata, controller) == [
+        {'token': [], 'csrf': []},
     ]

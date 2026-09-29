@@ -4,10 +4,10 @@ from typing import ClassVar
 
 from dmr import Controller, ResponseSpec
 from dmr.errors import ErrorModel
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
-class MyBaseController(Controller[PydanticSerializer]):
+class MyBaseController(Controller[PydanticFastSerializer]):
     responses: ClassVar[Sequence[ResponseSpec]] = (
         ResponseSpec(ErrorModel, status_code=HTTPStatus.NOT_FOUND),
     )

@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from dmr import Controller, ResponseSpec
 from dmr.decorators import wrap_middleware
 from dmr.errors import ErrorModel, format_error
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.response import build_response
 
 
@@ -16,16 +16,12 @@ from dmr.response import build_response
         return_type=ErrorModel,
         status_code=HTTPStatus.UNAUTHORIZED,
     ),
-    ResponseSpec(  # Uses for proxy authed response with HTTPStatus.OK
-        return_type=dict[str, str],
-        status_code=HTTPStatus.OK,
-    ),
 )
 def login_required_json(response: HttpResponse) -> HttpResponse:
     """Convert Django's login_required redirect to JSON 401 response."""
     if response.status_code == HTTPStatus.FOUND:
         return build_response(
-            PydanticSerializer,
+            PydanticFastSerializer,
             raw_data=format_error(
                 'Authentication credentials were not provided',
             ),
@@ -35,7 +31,7 @@ def login_required_json(response: HttpResponse) -> HttpResponse:
 
 
 @login_required_json
-class LoginRequiredController(Controller[PydanticSerializer]):
+class LoginRequiredController(Controller[PydanticFastSerializer]):
     """Controller that uses Django's login_required decorator.
 
     Demonstrates wrapping Django's built-in authentication decorators.

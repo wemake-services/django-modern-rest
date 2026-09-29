@@ -1,8 +1,8 @@
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
-class ExampleController(Controller[PydanticSerializer]):
+class ExampleController(Controller[PydanticFastSerializer]):
     csrf_exempt = False
 
     def post(self) -> str:

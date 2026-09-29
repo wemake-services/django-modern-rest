@@ -2,7 +2,6 @@ import re
 from http import HTTPStatus
 from typing import Final
 
-import pydantic
 import pytest
 from django.http import HttpResponse
 
@@ -14,10 +13,6 @@ from dmr.settings import HttpSpec
 _MATCH_PATTERN: Final = re.compile(
     r'Header .+ is not allowed in responses from endpoint .+',
 )
-
-
-class _BodyModel(pydantic.BaseModel):
-    name: str
 
 
 @pytest.mark.parametrize(

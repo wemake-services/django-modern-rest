@@ -90,10 +90,7 @@ class _WrongUserController(Controller[PydanticFastSerializer]):
         return {}  # type: ignore[return-value]
 
 
-def test_response_error(
-    dmr_rf: DMRRequestFactory,
-    faker: Faker,
-) -> None:
+def test_response_error(dmr_rf: DMRRequestFactory) -> None:
     """Ensures that response validation works."""
     request = dmr_rf.get('/whatever/')
 
@@ -118,10 +115,7 @@ class _UnserializableController(Controller[PydanticFastSerializer]):
         return object()
 
 
-def test_unserializable_error(
-    dmr_rf: DMRRequestFactory,
-    faker: Faker,
-) -> None:
+def test_unserializable_error(dmr_rf: DMRRequestFactory) -> None:
     """Ensures that unserializable objects raise."""
     request = dmr_rf.get('/whatever/')
 

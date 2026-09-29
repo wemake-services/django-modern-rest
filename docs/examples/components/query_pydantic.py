@@ -1,7 +1,7 @@
 import pydantic
 
 from dmr import Controller, Query
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class _QueryModel(pydantic.BaseModel):
@@ -9,7 +9,7 @@ class _QueryModel(pydantic.BaseModel):
     count: int
 
 
-class ApiController(Controller[PydanticSerializer]):
+class ApiController(Controller[PydanticFastSerializer]):
     def get(self, parsed_query: Query[_QueryModel]) -> _QueryModel:
         return parsed_query
 

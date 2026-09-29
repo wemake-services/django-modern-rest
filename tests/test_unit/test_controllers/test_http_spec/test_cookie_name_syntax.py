@@ -16,9 +16,10 @@ from dmr import (
 )
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.settings import HttpSpec
 
 _MATCH_PATTERN: Final = re.compile(
-    r'\b(Cookie|Header)\b name .+ is not following http spec',
+    r'Cookie name .+ is not following http spec.',
 )
 
 
@@ -72,3 +73,15 @@ def test_check_new_cookie_name_syntax(
             )
             def get(self) -> _UserModel:
                 raise NotImplementedError
+
+
+def test_check_cookie_name_syntax_controller() -> None:
+    """Ensure that the validation can be disabled on endpoint level."""
+
+    class _Mixed(Controller[PydanticSerializer]):
+        @modify(
+            cookies={'user name': NewCookie(value='1')},
+            no_validate_http_spec={HttpSpec.cookie_name_syntax},
+        )
+        def get(self) -> _UserModel:
+            raise NotImplementedError

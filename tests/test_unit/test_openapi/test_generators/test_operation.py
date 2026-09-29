@@ -1,14 +1,9 @@
-from typing import Final
-
 import pytest
 
 from dmr import Controller, modify
-from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators import OperationIdGenerator
 from dmr.plugins.pydantic import PydanticSerializer
-
-_TEST_CONFIG: Final = OpenAPIConfig(title='Test API', version='1.0.0')
 
 
 @pytest.fixture

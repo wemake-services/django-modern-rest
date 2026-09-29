@@ -36,8 +36,8 @@ Configuration levels
 
 Most of the settings can be also configured on the controller level
 with :class:`~dmr.controller.Controller` attributes
-and on the endpoint level with :func:`~dmr.endpoint.modify`
-and :func:`~dmr.endpoint.validate` parameters.
+and on the endpoint level with :data:`~dmr.endpoint.modify`
+and :data:`~dmr.endpoint.validate` parameters.
 
 The most specific level always wins:
 
@@ -143,13 +143,20 @@ Content negotiation
   to serialize data from the requested text format,
   like json or xml, into python object.
 
-  Custom configuration example, let's say you want to always use ``ujson``:
+  Custom configuration example, let's say you want to always use ``orjson``:
 
   .. code-block:: python
     :caption: settings.py
 
-    >>> from dmr.parsers import JsonParser
-    >>> DMR_SETTINGS = {Settings.parsers: [JsonParser()]}
+    import orjson
+    from dmr.parsers import JsonParser
+    DMR_SETTINGS = {Settings.parsers: [JsonParser(json_module=orjson)]}
+
+  See :ref:`configuration-levels` on how
+  to merge / override / disable this setting on multiple levels.
+
+  .. versionchanged:: 0.16.0
+    Controller and endpoint values are not merged anymore.
 
 .. data:: dmr.settings.Settings.renderers
 
@@ -160,13 +167,20 @@ Content negotiation
   of :class:`~dmr.renderers.Renderer`
   to serialize python objects to the requested text format, like json or xml.
 
-  Custom configuration example, let's say you want to always use ``ujson``:
+  Custom configuration example, let's say you want to always use ``orjson``:
 
   .. code-block:: python
     :caption: settings.py
 
-    >>> from dmr.renderers import JsonRenderer
-    >>> DMR_SETTINGS = {Settings.renderers: [JsonRenderer()]}
+    import orjson
+    from dmr.renderers import JsonRenderer
+    DMR_SETTINGS = {Settings.renderers: [JsonRenderer(json_module=orjson)]}
+
+  See :ref:`configuration-levels` on how
+  to merge / override / disable this setting on multiple levels.
+
+  .. versionchanged:: 0.16.0
+    Controller and endpoint values are not merged anymore.
 
 .. data:: dmr.settings.Settings.validate_negotiation
 
@@ -226,9 +240,8 @@ Response handling
     ...     ],
     ... }
 
-  Controller ``responses`` and endpoint ``extra_responses`` values
-  override this setting, they are not merged with it.
-  See :ref:`configuration-levels`.
+  See :ref:`configuration-levels` on how
+  to merge / override / disable this setting on multiple levels.
 
   .. versionchanged:: 0.16.0
     Controller and endpoint values are not merged anymore.
@@ -246,9 +259,9 @@ Response handling
   .. code:: python
 
     >>> from dmr import Controller
-    >>> from dmr.plugins.pydantic import PydanticSerializer
+    >>> from dmr.plugins.pydantic import PydanticFastSerializer
 
-    >>> class MyController(Controller[PydanticSerializer]):
+    >>> class MyController(Controller[PydanticFastSerializer]):
     ...     def get(self) -> list[str]:
     ...         return [1, 2]  # <- both static typing and runtime error
 
@@ -265,8 +278,10 @@ Response handling
     You can also switch off this validation per-controller
     with :attr:`~dmr.controller.Controller.validate_responses`
     and per-endpoint with ``validate_responses`` argument
-    to :func:`~dmr.endpoint.modify`
-    and :func:`~dmr.endpoint.validate`.
+    to :data:`~dmr.endpoint.modify`
+    and :data:`~dmr.endpoint.validate`.
+
+  We recommend setting this value to ``not DEBUG``.
 
 .. data:: dmr.settings.Settings.exclude_validate_responses
 
@@ -291,23 +306,47 @@ Response handling
     ...     },
     ... }
 
-  Controller and endpoint values override this setting,
-  they are not merged with it. See :ref:`configuration-levels`.
-  For example, setting ``exclude_validate_responses=None`` on endpoint level
-  will cancel all controller and settings level values
-  and enable all validation back again.
+  See :ref:`configuration-levels` on how
+  to merge / override / disable this setting on multiple levels.
 
   .. versionadded:: 0.15.0
 
   .. versionchanged:: 0.16.0
     Controller and endpoint values are not merged anymore.
 
-.. data:: dmr.settings.Settings.semantic_responses
+
+Semantic schema generation
+--------------------------
+
+.. data:: dmr.settings.Settings.semantic_schema
 
   Default: ``True``
 
   When ``True``, parsers, renderers, and authentication classes
-  automatically inject their semantic response specs
+  automatically inject their semantic schema like response specs,
+  security schemes, and security requirements into every endpoint's metadata.
+  This data is then visible in the generated OpenAPI spec.
+
+  Set to ``False`` to disable this auto-injection globally.
+  User-defined schema (via ``@modify``, ``@validate``,
+  controller ``responses``, ``Settings.responses`` or ``Settings.security``)
+  are not affected by this flag.
+  Runtime response validation still works as configured
+  by ``Settings.validate_responses``.
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> DMR_SETTINGS = {Settings.semantic_schema: False}
+
+  .. versionadded:: 0.16.0
+
+.. data:: dmr.settings.Settings.semantic_responses
+
+  Default: ``EMPTY``
+
+  When ``True``, parsers, renderers, and authentication classes
+  automatically inject their semantic responses spec
   (e.g. ``422 Unprocessable Entity``, ``406 Not Acceptable``)
   into every endpoint's metadata.
   These responses are then visible in the generated OpenAPI spec.
@@ -318,6 +357,9 @@ Response handling
   are not affected by this flag.
   Runtime response validation still works as configured
   by ``Settings.validate_responses``.
+
+  Defaults to the value set in :data:`~dmr.settings.Settings.semantic_schema`
+  for convenience if this value is :data:`~dmr.types.EMPTY`.
 
   .. code-block:: python
     :caption: settings.py
@@ -341,14 +383,50 @@ Response handling
     ...    },
     ... }
 
-  Controller and endpoint values override this setting,
-  they are not merged with it. See :ref:`configuration-levels`.
-  For example, setting ``exclude_semantic_responses=None`` on endpoint level
-  will cancel all controller and settings level values
-  and enable all responses back again.
+  See :ref:`configuration-levels` on how
+  to merge / override / disable this setting on multiple levels.
 
   .. versionchanged:: 0.16.0
     Controller and endpoint values are not merged anymore.
+
+.. data:: dmr.settings.Settings.semantic_auth
+
+  Default: ``EMPTY``
+
+  When ``True``,  authentication classes
+  automatically inject their semantic security requirements and security schemes
+  into the final OpenAPI spec.
+
+  Set to ``False`` to disable this auto-injection globally.
+  User-defined schemes and ``security`` field
+  (via ``@modify``, ``@validate``, etc) are not affected by this flag.
+
+  Defaults to the value set in :data:`~dmr.settings.Settings.semantic_schema`
+  for convenience if this value is :data:`~dmr.types.EMPTY`.
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> DMR_SETTINGS = {Settings.semantic_auth: False}
+
+  .. versionadded:: 0.16.0
+
+.. data:: dmr.settings.Settings.exclude_semantic_auth
+
+  Default: ``frozenset()``
+
+  Exclude specific semantic security schemes and security requirements
+  that auth instances produce from the spec.
+
+  .. code-block:: python
+    :caption: settings.py
+
+    >>> DMR_SETTINGS = {Settings.exclude_semantic_auth: {'jwt'}}
+
+  See :ref:`configuration-levels` on how
+  to merge / override / disable this setting on multiple levels.
+
+  .. versionadded:: 0.16.0
 
 .. data:: dmr.settings.Settings.semantic_schema_providers
 
@@ -367,7 +445,9 @@ Response handling
   - ``csrf`` security requirement to all auth instances
   - Global ``csrf`` security scheme component
 
-  :data:`~dmr.settings.Settings.exclude_semantic_responses` is also respected.
+  :data:`~dmr.settings.Settings.exclude_semantic_responses`
+  and :data:`~dmr.settings.Settings.exclude_semantic_auth`
+  are also respected.
 
   .. code-block:: python
     :caption: settings.py
@@ -440,8 +520,8 @@ Authentication
   consider using :class:`~dmr.security.SyncOrAsyncAuth` for settings.
   All auth types must be importable in settings.
 
-  Controller and endpoint ``auth`` values override this setting,
-  they are not merged with it. See :ref:`configuration-levels`.
+  See :ref:`configuration-levels` on how
+  to merge / override / disable this setting on multiple levels.
 
   .. versionchanged:: 0.16.0
     Controller and endpoint values are not merged anymore.
@@ -472,38 +552,11 @@ Throttling
   consider using :class:`~dmr.throttling.SyncOrAsyncThrottle` for settings.
   All throttle types must be importable in settings.
 
-  Controller and endpoint ``throttling`` values override this setting,
-  they are not merged with it. See :ref:`configuration-levels`.
+  See :ref:`configuration-levels` on how
+  to merge / override / disable this setting on multiple levels.
 
   .. versionchanged:: 0.16.0
     Controller and endpoint values are not merged anymore.
-
-
-.. data:: dmr.settings.Settings.throttling_allow_unsafe_cache
-
-  Default: ``True``
-
-  By default we emit
-  :class:`~dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning`
-  at startup if an unsafe cache backend is detected
-  for throttling backend instance (``LocMemCache``, ``DummyCache``).
-  These backends do not share state between processes,
-  so throttling counters are not consistent in multi-process deployments.
-
-  When set to ``False``,
-  we raise :exc:`~django.core.exceptions.ImproperlyConfigured` instead.
-
-  Set to ``None`` to completely disable this check:
-  no warnings or errors will be produced.
-
-  .. code-block:: python
-    :caption: settings.py
-
-    >>> from dmr.settings import Settings
-
-    >>> DMR_SETTINGS = {
-    ...     Settings.throttling_allow_unsafe_cache: False,
-    ... }
 
 
 HTTP Spec validation
@@ -529,11 +582,8 @@ HTTP Spec validation
     ...     },
     ... }
 
-  Controller and endpoint values override this setting,
-  they are not merged with it. See :ref:`configuration-levels`.
-  For example, setting ``no_validate_http_spec=None`` on endpoint level
-  will cancel all controller and settings level values
-  and enable all validation back again.
+  See :ref:`configuration-levels` on how
+  to merge / override / disable this setting on multiple levels.
 
   .. versionchanged:: 0.16.0
     Controller and endpoint values are not merged anymore.
@@ -563,8 +613,6 @@ Streaming
     >>> DMR_SETTINGS = {
     ...     Settings.validate_events: False,
     ... }
-
-  We recommend setting this value to ``not DEBUG``.
 
 
 OpenAPI

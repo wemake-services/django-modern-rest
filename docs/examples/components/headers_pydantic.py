@@ -1,7 +1,7 @@
 import pydantic
 
 from dmr import Controller, Headers
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class _HeadersModel(pydantic.BaseModel):
@@ -9,7 +9,7 @@ class _HeadersModel(pydantic.BaseModel):
     client_id: int = pydantic.Field(alias='X-Client-Id', default=-1)
 
 
-class ApiController(Controller[PydanticSerializer]):
+class ApiController(Controller[PydanticFastSerializer]):
     def get(self, parsed_headers: Headers[_HeadersModel]) -> _HeadersModel:
         return parsed_headers
 

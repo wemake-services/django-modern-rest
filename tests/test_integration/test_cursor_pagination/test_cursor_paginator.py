@@ -1,10 +1,19 @@
 import pytest
+from django.conf import LazySettings
 from django.db import models
 
 from dmr.pagination.cursor import CursorPaginator, InvalidCursorError
 from server.apps.model_cursor.models import (  # type: ignore[import-not-found]
     Entry,
 )
+
+
+@pytest.fixture(autouse=True)
+def _modify_integration_settings(settings: LazySettings) -> None:
+    # The paginator is called directly, without any requests,
+    # and it never reads `DEBUG`, so there is no value
+    # in running all cases twice via the parent conftest parametrisation.
+    settings.DEBUG = False
 
 
 def _encode(paginator: CursorPaginator[Entry], *to_encode: str) -> str:

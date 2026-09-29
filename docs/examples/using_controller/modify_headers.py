@@ -1,23 +1,20 @@
-from http import HTTPStatus
-
 import pydantic
 
 from dmr import Body, Controller, NewHeader, modify
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
 class UserModel(pydantic.BaseModel):
     email: str
 
 
-class UserController(Controller[PydanticSerializer]):
+class UserController(Controller[PydanticFastSerializer]):
     @modify(
-        status_code=HTTPStatus.OK,
         # Add explicit header:
         headers={'X-Created': NewHeader(value='true')},
     )
     def post(self, parsed_body: Body[UserModel]) -> UserModel:
-        # This response would have an explicit status code `200`
+        # This response would have an implicit status code `201`
         # and new explicit header `{'X-Created': 'true'}`:
         return parsed_body
 

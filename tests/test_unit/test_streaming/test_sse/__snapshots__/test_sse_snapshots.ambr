@@ -539,7 +539,8 @@
                   "type": "null"
                 }
               ],
-              "title": "Event"
+              "title": "Event",
+              "default": null
             },
             "id": {
               "anyOf": [
@@ -553,7 +554,8 @@
                   "type": "null"
                 }
               ],
-              "title": "Id"
+              "title": "Id",
+              "default": null
             },
             "retry": {
               "anyOf": [
@@ -564,7 +566,8 @@
                   "type": "null"
                 }
               ],
-              "title": "Retry"
+              "title": "Retry",
+              "default": null
             },
             "comment": {
               "anyOf": [
@@ -575,7 +578,8 @@
                   "type": "null"
                 }
               ],
-              "title": "Comment"
+              "title": "Comment",
+              "default": null
             }
           },
           "type": "object",

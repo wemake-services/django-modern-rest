@@ -6,7 +6,7 @@ import pytest
 from dirty_equals import IsInstance
 from django.http import HttpResponse
 
-from dmr import (  # noqa: WPS235
+from dmr import (
     Body,
     Controller,
     Headers,
@@ -95,8 +95,8 @@ def test_single_component_query(
     """Ensure controller with Query component has it in component_parsers."""
     endpoint = _QueryController.api_endpoints[str(method)]
     assert [
-        (component.context_name, model, meta)
-        for component, model, meta in endpoint.metadata.component_parsers
+        (spec.parser.context_name, spec.model, spec.model_meta)
+        for spec in endpoint.metadata.component_parsers
     ] == [('parsed_query', _QueryModel, (IsInstance(QueryComponent),))]
 
 
@@ -142,8 +142,8 @@ def test_multiple_components_get() -> None:
         ('parsed_path', _PathModel, (IsInstance(PathComponent),)),
     ]
     assert sorted(components) == sorted([
-        (component.context_name, model, meta)
-        for component, model, meta in endpoint.metadata.component_parsers
+        (spec.parser.context_name, spec.model, spec.model_meta)
+        for spec in endpoint.metadata.component_parsers
     ])
 
 
@@ -165,6 +165,6 @@ def test_multiple_components_with_body(
         ('parsed_body', _BodyModel, (IsInstance(BodyComponent),)),
     ]
     assert sorted(components) == sorted([
-        (component.context_name, model, meta)
-        for component, model, meta in endpoint.metadata.component_parsers
+        (spec.parser.context_name, spec.model, spec.model_meta)
+        for spec in endpoint.metadata.component_parsers
     ])

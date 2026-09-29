@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security import AuthenticatedHttpRequest, request_auth
 from dmr.security.jwt import HeaderJWTAsyncAuth, request_jwt
 from dmr.security.jwt.blocklist import JWTokenBlocklistAsyncMixin
@@ -14,7 +14,7 @@ class JWTAuthWithBlocklist(JWTokenBlocklistAsyncMixin, HeaderJWTAsyncAuth):
 jwt_blocklist_auth = JWTAuthWithBlocklist()
 
 
-class APIController(Controller[PydanticSerializer]):
+class APIController(Controller[PydanticFastSerializer]):
     request: AuthenticatedHttpRequest[User]
     auth = (jwt_blocklist_auth,)
 

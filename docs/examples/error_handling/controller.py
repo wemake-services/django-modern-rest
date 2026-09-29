@@ -6,10 +6,10 @@ from typing_extensions import override
 
 from dmr import Controller, ResponseSpec
 from dmr.endpoint import Endpoint
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
-class ProxyController(Controller[PydanticSerializer]):
+class ProxyController(Controller[PydanticFastSerializer]):
     responses = (
         # Custom schema that we can return when `HTTPError` happens:
         ResponseSpec(str, status_code=HTTPStatus.FAILED_DEPENDENCY),
@@ -29,7 +29,7 @@ class ProxyController(Controller[PydanticSerializer]):
     async def handle_async_error(
         self,
         endpoint: Endpoint,
-        controller: Controller[PydanticSerializer],
+        controller: Controller[PydanticFastSerializer],
         exc: Exception,
     ) -> HttpResponse:
         # Will handle errors in all endpoints.

@@ -2,7 +2,6 @@ import pytest
 from django.urls import path
 from faker import Faker
 from inline_snapshot import snapshot
-from syrupy.assertion import SnapshotAssertion
 from typing_extensions import override
 
 from dmr import Controller, modify
@@ -103,7 +102,7 @@ def test_schema_supports_json_schema_keywords(  # noqa: WPS210
     })
 
 
-def test_schema_validation(snapshot: SnapshotAssertion) -> None:
+def test_schema_validation() -> None:
     """Ensure that schema is validated correctly."""
     router = Router(
         'api/v1/',

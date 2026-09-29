@@ -118,7 +118,7 @@ def test_valid_data(
         (str, b'abc'),
         (str | int, None),
         (tuple[int, str], ('a', 1)),
-        (tuple[int, ...], ('a')),
+        (tuple[int, ...], ('a',)),
         (_TypedDict, {}),
         (_TypedDict, {'a': 1}),
         (_TypedDict, {'age': 'a'}),
@@ -143,7 +143,7 @@ def test_invalid_data(
     validator_builder: Callable[[Any], Callable[..., Any]],
     serializer: type[BaseSerializer],
 ) -> None:
-    """Ensure that correct data can be validated."""
+    """Ensure that incorrect data is rejected."""
 
     class _Controller(Controller[serializer]):  # type: ignore[valid-type]
         get = validator_builder(typ)
@@ -187,7 +187,7 @@ def test_cast_data_no_strict(
     validator_builder: Callable[[Any], Callable[..., Any]],
     serializer: type[BaseSerializer],
 ) -> None:
-    """Ensure that correct data can be validated."""
+    """Ensure that data is casted when `strict` is disabled."""
 
     class _Controller(Controller[serializer]):  # type: ignore[valid-type]
         get = validator_builder(typ)

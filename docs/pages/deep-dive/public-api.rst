@@ -20,16 +20,32 @@ Endpoint
 .. autoclass:: dmr.metadata.EndpointMetadata
   :members:
 
-.. autodecorator:: dmr.endpoint.modify
+.. autofunction:: dmr.endpoint.request_endpoint
 
-.. autodecorator:: dmr.endpoint.validate
+Modify
+~~~~~~
 
-.. autodecorator:: dmr.endpoint.request_endpoint
+.. autoclass:: dmr.endpoint.ModifyEndpoint
+  :members:
+
+.. autodata:: dmr.endpoint.modify
+
+Validate
+~~~~~~~~
+
+.. autoclass:: dmr.endpoint.ValidateEndpoint
+  :members:
+
+.. autodata:: dmr.endpoint.validate
+
+Extras
+~~~~~~
+
+.. autoclass:: dmr.endpoint.Extras
+  :members:
 
 Lazy endpoints
 ~~~~~~~~~~~~~~
-
-.. autodecorator:: dmr.endpoint.modify.lazy
 
 .. autoclass:: dmr.endpoint.ModifySyncCallable
   :members:
@@ -39,8 +55,6 @@ Lazy endpoints
 
 .. autoclass:: dmr.endpoint.ModifyAnyCallable
   :members:
-
-.. autodecorator:: dmr.endpoint.validate.lazy
 
 .. autoclass:: dmr.endpoint.ValidateSyncCallable
   :members:
@@ -120,7 +134,21 @@ Serialization
 .. autoclass:: dmr.serializer.BaseSchemaGenerator
   :members:
 
+.. autoclass:: dmr.serializer.ContextField
+  :members:
+
+.. autoclass:: dmr.serializer.ContextModel
+  :members:
+
+.. autofunction:: dmr.serializer.context_field_tuples
+
 .. autoclass:: dmr.components.ComponentParserBuilder
+  :members:
+
+.. autoclass:: dmr.components.ComponentParserSpec
+  :members:
+
+.. autoclass:: dmr.components.FunctionDefaults
   :members:
 
 
@@ -237,6 +265,9 @@ CSRF
 .. autofunction:: dmr.security.csrf.csrf_response_spec
 
 .. autofunction:: dmr.security.csrf.csrf_security_scheme
+
+.. autoclass:: dmr.security.csrf.CSRFAuthMixin
+  :members:
 
 
 Semantic schema
@@ -463,9 +494,6 @@ OpenAPI Core
 .. autoclass:: dmr.openapi.core.registry.SchemaRegistry
   :members:
 
-.. autoclass:: dmr.openapi.core.registry.SchemaCallback
-  :members:
-
 .. autoclass:: dmr.openapi.core.registry.SecuritySchemeRegistry
   :members:
 
@@ -480,6 +508,9 @@ OpenAPI Generators
    :members:
 
 .. autoclass:: dmr.openapi.generators.ResponseGenerator
+   :members:
+
+.. autoclass:: dmr.openapi.generators.schema.LoadedSchema
    :members:
 
 .. autoclass:: dmr.openapi.generators.SchemaGenerator

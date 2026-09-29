@@ -1,10 +1,10 @@
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from examples.middleware.csrf_protect_json import csrf_protect_json
 
 
 @csrf_protect_json
-class AsyncController(Controller[PydanticSerializer]):
+class AsyncController(Controller[PydanticFastSerializer]):
     """Example async controller using CSRF protection middleware."""
 
     responses = csrf_protect_json.responses

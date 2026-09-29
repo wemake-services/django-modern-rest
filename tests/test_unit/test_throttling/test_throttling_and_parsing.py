@@ -12,12 +12,19 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.settings import default_renderer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
+from dmr.throttling.backends import AsyncDjangoCache, SyncDjangoCache
 from tests.infra.xml_format import XmlRenderer
 
 
 class _SyncController(Controller[PydanticSerializer]):
     @modify(
-        throttling=[SyncThrottle(1, Rate.second)],
+        throttling=[
+            SyncThrottle(
+                1,
+                Rate.second,
+                backend=SyncDjangoCache(allow_unsafe_cache=None),
+            ),
+        ],
         renderers=(XmlRenderer(), default_renderer),
     )
     def get(self) -> str:
@@ -58,7 +65,13 @@ def test_throttle_before_negotiation(
 
 class _AsyncController(Controller[PydanticSerializer]):
     @modify(
-        throttling=[AsyncThrottle(1, Rate.second)],
+        throttling=[
+            AsyncThrottle(
+                1,
+                Rate.second,
+                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+            ),
+        ],
         renderers=(XmlRenderer(), default_renderer),
     )
     async def get(self) -> str:

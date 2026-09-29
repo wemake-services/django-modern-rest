@@ -11,14 +11,20 @@ from django.http import HttpResponse
 from inline_snapshot import snapshot
 from typing_extensions import Sentinel
 
-from dmr import APIError, ResponseSpec, modify, validate
+from dmr import APIError, ResponseSpec
 from dmr.errors import ErrorModel, format_error
 from dmr.exceptions import DataRenderingError, EndpointMetadataError
 from dmr.negotiation import ContentType
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
-from dmr.streaming import StreamingResponse, streaming_response_spec
+from dmr.streaming import (
+    Streaming,
+    StreamingResponse,
+    modify,
+    streaming_response_spec,
+    validate,
+)
 from dmr.streaming.sse import SSEController, SSEvent
 from dmr.test import DMRAsyncRequestFactory
 from dmr.types import EMPTY
@@ -136,7 +142,9 @@ async def test_wrong_event_type(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
         validate_responses = options.get('validate_responses', EMPTY)
-        validate_events = options.get('validate_events', EMPTY)
+        extras = Streaming(
+            validate_events=options.get('validate_events', EMPTY),
+        )
 
         async def get(self) -> AsyncIterator[_EventsType]:
             return _wrong_type_events()
@@ -189,7 +197,9 @@ async def test_wrong_event_type_endpoint(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
         @modify(
-            validate_events=options.get('validate_events', EMPTY),
+            extras=Streaming(
+                validate_events=options.get('validate_events', EMPTY),
+            ),
             validate_responses=options.get('validate_responses', EMPTY),
         )
         async def get(self) -> AsyncIterator[_EventsType]:
@@ -200,7 +210,9 @@ async def test_wrong_event_type_endpoint(
                 _EventsType,
                 content_type=ContentType.event_stream,
             ),
-            validate_events=options.get('validate_events', EMPTY),
+            extras=Streaming(
+                validate_events=options.get('validate_events', EMPTY),
+            ),
             validate_responses=options.get('validate_responses', EMPTY),
         )
         async def post(self) -> StreamingResponse:
@@ -366,13 +378,11 @@ async def test_event_response_validation(
 @pytest.mark.asyncio
 @pytest.mark.parametrize('serializer', serializers)
 @pytest.mark.parametrize('validate_responses', [True, False, EMPTY])
-@pytest.mark.parametrize('method', [HTTPMethod.GET, HTTPMethod.POST])
 async def test_sse_api_error(
     dmr_async_rf: DMRAsyncRequestFactory,
     *,
     serializer: type[BaseSerializer],
     validate_responses: bool | Sentinel,
-    method: HTTPMethod,
 ) -> None:
     """Ensures that raising API errors is supported in SSE."""
 
@@ -393,13 +403,44 @@ async def test_sse_api_error(
                 status_code=HTTPStatus.CONFLICT,
             )
 
+    request = dmr_async_rf.get('/whatever/')
+
+    response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.CONFLICT, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'API Error'}],
+    })
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('serializer', serializers)
+async def test_sse_api_error_raw_endpoint(
+    dmr_async_rf: DMRAsyncRequestFactory,
+    *,
+    serializer: type[BaseSerializer],
+) -> None:
+    """Ensures that returning API errors from raw SSE endpoints works."""
+
+    class _ClassBasedSSE(
+        SSEController[serializer],  # type: ignore[valid-type]
+    ):
+        responses = (
+            ResponseSpec(
+                return_type=ErrorModel,
+                status_code=HTTPStatus.CONFLICT,
+            ),
+        )
+
         async def post(self) -> HttpResponse:
             return self.to_error(
                 format_error('API Error'),
                 status_code=HTTPStatus.CONFLICT,
             )
 
-    request = dmr_async_rf.generic(str(method), '/whatever/')
+    request = dmr_async_rf.post('/whatever/')
 
     response = await dmr_async_rf.wrap(_ClassBasedSSE.as_view()(request))
 
@@ -509,7 +550,7 @@ async def test_missing_event_model(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
         validate_responses = False
-        validate_events = False
+        extras = Streaming(validate_events=False)
 
         @validate(
             streaming_response_spec(
@@ -553,7 +594,7 @@ async def test_missing_event_model_strict(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
         validate_responses = False
-        validate_events = True
+        extras = Streaming(validate_events=True)
 
         @validate(
             streaming_response_spec(

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Final, Literal, Self, cast, overload
+from typing import TYPE_CHECKING, Final, Literal, Self, overload
 
 from asgiref.sync import sync_to_async
 from django.http import HttpRequest
@@ -105,9 +105,8 @@ def _authenticate(token: str) -> tuple['AbstractBaseUser', 'SessionBase']:
 
     # `django-allauth` already checks that the user is active,
     # and returns `None` for unknown / expired / anonymous sessions.
-    authenticated = cast(
-        'tuple[AbstractBaseUser, SessionBase] | None',
-        authenticate_by_x_session_token(token),
+    authenticated: tuple[AbstractBaseUser, SessionBase] | None = (  # pyright: ignore[reportUnknownVariableType]
+        authenticate_by_x_session_token(token)
     )
     if authenticated is None:
         raise NotAuthenticatedError

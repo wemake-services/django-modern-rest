@@ -1,7 +1,7 @@
 import dataclasses
 import itertools
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAlias
 
 from dmr.exceptions import EndpointMetadataError
 
@@ -16,6 +16,9 @@ if TYPE_CHECKING:
     )
     from dmr.semantic_schema import SecurityProvider
     from dmr.serializer import BaseSerializer
+
+
+_SecuritySchemes: TypeAlias = dict[str, 'SecurityScheme | Reference']
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -85,21 +88,18 @@ class SecuritySchemeGenerator:
         # We process all existing `metadata.auth` security requirements
         # to possibly inject extra ones from semantic schemas.
         # User provided `metadata.security` is added last.
-        auth_schemes = self._register_security_schemes(
-            metadata,
-            controller_cls,
-        )
+        self._register_auth_security_schemes(metadata, controller_cls)
         requirements = self._prepare_requirements(metadata, controller_cls)
         requirements, semantic_schemes = self._inject_semantic_schema(
             metadata,
             controller_cls,
             requirements,
         )
-        for scheme_name, scheme in semantic_schemes.items():
-            self._context.registries.security_scheme.register(
-                scheme_name,
-                scheme,
-            )
+        self._register_security_schemes(
+            metadata,
+            controller_cls,
+            semantic_schemes,
+        )
 
         self._validate_no_auth_scheme_overlap(
             metadata,
@@ -119,41 +119,32 @@ class SecuritySchemeGenerator:
             return [] if self._context.config.security else None
         return requirements
 
-    def _register_security_schemes(
+    def _register_auth_security_schemes(
         self,
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> set[str]:
         registered: set[str] = set()
         for auth in metadata.auth or []:
-            for scheme_name, scheme in auth.security_schemes(
+            self._register_security_schemes(
                 metadata,
                 controller_cls,
-            ).items():
-                self._context.registries.security_scheme.register(
-                    scheme_name,
-                    scheme,
-                )
-                registered.add(scheme_name)
-        return registered
 
-    def _validate_no_auth_scheme_overlap(
+    def _register_security_schemes(
         self,
         metadata: 'EndpointMetadata',
-        auth_schemes: set[str],
+        controller_cls: type['Controller[BaseSerializer]'],
+        security_schemes: _SecuritySchemes,
     ) -> None:
-        if not metadata.security:
-            return
-
-        intersection = sorted(
-            _scheme_names(metadata.security) & auth_schemes,
-        )
-        if intersection:
-            raise EndpointMetadataError(
-                f'Security schemes {intersection} are already generated '
-                f'by auth providers for {metadata.endpoint_name=}, '
-                'check `security` in settings, on the controller, '
-                'and on the endpoint',
+        for scheme_name, scheme in security_schemes.items():
+            if (
+                not metadata.semantic_auth
+                or scheme_name in metadata.exclude_semantic_auth
+            ):
+                continue
+            self._context.registries.security_scheme.register(
+                scheme_name,
+                scheme,
             )
 
     def _prepare_requirements(
@@ -164,7 +155,18 @@ class SecuritySchemeGenerator:
         requirements: list[SecurityRequirement] = []
         for auth in metadata.auth or []:
             requirements.extend(
-                auth.security_requirements(metadata, controller_cls),
+                new_requirement
+                for requirement in auth.security_requirements(
+                    metadata,
+                    controller_cls,
+                )
+                if (
+                    new_requirement := _filter_requirement(
+                        requirement,
+                        metadata,
+                    )
+                )
+                is not None
             )
         return requirements
 
@@ -175,7 +177,7 @@ class SecuritySchemeGenerator:
         requirements: list['SecurityRequirement'],
     ) -> tuple[
         list['SecurityRequirement'],
-        dict[str, 'SecurityScheme | Reference'],
+        _SecuritySchemes,
     ]:
         from dmr.semantic_schema import SecurityRequirementMerger  # noqa: PLC0415
 
@@ -242,11 +244,15 @@ class SecuritySchemeGenerator:
         ]
 
 
-def _scheme_names(
-    requirements: Sequence['SecurityRequirement'],
-) -> frozenset[str]:
-    return frozenset(
-        itertools.chain.from_iterable(
-            requirement.keys() for requirement in requirements
-        ),
-    )
+def _filter_requirement(
+    requirement: 'SecurityRequirement',
+    metadata: 'EndpointMetadata',
+) -> 'SecurityRequirement | None':
+    return {
+        req_name: req_value
+        for req_name, req_value in requirement.items()
+        if (
+            metadata.semantic_auth
+            and req_name not in metadata.exclude_semantic_auth
+        )
+    } or None

@@ -10,7 +10,10 @@ from dmr.openapi.objects import (
 )
 
 if TYPE_CHECKING:
+    from dmr.controller import Controller
+    from dmr.metadata import EndpointMetadata
     from dmr.openapi.core.context import OpenAPIContext
+    from dmr.openapi.generators.schema import LoadedSchema
     from dmr.serializer import BaseSerializer
 
 
@@ -24,65 +27,152 @@ class ParameterGenerator:
         self,
         model: Any,
         model_meta: tuple[Any, ...],
-        serializer: type['BaseSerializer'],
-        context: 'OpenAPIContext',
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
         *,
         param_in: ParameterLocation,
     ) -> list[Parameter | Reference]:
-        """Generate parameter spec for the OpenAPI."""
+        """
+        Generate parameter spec for the OpenAPI.
+
+        Parameters are generated from the properties of object schemas.
+        Unions like ``Query[Model | None] = None``
+        or ``Query[Model | Literal['']] = ''`` are supported:
+        only their object members have properties, other members
+        can only come from defaults, not from the request.
+        When there are several object members, a parameter is required
+        only when it is required by all of them.
+
+        .. versionchanged:: 0.16.0
+            Now accepts *metadata* and *controller_cls* parameters.
+            Removed *serializer* and *context* parameters.
+            Union models are now supported.
+
+        """
         # Import cycle:
         from dmr.metadata import get_annotated_metadata  # noqa: PLC0415
 
-        schema = self._context.registries.schema.maybe_resolve_reference(
-            self._context.generators.schema(
-                model,
-                serializer,
-                skip_registration=True,
-                register_referenced_components=True,
-            ),
-        )
-        metadata = get_annotated_metadata(
+        loaded = self._context.generators.schema.load(
             model,
-            ParameterMetadata,
-            model_meta=model_meta,
+            controller_cls.serializer,
+            inline=True,
         )
+        generated = self._generate(
+            loaded,
+            get_annotated_metadata(
+                model,
+                ParameterMetadata,
+                model_meta=model_meta,
+            ),
+            param_in=param_in,
+        )
+        # Models themselves are inlined as parameters, only components
+        # used by their properties are needed in the schema:
+        self._context.generators.schema.register(generated, loaded)
+        return generated
+
+    def _generate(
+        self,
+        loaded: 'LoadedSchema',
+        annotated_meta: ParameterMetadata | None,
+        *,
+        param_in: ParameterLocation,
+    ) -> list[Parameter | Reference]:
+        object_schemas = self._object_schemas(loaded.schema, loaded.defs)
         return [  # pyright: ignore[reportReturnType]
             Parameter(
                 name=property_name,
                 param_in=param_in,
                 schema=property_schema,
-                required=(property_name in schema.required) or None,
+                # OpenAPI requires all path parameters to be required.
+                # But, path fields can still have defaults, because
+                # a controller can be routed to several urls,
+                # and not all of them might have this parameter:
+                required=(
+                    param_in == 'path'
+                    or all(
+                        property_name in object_schema.required
+                        for object_schema in object_schemas
+                    )
+                    or None
+                ),
                 **self._compute_metadata(
-                    metadata,
+                    annotated_meta,
                     property_name,
                     property_schema,
-                    schema,
-                    self._context,
+                    object_schema,
+                    loaded.defs,
                 ),
             )
-            for property_name, property_schema in (
-                schema.properties or {}
+            for object_schema in object_schemas
+            for property_name, property_schema in self._new_properties(
+                object_schema,
+                object_schemas,
             ).items()
         ]
 
+    def _object_schemas(
+        self,
+        schema: Schema,
+        defs: dict[str, Schema],
+    ) -> list[Schema]:
+        """
+        Find all schemas with properties inside a schema.
+
+        Unions are represented with ``anyOf`` or ``oneOf``,
+        we look into their members recursively.
+        """
+        schema = self._context.registries.schema.maybe_resolve_reference(
+            schema,
+            resolution_context=defs,
+        )
+        members = schema.any_of or schema.one_of
+        if not members:
+            return [schema] if schema.properties else []
+        object_schemas: list[Schema] = []
+        for member in members:
+            object_schemas.extend(self._object_schemas(member, defs))
+        return object_schemas
+
+    def _new_properties(
+        self,
+        object_schema: Schema,
+        object_schemas: list[Schema],
+    ) -> dict[str, Schema]:
+        """Properties of *object_schema* that previous schemas don't have."""
+        previous = object_schemas[: object_schemas.index(object_schema)]
+        return {
+            property_name: property_schema
+            for property_name, property_schema in (
+                object_schema.properties or {}
+            ).items()
+            if not any(
+                property_name in (schema.properties or {})
+                for schema in previous
+            )
+        }
+
     def _compute_metadata(
         self,
-        metadata: ParameterMetadata | None,
+        annotated_meta: ParameterMetadata | None,
         property_name: str,
-        property_schema: Reference | Schema,
+        property_schema: Schema,
         schema: Schema,
-        context: 'OpenAPIContext',
+        defs: dict[str, Schema],
     ) -> dict[str, Any]:
         metadata_params = (
             {}
-            if metadata is None
+            if annotated_meta is None
             else {
-                field.name: getattr(metadata, field.name)
-                for field in dataclasses.fields(metadata)
+                field.name: getattr(annotated_meta, field.name)
+                for field in dataclasses.fields(annotated_meta)
             }
         )
-        property_schema = context.registries.schema.maybe_resolve_reference(
-            property_schema,
+        property_schema = (
+            self._context.registries.schema.maybe_resolve_reference(
+                property_schema,
+                resolution_context=defs,
+            )
         )
         return {
             **metadata_params,

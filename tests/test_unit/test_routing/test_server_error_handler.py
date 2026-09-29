@@ -23,7 +23,10 @@ def test_prefix_normalization(
 ) -> None:
     """Ensure that normalizes prefix with or without slashes."""
     view = build_500_handler(prefix, serializer=PydanticSerializer)
-    request = dmr_rf.get('/api/existing/')
+    request = dmr_rf.get(
+        '/api/existing/',
+        headers={'Accept': 'application/json'},
+    )
 
     response = view(request)
 

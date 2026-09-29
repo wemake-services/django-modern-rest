@@ -23,6 +23,7 @@ from dmr.security.django_session import (
 )
 from dmr.serializer import BaseSerializer
 from dmr.throttling import AsyncThrottle, SyncThrottle
+from dmr.types import EMPTY
 
 
 class _Model(pydantic.BaseModel):
@@ -115,7 +116,7 @@ class CorrectValidateController(Controller[PydanticSerializer]):
 
 # Regression test for `@validate` return type invalid narrowing:
 controller = CorrectValidateController()
-assert_type(controller.put, Callable[[], JsonResponse])  # ty: ignore[type-assertion-failure]
+assert_type(controller.put, Callable[[], JsonResponse])  # ty: ignore[assert-type-unspellable-subtype]
 
 
 class WrongModifyController(Controller[PydanticSerializer]):
@@ -330,3 +331,11 @@ class WrongErrorHandlerController(Controller[PydanticSerializer]):
     )
     async def patch(self) -> str:
         return 'mixed'
+
+
+# Explicit `EMPTY` for `extras` should be allowed:
+modify(extras=EMPTY)
+validate(
+    ResponseSpec(status_code=HTTPStatus.OK, return_type=_Model),
+    extras=EMPTY,
+)

@@ -62,11 +62,54 @@ to be present for successful login.
   - https://docs.djangoproject.com/en/stable/ref/csrf/
 
 
-Reusing pre-existing views
---------------------------
+.. _django-session-concrete-views:
+
+Ready-to-use views
+------------------
+
+``dmr.security.django_session.concrete_views`` has login controllers
+that only need a serializer:
+
+- :class:`~dmr.security.django_session.concrete_views.DjangoSessionSyncController`
+  for sync views
+- :class:`~dmr.security.django_session.concrete_views.DjangoSessionAsyncController`
+  for async views
+
+Pass the serializer to ``as_view`` in your urls,
+there is no view code at all:
+
+.. literalinclude:: /examples/auth/django_session/django_session_concrete.py
+  :caption: urls.py
+  :linenos:
+  :language: python
+
+They take a username and a password
+as :class:`~dmr.security.django_session.views.DjangoSessionPayload`,
+start a session, and return the id of the user
+as :class:`~dmr.security.django_session.views.DjangoSessionResponse`.
+``as_view`` takes the serializer as a typed keyword argument
+and passes everything else to django as usual, see
+:meth:`~dmr.security.django_session.concrete_views.DjangoSessionSyncController.as_view`.
+
+They all set ``auth = None``: they are the very endpoints
+that check credentials, so auth from the settings
+must never be required to reach them.
+
+.. tip::
+
+  These should be your default for the common cases.
+  They are final, so any custom logic belongs to the reusable
+  controllers below, which leave the bodies and the hooks open for you.
+
+
+Customizing pre-existing views
+------------------------------
 
 We provide several pre-existing views to get Django session cookie.
 So, users won't have to write tons of boilerplate code.
+
+Reach for them when the bodies of :ref:`django-session-concrete-views`
+do not match your API.
 
 We provide two :ref:`reusable-controllers` to obtain
 Django session cookie:
@@ -109,6 +152,14 @@ in the login response (alongside the session cookie).
   appears in the login response — the token is already embedded in the
   session used for authentication.
 
+  The OpenAPI schema reflects this as well: with a CSRF cookie
+  the ``csrf`` security scheme is an ``apiKey`` in ``cookie``,
+  with ``CSRF_USE_SESSIONS`` it is an ``apiKey`` in ``header``
+  named after ``CSRF_HEADER_NAME``, like ``X-Csrftoken``.
+  The session cookie itself is described only once,
+  by the ``django_session`` security scheme.
+  See :func:`~dmr.security.csrf.csrf_security_scheme`.
+
 .. seealso::
 
   - https://docs.djangoproject.com/en/stable/ref/settings/#std-setting-CSRF_USE_SESSIONS
@@ -124,6 +175,15 @@ API Reference
 .. autoclass:: dmr.security.django_session.auth.DjangoSessionAsyncAuth
   :members:
   :inherited-members:
+
+Ready-to-use views to get Django session cookie
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. autoclass:: dmr.security.django_session.concrete_views.DjangoSessionSyncController
+  :members: as_view, convert_auth_payload, make_api_response
+
+.. autoclass:: dmr.security.django_session.concrete_views.DjangoSessionAsyncController
+  :members: as_view, convert_auth_payload, make_api_response
 
 Pre-defined views to get Django session cookie
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

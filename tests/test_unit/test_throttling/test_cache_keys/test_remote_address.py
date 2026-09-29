@@ -12,6 +12,7 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle, ThrottlingReport
+from dmr.throttling.backends import AsyncDjangoCache, SyncDjangoCache
 from dmr.throttling.cache_keys import RemoteAddr
 
 _ATTEMPTS: Final = 5
@@ -33,7 +34,12 @@ class _FakeRemoteAddr(RemoteAddr):
 
 class _SyncController(Controller[PydanticSerializer]):
     throttling = [
-        SyncThrottle(1, Rate.second, cache_key=_FakeRemoteAddr()),
+        SyncThrottle(
+            1,
+            Rate.second,
+            cache_key=_FakeRemoteAddr(),
+            backend=SyncDjangoCache(allow_unsafe_cache=None),
+        ),
     ]
 
     def get(self) -> str:
@@ -56,7 +62,12 @@ def test_throttle_no_limits(
 
 class _AsyncController(Controller[PydanticSerializer]):
     throttling = [
-        AsyncThrottle(1, Rate.second, cache_key=_FakeRemoteAddr()),
+        AsyncThrottle(
+            1,
+            Rate.second,
+            cache_key=_FakeRemoteAddr(),
+            backend=AsyncDjangoCache(allow_unsafe_cache=None),
+        ),
     ]
 
     async def get(self) -> str:

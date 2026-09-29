@@ -40,7 +40,7 @@ USER_LOOKUP_ERRORS: Final = (
 )
 
 
-class _BaseJWTAuth:  # noqa: WPS214, WPS230
+class _BaseJWTAuth:  # noqa: WPS230
     """
     Transport-agnostic part of jwt auth.
 

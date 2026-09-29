@@ -1,9 +1,9 @@
 from dmr import Controller
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.throttling import AsyncThrottle, Rate
 
 
-class AsyncController(Controller[PydanticSerializer]):
+class AsyncController(Controller[PydanticFastSerializer]):
     throttling = (AsyncThrottle(1, Rate.minute),)
 
     async def get(self) -> str:

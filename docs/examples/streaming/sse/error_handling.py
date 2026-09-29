@@ -26,3 +26,4 @@ class NumberEventsController(SSEController[PydanticSerializer]):
 
 
 # run: {"controller": "NumberEventsController", "method": "get"}  # noqa: ERA001
+# openapi: {"controller": "NumberEventsController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501

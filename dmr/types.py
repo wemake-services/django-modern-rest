@@ -1,7 +1,7 @@
 import inspect
 import sys
 from collections.abc import Callable, Iterator, Mapping
-from typing import (  # noqa: WPS235
+from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,

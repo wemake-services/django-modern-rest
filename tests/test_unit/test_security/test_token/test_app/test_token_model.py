@@ -1,5 +1,4 @@
 import datetime as dt
-from typing import Final
 
 import pytest
 from django.contrib.auth.models import User
@@ -7,8 +6,6 @@ from freezegun.api import FrozenDateTimeFactory
 
 from dmr.security.token.app.models import Token
 from dmr.security.token.constants import TOKEN_DEFAULT_EXPIRY
-
-_CUSTOM_EXPIRY_DAYS: Final = 90
 
 
 @pytest.mark.django_db

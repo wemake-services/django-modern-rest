@@ -1,10 +1,10 @@
 from http import HTTPStatus
 
 from dmr import Controller, modify
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 
 
-class JobController(Controller[PydanticSerializer]):
+class JobController(Controller[PydanticFastSerializer]):
     @modify(status_code=HTTPStatus.NO_CONTENT)
     def post(self) -> None:
         print('Job created')  # noqa: WPS421

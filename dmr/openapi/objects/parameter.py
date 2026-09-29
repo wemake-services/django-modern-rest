@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Annotated, Any, Literal, TypeAlias
 
 from dmr.internal.dataclass_aliases import Field
+from dmr.internal.empty import EMPTY
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.example import Example
@@ -22,7 +23,14 @@ ParameterLocation: TypeAlias = Literal[
 
 @dataclass(unsafe_hash=True, kw_only=True, slots=True)
 class ParameterMetadata:
-    """Describes metadata for a single operation parameter."""
+    """
+    Describes metadata for a single operation parameter.
+
+    .. versionchanged:: 0.16.0
+        ``example`` now defaults to :data:`~dmr.types.EMPTY`
+        instead of ``None``, because ``None`` is a valid value for it.
+
+    """
 
     description: str | None = None
     deprecated: bool | None = None
@@ -30,7 +38,7 @@ class ParameterMetadata:
     style: str | None = None
     explode: bool | None = None
     allow_reserved: bool | None = None
-    example: Any | None = None
+    example: Any = EMPTY
     examples: dict[str, 'Example | Reference'] | None = None
 
 
@@ -49,6 +57,6 @@ class Parameter(ParameterMetadata):
     param_in: Annotated[ParameterLocation, Field(alias='in')]
     # NOTE: `'querystring'` parameters must use `content`, not `schema`,
     # we let `openapi-spec-validator` report that.
-    schema: 'Reference | Schema | None' = None
+    schema: 'Schema | None' = None
     content: dict[str, 'MediaType | Reference'] | None = None
     required: bool | None = None

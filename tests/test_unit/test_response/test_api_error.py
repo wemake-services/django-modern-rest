@@ -19,6 +19,7 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AsyncAuth, SyncAuth
 from dmr.serializer import BaseSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
+from dmr.types import EMPTY
 
 
 class _ValidAPIError(Controller[PydanticSerializer]):
@@ -200,6 +201,7 @@ class _TestComponent(ComponentParser, Generic[_StrT]):
         controller: Controller[BaseSerializer],
         *,
         field_model: Any,
+        default: Any = EMPTY,
     ) -> Any:
         raise APIError(self.error_message, status_code=HTTPStatus.IM_A_TEAPOT)
 

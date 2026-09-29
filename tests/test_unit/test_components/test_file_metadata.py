@@ -125,10 +125,7 @@ def test_file_metadata_wrong_content_type(
     })
 
 
-def test_file_metadata_empty(
-    rf: RequestFactory,
-    faker: Faker,
-) -> None:
+def test_file_metadata_empty(rf: RequestFactory) -> None:
     """Ensures file metadata fields are required."""
     request = rf.post('/whatever/', {})
 
@@ -353,7 +350,6 @@ def test_send_files_with_body(
 )
 def test_send_files_with_body_invalid(
     dmr_rf: DMRRequestFactory,
-    faker: Faker,
     *,
     method: HTTPMethod,
 ) -> None:
@@ -469,7 +465,7 @@ class _FakeParser(SupportsFileParsing, Parser):
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
-        serializer: type[BaseSerializer],
+        controller_cls: type[Controller[BaseSerializer]],
         context: OpenAPIContext,
     ) -> type[FileBodyLike]:
         raise NotImplementedError
@@ -488,7 +484,6 @@ class _ControllerWithWrongParsers(Controller[PydanticSerializer]):
 
 def test_send_files_with_body_wrong_parsers(
     dmr_rf: DMRRequestFactory,
-    faker: Faker,
 ) -> None:
     """Ensures that when selecting non-files ready parser, it raises."""
     request = dmr_rf.post(

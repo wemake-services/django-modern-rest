@@ -86,7 +86,6 @@ def test_jwt_cookie_auth_invalid(
     assert response.status_code == HTTPStatus.UNAUTHORIZED, response.content
 
 
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     'check_url',
     [

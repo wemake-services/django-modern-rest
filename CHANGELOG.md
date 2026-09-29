@@ -21,11 +21,29 @@ All migration prompts since `0.13.0` release
 are stored as descriptions in version releases on GitHub, example:
 https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
+Prompts of the three latest breaking releases also live in the
+[`dmr-upgrade`](https://github.com/wemake-services/django-modern-rest/tree/master/dmr/.agents/skills/dmr-upgrade) agent skill,
+ask your coding agent to use `$dmr-upgrade` to upgrade a project.
+
 
 ## 0.16.0 WIP
 
 ### Breaking changes
 
+- `Components.path_items` is now typed as `dict[str, PathItem] | None`.
+  The spec only allows Path Item Objects there, `Reference` objects
+  are not permitted, #1491
+- Reworked how OpenAPI schema components are registered.
+  `SchemaGenerator.__call__` lost `skip_registration`
+  and `register_referenced_components` parameters,
+  use `SchemaGenerator.load` to get a schema with its components
+  kept locally, and `SchemaGenerator.register` to register
+  only the components that the final result references.
+  Removed `SchemaRegistry.try_unregister` and the unused
+  `dmr.openapi.core.registry.SchemaCallback` protocol.
+  `ResponseGenerator.get_schema` accepts `content_schema`
+  to skip generating a schema from the return type,
+  `FileResponseSpec` uses it instead of removing `FileBody` afterwards, #1647
 - `auth`, `throttling`, `parsers`, `renderers`, `responses`, `tags`,
   `exclude_validate_responses`, `exclude_semantic_responses`,
   and `no_validate_http_spec` are not merged anymore
@@ -57,6 +75,7 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `OpenAPIConfig` now raises `ValueError` for `openapi_version` below `3.1.0`.
   OpenAPI `3.0.x` was never really supported: it predates JSON Schema,
   which is what `pydantic` and `msgspec` generate for our models, #1435
+- Removed OpenAPI `3.0` style `Reference` objects from schema positions, #1648
 - `summary` and `description` of `@modify` and `@validate` are now resolved
   one at a time. Passing just one of them used to drop the endpoint's
   docstring entirely, now the other one is still parsed from it.
@@ -68,6 +87,12 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   it is not needed anymore, #1456
 - Removed `build_headers`, `actionable_headers`, `actionable_cookies`,
   `infer_return_type` methods from `dmr.metadata.ResponseModification`, #1456
+- Removed `Settings.throttling_allow_unsafe_cache`, the
+  `throttling_allow_unsafe_cache` controller attribute and endpoint parameter,
+  and `EndpointMetadata.throttling_allow_unsafe_cache`.
+  Use `allow_unsafe_cache` parameter of `SyncDjangoCache`
+  and `AsyncDjangoCache` instead, like
+  `SyncDjangoCache(allow_unsafe_cache=False)`, #1611
 - Removed `NewCookie.as_dict` method, #1456
 - `NewCookie.secure`, `CookieSpec.secure`, `NewCookie.httponly`,
   `CookieSpec.httponly` can no longer be `None`, use `False` instead, #1456
@@ -124,11 +149,62 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `Endpoint.get_operation_id` was removed, instead customize
   the `OperationIdGenerator` instance or `operation_id` metadata parameter
   to the endpoint, #1502
+- `ParameterGenerator.__call__` signature was changed
+  to accept *metadata* and *controller_cls* instead
+  of *serializer* and *context*, #1620
+- `ComponentParserSpec` moved from `dmr.metadata` to `dmr.components`,
+  it is now a named tuple of `parser`, `model`, `model_meta`, and `default`
+  fields. Previously it was a regular tuple of three elements, #1494
+- `BaseSerializer.build_context_model` is a new abstract method,
+  custom serializers must implement it. It builds the model
+  that parses all components of an endpoint at once,
+  previously it was always a `TypedDict` built by `SerializerContext`, #1494
+- Component annotations hidden inside other types are now rejected.
+  Things like `parsed_body: Body[Model] | None = None` used to be silently
+  ignored, since the component is hidden behind a union, now they raise
+  `UnsolvableAnnotationsError`. Use `Body[Model | None] = None` instead, #1494
+- `ComponentParser.provide_context_data` now accepts *default* keyword
+  parameter, custom components must accept it as well.
+  It is the default value of the endpoint parameter
+  or `EMPTY` when there's none, #1494
+- `ComponentParser.get_schema` signature was changed
+  to accept *controller_cls* instead of *serializer*, #1620
+- `SupportsFileParsing.schema_metadata` signature was changed
+  to accept *controller_cls* instead of *serializer*,
+- `FileBodyLike.media_type` signature was changed, #1620
+  now it also accepts *metadata* and *controller_cls* parameters, #1620
 - `jwt_ensure_csrf` was removed from reusable JWT cookie views,
   it is now always mandatory, #1574
+- `CookieJWTSyncAuth` and `CookieJWTAsyncAuth` now use `jwt_cookie`
+  as the default `security_scheme_name` instead of `jwt`.
+  Previously it was the same as the `HeaderJWTSyncAuth`
+  and `HeaderJWTAsyncAuth` one, so using both of them in a single endpoint
+  was generating a single `jwt` security scheme and requirement, #1587
+- `validate_events` parameter was removed from `@modify` and `@validate`,
+  it was silently ignored for non-streaming controllers.
+  Use `extras=Streaming(validate_events=...)` with `dmr.streaming.modify`
+  and `dmr.streaming.validate` instead. `Controller.validate_events`
+  was removed as well, use `extras = Streaming(validate_events=...)`
+  on streaming controllers, #1612
+- `StreamingController.streaming_ping_seconds` was removed,
+  use `extras = Streaming(ping_seconds=...)` on streaming controllers
+  or `extras=Streaming(ping_seconds=...)` per endpoint instead.
+  `SSEController` still sends pings every 15 seconds by default, #1623
+- OpenAPI object fields that can have `None` as a real value
+  now default to `EMPTY` instead of `None`: `Schema.const`, `Schema.default`,
+  `Schema.example`, `Example.value`, `Example.data_value`, `Header.example`,
+  `MediaType.example`, `MediaTypeMetadata.example`,
+  `ParameterMetadata.example`, `Parameter.example`,
+  and `Link.request_body`. Passing `None` to them explicitly
+  now dumps `null` into the schema, #1619
 
 ### Performance improvements
 
+- `MsgspecSerializer` now parses all components of an endpoint
+  into a `msgspec.Struct` with `gc=False` instead of a `TypedDict`.
+  Validation of the parsed context is around x2 faster, #1494
+  `PydanticSerializer` keeps using a `TypedDict`, it is the fastest
+  model for `pydantic` when there are no defaults, #1494
 - `RequestNegotiator` and `ResponseNegotiator` now memoize their decisions
   per header value. Almost every client sends the very same
   `Content-Type: application/json` and `Accept: application/json` headers,
@@ -160,6 +236,18 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 
 ### Features
 
+- Component parameters can now have default values, like
+  `parsed_body: Body[Model | None] = None`
+  or `parsed_query: Query[Filters | None] = None`.
+  When a request has no data for a component, the endpoint
+  receives its default as-is, without any parsing.
+  Bodies with defaults are documented with `required: false`,
+  parameters of other components with defaults are documented
+  as not required in the OpenAPI schema, #1494
+- Added `FunctionDefaults` and `ComponentParserBuilder.defaults_cls`
+  to customize how defaults of component parameters are found, #1494
+- Auth and throttling instances now provide a `validate` hook for enforcing
+  instance-specific constraints during endpoint construction, #1600
 - Added `Controller.metadata_merger_cls` and `dmr.validation.MetadataMerger`
   to customize how endpoint, controller, and settings values are resolved
   into the endpoint metadata. All layers of every field go through
@@ -178,10 +266,12 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   `CSRF_FAILURE_VIEW` Django setting to return actual REST responses,
   instead of HTML ones, #1521
 - Added `semantic_schema` module with `SecurityProvider` interface, #1521
+- Added `CSRF_USE_SESSIONS=True` CSRF security scheme support, #1608
 - Now `security_requirements` can return both
   `AND` and `OR` auth strategies, previously
   it was only possible to represent `OR` strategy, #1521
 - Added `CursorPagination` support to `drm.pagination`, #1428
+- Added `HttpSpec.cookie_semantics` validation rule, #1555
 - Added `clear_cache` method to `RequestNegotiator` and `ResponseNegotiator`
   to drop the memoized negotiation results. Needed when parsers
   or renderers of an endpoint are modified in place, #1455
@@ -214,7 +304,26 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
   and `schema_generator` to `pydantic`'s `TypeAdapter.json_schema`, #1462
 - Added `schema_hook` class method to `MsgspecSchemaGenerator`
   to customize JSON schema generation for custom types, #1462
+- Explicit `is_abstract = True` controller definitions are now respected.
+  A controller with an exact serializer can be marked as abstract
+  to be reused without being routed: it does not build any endpoints.
+  Subclasses that don't declare `is_abstract` themselves are concrete, #1458
 - `NewCookie.expires` and `CookieSpec.expires` can now be `dt.datetime`, #1456
+- Added `concrete_views` next to `views` for every auth flow:
+  `dmr.security.jwt.concrete_views`, `dmr.security.token.concrete_views`,
+  and `dmr.security.django_session.concrete_views`.
+  They are controllers that only need a serializer,
+  everything else is optional: `token_cls` defaults to the `Token` model
+  of `dmr.security.token.app`, and `jwt_refresh_cookie_path` defaults
+  to `'/'`. Each of them has its own typed `as_view`, which takes
+  the fields that controller requires and passes everything else
+  to Django as `initkwargs`, so there is no view code at all:
+  `path('login/', ObtainTokenSyncController.as_view(
+  serializer=PydanticSerializer, token_cls=Token))`.
+  They all set `auth = None`, so auth from the settings never makes
+  the login endpoints themselves require auth.
+  They are `@final`: use them for the common cases, custom logic goes
+  to the reusable controllers in `views`, #1457
 - Added the missing OpenAPI 3.2 fields to our spec objects, #1485:
   - `OpenAPIConfig.self_uri` and `OpenAPI.self_uri` for `$self`
   - `Server.name`
@@ -260,9 +369,53 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - `external_path` can now be nested anywhere in the URL resolution tree, #1567
 - `external_re_path` was added to support the same use-case
   as `external_path`, but for regex patterns, #1567
+- Added `semantic_schema`, `semantic_auth`, and `exclude_semantic_auth`
+  endpoint, controller, settings, and metadata parameters
+  to disable all semantic schema generation or semantic auth injection
+  respectively, #1586
+- Added `extras=` parameter to `@modify` and `@validate` for custom
+  controllers: subclass `dmr.endpoint.Extras`, create typed decorators
+  with `ModifyEndpoint(YourExtras)` and `ValidateEndpoint(YourExtras)`,
+  and assign `extras = YourExtras(...)` on the controller to enable them
+  and to provide controller-level defaults, #1612
 
 ### Bugfixes
 
+- `SchemaRegistry.maybe_resolve_reference` now puts the keywords
+  that sit next to `$ref`, like `default` and `description`,
+  on top of the component's own schema without modifying
+  the component itself. Custom `x-` schema extensions
+  are now kept through loading and dumping, for both `pydantic`
+  and `msgspec`, #1491
+- Fixed models that are only used as `Query`, `Headers`, `Cookies`,
+  `Path`, and `FileMetadata` components, being added to `components.schemas`
+  of the OpenAPI schema. Such models are inlined and never referenced,
+  now only components that are referenced
+  from the final schema are registered, #1647
+- Fixed seeded OpenAPI examples of `datetime`, `date`, and `time`
+  changing with the current time. Faker's defaults end at the current time,
+  now these examples are generated between `2000-01-01` and `2026-01-01`.
+  `timedelta` examples are not always `P0D` anymore, #1632
+- Fixed `example` of `NewHeader` and `HeaderSpec` not being
+  in the OpenAPI schema. Now it is set on the `Header` object,
+  and such headers don't get generated examples, #1627
+- Fixed generated OpenAPI examples that are `None` being dropped,
+  for example, for `-> None` and `-> int | None` responses.
+  `dmr.openapi.mappers.example.generate_example` now returns `EMPTY`
+  instead of `None` when there's no example, #1626
+- Fixed seeded OpenAPI examples depending on `PYTHONHASHSEED`.
+  `Controller.api_endpoints` was built in the iteration order
+  of `allowed_http_methods`, which is a `frozenset`,
+  so endpoints got their examples in a different order in every process.
+  Now `api_endpoints` is sorted by controller method names, #1629
+- Fixed `default: null` being dropped from the OpenAPI schema,
+  for example, for `field: str | None = None` model fields.
+  The same was true for `const: null` and `example: null`, #1619
+- Path parameters now always have `required: true` in the OpenAPI schema,
+  even when their `Path` model fields have default values.
+  Previously, such parameters generated an invalid schema, #1610
+- Fixed typing error in callable cases
+  of `@modify.lazy` and `@validate.lazy`, #1607
 - Fixed every autogenerated OpenAPI example of the same type getting
   the same value. The factory was reseeded before each example, which
   restarted its random stream, so all strings in a schema came out equal.
@@ -328,6 +481,25 @@ https://github.com/wemake-services/django-modern-rest/releases/tag/0.13.0
 - Fixed reusable views `error_model` definition for `401` response, #1573
 - Fixed that `links` and `callbacks` in endpoints definitions can
   be any `Mapping`, not just `dict`, #1576
+- Now prefixes like `api/` in `build_404_handler` and `build_500_handler`
+  only cover full URLs like `/api/v1`
+  and do not cover partials like `/apiary/v1`, #1606
+
+### Misc
+
+- Agent skills now ship inside the `dmr` package as `dmr/.agents/skills`,
+  so `uvx library-skills` installs the skills matching the installed version
+  into any project, the Claude Code marketplace keeps working
+- Added `dmr-upgrade` agent skill with the migration prompts
+  of the three latest breaking releases
+- Split the `dmr` skill into a short `SKILL.md` and topic references,
+  fixed skill descriptions to trigger on natural requests,
+  added `agentskills validate` to `just lint`
+- Fixed `dmr-from-dj-rest-auth` entry in the Claude Code marketplace
+- Docs: every page is also published as Markdown (`<page>.md`),
+  the `M↓` button next to its title copies it,
+  `llms-full.txt` now includes the code of every example,
+  `llms.txt` now carries the version
 
 
 ## 0.15.0 (2026-09-11)
@@ -812,9 +984,9 @@ User-facing changes:
 ```md
 Apply this change to the code that uses `django-modern-rest`:
 1. Replace `dmr.response.APIRedirectError` with `dmr.response.RedirectTo`
-2. Replace `dmr.throttling.backend.DjangoCache`
-   with `dmr.throttling.backend.SyncDjangoCache` for sync throttles
-   and with `dmr.throttling.backend.AsyncDjangoCache` for async throttles
+2. Replace `dmr.throttling.backends.DjangoCache`
+   with `dmr.throttling.backends.SyncDjangoCache` for sync throttles
+   and with `dmr.throttling.backends.AsyncDjangoCache` for async throttles
 ```
 
 ### Features

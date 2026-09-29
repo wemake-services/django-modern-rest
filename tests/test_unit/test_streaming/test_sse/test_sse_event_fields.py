@@ -8,7 +8,7 @@ import pytest
 from dmr.exceptions import ValidationError
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.serializer import BaseSerializer
-from dmr.streaming import StreamingResponse
+from dmr.streaming import Streaming, StreamingResponse
 from dmr.streaming.sse import SSEController, SSEvent
 from dmr.streaming.sse.validation import check_event_field
 from dmr.test import DMRAsyncRequestFactory
@@ -193,7 +193,7 @@ async def test_wrong_chars_skipped_when_disabled(
     class _ClassBasedSSE(
         SSEController[serializer],  # type: ignore[valid-type]
     ):
-        validate_events = False
+        extras = Streaming(validate_events=False)
 
         async def get(self) -> AsyncIterator[SSEvent[int]]:
             return self._events()
@@ -208,10 +208,7 @@ async def test_wrong_chars_skipped_when_disabled(
     assert isinstance(response, StreamingResponse)
     assert response.status_code == HTTPStatus.OK
     assert await get_streaming_content(response) == (
-        b'id: wrong\nid\r\n'  # noqa: WPS342
-        b'event: wrong\nevent\r\n'  # noqa: WPS342
-        b'data: 1\r\n'
-        b'\r\n'
+        b'id: wrong\nid\r\nevent: wrong\nevent\r\ndata: 1\r\n\r\n'
     )
 
 
@@ -222,7 +219,7 @@ async def test_custom_event_skipped_when_disabled(
     """Ensures that custom types are not validated when disabled either."""
 
     class _ClassBasedSSE(SSEController[PydanticSerializer]):
-        validate_events = False
+        extras = Streaming(validate_events=False)
 
         async def get(self) -> AsyncIterator[_CustomEvent]:
             return self._events()
@@ -237,8 +234,5 @@ async def test_custom_event_skipped_when_disabled(
     assert isinstance(response, StreamingResponse)
     assert response.status_code == HTTPStatus.OK
     assert await get_streaming_content(response) == (
-        b'id: wrong\nid\r\n'  # noqa: WPS342
-        b'event: wrong\nevent\r\n'  # noqa: WPS342
-        b'data: 1\r\n'
-        b'\r\n'
+        b'id: wrong\nid\r\nevent: wrong\nevent\r\ndata: 1\r\n\r\n'
     )

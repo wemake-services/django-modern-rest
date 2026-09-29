@@ -16,9 +16,7 @@ class UserUpload(pydantic.BaseModel):
     avatar: FileModel
 
 
-class UserController(
-    Controller[PydanticSerializer],
-):
+class UserController(Controller[PydanticSerializer]):
     parsers = (MultiPartParser(),)
 
     def post(

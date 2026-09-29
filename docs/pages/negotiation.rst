@@ -187,7 +187,7 @@ going back to the less specific:
       :caption: views.py
       :language: python
       :linenos:
-      :emphasize-lines: 35
+      :emphasize-lines: 32
 
   .. tab:: per controller
 
@@ -195,7 +195,7 @@ going back to the less specific:
       :caption: views.py
       :language: python
       :linenos:
-      :emphasize-lines: 39-40
+      :emphasize-lines: 33-34
 
   .. tab:: per settings
 
@@ -207,7 +207,7 @@ going back to the less specific:
       :caption: settings.py
       :language: python
       :linenos:
-      :emphasize-lines: 6-7
+      :emphasize-lines: 5-6
 
 First parsers / renderers definition found, starting from the top,
 will win and be used for the endpoint.

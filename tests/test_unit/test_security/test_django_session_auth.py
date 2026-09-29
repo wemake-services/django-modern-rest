@@ -311,7 +311,7 @@ def test_schema_with_csrf_sessions(
     *,
     typ: type[DjangoSessionSyncAuth] | type[DjangoSessionAsyncAuth],
 ) -> None:
-    """Ensures that CSRF cookie schema is omitted for session-backed CSRF."""
+    """Ensures that CSRF is a header scheme for session-backed CSRF."""
     settings.CSRF_USE_SESSIONS = True
     metadata = _SyncController.api_endpoints['GET'].metadata
     instance = typ()
@@ -323,6 +323,12 @@ def test_schema_with_csrf_sessions(
             description='Reusing standard Django auth flow for API',
             name='sessionid',
             security_scheme_in='cookie',
+        ),
+        'csrf': SecurityScheme(
+            type='apiKey',
+            description='CSRF protection, the secret is stored in the session',
+            name='X-Csrftoken',
+            security_scheme_in='header',
         ),
     })
     assert instance.security_requirements(
@@ -339,7 +345,35 @@ def test_schema_with_csrf_sessions(
     assert instance.security_requirements(
         unsafe_metadata,
         _SyncController,
-    ) == snapshot([{'django_session': []}])
+    ) == snapshot([{'django_session': [], 'csrf': []}])
+
+
+@pytest.mark.parametrize('typ', [DjangoSessionSyncAuth, DjangoSessionAsyncAuth])
+def test_schema_with_csrf_sessions_custom_header(
+    settings: LazySettings,
+    *,
+    typ: type[DjangoSessionSyncAuth] | type[DjangoSessionAsyncAuth],
+) -> None:
+    """Ensures that custom ``CSRF_HEADER_NAME`` is respected."""
+    settings.CSRF_USE_SESSIONS = True
+    settings.CSRF_HEADER_NAME = 'HTTP_X_XSRF_TOKEN'
+    metadata = _SyncController.api_endpoints['GET'].metadata
+    instance = typ()
+
+    assert instance.security_schemes(metadata, _SyncController) == snapshot({
+        'django_session': SecurityScheme(
+            type='apiKey',
+            description='Reusing standard Django auth flow for API',
+            name='sessionid',
+            security_scheme_in='cookie',
+        ),
+        'csrf': SecurityScheme(
+            type='apiKey',
+            description='CSRF protection, the secret is stored in the session',
+            name='X-Xsrf-Token',
+            security_scheme_in='header',
+        ),
+    })
 
 
 @pytest.mark.parametrize('typ', [DjangoSessionSyncAuth, DjangoSessionAsyncAuth])

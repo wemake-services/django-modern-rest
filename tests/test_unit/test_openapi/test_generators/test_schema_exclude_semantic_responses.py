@@ -2,7 +2,6 @@ import json
 from http import HTTPStatus
 from typing import final
 
-import pydantic
 from django.urls import path
 from syrupy.assertion import SnapshotAssertion
 
@@ -10,11 +9,6 @@ from dmr import Controller
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
-
-
-@final
-class _MyPydanticModel(pydantic.BaseModel):
-    email: str
 
 
 @final

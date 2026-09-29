@@ -1,9 +1,9 @@
 from dmr import Controller, modify
-from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.security.django_session import DjangoSessionSyncAuth
 
 
-class APIController(Controller[PydanticSerializer]):
+class APIController(Controller[PydanticFastSerializer]):
     @modify(auth=[DjangoSessionSyncAuth()])
     def get(self) -> str:
         return 'authed'

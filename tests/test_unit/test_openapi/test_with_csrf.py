@@ -77,6 +77,39 @@ def test_csrf_schema_and_auth(snapshot: SnapshotAssertion) -> None:
     )
 
 
+def test_csrf_schema_with_sessions(
+    snapshot: SnapshotAssertion,
+    settings: LazySettings,
+) -> None:
+    """Ensure that session-backed CSRF is represented as a header scheme."""
+    settings.CSRF_USE_SESSIONS = True
+
+    class _UserController(Controller[PydanticSerializer]):
+        csrf_exempt = False
+        auth = (HeaderJWTSyncAuth(),)
+
+        def post(self) -> str:
+            raise NotImplementedError
+
+        def get(self) -> int:
+            raise NotImplementedError
+
+    assert (
+        json.dumps(
+            build_schema(
+                Router(
+                    'api/v1/',
+                    [
+                        path('user/', _UserController.as_view()),
+                    ],
+                ),
+            ).convert(),
+            indent=2,
+        )
+        == snapshot
+    )
+
+
 def test_disabled_csrf_schema(
     snapshot: SnapshotAssertion,
     settings: LazySettings,
