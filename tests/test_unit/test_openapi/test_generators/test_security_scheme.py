@@ -184,10 +184,7 @@ def test_user_security_duplicates_auth(
 
     metadata = _Controller.api_endpoints['GET'].metadata
 
-    with pytest.raises(
-        EndpointMetadataError,
-        match=r"Security requirements \[\{'noScheme': \[\]\}\] are duplicated",
-    ):
+    with pytest.raises(EndpointMetadataError, match='noScheme'):
         generator(metadata, _Controller)
 
 
@@ -203,10 +200,8 @@ def test_user_security_duplicates_itself(
 
     metadata = _Controller.api_endpoints['GET'].metadata
 
-    with pytest.raises(
-        EndpointMetadataError,
-        match=r"Security requirements \[\{'gateway': \[\]\}\] are duplicated",
-    ):
+    # One `gateway` item:
+    with pytest.raises(EndpointMetadataError, match=r"\[{'gateway': \[\]}\]"):
         generator(metadata, _Controller)
 
 

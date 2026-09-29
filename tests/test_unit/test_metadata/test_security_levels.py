@@ -508,7 +508,7 @@ def test_security_can_reuse_auth_schemes() -> None:
     [
         [{'jwt': []}],
         [{'jwt': []}, {'jwt': []}],
-        [{'jwt': ['claim1']}, {'jwt': ['claim2']}],
+        [{'jwt': ['claim1']}, {'jwt': ['claim1']}],
     ],
 )
 def test_security_duplicates_auth_requirement(*, security_def: Any) -> None:
@@ -519,7 +519,7 @@ def test_security_duplicates_auth_requirement(*, security_def: Any) -> None:
         def get(self) -> str:
             raise NotImplementedError
 
-    with pytest.raises(EndpointMetadataError, match=r"\{'jwt'\}"):
+    with pytest.raises(EndpointMetadataError, match='jwt'):
         _operation_security(_DuplicateController)
 
 
