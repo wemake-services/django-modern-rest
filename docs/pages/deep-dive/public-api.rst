@@ -282,6 +282,9 @@ Semantic schema
 .. autoclass:: dmr.semantic_schema.SecurityRequirementMerger
   :members:
 
+.. autoclass:: dmr.semantic_schema.OrSecurityRequirementMerger
+  :members:
+
 
 Testing
 -------

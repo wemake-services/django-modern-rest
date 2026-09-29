@@ -16,9 +16,10 @@ class UserController(Controller[MsgspecSerializer]):
     def get(self) -> str:
         return 'get'
 
-    # This endpoint is also called by other services in the mesh:
+    # This endpoint is only called by other services in the mesh,
+    # it overrides the controller-level requirement:
     @modify(security=[{'mesh': []}])
-    def post(self) -> str:
+    def post(self) -> str:  # NOTE: runtime has no auth! Only spec!
         return 'post'
 
 

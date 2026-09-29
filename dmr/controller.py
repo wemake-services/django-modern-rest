@@ -168,9 +168,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             Overrides router-level tags, can be overridden per endpoint.
             Set it to ``None`` to have no tags at all.
         security: A sequence of security requirement objects for all operations
-            in this controller. Overrides settings value.
-            Set it to ``None`` to disable ``security`` for this controller.
-            It never affects the runtime auth.
+            in this controller. Overrides ``security``
+            of :class:`dmr.openapi.OpenAPIConfig`, can be overridden
+            per endpoint. Set it to ``None``
+            to disable ``security`` for this controller.
+            It is merged with the requirements generated from ``auth``,
+            but it never affects the runtime auth.
             Useful to document external security mechanisms,
             for example, the ones enforced by an HTTP proxy.
             Used security schemes must be declared

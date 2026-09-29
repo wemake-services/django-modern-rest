@@ -51,8 +51,6 @@ def _reset_settings_validation(
         {'openapi_examples_seed': 'abc'},
         {'openapi_examples_seed': None},
         {'auth': ['auth']},
-        {'security': 'proxy'},
-        {'security': [1]},
         {'throttling': ['throttling']},
         {'responses': [{}]},
         {'semantic_schema_providers': [None]},

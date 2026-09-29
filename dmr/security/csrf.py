@@ -348,9 +348,12 @@ class CSRFSemanticSchemaProvider(
     @override
     def merge_security_requirements(
         self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
         own_requirements: list[SecurityRequirement],
         auth_requirements: list[SecurityRequirement],
     ) -> list[SecurityRequirement]:
+        """Joins CSRF requirement with each auth requirement."""
         # We join the security requirements with `AND` logic for this type.
         # It needs both auth and CSRF checks to pass to be able to login.
         if not own_requirements:

@@ -236,6 +236,8 @@ from some other source, like pre-existing schemas.
 To learn more, see :doc:`../external-views` guide.
 
 
+.. _customizing_openapi_context:
+
 Customizing OpenAPI context
 ---------------------------
 
@@ -425,8 +427,9 @@ Use ``security`` to document them, it accepts any sequence of
 Security requirements can be defined on three levels,
 just like ``auth`` is defined:
 
-1. In settings with :data:`dmr.settings.Settings.security`,
+1. In settings with ``security`` of :class:`~dmr.openapi.OpenAPIConfig`,
    it applies to all endpoints of your app
+   and it is also used as the document-level ``security``
 2. On a controller with
    the :attr:`~dmr.controller.Controller.security` attribute,
    it applies to all endpoints of this controller
@@ -435,26 +438,34 @@ just like ``auth`` is defined:
 
 These rules define how the final list is built:
 
-- All three levels are merged together,
-  duplicate requirements are only added once
-- The result is added *after* the requirements generated from ``auth``,
-  each requirement is an alternative: a client can satisfy any of them
+- Levels are not merged together, the first explicitly defined level wins:
+  endpoint, then controller, then settings.
+  This is how all other metadata is resolved as well
 - Setting ``security=None`` on an endpoint or a controller disables
-  all user provided requirements for it, exactly like ``auth=None`` does.
-  A controller's ``None`` also drops the requirements
-  that its own endpoints declare
-- Empty ``security=[]`` simply adds nothing on this level
-- Security schemes used in ``security`` are **not** registered automatically,
-  declare them in ``components`` of :class:`~dmr.openapi.OpenAPIConfig`
-- ``security`` must not reuse the scheme names that ``auth`` generates,
-  :class:`~dmr.exceptions.EndpointMetadataError` is raised
-  during the schema generation when it does
-- Document-level ``security`` of :class:`~dmr.openapi.OpenAPIConfig`
-  is a separate thing: when it is defined, an endpoint without ``auth``
-  and without any ``security`` emits ``security: []``,
+  all less specific levels, exactly like ``auth=None`` does.
+  Without ``auth`` such an operation gets ``security: []``,
   which opts out of the document-level requirements
-  instead of inheriting them. Without it such an endpoint
-  has no ``security`` key at all
+  instead of inheriting them
+- Empty ``security=[]`` is not explicit, the next level is used instead
+- The resolved requirements are merged with the requirements
+  generated from ``auth`` by
+  :attr:`~dmr.openapi.generators.SecuritySchemeGenerator.security_merger`.
+  By default, they are added as-is *after* the ``auth`` ones,
+  each requirement is an alternative: a client can satisfy any of them
+- The default merger raises :class:`~dmr.exceptions.EndpointMetadataError`
+  during the schema generation when the same requirement is present twice,
+  for example, when ``security`` repeats what ``auth`` already generates
+- Security schemes used in ``security`` are **not** registered automatically,
+  declare them in ``components`` of :class:`~dmr.openapi.OpenAPIConfig`.
+  Schemes that ``auth`` registers can be reused in ``security``
+
+To change how ``auth`` and ``security`` are merged, for example,
+to require both of them at once with ``AND`` logic,
+subclass :class:`~dmr.semantic_schema.SecurityRequirementMerger`
+and set its instance as ``security_merger`` of your
+:class:`~dmr.openapi.generators.SecuritySchemeGenerator` subclass.
+Then use this generator in your OpenAPI context,
+see :ref:`customizing_openapi_context`.
 
 .. note::
 

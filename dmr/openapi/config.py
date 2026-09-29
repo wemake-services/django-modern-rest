@@ -47,7 +47,10 @@ class OpenAPIConfig:
         contact: Contact information for the exposed API.
         external_docs: Link to additional external documentation.
         security: Global security requirements applied across the API.
-            Each entry may be overridden per operation.
+            It is also used as the settings level of ``security``
+            for all controllers and endpoints, so it is merged
+            with the requirements generated from ``auth``.
+            Can be overridden per controller and per endpoint.
             See :ref:`customizing_security_openapi`.
         license: License information for the exposed API.
         components: Reusable components (schemas, responses, parameters, etc.)

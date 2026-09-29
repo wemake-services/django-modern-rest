@@ -280,13 +280,19 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   customization through context subclasses, #1461, #1487, #1556
 - Added class-level overrides for `ProblemDetailsModel`
   in `ProblemDetailsError`, #1556
-- Added `security` OpenAPI setting, controller attribute,
-  and `@modify` / `@validate` argument to document security mechanisms
-  that are not implemented by `auth`: API gateways, service meshes, etc.
-  All three levels are merged together and added after the requirements
-  generated from `auth`. Schemes used there must be declared
-  in `components` of `OpenAPIConfig`, and they must not reuse
-  the scheme names that `auth` generates, #1499
+- Added `security` controller attribute and `@modify` / `@validate`
+  argument to document security mechanisms that are not implemented
+  by `auth`: API gateways, service meshes, etc.
+  `OpenAPIConfig.security` is used as the settings level,
+  the first explicitly defined level wins.
+  The result is merged with the requirements generated from `auth`
+  by the new `SecuritySchemeGenerator.security_merger` class variable,
+  by default they are added as alternatives and duplicated
+  requirements raise `EndpointMetadataError`. Schemes used there
+  must be declared in `components` of `OpenAPIConfig`, #1499
+- Added `SecurityRequirementMerger` interface
+  and `OrSecurityRequirementMerger` default implementation
+  to `semantic_schema` module, #1499
 - `summary` and `description` of a `PathItem` are now parsed
   from the controller's docstring, just like they are parsed
   from the endpoint's docstring for an `Operation`.

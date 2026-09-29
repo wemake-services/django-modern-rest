@@ -14,7 +14,7 @@ from dmr import Controller, ResponseSpec, modify, validate
 from dmr.endpoint import Endpoint
 from dmr.exceptions import EndpointMetadataError
 from dmr.metadata import EndpointMetadata
-from dmr.openapi import build_schema
+from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
@@ -89,16 +89,39 @@ class _RawController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
+def _config(security: list[SecurityRequirement]) -> OpenAPIConfig:
+    return OpenAPIConfig(
+        title='Security API',
+        version='1.0.0',
+        security=security,
+    )
+
+
 @pytest.fixture
 def _settings_security(settings: LazySettings) -> None:
-    # TODO: replace with custom OpenAPI config
-    settings.DMR_SETTINGS = {Settings.security: [{'proxy': []}]}
+    settings.DMR_SETTINGS = {
+        Settings.openapi_config: _config([{'proxy': []}]),
+    }
 
 
 @pytest.fixture
 def _settings_jwt_security(settings: LazySettings) -> None:
-    # TODO: replace with custom OpenAPI config
-    settings.DMR_SETTINGS = {Settings.security: [{'jwt': []}]}
+    settings.DMR_SETTINGS = {
+        Settings.openapi_config: _config([{'jwt': []}]),
+    }
+
+
+def _operation_security(
+    controller_cls: type[Controller[PydanticSerializer]],
+    method: str = 'get',
+) -> list[SecurityRequirement] | None:
+    schema = build_schema(
+        Router('api/', [path('user/', controller_cls.as_view())]),
+    ).convert()
+    return cast(
+        'list[SecurityRequirement] | None',
+        schema['paths']['/api/user/'][method].get('security'),
+    )
 
 
 def test_endpoint_security() -> None:
@@ -167,23 +190,20 @@ def test_raw_endpoint_security() -> None:
 
 @pytest.mark.usefixtures('_settings_security')
 def test_raw_endpoint_settings_security() -> None:
-    """Endpoints without decorators also merge the settings level."""
+    """Endpoints without decorators also get the settings level."""
 
     class _RawSettingsController(Controller[PydanticSerializer]):
-        security = [{'gateway': []}]
-
         def get(self) -> str:
             raise NotImplementedError
 
-    assert _RawSettingsController.api_endpoints['GET'].metadata.security == [
-        {'gateway': []},
-        {'proxy': []},
-    ]
+    metadata = _RawSettingsController.api_endpoints['GET'].metadata
+
+    assert metadata.security == [{'proxy': []}]
 
 
 @pytest.mark.usefixtures('_settings_security')
 def test_settings_security() -> None:
-    """Settings level `security` is applied to all endpoints."""
+    """`OpenAPIConfig.security` from settings is applied to all endpoints."""
 
     class _SettingsController(Controller[PydanticSerializer]):
         @modify()
@@ -196,38 +216,35 @@ def test_settings_security() -> None:
 
 
 @pytest.mark.usefixtures('_settings_security')
-def test_all_security_levels_are_merged() -> None:
-    """All levels are merged: endpoint, controller, and settings."""
+def test_endpoint_security_wins() -> None:
+    """The endpoint level wins over the controller and settings levels."""
 
-    class _MergedController(Controller[PydanticSerializer]):
+    class _EndpointWinsController(Controller[PydanticSerializer]):
         security = [{'controller': []}]
 
         @modify(security=[{'endpoint': []}])
         def get(self) -> str:
             raise NotImplementedError
 
-    metadata = _MergedController.api_endpoints['GET'].metadata
+    metadata = _EndpointWinsController.api_endpoints['GET'].metadata
 
-    assert metadata.security == [
-        {'endpoint': []},
-        {'controller': []},
-        {'proxy': []},
-    ]
+    assert metadata.security == [{'endpoint': []}]
 
 
-def test_duplicate_security_is_merged_once() -> None:
-    """The same requirement from several levels is only added once."""
+@pytest.mark.usefixtures('_settings_security')
+def test_controller_security_wins_over_settings() -> None:
+    """The controller level wins over the settings level."""
 
-    class _DuplicateController(Controller[PydanticSerializer]):
-        security = [{'gateway': []}]
+    class _ControllerWinsController(Controller[PydanticSerializer]):
+        security = [{'controller': []}]
 
-        @modify(security=[{'gateway': []}])
+        @modify()
         def get(self) -> str:
             raise NotImplementedError
 
-    metadata = _DuplicateController.api_endpoints['GET'].metadata
+    metadata = _ControllerWinsController.api_endpoints['GET'].metadata
 
-    assert metadata.security == [{'gateway': []}]
+    assert metadata.security == [{'controller': []}]
 
 
 @pytest.mark.usefixtures('_settings_security')
@@ -263,37 +280,23 @@ def test_controller_security_none_disables() -> None:
 
 
 @pytest.mark.usefixtures('_settings_security')
-def test_controller_none_wins_over_endpoint() -> None:
-    """Controller `None` also drops the endpoint level requirements."""
+def test_endpoint_security_over_controller_none() -> None:
+    """Endpoint level is more specific than the controller's `None`."""
 
-    class _DisabledEverythingController(Controller[PydanticSerializer]):
+    class _EnabledEndpointController(Controller[PydanticSerializer]):
         security = None
 
         @modify(security=[{'gateway': []}])
         def get(self) -> str:
             raise NotImplementedError
 
-    metadata = _DisabledEverythingController.api_endpoints['GET'].metadata
+    metadata = _EnabledEndpointController.api_endpoints['GET'].metadata
 
-    assert metadata.security is None
-
-
-@pytest.mark.usefixtures('_settings_security')
-def test_settings_duplicate_security_once() -> None:
-    """The settings level is deduplicated together with the other ones."""
-
-    class _SettingsDuplicateController(Controller[PydanticSerializer]):
-        @modify(security=[{'proxy': []}])
-        def get(self) -> str:
-            raise NotImplementedError
-
-    metadata = _SettingsDuplicateController.api_endpoints['GET'].metadata
-
-    assert metadata.security == [{'proxy': []}]
+    assert metadata.security == [{'gateway': []}]
 
 
 def test_empty_security_adds_nothing() -> None:
-    """Empty `security` means that this level adds no requirements."""
+    """Empty `security` is not explicit, so nothing is configured."""
 
     class _EmptyController(Controller[PydanticSerializer]):
         @modify(security=[])
@@ -305,85 +308,29 @@ def test_empty_security_adds_nothing() -> None:
     assert metadata.security is None
 
 
-def test_security_intersection_with_auth() -> None:
-    """Schemes from `auth` cannot be redefined by `security`."""
+@pytest.mark.usefixtures('_settings_security')
+def test_empty_security_uses_next_level() -> None:
+    """Empty `security` is not explicit, the next level is used instead."""
 
-    class _IntersectionController(Controller[PydanticSerializer]):
-        @modify(auth=[HeaderJWTSyncAuth()], security=[{'jwt': []}])
+    class _EmptyEndpointController(Controller[PydanticSerializer]):
+        security = [{'gateway': []}]
+
+        @modify(security=[])
         def get(self) -> str:
             raise NotImplementedError
 
-    with pytest.raises(
-        EndpointMetadataError,
-        match=r"Security schemes \['jwt'\] are already generated",
-    ):
-        build_schema(
-            Router('api/', [path('user/', _IntersectionController.as_view())]),
-        ).convert()
+    class _EmptyControllerController(Controller[PydanticSerializer]):
+        security = []
 
-
-def test_security_reuses_registered_scheme() -> None:
-    """Schemes that `auth` registers cannot be reused either."""
-
-    class _RegisteredOnlyController(Controller[PydanticSerializer]):
-        @modify(
-            auth=[_TwoSchemesAuth()],
-            security=[{'extra': []}, {'main': []}],
-        )
+        @modify()
         def get(self) -> str:
             raise NotImplementedError
 
-    router = Router(
-        'api/',
-        [path('user/', _RegisteredOnlyController.as_view())],
-    )
+    empty_endpoint = _EmptyEndpointController.api_endpoints['GET'].metadata
+    empty_controller = _EmptyControllerController.api_endpoints['GET'].metadata
 
-    with pytest.raises(
-        EndpointMetadataError,
-        match=r"Security schemes \['extra', 'main'\] are already generated",
-    ):
-        build_schema(router).convert()
-
-
-def test_security_intersection_names_endpoint() -> None:
-    """The intersection error names the endpoint that has it."""
-
-    class _NamedIntersectionController(Controller[PydanticSerializer]):
-        @modify(auth=[HeaderJWTSyncAuth()], security=[{'jwt': []}])
-        def get(self) -> str:
-            raise NotImplementedError
-
-    with pytest.raises(
-        EndpointMetadataError,
-        match=r"endpoint_name=.*_NamedIntersectionController\.get'",
-    ):
-        build_schema(
-            Router(
-                'api/',
-                [path('user/', _NamedIntersectionController.as_view())],
-            ),
-        ).convert()
-
-
-@pytest.mark.usefixtures('_settings_jwt_security')
-def test_settings_security_intersection_with_auth() -> None:
-    """Settings level `security` cannot redefine schemes from `auth`."""
-
-    class _SettingsIntersectionController(Controller[PydanticSerializer]):
-        @modify(auth=[HeaderJWTSyncAuth()])
-        def get(self) -> str:
-            raise NotImplementedError
-
-    with pytest.raises(
-        EndpointMetadataError,
-        match=r"Security schemes \['jwt'\] are already generated",
-    ):
-        build_schema(
-            Router(
-                'api/',
-                [path('user/', _SettingsIntersectionController.as_view())],
-            ),
-        ).convert()
+    assert empty_endpoint.security == [{'gateway': []}]
+    assert empty_controller.security == [{'proxy': []}]
 
 
 @pytest.mark.usefixtures('_settings_security')
@@ -400,22 +347,6 @@ def test_security_with_schema_only_auth() -> None:
     assert metadata.security == [{'proxy': []}]
 
 
-@pytest.mark.usefixtures('_settings_security')
-def test_empty_security_keeps_other_levels() -> None:
-    """Empty `security` adds nothing, but does not disable other levels."""
-
-    class _EmptyLevelController(Controller[PydanticSerializer]):
-        security = [{'gateway': []}]
-
-        @modify(security=[])
-        def get(self) -> str:
-            raise NotImplementedError
-
-    metadata = _EmptyLevelController.api_endpoints['GET'].metadata
-
-    assert metadata.security == [{'gateway': []}, {'proxy': []}]
-
-
 def test_security_with_disabled_auth() -> None:
     """Disabling `auth` does not disable user provided `security`."""
 
@@ -427,6 +358,127 @@ def test_security_with_disabled_auth() -> None:
     metadata = _NoAuthController.api_endpoints['GET'].metadata
 
     assert metadata.security == [{'gateway': []}]
+
+
+def test_security_is_merged_with_auth() -> None:
+    """User provided `security` is added after the `auth` requirements."""
+
+    class _MergedController(Controller[PydanticSerializer]):
+        @modify(auth=[_TwoSchemesAuth()], security=[{'gateway': []}])
+        def get(self) -> str:
+            raise NotImplementedError
+
+    assert _operation_security(_MergedController) == [
+        {'main': []},
+        {'gateway': []},
+    ]
+
+
+@pytest.mark.usefixtures('_settings_security')
+def test_settings_security_is_merged_with_auth() -> None:
+    """Settings level `security` is merged with `auth` as well."""
+
+    class _SettingsMergedController(Controller[PydanticSerializer]):
+        @modify(auth=[_TwoSchemesAuth()])
+        def get(self) -> str:
+            raise NotImplementedError
+
+    assert _operation_security(_SettingsMergedController) == [
+        {'main': []},
+        {'proxy': []},
+    ]
+
+
+@pytest.mark.usefixtures('_settings_security')
+def test_settings_security_without_auth() -> None:
+    """Endpoints without `auth` still get the settings level `security`."""
+
+    class _SettingsOnlyController(Controller[PydanticSerializer]):
+        @modify()
+        def get(self) -> str:
+            raise NotImplementedError
+
+    assert _operation_security(_SettingsOnlyController) == [{'proxy': []}]
+
+
+@pytest.mark.usefixtures('_settings_security')
+def test_disabled_security_opts_out_of_global() -> None:
+    """`security=None` without `auth` opts out of the global requirements."""
+
+    class _OptOutController(Controller[PydanticSerializer]):
+        @modify(security=None)
+        def get(self) -> str:
+            raise NotImplementedError
+
+    assert _operation_security(_OptOutController) == []
+
+
+def test_security_can_reuse_auth_schemes() -> None:
+    """Schemes registered by `auth` can be used in `security` requirements."""
+
+    class _ReuseSchemeController(Controller[PydanticSerializer]):
+        @modify(auth=[_TwoSchemesAuth()], security=[{'extra': []}])
+        def get(self) -> str:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('user/', _ReuseSchemeController.as_view())]),
+    ).convert()
+
+    assert schema['paths']['/api/user/']['get']['security'] == [
+        {'main': []},
+        {'extra': []},
+    ]
+    assert set(schema['components']['securitySchemes']) == {'main', 'extra'}
+
+
+def test_security_duplicates_auth_requirement() -> None:
+    """Requirements from `auth` cannot be repeated in `security`."""
+
+    class _DuplicateController(Controller[PydanticSerializer]):
+        @modify(auth=[HeaderJWTSyncAuth()], security=[{'jwt': []}])
+        def get(self) -> str:
+            raise NotImplementedError
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match=(
+            r"Security requirements \[\{'jwt': \[\]\}\] are duplicated "
+            r'for .*endpoint_name=.*_DuplicateController\.get'
+        ),
+    ):
+        _operation_security(_DuplicateController)
+
+
+def test_security_duplicates_itself() -> None:
+    """The same requirement cannot be repeated inside `security`."""
+
+    class _RepeatedController(Controller[PydanticSerializer]):
+        @modify(security=[{'gateway': []}, {'mesh': []}, {'gateway': []}])
+        def get(self) -> str:
+            raise NotImplementedError
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match=r"Security requirements \[\{'gateway': \[\]\}\] are duplicated",
+    ):
+        _operation_security(_RepeatedController)
+
+
+@pytest.mark.usefixtures('_settings_jwt_security')
+def test_settings_security_duplicates_auth() -> None:
+    """Settings level `security` cannot repeat requirements from `auth`."""
+
+    class _SettingsDuplicateController(Controller[PydanticSerializer]):
+        @modify(auth=[HeaderJWTSyncAuth()])
+        def get(self) -> str:
+            raise NotImplementedError
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match=r"Security requirements \[\{'jwt': \[\]\}\] are duplicated",
+    ):
+        _operation_security(_SettingsDuplicateController)
 
 
 @pytest.mark.parametrize(
@@ -463,6 +515,21 @@ def test_wrong_security_shape(wrong_security: object, reported: str) -> None:
 
         class _WrongShapeController(Controller[PydanticSerializer]):
             @modify(security=security)
+            def get(self) -> str:
+                raise NotImplementedError
+
+
+def test_wrong_controller_security_shape() -> None:
+    """Controller level `security` is validated even when it is overridden."""
+    with pytest.raises(
+        EndpointMetadataError,
+        match=r"must be .*got \{'gateway': \[\]\}.*endpoint_name",
+    ):
+
+        class _WrongControllerController(Controller[PydanticSerializer]):
+            security = cast('Sequence[SecurityRequirement]', {'gateway': []})
+
+            @modify(security=[{'mesh': []}])
             def get(self) -> str:
                 raise NotImplementedError
 

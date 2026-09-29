@@ -485,44 +485,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             ),
         )
 
-    def _build_metadata(
-        self,
-        method: str,
-        allowed_http_methods: frozenset[str],
-        return_annotation: Any,
-    ) -> EndpointMetadata:
-        if isinstance(self.payload, ValidateEndpointPayload):
-            return self._from_validate(
-                self.payload,
-                method,
-                allowed_http_methods=allowed_http_methods,
-            )
-        if isinstance(self.payload, ModifyEndpointPayload):
-            return self._from_modify(
-                self.payload,
-                method,
-                return_annotation,
-                allowed_http_methods=allowed_http_methods,
-            )
-        if self.payload is None:
-            return self._from_raw_data(
-                method,
-                return_annotation,
-                allowed_http_methods=allowed_http_methods,
-            )
-        assert_never(self.payload)
-
-    def merger(self, field_name: str) -> MetadataMerger:
-        """
-        Create a merger for the given metadata field.
-
-        Use it to resolve endpoint, controller, and settings layers
-        the same way built-in fields are resolved.
-
-        .. versionadded:: 0.16.0
-        """
-        return self.metadata_merger_cls(field_name=field_name)
-
     def build_validate_responses(self) -> bool:
         """
         Resolve the ``validate_responses`` flag for this endpoint.
@@ -560,6 +522,44 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             settings_value,
         )
         return merger.not_empty(semantic_schema)
+
+    def merger(self, field_name: str) -> MetadataMerger:
+        """
+        Create a merger for the given metadata field.
+
+        Use it to resolve endpoint, controller, and settings layers
+        the same way built-in fields are resolved.
+
+        .. versionadded:: 0.16.0
+        """
+        return self.metadata_merger_cls(field_name=field_name)
+
+    def _build_metadata(
+        self,
+        method: str,
+        allowed_http_methods: frozenset[str],
+        return_annotation: Any,
+    ) -> EndpointMetadata:
+        if isinstance(self.payload, ValidateEndpointPayload):
+            return self._from_validate(
+                self.payload,
+                method,
+                allowed_http_methods=allowed_http_methods,
+            )
+        if isinstance(self.payload, ModifyEndpointPayload):
+            return self._from_modify(
+                self.payload,
+                method,
+                return_annotation,
+                allowed_http_methods=allowed_http_methods,
+            )
+        if self.payload is None:
+            return self._from_raw_data(
+                method,
+                return_annotation,
+                allowed_http_methods=allowed_http_methods,
+            )
+        assert_never(self.payload)
 
     def _post_validate(self, metadata: EndpointMetadata) -> EndpointMetadata:
         # Does nothing by default
@@ -740,7 +740,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             tags=self._build_tags(EMPTY),
             operation_id=None,
             deprecated=False,
-            security=None,
+            security=self._build_security(),
             external_docs=None,
             callbacks=None,
             servers=None,
@@ -833,28 +833,44 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         callbacks = self.merger('callbacks').empty_to_none(payload_callbacks)
         return None if callbacks is None else dict(callbacks)
 
-    def _build_security(self) -> list[SecurityRequirement] | None:
-        field_name = 'security'
+    def _build_security(self) -> 'list[SecurityRequirement] | None':
         settings_config: OpenAPIConfig = resolve_setting(
             Settings.openapi_config,
         )
-        resolved_security = self.merger(field_name).first_defined(
+        layers = (
             self.payload.security if self.payload else EMPTY,
             self.controller_cls.security,
+            # `None` in the config means "not set", not "disabled":
             (
                 EMPTY
                 if settings_config.security is None
                 else settings_config.security
             ),
         )
-        return (
-            None
-            if (
-                resolved_security is None
-                or isinstance(resolved_security, Sentinel)
+        for layer in layers:
+            self._validate_security_shape(layer)
+        security = self.merger('security').first_defined(*layers)
+        if security is None or isinstance(security, Sentinel):
+            return None  # explicitly disabled or nothing is configured
+        return list(security)
+
+    def _validate_security_shape(
+        self,
+        security: 'Sequence[SecurityRequirement] | Sentinel | None',
+    ) -> None:
+        if security is None or isinstance(security, Sentinel):
+            return
+        if (
+            not isinstance(security, (list, tuple))
+            or not all(
+                isinstance(requirement, dict)  # pyright: ignore[reportUnnecessaryIsInstance]
+                for requirement in security
             )
-            else list(resolved_security)
-        )
+        ):
+            raise EndpointMetadataError(
+                '`security` must be a sequence of `SecurityRequirement` '
+                f'dicts, got {security!r} for {self.endpoint_name=}',
+            )
 
     def _build_auth(self) -> list[SyncAuth | AsyncAuth] | None:
         base_type = (

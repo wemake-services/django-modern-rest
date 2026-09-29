@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import override
 
-from dmr.exceptions import ResponseSchemaError
+from dmr.exceptions import EndpointMetadataError, ResponseSchemaError
 from dmr.internal.types import StrOrPromise
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 
@@ -53,8 +53,13 @@ class SecurityRequirementMerger:
     Interface for things that can merge security requirements.
 
     What can do that?
-    - Some specific auth classes
-    - Semantic schema providers
+
+    - :attr:`~dmr.openapi.generators.SecuritySchemeGenerator.security_merger`
+      merges user provided ``security`` requirements
+      with the ones generated from ``auth``
+    - Semantic schema providers merge their own requirements
+      with the ones generated from ``auth``,
+      like :class:`~dmr.security.csrf.CSRFSemanticSchemaProvider` does
 
     .. versionadded:: 0.16.0
     """
@@ -64,22 +69,88 @@ class SecurityRequirementMerger:
     @abstractmethod
     def merge_security_requirements(
         self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
         own_requirements: list['SecurityRequirement'],
         auth_requirements: list['SecurityRequirement'],
     ) -> list['SecurityRequirement']:
         """
-        Inject semantic scheme requirements into regular auth requirements.
+        Merge own security requirements into the auth requirements.
 
-        This can implement both `OR` and `AND` logic
-        depending on the auth logic.
+        This can implement both ``OR`` and ``AND`` logic
+        depending on the security logic:
+        several alternative requirements mean ``OR``,
+        several schemes in a single requirement mean ``AND``.
 
-        This method is only called by semantic schema providers
-        when generating auth requirements.
-        By default just raises an error.
+        Args:
+            metadata: Metadata of the endpoint that is being generated.
+            controller_cls: Controller class of this endpoint.
+            own_requirements: Requirements of the thing that merges,
+                for example, user provided ``security``.
+            auth_requirements: Requirements generated from ``auth``,
+                already processed by semantic schema providers.
+
+        Returns:
+            The final list of security requirements for the operation.
+
         """
-        raise NotImplementedError(
-            'Must be implemented by semantic auth providers only',
-        )
+        raise NotImplementedError
+
+
+class OrSecurityRequirementMerger(SecurityRequirementMerger):
+    """
+    Merge security requirements as alternatives.
+
+    All requirements are used as-is, own requirements are added
+    after the auth ones. A client can satisfy any of them,
+    this is what ``OR`` means in OpenAPI.
+
+    This is the default value of
+    :attr:`~dmr.openapi.generators.SecuritySchemeGenerator.security_merger`.
+
+    Raises:
+        EndpointMetadataError: When the same requirement is present
+            more than once in the result. It usually means that
+            ``security`` repeats what ``auth`` already documents.
+
+    .. versionadded:: 0.16.0
+    """
+
+    __slots__ = ()
+
+    @override
+    def merge_security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+        own_requirements: list['SecurityRequirement'],
+        auth_requirements: list['SecurityRequirement'],
+    ) -> list['SecurityRequirement']:
+        """Add own requirements as alternatives to the auth ones."""
+        merged = [*auth_requirements, *own_requirements]
+        self._validate_no_duplicates(metadata, merged)
+        return merged
+
+    def _validate_no_duplicates(
+        self,
+        metadata: EndpointMetadata,
+        requirements: list['SecurityRequirement'],
+    ) -> None:
+        # Requirements are dicts, so they are not hashable,
+        # but there are usually just a few of them:
+        seen: list[SecurityRequirement] = []
+        duplicates: list[SecurityRequirement] = []
+        for requirement in requirements:
+            if requirement in seen:
+                if requirement not in duplicates:
+                    duplicates.append(requirement)
+            else:
+                seen.append(requirement)
+        if duplicates:
+            raise EndpointMetadataError(
+                f'Security requirements {duplicates!r} are duplicated '
+                f'for {metadata.endpoint_name=}',
+            )
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)

@@ -329,7 +329,7 @@ Semantic schema generation
 
   Set to ``False`` to disable this auto-injection globally.
   User-defined schema (via ``@modify``, ``@validate``,
-  controller ``responses``, ``Settings.responses`` or ``Settings.security``)
+  controller ``responses``, ``Settings.responses``, or ``security``)
   are not affected by this flag.
   Runtime response validation still works as configured
   by ``Settings.validate_responses``.
@@ -627,6 +627,9 @@ OpenAPI
   See :class:`~dmr.openapi.OpenAPIConfig`
   for the available fields and their description.
   It can also be used to change the default OpenAPI spec version.
+  Its ``security`` field is also the settings level of ``security``
+  for all controllers and endpoints,
+  see :ref:`customizing_security_openapi`.
 
   .. code-block:: python
     :caption: settings.py
@@ -640,29 +643,6 @@ OpenAPI
     ...         openapi_version='3.2.0',
     ...     ),
     ... }
-
-.. data:: dmr.settings.Settings.security
-
-  Default: ``[]``
-
-  Extra OpenAPI security requirements for all endpoints of your API.
-
-  Use it to document security mechanisms that are not implemented
-  by ``auth``, like an API gateway or a service mesh:
-
-  .. code-block:: python
-    :caption: settings.py
-
-    >>> DMR_SETTINGS = {
-    ...     Settings.security: [{'gateway': []}],
-    ... }
-
-  These requirements are merged with the controller-level
-  and endpoint-level ones. They only affect the generated schema,
-  never the runtime auth. See :ref:`customizing_security_openapi`
-  for the full set of rules.
-
-  .. versionadded:: 0.16.0
 
 .. data:: dmr.settings.Settings.openapi_examples_seed
 

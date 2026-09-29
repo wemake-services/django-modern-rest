@@ -16,7 +16,6 @@ from dmr.security.jwt import HeaderJWTSyncAuth
 class _SecurityController(Controller[PydanticSerializer]):
     security = [{'gateway': []}]
 
-    @modify(security=[{'mesh': []}])
     def get(self) -> str:
         raise NotImplementedError
 
@@ -57,7 +56,12 @@ def test_undeclared_security_scheme() -> None:
 
 
 def test_user_security_schema(snapshot: SnapshotAssertion) -> None:
-    """User provided `security` is merged with `auth` requirements."""
+    """User provided `security` is merged with `auth` requirements.
+
+    - ``get`` inherits the controller level ``gateway``
+    - ``post`` overrides it with ``mesh`` and merges it with ``auth``
+    - ``put`` disables ``security`` and opts out of the global ``jwt``
+    """
     config = OpenAPIConfig(
         title='Security API',
         version='1.0.0',

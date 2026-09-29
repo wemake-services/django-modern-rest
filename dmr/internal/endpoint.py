@@ -375,9 +375,11 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
         security: A sequence of security requirement objects for this operation.
-            Overrides controller and settings values.
+            Overrides the controller value and ``security``
+            of :class:`dmr.openapi.OpenAPIConfig`.
             Set it to ``None`` to disable ``security`` of this endpoint.
-            It never affects the runtime auth.
+            It is merged with the requirements generated from ``auth``,
+            but it never affects the runtime auth.
             Useful to document external security mechanisms,
             for example, the ones enforced by an HTTP proxy.
             Used security schemes must be declared
@@ -825,9 +827,11 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
         security: A sequence of security requirement objects for this operation.
-            Overrides controller and settings values.
+            Overrides the controller value and ``security``
+            of :class:`dmr.openapi.OpenAPIConfig`.
             Set it to ``None`` to disable ``security`` of this endpoint.
-            It never affects the runtime auth.
+            It is merged with the requirements generated from ``auth``,
+            but it never affects the runtime auth.
             Useful to document external security mechanisms,
             for example, the ones enforced by an HTTP proxy.
             Used security schemes must be declared
