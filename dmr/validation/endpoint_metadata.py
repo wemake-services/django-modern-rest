@@ -53,6 +53,7 @@ from dmr.validation.payload import (
 if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.errors import AsyncErrorHandler, SyncErrorHandler
+    from dmr.internal.endpoint import Extras
     from dmr.openapi.config import OpenAPIConfig
     from dmr.openapi.objects import (
         Callback,
@@ -60,8 +61,6 @@ if TYPE_CHECKING:
         SecurityRequirement,
         Server,
     )
-    from dmr.internal.endpoint import Extras
-    from dmr.openapi.objects import Callback, Reference, Server
 
 #: Regex expression to match allowed chars in tokens
 #: For header and cookie names.
@@ -544,7 +543,23 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         return merger.not_empty(validate_responses)
 
     def build_semantic_schema(self) -> bool:
-        print()
+        """
+        Resolve the ``semantic_schema`` flag for this endpoint.
+
+        It is public, because other flags can default to this one.
+
+        .. versionadded:: 0.16.0
+        """
+        merger = self.merger('semantic_schema')
+        settings_value: bool | Sentinel = resolve_setting(
+            Settings.semantic_schema,
+        )
+        semantic_schema = merger.first_set(
+            self.payload.semantic_schema if self.payload else EMPTY,
+            self.controller_cls.semantic_schema,
+            settings_value,
+        )
+        return merger.not_empty(semantic_schema)
 
     def _post_validate(self, metadata: EndpointMetadata) -> EndpointMetadata:
         # Does nothing by default
@@ -578,7 +593,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             exclude_validate_responses=(
                 self._build_exclude_validate_responses()
             ),
-            semantic_schema=self._build_semantic_schema(),
+            semantic_schema=self.build_semantic_schema(),
             semantic_responses=self._build_semantic_responses(),
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
             semantic_auth=self._build_semantic_auth(),
@@ -652,7 +667,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             exclude_validate_responses=(
                 self._build_exclude_validate_responses()
             ),
-            semantic_schema=self._build_semantic_schema(),
+            semantic_schema=self.build_semantic_schema(),
             semantic_responses=self._build_semantic_responses(),
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
             semantic_auth=self._build_semantic_auth(),
@@ -715,7 +730,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             exclude_validate_responses=(
                 self._build_exclude_validate_responses()
             ),
-            semantic_schema=self._build_semantic_schema(),
+            semantic_schema=self.build_semantic_schema(),
             semantic_responses=self._build_semantic_responses(),
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
             semantic_auth=self._build_semantic_auth(),
@@ -1030,18 +1045,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             field_name='no_validate_http_spec',
         )
 
-    def _build_semantic_schema(self) -> bool:
-        merger = self.merger('semantic_schema')
-        settings_value: bool | Sentinel = resolve_setting(
-            Settings.semantic_schema,
-        )
-        semantic_schema = merger.first_set(
-            self.payload.semantic_schema if self.payload else EMPTY,
-            self.controller_cls.semantic_schema,
-            settings_value,
-        )
-        return merger.not_empty(semantic_schema)
-
     def _build_semantic_responses(self) -> bool:
         merger = self.merger('semantic_responses')
         settings_value: bool | Sentinel = resolve_setting(
@@ -1053,7 +1056,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             settings_value,
         )
         if isinstance(semantic_responses, Sentinel):
-            return self._build_semantic_schema()
+            return self.build_semantic_schema()
         return merger.not_empty(semantic_responses)
 
     def _build_exclude_validate_responses(self) -> frozenset[HTTPStatus]:
@@ -1089,7 +1092,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             settings_value,
         )
         if isinstance(semantic_auth, Sentinel):
-            return self._build_semantic_schema()
+            return self.build_semantic_schema()
         return merger.not_empty(semantic_auth)
 
     def _build_exclude_semantic_auth(self) -> frozenset[str]:

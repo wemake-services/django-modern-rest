@@ -91,11 +91,13 @@ class _RawController(Controller[PydanticSerializer]):
 
 @pytest.fixture
 def _settings_security(settings: LazySettings) -> None:
+    # TODO: replace with custom OpenAPI config
     settings.DMR_SETTINGS = {Settings.security: [{'proxy': []}]}
 
 
 @pytest.fixture
 def _settings_jwt_security(settings: LazySettings) -> None:
+    # TODO: replace with custom OpenAPI config
     settings.DMR_SETTINGS = {Settings.security: [{'jwt': []}]}
 
 

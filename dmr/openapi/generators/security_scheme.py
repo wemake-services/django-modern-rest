@@ -1,9 +1,6 @@
 import dataclasses
 import itertools
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, TypeAlias
-
-from dmr.exceptions import EndpointMetadataError
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -29,10 +26,6 @@ class SecuritySchemeGenerator:
     Responsible for processing authentication providers, extracting their
     security schemes, registering them in the context, and returning
     the corresponding security requirements for the operation.
-
-    User provided requirements from ``metadata.security`` are passed
-    through as-is, their schemes are never registered. We only validate
-    that they do not reuse the scheme names that ``auth`` generates.
     """
 
     _context: 'OpenAPIContext'
@@ -49,45 +42,16 @@ class SecuritySchemeGenerator:
         security schemes in the global registry, and collects their security
         usage requirements.
 
-        User provided ``security`` requirements are added after the auth ones.
-        Their security schemes are not registered,
-        users must declare them in the OpenAPI config.
-        They also must not reuse the scheme names that ``auth`` generates,
-        :class:`~dmr.exceptions.EndpointMetadataError` is raised when they do.
-
-        When there are no requirements but the document defines global
+        When there are no auth providers but the document defines global
         ``security``, returns an explicit ``[]`` so the operation opts out
         of the global requirements instead of inheriting them.
 
         .. versionchanged:: 0.16.0
             Now accepts *metadata* and *controller_cls* parameters.
-            User provided ``security`` requirements are added as well.
 
         """
         # How it works?
-        #
-        # First, of all: we have security specs and security requirements.
-        # Secondly: we have several different ways of how they can be provided.
-        #
-        # Security schemes
-        # ----------------
-        # Can be provided via: `metadata.auth` classes,
-        # `OpenAPIConfig.components.security_schemes` field,
-        # semantic schema providers.
-        # We always use `metadata.auth` as-is.
-        # `security_schemes` is applied in config merger.
-        # We only register security schemes from semantic schema providers,
-        # that are actually used.
-        #
-        # Security requirements
-        # ---------------------
-        # Can be provided via: `metadata.auth`, `metadata.security`,
-        # `OpenAPIConfig.security`, semantic schema providers.
-        # We always use  `metadata.auth` as-is.
-        # `OpenAPIConfig.security` is applied in config merger.
-        # We process all existing `metadata.auth` security requirements
-        # to possibly inject extra ones from semantic schemas.
-        # User provided `metadata.security` is added last.
+        # TODO: describe the flow
         self._register_auth_security_schemes(metadata, controller_cls)
         requirements = self._prepare_requirements(metadata, controller_cls)
         requirements, semantic_schemes = self._inject_semantic_schema(
@@ -101,16 +65,6 @@ class SecuritySchemeGenerator:
             semantic_schemes,
         )
 
-        self._validate_no_auth_scheme_overlap(
-            metadata,
-            auth_schemes
-            | semantic_schemes.keys()
-            | _scheme_names(
-                requirements,
-            ),
-        )
-        requirements.extend(metadata.security or ())
-
         # Finally, return the result:
         if not requirements:
             # If global security is set,
@@ -123,12 +77,16 @@ class SecuritySchemeGenerator:
         self,
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
-    ) -> set[str]:
-        registered: set[str] = set()
+    ) -> None:
         for auth in metadata.auth or []:
             self._register_security_schemes(
                 metadata,
                 controller_cls,
+                auth.security_schemes(
+                    metadata,
+                    controller_cls,
+                ),
+            )
 
     def _register_security_schemes(
         self,
@@ -215,7 +173,9 @@ class SecuritySchemeGenerator:
         semantic_providers: list['SecurityProvider'],
         requirements: list['SecurityRequirement'],
     ) -> dict[str, 'SecurityScheme | Reference']:
-        used_requirements = _scheme_names(requirements)
+        used_requirements = frozenset(
+            itertools.chain.from_iterable(req.keys() for req in requirements),
+        )
         schemes = [
             provider.security_schemes(metadata, controller_cls)
             for provider in semantic_providers

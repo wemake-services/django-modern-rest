@@ -19,8 +19,8 @@ from dmr.internal.error_handlers import (
 from dmr.internal.types import FormatError, StrOrPromise
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
-from dmr.semantic_schema import SecurityProvider, SecurityRequirementMerger
 from dmr.security.base import unauth_response_spec
+from dmr.semantic_schema import SecurityProvider, SecurityRequirementMerger
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
