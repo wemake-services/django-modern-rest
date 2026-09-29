@@ -240,6 +240,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Optimized `SyncDjangoCache` and `AsyncDjangoCache` json parsing, #1456
 - Optimized `Controller.as_view()` for cases with `csrf_exempt=True`,
   which is the default, #1456
+- Now uses `msgspec@0.22`, which is much faster in many cases,
 
 ### Features
 
