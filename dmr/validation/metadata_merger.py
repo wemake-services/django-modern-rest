@@ -21,7 +21,8 @@ class MetadataMerger:
     to change how a specific field is resolved.
 
     By default, nothing is merged: the first layer with an explicit value
-    wins. Override this class and set it as
+    wins. Only ``EMPTY`` is not explicit: ``None``, empty collections,
+    and all other values are used as-is. Override this class and set it as
     :attr:`~dmr.endpoint.Endpoint.metadata_merger_cls`
     to change this. For example, to merge ``auth`` from all layers:
 
@@ -37,17 +38,17 @@ class MetadataMerger:
         """
         Return the first explicitly defined configuration layer.
 
-        It is used for collections, where empty ones are not explicit.
+        It is used for collections. Only ``EMPTY`` is not explicit,
+        the next layer is used instead of it. It returns ``EMPTY``
+        if no layer has an explicit value.
 
         ``None`` is an explicit value, it disables all less specific layers.
-        ``EMPTY`` and empty collections are not explicit,
-        the next layer is used instead. It returns ``EMPTY``
-        if no layer has an explicit value.
+        Empty collections like ``[]`` and ``()`` are explicit values too,
+        they are taken literally: "nothing on this layer",
+        they also disable all less specific layers.
         """
         for layer in layers:
-            if layer is None:
-                return None
-            if not isinstance(layer, Sentinel) and layer:
+            if not isinstance(layer, Sentinel):
                 return layer
         return EMPTY
 

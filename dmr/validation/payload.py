@@ -72,7 +72,8 @@ class _BasePayload:
 class ValidateEndpointPayload(_BasePayload):
     """Payload created by ``@validate``."""
 
-    responses: list[ResponseSpec]
+    # `EMPTY` is only used by `implicit()`, `@validate` always sets a list:
+    responses: list[ResponseSpec] | Sentinel
 
     @classmethod
     def implicit(cls) -> 'ValidateEndpointPayload':
@@ -81,10 +82,12 @@ class ValidateEndpointPayload(_BasePayload):
 
         Such endpoints do not have to use ``@validate`` explicitly,
         when responses are defined on the controller or settings level.
-        All values are the same as ``@validate`` defaults.
+        All values are the same as ``@validate`` defaults,
+        except ``responses`` which is ``EMPTY`` and not an explicit ``[]``,
+        so the controller and settings levels are used.
         """
         return cls(
-            responses=[],
+            responses=EMPTY,
             summary=EMPTY,
             description=EMPTY,
             tags=EMPTY,

@@ -88,13 +88,6 @@ class _RawController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-#: Empty values are not explicit, `None` is.
-_EMPTY_VALUES = (
-    pytest.param([], id='list'),
-    pytest.param((), id='tuple'),
-)
-
-
 def _config(security: list[SecurityRequirement]) -> OpenAPIConfig:
     return OpenAPIConfig(
         title='Security API',
@@ -282,7 +275,7 @@ def test_endpoint_empty_auth_disables(
     class _DisabledEndpointController(Controller[PydanticSerializer]):
         auth = [HeaderJWTSyncAuth()]
 
-        @modify(auth=auth_def)
+        @modify(auth=auth_def)  # type: ignore[untyped-decorator]
         def get(self) -> str:
             raise NotImplementedError
 
@@ -323,11 +316,11 @@ def test_endpoint_security_over_controller_none() -> None:
     assert metadata.security == [{'gateway': []}]
 
 
-@pytest.mark.parametrize('empty', _EMPTY_VALUES)
+@pytest.mark.parametrize('empty', [[], ()])
 def test_empty_security_adds_nothing(
     empty: Sequence[SecurityRequirement],
 ) -> None:
-    """Empty `security` is not explicit, so nothing is configured."""
+    """Empty `security` means that no security is configured."""
 
     class _EmptyController(Controller[PydanticSerializer]):
         @modify(security=empty)
@@ -340,11 +333,11 @@ def test_empty_security_adds_nothing(
 
 
 @pytest.mark.usefixtures('_settings_security')
-@pytest.mark.parametrize('empty', _EMPTY_VALUES)
-def test_empty_security_uses_next_level(
+@pytest.mark.parametrize('empty', [[], ()])
+def test_empty_security_disables_next_level(
     empty: Sequence[SecurityRequirement],
 ) -> None:
-    """Empty `security` is not explicit, the next level is used instead."""
+    """Empty `security` is explicit, it disables all less specific levels."""
 
     class _EmptyEndpointController(Controller[PydanticSerializer]):
         security = [{'gateway': []}]
@@ -363,16 +356,16 @@ def test_empty_security_uses_next_level(
     empty_endpoint = _EmptyEndpointController.api_endpoints['GET'].metadata
     empty_controller = _EmptyControllerController.api_endpoints['GET'].metadata
 
-    assert empty_endpoint.security == [{'gateway': []}]
-    assert empty_controller.security == [{'proxy': []}]
+    assert empty_endpoint.security is None
+    assert empty_controller.security is None
 
 
 @pytest.mark.usefixtures('_settings_security')
-@pytest.mark.parametrize('empty', _EMPTY_VALUES)
-def test_empty_security_is_not_none(
+@pytest.mark.parametrize('empty', [[], ()])
+def test_empty_security_is_none(
     empty: Sequence[SecurityRequirement],
 ) -> None:
-    """Empty `security` does not disable the next level, unlike `None`."""
+    """Empty `security` and `None` produce the same schema."""
 
     class _EmptyController(Controller[PydanticSerializer]):
         @modify(security=empty)
@@ -384,20 +377,18 @@ def test_empty_security_is_not_none(
         def get(self) -> str:
             raise NotImplementedError
 
-    empty_metadata = _EmptyController.api_endpoints['GET'].metadata
-    none_metadata = _NoneController.api_endpoints['GET'].metadata
+    assert _EmptyController.api_endpoints['GET'].metadata.security is None
+    assert _NoneController.api_endpoints['GET'].metadata.security is None
+    assert _operation_security(_EmptyController) == []
+    assert _operation_security(_NoneController) == []
 
-    assert empty_metadata.security == [{'proxy': []}]
-    assert none_metadata.security is None
 
-
-@pytest.mark.usefixtures('_settings_security')
-@pytest.mark.parametrize('empty', _EMPTY_VALUES)
-def test_empty_settings_security_is_not_set(
+@pytest.mark.parametrize('empty', [[], ()])
+def test_empty_settings_security_disables(
     settings: LazySettings,
     empty: Sequence[SecurityRequirement],
 ) -> None:
-    """Empty `OpenAPIConfig.security` is the same as `None` there."""
+    """Empty `OpenAPIConfig.security` means no security at all."""
     settings.DMR_SETTINGS = {
         Settings.openapi_config: _config(list(empty)),
     }

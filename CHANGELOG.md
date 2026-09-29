@@ -53,7 +53,11 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   Merging is still possible, but it must be explicit,
   like `@modify(auth=[*auth, other_auth])`,
   or customized with `Controller.metadata_merger_cls`.
-  This allows a better composition and better value overrides, #1576
+  This allows a better composition and better value overrides, #1576.
+  Explicit empty values like `auth=[]` or `throttling=()` are now
+  taken literally as "nothing on this level", exactly like `None`,
+  they do not fall through to the next level anymore.
+  Only `EMPTY` (or not setting the value at all) uses the next level, #1499
 - All endpoint, controller, and settings values now default to `EMPTY`,
   which means "not set on this level", instead of `None`.
   `None` is only allowed where it disables something explicitly,

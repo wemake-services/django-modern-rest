@@ -53,6 +53,13 @@ This is true for sequences, sets, booleans, and all other values.
 like ``auth=None`` or ``tags=None``, and it is only allowed
 where disabling makes sense.
 
+Explicit empty values are real values as well, they are taken literally:
+``auth=[]`` means "no auth on this level", it does not fall through
+to the next level. So, ``auth=[]`` and ``auth=()`` work exactly
+like ``auth=None`` does. The same is true for ``throttling``,
+``security``, ``responses``, ``tags``, and all other sequences and sets.
+Only :data:`~dmr.types.EMPTY` uses the next level.
+
 Here's how one can use this system to achieve different strategies.
 Let's use :doc:`authentication <auth/common>` as the example.
 
@@ -92,6 +99,7 @@ For example, it is possible to restore ``0.15.0`` behavior
 and merge all sequences in a custom subclass, if it is needed.
 
 .. versionchanged:: 0.16.0
+
   Values from different levels used to be merged.
 
 

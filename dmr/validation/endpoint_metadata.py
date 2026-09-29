@@ -783,11 +783,16 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     ) -> dict[str, _PluggableT]:
         merger = self.merger(field_name)
         pluggables = merger.first_defined(*layers)
-        if pluggables is None or isinstance(pluggables, Sentinel):
-            # Settings is the last place we look at, it must be present:
+        if (
+            pluggables is None
+            or isinstance(pluggables, Sentinel)
+            or not pluggables
+        ):
+            # Explicit empty values are taken literally, so an endpoint
+            # can end up without any parsers or renderers, which is an error:
             raise EndpointMetadataError(
                 f'{self.endpoint_name!r} must have at least one {kind} '
-                'configured in settings',
+                'configured on the endpoint, controller, or settings level',
             )
         return {
             pluggable.content_type: self._check_supported(pluggable)

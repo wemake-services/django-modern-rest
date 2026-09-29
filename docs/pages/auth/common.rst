@@ -132,6 +132,8 @@ like ``/registration`` and ``/login``.
 
 To do so, set ``auth=None`` for the specific
 endpoints / controllers that should not have auth.
+An explicit empty sequence like ``auth=[]`` works the same way,
+only :data:`~dmr.types.EMPTY` inherits the next level.
 
 Setting ``None`` as ``auth`` on a controller disables
 auth from the settings for all its endpoints,

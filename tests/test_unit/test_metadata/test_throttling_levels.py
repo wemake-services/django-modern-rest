@@ -1,62 +1,59 @@
-from collections.abc import Sequence
 from http import HTTPStatus
-from types import MappingProxyType
-from typing import Any, Self
+from typing import Any, Final
 
 import pytest
 from django.conf import LazySettings
-from django.http import HttpResponse
-from django.urls import path
-from typing_extensions import override
 
-from dmr import Controller, ResponseSpec, modify, validate
-from dmr.endpoint import Endpoint
-from dmr.exceptions import EndpointMetadataError
-from dmr.metadata import EndpointMetadata
-from dmr.openapi import OpenAPIConfig, build_schema
-from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
+from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.routing import Router
-from dmr.security import SyncAuth
-from dmr.security.jwt import HeaderJWTSyncAuth
-from dmr.serializer import BaseSerializer
 from dmr.settings import Settings
+from dmr.throttling import Rate, SyncThrottle
+from dmr.throttling.backends import SyncDjangoCache
+
+# We don't care about this warning here.
+_SYNC_THROTTLE: Final = SyncThrottle(
+    1,
+    Rate.second,
+    backend=SyncDjangoCache(allow_unsafe_cache=None),
+)
 
 
-@pytest.mark.parametrize('auth_def', [None, [], ()])
-def test_endpoint_empty_auth_disables_controller(
+@pytest.mark.parametrize('throttling_def', [None, [], ()])
+def test_empty_throttle_disables_controller(
     *,
-    auth_def: Any,
+    throttling_def: Any,
 ) -> None:
-    """Empty `auth` on the endpoint disables all."""
+    """Empty `throttle` on the endpoint disables all."""
 
     class _DisabledEndpointController(Controller[PydanticSerializer]):
-        auth = [HeaderJWTSyncAuth()]
+        throttling = [_SYNC_THROTTLE]
 
-        @modify(auth=auth_def)
+        @modify(throttling=throttling_def)
         def get(self) -> str:
             raise NotImplementedError
 
     metadata = _DisabledEndpointController.api_endpoints['GET'].metadata
 
-    assert metadata.auth is None
+    assert metadata.throttling is None
+    assert HTTPStatus.TOO_MANY_REQUESTS not in metadata.responses
 
 
-@pytest.mark.parametrize('auth_def', [None, [], ()])
-def test_endpoint_empty_auth_disables_settings(
+@pytest.mark.parametrize('throttling_def', [None, [], ()])
+def test_empty_throttle_disables_settings(
     settings: LazySettings,
     *,
-    auth_def: Any,
+    throttling_def: Any,
 ) -> None:
     """Empty `auth` on the endpoint disables all."""
-    settings.DMR_SETTTINGS = {Settings.auth: [HeaderJWTSyncAuth()]}
+    settings.DMR_SETTTINGS = {Settings.auth: [_SYNC_THROTTLE]}
 
     class _DisabledEndpointController(Controller[PydanticSerializer]):
-        auth = auth_def
+        throttling = throttling_def
 
         def get(self) -> str:
             raise NotImplementedError
 
     metadata = _DisabledEndpointController.api_endpoints['GET'].metadata
 
-    assert metadata.auth is None
+    assert metadata.throttling is None
+    assert HTTPStatus.TOO_MANY_REQUESTS not in metadata.responses
