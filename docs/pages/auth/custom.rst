@@ -69,7 +69,6 @@ Now use it like any auth we ship:
   :linenos:
   :language: python
 
-
 Deciding the outcome
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -112,7 +111,6 @@ so we return ``None``. A header with an unknown username means
   If your auth does anything that can fail before it knows the request
   is meant for it, do that check *after* you have the credentials.
 
-
 Describing it in OpenAPI
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -133,6 +131,8 @@ Both receive the endpoint metadata and controller class because their results
 can vary per endpoint. They can also depend on instance configuration,
 like the header name above.
 
+See :ref:`customizing_security_openapi` to learn the difference between
+``auth=`` and ``security=``.
 
 Setting the request attributes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -158,7 +158,6 @@ a session, store it under a name of your own and give your users
 a helper to read it back. That is exactly what
 :func:`~dmr.security.jwt.auth.request_jwt`
 and :func:`~dmr.security.token.request_token` do.
-
 
 Telling clients how to authenticate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -286,12 +285,6 @@ See :ref:`the auth views section <auth-views-security>` for the details,
 they apply to auth classes just as much as to views.
 
 
-API Reference
--------------
-
-.. autofunction:: dmr.security.base.unauth_response_spec
-
-
 Next up
 -------
 
@@ -301,3 +294,9 @@ unchanged. You will probably want:
 - :doc:`common` for how auth is enabled, chained, and disabled
 - :doc:`/pages/testing/authentication` for testing endpoints behind it
 - :doc:`/pages/openapi/openapi` for the generated schema
+
+
+API Reference
+-------------
+
+.. autofunction:: dmr.security.base.unauth_response_spec

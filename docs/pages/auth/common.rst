@@ -53,7 +53,7 @@ Some classes provide configuration to be adjusted when creating instances.
 For example: :class:`~dmr.security.jwt.auth.HeaderJWTSyncAuth`
 contains multiple options in its ``__init__`` method.
 
-There are 4 ways to provide auth classes for an endpoint:
+There are 3 ways to provide auth classes for an endpoint:
 
 .. tabs::
 
@@ -117,9 +117,11 @@ endpoint ``auth`` overrides controller ``auth``,
 controller ``auth`` overrides :data:`~dmr.settings.Settings.auth`.
 See :ref:`configuration-levels`.
 
+See :ref:`customizing_security_openapi` to learn the difference between
+``auth=`` and ``security=``.
+
 .. versionchanged:: 0.16.0
   Auth instances from different levels used to be merged.
-
 
 Disabling auth
 ~~~~~~~~~~~~~~
@@ -197,7 +199,6 @@ allows a challenge list:
   a token with no ``=`` in it. ``Bearer`` above starts a new challenge,
   while ``charset="UTF-8"`` is another param of ``Basic``.
 
-
 What is supported
 ~~~~~~~~~~~~~~~~~
 
@@ -260,7 +261,6 @@ The same applies to :class:`~dmr.security.token.HeaderTokenSyncAuth`,
 which defaults to a prefix-less ``X-API-Token`` header:
 without a scheme prefix there is no scheme name to build a challenge from.
 
-
 Disabling it
 ~~~~~~~~~~~~
 
@@ -299,7 +299,6 @@ Views that issue or accept credentials get extra protection out of the box.
 All the auth views we ship already do all of the below,
 you only need this when you write your own auth views.
 
-
 Never cache credentials
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -319,7 +318,6 @@ it also documents the header in the OpenAPI schema:
   Only a successful response gets this header,
   because only this response carries credentials.
   Error responses of auth views are not affected.
-
 
 Keep credentials out of error reports
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -438,7 +436,6 @@ Select the auth backend that fits your needs:
 
       Write an auth class for a transport we don't ship.
 
-
 JWT vs Opaque Tokens
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -499,7 +496,6 @@ API Reference
 .. autofunction:: dmr.security.add_www_authenticate
 
 .. autodata:: dmr.security.NO_STORE_HEADERS
-
 
 .. autoclass:: dmr.security.AuthenticatedHttpRequest
   :members:

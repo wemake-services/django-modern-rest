@@ -441,12 +441,12 @@ These rules define how the final list is built:
 - Levels are not merged together, the first explicitly defined level wins:
   endpoint, then controller, then settings.
   This is how all other metadata is resolved as well
-- Setting ``security=None`` on an endpoint or a controller disables
+- Setting ``security=None`` or ``security=[]``
+  on an endpoint or a controller disables
   all less specific levels, exactly like ``auth=None`` does.
   Without ``auth`` such an operation gets ``security: []``,
   which opts out of the document-level requirements
   instead of inheriting them
-- Empty ``security=[]`` is not explicit, the next level is used instead
 - The resolved requirements are merged with the requirements
   generated from ``auth`` by
   :attr:`~dmr.openapi.generators.SecuritySchemeGenerator.security_merger`.
@@ -473,6 +473,14 @@ see :ref:`customizing_openapi_context`.
   Subclass the auth class you need and override
   :meth:`dmr.security.SyncAuth.security_schemes`
   or :meth:`dmr.security.SyncAuth.security_requirements` instead.
+
+.. danger::
+
+  Setting ``security`` only modifies the OpenAPI spec,
+  not the runtime enforcing of the security.
+  Only use it to describe the schema.
+
+  Prefer ``auth`` whenever possible.
 
 Customizing router-level metadata
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 from typing import Final
 
+from typing_extensions import Sentinel
+
+from dmr.internal.types import EMPTY
 from dmr.openapi.objects import (  # noqa: WPS235
     Components,
     Contact,
@@ -82,7 +85,7 @@ class OpenAPIConfig:
     terms_of_service: str | None = None
     contact: Contact | None = None
     external_docs: ExternalDocumentation | None = None
-    security: list[SecurityRequirement] | None = None
+    security: list[SecurityRequirement] | Sentinel | None = EMPTY
     license: License | None = None
     # Components can't be a list in the final schema, so we merge them together:
     components: Components | list[Components] | None = None

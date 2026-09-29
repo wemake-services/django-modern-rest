@@ -840,19 +840,16 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         layers = (
             self.payload.security if self.payload else EMPTY,
             self.controller_cls.security,
-            # `None` in the config means "not set", not "disabled":
-            (
-                EMPTY
-                if settings_config.security is None
-                else settings_config.security
-            ),
+            settings_config.security,
         )
         for layer in layers:
             self._validate_security_shape(layer)
         security = self.merger('security').first_defined(*layers)
         if security is None or isinstance(security, Sentinel):
             return None  # explicitly disabled or nothing is configured
-        return list(security)
+        # Empty security list means that no auth is configured
+        # and it is just `None`.
+        return list(security) or None
 
     def _validate_security_shape(
         self,
@@ -860,12 +857,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     ) -> None:
         if security is None or isinstance(security, Sentinel):
             return
-        if (
-            not isinstance(security, (list, tuple))
-            or not all(
-                isinstance(requirement, dict)  # pyright: ignore[reportUnnecessaryIsInstance]
-                for requirement in security
-            )
+        if not isinstance(security, (list, tuple)) or not all(
+            isinstance(requirement, dict)  # pyright: ignore[reportUnnecessaryIsInstance]
+            for requirement in security
         ):
             raise EndpointMetadataError(
                 '`security` must be a sequence of `SecurityRequirement` '

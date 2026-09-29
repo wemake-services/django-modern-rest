@@ -128,7 +128,14 @@ class SecuritySchemeGenerator:  # noqa: WPS214
             # If global security is set,
             # but this endpoint does not have any auth,
             # it must return explicit `[]`, so it's auth would be re-written:
-            return [] if self._context.config.security else None
+            return (
+                []
+                if (
+                    isinstance(self._context.config.security, list)
+                    and self._context.config.security
+                )
+                else None
+            )
         return requirements
 
     def _register_auth_security_schemes(

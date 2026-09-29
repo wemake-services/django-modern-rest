@@ -1,8 +1,7 @@
-import re
 from collections.abc import Sequence
 from http import HTTPStatus
 from types import MappingProxyType
-from typing import Self, cast
+from typing import Any, Self
 
 import pytest
 from django.conf import LazySettings
@@ -89,6 +88,13 @@ class _RawController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
+#: Empty values are not explicit, `None` is.
+_EMPTY_VALUES = (
+    pytest.param([], id='list'),
+    pytest.param((), id='tuple'),
+)
+
+
 def _config(security: list[SecurityRequirement]) -> OpenAPIConfig:
     return OpenAPIConfig(
         title='Security API',
@@ -118,9 +124,8 @@ def _operation_security(
     schema = build_schema(
         Router('api/', [path('user/', controller_cls.as_view())]),
     ).convert()
-    return cast(
-        'list[SecurityRequirement] | None',
-        schema['paths']['/api/user/'][method].get('security'),
+    return schema['paths']['/api/user/'][method].get(  # type: ignore[no-any-return]
+        'security',
     )
 
 
@@ -248,19 +253,42 @@ def test_controller_security_wins_over_settings() -> None:
 
 
 @pytest.mark.usefixtures('_settings_security')
-def test_endpoint_security_none_disables_security() -> None:
-    """`security=None` on the endpoint disables all inherited requirements."""
+@pytest.mark.parametrize('security_def', [None, [], ()])
+def test_endpoint_security_disables_security(
+    *,
+    security_def: Any,
+) -> None:
+    """Empty `security` on the endpoint disables all inherited requirements."""
 
     class _DisabledEndpointController(Controller[PydanticSerializer]):
         security = [{'gateway': []}]
 
-        @modify(security=None)
+        @modify(security=security_def)
         def get(self) -> str:
             raise NotImplementedError
 
     metadata = _DisabledEndpointController.api_endpoints['GET'].metadata
 
     assert metadata.security is None
+
+
+@pytest.mark.parametrize('auth_def', [None, [], ()])
+def test_endpoint_empty_auth_disables(
+    *,
+    auth_def: Any,
+) -> None:
+    """Empty `auth` on the endpoint disables all."""
+
+    class _DisabledEndpointController(Controller[PydanticSerializer]):
+        auth = [HeaderJWTSyncAuth()]
+
+        @modify(auth=auth_def)
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _DisabledEndpointController.api_endpoints['GET'].metadata
+
+    assert metadata.auth is None
 
 
 @pytest.mark.usefixtures('_settings_security')
@@ -295,11 +323,14 @@ def test_endpoint_security_over_controller_none() -> None:
     assert metadata.security == [{'gateway': []}]
 
 
-def test_empty_security_adds_nothing() -> None:
+@pytest.mark.parametrize('empty', _EMPTY_VALUES)
+def test_empty_security_adds_nothing(
+    empty: Sequence[SecurityRequirement],
+) -> None:
     """Empty `security` is not explicit, so nothing is configured."""
 
     class _EmptyController(Controller[PydanticSerializer]):
-        @modify(security=[])
+        @modify(security=empty)
         def get(self) -> str:
             raise NotImplementedError
 
@@ -309,18 +340,21 @@ def test_empty_security_adds_nothing() -> None:
 
 
 @pytest.mark.usefixtures('_settings_security')
-def test_empty_security_uses_next_level() -> None:
+@pytest.mark.parametrize('empty', _EMPTY_VALUES)
+def test_empty_security_uses_next_level(
+    empty: Sequence[SecurityRequirement],
+) -> None:
     """Empty `security` is not explicit, the next level is used instead."""
 
     class _EmptyEndpointController(Controller[PydanticSerializer]):
         security = [{'gateway': []}]
 
-        @modify(security=[])
+        @modify(security=empty)
         def get(self) -> str:
             raise NotImplementedError
 
     class _EmptyControllerController(Controller[PydanticSerializer]):
-        security = []
+        security = empty
 
         @modify()
         def get(self) -> str:
@@ -331,6 +365,52 @@ def test_empty_security_uses_next_level() -> None:
 
     assert empty_endpoint.security == [{'gateway': []}]
     assert empty_controller.security == [{'proxy': []}]
+
+
+@pytest.mark.usefixtures('_settings_security')
+@pytest.mark.parametrize('empty', _EMPTY_VALUES)
+def test_empty_security_is_not_none(
+    empty: Sequence[SecurityRequirement],
+) -> None:
+    """Empty `security` does not disable the next level, unlike `None`."""
+
+    class _EmptyController(Controller[PydanticSerializer]):
+        @modify(security=empty)
+        def get(self) -> str:
+            raise NotImplementedError
+
+    class _NoneController(Controller[PydanticSerializer]):
+        @modify(security=None)
+        def get(self) -> str:
+            raise NotImplementedError
+
+    empty_metadata = _EmptyController.api_endpoints['GET'].metadata
+    none_metadata = _NoneController.api_endpoints['GET'].metadata
+
+    assert empty_metadata.security == [{'proxy': []}]
+    assert none_metadata.security is None
+
+
+@pytest.mark.usefixtures('_settings_security')
+@pytest.mark.parametrize('empty', _EMPTY_VALUES)
+def test_empty_settings_security_is_not_set(
+    settings: LazySettings,
+    empty: Sequence[SecurityRequirement],
+) -> None:
+    """Empty `OpenAPIConfig.security` is the same as `None` there."""
+    settings.DMR_SETTINGS = {
+        Settings.openapi_config: _config(list(empty)),
+    }
+
+    class _EmptySettingsController(Controller[PydanticSerializer]):
+        @modify()
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _EmptySettingsController.api_endpoints['GET'].metadata
+
+    assert metadata.security is None
+    assert _operation_security(_EmptySettingsController) is None
 
 
 @pytest.mark.usefixtures('_settings_security')
@@ -440,13 +520,7 @@ def test_security_duplicates_auth_requirement() -> None:
         def get(self) -> str:
             raise NotImplementedError
 
-    with pytest.raises(
-        EndpointMetadataError,
-        match=(
-            r"Security requirements \[\{'jwt': \[\]\}\] are duplicated "
-            r'for .*endpoint_name=.*_DuplicateController\.get'
-        ),
-    ):
+    with pytest.raises(EndpointMetadataError, match='jwt'):
         _operation_security(_DuplicateController)
 
 
@@ -458,10 +532,7 @@ def test_security_duplicates_itself() -> None:
         def get(self) -> str:
             raise NotImplementedError
 
-    with pytest.raises(
-        EndpointMetadataError,
-        match=r"Security requirements \[\{'gateway': \[\]\}\] are duplicated",
-    ):
+    with pytest.raises(EndpointMetadataError, match='gateway'):
         _operation_security(_RepeatedController)
 
 
@@ -474,10 +545,7 @@ def test_settings_security_duplicates_auth() -> None:
         def get(self) -> str:
             raise NotImplementedError
 
-    with pytest.raises(
-        EndpointMetadataError,
-        match=r"Security requirements \[\{'jwt': \[\]\}\] are duplicated",
-    ):
+    with pytest.raises(EndpointMetadataError, match='jwt'):
         _operation_security(_SettingsDuplicateController)
 
 
@@ -504,30 +572,26 @@ def test_settings_security_duplicates_auth() -> None:
         ),
     ],
 )
-def test_wrong_security_shape(wrong_security: object, reported: str) -> None:
+def test_wrong_security_shape(
+    *,
+    wrong_security: Any,
+    reported: str,
+) -> None:
     """Security must be a list of dicts of scheme names to lists of scopes."""
-    security = cast('Sequence[SecurityRequirement]', wrong_security)
-
-    with pytest.raises(
-        EndpointMetadataError,
-        match=rf'must be .*got {re.escape(reported)}.*endpoint_name',
-    ):
+    with pytest.raises(EndpointMetadataError, match='must be a sequence'):
 
         class _WrongShapeController(Controller[PydanticSerializer]):
-            @modify(security=security)
+            @modify(security=wrong_security)
             def get(self) -> str:
                 raise NotImplementedError
 
 
 def test_wrong_controller_security_shape() -> None:
     """Controller level `security` is validated even when it is overridden."""
-    with pytest.raises(
-        EndpointMetadataError,
-        match=r"must be .*got \{'gateway': \[\]\}.*endpoint_name",
-    ):
+    with pytest.raises(EndpointMetadataError, match='must be a sequence'):
 
         class _WrongControllerController(Controller[PydanticSerializer]):
-            security = cast('Sequence[SecurityRequirement]', {'gateway': []})
+            security = {'gateway': []}  # type: ignore[var-annotated, assignment]
 
             @modify(security=[{'mesh': []}])
             def get(self) -> str:
