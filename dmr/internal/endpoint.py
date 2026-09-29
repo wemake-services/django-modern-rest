@@ -42,6 +42,7 @@ if TYPE_CHECKING:
         ExternalDocumentation,
         Link,
         Reference,
+        SecurityRequirement,
         Server,
     )
     from dmr.parsers import Parser
@@ -373,6 +374,18 @@ class ModifyEndpoint(Generic[_ExtrasT]):
             Set it to ``None`` to have no tags at all.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
+        security: A sequence of security requirement objects for this operation.
+            Overrides the controller value and ``security``
+            of :class:`dmr.openapi.OpenAPIConfig`.
+            Set it to ``None`` to disable ``security`` of this endpoint.
+            It is merged with the requirements generated from ``auth``,
+            but it never affects the runtime auth.
+            Useful to document external security mechanisms,
+            for example, the ones enforced by an HTTP proxy.
+            Used security schemes must be declared
+            as ``security_schemes`` in ``components``
+            of :class:`dmr.openapi.OpenAPIConfig`.
+            See :ref:`customizing_security_openapi`.
         external_docs: Additional external documentation for this operation.
         callbacks: A map of possible out-of band callbacks related to the
             parent operation. The key is a unique identifier
@@ -442,6 +455,7 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -478,6 +492,7 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -514,6 +529,7 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -553,6 +569,7 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -582,7 +599,7 @@ class ModifyEndpoint(Generic[_ExtrasT]):
                 parsers=parsers,
                 renderers=renderers,
                 validate_negotiation=validate_negotiation,
-                security=EMPTY,  # TODO
+                security=security,
                 auth=auth,
                 throttling=throttling,
                 summary=summary,
@@ -809,6 +826,18 @@ class ValidateEndpoint(Generic[_ExtrasT]):
             Set it to ``None`` to have no tags at all.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
+        security: A sequence of security requirement objects for this operation.
+            Overrides the controller value and ``security``
+            of :class:`dmr.openapi.OpenAPIConfig`.
+            Set it to ``None`` to disable ``security`` of this endpoint.
+            It is merged with the requirements generated from ``auth``,
+            but it never affects the runtime auth.
+            Useful to document external security mechanisms,
+            for example, the ones enforced by an HTTP proxy.
+            Used security schemes must be declared
+            as ``security_schemes`` in ``components``
+            of :class:`dmr.openapi.OpenAPIConfig`.
+            See :ref:`customizing_security_openapi`.
         external_docs: Additional external documentation for this operation.
         callbacks: A map of possible out-of band callbacks related to the
             parent operation. The key is a unique identifier for the Callback
@@ -872,6 +901,7 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -904,6 +934,7 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -936,6 +967,7 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -971,6 +1003,7 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
         deprecated: bool = False,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
         external_docs: ExternalDocumentation | Sentinel = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
@@ -995,7 +1028,7 @@ class ValidateEndpoint(Generic[_ExtrasT]):
                 parsers=parsers,
                 renderers=renderers,
                 validate_negotiation=validate_negotiation,
-                security=EMPTY,  # TODO
+                security=security,
                 auth=auth,
                 throttling=throttling,
                 summary=summary,

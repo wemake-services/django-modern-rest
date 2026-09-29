@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from dmr.parsers import Parser
     from dmr.renderers import Renderer
     from dmr.security import AsyncAuth, SyncAuth, SyncOrAsyncAuth
-    from dmr.semantic_schema import AuthProvider
+    from dmr.semantic_schema import SecurityProvider
     from dmr.throttling import AsyncThrottle, SyncOrAsyncThrottle, SyncThrottle
 
 try:
@@ -141,7 +141,9 @@ class SettingsDict(TypedDict, total=False):
     semantic_schema: bool
     semantic_responses: bool | Sentinel
     exclude_semantic_responses: Set[HTTPStatus]
-    semantic_schema_providers: Sequence['ResponseSpecProvider | AuthProvider']
+    semantic_schema_providers: Sequence[
+        'ResponseSpecProvider | SecurityProvider'
+    ]
     semantic_auth: bool | Sentinel
     exclude_semantic_auth: Set[str]
     validate_events: bool | Sentinel
