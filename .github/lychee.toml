@@ -62,4 +62,6 @@ exclude = [
   # Telegram terminates automated requests even when public channel links are
   # reachable in regular browsers.
   "^https://t\\.me/.*$",
+  # DeepWiki rate limits (HTTP 429) requests from CI runners.
+  "^https://deepwiki\\.com/.*$",
 ]
