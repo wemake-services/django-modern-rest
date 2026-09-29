@@ -44,8 +44,8 @@ def test_empty_throttle_disables_settings(
     *,
     throttling_def: Any,
 ) -> None:
-    """Empty `auth` on the endpoint disables all."""
-    settings.DMR_SETTINGS = {Settings.auth: [_SYNC_THROTTLE]}
+    """Empty `throttling` on the endpoint disables all."""
+    settings.DMR_SETTINGS = {Settings.throttling: [_SYNC_THROTTLE]}
 
     class _DisabledEndpointController(Controller[PydanticSerializer]):
         throttling = throttling_def
