@@ -28,7 +28,7 @@ def test_empty_throttle_disables_controller(
     class _DisabledEndpointController(Controller[PydanticSerializer]):
         throttling = [_SYNC_THROTTLE]
 
-        @modify(throttling=throttling_def)
+        @modify(throttling=throttling_def)  # type: ignore[untyped-decorator]
         def get(self) -> str:
             raise NotImplementedError
 
@@ -45,7 +45,7 @@ def test_empty_throttle_disables_settings(
     throttling_def: Any,
 ) -> None:
     """Empty `auth` on the endpoint disables all."""
-    settings.DMR_SETTTINGS = {Settings.auth: [_SYNC_THROTTLE]}
+    settings.DMR_SETTINGS = {Settings.auth: [_SYNC_THROTTLE]}
 
     class _DisabledEndpointController(Controller[PydanticSerializer]):
         throttling = throttling_def

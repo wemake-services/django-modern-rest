@@ -20,7 +20,7 @@ def test_empty_auth_disables_controller(
     class _DisabledEndpointController(Controller[PydanticSerializer]):
         auth = [HeaderJWTSyncAuth()]
 
-        @modify(auth=auth_def)
+        @modify(auth=auth_def)  # type: ignore[untyped-decorator]
         def get(self) -> str:
             raise NotImplementedError
 
@@ -37,7 +37,7 @@ def test_empty_auth_disables_settings(
     auth_def: Any,
 ) -> None:
     """Empty `auth` on the endpoint disables all."""
-    settings.DMR_SETTTINGS = {Settings.auth: [HeaderJWTSyncAuth()]}
+    settings.DMR_SETTINGS = {Settings.auth: [HeaderJWTSyncAuth()]}
 
     class _DisabledEndpointController(Controller[PydanticSerializer]):
         auth = auth_def
