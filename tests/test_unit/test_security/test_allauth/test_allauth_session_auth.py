@@ -5,7 +5,11 @@ from importlib import import_module
 
 import pytest
 from django.conf import LazySettings
-from django.contrib.auth import SESSION_KEY
+from django.contrib.auth import (
+    BACKEND_SESSION_KEY,
+    HASH_SESSION_KEY,
+    SESSION_KEY,
+)
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 
@@ -29,8 +33,13 @@ def make_session_token(
     def factory(user: User) -> str:
         engine = import_module(settings.SESSION_ENGINE)
         session = engine.SessionStore()
+        # This is how the auth happens:
+        session[BACKEND_SESSION_KEY] = (
+            'django.contrib.auth.backends.ModelBackend'
+        )
         # This is what `django-allauth` looks up the user by:
         session[SESSION_KEY] = str(user.pk)
+        session[HASH_SESSION_KEY] = user.get_session_auth_hash()
         session.save()
         # The default `SessionTokenStrategy` uses the session key as a token:
         token = session.session_key

@@ -266,13 +266,14 @@ def _inline(
         schema,
         resolution_context=defs,
     )
-    if not resolved.any_of and not resolved.one_of:
+    if not resolved.any_of and not resolved.one_of and not resolved.all_of:
         return resolved
     # Copy the resolved schema, so the component itself is not changed:
     return dataclasses.replace(
         resolved,
         any_of=_inline_members(resolved.any_of, defs, registry),
         one_of=_inline_members(resolved.one_of, defs, registry),
+        all_of=_inline_members(resolved.all_of, defs, registry),
     )
 
 
