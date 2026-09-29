@@ -503,15 +503,23 @@ def test_security_can_reuse_auth_schemes() -> None:
     assert set(schema['components']['securitySchemes']) == {'main', 'extra'}
 
 
-def test_security_duplicates_auth_requirement() -> None:
+@pytest.mark.parametrize(
+    'security_def',
+    [
+        [{'jwt': []}],
+        [{'jwt': []}, {'jwt': []}],
+        [{'jwt': ['claim1']}, {'jwt': ['claim2']}],
+    ],
+)
+def test_security_duplicates_auth_requirement(*, security_def: Any) -> None:
     """Requirements from `auth` cannot be repeated in `security`."""
 
     class _DuplicateController(Controller[PydanticSerializer]):
-        @modify(auth=[HeaderJWTSyncAuth()], security=[{'jwt': []}])
+        @modify(auth=[HeaderJWTSyncAuth()], security=security_def)
         def get(self) -> str:
             raise NotImplementedError
 
-    with pytest.raises(EndpointMetadataError, match='jwt'):
+    with pytest.raises(EndpointMetadataError, match=r"\{'jwt'\}"):
         _operation_security(_DuplicateController)
 
 

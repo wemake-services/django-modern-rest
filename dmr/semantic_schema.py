@@ -136,16 +136,13 @@ class OrSecurityRequirementMerger(SecurityRequirementMerger):
         metadata: EndpointMetadata,
         requirements: list['SecurityRequirement'],
     ) -> None:
-        # Requirements are dicts, so they are not hashable,
-        # but there are usually just a few of them:
-        seen: list[SecurityRequirement] = []
-        duplicates: list[SecurityRequirement] = []
+        seen: set[str] = set()
+        duplicates: set[str] = set()
         for requirement in requirements:
-            if requirement in seen:
-                if requirement not in duplicates:
-                    duplicates.append(requirement)
-            else:
-                seen.append(requirement)
+            for req in requirement:
+                if req in seen:
+                    duplicates.add(req)
+                seen.add(req)
         if duplicates:
             raise EndpointMetadataError(
                 f'Security requirements {duplicates!r} are duplicated '
