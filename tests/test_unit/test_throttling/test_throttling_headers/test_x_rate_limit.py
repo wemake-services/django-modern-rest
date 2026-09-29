@@ -9,7 +9,6 @@ from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
 from dmr.throttling import Rate, SyncThrottle
-from dmr.throttling.backends import SyncDjangoCache
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
 
 
@@ -20,7 +19,6 @@ class _SyncNoHeadersController(Controller[PydanticSerializer]):
                 1,
                 Rate.second,
                 response_headers=(),
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
     )
@@ -65,7 +63,6 @@ class _SyncAllHeadersController(Controller[PydanticSerializer]):
                     XRateLimit(),
                     RateLimitIETFDraft(),
                 ],
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
     )

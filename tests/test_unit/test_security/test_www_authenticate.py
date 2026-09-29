@@ -1,6 +1,6 @@
 import json
 from http import HTTPStatus
-from typing import Self, TypeAlias, final
+from typing import Final, Self, TypeAlias, final
 
 import pytest
 from django.conf import LazySettings
@@ -44,7 +44,7 @@ from dmr.test import DMRRequestFactory
 
 _AuthFactory: TypeAlias = type[SyncAuth] | type[AsyncAuth]
 
-_BASIC_CHALLENGE = 'Basic realm="api", charset="UTF-8"'
+_BASIC_CHALLENGE: Final = 'Basic realm="api", charset="UTF-8"'
 
 
 class _RejectingBasicAuth(HttpBasicSyncAuth):

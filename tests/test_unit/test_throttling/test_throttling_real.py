@@ -10,7 +10,6 @@ from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory, assert_throttled
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
-from dmr.throttling.backends import AsyncDjangoCache, SyncDjangoCache
 
 
 class _SyncEndpointController(Controller[PydanticFastSerializer]):
@@ -19,7 +18,6 @@ class _SyncEndpointController(Controller[PydanticFastSerializer]):
             SyncThrottle(
                 1,
                 Rate.hour,
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
     )
@@ -64,7 +62,6 @@ class _AsyncController(Controller[PydanticFastSerializer]):
         AsyncThrottle(
             1,
             Rate.hour,
-            backend=AsyncDjangoCache(allow_unsafe_cache=None),
         ),
     ]
 

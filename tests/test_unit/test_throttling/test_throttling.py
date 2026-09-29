@@ -54,7 +54,7 @@ def test_throttle_sync_per_endpoint(
                 SyncThrottle(
                     1,
                     Rate.second,
-                    backend=SyncDjangoCache(allow_unsafe_cache=None),
+                    backend=SyncDjangoCache(allow_unsafe_cache=True),
                 ),
             ],
         )
@@ -67,7 +67,7 @@ def test_throttle_sync_per_endpoint(
                 SyncThrottle(
                     1,
                     Rate.second,
-                    backend=SyncDjangoCache(allow_unsafe_cache=None),
+                    backend=SyncDjangoCache(allow_unsafe_cache=True),
                 ),
             ],
         )
@@ -136,7 +136,7 @@ async def test_throttle_async_per_controller(
             AsyncThrottle(
                 1,
                 Rate.second,
-                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+                backend=AsyncDjangoCache(allow_unsafe_cache=True),
             ),
         ]
 
@@ -198,7 +198,6 @@ def test_throttle_settings_override(settings: LazySettings) -> None:
             AsyncThrottle(
                 1,
                 Rate.second,
-                backend=AsyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
     }
@@ -218,12 +217,10 @@ def test_throttle_settings_override(settings: LazySettings) -> None:
             AsyncThrottle(
                 10,
                 Rate.minute,
-                backend=AsyncDjangoCache(allow_unsafe_cache=None),
             ),
             AsyncThrottle(
                 10,
                 Rate.hour,
-                backend=AsyncDjangoCache(allow_unsafe_cache=None),
             ),
         ]
 
@@ -252,7 +249,7 @@ async def test_throttle_async_per_settings(
             AsyncThrottle(
                 _ATTEMPTS,
                 Rate.second,
-                backend=AsyncDjangoCache(allow_unsafe_cache=None),
+                backend=AsyncDjangoCache(allow_unsafe_cache=True),
             ),
         ],
     }
@@ -318,7 +315,7 @@ def test_throttle_sync_multiple_sources(
             SyncThrottle(
                 _ATTEMPTS,
                 Rate.second,
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
+                backend=SyncDjangoCache(allow_unsafe_cache=True),
             ),
         ],
     }
@@ -330,12 +327,12 @@ def test_throttle_sync_multiple_sources(
             SyncThrottle(
                 10,
                 Rate.minute,
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
+                backend=SyncDjangoCache(allow_unsafe_cache=True),
             ),
             SyncThrottle(
                 10,
                 Rate.hour,
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
+                backend=SyncDjangoCache(allow_unsafe_cache=True),
             ),
         ]
 
@@ -353,12 +350,12 @@ def test_throttle_sync_multiple_sources(
             SyncThrottle(
                 10,
                 Rate.minute,
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
+                backend=SyncDjangoCache(allow_unsafe_cache=True),
             ),
             SyncThrottle(
                 10,
                 Rate.hour,
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
+                backend=SyncDjangoCache(allow_unsafe_cache=True),
             ),
             # Merging is explicit:
             *resolve_setting(Settings.throttling),
@@ -419,7 +416,7 @@ def test_throttle_sync_rates(
             SyncThrottle(
                 1,
                 rate,
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
+                backend=SyncDjangoCache(allow_unsafe_cache=True),
             ),
         ]
 
@@ -472,7 +469,7 @@ def test_throttle_full_cache_key_is_hashed(
         5,
         Rate.minute,
         cache_key=RemoteAddr(name='per-ip'),
-        backend=SyncDjangoCache(allow_unsafe_cache=None),
+        backend=SyncDjangoCache(allow_unsafe_cache=True),
     )
 
     class _SyncController(Controller[PydanticSerializer]):
@@ -514,7 +511,7 @@ def test_throttle_full_cache_key_is_unique(
         5,
         Rate.minute,
         cache_key=RemoteAddr(name='per-ip'),
-        backend=SyncDjangoCache(allow_unsafe_cache=None),
+        backend=SyncDjangoCache(allow_unsafe_cache=True),
     )
 
     class _SyncController(Controller[PydanticSerializer]):

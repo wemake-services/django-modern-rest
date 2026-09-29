@@ -31,7 +31,7 @@ class UnsafeCacheBackendWarning(UserWarning):
 @dataclasses.dataclass(slots=True, frozen=True)
 class _DjangoCache:
     cache_name: str = DEFAULT_CACHE_ALIAS
-    allow_unsafe_cache: bool | None = True
+    allow_unsafe_cache: bool | None = None
     _cache: BaseCache = dataclasses.field(init=False)
 
     def __post_init__(self) -> None:
@@ -48,8 +48,10 @@ class _DjangoCache:
 
         .. versionadded:: 0.16.0
         """
+        from django.conf import settings  # noqa: PLC0415
+
         allow_cache = self.allow_unsafe_cache
-        if allow_cache is None or not isinstance(
+        if allow_cache is True or not isinstance(
             self._cache,
             (locmem.LocMemCache, dummy.DummyCache),
         ):
@@ -62,8 +64,9 @@ class _DjangoCache:
             'counters are NOT shared between processes/instances. '
             'Use Redis or Memcached backends instead.'
         )
-        if allow_cache:
-            warnings.warn(msg, category=UnsafeCacheBackendWarning, stacklevel=1)
+        if allow_cache is None:
+            if not settings.DEBUG:
+                warnings.warn(msg, category=UnsafeCacheBackendWarning)  # noqa: B028
         else:
             raise EndpointMetadataError(msg)
 
@@ -93,10 +96,11 @@ class SyncDjangoCache(_DjangoCache, BaseThrottleSyncBackend):
     Unsafe cache backends (``LocMemCache``, ``DummyCache``) do not share
     the throttling state between processes. Use ``allow_unsafe_cache``
     to control what happens when such a backend is detected:
-    ``True`` (default) emits
-    :class:`~dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning`,
-    ``False`` raises :exc:`~dmr.exceptions.EndpointMetadataError`,
-    and ``None`` disables the check.
+    ``None`` (default) emits
+    :class:`~dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning`
+    when ``settings.DEBUG`` is ``False`` and stays silent otherwise,
+    ``False`` always raises :exc:`~dmr.exceptions.EndpointMetadataError`,
+    and ``True`` disables the check.
 
     .. seealso::
 
@@ -168,10 +172,11 @@ class AsyncDjangoCache(_DjangoCache, BaseThrottleAsyncBackend):
     Unsafe cache backends (``LocMemCache``, ``DummyCache``) do not share
     the throttling state between processes. Use ``allow_unsafe_cache``
     to control what happens when such a backend is detected:
-    ``True`` (default) emits
-    :class:`~dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning`,
-    ``False`` raises :exc:`~dmr.exceptions.EndpointMetadataError`,
-    and ``None`` disables the check.
+    ``None`` (default) emits
+    :class:`~dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning`
+    when ``settings.DEBUG`` is ``False`` and stays silent otherwise,
+    ``False`` always raises :exc:`~dmr.exceptions.EndpointMetadataError`,
+    and ``True`` disables the check.
 
     .. seealso::
 

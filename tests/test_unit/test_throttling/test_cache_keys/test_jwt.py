@@ -13,7 +13,6 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.jwt import JWToken
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
-from dmr.throttling.backends import AsyncDjangoCache, SyncDjangoCache
 from dmr.throttling.cache_keys import JwtToken
 
 
@@ -23,7 +22,6 @@ class _SyncController(Controller[PydanticSerializer]):
             1,
             Rate.second,
             cache_key=JwtToken(),
-            backend=SyncDjangoCache(allow_unsafe_cache=None),
         ),
     ]
 
@@ -37,7 +35,6 @@ class _AsyncController(Controller[PydanticSerializer]):
             1,
             Rate.second,
             cache_key=JwtToken(),
-            backend=AsyncDjangoCache(allow_unsafe_cache=None),
         ),
     ]
 

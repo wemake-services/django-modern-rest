@@ -1,6 +1,6 @@
 import json
 from http import HTTPStatus
-from typing import Any, Self
+from typing import Any, Final, Self
 
 import pytest
 from django.conf import LazySettings
@@ -21,12 +21,9 @@ from dmr.settings import (
 )
 from dmr.test import DMRRequestFactory
 from dmr.throttling import Rate, SyncThrottle
+from dmr.throttling.backends import SyncDjangoCache
 from dmr.types import EMPTY
 from dmr.validation import SettingsValidator
-
-pytestmark = pytest.mark.filterwarnings(
-    'ignore::dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning',
-)
 
 
 class _SettingsAuth(HttpBasicSyncAuth):
@@ -49,15 +46,31 @@ class _EndpointAuth(_SettingsAuth):
     """Auth type to be used on the endpoint level."""
 
 
-_SETTINGS_AUTH = _SettingsAuth()
-_CONTROLLER_AUTH = _ControllerAuth()
-_ENDPOINT_AUTH = _EndpointAuth()
+_SETTINGS_AUTH: Final = _SettingsAuth()
+_CONTROLLER_AUTH: Final = _ControllerAuth()
+_ENDPOINT_AUTH: Final = _EndpointAuth()
 
-_SETTINGS_THROTTLE = SyncThrottle(1, Rate.second)
-_CONTROLLER_THROTTLING = (SyncThrottle(2, Rate.minute),)
-_SETTINGS_RESPONSE = ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED)
-_CONTROLLER_RESPONSE = ResponseSpec(str, status_code=HTTPStatus.NOT_FOUND)
-_ENDPOINT_RESPONSE = ResponseSpec(bool, status_code=HTTPStatus.CONFLICT)
+_SETTINGS_THROTTLE: Final = SyncThrottle(
+    1,
+    Rate.second,
+    backend=SyncDjangoCache(allow_unsafe_cache=True),
+)
+_CONTROLLER_THROTTLING: Final = (
+    SyncThrottle(
+        2,
+        Rate.minute,
+        backend=SyncDjangoCache(allow_unsafe_cache=True),
+    ),
+)
+_SETTINGS_RESPONSE: Final = ResponseSpec(
+    int,
+    status_code=HTTPStatus.PAYMENT_REQUIRED,
+)
+_CONTROLLER_RESPONSE: Final = ResponseSpec(
+    str,
+    status_code=HTTPStatus.NOT_FOUND,
+)
+_ENDPOINT_RESPONSE: Final = ResponseSpec(bool, status_code=HTTPStatus.CONFLICT)
 
 
 @pytest.fixture(autouse=True)
@@ -97,7 +110,11 @@ def test_controller_overrides_settings() -> None:
 
 def test_endpoint_overrides_controller() -> None:
     """Ensure that endpoint values replace controller and settings values."""
-    endpoint_throttle = SyncThrottle(3, Rate.hour)
+    endpoint_throttle = SyncThrottle(
+        3,
+        Rate.hour,
+        backend=SyncDjangoCache(allow_unsafe_cache=True),
+    )
 
     class _Controller(Controller[PydanticSerializer]):
         auth = (_CONTROLLER_AUTH,)
