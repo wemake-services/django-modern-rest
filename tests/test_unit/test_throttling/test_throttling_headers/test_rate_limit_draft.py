@@ -9,7 +9,6 @@ from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
 from dmr.throttling import Rate, SyncThrottle
-from dmr.throttling.backends import SyncDjangoCache
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft
 
@@ -20,7 +19,6 @@ class _SyncSeveralController(Controller[PydanticSerializer]):
             5,
             Rate.minute,
             cache_key=RemoteAddr(name='test'),
-            backend=SyncDjangoCache(allow_unsafe_cache=None),
         ),
     ]
 
@@ -32,7 +30,6 @@ class _SyncSeveralController(Controller[PydanticSerializer]):
                 response_headers=[
                     RateLimitIETFDraft(),
                 ],
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
             # Endpoint throttling replaces the controller one,
             # so we explicitly reuse it:

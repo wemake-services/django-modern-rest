@@ -96,7 +96,10 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   and `EndpointMetadata.throttling_allow_unsafe_cache`.
   Use `allow_unsafe_cache` parameter of `SyncDjangoCache`
   and `AsyncDjangoCache` instead, like
-  `SyncDjangoCache(allow_unsafe_cache=False)`, #1611
+  `SyncDjangoCache(allow_unsafe_cache=False)`. `None` (default) now emits
+  `UnsafeCacheBackendWarning` only when `settings.DEBUG` is `False`,
+  `True` now disables the check completely,
+  `False` still raises `EndpointMetadataError`, #1611
 - Removed `NewCookie.as_dict` method, #1456
 - `NewCookie.secure`, `CookieSpec.secure`, `NewCookie.httponly`,
   `CookieSpec.httponly` can no longer be `None`, use `False` instead, #1456

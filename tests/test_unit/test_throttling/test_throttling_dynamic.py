@@ -40,20 +40,17 @@ _THROTTLE: Final = SyncOrAsyncThrottle(
     SyncThrottle(
         _ATTEMPTS,
         Rate.second,
-        backend=SyncDjangoCache(allow_unsafe_cache=None),
+        backend=SyncDjangoCache(allow_unsafe_cache=True),
     ),
     AsyncThrottle(
         _ATTEMPTS,
         Rate.second,
-        backend=AsyncDjangoCache(allow_unsafe_cache=None),
+        backend=AsyncDjangoCache(allow_unsafe_cache=True),
     ),
 )
 
 
 @pytest.mark.parametrize('serializer', serializers)
-@pytest.mark.filterwarnings(
-    'ignore::dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning',
-)
 def test_sync_or_async_throttle_settings_sync(
     dmr_rf: DMRRequestFactory,
     freezer: FrozenDateTimeFactory,
@@ -114,9 +111,6 @@ def test_sync_or_async_throttle_settings_sync(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('serializer', serializers)
-@pytest.mark.filterwarnings(
-    'ignore::dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning',
-)
 async def test_sync_or_async_throttle_settings_async(
     dmr_async_rf: DMRAsyncRequestFactory,
     freezer: FrozenDateTimeFactory,

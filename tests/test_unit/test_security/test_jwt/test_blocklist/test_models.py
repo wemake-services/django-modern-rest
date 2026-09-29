@@ -1,13 +1,14 @@
 import datetime as dt
 import secrets
+from typing import Final
 
 import pytest
 from django.contrib.auth.models import User
 
 from dmr.security.jwt.blocklist.models import BlocklistedJWToken
 
-_JTI = secrets.token_hex()
-_EXPIRES_AT = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
+_JTI: Final = secrets.token_hex()
+_EXPIRES_AT: Final = dt.datetime.now(dt.UTC) + dt.timedelta(days=1)
 
 
 @pytest.fixture

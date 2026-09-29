@@ -1,3 +1,5 @@
+from typing import Final
+
 from django.urls import reverse_lazy
 
 from dmr.plugins.pydantic import PydanticFastSerializer
@@ -6,7 +8,7 @@ from dmr.security.jwt import concrete_views
 
 #: The refresh cookie is only sent to the refresh endpoint,
 #: `reverse_lazy` keeps this in sync with the urls below:
-REFRESH_COOKIE_PATH = reverse_lazy('api:jwt_refresh')
+REFRESH_COOKIE_PATH: Final = reverse_lazy('api:jwt_refresh')
 
 router = Router(
     'api/',

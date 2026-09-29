@@ -25,7 +25,6 @@ def test_throttle_sync_mix() -> None:
                 AsyncThrottle(
                     1,
                     Rate.second,
-                    backend=AsyncDjangoCache(allow_unsafe_cache=None),
                 ),
             )
 
@@ -44,7 +43,6 @@ def test_throttle_async_mix() -> None:
                 SyncThrottle(
                     1,
                     Rate.second,
-                    backend=SyncDjangoCache(allow_unsafe_cache=None),
                 ),
             )
 
@@ -65,12 +63,10 @@ def test_sync_or_async_throttle_not_allowed_at_controller_level(  # noqa: WPS118
                     SyncThrottle(
                         1,
                         Rate.second,
-                        backend=SyncDjangoCache(allow_unsafe_cache=None),
                     ),
                     AsyncThrottle(
                         1,
                         Rate.second,
-                        backend=AsyncDjangoCache(allow_unsafe_cache=None),
                     ),
                 ),
             )
@@ -87,12 +83,10 @@ def test_sync_or_async_throttle_not_allowed_at_endpoint_level(  # noqa: WPS118
             SyncThrottle(
                 1,
                 Rate.second,
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
             AsyncThrottle(
                 1,
                 Rate.second,
-                backend=AsyncDjangoCache(allow_unsafe_cache=None),
             ),
         ),
     ]
@@ -106,9 +100,6 @@ def test_sync_or_async_throttle_not_allowed_at_endpoint_level(  # noqa: WPS118
                 raise NotImplementedError
 
 
-@pytest.mark.filterwarnings(
-    'ignore::dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning',
-)
 def test_same_instance_reused_for_sync_and_async(
     settings: LazySettings,
 ) -> None:
@@ -116,12 +107,12 @@ def test_same_instance_reused_for_sync_and_async(
     sync_throttle = SyncThrottle(
         1,
         Rate.second,
-        backend=SyncDjangoCache(allow_unsafe_cache=None),
+        backend=SyncDjangoCache(allow_unsafe_cache=True),
     )
     async_throttle = AsyncThrottle(
         1,
         Rate.second,
-        backend=AsyncDjangoCache(allow_unsafe_cache=None),
+        backend=AsyncDjangoCache(allow_unsafe_cache=True),
     )
     instance = SyncOrAsyncThrottle(sync_throttle, async_throttle)
     settings.DMR_SETTINGS = {

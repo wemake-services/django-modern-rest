@@ -8,13 +8,11 @@ from dmr import Controller, modify
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.settings import Settings
 from dmr.throttling import Rate, SyncThrottle
-from dmr.throttling.backends import SyncDjangoCache
 
 # We don't care about this warning here.
 _SYNC_THROTTLE: Final = SyncThrottle(
     1,
     Rate.second,
-    backend=SyncDjangoCache(allow_unsafe_cache=None),
 )
 
 

@@ -231,7 +231,10 @@ Unsafe backend warning
 
 By default, ``django-modern-rest`` emits
 a :class:`~dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning`
-warning when detecting an unsafe cache backend for throttling.
+warning when detecting an unsafe cache backend for throttling
+and ``settings.DEBUG`` is ``False``.
+Unsafe backends are fine for local development,
+so no warning is emitted when ``settings.DEBUG`` is ``True``.
 
 You can configure this check with the ``allow_unsafe_cache``
 parameter of :class:`~dmr.throttling.backends.SyncDjangoCache`
@@ -250,10 +253,11 @@ and :class:`~dmr.throttling.backends.AsyncDjangoCache`:
 
 When ``allow_unsafe_cache`` is set to ``False``,
 we raise a :exc:`dmr.exceptions.EndpointMetadataError`
-exception instead of a warning. This will ensure the maximum safety.
+exception instead of a warning, regardless of ``settings.DEBUG``.
+This will ensure the maximum safety.
 
 To suppress this check completely and run throttling at your own risk,
-set ``allow_unsafe_cache`` to ``None``.
+set ``allow_unsafe_cache`` to ``True``.
 
 
 Algorithms

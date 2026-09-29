@@ -1,3 +1,5 @@
+from typing import Final
+
 import pydantic
 
 from dmr import Body, Controller, Query
@@ -15,7 +17,7 @@ class Pagination(pydantic.BaseModel):
     page: int = 1
 
 
-DEFAULT_PAGINATION = Pagination()
+DEFAULT_PAGINATION: Final = Pagination()
 
 
 class ProductController(Controller[PydanticSerializer]):
