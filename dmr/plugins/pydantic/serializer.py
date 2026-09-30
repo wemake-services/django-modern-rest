@@ -251,8 +251,8 @@ class PydanticSerializer(BaseSerializer):  # noqa: WPS214
     @classmethod
     def validate(
         cls,
-        metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
+        metadata: 'EndpointMetadata',
     ) -> None:
         """
         Validate that :data:`~dmr.components.BodyFast` is not used.
