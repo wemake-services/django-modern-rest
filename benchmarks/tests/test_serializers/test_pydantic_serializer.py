@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 import uuid
-from typing import Final
+from typing import Any, Final
 
 import pydantic
 from faker import Faker
@@ -67,7 +67,7 @@ def test_pyndatic_with_parser(
             body,
             parser=parser,
             request=request,
-            model=list[User],
+            model=Any,
         )
 
 

@@ -18,6 +18,8 @@ class MsgpackParser(Parser):
     __slots__ = ()
 
     content_type = 'application/msgpack'
+
+    #: Default strictness of the parser.
     strict: ClassVar[bool] = False
 
     @override
@@ -44,7 +46,9 @@ class MsgpackParser(Parser):
 
         Raises:
             DataParsingError: If error decoding ``obj``.
-            msgspec.
+            msgspec.ValidationError: When *model* is not ``Any``
+                and validation fails, like with
+                :data:`~dmr.components.BodyFast`.
 
         """
         try:

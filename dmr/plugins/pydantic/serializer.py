@@ -196,6 +196,8 @@ class PydanticSerializer(BaseSerializer):  # noqa: WPS214
             buffer,
             cls.deserialize_hook,
             request=request,
+            # Note: passing real `pydantic` model to `msgspec` parser
+            # is not supported, because it is SLOWER than using 2-phase parsing.
             model=model,
         )
 

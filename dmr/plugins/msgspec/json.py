@@ -19,6 +19,8 @@ class MsgspecJsonParser(Parser):
     __slots__ = ()
 
     content_type = 'application/json'
+
+    #: Default strictness of the parser.
     strict: ClassVar[bool] = False
 
     @override
