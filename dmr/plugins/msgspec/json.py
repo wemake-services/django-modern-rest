@@ -49,7 +49,7 @@ class MsgspecJsonParser(Parser):
             DataParsingError: If error decoding *to_deserialize*.
             msgspec.ValidationError: When *model* is not ``Any``
                 and validation fails, like with
-                :data:`~dmr.components.BodyFast`.
+                :data:`~dmr.plugins.msgspec.BodyMsgspec`.
 
         """
         try:

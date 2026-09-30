@@ -488,7 +488,9 @@ class BodyComponent(ComponentParser):
     Args:
         fast_mode: Whether to parse and validate the body directly
             into its model, before all other components.
-            Use :data:`BodyFast` alias for that.
+            Plugins that support it provide their own aliases,
+            like :data:`~dmr.plugins.msgspec.BodyMsgspec`,
+            and validate that their serializer is used.
             See :ref:`fast-body-component` to learn more.
 
     .. versionchanged:: 0.16.0
@@ -652,17 +654,6 @@ class BodyComponent(ComponentParser):
 
 Body: TypeAlias = Annotated[_BodyT, BodyComponent()]
 """Annotated alias for parsing requests bodies."""
-
-BodyFast: TypeAlias = Annotated[_BodyT, BodyComponent(fast_mode=True)]
-"""
-Annotated alias for parsing requests bodies directly into models.
-
-It is a drop-in replacement for :data:`Body`,
-which is faster, but has some limitations.
-See :ref:`fast-body-component` to learn more.
-
-.. versionadded:: 0.16.0
-"""
 
 
 class HeadersComponent(ComponentParser):

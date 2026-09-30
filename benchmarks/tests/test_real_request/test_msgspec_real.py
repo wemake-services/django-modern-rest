@@ -7,8 +7,9 @@ from typing import Final
 import msgspec
 from pytest_codspeed import BenchmarkFixture
 
-from dmr import Body, BodyFast, Controller
+from dmr import Body, Controller
 from dmr.plugins.msgspec import (
+    BodyMsgspec,
     MsgspecSerializer,
 )
 from dmr.test import DMRRequestFactory
@@ -52,11 +53,6 @@ class _MsgspecController(Controller[MsgspecSerializer]):
         return len(parsed_body)
 
 
-class _MsgspecFastController(Controller[MsgspecSerializer]):
-    def post(self, parsed_body: BodyFast[list[User]]) -> int:
-        return len(parsed_body)
-
-
 def test_msgspec_parse_and_validate(
     benchmark: BenchmarkFixture,
     dmr_rf: DMRRequestFactory,
@@ -74,6 +70,11 @@ def test_msgspec_parse_and_validate(
     def factory() -> None:
         for _ in range(100):
             controller.dispatch(request)
+
+
+class _MsgspecFastController(Controller[MsgspecSerializer]):
+    def post(self, parsed_body: BodyMsgspec[list[User]]) -> int:
+        return len(parsed_body)
 
 
 def test_msgspec_fast_parse_and_validate(

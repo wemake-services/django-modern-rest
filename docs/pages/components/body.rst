@@ -146,14 +146,14 @@ See :ref:`component-defaults` to learn more.
 
 .. _fast-body-component:
 
-Fast body parsing
------------------
+Fast body parsing with msgspec
+------------------------------
 
 .. versionadded:: 0.16.0
 
 .. tip::
 
-  ``BodyFast`` is generally x1.5 faster than ``Body``.
+  ``BodyMsgspec`` is generally x1.6 faster than ``Body``.
 
 By default, ``Body`` is parsed in two steps:
 
@@ -166,31 +166,26 @@ By default, ``Body`` is parsed in two steps:
    see :ref:`serializer-context`
 
 This is flexible, but the intermediate python objects cost time.
-But, we can add the shape in advance.
-:data:`~dmr.components.BodyFast` does exactly that: it decodes
-the request body directly into its model.
-It is a drop-in replacement for ``Body``:
+But, ``msgspec`` can decode bytes directly into a model,
+when it knows the shape in advance. It gives a lot of speed: for example,
+``msgspec`` skips unknown fields and does not parse them from the body payload.
+It is a drop-in replacement for ``Body`` when using
+:class:`~dmr.plugins.msgspec.MsgspecSerializer`:
 
-.. tabs::
-
-  .. tab:: msgspec
-
-    .. literalinclude:: /examples/components/body_fast_msgspec.py
-      :caption: views.py
-      :language: python
-      :linenos:
-      :emphasize-lines: 13
-
-  .. tab:: pydantic
-
-    .. literalinclude:: /examples/components/body_fast_pydantic.py
-      :caption: views.py
-      :language: python
-      :linenos:
-      :emphasize-lines: 13
+.. literalinclude:: /examples/components/body_fast_msgspec.py
+  :caption: views.py
+  :language: python
+  :linenos:
+  :emphasize-lines: 12
 
 What is different from ``Body``?
 
+- Only :class:`~dmr.plugins.msgspec.MsgspecSerializer` is supported,
+  other serializers raise :exc:`~dmr.exceptions.EndpointMetadataError`
+  during the import time.
+  ``pydantic`` cannot benefit from this: its models can't be decoded
+  by ``msgspec``, and validating them from within the decoder
+  is slower than the regular ``Body`` in all measured cases
 - The body is validated on its own, before all other components
   are validated together. When the body is invalid, other components
   are not validated at all: the error response only contains
@@ -198,9 +193,8 @@ What is different from ``Body``?
   are also invalid
 - Error locations change: the body is validated as the root object,
   not as a part of the whole request, so the ``parsed_body`` prefix
-  is gone. ``Body`` reports ``$.parsed_body.age`` for ``msgspec``
-  and ``["parsed_body", "age"]`` for ``pydantic``,
-  ``BodyFast`` reports ``$.age`` and ``["age"]`` for the same error.
+  is gone. ``Body`` reports ``$.parsed_body.age``,
+  ``BodyMsgspec`` reports ``$.age`` for the same error.
   Top level errors have no location at all
 - Invalid bytes, like malformed ``json``, are still reported
   as parsing errors, exactly like for ``Body``
@@ -213,29 +207,21 @@ What is different from ``Body``?
 
 .. tip::
 
-  ``BodyFast`` works best if there are no other components.
+  ``BodyMsgspec`` works best if there are no other components.
 
 Everything else works the same: :ref:`defaults <component-defaults>`,
 :ref:`conditional types <conditional-types>`, OpenAPI schema generation,
 and :doc:`response validation <../validation>`.
+The OpenAPI schema is always the same for ``Body`` and ``BodyMsgspec``.
 
 .. note::
 
-  Not all combinations of serializers and parsers really support ``BodyFast``.
-  :class:`~dmr.plugins.msgspec.MsgspecJsonParser`,
-  :class:`~dmr.plugins.msgspec.MsgpackParser`, and
-  :class:`~dmr.plugins.pydantic.PydanticFastSerializer`
-  do support this mode. Other parsers, like :class:`~dmr.parsers.JsonParser`,
-  ignore the model and work the default way: the body is validated
-  together with all other components, exactly like with ``Body``,
-  including the ``parsed_body`` prefix in error locations.
-  There's no speedup in this case, but nothing breaks either.
+  Only parsers that decode into models really support ``BodyMsgspec``:
+  :class:`~dmr.plugins.msgspec.MsgspecJsonParser`
+  and :class:`~dmr.plugins.msgspec.MsgpackParser`.
 
-  :class:`~dmr.plugins.pydantic.PydanticSerializer` does not support
-  ``BodyFast`` at all. Because it is actually slower
-  to do in all measured cases.
-  Serializers check that in :meth:`~dmr.serializer.BaseSerializer.validate`
-  during the import time, so you won't be able to create an unsupported case.
+  Custom parsers can also learn to respect the model,
+  but it needs a support from the core library's serializer side.
 
 
 Customizing the OpenAPI metadata for Body
@@ -349,8 +335,6 @@ API Reference
 -------------
 
 .. autodata:: dmr.components.Body
-
-.. autodata:: dmr.components.BodyFast
 
 .. autoclass:: dmr.components.BodyComponent
   :members:

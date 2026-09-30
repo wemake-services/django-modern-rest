@@ -18,7 +18,6 @@ from django.http import HttpRequest
 from pydantic.config import ExtraValues
 from typing_extensions import TypedDict, override
 
-from dmr.components import BodyComponent
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.errors import ErrorDetail, ErrorType
 from dmr.exceptions import (
@@ -103,7 +102,7 @@ class PydanticEndpointOptimizer(BaseEndpointOptimizer):
         _get_cached_type_adapter(Any)
 
 
-class PydanticSerializer(BaseSerializer):  # noqa: WPS214
+class PydanticSerializer(BaseSerializer):
     """
     Serialize and deserialize objects using pydantic.
 
@@ -248,31 +247,6 @@ class PydanticSerializer(BaseSerializer):  # noqa: WPS214
             strict=strict,
             **cls.to_model_kwargs,
         )
-
-    @override
-    @classmethod
-    def validate(
-        cls,
-        controller_cls: type['Controller[BaseSerializer]'],
-        metadata: 'EndpointMetadata',
-    ) -> None:
-        """
-        Validate that :data:`~dmr.components.BodyFast` is not used.
-
-        Parsers cannot build ``pydantic`` models on their own,
-        so this serializer cannot parse bodies directly into models.
-        Use :class:`PydanticFastSerializer` for that.
-
-        .. versionadded:: 0.16.0
-
-        """
-        for spec in metadata.component_parsers:
-            if isinstance(spec.parser, BodyComponent) and spec.parser.fast_mode:
-                raise EndpointMetadataError(
-                    f'{metadata.endpoint_name!r} uses `BodyFast`, '
-                    f'but {cls.__qualname__} cannot parse bodies directly '
-                    'into models, use `Body` or `PydanticFastSerializer`',
-                )
 
     @override
     @classmethod
@@ -421,7 +395,7 @@ class PydanticFastSerializer(PydanticSerializer):
         *parser* parameter is always ignored.
         """
         try:
-            return _get_cached_type_adapter(model).validate_json(
+            return _get_cached_type_adapter(Any).validate_json(
                 buffer,
                 **cls.to_model_kwargs,
             )
@@ -432,15 +406,7 @@ class PydanticFastSerializer(PydanticSerializer):
             # a penalty for all positive cases.
             if buffer == b'':
                 return None
-            # Next, we can run this serializer in two modes: with `Body`
-            # and with `FastBody`. In the second case, `model` will be
-            # the actual type, so we only convert `json` errors to data parsing,
-            # while keeping structured errors as `ValidationError` for later.
-            errors = exc.errors()
-            if errors[0]['type'] == 'json_invalid':
-                # Invalid `json` bytes, not a model validation error:
-                raise DataParsingError(errors[0]['msg']) from exc
-            raise
+            raise DataParsingError(exc.errors()[0]['msg']) from exc
 
     @classmethod
     @override
@@ -451,9 +417,6 @@ class PydanticFastSerializer(PydanticSerializer):
     ) -> None:
         """
         Validate that only ``json`` parsers and renderers are used.
-
-        :data:`~dmr.components.BodyFast` is supported,
-        unlike in :class:`PydanticSerializer`.
 
         .. versionchanged:: 0.16.0
             Replaces ``is_supported`` method.

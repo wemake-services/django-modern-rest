@@ -7,7 +7,7 @@ from typing import Final
 import pydantic
 from pytest_codspeed import BenchmarkFixture
 
-from dmr import Body, BodyFast, Controller
+from dmr import Body, Controller
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.test import DMRRequestFactory
 
@@ -55,11 +55,6 @@ class _PydanticFastController(Controller[PydanticFastSerializer]):
         return len(parsed_body)
 
 
-class _PydanticFastBodyController(Controller[PydanticFastSerializer]):
-    def post(self, parsed_body: BodyFast[list[User]]) -> int:
-        return len(parsed_body)
-
-
 def test_pydantic_parse_and_validate(
     benchmark: BenchmarkFixture,
     dmr_rf: DMRRequestFactory,
@@ -90,25 +85,6 @@ def test_pydantic_fast_parse_and_validate(
         content_type='application/json',
     )
     controller = _PydanticFastController()
-    controller.setup(request)
-
-    @benchmark
-    def factory() -> None:
-        for _ in range(100):
-            controller.dispatch(request)
-
-
-def test_pydantic_fast_body_parse_and_validate(
-    benchmark: BenchmarkFixture,
-    dmr_rf: DMRRequestFactory,
-) -> None:
-    """Benchmark through the request pipeline with the fast body."""
-    request = dmr_rf.post(
-        '/test',
-        data=_BODY,
-        content_type='application/json',
-    )
-    controller = _PydanticFastBodyController()
     controller.setup(request)
 
     @benchmark

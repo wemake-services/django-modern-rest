@@ -48,7 +48,7 @@ class MsgpackParser(Parser):
             DataParsingError: If error decoding ``obj``.
             msgspec.ValidationError: When *model* is not ``Any``
                 and validation fails, like with
-                :data:`~dmr.components.BodyFast`.
+                :data:`~dmr.plugins.msgspec.BodyMsgspec`.
 
         """
         try:

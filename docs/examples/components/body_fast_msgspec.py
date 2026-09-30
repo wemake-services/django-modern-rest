@@ -1,7 +1,7 @@
 import msgspec
 
-from dmr import BodyFast, Controller
-from dmr.plugins.msgspec import MsgspecSerializer
+from dmr import Controller
+from dmr.plugins.msgspec import BodyMsgspec, MsgspecSerializer
 
 
 class _User(msgspec.Struct, gc=False):
@@ -10,7 +10,7 @@ class _User(msgspec.Struct, gc=False):
 
 
 class UserController(Controller[MsgspecSerializer]):
-    def put(self, parsed_body: BodyFast[_User]) -> _User:
+    def put(self, parsed_body: BodyMsgspec[_User]) -> _User:
         return parsed_body
 
 

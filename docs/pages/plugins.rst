@@ -128,7 +128,6 @@ You would need to:
   :meth:`~dmr.serializer.BaseSerializer.validate` method,
   which receives the complete endpoint metadata during the import time,
   for example: to only allow some parsers and renderers
-  or to reject :data:`~dmr.components.BodyFast`
 - Provide a way to get the OpenAPI / JsonSchema schema from your models,
   see :class:`dmr.serializer.BaseSchemaGenerator`. Example implementations:
   :class:`~dmr.plugins.pydantic.schema.PydanticSchemaGenerator`

@@ -17,11 +17,13 @@ from faker import Faker
 from inline_snapshot import snapshot
 from typing_extensions import Sentinel
 
-from dmr import Body, BodyFast, Controller, Headers, modify
+from dmr import Body, Controller, Headers, modify
+from dmr.exceptions import EndpointMetadataError
 from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
 from dmr.parsers import JsonParser, Parser
 from dmr.plugins.msgspec import (
+    BodyMsgspec,
     MsgpackParser,
     MsgpackRenderer,
     MsgspecJsonParser,
@@ -75,7 +77,7 @@ def _make_controller(
         def put(
             self,
             parsed_headers: Headers[_AuthHeaders],
-            parsed_body: BodyFast[_User],
+            parsed_body: BodyMsgspec[_User],
         ) -> _User:
             assert parsed_headers.token
             return parsed_body
@@ -319,7 +321,7 @@ def test_empty_body(
 
 @final
 class _DefaultController(Controller[MsgspecSerializer]):
-    def put(self, parsed_body: BodyFast[_User | None] = None) -> bool:
+    def put(self, parsed_body: BodyMsgspec[_User | None] = None) -> bool:
         return parsed_body is None
 
 
@@ -345,7 +347,7 @@ def test_body_default(dmr_rf: DMRRequestFactory, faker: Faker) -> None:
 
 @final
 class _ListController(Controller[MsgspecSerializer]):
-    async def put(self, parsed_body: BodyFast[list[_User]]) -> int:
+    async def put(self, parsed_body: BodyMsgspec[list[_User]]) -> int:
         return len(parsed_body)
 
 
@@ -406,7 +408,7 @@ class _ConditionalController(Controller[MsgspecSerializer]):
 
     def put(
         self,
-        parsed_body: BodyFast[
+        parsed_body: BodyMsgspec[
             Annotated[
                 _User | int,
                 conditional_type({
@@ -501,13 +503,13 @@ class _FastBodyController(Controller[MsgspecSerializer]):
     def put(
         self,
         parsed_headers: Headers[_AuthHeaders],
-        parsed_body: BodyFast[_User],
+        parsed_body: BodyMsgspec[_User],
     ) -> _User:
         raise NotImplementedError
 
 
 def test_same_openapi_schema() -> None:
-    """Ensures that ``Body`` and ``BodyFast`` have the same OpenAPI spec."""
+    """Ensures that ``Body`` and ``BodyMsgspec`` have the same OpenAPI spec."""
     fast_schema = build_schema(
         Router('api/', [path('users/', _BodyController.as_view())]),
     ).convert()
@@ -517,3 +519,30 @@ def test_same_openapi_schema() -> None:
 
     assert fast_schema == regular_schema
     assert fast_schema['paths']['/api/users/']['put']['requestBody']
+
+
+def test_other_serializers_are_not_supported() -> None:
+    """Ensures that only ``msgspec`` serializer can parse bodies directly."""
+    pytest.importorskip('pydantic')
+
+    import pydantic  # noqa: PLC0415
+
+    from dmr.plugins.pydantic import (  # noqa: PLC0415
+        PydanticFastSerializer,
+        PydanticSerializer,
+    )
+
+    class _PydanticUser(pydantic.BaseModel):
+        username: str
+
+    for serializer in (PydanticSerializer, PydanticFastSerializer):
+        with pytest.raises(EndpointMetadataError, match='uses `BodyMsgspec`'):
+
+            class _PydanticController(
+                Controller[serializer],  # type: ignore[valid-type]
+            ):
+                def put(
+                    self,
+                    parsed_body: BodyMsgspec[_PydanticUser],
+                ) -> _PydanticUser:
+                    raise NotImplementedError
