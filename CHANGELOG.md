@@ -127,6 +127,14 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   `CookieSpec.httponly` can no longer be `None`, use `False` instead, #1456
 - `Endpoint` objects are not callable anymore, use `.func` attribute
   to make the call instead, #1456
+- `BaseSerializer.is_supported` is replaced with `BaseSerializer.validate`,
+  which receives `controller_cls` and the complete `EndpointMetadata`
+  and raises `EndpointMetadataError` instead of returning a `bool`.
+  It runs last in the endpoint validation, so it can check
+  parsers, renderers, components, and everything else at once, #1661
+- `MsgspecJsonParser.strict` and `MsgpackParser.strict` now default
+  to `False` instead of `True`. They only affect `BodyMsgspec`,
+  and lax mode matches how regular request bodies are validated, #1661
 - `security_schemes` API for auth classes was changed,
   accepts `metadata` and `controller_cls`, and now it is a method,
   not a property, #1521
@@ -229,6 +237,10 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Performance improvements
 
+- Added `BodyMsgspec` component to `dmr.plugins.msgspec`,
+  a drop-in replacement for `Body` for `MsgspecSerializer`
+  that parses and validates the request body with a different semantics,
+  but, it is x1.6 faster in our benchmarks, #1661
 - `MsgspecSerializer` now parses all components of an endpoint
   into a `msgspec.Struct` with `gc=False` instead of a `TypedDict`.
   Validation of the parsed context is around x2 faster, #1494

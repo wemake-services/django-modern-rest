@@ -20,7 +20,11 @@ from typing_extensions import TypedDict, override
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.errors import ErrorDetail, ErrorType
-from dmr.exceptions import DataParsingError, DataRenderingError
+from dmr.exceptions import (
+    DataParsingError,
+    DataRenderingError,
+    EndpointMetadataError,
+)
 from dmr.parsers import Parser, Raw
 from dmr.plugins.pydantic.schema import PydanticSchemaGenerator
 from dmr.renderers import Renderer
@@ -34,6 +38,7 @@ from dmr.serializer import (
 from dmr.types import EMPTY
 
 if TYPE_CHECKING:
+    from dmr.controller import Controller
     from dmr.metadata import EndpointMetadata
 
 #: Mode that we use for default serialization.
@@ -190,6 +195,8 @@ class PydanticSerializer(BaseSerializer):
             buffer,
             cls.deserialize_hook,
             request=request,
+            # Note: passing real `pydantic` model to `msgspec` parser
+            # is not supported, because it is SLOWER than using 2-phase parsing.
             model=model,
         )
 
@@ -403,13 +410,28 @@ class PydanticFastSerializer(PydanticSerializer):
 
     @classmethod
     @override
-    def is_supported(cls, pluggable: Parser | Renderer) -> bool:
+    def validate(
+        cls,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: 'EndpointMetadata',
+    ) -> None:
         """
-        Is this parser or renderer supported?
+        Validate that only ``json`` parsers and renderers are used.
 
-        We only support ``json`` parsers and renderers.
+        .. versionchanged:: 0.16.0
+            Replaces ``is_supported`` method.
+
         """
-        return pluggable.content_type == 'application/json'
+        pluggables: list[Parser | Renderer] = [
+            *metadata.parsers.values(),
+            *metadata.renderers.values(),
+        ]
+        for pluggable in pluggables:
+            if pluggable.content_type != 'application/json':
+                raise EndpointMetadataError(
+                    f'{metadata.endpoint_name!r} serializer '
+                    f'does not support {pluggable!r}, only json is supported',
+                )
 
 
 _ModelT = TypeVar('_ModelT')

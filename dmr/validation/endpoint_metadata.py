@@ -790,20 +790,8 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 f'{self.endpoint_name!r} must have at least one {kind} '
                 'configured on the endpoint, controller, or settings level',
             )
-        return {
-            pluggable.content_type: self._check_supported(pluggable)
-            for pluggable in pluggables
-        }
-
-    def _check_supported(
-        self,
-        pluggable: _PluggableT,
-    ) -> _PluggableT:
-        if self.controller_cls.serializer.is_supported(pluggable):
-            return pluggable
-        raise EndpointMetadataError(
-            f'{self.endpoint_name!r} serializer does not support {pluggable!r}',
-        )
+        # Serializer support is validated later, when metadata is complete:
+        return {pluggable.content_type: pluggable for pluggable in pluggables}
 
     def _build_validate_negotiation(self) -> bool:
         settings_value: bool | Sentinel = resolve_setting(
@@ -1320,6 +1308,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
             throttle.validate(controller_cls, self.metadata)
         for auth in self.metadata.auth or ():
             auth.validate(controller_cls, self.metadata)
+        # Serializer goes last, it can inspect everything above:
+        controller_cls.serializer.validate(controller_cls, self.metadata)
 
     def _resolve_all_responses(
         self,
