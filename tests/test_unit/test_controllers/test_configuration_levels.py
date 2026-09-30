@@ -1,6 +1,6 @@
 import json
 from http import HTTPStatus
-from typing import Any, Self
+from typing import Any, Final, Self
 
 import pytest
 from django.conf import LazySettings
@@ -21,12 +21,9 @@ from dmr.settings import (
 )
 from dmr.test import DMRRequestFactory
 from dmr.throttling import Rate, SyncThrottle
+from dmr.throttling.backends import SyncDjangoCache
 from dmr.types import EMPTY
 from dmr.validation import SettingsValidator
-
-pytestmark = pytest.mark.filterwarnings(
-    'ignore::dmr.throttling.backends.django_cache.UnsafeCacheBackendWarning',
-)
 
 
 class _SettingsAuth(HttpBasicSyncAuth):
@@ -49,15 +46,31 @@ class _EndpointAuth(_SettingsAuth):
     """Auth type to be used on the endpoint level."""
 
 
-_SETTINGS_AUTH = _SettingsAuth()
-_CONTROLLER_AUTH = _ControllerAuth()
-_ENDPOINT_AUTH = _EndpointAuth()
+_SETTINGS_AUTH: Final = _SettingsAuth()
+_CONTROLLER_AUTH: Final = _ControllerAuth()
+_ENDPOINT_AUTH: Final = _EndpointAuth()
 
-_SETTINGS_THROTTLE = SyncThrottle(1, Rate.second)
-_CONTROLLER_THROTTLING = (SyncThrottle(2, Rate.minute),)
-_SETTINGS_RESPONSE = ResponseSpec(int, status_code=HTTPStatus.PAYMENT_REQUIRED)
-_CONTROLLER_RESPONSE = ResponseSpec(str, status_code=HTTPStatus.NOT_FOUND)
-_ENDPOINT_RESPONSE = ResponseSpec(bool, status_code=HTTPStatus.CONFLICT)
+_SETTINGS_THROTTLE: Final = SyncThrottle(
+    1,
+    Rate.second,
+    backend=SyncDjangoCache(allow_unsafe_cache=True),
+)
+_CONTROLLER_THROTTLING: Final = (
+    SyncThrottle(
+        2,
+        Rate.minute,
+        backend=SyncDjangoCache(allow_unsafe_cache=True),
+    ),
+)
+_SETTINGS_RESPONSE: Final = ResponseSpec(
+    int,
+    status_code=HTTPStatus.PAYMENT_REQUIRED,
+)
+_CONTROLLER_RESPONSE: Final = ResponseSpec(
+    str,
+    status_code=HTTPStatus.NOT_FOUND,
+)
+_ENDPOINT_RESPONSE: Final = ResponseSpec(bool, status_code=HTTPStatus.CONFLICT)
 
 
 @pytest.fixture(autouse=True)
@@ -97,7 +110,11 @@ def test_controller_overrides_settings() -> None:
 
 def test_endpoint_overrides_controller() -> None:
     """Ensure that endpoint values replace controller and settings values."""
-    endpoint_throttle = SyncThrottle(3, Rate.hour)
+    endpoint_throttle = SyncThrottle(
+        3,
+        Rate.hour,
+        backend=SyncDjangoCache(allow_unsafe_cache=True),
+    )
 
     class _Controller(Controller[PydanticSerializer]):
         auth = (_CONTROLLER_AUTH,)
@@ -168,32 +185,28 @@ def test_explicit_merge() -> None:
     }
 
 
-@pytest.mark.parametrize('unset', [EMPTY, (), []])
-def test_empty_values_are_not_set(
-    *,
-    unset: Any,
-) -> None:
-    """Ensure that `EMPTY` and empty values use the next level."""
+def test_empty_sentinel_is_not_set() -> None:
+    """Ensure that `EMPTY` values use the next level."""
 
     class _Controller(Controller[PydanticSerializer]):
-        auth = unset
-        throttling = unset
-        parsers = unset
-        renderers = unset
-        exclude_validate_responses = unset
-        no_validate_http_spec = unset
-        responses = unset
-        tags = unset
+        auth = EMPTY
+        throttling = EMPTY
+        parsers = EMPTY
+        renderers = EMPTY
+        exclude_validate_responses = EMPTY
+        no_validate_http_spec = EMPTY
+        responses = EMPTY
+        tags = EMPTY
 
-        @modify(  # type: ignore[untyped-decorator]
-            auth=unset,
-            throttling=unset,
-            parsers=unset,
-            renderers=unset,
-            exclude_validate_responses=unset,
-            no_validate_http_spec=unset,
-            extra_responses=unset,
-            tags=unset,
+        @modify(
+            auth=EMPTY,
+            throttling=EMPTY,
+            parsers=EMPTY,
+            renderers=EMPTY,
+            exclude_validate_responses=EMPTY,
+            no_validate_http_spec=EMPTY,
+            extra_responses=EMPTY,
+            tags=EMPTY,
         )
         def get(self) -> str:
             raise NotImplementedError
@@ -211,6 +224,62 @@ def test_empty_values_are_not_set(
     assert metadata.renderers == {
         default_renderer.content_type: default_renderer,
     }
+
+
+@pytest.mark.parametrize('empty', [(), [], frozenset()])
+@pytest.mark.parametrize('level', ['endpoint', 'controller'])
+def test_empty_values_are_explicit(
+    *,
+    empty: Any,
+    level: str,
+) -> None:
+    """Ensure that empty values are taken literally, just like `None`."""
+    on_controller = empty if level == 'controller' else EMPTY
+    on_endpoint = empty if level == 'endpoint' else EMPTY
+
+    class _Controller(Controller[PydanticSerializer]):
+        auth = on_controller
+        throttling = on_controller
+        exclude_validate_responses = on_controller
+        no_validate_http_spec = on_controller
+        responses = on_controller
+        tags = on_controller
+
+        @modify(  # type: ignore[untyped-decorator]
+            auth=on_endpoint,
+            throttling=on_endpoint,
+            exclude_validate_responses=on_endpoint,
+            no_validate_http_spec=on_endpoint,
+            extra_responses=on_endpoint,
+            tags=on_endpoint,
+        )
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _Controller.api_endpoints['GET'].metadata
+    assert metadata.auth is None
+    assert metadata.throttling is None
+    assert metadata.tags is not None
+    assert not metadata.tags
+    assert HTTPStatus.PAYMENT_REQUIRED not in metadata.responses
+    assert metadata.exclude_validate_responses == frozenset()
+    assert metadata.no_validate_http_spec == frozenset()
+
+
+@pytest.mark.parametrize('empty', [(), []])
+@pytest.mark.parametrize('kind', ['parser', 'renderer'])
+def test_empty_pluggables_are_explicit(
+    *,
+    empty: Any,
+    kind: str,
+) -> None:
+    """Ensure that empty `parsers` and `renderers` do not use the next level."""
+    with pytest.raises(EndpointMetadataError, match=f'at least one {kind}'):
+
+        class _Controller(Controller[PydanticSerializer]):
+            @modify(**{f'{kind}s': empty})  # type: ignore[untyped-decorator]
+            def get(self) -> str:
+                raise NotImplementedError
 
 
 def test_empty_settings_flags(settings: LazySettings) -> None:

@@ -8,7 +8,7 @@ Custom logic belongs to the reusable ``dmr.security.token.views`` instead.
 
 import importlib
 from collections.abc import Callable
-from typing import Any, Generic, cast, final
+from typing import Any, Generic, final
 
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.http import HttpResponseBase
@@ -136,7 +136,9 @@ class ObtainTokenSyncController(
         # `login` has authed this request before calling us,
         # so `request.user` is the real user, not an `AnonymousUser`.
         return {
-            'token': self.issue_token(user=cast('_UserT', self.request.user)),
+            'token': self.issue_token(
+                user=self.request.user,  # type: ignore[arg-type]
+            ),
         }
 
 
@@ -206,5 +208,8 @@ class ObtainTokenAsyncController(
         """Issue a new token for the user we have just authenticated."""
         # `login` has authed this request before calling us,
         # so `request.user` is the real user, not an `AnonymousUser`.
-        user = cast('_UserT', await self.request.auser())
-        return {'token': await self.issue_token(user=user)}
+        return {
+            'token': await self.issue_token(
+                user=await self.request.auser(),  # type: ignore[arg-type]
+            ),
+        }

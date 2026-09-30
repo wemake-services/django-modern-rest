@@ -30,6 +30,20 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Breaking changes
 
+- `Components.path_items` is now typed as `dict[str, PathItem] | None`.
+  The spec only allows Path Item Objects there, `Reference` objects
+  are not permitted, #1491
+- Reworked how OpenAPI schema components are registered.
+  `SchemaGenerator.__call__` lost `skip_registration`
+  and `register_referenced_components` parameters,
+  use `SchemaGenerator.load` to get a schema with its components
+  kept locally, and `SchemaGenerator.register` to register
+  only the components that the final result references.
+  Removed `SchemaRegistry.try_unregister` and the unused
+  `dmr.openapi.core.registry.SchemaCallback` protocol.
+  `ResponseGenerator.get_schema` accepts `content_schema`
+  to skip generating a schema from the return type,
+  `FileResponseSpec` uses it instead of removing `FileBody` afterwards, #1647
 - `auth`, `throttling`, `parsers`, `renderers`, `responses`, `tags`,
   `exclude_validate_responses`, `exclude_semantic_responses`,
   and `no_validate_http_spec` are not merged anymore
@@ -39,7 +53,33 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   Merging is still possible, but it must be explicit,
   like `@modify(auth=[*auth, other_auth])`,
   or customized with `Controller.metadata_merger_cls`.
-  This allows a better composition and better value overrides, #1576
+- `deprecated` of `@modify` and `@validate` now defaults to `EMPTY`
+  instead of `False` and `EndpointMetadata.deprecated` can be `EMPTY`.
+  `Router.deprecated` is now the last level for `deprecated`,
+  like it is for `tags`, instead of being combined with `OR`:
+  an endpoint or a controller with an explicit `deprecated=False`
+  is not deprecated anymore, even inside `Router(deprecated=True)`,
+- `Controller.servers` is now resolved into `EndpointMetadata.servers`
+  of every endpoint, the first explicitly defined level wins,
+  and dumped on each operation instead of the path item.
+  The effective servers of every operation stay the same,
+  `servers=None` on an endpoint now disables the controller value, #1660
+- Changed how `deprecated` is calculated, now any explicit value wins,
+  just like all other settings, #1660
+- `auth`, `throttling`, `parsers`, `renderers`, `responses`, `tags`,
+  `exclude_validate_responses`, `exclude_semantic_responses`,
+  and `no_validate_http_spec` are not merged anymore
+  from settings, router, controller, and endpoint levels.
+  Now, endpoint values override controller values,
+  controller values override settings values.
+  Merging is still possible, but it must be explicit,
+  like `@modify(auth=[*auth, other_auth])`,
+  or customized with `Controller.metadata_merger_cls`.
+  This allows a better composition and better value overrides, #1576.
+  Explicit empty values like `auth=[]` or `throttling=()` are now
+  taken literally as "nothing on this level", exactly like `None`,
+  they do not fall through to the next level anymore.
+  Only `EMPTY` (or not setting the value at all) uses the next level, #1499
 - All endpoint, controller, and settings values now default to `EMPTY`,
   which means "not set on this level", instead of `None`.
   `None` is only allowed where it disables something explicitly,
@@ -61,6 +101,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - `OpenAPIConfig` now raises `ValueError` for `openapi_version` below `3.1.0`.
   OpenAPI `3.0.x` was never really supported: it predates JSON Schema,
   which is what `pydantic` and `msgspec` generate for our models, #1435
+- Removed OpenAPI `3.0` style `Reference` objects from schema positions, #1648
 - `summary` and `description` of `@modify` and `@validate` are now resolved
   one at a time. Passing just one of them used to drop the endpoint's
   docstring entirely, now the other one is still parsed from it.
@@ -77,12 +118,23 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   and `EndpointMetadata.throttling_allow_unsafe_cache`.
   Use `allow_unsafe_cache` parameter of `SyncDjangoCache`
   and `AsyncDjangoCache` instead, like
-  `SyncDjangoCache(allow_unsafe_cache=False)`, #1611
+  `SyncDjangoCache(allow_unsafe_cache=False)`. `None` (default) now emits
+  `UnsafeCacheBackendWarning` only when `settings.DEBUG` is `False`,
+  `True` now disables the check completely,
+  `False` still raises `EndpointMetadataError`, #1611
 - Removed `NewCookie.as_dict` method, #1456
 - `NewCookie.secure`, `CookieSpec.secure`, `NewCookie.httponly`,
   `CookieSpec.httponly` can no longer be `None`, use `False` instead, #1456
 - `Endpoint` objects are not callable anymore, use `.func` attribute
   to make the call instead, #1456
+- `BaseSerializer.is_supported` is replaced with `BaseSerializer.validate`,
+  which receives `controller_cls` and the complete `EndpointMetadata`
+  and raises `EndpointMetadataError` instead of returning a `bool`.
+  It runs last in the endpoint validation, so it can check
+  parsers, renderers, components, and everything else at once, #1661
+- `MsgspecJsonParser.strict` and `MsgpackParser.strict` now default
+  to `False` instead of `True`. They only affect `BodyMsgspec`,
+  and lax mode matches how regular request bodies are validated, #1661
 - `security_schemes` API for auth classes was changed,
   accepts `metadata` and `controller_cls`, and now it is a method,
   not a property, #1521
@@ -185,6 +237,12 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Performance improvements
 
+- Improved speed of `PydanticFastSerializer.deserialize` x2.2
+  and `PydanticFastSerializer.serialize` x1.33 times, #1662
+- Added `BodyMsgspec` component to `dmr.plugins.msgspec`,
+  a drop-in replacement for `Body` for `MsgspecSerializer`
+  that parses and validates the request body with a different semantics,
+  but, it is x1.6 faster in our benchmarks, #1661
 - `MsgspecSerializer` now parses all components of an endpoint
   into a `msgspec.Struct` with `gc=False` instead of a `TypedDict`.
   Validation of the parsed context is around x2 faster, #1494
@@ -218,6 +276,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Optimized `SyncDjangoCache` and `AsyncDjangoCache` json parsing, #1456
 - Optimized `Controller.as_view()` for cases with `csrf_exempt=True`,
   which is the default, #1456
+- Now uses `msgspec@0.22`, which is much faster in many cases, #1653
 
 ### Features
 
@@ -250,8 +309,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   get the correct response specs and `build_csrf_handler` allows customizing
   `CSRF_FAILURE_VIEW` Django setting to return actual REST responses,
   instead of HTML ones, #1521
+- Added `semantic_schema` module with `SecurityProvider` interface, #1521
 - Added `CSRF_USE_SESSIONS=True` CSRF security scheme support, #1608
-- Added `semantic_schema` module with `AuthProvider` interface, #1521
 - Now `security_requirements` can return both
   `AND` and `OR` auth strategies, previously
   it was only possible to represent `OR` strategy, #1521
@@ -265,6 +324,21 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   customization through context subclasses, #1461, #1487, #1556
 - Added class-level overrides for `ProblemDetailsModel`
   in `ProblemDetailsError`, #1556
+- Added `security` controller attribute and `@modify` / `@validate`
+  argument to document security mechanisms that are not implemented
+  by `auth`: API gateways, service meshes, etc.
+  `OpenAPIConfig.security` is used as the settings level,
+  the first explicitly defined level wins.
+  The result is merged with the requirements generated from `auth`
+  by the new `SecuritySchemeGenerator.security_merger` class variable,
+  by default they are added as alternatives and duplicated
+  requirements raise `EndpointMetadataError`. Schemes used there
+  must be declared in `components` of `OpenAPIConfig`, #1499
+- Added `deprecated`, `external_docs`, and `callbacks` controller
+  attributes as defaults for all endpoints of a controller, #1660
+- Added `SecurityRequirementMerger` interface
+  and `OrSecurityRequirementMerger` default implementation
+  to `semantic_schema` module, #1499
 - `summary` and `description` of a `PathItem` are now parsed
   from the controller's docstring, just like they are parsed
   from the endpoint's docstring for an `Operation`.
@@ -364,6 +438,21 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   or `msgspec.Meta(examples=[...])`. Such fields used to get
   random values in the model example, now they get their own examples.
   It works for all serializers, #1639
+- `SchemaRegistry.maybe_resolve_reference` now puts the keywords
+  that sit next to `$ref`, like `default` and `description`,
+  on top of the component's own schema without modifying
+  the component itself. Custom `x-` schema extensions
+  are now kept through loading and dumping, for both `pydantic`
+  and `msgspec`, #1491
+- Fixed models that are only used as `Query`, `Headers`, `Cookies`,
+  `Path`, and `FileMetadata` components, being added to `components.schemas`
+  of the OpenAPI schema. Such models are inlined and never referenced,
+  now only components that are referenced
+  from the final schema are registered, #1647
+- Fixed seeded OpenAPI examples of `datetime`, `date`, and `time`
+  changing with the current time. Faker's defaults end at the current time,
+  now these examples are generated between `2000-01-01` and `2026-01-01`.
+  `timedelta` examples are not always `P0D` anymore, #1632
 - Fixed `example` of `NewHeader` and `HeaderSpec` not being
   in the OpenAPI schema. Now it is set on the `Header` object,
   and such headers don't get generated examples, #1627

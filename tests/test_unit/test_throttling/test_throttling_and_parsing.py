@@ -12,7 +12,6 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.settings import default_renderer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
-from dmr.throttling.backends import AsyncDjangoCache, SyncDjangoCache
 from tests.infra.xml_format import XmlRenderer
 
 
@@ -22,7 +21,6 @@ class _SyncController(Controller[PydanticSerializer]):
             SyncThrottle(
                 1,
                 Rate.second,
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
         renderers=(XmlRenderer(), default_renderer),
@@ -69,7 +67,6 @@ class _AsyncController(Controller[PydanticSerializer]):
             AsyncThrottle(
                 1,
                 Rate.second,
-                backend=AsyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
         renderers=(XmlRenderer(), default_renderer),

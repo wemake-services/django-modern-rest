@@ -27,7 +27,7 @@ from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators import SchemaGenerator
-from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Reference, Schema
+from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Schema
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.plugins.pydantic.schema import (
     JsonSchemaKwargs,
@@ -274,7 +274,7 @@ def test_enum(
 ) -> None:
     """Ensure schema for enums is correct."""
     reference = schema_generator(_TestEnum, PydanticSerializer)
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
 
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
@@ -307,10 +307,13 @@ def _assert_enum_parameter_schema(
     }
 
     for parameter_location in ('path', 'query', 'header', 'cookie'):
-        parameter = parameter_specs['enum_value', parameter_location]
-        assert parameter['schema'] == {
+        expected: dict[str, Any] = {
             '$ref': f'#/components/schemas/{component_name}',
         }
+        assert (
+            parameter_specs['enum_value', parameter_location]['schema']
+            == expected
+        )
     assert schema['components']['schemas'][component_name] == expected_schema
 
 
@@ -325,7 +328,7 @@ def test_parameter_schema_with_enum() -> None:
         enum_value: _QueryEnum
 
     class _EnumQuery(pydantic.BaseModel):
-        enum_value: _QueryEnum = _QueryEnum.alpha
+        enum_value: _QueryEnum
 
     class _EnumHeaders(pydantic.BaseModel):
         enum_value: _QueryEnum
@@ -365,7 +368,7 @@ def test_parameter_schema_with_int_enum() -> None:
         enum_value: _QueryEnum
 
     class _EnumQuery(pydantic.BaseModel):
-        enum_value: _QueryEnum = _QueryEnum.alpha
+        enum_value: _QueryEnum
 
     class _EnumHeaders(pydantic.BaseModel):
         enum_value: _QueryEnum
@@ -405,7 +408,7 @@ def test_parameter_schema_with_str_enum() -> None:
         enum_value: _QueryEnum
 
     class _EnumQuery(pydantic.BaseModel):
-        enum_value: _QueryEnum = _QueryEnum.alpha
+        enum_value: _QueryEnum
 
     class _EnumHeaders(pydantic.BaseModel):
         enum_value: _QueryEnum
@@ -584,7 +587,7 @@ def test_root_model(
         pydantic.RootModel[list[int]],
         PydanticSerializer,
     )
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
 
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
@@ -633,7 +636,7 @@ def test_type_mapper_typeddict(
 ) -> None:
     """Ensure that schema for ``TypedDict`` returns ``None``."""
     reference = schema_generator(_TestTypedDict, PydanticSerializer)
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
 
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
@@ -780,7 +783,7 @@ def test_custom_by_alias(
         schema_kwargs,
     )
     reference = openapi_context.generators.schema(_AliasedModel, serializer)
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
     )
@@ -824,3 +827,68 @@ def test_custom_union_format(
     assert isinstance(schema.type, list)
     schema.type = sorted(schema.type)
     assert schema == Schema(type=[OpenAPIType.INTEGER, OpenAPIType.STRING])
+
+
+def test_ref_siblings_and_extensions_issue1491() -> None:
+    """Keep ``$ref`` siblings and explicit extras in the final schema."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1491
+
+    class _Address(pydantic.BaseModel):
+        model_config = pydantic.ConfigDict(
+            json_schema_extra={
+                '$anchor': 'address',
+                '$comment': 'Postal address',
+                'x-category': 'contact',
+            },
+        )
+        city: str
+
+    class _User(pydantic.BaseModel):
+        model_config = pydantic.ConfigDict(
+            json_schema_extra={'x-api-version': 'v1'},
+        )
+        name: str = pydantic.Field(
+            default='unknown',
+            json_schema_extra={'x-display': 'Name'},
+        )
+        address: _Address = pydantic.Field(
+            default=_Address(city='Moscow'),
+            description='Where the user lives',
+        )
+
+    class _IssueController(Controller[PydanticSerializer]):
+        async def post(self, parsed_body: Body[_User]) -> None:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('test/', _IssueController.as_view())]),
+    ).convert()
+
+    assert schema['components']['schemas']['_User'] == snapshot({
+        'properties': {
+            'name': {
+                'type': 'string',
+                'title': 'Name',
+                'default': 'unknown',
+                'x-display': 'Name',
+            },
+            'address': {
+                'description': 'Where the user lives',
+                'default': {'city': 'Moscow'},
+                '$ref': '#/components/schemas/_Address',
+            },
+        },
+        'type': 'object',
+        'title': '_User',
+        'x-api-version': 'v1',
+    })
+    assert schema['components']['schemas']['_Address'] == snapshot({
+        'properties': {'city': {'type': 'string', 'title': 'City'}},
+        'type': 'object',
+        'required': ['city'],
+        'title': '_Address',
+        '$anchor': 'address',
+        '$comment': 'Postal address',
+        'x-category': 'contact',
+    })

@@ -54,7 +54,7 @@ class ResponseGenerator:
             )
         }
 
-    def get_schema(
+    def get_schema(  # noqa: WPS211
         self,
         response_spec: 'ResponseSpec',
         metadata: 'EndpointMetadata',
@@ -63,11 +63,19 @@ class ResponseGenerator:
         *,
         schema_field_name: Literal['schema', 'item_schema'] = 'schema',
         used_for_response: bool = True,
+        content_schema: Schema | None = None,
     ) -> Response:
         """
         Returns the OpenAPI schema for the response.
 
         Can be customized in ``ResponseSpec`` subclasses.
+
+        When *content_schema* is passed, it is used for all content types
+        instead of the schema generated from the return type.
+
+        .. versionchanged:: 0.16.0
+            Added *content_schema* parameter.
+
         """
         headers: dict[str, Header | Reference] = {}
         headers.update(
@@ -112,6 +120,7 @@ class ResponseGenerator:
                 context,
                 schema_field_name=schema_field_name,
                 used_for_response=used_for_response,
+                content_schema=content_schema,
             ),
         )
 
@@ -190,7 +199,7 @@ class ResponseGenerator:
             )
         return cookies
 
-    def _get_content(
+    def _get_content(  # noqa: WPS211
         self,
         response_spec: 'ResponseSpec',
         metadata: 'EndpointMetadata',
@@ -199,6 +208,7 @@ class ResponseGenerator:
         *,
         schema_field_name: str,
         used_for_response: bool,
+        content_schema: Schema | None,
     ) -> dict[str, MediaType | Reference]:
         # Import cycle:
         from dmr.internal.negotiation import (  # noqa: PLC0415
@@ -212,13 +222,17 @@ class ResponseGenerator:
             # Sorted by content type, not by the renderers order:
             renderer.content_type: MediaType(
                 **{  # type: ignore[arg-type]
-                    schema_field_name: context.generators.schema(
-                        return_types.get(
-                            renderer.content_type,
-                            response_spec.return_type,
-                        ),
-                        controller_cls.serializer,
-                        used_for_response=used_for_response,
+                    schema_field_name: (
+                        context.generators.schema(
+                            return_types.get(
+                                renderer.content_type,
+                                response_spec.return_type,
+                            ),
+                            controller_cls.serializer,
+                            used_for_response=used_for_response,
+                        )
+                        if content_schema is None
+                        else content_schema
                     ),
                 },
             )

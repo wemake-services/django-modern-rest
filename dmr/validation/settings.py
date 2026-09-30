@@ -11,7 +11,7 @@ from dmr.openapi import OpenAPIConfig
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.security import AsyncAuth, SyncAuth, SyncOrAsyncAuth
-from dmr.semantic_schema import AuthProvider
+from dmr.semantic_schema import SecurityProvider
 from dmr.serializer import BaseSerializer
 from dmr.settings import (
     Settings,
@@ -25,7 +25,8 @@ class _SettingsModel(SettingsDict, total=False):
     """
     Settings model that can be validated by our serializers.
 
-    We redefine all unsupported fields with ``Any`` types here.
+    We redefine all unsupported fields with ``Any``
+    or with concretely-resolvable types here.
     """
 
     parsers: Sequence[Any]
@@ -57,7 +58,7 @@ _SEQUENCE_TYPES: Final = types.MappingProxyType({
     'auth': (SyncAuth, AsyncAuth, SyncOrAsyncAuth),
     'throttling': (SyncThrottle, AsyncThrottle, SyncOrAsyncThrottle),
     'responses': (ResponseSpec,),
-    'semantic_schema_providers': (ResponseSpecProvider, AuthProvider),
+    'semantic_schema_providers': (ResponseSpecProvider, SecurityProvider),
 })
 
 

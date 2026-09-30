@@ -20,7 +20,7 @@ from dmr.internal.types import FormatError, StrOrPromise
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.security.base import unauth_response_spec
-from dmr.semantic_schema import AuthProvider
+from dmr.semantic_schema import SecurityProvider, SecurityRequirementMerger
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -71,7 +71,7 @@ def csrf_security_scheme() -> SecurityScheme:
     )
 
 
-class CSRFAuthMixin(ResponseSpecProvider, AuthProvider):  # noqa: WPS214
+class CSRFAuthMixin(ResponseSpecProvider, SecurityProvider):  # noqa: WPS214
     """
     Shared parts of auth classes that are protected by CSRF.
 
@@ -251,7 +251,11 @@ def build_csrf_handler(
 
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
-class CSRFSemanticSchemaProvider(ResponseSpecProvider, AuthProvider):
+class CSRFSemanticSchemaProvider(
+    ResponseSpecProvider,
+    SecurityProvider,
+    SecurityRequirementMerger,
+):
     """
     Provide response specs for controllers that have ``csrf_exempt = False``.
 
@@ -342,11 +346,14 @@ class CSRFSemanticSchemaProvider(ResponseSpecProvider, AuthProvider):
         return [{self.security_scheme_name: []}]
 
     @override
-    def inject_requirements(
+    def merge_security_requirements(
         self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
         own_requirements: list[SecurityRequirement],
         auth_requirements: list[SecurityRequirement],
     ) -> list[SecurityRequirement]:
+        """Joins CSRF requirement with each auth requirement."""
         # We join the security requirements with `AND` logic for this type.
         # It needs both auth and CSRF checks to pass to be able to login.
         if not own_requirements:

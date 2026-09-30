@@ -10,7 +10,6 @@ from dmr.openapi.objects import (
     ExternalDocumentation,
     OpenAPIFormat,
     OpenAPIType,
-    Reference,
     Schema,
 )
 
@@ -32,6 +31,12 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         they land on depends on the target OpenAPI version.
         :func:`dmr.openapi.mappers.example.set_generated_example`
         does that now.
+        Subschemas with ``$ref`` are loaded as :class:`Schema` objects
+        with :attr:`Schema.ref` set, keeping their sibling keywords,
+        as OpenAPI 3.1 requires. They are not
+        :class:`~dmr.openapi.objects.Reference` objects anymore.
+        Specification extensions, like ``x-thing``,
+        are now kept in :attr:`Schema.extensions`, #1491
 
     """
     return Schema(
@@ -48,7 +53,7 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         contains=_try_optional_type(raw_data.get('contains')),
         properties=_try_dict(raw_data.get('properties')),
         pattern_properties=_try_dict(raw_data.get('patternProperties')),
-        additional_properties=_try_additional_properties(
+        additional_properties=_try_optional_bool_type(
             raw_data.get('additionalProperties'),
         ),
         property_names=_try_optional_type(raw_data.get('propertyNames')),
@@ -93,15 +98,17 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         example=raw_data.get('example', EMPTY),
         dynamic_ref=raw_data.get('$dynamicRef'),
         dynamic_anchor=raw_data.get('$dynamicAnchor'),
+        ref=raw_data.get('$ref'),
         anchor=raw_data.get('$anchor'),
         comment=raw_data.get('$comment'),
         schema_uri=raw_data.get('$schema'),
         defs=_try_dict(raw_data.get('$defs')),
+        extensions=_try_extensions(raw_data),
     )
 
 
-def _try_optional_bool_type(raw_value: Any) -> Reference | Schema | bool | None:
-    """Load a raw_value as Reference, or Schema, or bool, or None."""
+def _try_optional_bool_type(raw_value: Any) -> Schema | bool | None:
+    """Load a raw_value as Schema, or bool, or None."""
     return (
         raw_value
         if isinstance(raw_value, bool)
@@ -109,51 +116,39 @@ def _try_optional_bool_type(raw_value: Any) -> Reference | Schema | bool | None:
     )
 
 
-def _try_optional_type(raw_value: Any) -> Reference | Schema | None:
-    """Load a raw_value as Reference (if it has '$ref') or Schema, or None."""
-    return None if raw_value is None else _try_type(raw_value)  # noqa: WPS204
+def _try_optional_type(raw_value: Any) -> Schema | None:
+    """Load a raw_value as Schema, or None."""
+    return None if raw_value is None else load_schema(raw_value)  # noqa: WPS204
 
 
-def _try_type(raw_value: Any) -> Reference | Schema:
-    """Load a raw_value as Reference (if it has '$ref') or Schema."""
-    if isinstance(raw_value, dict) and '$ref' in raw_value:
-        return Reference(
-            ref=raw_value['$ref'],
-            summary=raw_value.get('summary'),
-            description=raw_value.get('description'),
-        )
-    return load_schema(raw_value)
+def _try_extensions(raw_data: dict[str, Any]) -> dict[str, Any] | None:
+    """Keep specification extensions, like ``x-thing``, as they are."""
+    extensions = {
+        raw_key: raw_value
+        for raw_key, raw_value in raw_data.items()
+        if raw_key.startswith('x-')
+    }
+    return extensions or None
 
 
-def _try_sequence(raw_value: Any) -> list[Reference | Schema] | None:
-    """Load a list of Reference | Schema values, or None."""
+def _try_sequence(raw_value: Any) -> list[Schema] | None:
+    """Load a list of Schema values, or None."""
     return (
         None
         if raw_value is None
-        else [_try_type(seq_item) for seq_item in raw_value]
+        else [load_schema(seq_item) for seq_item in raw_value]
     )
 
 
-def _try_dict(raw_value: Any) -> dict[str, Reference | Schema] | None:
-    """Load a dict of str -> Reference | Schema values, or None."""
+def _try_dict(raw_value: Any) -> dict[str, Schema] | None:
+    """Load a dict of str -> Schema values, or None."""
     return (
         None
         if raw_value is None
         else {
-            dict_key: _try_type(dict_value)
+            dict_key: load_schema(dict_value)
             for dict_key, dict_value in raw_value.items()
         }
-    )
-
-
-def _try_additional_properties(
-    raw_value: Any,
-) -> Reference | Schema | bool | None:
-    """Load additionalProperties which can also be a plain bool."""
-    return (
-        raw_value
-        if isinstance(raw_value, bool)
-        else _try_optional_type(raw_value)
     )
 
 
@@ -213,29 +208,15 @@ def _try_xml(raw_value: Any) -> XML | None:
 
 
 def _sort_null_last(
-    sequence: list[Reference | Schema] | None,
-) -> list[Reference | Schema] | None:
+    sequence: list[Schema] | None,
+) -> list[Schema] | None:
     # See https://github.com/wemake-services/django-modern-rest/issues/990
     # TODO: remove once solved: https://github.com/msgspec/msgspec/issues/1027
     return (
         None
         if sequence is None
         else (
-            [
-                schema
-                for schema in sequence
-                if (
-                    not isinstance(schema, Schema)
-                    or schema.type != OpenAPIType.NULL
-                )
-            ]
-            + [
-                schema
-                for schema in sequence
-                if (
-                    isinstance(schema, Schema)
-                    and schema.type == OpenAPIType.NULL
-                )
-            ]
+            [schema for schema in sequence if schema.type != OpenAPIType.NULL]
+            + [schema for schema in sequence if schema.type == OpenAPIType.NULL]
         )
     )
