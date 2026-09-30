@@ -1,7 +1,7 @@
 import json
 
 import pytest
-from django.urls import URLResolver
+from django.urls import URLResolver, include
 from syrupy.assertion import SnapshotAssertion
 
 from dmr import Controller
@@ -146,3 +146,54 @@ def test_nested_router_ignore_from_spec() -> None:
 
     assert schema.paths is not None
     assert set(schema.paths) == {'/api/v1/other/'}
+
+
+@pytest.mark.parametrize(
+    ('prefix', 'expected_path'),
+    [
+        ('users', '/api/users'),
+        ('/users', '/api/users'),
+        ('users/', '/api/users/'),
+    ],
+)
+def test_router_include_empty_pattern(
+    prefix: str,
+    expected_path: str,
+) -> None:
+    """Ensure that `router.include()` works with empty patterns, #1657."""
+    users = Router(
+        prefix=prefix,
+        urls=[path('', _UserController.as_view(), name='users')],
+        tags=['users'],
+    )
+    router = Router(prefix='api', tags=['api'])
+    router.include(users, namespace='users')
+
+    schema = build_schema(router).convert()
+
+    assert set(schema['paths']) == {expected_path}
+    assert schema['paths'][expected_path]['get']['tags'] == ['api', 'users']
+
+
+def test_router_nested_empty_patterns() -> None:
+    """Ensure that nested empty patterns work in schema generation, #1657."""
+    inner = Router(
+        prefix='inner/',
+        urls=[path('', _UserController.as_view())],
+        ignore_from_spec=True,
+    )
+    users = Router(
+        prefix='users/',
+        urls=[
+            path('', include([path('', _OtherController.as_view())])),
+        ],
+    )
+    users.include(inner)
+    router = Router(prefix='')
+    router.include(users)
+
+    schema = build_schema(router)
+
+    assert schema.paths is not None
+    assert set(schema.paths) == {'/users/'}
+    assert router.metadata_for('/users/inner/').ignore_from_spec is True
