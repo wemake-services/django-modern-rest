@@ -4,6 +4,7 @@ from typing import Any
 
 import pydantic
 import pytest
+from dirty_equals import IsStr
 from django.http import HttpResponse
 from faker import Faker
 from inline_snapshot import snapshot
@@ -76,12 +77,11 @@ def test_invalid_json(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST
+    # `msg` can change if `msgspec` is present or not:
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'msg': (
-                    'JSON is malformed: object keys must be strings (byte 1)'
-                ),
+                'msg': IsStr(),
                 'type': 'value_error',
             },
         ],
