@@ -30,6 +30,7 @@ class Schema:
         Subschemas are always ``Schema`` objects,
         since OpenAPI 3.1 a ``$ref`` inside a schema is a JSON Schema
         keyword (see ``ref``), not a :class:`Reference` object.
+        ``extensions`` is renamed to ``x_extensions``.
 
     """
 
@@ -95,4 +96,5 @@ class Schema:
         dict[str, 'Schema'] | None,
         Field(alias='$defs'),
     ] = None
-    extensions: dict[str, Any] | None = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None

@@ -280,6 +280,18 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Features
 
+- Added `x_extensions` to all OpenAPI objects that allow
+  specification extensions, `x-` keys are dumped next to the object's
+  own keys. Only `Reference` and `SecurityRequirement` cannot be extended.
+  Added `OpenAPIConfig.x_extensions` for the root document,
+  `Controller.x_extensions` for path items,
+  `@modify(x_extensions=...)` and `@validate(x_extensions=...)`
+  for operations, `ParameterMetadata.x_extensions`,
+  `MediaTypeMetadata.x_extensions`, and `ResponseSpec.x_extensions`
+  for parameters, media types, and responses.
+  Each setting describes its own object only,
+  extensions are never inherited or merged across levels.
+  `load_schema` now keeps `x-` keys instead of silently dropping them, 
 - Component parameters can now have default values, like
   `parsed_body: Body[Model | None] = None`
   or `parsed_query: Query[Filters | None] = None`.

@@ -29,6 +29,7 @@ class ParameterMetadata:
     .. versionchanged:: 0.16.0
         ``example`` now defaults to :data:`~dmr.types.EMPTY`
         instead of ``None``, because ``None`` is a valid value for it.
+        Added ``x_extensions`` for specification extensions.
 
     """
 
@@ -40,6 +41,8 @@ class ParameterMetadata:
     allow_reserved: bool | None = None
     example: Any = EMPTY
     examples: dict[str, 'Example | Reference'] | None = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None
 
 
 @dataclass(kw_only=True, slots=True)

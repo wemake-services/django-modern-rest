@@ -621,6 +621,7 @@ class BodyComponent(ComponentParser):
                 encoding=media_type_meta.encoding,
                 item_encoding=media_type_meta.item_encoding,
                 prefix_encoding=media_type_meta.prefix_encoding,
+                x_extensions=media_type_meta.x_extensions,
             )
 
         return RequestBody(
