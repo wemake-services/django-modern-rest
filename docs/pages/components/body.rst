@@ -149,6 +149,8 @@ See :ref:`component-defaults` to learn more.
 Fast body parsing
 -----------------
 
+.. versionadded:: 0.16.0
+
 .. tip::
 
   ``BodyFast`` is generally x1.5 faster than ``Body``.
