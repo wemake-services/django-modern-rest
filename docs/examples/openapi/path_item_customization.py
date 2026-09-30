@@ -1,5 +1,5 @@
 from dmr import Controller
-from dmr.openapi.objects import Server
+from dmr.openapi.objects import ExternalDocumentation, Server
 from dmr.plugins.msgspec import MsgspecSerializer
 
 
@@ -15,6 +15,9 @@ class UserController(Controller[MsgspecSerializer]):
         Server(url='https://example.com'),
         Server(url='https://dev.example.com'),
     )
+    # These are used for all operations, unless an endpoint sets its own:
+    deprecated = True
+    external_docs = ExternalDocumentation(url='https://example.com/docs')
 
     def post(self) -> str:
         return 'post'

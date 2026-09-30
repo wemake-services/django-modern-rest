@@ -37,10 +37,10 @@ class _BasePayload:
     description: StrOrPromise | Sentinel | None
     tags: Sequence[str] | Sentinel | None
     operation_id: str | Sentinel
-    deprecated: bool
+    deprecated: bool | Sentinel
     security: Sequence['SecurityRequirement'] | Sentinel | None
-    external_docs: 'ExternalDocumentation | Sentinel'
-    callbacks: Mapping[str, 'Callback | Reference'] | Sentinel
+    external_docs: 'ExternalDocumentation | Sentinel | None'
+    callbacks: Mapping[str, 'Callback | Reference'] | Sentinel | None
     servers: Sequence['Server'] | Sentinel | None
     ignore_from_spec: bool | Sentinel
 
@@ -92,7 +92,7 @@ class ValidateEndpointPayload(_BasePayload):
             description=EMPTY,
             tags=EMPTY,
             operation_id=EMPTY,
-            deprecated=False,
+            deprecated=EMPTY,
             security=EMPTY,
             external_docs=EMPTY,
             callbacks=EMPTY,

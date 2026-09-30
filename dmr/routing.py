@@ -51,7 +51,8 @@ class Router:
             Used for operations that do not have
             controller-level or endpoint-level tags.
         deprecated: Optional flag to mark all operations as deprecated.
-            Combines with endpoint-level deprecated flag using OR logic.
+            Used for operations that do not have
+            controller-level or endpoint-level ``deprecated`` value.
         ignore_from_spec: If set to ``True``, all routes from this router
             are excluded from the generated OpenAPI specification.
             Runtime URL routing is not affected.

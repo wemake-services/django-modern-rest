@@ -4,7 +4,6 @@ import re
 from collections.abc import (
     Callable,
     ItemsView,
-    Mapping,
     Sequence,
     Set,
 )
@@ -57,6 +56,7 @@ if TYPE_CHECKING:
     from dmr.openapi.config import OpenAPIConfig
     from dmr.openapi.objects import (
         Callback,
+        ExternalDocumentation,
         Reference,
         SecurityRequirement,
         Server,
@@ -600,17 +600,15 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             exclude_semantic_auth=self._build_exclude_semantic_auth(),
             summary=summary,
             description=description,
-            tags=self._build_tags(payload.tags),
+            tags=self._build_tags(),
             operation_id=self.merger('operation_id').empty_to_none(
                 payload.operation_id,
             ),
-            deprecated=payload.deprecated,
+            deprecated=self._build_deprecated(),
             security=self._build_security(),
-            external_docs=self.merger('external_docs').empty_to_none(
-                payload.external_docs,
-            ),
-            callbacks=self._build_callbacks(payload.callbacks),
-            servers=self._build_servers(payload.servers),
+            external_docs=self._build_external_docs(),
+            callbacks=self._build_callbacks(),
+            servers=self._build_servers(),
             ignore_from_spec=self._build_ignore_from_spec(),
             extras=self._build_extras(),
         )
@@ -674,17 +672,15 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             exclude_semantic_auth=self._build_exclude_semantic_auth(),
             summary=summary,
             description=description,
-            tags=self._build_tags(payload.tags),
+            tags=self._build_tags(),
             operation_id=self.merger('operation_id').empty_to_none(
                 payload.operation_id,
             ),
-            deprecated=payload.deprecated,
+            deprecated=self._build_deprecated(),
             security=self._build_security(),
-            external_docs=self.merger('external_docs').empty_to_none(
-                payload.external_docs,
-            ),
-            callbacks=self._build_callbacks(payload.callbacks),
-            servers=self._build_servers(payload.servers),
+            external_docs=self._build_external_docs(),
+            callbacks=self._build_callbacks(),
+            servers=self._build_servers(),
             ignore_from_spec=self._build_ignore_from_spec(),
             extras=self._build_extras(),
         )
@@ -737,13 +733,13 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             exclude_semantic_auth=self._build_exclude_semantic_auth(),
             summary=summary,
             description=description,
-            tags=self._build_tags(EMPTY),
+            tags=self._build_tags(),
             operation_id=None,
-            deprecated=False,
+            deprecated=self._build_deprecated(),
             security=self._build_security(),
-            external_docs=None,
-            callbacks=None,
-            servers=None,
+            external_docs=self._build_external_docs(),
+            callbacks=self._build_callbacks(),
+            servers=self._build_servers(),
             ignore_from_spec=self._build_ignore_from_spec(),
             extras=self._build_extras(),
         )
@@ -822,21 +818,38 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             return self.build_validate_responses()
         return validate_negotiation
 
-    def _build_servers(
-        self,
-        payload_servers: Sequence['Server'] | Sentinel | None,
-    ) -> list['Server'] | None:
-        # Controller-level servers belong to the path item,
-        # not to the operation, so they are not a layer here:
-        servers = self.merger('servers').empty_to_none(payload_servers)
-        return None if servers is None else list(servers)
+    def _build_servers(self) -> list['Server'] | None:
+        servers = self.merger('servers').first_defined(
+            self.payload.servers if self.payload else EMPTY,
+            self.controller_cls.servers,
+        )
+        if servers is None or isinstance(servers, Sentinel):
+            return None  # explicitly disabled or nothing is configured
+        return list(servers)
 
-    def _build_callbacks(
-        self,
-        payload_callbacks: 'Mapping[str, Callback | Reference] | Sentinel',
-    ) -> 'dict[str, Callback | Reference] | None':
-        callbacks = self.merger('callbacks').empty_to_none(payload_callbacks)
-        return None if callbacks is None else dict(callbacks)
+    def _build_callbacks(self) -> 'dict[str, Callback | Reference] | None':
+        callbacks = self.merger('callbacks').first_defined(
+            self.payload.callbacks if self.payload else EMPTY,
+            self.controller_cls.callbacks,
+        )
+        if callbacks is None or isinstance(callbacks, Sentinel):
+            return None  # explicitly disabled or nothing is configured
+        return dict(callbacks)
+
+    def _build_external_docs(self) -> 'ExternalDocumentation | None':
+        external_docs = self.merger('external_docs').first_defined(
+            self.payload.external_docs if self.payload else EMPTY,
+            self.controller_cls.external_docs,
+        )
+        return None if isinstance(external_docs, Sentinel) else external_docs
+
+    def _build_deprecated(self) -> bool | Sentinel:
+        # Router-level `deprecated` is resolved later during the schema
+        # generation, that's why `EMPTY` is preserved here:
+        return self.merger('deprecated').first_set(
+            self.payload.deprecated if self.payload else EMPTY,
+            self.controller_cls.deprecated,
+        )
 
     def _build_security(self) -> 'list[SecurityRequirement] | None':
         settings_config: OpenAPIConfig = resolve_setting(
@@ -1014,14 +1027,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         )
         return not isinstance(ignore_from_spec, Sentinel) and ignore_from_spec
 
-    def _build_tags(
-        self,
-        payload_tags: Sequence[str] | Sentinel | None,
-    ) -> list[str] | Sentinel | None:
+    def _build_tags(self) -> list[str] | Sentinel | None:
         # Router-level tags are resolved later during the schema generation,
         # that's why `EMPTY` is preserved here.
         tags = self.merger('tags').first_defined(
-            payload_tags,
+            self.payload.tags if self.payload else EMPTY,
             self.controller_cls.tags,
         )
         if tags is None or isinstance(tags, Sentinel):

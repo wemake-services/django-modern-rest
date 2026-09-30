@@ -45,8 +45,7 @@
                 }
               }
             }
-          },
-          "deprecated": true
+          }
         },
         "post": {
           "tags": [

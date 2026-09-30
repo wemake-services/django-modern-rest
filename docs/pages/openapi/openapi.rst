@@ -362,9 +362,22 @@ for :class:`~dmr.openapi.objects.PathItem`:
   or :attr:`~dmr.controller.Controller.description`
   to ``None`` to leave them out of the schema.
 
+``tags``, ``security``, ``servers``, ``deprecated``, ``external_docs``,
+and ``callbacks`` are operation fields,
+but they can also be set on the controller level
+as defaults for all its operations. As everywhere in ``django-modern-rest``,
+the first explicitly defined level wins: endpoint, then controller,
+then router for ``tags`` and ``deprecated``,
+or :class:`~dmr.openapi.OpenAPIConfig` for ``security``.
+Set ``servers``, ``external_docs``, or ``callbacks`` to ``None``
+on an endpoint to remove the controller value from that operation.
+
 .. versionchanged:: 0.16.0
   Controller docstrings are now used as the default
   summary and description of a path item.
+  Added ``deprecated``, ``external_docs``, and ``callbacks``
+  controller attributes. ``servers`` is now dumped
+  on every operation instead of the path item.
 
 Customizing operation
 ~~~~~~~~~~~~~~~~~~~~~
