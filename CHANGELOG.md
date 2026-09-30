@@ -63,7 +63,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   of every endpoint, the first explicitly defined level wins,
   and dumped on each operation instead of the path item.
   The effective servers of every operation stay the same,
-  `servers=None` on an endpoint now disables the controller value,
+  `servers=None` on an endpoint now disables the controller value, #1660
+- Changed how `deprecated` is calculated, now any explicit value wins,
+  just like all other settings, #1660
 - `auth`, `throttling`, `parsers`, `renderers`, `responses`, `tags`,
   `exclude_validate_responses`, `exclude_semantic_responses`,
   and `no_validate_http_spec` are not merged anymore
@@ -319,7 +321,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   requirements raise `EndpointMetadataError`. Schemes used there
   must be declared in `components` of `OpenAPIConfig`, #1499
 - Added `deprecated`, `external_docs`, and `callbacks` controller
-  attributes as defaults for all endpoints of a controller, 
+  attributes as defaults for all endpoints of a controller, #1660
 - Added `SecurityRequirementMerger` interface
   and `OrSecurityRequirementMerger` default implementation
   to `semantic_schema` module, #1499
