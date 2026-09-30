@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Annotated, Any, ClassVar, Final, Literal, TypeAlias
 
 import pydantic
@@ -357,15 +358,22 @@ class _OptionalFileController(Controller[PydanticSerializer]):
 
 
 _MULTIPART: Final = str(ContentType.multipart_form_data)
+_SCHEMAS_PREFIX: Final = '#/components/schemas/'
+
+
+def _built_document(
+    controller: type[Controller[PydanticSerializer]],
+) -> Any:
+    return build_schema(
+        Router('', [path('merged/', controller.as_view())]),
+    ).convert()
 
 
 def _merged_request_body(
     controller: type[Controller[PydanticSerializer]],
 ) -> Any:
-    schema = build_schema(
-        Router('', [path('merged/', controller.as_view())]),
-    ).convert()
-    return schema['paths']['/merged/']['post']['requestBody']
+    document = _built_document(controller)
+    return document['paths']['/merged/']['post']['requestBody']
 
 
 def test_required_file_merged_body() -> None:
@@ -433,11 +441,18 @@ def test_optional_file_merged_body() -> None:
                         {
                             'anyOf': [
                                 {
-                                    '$ref': '#/components/schemas/_OneFile',
+                                    'properties': {
+                                        'first_file': {
+                                            'type': 'string',
+                                            'format': 'binary',
+                                        },
+                                    },
+                                    'type': 'object',
+                                    'required': ['first_file'],
+                                    'title': '_OneFile',
                                 },
                                 {'type': 'null'},
                             ],
-                            'properties': {},
                         },
                     ],
                 },
@@ -445,6 +460,25 @@ def test_optional_file_merged_body() -> None:
         },
         'required': True,
     })
+
+
+def test_file_model_is_inlined_not_referenced() -> None:
+    """Ensure that a file model does not leave a `$ref` to nothing."""
+    document = _built_document(_OptionalFileController)
+    registered = document['components']['schemas']
+
+    # `FileMetadata[]` swaps its model for the file representation, so
+    # `_OneFile` is inlined and never becomes a component on its own.
+    # Referencing it anyway would leave a `$ref` that resolves to nothing,
+    # which `openapi-spec-validator` does not catch:
+    dangling = {
+        ref
+        for ref in re.findall(r'"\$ref": "(.+?)"', json.dumps(document))
+        if ref.removeprefix(_SCHEMAS_PREFIX) not in registered
+    }
+
+    assert '_OneFile' not in registered
+    assert dangling == set()
 
 
 def test_merged_body_ignores_component_order() -> None:

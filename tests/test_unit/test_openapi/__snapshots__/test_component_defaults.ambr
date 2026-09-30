@@ -96,6 +96,15 @@
                       "anyOf": [
                         {
                           "$ref": "#/components/schemas/_Model"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
                           "properties": {
                             "name": {
                               "type": "string",
@@ -112,17 +121,6 @@
                           "type": "null"
                         }
                       ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/components/schemas/_FileModel"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ],
-                      "properties": {}
                     }
                   ]
                 }
@@ -217,12 +215,7 @@
                         {
                           "type": "null"
                         }
-                      ],
-                      "properties": {}
                       ]
-                    },
-                    {
-                      "$ref": "#/components/schemas/_Model"
                     }
                   ]
                 }
