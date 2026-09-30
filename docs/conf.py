@@ -198,7 +198,7 @@ nitpick_ignore = [
     (_PY_OBJ, 'dmr.streaming.jsonl.controller._SerializerT_co'),
     (_PY_CLASS, 'dmr.streaming.jsonl.controller._SerializerT_co'),
     (_PY_CLASS, 'dmr.streaming.sse.metadata._DataT_co'),
-    (_PY_CLASS, 'dmr.plugins.msgspec.components._BodyT'),
+    (_PY_OBJ, 'dmr.plugins.msgspec.components._BodyT'),
     # Explicitly protected names:
     (_PY_CLASS, 'dmr.parsers._NoOpParser'),
     (_PY_CLASS, 'dmr.streaming.controller._StreamingEndpoint'),
