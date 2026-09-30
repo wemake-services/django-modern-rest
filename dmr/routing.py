@@ -19,6 +19,7 @@ from dmr.internal.routing import PrefixRoutePattern, RouterMetadata
 from dmr.internal.types import FormatError, StrOrPromise
 from dmr.openapi.collector import (
     ExternalRouteMetadata,
+    _join_paths,
     collect_normalized_paths,
     controller_mapping_collector,
 )
@@ -167,16 +168,15 @@ class Router:
 
         .. versionadded:: 0.13.0
         """
+        # Use the included router's own metadata keys. Building lookup
+        # keys with ``original_prefix=router.prefix`` disagrees with
+        # ``Router.__init__`` (which uses ``original_prefix=''``) for
+        # empty route patterns such as ``path('', ...)``.
         self._path_metadata.update({
-            new_path: RouterMetadata.from_included(
-                self,
-                router.metadata_for(original_path),
+            _join_paths(self.prefix, original_path): (
+                RouterMetadata.from_included(self, metadata)
             )
-            for original_path, new_path in collect_normalized_paths(
-                router.urls,
-                original_prefix=router.prefix,
-                new_prefix=self.prefix,
-            )
+            for original_path, metadata in router._path_metadata.items()
         })
 
         self.urls.append(

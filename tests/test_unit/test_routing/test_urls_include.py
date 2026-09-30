@@ -146,3 +146,25 @@ def test_nested_router_ignore_from_spec() -> None:
 
     assert schema.paths is not None
     assert set(schema.paths) == {'/api/v1/other/'}
+
+
+def test_router_include_empty_pattern() -> None:
+    """Empty route patterns must remount under the parent prefix.
+
+    ``path('', ...)`` is the usual way to mount a list endpoint at the
+    included router's prefix. ``Router.include()`` used to raise
+    ``KeyError`` because metadata was stored under ``'/users/'`` and
+    looked up as ``'/users'``.
+    """
+    users = Router(
+        '/users',
+        [path('', _UserController.as_view(), name='users')],
+    )
+    api = Router('api')
+    api.include(users, namespace='users')
+
+    schema = build_schema(api)
+
+    assert schema.paths is not None
+    assert '/api/users/' in schema.paths
+    assert api.metadata_for('/api/users/') is not None
