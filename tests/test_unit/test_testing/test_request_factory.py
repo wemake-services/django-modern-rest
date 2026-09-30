@@ -8,7 +8,7 @@ from django.http import HttpResponse
 from faker import Faker
 
 from dmr import Body, Controller
-from dmr.internal.json import _compact_json_dumps
+from dmr.internal.json import NativeJson, _wrap_bytes_dumper
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
@@ -29,7 +29,10 @@ def test_encode_json_fallback_without_msgspec(
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Check correct encoding when msgspec is unavailable (stdlib fallback)."""
-    with patch('dmr.internal.json._json_dumps', _compact_json_dumps):
+    with patch(
+        'dmr.internal.json._json_dumps',
+        _wrap_bytes_dumper(NativeJson.dumps),
+    ):
         request = dmr_rf.post('/whatever/', data={'key': 'value'})
     assert request.body == b'{"key":"value"}'
 
