@@ -366,6 +366,12 @@ Msgspec
 .. autoclass:: dmr.plugins.msgspec.serializer.ToModelKwargs
   :members:
 
+.. autodata:: dmr.plugins.msgspec.BodyMsgspec
+
+.. autoclass:: dmr.plugins.msgspec.components.BodyMsgspecComponent
+  :members:
+  :show-inheritance:
+
 
 .. _openapi-reference:
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.header import Header
@@ -14,6 +14,7 @@ class Encoding:
     .. versionchanged:: 0.16.0
         Added ``encoding``, ``item_encoding``, and ``prefix_encoding``
         from OpenAPI 3.2, they describe nested and sequential encodings.
+        Added ``x_extensions`` for specification extensions.
 
     """
 
@@ -29,3 +30,5 @@ class Encoding:
     encoding: dict[str, 'Encoding'] | None = None
     item_encoding: 'Encoding | None' = None
     prefix_encoding: list['Encoding'] | None = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None

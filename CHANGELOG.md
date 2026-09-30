@@ -53,6 +53,28 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   Merging is still possible, but it must be explicit,
   like `@modify(auth=[*auth, other_auth])`,
   or customized with `Controller.metadata_merger_cls`.
+- `deprecated` of `@modify` and `@validate` now defaults to `EMPTY`
+  instead of `False` and `EndpointMetadata.deprecated` can be `EMPTY`.
+  `Router.deprecated` is now the last level for `deprecated`,
+  like it is for `tags`, instead of being combined with `OR`:
+  an endpoint or a controller with an explicit `deprecated=False`
+  is not deprecated anymore, even inside `Router(deprecated=True)`,
+- `Controller.servers` is now resolved into `EndpointMetadata.servers`
+  of every endpoint, the first explicitly defined level wins,
+  and dumped on each operation instead of the path item.
+  The effective servers of every operation stay the same,
+  `servers=None` on an endpoint now disables the controller value, #1660
+- Changed how `deprecated` is calculated, now any explicit value wins,
+  just like all other settings, #1660
+- `auth`, `throttling`, `parsers`, `renderers`, `responses`, `tags`,
+  `exclude_validate_responses`, `exclude_semantic_responses`,
+  and `no_validate_http_spec` are not merged anymore
+  from settings, router, controller, and endpoint levels.
+  Now, endpoint values override controller values,
+  controller values override settings values.
+  Merging is still possible, but it must be explicit,
+  like `@modify(auth=[*auth, other_auth])`,
+  or customized with `Controller.metadata_merger_cls`.
   This allows a better composition and better value overrides, #1576.
   Explicit empty values like `auth=[]` or `throttling=()` are now
   taken literally as "nothing on this level", exactly like `None`,
@@ -105,6 +127,14 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   `CookieSpec.httponly` can no longer be `None`, use `False` instead, #1456
 - `Endpoint` objects are not callable anymore, use `.func` attribute
   to make the call instead, #1456
+- `BaseSerializer.is_supported` is replaced with `BaseSerializer.validate`,
+  which receives `controller_cls` and the complete `EndpointMetadata`
+  and raises `EndpointMetadataError` instead of returning a `bool`.
+  It runs last in the endpoint validation, so it can check
+  parsers, renderers, components, and everything else at once, #1661
+- `MsgspecJsonParser.strict` and `MsgpackParser.strict` now default
+  to `False` instead of `True`. They only affect `BodyMsgspec`,
+  and lax mode matches how regular request bodies are validated, #1661
 - `security_schemes` API for auth classes was changed,
   accepts `metadata` and `controller_cls`, and now it is a method,
   not a property, #1521
@@ -207,6 +237,12 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Performance improvements
 
+- Improved speed of `PydanticFastSerializer.deserialize` x2.2
+  and `PydanticFastSerializer.serialize` x1.33 times, #1662
+- Added `BodyMsgspec` component to `dmr.plugins.msgspec`,
+  a drop-in replacement for `Body` for `MsgspecSerializer`
+  that parses and validates the request body with a different semantics,
+  but, it is x1.6 faster in our benchmarks, #1661
 - `MsgspecSerializer` now parses all components of an endpoint
   into a `msgspec.Struct` with `gc=False` instead of a `TypedDict`.
   Validation of the parsed context is around x2 faster, #1494
@@ -244,6 +280,18 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Features
 
+- Added `x_extensions` to all OpenAPI objects that allow
+  specification extensions, `x-` keys are dumped next to the object's
+  own keys. Only `Reference` and `SecurityRequirement` cannot be extended.
+  Added `OpenAPIConfig.x_extensions` for the root document,
+  `Controller.x_extensions` for path items,
+  `@modify(x_extensions=...)` and `@validate(x_extensions=...)`
+  for operations, `ParameterMetadata.x_extensions`,
+  `MediaTypeMetadata.x_extensions`, and `ResponseSpec.x_extensions`
+  for parameters, media types, and responses.
+  Each setting describes its own object only,
+  extensions are never inherited or merged across levels.
+  `load_schema` now keeps `x-` keys instead of silently dropping them, #1664
 - Component parameters can now have default values, like
   `parsed_body: Body[Model | None] = None`
   or `parsed_query: Query[Filters | None] = None`.
@@ -298,6 +346,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   by default they are added as alternatives and duplicated
   requirements raise `EndpointMetadataError`. Schemes used there
   must be declared in `components` of `OpenAPIConfig`, #1499
+- Added `deprecated`, `external_docs`, and `callbacks` controller
+  attributes as defaults for all endpoints of a controller, #1660
 - Added `SecurityRequirementMerger` interface
   and `OrSecurityRequirementMerger` default implementation
   to `semantic_schema` module, #1499

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.header import Header
@@ -18,6 +18,7 @@ class Response:
     .. versionchanged:: 0.16.0
         Added ``summary`` from OpenAPI 3.2.
         ``content`` values can now be references.
+        Added ``x_extensions`` for specification extensions.
 
     """
 
@@ -29,3 +30,5 @@ class Response:
     # OpenAPI 3.2+ fields:
     #: Short label for the response, `description` is the long form.
     summary: str | None = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.oauth_flow import OAuthFlow
@@ -12,6 +12,7 @@ class OAuthFlows:
 
     .. versionchanged:: 0.16.0
         Added ``device_authorization`` from OpenAPI 3.2.
+        Added ``x_extensions`` for specification extensions.
 
     """
 
@@ -22,3 +23,5 @@ class OAuthFlows:
 
     # OpenAPI 3.2+ fields:
     device_authorization: 'OAuthFlow | None' = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None

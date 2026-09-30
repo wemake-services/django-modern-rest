@@ -483,10 +483,26 @@ class BodyComponent(ComponentParser):
     that will be split by ``','`` char.
 
     See :ref:`conditional-types` to learn more about conditional bodies.
+
+    Args:
+        pass_model: Whether or not to pass ``model``
+            to the serializer or ``Any``.
+            Plugins that support direct model parsing provide their own aliases,
+            like :data:`~dmr.plugins.msgspec.BodyMsgspec`,
+            and validate that their serializer is used to parse objects faster.
+            See :ref:`msgspec-body-component` to learn more.
+
+    .. versionchanged:: 0.16.0
+        Added *pass_model* parameter.
+
     """
 
-    __slots__ = ()
+    __slots__ = ('pass_model',)
     context_name: ClassVar[str] = 'parsed_body'
+
+    def __init__(self, *, pass_model: bool = False) -> None:
+        """Initialize the body parsing mode."""
+        self.pass_model = pass_model
 
     @override
     def provide_context_data(
@@ -539,7 +555,12 @@ class BodyComponent(ComponentParser):
                 controller.request.body,
                 parser=parser,
                 request=controller.request,
-                model=field_model,
+                # Regular bodies are decoded into simple python objects,
+                # which are validated later together with all other
+                # components, passing the real model here would raise
+                # errors for some valid cases that we handle later.
+                # Fast bodies are decoded and validated right here:
+                model=field_model if self.pass_model else Any,
             )
         except DataParsingError as exc:
             raise RequestSerializationError(str(exc)) from None
@@ -600,6 +621,7 @@ class BodyComponent(ComponentParser):
                 encoding=media_type_meta.encoding,
                 item_encoding=media_type_meta.item_encoding,
                 prefix_encoding=media_type_meta.prefix_encoding,
+                x_extensions=media_type_meta.x_extensions,
             )
 
         return RequestBody(

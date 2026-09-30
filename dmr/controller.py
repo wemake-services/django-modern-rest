@@ -6,7 +6,8 @@ from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.utils.functional import classproperty
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from typing_extensions import Sentinel, deprecated, override
+from typing_extensions import Sentinel, override
+from typing_extensions import deprecated as typing_deprecated
 
 from dmr import throttling as dmr_throttling
 from dmr.cookies import NewCookie
@@ -20,7 +21,15 @@ from dmr.metadata import ResponseSpec
 from dmr.negotiation import request_renderer
 from dmr.openapi.collector import InternalRouteMetadata
 from dmr.openapi.core.context import OpenAPIContext
-from dmr.openapi.objects import Operation, PathItem, SecurityRequirement, Server
+from dmr.openapi.objects import (
+    Callback,
+    ExternalDocumentation,
+    Operation,
+    PathItem,
+    Reference,
+    SecurityRequirement,
+    Server,
+)
 from dmr.parsers import Parser
 from dmr.renderers import Renderer
 from dmr.response import build_response
@@ -180,7 +189,28 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             as ``security_schemes`` in ``components``
             of :class:`dmr.openapi.OpenAPIConfig`.
             See :ref:`customizing_security_openapi`.
-        servers: An alternative servers array to service this path item.
+        servers: An alternative servers array to service all operations
+            in this controller. Can be overridden per endpoint.
+            Set it to ``None`` to have no servers at all.
+        deprecated: Declares all operations in this controller
+            to be deprecated. Overrides router-level value,
+            can be overridden per endpoint.
+        external_docs: Additional external documentation
+            for all operations in this controller.
+            Can be overridden per endpoint.
+            Set it to ``None`` to have no external docs at all.
+        callbacks: A map of possible out-of band callbacks related
+            to all operations in this controller.
+            Can be overridden per endpoint.
+            Set it to ``None`` to have no callbacks at all.
+        x_extensions: Specification extensions
+            of the :class:`~dmr.openapi.objects.PathItem`
+            of this controller, keys must start with ``x-``.
+            Unlike other OpenAPI attributes, it is not a default
+            for the operations: every OpenAPI object has its own
+            extensions, so nothing is inherited or merged.
+            Use ``x_extensions`` of :func:`~dmr.endpoint.modify`
+            or :func:`~dmr.endpoint.validate` for an operation.
         ignore_from_spec: If set to ``True``, all endpoints from this controller
             would not be added to the final OpenAPI spec.
         request: Current :class:`~django.http.HttpRequest` instance.
@@ -190,6 +220,10 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     .. versionchanged:: 0.16.0
         Explicit ``is_abstract`` definitions are now respected:
         abstract controllers do not build any endpoints.
+        Added ``deprecated``, ``external_docs``, ``callbacks``,
+        and ``x_extensions``.
+        ``servers`` is now resolved per endpoint
+        and dumped on operations, not on the path item.
 
     """
 
@@ -247,6 +281,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     tags: ClassVar[Sequence[str] | Sentinel | None] = EMPTY
     servers: ClassVar[Sequence[Server] | Sentinel | None] = EMPTY
     security: ClassVar[Sequence[SecurityRequirement] | Sentinel | None] = EMPTY
+    deprecated: ClassVar[bool | Sentinel] = EMPTY
+    external_docs: ClassVar[ExternalDocumentation | Sentinel | None] = EMPTY
+    callbacks: ClassVar[
+        Mapping[str, Callback | Reference] | Sentinel | None
+    ] = EMPTY
+    x_extensions: ClassVar[Mapping[str, Any] | None] = None
     ignore_from_spec: ClassVar[bool] = False
 
     # Public instance API:
@@ -490,7 +530,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         raise  # noqa: PLE0704
 
     @override
-    @deprecated(
+    @typing_deprecated(
         # It is not actually deprecated, but type checkers have no other
         # ways to raise custom errors.
         'Please do not use this method with `django-modern-rest`, '
@@ -513,7 +553,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         )
 
     @override
-    @deprecated(
+    @typing_deprecated(
         # It is not actually deprecated, but type checkers have no other
         # ways to raise custom errors.
         'Please do not use `options` method with `django-modern-rest`, '
@@ -649,6 +689,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             from the controller's docstring when they are not set explicitly.
             Changed *path* and *pattern* parameters
             to be *route_metadata* instead.
+            ``servers`` is not set on the path item anymore,
+            it is resolved per endpoint instead.
 
         """
         assert not cls.is_abstract, f"Can't include abstract controller: {cls}"  # noqa: S101
@@ -679,10 +721,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             additional_operations=additional_ops,
             summary=summary,
             description=description,
-            servers=(
-                None
-                if cls.servers is None or isinstance(cls.servers, Sentinel)
-                else list(cls.servers)
+            x_extensions=(
+                None if cls.x_extensions is None else dict(cls.x_extensions)
             ),
         )
 

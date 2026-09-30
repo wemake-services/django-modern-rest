@@ -118,6 +118,7 @@ class FileBody(FileBodyLike):
             examples=media_type_meta.examples,
             item_encoding=media_type_meta.item_encoding,
             prefix_encoding=media_type_meta.prefix_encoding,
+            x_extensions=media_type_meta.x_extensions,
         )
 
     @override

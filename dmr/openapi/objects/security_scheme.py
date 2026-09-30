@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Any, Literal
 
 from dmr.internal.dataclass_aliases import Field
 
@@ -25,6 +25,7 @@ class SecurityScheme:
 
     .. versionchanged:: 0.16.0
         Added ``oauth2_metadata_url`` and ``deprecated`` from OpenAPI 3.2.
+        Added ``x_extensions`` for specification extensions.
 
     """
 
@@ -45,3 +46,5 @@ class SecurityScheme:
     #: Only applies to the ``oauth2`` type.
     oauth2_metadata_url: str | None = None
     deprecated: bool | None = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None
