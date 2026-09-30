@@ -174,7 +174,7 @@ class Router:
             )
             for original_path, new_path in collect_normalized_paths(
                 router.urls,
-                original_prefix='',
+                original_prefix=router.prefix,
                 new_prefix=self.prefix,
             )
         })

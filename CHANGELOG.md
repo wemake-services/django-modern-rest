@@ -395,6 +395,10 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Bugfixes
 
+- Fixed `Router.include()` and `build_schema` raising `KeyError`
+  for routes with an empty pattern, like `Router('users', [path('', ...)])`.
+  Router metadata was stored under `/users/`, while the schema
+  generation looked it up as `/users`, #1657
 - `SchemaRegistry.maybe_resolve_reference` now puts the keywords
   that sit next to `$ref`, like `default` and `description`,
   on top of the component's own schema without modifying
