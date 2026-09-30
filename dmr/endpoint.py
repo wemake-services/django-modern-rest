@@ -324,12 +324,9 @@ class Endpoint:  # noqa: WPS214
                 else str(self.metadata.description)
             ),
             deprecated=(
-                (
-                    router_metadata.deprecated
-                    if isinstance(self.metadata.deprecated, Sentinel)
-                    else self.metadata.deprecated
-                )
-                or None
+                router_metadata.deprecated or None
+                if isinstance(self.metadata.deprecated, Sentinel)
+                else self.metadata.deprecated or None
             ),
             security=context.generators.security_scheme(
                 self.metadata,
