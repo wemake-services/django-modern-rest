@@ -53,6 +53,26 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   Merging is still possible, but it must be explicit,
   like `@modify(auth=[*auth, other_auth])`,
   or customized with `Controller.metadata_merger_cls`.
+- `deprecated` of `@modify` and `@validate` now defaults to `EMPTY`
+  instead of `False` and `EndpointMetadata.deprecated` can be `EMPTY`.
+  `Router.deprecated` is now the last level for `deprecated`,
+  like it is for `tags`, instead of being combined with `OR`:
+  an endpoint or a controller with an explicit `deprecated=False`
+  is not deprecated anymore, even inside `Router(deprecated=True)`,
+- `Controller.servers` is now resolved into `EndpointMetadata.servers`
+  of every endpoint, the first explicitly defined level wins,
+  and dumped on each operation instead of the path item.
+  The effective servers of every operation stay the same,
+  `servers=None` on an endpoint now disables the controller value,
+- `auth`, `throttling`, `parsers`, `renderers`, `responses`, `tags`,
+  `exclude_validate_responses`, `exclude_semantic_responses`,
+  and `no_validate_http_spec` are not merged anymore
+  from settings, router, controller, and endpoint levels.
+  Now, endpoint values override controller values,
+  controller values override settings values.
+  Merging is still possible, but it must be explicit,
+  like `@modify(auth=[*auth, other_auth])`,
+  or customized with `Controller.metadata_merger_cls`.
   This allows a better composition and better value overrides, #1576.
   Explicit empty values like `auth=[]` or `throttling=()` are now
   taken literally as "nothing on this level", exactly like `None`,
@@ -298,6 +318,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   by default they are added as alternatives and duplicated
   requirements raise `EndpointMetadataError`. Schemes used there
   must be declared in `components` of `OpenAPIConfig`, #1499
+- Added `deprecated`, `external_docs`, and `callbacks` controller
+  attributes as defaults for all endpoints of a controller, 
 - Added `SecurityRequirementMerger` interface
   and `OrSecurityRequirementMerger` default implementation
   to `semantic_schema` module, #1499
