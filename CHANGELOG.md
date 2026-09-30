@@ -237,6 +237,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Performance improvements
 
+- Improved speed of `PydanticFastSerializer.deserialize` x2.2
+  and `PydanticFastSerializer.serialize` x1.33 times, #1662
 - Added `BodyMsgspec` component to `dmr.plugins.msgspec`,
   a drop-in replacement for `Body` for `MsgspecSerializer`
   that parses and validates the request body with a different semantics,

@@ -25,6 +25,7 @@ from dmr.exceptions import (
     DataRenderingError,
     EndpointMetadataError,
 )
+from dmr.internal.json import NativeJson, json_loads
 from dmr.parsers import Parser, Raw
 from dmr.plugins.pydantic.schema import PydanticSchemaGenerator
 from dmr.renderers import Renderer
@@ -371,7 +372,9 @@ class PydanticFastSerializer(PydanticSerializer):
         *renderer* parameter is always ignored.
         """
         try:
-            return _get_cached_type_adapter(Any).dump_json(
+            return _get_cached_type_adapter(
+                type(structure),  # type: ignore[arg-type]
+            ).dump_json(
                 structure,
                 fallback=cls.serialize_hook,
                 **cls.to_json_kwargs,  # type: ignore[misc]
@@ -393,12 +396,13 @@ class PydanticFastSerializer(PydanticSerializer):
         Fast way to serializer pyndatic models into json bytestring.
 
         *parser* parameter is always ignored.
+
+        .. versionchanged:: 0.16.0
+            Now uses faster ``json_loads`` when it is available.
+
         """
         try:
-            return _get_cached_type_adapter(Any).validate_json(
-                buffer,
-                **cls.to_model_kwargs,
-            )
+            return _json_loads(buffer)
         except pydantic_core.ValidationError as exc:
             # Corner case: an empty body is `None` for us,
             # just like `JsonParser` treats it. Happens for `204` responses.
@@ -407,6 +411,10 @@ class PydanticFastSerializer(PydanticSerializer):
             if buffer == b'':
                 return None
             raise DataParsingError(exc.errors()[0]['msg']) from exc
+        except Exception as exc:  # which can be raise for non-pydantic loads
+            if buffer == b'':
+                return None
+            raise DataParsingError(str(exc)) from exc
 
     @classmethod
     @override
@@ -452,3 +460,13 @@ def _get_cached_type_adapter(model: _ModelT) -> pydantic.TypeAdapter[_ModelT]:
     """
     # This is a function not to cache `self` or `cls` params.
     return pydantic.TypeAdapter(model, _parent_depth=4)
+
+
+#: Internal helper to load json for fast serializer.
+#: If `msgspec` is missing and the default `json` module is used, we fallback
+#: to the `pydantic` one, which is also rather slow.
+_json_loads: Final = (
+    _get_cached_type_adapter(Any).validate_json
+    if json_loads is NativeJson.loads
+    else json_loads
+)
