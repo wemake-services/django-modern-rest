@@ -49,6 +49,7 @@ class MsgspecEndpointOptimizer(BaseEndpointOptimizer):
         # `msgspec.convert` does not have any API
         # to pre-build validation schema.
         # Returning `Struct` or `list[Struct]` will be just fast enough.
+        # Creating first `Encoder` and `Decoder` objects are fast enough.
 
 
 class MsgspecSerializer(BaseSerializer):

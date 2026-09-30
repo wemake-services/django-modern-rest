@@ -7,12 +7,16 @@ from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 
 from dmr.errors import ErrorDetail
-from dmr.exceptions import DataRenderingError, RequestSerializationError
+from dmr.exceptions import (
+    DataRenderingError,
+    RequestSerializationError,
+)
 from dmr.internal.types import EMPTY
 from dmr.parsers import Parser, Raw
 from dmr.renderers import Renderer
 
 if TYPE_CHECKING:
+    from dmr.controller import Controller
     from dmr.metadata import EndpointMetadata
 
 _CANNOT_DESERIALIZE_MSG: Final = _(
@@ -355,17 +359,31 @@ class BaseSerializer:  # noqa: WPS214
 
         Returns:
             Simple python object - exception converted to json.
+
         """
         raise NotImplementedError
 
     @classmethod
-    def is_supported(cls, pluggable: Parser | Renderer) -> bool:
+    def validate(
+        cls,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: 'EndpointMetadata',
+    ) -> None:
         """
-        Is this parser or renderer supported?
+        Validate that this serializer can serve the endpoint at import time.
 
-        When defining custom serializers you can specify what kind
-        of parser and renders you support.
-        Adding a combination of unsupported serializer and parser / render
-        will raise an import-time validation error.
+        It is called once per endpoint, after all metadata fields
+        are fully built, so parsers, renderers, components,
+        and everything else can be inspected.
+        Override this method to enforce serializer-specific constraints,
+        like supported parsers and renderers or supported components.
+        Raise :exc:`~dmr.exceptions.EndpointMetadataError`
+        if the serializer is used incorrectly.
+
+        By default all endpoints are supported.
+
+        .. versionchanged:: 0.16.0
+            Replaces ``is_supported`` method, which only received
+            a single parser or renderer and returned a boolean.
+
         """
-        return True  # By default all are supported

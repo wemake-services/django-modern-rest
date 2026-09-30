@@ -19,7 +19,7 @@ class MsgspecJsonParser(Parser):
     __slots__ = ()
 
     content_type = 'application/json'
-    strict: ClassVar[bool] = True
+    strict: ClassVar[bool] = False
 
     @override
     def parse(
@@ -44,14 +44,15 @@ class MsgspecJsonParser(Parser):
             Simple python object with primitive parts.
 
         Raises:
-            DataParsingError: If error decoding ``obj``.
+            DataParsingError: If error decoding *to_deserialize*.
+            msgspec.ValidationError: When *model* is not ``Any``
+                and validation fails, like with
+                :data:`~dmr.components.BodyFast`.
 
         """
         try:
             return _get_deserializer(
-                # Passing `model` here won't work, because it will raise
-                # errors on some valid cases that we would handle later.
-                Any,
+                model,
                 deserializer_hook,
                 strict=self.strict,
             ).decode(to_deserialize)

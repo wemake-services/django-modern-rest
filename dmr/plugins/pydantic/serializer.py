@@ -18,9 +18,14 @@ from django.http import HttpRequest
 from pydantic.config import ExtraValues
 from typing_extensions import TypedDict, override
 
+from dmr.components import BodyComponent
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.errors import ErrorDetail, ErrorType
-from dmr.exceptions import DataParsingError, DataRenderingError
+from dmr.exceptions import (
+    DataParsingError,
+    DataRenderingError,
+    EndpointMetadataError,
+)
 from dmr.parsers import Parser, Raw
 from dmr.plugins.pydantic.schema import PydanticSchemaGenerator
 from dmr.renderers import Renderer
@@ -34,6 +39,7 @@ from dmr.serializer import (
 from dmr.types import EMPTY
 
 if TYPE_CHECKING:
+    from dmr.controller import Controller
     from dmr.metadata import EndpointMetadata
 
 #: Mode that we use for default serialization.
@@ -97,7 +103,7 @@ class PydanticEndpointOptimizer(BaseEndpointOptimizer):
         _get_cached_type_adapter(Any)
 
 
-class PydanticSerializer(BaseSerializer):
+class PydanticSerializer(BaseSerializer):  # noqa: WPS214
     """
     Serialize and deserialize objects using pydantic.
 
@@ -240,6 +246,31 @@ class PydanticSerializer(BaseSerializer):
             strict=strict,
             **cls.to_model_kwargs,
         )
+
+    @override
+    @classmethod
+    def validate(
+        cls,
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> None:
+        """
+        Validate that :data:`~dmr.components.BodyFast` is not used.
+
+        Parsers cannot build ``pydantic`` models on their own,
+        so this serializer cannot parse bodies directly into models.
+        Use :class:`PydanticFastSerializer` for that.
+
+        .. versionadded:: 0.16.0
+
+        """
+        for spec in metadata.component_parsers:
+            if isinstance(spec.parser, BodyComponent) and spec.parser.fast_mode:
+                raise EndpointMetadataError(
+                    f'{metadata.endpoint_name!r} uses `BodyFast`, '
+                    f'but {cls.__qualname__} cannot parse bodies directly '
+                    'into models, use `Body` or `PydanticFastSerializer`',
+                )
 
     @override
     @classmethod
@@ -388,7 +419,7 @@ class PydanticFastSerializer(PydanticSerializer):
         *parser* parameter is always ignored.
         """
         try:
-            return _get_cached_type_adapter(Any).validate_json(
+            return _get_cached_type_adapter(model).validate_json(
                 buffer,
                 **cls.to_model_kwargs,
             )
@@ -399,17 +430,43 @@ class PydanticFastSerializer(PydanticSerializer):
             # a penalty for all positive cases.
             if buffer == b'':
                 return None
-            raise DataParsingError(exc.errors()[0]['msg']) from exc
+            # Next, we can run this serializer in two modes: with `Body`
+            # and with `FastBody`. In the second case, `model` will be
+            # the actual type, so we only convert `json` errors to data parsing,
+            # while keeping structured errors as `ValidationError` for later.
+            errors = exc.errors()
+            if errors[0]['type'] == 'json_invalid':
+                # Invalid `json` bytes, not a model validation error:
+                raise DataParsingError(errors[0]['msg']) from exc
+            raise
 
     @classmethod
     @override
-    def is_supported(cls, pluggable: Parser | Renderer) -> bool:
+    def validate(
+        cls,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: 'EndpointMetadata',
+    ) -> None:
         """
-        Is this parser or renderer supported?
+        Validate that only ``json`` parsers and renderers are used.
 
-        We only support ``json`` parsers and renderers.
+        :data:`~dmr.components.BodyFast` is supported,
+        unlike in :class:`PydanticSerializer`.
+
+        .. versionchanged:: 0.16.0
+            Replaces ``is_supported`` method.
+
         """
-        return pluggable.content_type == 'application/json'
+        pluggables: list[Parser | Renderer] = [
+            *metadata.parsers.values(),
+            *metadata.renderers.values(),
+        ]
+        for pluggable in pluggables:
+            if pluggable.content_type != 'application/json':
+                raise EndpointMetadataError(
+                    f'{metadata.endpoint_name!r} serializer '
+                    f'does not support {pluggable!r}, only json is supported',
+                )
 
 
 _ModelT = TypeVar('_ModelT')

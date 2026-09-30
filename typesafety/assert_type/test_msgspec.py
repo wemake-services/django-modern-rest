@@ -3,7 +3,7 @@ from typing import assert_type
 import msgspec
 from django.http import HttpRequest
 
-from dmr import Body, Controller, Headers, Query
+from dmr import Body, BodyFast, Controller, Headers, Query
 from dmr.plugins.msgspec import MsgspecSerializer
 
 
@@ -31,4 +31,11 @@ class MyController(Controller[MsgspecSerializer]):
         assert_type(parsed_body, dict[str, int])
         assert_type(parsed_headers, _HeaderModel)
         assert_type(parsed_query, _QueryModel)
+        return 'Done'
+
+
+class FastController(Controller[MsgspecSerializer]):
+    def post(self, parsed_body: BodyFast[_QueryModel]) -> str:
+        """Fast bodies have the same types as regular ones."""
+        assert_type(parsed_body, _QueryModel)
         return 'Done'

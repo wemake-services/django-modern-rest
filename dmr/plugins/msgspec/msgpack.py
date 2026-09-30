@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from functools import lru_cache
-from typing import Any, ClassVar
+from typing import Any, ClassVar, TypeVar
 
 import msgspec
 from django.http import HttpRequest
@@ -18,7 +18,7 @@ class MsgpackParser(Parser):
     __slots__ = ()
 
     content_type = 'application/msgpack'
-    strict: ClassVar[bool] = True
+    strict: ClassVar[bool] = False
 
     @override
     def parse(
@@ -44,10 +44,12 @@ class MsgpackParser(Parser):
 
         Raises:
             DataParsingError: If error decoding ``obj``.
+            msgspec.
 
         """
         try:
             return _get_deserializer(
+                model,
                 deserializer_hook,
                 strict=self.strict,
             ).decode(to_deserialize)
@@ -110,12 +112,16 @@ def _get_serializer(
     return msgspec.msgpack.Encoder(enc_hook=serializer_hook)
 
 
+_ModelT = TypeVar('_ModelT')
+
+
 @lru_cache(maxsize=MAX_CACHE_SIZE)
 def _get_deserializer(
+    model: _ModelT,
     deserializer_hook: DeserializeFunc | None,
     *,
     strict: bool,
-) -> msgspec.msgpack.Decoder[Any]:
+) -> msgspec.msgpack.Decoder[_ModelT]:
     """
     Returns cached deserializer.
 
@@ -126,4 +132,8 @@ def _get_deserializer(
         >>> _get_deserializer.cache_clear()
 
     """
-    return msgspec.msgpack.Decoder(dec_hook=deserializer_hook, strict=strict)
+    return msgspec.msgpack.Decoder(
+        model,
+        dec_hook=deserializer_hook,
+        strict=strict,
+    )

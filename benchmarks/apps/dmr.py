@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.handlers import asgi, wsgi
 from django.urls import include
 
-from dmr import Body, Controller, Headers, Query
+from dmr import BodyFast, Controller, Headers, Query
 from dmr.plugins.msgspec import MsgspecSerializer
 from dmr.routing import Router, path
 
@@ -79,7 +79,7 @@ class QueryModel(msgspec.Struct):
 class UserAsyncController(Controller[MsgspecSerializer]):
     async def post(
         self,
-        parsed_body: Body[UserCreateModel],
+        parsed_body: BodyFast[UserCreateModel],
         parsed_headers: Headers[HeadersModel],
         parsed_query: Query[QueryModel],
     ) -> UserModel:
@@ -93,7 +93,7 @@ class UserAsyncController(Controller[MsgspecSerializer]):
 class UserSyncController(Controller[MsgspecSerializer]):
     def post(
         self,
-        parsed_body: Body[UserCreateModel],
+        parsed_body: BodyFast[UserCreateModel],
         parsed_headers: Headers[HeadersModel],
         parsed_query: Query[QueryModel],
     ) -> UserModel:

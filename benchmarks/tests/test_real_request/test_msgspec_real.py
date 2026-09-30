@@ -7,7 +7,7 @@ from typing import Final
 import msgspec
 from pytest_codspeed import BenchmarkFixture
 
-from dmr import Body, Controller
+from dmr import Body, BodyFast, Controller
 from dmr.plugins.msgspec import (
     MsgspecSerializer,
 )
@@ -52,6 +52,11 @@ class _MsgspecController(Controller[MsgspecSerializer]):
         return len(parsed_body)
 
 
+class _MsgspecFastController(Controller[MsgspecSerializer]):
+    def post(self, parsed_body: BodyFast[list[User]]) -> int:
+        return len(parsed_body)
+
+
 def test_msgspec_parse_and_validate(
     benchmark: BenchmarkFixture,
     dmr_rf: DMRRequestFactory,
@@ -63,6 +68,25 @@ def test_msgspec_parse_and_validate(
         content_type='application/json',
     )
     controller = _MsgspecController()
+    controller.setup(request)
+
+    @benchmark
+    def factory() -> None:
+        for _ in range(100):
+            controller.dispatch(request)
+
+
+def test_msgspec_fast_parse_and_validate(
+    benchmark: BenchmarkFixture,
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Benchmark through the request pipeline with the fast body."""
+    request = dmr_rf.post(
+        '/test',
+        data=_BODY,
+        content_type='application/json',
+    )
+    controller = _MsgspecFastController()
     controller.setup(request)
 
     @benchmark

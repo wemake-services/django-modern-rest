@@ -1,4 +1,5 @@
 from dmr.components import Body as Body
+from dmr.components import BodyFast as BodyFast
 from dmr.components import Cookies as Cookies
 from dmr.components import FileMetadata as FileMetadata
 from dmr.components import Headers as Headers
