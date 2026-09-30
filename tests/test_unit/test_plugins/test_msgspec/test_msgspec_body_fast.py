@@ -43,18 +43,6 @@ class _AuthHeaders(msgspec.Struct, rename={'token': 'X-API-Token'}):
     token: str
 
 
-@final
-class _UserController(Controller[MsgspecSerializer]):
-    @modify(operation_id='putUsers')  # to compare specs with `Body`
-    def put(
-        self,
-        parsed_headers: Headers[_AuthHeaders],
-        parsed_body: BodyFast[_User],
-    ) -> _User:
-        assert parsed_headers.token
-        return parsed_body
-
-
 _HEADERS: Final = MappingProxyType({'X-API-Token': 'token'})
 
 #: Parsers and the location prefix of body errors. `MsgspecJsonParser`
@@ -72,7 +60,6 @@ _parsers = pytest.mark.parametrize(
 
 
 def _at(loc: str, path: str = '') -> str:
-    """Build the location part of a ``msgspec`` error message."""
     full_path = loc + path
     return f' - at `${full_path}`' if full_path else ''
 
@@ -508,13 +495,24 @@ class _BodyController(Controller[MsgspecSerializer]):
         raise NotImplementedError
 
 
+@final
+class _FastBodyController(Controller[MsgspecSerializer]):
+    @modify(operation_id='putUsers')  # to compare specs with `Body`
+    def put(
+        self,
+        parsed_headers: Headers[_AuthHeaders],
+        parsed_body: BodyFast[_User],
+    ) -> _User:
+        raise NotImplementedError
+
+
 def test_same_openapi_schema() -> None:
     """Ensures that ``Body`` and ``BodyFast`` have the same OpenAPI spec."""
     fast_schema = build_schema(
-        Router('api/', [path('users/', _UserController.as_view())]),
+        Router('api/', [path('users/', _BodyController.as_view())]),
     ).convert()
     regular_schema = build_schema(
-        Router('api/', [path('users/', _BodyController.as_view())]),
+        Router('api/', [path('users/', _FastBodyController.as_view())]),
     ).convert()
 
     assert fast_schema == regular_schema
