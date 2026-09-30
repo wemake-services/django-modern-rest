@@ -16,6 +16,7 @@ from typing import (
 
 import pydantic
 import pytest
+from django.conf import LazySettings
 from inline_snapshot import snapshot
 from pydantic.json_schema import GenerateJsonSchema
 from pydantic_core import core_schema
@@ -33,6 +34,7 @@ from dmr.plugins.pydantic.schema import (
     PydanticSchemaGenerator,
 )
 from dmr.routing import Router, path
+from dmr.settings import Settings
 
 
 @pytest.fixture
@@ -525,6 +527,54 @@ def test_none_default(*, serializer: type[PydanticSerializer]) -> None:
         'type': 'object',
         'required': ['first'],
         'title': '_NoneDefaultModel',
+    })
+
+
+class _ProfileModel(pydantic.BaseModel):
+    bio: str = pydantic.Field(examples=['Hello'])
+
+
+class _AccountModel(pydantic.BaseModel):
+    username: str = pydantic.Field(examples=['admin'])
+    profile: _ProfileModel
+
+
+@pytest.mark.parametrize(
+    'serializer',
+    [PydanticSerializer, PydanticFastSerializer],
+)
+def test_field_examples(
+    *,
+    settings: LazySettings,
+    serializer: type[PydanticSerializer],
+) -> None:
+    """Ensure that generated examples use hand-written field examples."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1639
+    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
+
+    class _AccountController(Controller[serializer]):  # type: ignore[valid-type]
+        def get(self) -> _AccountModel:
+            raise NotImplementedError
+
+        def post(self) -> list[_AccountModel]:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('accounts/', _AccountController.as_view())]),
+    ).convert()
+
+    components = schema['components']['schemas']
+    assert components['_AccountModel']['examples'] == snapshot([
+        {'username': 'admin', 'profile': {'bio': 'Hello'}},
+    ])
+    # Inline schemas use field examples of their items too:
+    operation = schema['paths']['/api/accounts/']['post']
+    response = operation['responses']['201']['content']['application/json']
+    assert response['schema'] == snapshot({
+        'items': {'$ref': '#/components/schemas/_AccountModel'},
+        'type': 'array',
+        'examples': [[{'username': 'admin', 'profile': {'bio': 'Hello'}}]],
     })
 
 

@@ -433,6 +433,11 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Bugfixes
 
+- Fixed generated OpenAPI examples of models ignoring hand-written
+  examples of their fields, like `pydantic.Field(examples=[...])`
+  or `msgspec.Meta(examples=[...])`. Such fields used to get
+  random values in the model example, now they get their own examples.
+  It works for all serializers, #1639
 - `SchemaRegistry.maybe_resolve_reference` now puts the keywords
   that sit next to `$ref`, like `default` and `description`,
   on top of the component's own schema without modifying
