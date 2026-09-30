@@ -1,13 +1,16 @@
-from typing import TYPE_CHECKING, Annotated, TypeAlias, TypeVar
+from http import HTTPStatus
+from typing import TYPE_CHECKING, Annotated, Any, TypeAlias, TypeVar
 
 from typing_extensions import override
 
 from dmr.components import BodyComponent
-from dmr.exceptions import EndpointMetadataError
+from dmr.exceptions import EndpointMetadataError, ValidationError
 from dmr.plugins.msgspec.serializer import MsgspecSerializer
+from dmr.types import EMPTY
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
+    from dmr.endpoint import Endpoint
     from dmr.metadata import EndpointMetadata
     from dmr.serializer import BaseSerializer
 
@@ -23,7 +26,7 @@ class BodyMsgspecComponent(BodyComponent):
     and parsers that decode into models, like
     :class:`~dmr.plugins.msgspec.MsgspecJsonParser`
     and :class:`~dmr.plugins.msgspec.MsgpackParser`.
-    Use :data:`BodyMsgspec` alias, see :ref:`fast-body-component`.
+    Use :data:`BodyMsgspec` alias, see :ref:`msgspec-body-component`.
 
     .. versionadded:: 0.16.0
     """
@@ -32,7 +35,7 @@ class BodyMsgspecComponent(BodyComponent):
 
     def __init__(self) -> None:
         """Always parses bodies in fast mode."""
-        super().__init__(fast_mode=True)
+        super().__init__(pass_model=True)
 
     @override
     def validate(
@@ -55,6 +58,33 @@ class BodyMsgspecComponent(BodyComponent):
                 'use `Body` instead',
             )
 
+    @override
+    def provide_context_data(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+        *,
+        field_model: Any,
+        default: Any = EMPTY,
+    ) -> Any:
+        serializer = controller.serializer
+        try:
+            return super().provide_context_data(
+                endpoint,
+                controller,
+                field_model=field_model,
+                default=default,
+            )
+        except serializer.validation_error as exc:
+            # Sanity check for the self validation:
+            assert self.pass_model  # noqa: S101
+            # Only happens in fast mode, other components
+            # are not validated at all in this case:
+            raise ValidationError(
+                serializer.serialize_validation_error(exc),
+                status_code=HTTPStatus.BAD_REQUEST,
+            ) from None
+
 
 BodyMsgspec: TypeAlias = Annotated[_BodyT, BodyMsgspecComponent()]
 """
@@ -63,7 +93,7 @@ Annotated alias for parsing requests bodies directly into ``msgspec`` models.
 It is a drop-in replacement for :data:`~dmr.components.Body`
 for :class:`~dmr.plugins.msgspec.MsgspecSerializer`,
 which is faster, but has some limitations.
-See :ref:`fast-body-component` to learn more.
+See :ref:`msgspec-body-component` to learn more.
 
 .. versionadded:: 0.16.0
 """

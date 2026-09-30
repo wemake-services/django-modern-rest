@@ -23,7 +23,6 @@ from dmr.exceptions import (
     EndpointMetadataError,
     RequestSerializationError,
     UnsolvableAnnotationsError,
-    ValidationError,
 )
 from dmr.internal.django import (
     convert_multi_value_dict,
@@ -486,24 +485,24 @@ class BodyComponent(ComponentParser):
     See :ref:`conditional-types` to learn more about conditional bodies.
 
     Args:
-        fast_mode: Whether to parse and validate the body directly
-            into its model, before all other components.
-            Plugins that support it provide their own aliases,
+        pass_model: Whether or not to pass ``model``
+            to the serializer or ``Any``.
+            Plugins that support direct model parsing provide their own aliases,
             like :data:`~dmr.plugins.msgspec.BodyMsgspec`,
-            and validate that their serializer is used.
-            See :ref:`fast-body-component` to learn more.
+            and validate that their serializer is used to parse objects faster.
+            See :ref:`msgspec-body-component` to learn more.
 
     .. versionchanged:: 0.16.0
-        Added *fast_mode* parameter.
+        Added *pass_model* parameter.
 
     """
 
-    __slots__ = ('fast_mode',)
+    __slots__ = ('pass_model',)
     context_name: ClassVar[str] = 'parsed_body'
 
-    def __init__(self, *, fast_mode: bool = False) -> None:
+    def __init__(self, *, pass_model: bool = False) -> None:
         """Initialize the body parsing mode."""
-        self.fast_mode = fast_mode
+        self.pass_model = pass_model
 
     @override
     def provide_context_data(
@@ -551,9 +550,8 @@ class BodyComponent(ComponentParser):
                 split_commas=split_commas,
             )
 
-        serializer = controller.serializer
         try:
-            return serializer.deserialize(
+            return controller.serializer.deserialize(
                 controller.request.body,
                 parser=parser,
                 request=controller.request,
@@ -562,19 +560,10 @@ class BodyComponent(ComponentParser):
                 # components, passing the real model here would raise
                 # errors for some valid cases that we handle later.
                 # Fast bodies are decoded and validated right here:
-                model=field_model if self.fast_mode else Any,
+                model=field_model if self.pass_model else Any,
             )
         except DataParsingError as exc:
             raise RequestSerializationError(str(exc)) from None
-        except serializer.validation_error as exc:
-            # Sanity check for the self validation.
-            assert self.fast_mode  # noqa: S101
-            # Only happens in fast mode, other components
-            # are not validated at all in this case:
-            raise ValidationError(
-                serializer.serialize_validation_error(exc),
-                status_code=HTTPStatus.BAD_REQUEST,
-            ) from None
 
     @override
     def conditional_types(

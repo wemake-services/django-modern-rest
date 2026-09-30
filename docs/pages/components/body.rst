@@ -144,7 +144,7 @@ Requests with a body are always validated, even when there's a default.
 See :ref:`component-defaults` to learn more.
 
 
-.. _fast-body-component:
+.. _msgspec-body-component:
 
 Fast body parsing with msgspec
 ------------------------------
