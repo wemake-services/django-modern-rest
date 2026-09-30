@@ -1,3 +1,5 @@
+import datetime as dt
+from collections.abc import Callable
 from typing import (
     TYPE_CHECKING,
     Annotated,
@@ -7,8 +9,6 @@ from typing import (
     get_args,
     get_origin,
 )
-from collections.abc import Callable
-import datetime as dt
 
 from typing_extensions import Sentinel, override
 
