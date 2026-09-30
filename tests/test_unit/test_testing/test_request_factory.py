@@ -1,6 +1,5 @@
 from http import HTTPStatus
 from typing import final
-from unittest.mock import patch
 
 import pydantic
 import pytest
@@ -8,7 +7,7 @@ from django.http import HttpResponse
 from faker import Faker
 
 from dmr import Body, Controller
-from dmr.internal.json import NativeJson, _wrap_bytes_dumper
+from dmr.internal import json as json_helper
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 
@@ -27,13 +26,17 @@ class _MyController(Controller[PydanticSerializer]):
 
 def test_encode_json_fallback_without_msgspec(
     dmr_rf: DMRRequestFactory,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Check correct encoding when msgspec is unavailable (stdlib fallback)."""
-    with patch(
-        'dmr.internal.json._json_dumps',
-        _wrap_bytes_dumper(NativeJson.dumps),
-    ):
-        request = dmr_rf.post('/whatever/', data={'key': 'value'})
+    monkeypatch.setattr(
+        json_helper,
+        '_json_dumps',
+        json_helper._wrap_bytes_dumper(json_helper.NativeJson.dumps),
+    )
+
+    request = dmr_rf.post('/whatever/', data={'key': 'value'})
+
     assert request.body == b'{"key":"value"}'
 
 

@@ -372,7 +372,9 @@ class PydanticFastSerializer(PydanticSerializer):
         *renderer* parameter is always ignored.
         """
         try:
-            return _get_cached_type_adapter(type(structure)).dump_json(
+            return _get_cached_type_adapter(
+                type(structure),  # type: ignore[arg-type]
+            ).dump_json(
                 structure,
                 fallback=cls.serialize_hook,
                 **cls.to_json_kwargs,  # type: ignore[misc]
@@ -394,6 +396,10 @@ class PydanticFastSerializer(PydanticSerializer):
         Fast way to serializer pyndatic models into json bytestring.
 
         *parser* parameter is always ignored.
+
+        .. versionchanged:: 0.16.0
+            Now uses faster ``json_loads`` when it is available.
+
         """
         try:
             return _json_loads(buffer)
@@ -405,6 +411,10 @@ class PydanticFastSerializer(PydanticSerializer):
             if buffer == b'':
                 return None
             raise DataParsingError(exc.errors()[0]['msg']) from exc
+        except Exception as exc:  # which can be raise for non-pydantic loads
+            if buffer == b'':
+                return None
+            raise DataParsingError(str(exc)) from exc
 
     @classmethod
     @override

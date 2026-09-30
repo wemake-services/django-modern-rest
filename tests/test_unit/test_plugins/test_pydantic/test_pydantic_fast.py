@@ -8,9 +8,10 @@ from django.http import HttpResponse
 from faker import Faker
 from inline_snapshot import snapshot
 
-from dmr import Body, Controller
+from dmr import Body, Controller, modify
 from dmr.exceptions import EndpointMetadataError
 from dmr.plugins.pydantic import PydanticFastSerializer
+from dmr.plugins.pydantic import serializer as pydantic_serializer
 from dmr.test import DMRRequestFactory
 from tests.infra.xml_format import XmlParser, XmlRenderer
 
@@ -69,6 +70,35 @@ def test_invalid_json(
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures that body validation works."""
+    request = dmr_rf.put('/whatever/', data=b'{$(#')
+
+    response = _UserController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    'JSON is malformed: object keys must be strings (byte 1)'
+                ),
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
+def test_invalid_json_native(
+    dmr_rf: DMRRequestFactory,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ensures that body validation works with native json."""
+    monkeypatch.setattr(
+        pydantic_serializer,
+        '_json_loads',
+        pydantic_serializer._get_cached_type_adapter(Any).validate_json,
+    )
+
     request = dmr_rf.put('/whatever/', data=b'{$(#')
 
     response = _UserController.as_view()(request)
@@ -155,3 +185,51 @@ def test_pydantic_fast_non_json() -> None:
 
             def get(self) -> str:
                 raise NotImplementedError
+
+
+class _EmptyBodyController(Controller[PydanticFastSerializer]):
+    @modify(status_code=HTTPStatus.NO_CONTENT)
+    def post(self, parsed_body: Body[None]) -> None:
+        """Does not return anything."""
+
+
+def test_empty_json_body(
+    dmr_rf: DMRRequestFactory,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ensures that body can be empty with both modes."""
+    request = dmr_rf.post(
+        '/whatever/',
+        data=b'',
+        headers={'Content-Type': 'application/json'},
+    )
+
+    response = _EmptyBodyController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.content
+    assert response.content == b''
+
+
+def test_empty_json_body_native(
+    dmr_rf: DMRRequestFactory,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ensures that body can be empty with both modes."""
+    monkeypatch.setattr(
+        pydantic_serializer,
+        '_json_loads',
+        pydantic_serializer._get_cached_type_adapter(Any).validate_json,
+    )
+
+    request = dmr_rf.post(
+        '/whatever/',
+        data=b'',
+        headers={'Content-Type': 'application/json'},
+    )
+
+    response = _EmptyBodyController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.NO_CONTENT, response.content
+    assert response.content == b''

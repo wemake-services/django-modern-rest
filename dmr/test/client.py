@@ -62,8 +62,10 @@ class _DMRMixin:  # noqa: WPS338
         # ALL THIS CODE DOES IS JUST A DEFAULT CONTENT_TYPE CHANGE, WTF!
 
         def post(self, path, data='', content_type=None, *args, **kwargs):
+            print(f'{content_type=}')
             if content_type is None:
                 content_type = self.default_content_type
+            print(content_type)
             return super().post(path, data, content_type, *args, **kwargs)
 
         def options(self, path, data='', content_type=None, *args, **kwargs):
