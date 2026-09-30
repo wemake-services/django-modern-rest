@@ -1,14 +1,6 @@
 import datetime as dt
 from collections.abc import Callable
-from typing import (
-    TYPE_CHECKING,
-    Annotated,
-    Any,
-    Final,
-    TypeAlias,
-    get_args,
-    get_origin,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias
 
 from typing_extensions import Sentinel, override
 
@@ -16,7 +8,7 @@ from dmr.internal.types import EMPTY
 from dmr.openapi.objects import Example, Schema
 
 if TYPE_CHECKING:
-    from dmr.serializer import BaseSerializer
+    from dmr.serializer import BaseSchemaGenerator, BaseSerializer
 
 
 def set_generated_example(schema: Schema, example: Any) -> Schema:
@@ -72,12 +64,15 @@ else:
         Uses hand-written examples of fields instead of random values.
 
         polyfactory only generates values from types and constraints.
-        Only its ``pydantic`` factory can use field examples,
-        and it does not do that by default. So, we do that ourselves
-        for all models: ``pydantic``, ``msgspec``, dataclasses, and others.
+        Serializers know how their models declare field examples,
+        so we ask them, see
+        :meth:`dmr.serializer.BaseSchemaGenerator.field_examples`.
         """
 
         __slots__ = ()
+
+        #: Schema generator of the serializer we generate examples for.
+        _schema_generator: ClassVar[type['BaseSchemaGenerator']]
 
         @override
         @classmethod
@@ -88,7 +83,7 @@ else:
             build_context: 'BuildContext | None' = None,
         ) -> Any:
             """Returns the first hand-written example of a field, if any."""
-            examples = cls._field_examples(field_meta)
+            examples = cls._schema_generator.field_examples(field_meta)
             if examples:
                 return examples[0]
             return super().get_field_value(
@@ -101,29 +96,12 @@ else:
         @classmethod
         def _get_config(cls) -> dict[str, Any]:
             # polyfactory creates factories for nested models with this
-            # config, `bases` makes them use this mixin too:
+            # config, so they use this mixin and the same schema generator:
             return {
                 **super()._get_config(),
                 'bases': (_FieldExamplesMixin,),
+                '_schema_generator': cls._schema_generator,
             }
-
-        @classmethod
-        def _field_examples(cls, field_meta: FieldMeta) -> list[Any] | None:
-            # `pydantic` factory keeps examples of fields in `FieldMeta`,
-            # others keep them in `Annotated`, like `msgspec.Meta` does:
-            examples = getattr(field_meta, 'examples', None)
-            if examples or get_origin(field_meta.annotation) is not Annotated:
-                return examples
-            return next(
-                (
-                    metadata_examples
-                    for metadata in get_args(field_meta.annotation)[1:]
-                    if (
-                        metadata_examples := getattr(metadata, 'examples', None)
-                    )
-                ),
-                None,
-            )
 
     #: Faker's defaults for dates and times end at the current time,
     #: so seeded examples would change with the clock. We use fixed bounds.
@@ -223,9 +201,12 @@ else:
             # Example generation is disabled in settings.
             return EMPTY
 
+        factory = _ExampleFactory.create_factory(
+            _schema_generator=serializer.schema_generator,
+        )
         try:  # noqa: WPS505
             return serializer.to_python(
-                _ExampleFactory.get_field_value(
+                factory.get_field_value(
                     FieldMeta.from_type(annotation=annotation),
                 ),
             )

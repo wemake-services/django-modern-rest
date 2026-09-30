@@ -647,6 +647,9 @@ but sometimes it is better than nothing.
   when a field has one, like ``pydantic.Field(examples=[...])``
   or ``msgspec.Meta(examples=[...])``. Nested models,
   lists and ``X | None`` fields are supported.
+  Serializers find field examples with
+  :meth:`~dmr.serializer.BaseSchemaGenerator.field_examples`,
+  custom serializers can override it.
 
 .. note::
 

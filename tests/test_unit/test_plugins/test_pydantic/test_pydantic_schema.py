@@ -531,12 +531,18 @@ def test_none_default(*, serializer: type[PydanticSerializer]) -> None:
 
 
 class _ProfileModel(pydantic.BaseModel):
-    bio: str = pydantic.Field(examples=['Hello'])
+    bio: Annotated[str, pydantic.Field(examples=['Hello'])]
+
+
+@dataclasses.dataclass
+class _SettingsDataclass:
+    theme: Annotated[str, pydantic.Field(examples=['dark'])]
 
 
 class _AccountModel(pydantic.BaseModel):
     username: str = pydantic.Field(examples=['admin'])
     profile: _ProfileModel
+    settings: _SettingsDataclass
 
 
 @pytest.mark.parametrize(
@@ -565,16 +571,58 @@ def test_field_examples(
     ).convert()
 
     components = schema['components']['schemas']
-    assert components['_AccountModel']['examples'] == snapshot([
-        {'username': 'admin', 'profile': {'bio': 'Hello'}},
-    ])
+    assert components['_AccountModel'] == snapshot({
+        'properties': {
+            'username': {
+                'type': 'string',
+                'title': 'Username',
+                'examples': ['admin'],
+            },
+            'profile': {'$ref': '#/components/schemas/_ProfileModel'},
+            'settings': {'$ref': '#/components/schemas/_SettingsDataclass'},
+        },
+        'type': 'object',
+        'required': ['username', 'profile', 'settings'],
+        'title': '_AccountModel',
+        'examples': [
+            {
+                'username': 'admin',
+                'profile': {'bio': 'Hello'},
+                'settings': {'theme': 'dark'},
+            },
+        ],
+    })
+    assert components['_ProfileModel'] == snapshot({
+        'properties': {
+            'bio': {'type': 'string', 'title': 'Bio', 'examples': ['Hello']},
+        },
+        'type': 'object',
+        'required': ['bio'],
+        'title': '_ProfileModel',
+    })
+    assert components['_SettingsDataclass'] == snapshot({
+        'properties': {
+            'theme': {'type': 'string', 'title': 'Theme', 'examples': ['dark']},
+        },
+        'type': 'object',
+        'required': ['theme'],
+        'title': '_SettingsDataclass',
+    })
     # Inline schemas use field examples of their items too:
     operation = schema['paths']['/api/accounts/']['post']
     response = operation['responses']['201']['content']['application/json']
     assert response['schema'] == snapshot({
         'items': {'$ref': '#/components/schemas/_AccountModel'},
         'type': 'array',
-        'examples': [[{'username': 'admin', 'profile': {'bio': 'Hello'}}]],
+        'examples': [
+            [
+                {
+                    'username': 'admin',
+                    'profile': {'bio': 'Hello'},
+                    'settings': {'theme': 'dark'},
+                },
+            ],
+        ],
     })
 
 

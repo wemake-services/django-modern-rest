@@ -132,6 +132,9 @@ You would need to:
   see :class:`dmr.serializer.BaseSchemaGenerator`. Example implementations:
   :class:`~dmr.plugins.pydantic.schema.PydanticSchemaGenerator`
   and :class:`~dmr.plugins.msgspec.schema.MsgspecSchemaGenerator`
+- Optionally, provide hand-written examples of your model fields
+  for the generated OpenAPI examples by overriding
+  :meth:`~dmr.serializer.BaseSchemaGenerator.field_examples` method
 
 
 Pydantic plugin

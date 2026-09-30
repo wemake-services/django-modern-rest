@@ -542,9 +542,22 @@ def test_field_examples(*, settings: LazySettings) -> None:
     ).convert()
 
     components = schema['components']['schemas']
-    assert components['_AccountStruct']['examples'] == snapshot([
-        {'username': 'admin', 'profile': {'bio': 'Hello'}},
-    ])
+    assert components['_AccountStruct'] == snapshot({
+        'properties': {
+            'username': {'type': 'string', 'examples': ['admin']},
+            'profile': {'$ref': '#/components/schemas/_ProfileStruct'},
+        },
+        'type': 'object',
+        'required': ['username', 'profile'],
+        'title': '_AccountStruct',
+        'examples': [{'username': 'admin', 'profile': {'bio': 'Hello'}}],
+    })
+    assert components['_ProfileStruct'] == snapshot({
+        'properties': {'bio': {'type': 'string', 'examples': ['Hello']}},
+        'type': 'object',
+        'required': ['bio'],
+        'title': '_ProfileStruct',
+    })
     # Inline schemas use field examples of their items too:
     operation = schema['paths']['/api/accounts/']['post']
     response = operation['responses']['201']['content']['application/json']

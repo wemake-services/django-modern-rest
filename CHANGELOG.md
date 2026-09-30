@@ -280,6 +280,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Features
 
+- Added `BaseSchemaGenerator.field_examples` method. Custom serializers
+  can override it to provide hand-written examples of their model fields
+  for the generated OpenAPI examples, #1639
 - Component parameters can now have default values, like
   `parsed_body: Body[Model | None] = None`
   or `parsed_query: Query[Filters | None] = None`.
@@ -437,7 +440,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   examples of their fields, like `pydantic.Field(examples=[...])`
   or `msgspec.Meta(examples=[...])`. Such fields used to get
   random values in the model example, now they get their own examples.
-  It works for all serializers, #1639
+  Both `pydantic` and `msgspec` serializers support it, #1639
 - `SchemaRegistry.maybe_resolve_reference` now puts the keywords
   that sit next to `$ref`, like `default` and `description`,
   on top of the component's own schema without modifying

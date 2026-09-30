@@ -1,10 +1,15 @@
-from collections.abc import Callable
-from typing import Any, ClassVar, final
+from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING, Any, ClassVar, final
 
+import msgspec
 from msgspec.json import schema
 from typing_extensions import TypedDict, override
 
+from dmr.internal.types import find_annotated_metadata
 from dmr.serializer import BaseSchemaGenerator, SchemaDef
+
+if TYPE_CHECKING:
+    from polyfactory.field_meta import FieldMeta
 
 
 @final
@@ -66,3 +71,16 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
         except Exception:
             return None
         return schema[0].get('title')
+
+    @override
+    @classmethod
+    def field_examples(cls, field_meta: 'FieldMeta') -> Sequence[Any]:
+        """
+        Return examples from ``msgspec.Meta(examples=[...])``.
+
+        .. versionadded:: 0.16.0
+        """
+        meta = find_annotated_metadata(field_meta.annotation, msgspec.Meta)
+        # `msgspec` types `Meta.examples` as a plain `list`:
+        examples: Sequence[Any] | None = getattr(meta, 'examples', None)
+        return examples or ()
