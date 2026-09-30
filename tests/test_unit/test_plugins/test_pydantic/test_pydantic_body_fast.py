@@ -37,7 +37,7 @@ class _AuthHeaders(pydantic.BaseModel):
 _HEADERS: Final = MappingProxyType({'X-API-Token': 'token'})
 
 #: `PydanticFastSerializer` ignores parsers, so any parser is fast:
-_parsers = pytest.mark.parametrize(
+_parsers: Final = pytest.mark.parametrize(
     'parsers',
     [EMPTY, [JsonParser()]],
     ids=['default-parser', 'json-parser'],

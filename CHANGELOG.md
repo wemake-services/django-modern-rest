@@ -131,10 +131,10 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   which receives `controller_cls` and the complete `EndpointMetadata`
   and raises `EndpointMetadataError` instead of returning a `bool`.
   It runs last in the endpoint validation, so it can check
-  parsers, renderers, components, and everything else at once
+  parsers, renderers, components, and everything else at once, #1661
 - `MsgspecJsonParser.strict` and `MsgpackParser.strict` now default
   to `False` instead of `True`. They only affect `BodyFast`,
-  and lax mode matches how regular request bodies are validated
+  and lax mode matches how regular request bodies are validated, #1661
 - `security_schemes` API for auth classes was changed,
   accepts `metadata` and `controller_cls`, and now it is a method,
   not a property, #1521
@@ -241,7 +241,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   that parses and validates the request body directly into its model,
   skipping the intermediate python objects.
   Works with `MsgspecSerializer` and `PydanticFastSerializer`.
-  Works around x1.5 faster than the default `Body`
+  Works around x1.5 faster than the default `Body`, #1661
 - `MsgspecSerializer` now parses all components of an endpoint
   into a `msgspec.Struct` with `gc=False` instead of a `TypedDict`.
   Validation of the parsed context is around x2 faster, #1494
