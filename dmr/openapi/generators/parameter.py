@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.metadata import EndpointMetadata
     from dmr.openapi.core.context import OpenAPIContext
+    from dmr.openapi.generators.schema import LoadedSchema
     from dmr.serializer import BaseSerializer
 
 
@@ -51,20 +52,33 @@ class ParameterGenerator:
         # Import cycle:
         from dmr.metadata import get_annotated_metadata  # noqa: PLC0415
 
-        schema = self._context.registries.schema.maybe_resolve_reference(
-            self._context.generators.schema(
-                model,
-                controller_cls.serializer,
-                skip_registration=True,
-                register_referenced_components=True,
-            ),
-        )
-        annotated_meta = get_annotated_metadata(
+        loaded = self._context.generators.schema.load(
             model,
-            ParameterMetadata,
-            model_meta=model_meta,
+            controller_cls.serializer,
+            inline=True,
         )
-        object_schemas = self._object_schemas(schema)
+        generated = self._generate(
+            loaded,
+            get_annotated_metadata(
+                model,
+                ParameterMetadata,
+                model_meta=model_meta,
+            ),
+            param_in=param_in,
+        )
+        # Models themselves are inlined as parameters, only components
+        # used by their properties are needed in the schema:
+        self._context.generators.schema.register(generated, loaded)
+        return generated
+
+    def _generate(
+        self,
+        loaded: 'LoadedSchema',
+        annotated_meta: ParameterMetadata | None,
+        *,
+        param_in: ParameterLocation,
+    ) -> list[Parameter | Reference]:
+        object_schemas = self._object_schemas(loaded.schema, loaded.defs)
         return [  # pyright: ignore[reportReturnType]
             Parameter(
                 name=property_name,
@@ -87,6 +101,7 @@ class ParameterGenerator:
                     property_name,
                     property_schema,
                     object_schema,
+                    loaded.defs,
                 ),
             )
             for object_schema in object_schemas
@@ -96,32 +111,34 @@ class ParameterGenerator:
             ).items()
         ]
 
-    def _object_schemas(self, schema: Schema) -> list[Schema]:
+    def _object_schemas(
+        self,
+        schema: Schema,
+        defs: dict[str, Schema],
+    ) -> list[Schema]:
         """
         Find all schemas with properties inside a schema.
 
         Unions are represented with ``anyOf`` or ``oneOf``,
         we look into their members recursively.
         """
+        schema = self._context.registries.schema.maybe_resolve_reference(
+            schema,
+            resolution_context=defs,
+        )
         members = schema.any_of or schema.one_of
         if not members:
             return [schema] if schema.properties else []
         object_schemas: list[Schema] = []
         for member in members:
-            object_schemas.extend(
-                self._object_schemas(
-                    self._context.registries.schema.maybe_resolve_reference(
-                        member,
-                    ),
-                ),
-            )
+            object_schemas.extend(self._object_schemas(member, defs))
         return object_schemas
 
     def _new_properties(
         self,
         object_schema: Schema,
         object_schemas: list[Schema],
-    ) -> dict[str, Reference | Schema]:
+    ) -> dict[str, Schema]:
         """Properties of *object_schema* that previous schemas don't have."""
         previous = object_schemas[: object_schemas.index(object_schema)]
         return {
@@ -139,8 +156,9 @@ class ParameterGenerator:
         self,
         annotated_meta: ParameterMetadata | None,
         property_name: str,
-        property_schema: Reference | Schema,
+        property_schema: Schema,
         schema: Schema,
+        defs: dict[str, Schema],
     ) -> dict[str, Any]:
         metadata_params = (
             {}
@@ -150,9 +168,11 @@ class ParameterGenerator:
                 for field in dataclasses.fields(annotated_meta)
             }
         )
-        schema_registry = self._context.registries.schema
-        property_schema = schema_registry.maybe_resolve_reference(
-            property_schema,
+        property_schema = (
+            self._context.registries.schema.maybe_resolve_reference(
+                property_schema,
+                resolution_context=defs,
+            )
         )
         return {
             **metadata_params,

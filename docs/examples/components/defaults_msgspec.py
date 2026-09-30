@@ -1,3 +1,5 @@
+from typing import Final
+
 import msgspec
 
 from dmr import Body, Controller, Query
@@ -13,7 +15,7 @@ class Pagination(msgspec.Struct, frozen=True):
     page: int = 1
 
 
-DEFAULT_PAGINATION = Pagination()
+DEFAULT_PAGINATION: Final = Pagination()
 
 
 class ProductController(Controller[MsgspecSerializer]):

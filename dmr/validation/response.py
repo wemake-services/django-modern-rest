@@ -182,7 +182,9 @@ class ResponseValidator:  # noqa: WPS214
                 response.content,
                 parser=parser,
                 request=controller.request,
-                model=schema.return_type,
+                # We don't care about the exact model here, because later
+                # it would be validated with `.from_python()` call:
+                model=Any,
             )
         elif isinstance(response, FileResponse):
             # But, when we are dealing with `FileResponse`

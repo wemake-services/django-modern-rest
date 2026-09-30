@@ -286,17 +286,12 @@ class ComponentParserGenerator:  # noqa: WPS214
         for param_spec in params_list:
             # We've just built these parameters, one per converter:
             assert isinstance(param_spec, Parameter)  # noqa: S101
-            if not isinstance(param_spec.schema, Schema):
-                # A custom converter can declare a model, and such a model
-                # is generated as a component reference. There is no inline
-                # schema to override, so we keep the reference as it is:
-                continue
+            schema = param_spec.schema
+            assert isinstance(schema, Schema)  # noqa: S101
             converter_schema = prepared[param_spec.name]
-            param_spec.schema.pattern = (
-                converter_schema.pattern or param_spec.schema.pattern
-            )
-            param_spec.schema.description = (
-                converter_schema.description or param_spec.schema.description
+            schema.pattern = converter_schema.pattern or schema.pattern
+            schema.description = (
+                converter_schema.description or schema.description
             )
         return params_list
 
@@ -341,6 +336,21 @@ class ComponentParserGenerator:  # noqa: WPS214
                 # when the other one is optional:
                 keep_lonely_existing=not new_schema.required,
                 keep_lonely_new=not schema.required,
+            # We've just built these bodies from component parsers,
+            # so all of them have inline media types, never references:
+            assert isinstance(media_type, MediaType)  # noqa: S101
+            media_items: list[Schema] = []
+            if media_type.schema:  # pragma: no cover:
+                media_items.append(media_type.schema)
+            existing_content = schema.content.get(media_name)
+            assert not isinstance(existing_content, Reference)  # noqa: S101
+            # TODO: remove pragma after implementing conditional types
+            # for `FileMetadata[]` component
+            if existing_content and existing_content.schema:  # pragma: no cover
+                media_items.append(existing_content.schema)
+            new_content[media_name] = dataclasses.replace(
+                media_type,
+                schema=Schema(all_of=media_items),
             )
             if media_type is not None:
                 merged[media_name] = media_type

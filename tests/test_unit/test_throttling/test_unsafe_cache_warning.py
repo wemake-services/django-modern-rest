@@ -66,20 +66,15 @@ def test_unsafe_cache_raises(
 
 
 @pytest.mark.parametrize('backend', [_LOCMEM_CACHES, _DUMMY_CACHES])
-@pytest.mark.parametrize('explicit_backend', [True, False])
 def test_unsafe_cache_warns_async(
     settings: LazySettings,
     *,
     backend: dict[str, Any],
-    explicit_backend: bool,
 ) -> None:
     """Test that unsafe cache warns by default for async controllers."""
     settings.CACHES = dict(backend)
-    throttle = (
-        AsyncThrottle(10, Rate.minute, backend=AsyncDjangoCache())
-        if explicit_backend
-        else AsyncThrottle(10, Rate.minute)
-    )
+    settings.DEBUG = False
+    throttle = AsyncThrottle(10, Rate.minute, backend=AsyncDjangoCache())
 
     with pytest.warns(
         UnsafeCacheBackendWarning,
@@ -94,20 +89,15 @@ def test_unsafe_cache_warns_async(
 
 
 @pytest.mark.parametrize('backend', [_LOCMEM_CACHES, _DUMMY_CACHES])
-@pytest.mark.parametrize('explicit_backend', [True, False])
 def test_unsafe_cache_warns_sync(
     settings: LazySettings,
     *,
     backend: dict[str, Any],
-    explicit_backend: bool,
 ) -> None:
     """Test that unsafe cache warns by default for sync controllers."""
     settings.CACHES = dict(backend)
-    throttle = (
-        SyncThrottle(10, Rate.minute, backend=SyncDjangoCache())
-        if explicit_backend
-        else SyncThrottle(10, Rate.minute)
-    )
+    settings.DEBUG = False
+    throttle = SyncThrottle(10, Rate.minute, backend=SyncDjangoCache())
 
     with pytest.warns(
         UnsafeCacheBackendWarning,
@@ -121,17 +111,73 @@ def test_unsafe_cache_warns_sync(
                 raise NotImplementedError
 
 
-@pytest.mark.parametrize(
-    'backend',
-    [_LOCMEM_CACHES, _DUMMY_CACHES, _REDIS_CACHES],
-)
-def test_unsafe_cache_disabled(
+@pytest.mark.parametrize('backend', [_LOCMEM_CACHES, _DUMMY_CACHES])
+def test_unsafe_cache_silent_in_debug(
     settings: LazySettings,
     *,
     backend: dict[str, Any],
 ) -> None:
+    """Test that unsafe cache does not warn by default when DEBUG is on."""
+    settings.CACHES = dict(backend)
+    settings.DEBUG = True
+    throttle = SyncThrottle(10, Rate.minute, backend=SyncDjangoCache())
+
+    with warnings.catch_warnings(record=True) as captured:
+        warnings.simplefilter('always')
+
+        class _Controller(Controller[PydanticFastSerializer]):
+            throttling = [throttle]
+
+            def get(self) -> str:
+                raise NotImplementedError
+
+    assert not captured
+
+
+@pytest.mark.parametrize('backend', [_LOCMEM_CACHES, _DUMMY_CACHES])
+@pytest.mark.parametrize('debug', [True, False])
+def test_unsafe_cache_raises_regardless_of_debug(
+    settings: LazySettings,
+    *,
+    backend: dict[str, Any],
+    debug: bool,
+) -> None:
+    """Test that `False` raises no matter what DEBUG is."""
+    settings.CACHES = dict(backend)
+    settings.DEBUG = debug
+
+    with pytest.raises(
+        EndpointMetadataError,
+        match='not safe for production',
+    ):
+
+        class _Controller(Controller[PydanticFastSerializer]):
+            throttling = [
+                AsyncThrottle(
+                    10,
+                    Rate.minute,
+                    backend=AsyncDjangoCache(allow_unsafe_cache=False),
+                ),
+            ]
+
+            async def get(self) -> str:
+                raise NotImplementedError
+
+
+@pytest.mark.parametrize(
+    'backend',
+    [_LOCMEM_CACHES, _DUMMY_CACHES, _REDIS_CACHES],
+)
+@pytest.mark.parametrize('debug', [True, False])
+def test_unsafe_cache_disabled(
+    settings: LazySettings,
+    *,
+    backend: dict[str, Any],
+    debug: bool,
+) -> None:
     """Test that unsafe cache check can be disabled."""
     settings.CACHES = dict(backend)
+    settings.DEBUG = debug
 
     with warnings.catch_warnings(record=True) as captured:
         warnings.simplefilter('always')
@@ -141,7 +187,7 @@ def test_unsafe_cache_disabled(
                 AsyncThrottle(
                     10,
                     Rate.minute,
-                    backend=AsyncDjangoCache(allow_unsafe_cache=None),
+                    backend=AsyncDjangoCache(allow_unsafe_cache=True),
                 ),
             ]
 
@@ -158,6 +204,7 @@ def test_unsafe_cache_disabled(
 def test_unsafe_cache_is_checked_per_backend(settings: LazySettings) -> None:
     """Each backend instance controls its own unsafe cache check."""
     settings.CACHES = dict(_LOCMEM_CACHES)
+    settings.DEBUG = False
 
     with warnings.catch_warnings(record=True) as captured:
         warnings.simplefilter('always')
@@ -167,7 +214,7 @@ def test_unsafe_cache_is_checked_per_backend(settings: LazySettings) -> None:
                 SyncThrottle(
                     10,
                     Rate.minute,
-                    backend=SyncDjangoCache(allow_unsafe_cache=None),
+                    backend=SyncDjangoCache(allow_unsafe_cache=True),
                 ),
                 SyncThrottle(100, Rate.hour, backend=SyncDjangoCache()),
             ]
@@ -182,6 +229,7 @@ def test_unsafe_cache_is_checked_per_backend(settings: LazySettings) -> None:
 def test_safe_cache(settings: LazySettings) -> None:
     """Test that safe cache does not warn, even in the strict mode."""
     settings.CACHES = dict(_REDIS_CACHES)
+    settings.DEBUG = False
 
     with warnings.catch_warnings(record=True) as captured:
         warnings.simplefilter('always')

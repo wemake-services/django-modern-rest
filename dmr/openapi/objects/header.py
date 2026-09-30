@@ -27,7 +27,7 @@ class Header:
 
     """
 
-    schema: 'Reference | Schema | None' = None
+    schema: 'Schema | None' = None
     description: str | None = None
     required: bool | None = None
     deprecated: bool | None = None

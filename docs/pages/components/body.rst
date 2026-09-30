@@ -144,6 +144,86 @@ Requests with a body are always validated, even when there's a default.
 See :ref:`component-defaults` to learn more.
 
 
+.. _msgspec-body-component:
+
+Fast body parsing with msgspec
+------------------------------
+
+.. versionadded:: 0.16.0
+
+.. tip::
+
+  ``BodyMsgspec`` is generally x1.6 faster than ``Body``.
+
+By default, ``Body`` is parsed in two steps:
+
+1. The :class:`~dmr.parsers.Parser` decodes the raw request bytes
+   into simple python objects, like :class:`dict` and :class:`list`,
+   using no exact shape
+2. Then, all components of the request (body, headers, query, etc)
+   are validated together in a single call with the model that
+   the :class:`~dmr.serializer.BaseSerializer` builds for the whole request,
+   see :ref:`serializer-context`
+
+This is flexible, but the intermediate python objects cost time.
+But, ``msgspec`` can decode bytes directly into a model,
+when it knows the shape in advance. It gives a lot of speed: for example,
+``msgspec`` skips unknown fields and does not parse them from the body payload.
+It is a drop-in replacement for ``Body`` when using
+:class:`~dmr.plugins.msgspec.MsgspecSerializer`:
+
+.. literalinclude:: /examples/components/body_fast_msgspec.py
+  :caption: views.py
+  :language: python
+  :linenos:
+  :emphasize-lines: 12
+
+What is different from ``Body``?
+
+- Only :class:`~dmr.plugins.msgspec.MsgspecSerializer` is supported,
+  other serializers raise :exc:`~dmr.exceptions.EndpointMetadataError`
+  during the import time.
+  ``pydantic`` cannot benefit from this: its models can't be decoded
+  by ``msgspec``, and validating them from within the decoder
+  is slower than the regular ``Body`` in all measured cases
+- The body is validated on its own, before all other components
+  are validated together. When the body is invalid, other components
+  are not validated at all: the error response only contains
+  body errors, even if ``parsed_headers`` or ``parsed_query``
+  are also invalid
+- Error locations change: the body is validated as the root object,
+  not as a part of the whole request, so the ``parsed_body`` prefix
+  is gone. ``Body`` reports ``$.parsed_body.age``,
+  ``BodyMsgspec`` reports ``$.age`` for the same error.
+  Top level errors have no location at all
+- Invalid bytes, like malformed ``json``, are still reported
+  as parsing errors, exactly like for ``Body``
+- Strictness of ``msgspec`` decoding is controlled by
+  :attr:`~dmr.plugins.msgspec.MsgspecJsonParser.strict`
+  and :attr:`~dmr.plugins.msgspec.MsgpackParser.strict` attributes,
+  which are lax by default, just like the regular request validation.
+  :attr:`~dmr.endpoint.SerializerContext.strict_validation` has no effect
+  on fast bodies
+
+.. tip::
+
+  ``BodyMsgspec`` works best if there are no other components.
+
+Everything else works the same: :ref:`defaults <component-defaults>`,
+:ref:`conditional types <conditional-types>`, OpenAPI schema generation,
+and :doc:`response validation <../validation>`.
+The OpenAPI schema is always the same for ``Body`` and ``BodyMsgspec``.
+
+.. note::
+
+  Only parsers that decode into models really support ``BodyMsgspec``:
+  :class:`~dmr.plugins.msgspec.MsgspecJsonParser`
+  and :class:`~dmr.plugins.msgspec.MsgpackParser`.
+
+  Custom parsers can also learn to respect the model,
+  but it needs a support from the core library's serializer side.
+
+
 Customizing the OpenAPI metadata for Body
 -----------------------------------------
 

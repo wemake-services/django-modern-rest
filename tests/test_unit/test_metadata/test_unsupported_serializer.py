@@ -3,18 +3,25 @@ from typing_extensions import override
 
 from dmr import Controller
 from dmr.exceptions import EndpointMetadataError
+from dmr.metadata import EndpointMetadata
 from dmr.negotiation import ContentType
-from dmr.parsers import Parser
 from dmr.plugins.pydantic import PydanticSerializer
-from dmr.renderers import Renderer
+from dmr.serializer import BaseSerializer
 from tests.infra.xml_format import XmlParser
 
 
 class _JsonPydanticSerializer(PydanticSerializer):
     @override
     @classmethod
-    def is_supported(cls, pluggable: Parser | Renderer) -> bool:
-        return pluggable.content_type == ContentType.json
+    def validate(
+        cls,
+        controller_cls: type[Controller[BaseSerializer]],
+        metadata: EndpointMetadata,
+    ) -> None:
+        super().validate(controller_cls, metadata)
+        for parser in metadata.parsers.values():
+            if parser.content_type != ContentType.json:
+                raise EndpointMetadataError(f'Unsupported {parser!r}')
 
 
 def test_unsupported_serializer_thing() -> None:
@@ -26,3 +33,11 @@ def test_unsupported_serializer_thing() -> None:
 
             def get(self) -> str:
                 raise NotImplementedError
+
+
+def test_supported_serializer() -> None:
+    """Ensures that it is possible to construct a supported object."""
+
+    class _Controller(Controller[_JsonPydanticSerializer]):
+        def get(self) -> str:
+            raise NotImplementedError

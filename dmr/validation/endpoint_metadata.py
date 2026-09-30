@@ -4,7 +4,6 @@ import re
 from collections.abc import (
     Callable,
     ItemsView,
-    Mapping,
     Sequence,
     Set,
 )
@@ -54,7 +53,14 @@ if TYPE_CHECKING:
     from dmr.controller import Controller
     from dmr.errors import AsyncErrorHandler, SyncErrorHandler
     from dmr.internal.endpoint import Extras
-    from dmr.openapi.objects import Callback, Reference, Server
+    from dmr.openapi.config import OpenAPIConfig
+    from dmr.openapi.objects import (
+        Callback,
+        ExternalDocumentation,
+        Reference,
+        SecurityRequirement,
+        Server,
+    )
 
 #: Regex expression to match allowed chars in tokens
 #: For header and cookie names.
@@ -471,6 +477,69 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
         self._validate_return_annotation(return_annotation)
 
+        return self._post_validate(
+            self._build_metadata(
+                method,
+                allowed_http_methods,
+                return_annotation,
+            ),
+        )
+
+    def build_validate_responses(self) -> bool:
+        """
+        Resolve the ``validate_responses`` flag for this endpoint.
+
+        It is public, because other flags can default to this one.
+
+        .. versionadded:: 0.16.0
+        """
+        merger = self.merger('validate_responses')
+        settings_value: bool | Sentinel = resolve_setting(
+            Settings.validate_responses,
+        )
+        validate_responses = merger.first_set(
+            self.payload.validate_responses if self.payload else EMPTY,
+            self.controller_cls.validate_responses,
+            settings_value,
+        )
+        return merger.not_empty(validate_responses)
+
+    def build_semantic_schema(self) -> bool:
+        """
+        Resolve the ``semantic_schema`` flag for this endpoint.
+
+        It is public, because other flags can default to this one.
+
+        .. versionadded:: 0.16.0
+        """
+        merger = self.merger('semantic_schema')
+        settings_value: bool | Sentinel = resolve_setting(
+            Settings.semantic_schema,
+        )
+        semantic_schema = merger.first_set(
+            self.payload.semantic_schema if self.payload else EMPTY,
+            self.controller_cls.semantic_schema,
+            settings_value,
+        )
+        return merger.not_empty(semantic_schema)
+
+    def merger(self, field_name: str) -> MetadataMerger:
+        """
+        Create a merger for the given metadata field.
+
+        Use it to resolve endpoint, controller, and settings layers
+        the same way built-in fields are resolved.
+
+        .. versionadded:: 0.16.0
+        """
+        return self.metadata_merger_cls(field_name=field_name)
+
+    def _build_metadata(
+        self,
+        method: str,
+        allowed_http_methods: frozenset[str],
+        return_annotation: Any,
+    ) -> EndpointMetadata:
         if isinstance(self.payload, ValidateEndpointPayload):
             return self._from_validate(
                 self.payload,
@@ -492,35 +561,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             )
         assert_never(self.payload)
 
-    def merger(self, field_name: str) -> MetadataMerger:
-        """
-        Create a merger for the given metadata field.
-
-        Use it to resolve endpoint, controller, and settings layers
-        the same way built-in fields are resolved.
-
-        .. versionadded:: 0.16.0
-        """
-        return self.metadata_merger_cls(field_name=field_name)
-
-    def build_validate_responses(self) -> bool:
-        """
-        Resolve the ``validate_responses`` flag for this endpoint.
-
-        It is public, because other flags can default to this one.
-
-        .. versionadded:: 0.16.0
-        """
-        merger = self.merger('validate_responses')
-        settings_value: bool | Sentinel = resolve_setting(
-            Settings.validate_responses,
-        )
-        validate_responses = merger.first_set(
-            self.payload.validate_responses if self.payload else EMPTY,
-            self.controller_cls.validate_responses,
-            settings_value,
-        )
-        return merger.not_empty(validate_responses)
+    def _post_validate(self, metadata: EndpointMetadata) -> EndpointMetadata:
+        # Does nothing by default
+        return metadata
 
     def _from_validate(
         self,
@@ -550,23 +593,22 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             exclude_validate_responses=(
                 self._build_exclude_validate_responses()
             ),
-            semantic_schema=self._build_semantic_schema(),
+            semantic_schema=self.build_semantic_schema(),
             semantic_responses=self._build_semantic_responses(),
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
             semantic_auth=self._build_semantic_auth(),
             exclude_semantic_auth=self._build_exclude_semantic_auth(),
             summary=summary,
             description=description,
-            tags=self._build_tags(payload.tags),
+            tags=self._build_tags(),
             operation_id=self.merger('operation_id').empty_to_none(
                 payload.operation_id,
             ),
-            deprecated=payload.deprecated,
-            external_docs=self.merger('external_docs').empty_to_none(
-                payload.external_docs,
-            ),
-            callbacks=self._build_callbacks(payload.callbacks),
-            servers=self._build_servers(payload.servers),
+            deprecated=self._build_deprecated(),
+            security=self._build_security(),
+            external_docs=self._build_external_docs(),
+            callbacks=self._build_callbacks(),
+            servers=self._build_servers(),
             ignore_from_spec=self._build_ignore_from_spec(),
             extras=self._build_extras(),
         )
@@ -623,23 +665,22 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             exclude_validate_responses=(
                 self._build_exclude_validate_responses()
             ),
-            semantic_schema=self._build_semantic_schema(),
+            semantic_schema=self.build_semantic_schema(),
             semantic_responses=self._build_semantic_responses(),
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
             semantic_auth=self._build_semantic_auth(),
             exclude_semantic_auth=self._build_exclude_semantic_auth(),
             summary=summary,
             description=description,
-            tags=self._build_tags(payload.tags),
+            tags=self._build_tags(),
             operation_id=self.merger('operation_id').empty_to_none(
                 payload.operation_id,
             ),
-            deprecated=payload.deprecated,
-            external_docs=self.merger('external_docs').empty_to_none(
-                payload.external_docs,
-            ),
-            callbacks=self._build_callbacks(payload.callbacks),
-            servers=self._build_servers(payload.servers),
+            deprecated=self._build_deprecated(),
+            security=self._build_security(),
+            external_docs=self._build_external_docs(),
+            callbacks=self._build_callbacks(),
+            servers=self._build_servers(),
             ignore_from_spec=self._build_ignore_from_spec(),
             extras=self._build_extras(),
         )
@@ -685,19 +726,20 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             exclude_validate_responses=(
                 self._build_exclude_validate_responses()
             ),
-            semantic_schema=self._build_semantic_schema(),
+            semantic_schema=self.build_semantic_schema(),
             semantic_responses=self._build_semantic_responses(),
             exclude_semantic_responses=self._build_exclude_semantic_responses(),
             semantic_auth=self._build_semantic_auth(),
             exclude_semantic_auth=self._build_exclude_semantic_auth(),
             summary=summary,
             description=description,
-            tags=self._build_tags(EMPTY),
+            tags=self._build_tags(),
             operation_id=None,
-            deprecated=False,
-            external_docs=None,
-            callbacks=None,
-            servers=None,
+            deprecated=self._build_deprecated(),
+            security=self._build_security(),
+            external_docs=self._build_external_docs(),
+            callbacks=self._build_callbacks(),
+            servers=self._build_servers(),
             ignore_from_spec=self._build_ignore_from_spec(),
             extras=self._build_extras(),
         )
@@ -737,26 +779,19 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     ) -> dict[str, _PluggableT]:
         merger = self.merger(field_name)
         pluggables = merger.first_defined(*layers)
-        if pluggables is None or isinstance(pluggables, Sentinel):
-            # Settings is the last place we look at, it must be present:
+        if (
+            pluggables is None
+            or isinstance(pluggables, Sentinel)
+            or not pluggables
+        ):
+            # Explicit empty values are taken literally, so an endpoint
+            # can end up without any parsers or renderers, which is an error:
             raise EndpointMetadataError(
                 f'{self.endpoint_name!r} must have at least one {kind} '
-                'configured in settings',
+                'configured on the endpoint, controller, or settings level',
             )
-        return {
-            pluggable.content_type: self._check_supported(pluggable)
-            for pluggable in pluggables
-        }
-
-    def _check_supported(
-        self,
-        pluggable: _PluggableT,
-    ) -> _PluggableT:
-        if self.controller_cls.serializer.is_supported(pluggable):
-            return pluggable
-        raise EndpointMetadataError(
-            f'{self.endpoint_name!r} serializer does not support {pluggable!r}',
-        )
+        # Serializer support is validated later, when metadata is complete:
+        return {pluggable.content_type: pluggable for pluggable in pluggables}
 
     def _build_validate_negotiation(self) -> bool:
         settings_value: bool | Sentinel = resolve_setting(
@@ -771,21 +806,71 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             return self.build_validate_responses()
         return validate_negotiation
 
-    def _build_servers(
-        self,
-        payload_servers: Sequence['Server'] | Sentinel | None,
-    ) -> list['Server'] | None:
-        # Controller-level servers belong to the path item,
-        # not to the operation, so they are not a layer here:
-        servers = self.merger('servers').empty_to_none(payload_servers)
-        return None if servers is None else list(servers)
+    def _build_servers(self) -> list['Server'] | None:
+        servers = self.merger('servers').first_defined(
+            self.payload.servers if self.payload else EMPTY,
+            self.controller_cls.servers,
+        )
+        if servers is None or isinstance(servers, Sentinel):
+            return None  # explicitly disabled or nothing is configured
+        return list(servers)
 
-    def _build_callbacks(
+    def _build_callbacks(self) -> 'dict[str, Callback | Reference] | None':
+        callbacks = self.merger('callbacks').first_defined(
+            self.payload.callbacks if self.payload else EMPTY,
+            self.controller_cls.callbacks,
+        )
+        if callbacks is None or isinstance(callbacks, Sentinel):
+            return None  # explicitly disabled or nothing is configured
+        return dict(callbacks)
+
+    def _build_external_docs(self) -> 'ExternalDocumentation | None':
+        external_docs = self.merger('external_docs').first_defined(
+            self.payload.external_docs if self.payload else EMPTY,
+            self.controller_cls.external_docs,
+        )
+        return None if isinstance(external_docs, Sentinel) else external_docs
+
+    def _build_deprecated(self) -> bool | Sentinel:
+        # Router-level `deprecated` is resolved later during the schema
+        # generation, that's why `EMPTY` is preserved here:
+        return self.merger('deprecated').first_set(
+            self.payload.deprecated if self.payload else EMPTY,
+            self.controller_cls.deprecated,
+        )
+
+    def _build_security(self) -> 'list[SecurityRequirement] | None':
+        settings_config: OpenAPIConfig = resolve_setting(
+            Settings.openapi_config,
+        )
+        layers = (
+            self.payload.security if self.payload else EMPTY,
+            self.controller_cls.security,
+            settings_config.security,
+        )
+        for layer in layers:
+            self._validate_security_shape(layer)
+        security = self.merger('security').first_defined(*layers)
+        if security is None or isinstance(security, Sentinel):
+            return None  # explicitly disabled or nothing is configured
+        # Empty security list means that no auth is configured
+        # and it is just `None`.
+        return list(security) or None
+
+    def _validate_security_shape(
         self,
-        payload_callbacks: 'Mapping[str, Callback | Reference] | Sentinel',
-    ) -> 'dict[str, Callback | Reference] | None':
-        callbacks = self.merger('callbacks').empty_to_none(payload_callbacks)
-        return None if callbacks is None else dict(callbacks)
+        security: 'Sequence[SecurityRequirement] | Sentinel | None',
+    ) -> None:
+        if security is None or isinstance(security, Sentinel):
+            return
+        if not isinstance(security, (list, tuple)) or not all(
+            isinstance(requirement, dict)  # pyright: ignore[reportUnnecessaryIsInstance]
+            for requirement in security
+        ):
+            raise EndpointMetadataError(
+                '`security` must be a sequence of `SecurityRequirement` '
+                f'dicts, got {security!r} for {self.endpoint_name=}',
+            )
 
     def _build_auth(self) -> list[SyncAuth | AsyncAuth] | None:
         base_type = (
@@ -930,14 +1015,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         )
         return not isinstance(ignore_from_spec, Sentinel) and ignore_from_spec
 
-    def _build_tags(
-        self,
-        payload_tags: Sequence[str] | Sentinel | None,
-    ) -> list[str] | Sentinel | None:
+    def _build_tags(self) -> list[str] | Sentinel | None:
         # Router-level tags are resolved later during the schema generation,
         # that's why `EMPTY` is preserved here.
         tags = self.merger('tags').first_defined(
-            payload_tags,
+            self.payload.tags if self.payload else EMPTY,
             self.controller_cls.tags,
         )
         if tags is None or isinstance(tags, Sentinel):
@@ -976,18 +1058,6 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             field_name='no_validate_http_spec',
         )
 
-    def _build_semantic_schema(self) -> bool:
-        merger = self.merger('semantic_schema')
-        settings_value: bool | Sentinel = resolve_setting(
-            Settings.semantic_schema,
-        )
-        semantic_schema = merger.first_set(
-            self.payload.semantic_schema if self.payload else EMPTY,
-            self.controller_cls.semantic_schema,
-            settings_value,
-        )
-        return merger.not_empty(semantic_schema)
-
     def _build_semantic_responses(self) -> bool:
         merger = self.merger('semantic_responses')
         settings_value: bool | Sentinel = resolve_setting(
@@ -999,7 +1069,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             settings_value,
         )
         if isinstance(semantic_responses, Sentinel):
-            return self._build_semantic_schema()
+            return self.build_semantic_schema()
         return merger.not_empty(semantic_responses)
 
     def _build_exclude_validate_responses(self) -> frozenset[HTTPStatus]:
@@ -1035,7 +1105,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             settings_value,
         )
         if isinstance(semantic_auth, Sentinel):
-            return self._build_semantic_schema()
+            return self.build_semantic_schema()
         return merger.not_empty(semantic_auth)
 
     def _build_exclude_semantic_auth(self) -> frozenset[str]:
@@ -1238,6 +1308,8 @@ class EndpointMetadataValidator:  # noqa: WPS214
             throttle.validate(controller_cls, self.metadata)
         for auth in self.metadata.auth or ():
             auth.validate(controller_cls, self.metadata)
+        # Serializer goes last, it can inspect everything above:
+        controller_cls.serializer.validate(controller_cls, self.metadata)
 
     def _resolve_all_responses(
         self,

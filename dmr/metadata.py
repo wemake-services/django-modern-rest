@@ -36,6 +36,7 @@ if TYPE_CHECKING:
         Link,
         Reference,
         Response,
+        SecurityRequirement,
         Server,
     )
     from dmr.parsers import Parser
@@ -569,17 +570,30 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
             are used during the schema generation.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
+            Already resolved from the endpoint and the controller,
+            ``EMPTY`` means that the router-level value
+            is used during the schema generation.
         security: A declaration of which security mechanisms can be used
             for this operation. List of security requirement objects.
+            Already resolved from the endpoint, the controller,
+            and ``security`` of :class:`~dmr.openapi.OpenAPIConfig`
+            from the settings: the first explicitly defined level wins.
+            They are merged with the requirements from ``auth``
+            during the schema generation.
+            When set to ``None`` it means that no user provided
+            security is used for this endpoint.
         external_docs: Additional external documentation for this operation.
+            Already resolved from the endpoint and the controller.
         callbacks: A map of possible out-of band callbacks related to the
             parent operation. The key is a unique identifier for the Callback
             Object. Each value in the map is a Callback Object that describes
             a request that may be initiated by the API provider and the
             expected responses.
+            Already resolved from the endpoint and the controller.
         servers: An alternative servers array to service this operation.
-            If a servers array is specified at the Path Item Object or
-            OpenAPI Object level, it will be overridden by this value.
+            If a servers array is specified at the OpenAPI Object level,
+            it will be overridden by this value.
+            Already resolved from the endpoint and the controller.
         ignore_from_spec: If set to ``True``, this endpoint
             would not be added to the final OpenAPI spec.
         extras: Extra settings for custom controllers,
@@ -637,7 +651,8 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
     description: StrOrPromise | None
     tags: list[str] | Sentinel | None
     operation_id: str | None
-    deprecated: bool
+    deprecated: bool | Sentinel
+    security: list['SecurityRequirement'] | None
     external_docs: 'ExternalDocumentation | None'
     callbacks: dict[str, 'Callback | Reference'] | None
     servers: list['Server'] | None

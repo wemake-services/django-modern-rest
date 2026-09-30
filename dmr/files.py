@@ -17,7 +17,6 @@ from dmr.openapi.objects import (
     MediaTypeMetadata,
     OpenAPIFormat,
     OpenAPIType,
-    Reference,
     Response,
     Schema,
 )
@@ -56,7 +55,7 @@ class FileBodyLike:
     @abc.abstractmethod
     def media_type(  # noqa: WPS211
         cls,
-        schema: Reference | Schema,
+        schema: Schema,
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
@@ -77,7 +76,7 @@ class FileBodyLike:
     @abc.abstractmethod
     def get_schema(
         cls,
-        schema: Reference | Schema,
+        schema: Schema,
         context: OpenAPIContext,
     ) -> Schema:
         """Return the OpenAPI schema for this file body."""
@@ -92,7 +91,7 @@ class FileBody(FileBodyLike):
     @classmethod
     def media_type(  # noqa: WPS211
         cls,
-        schema: Reference | Schema,
+        schema: Schema,
         model: Any,
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
@@ -125,7 +124,7 @@ class FileBody(FileBodyLike):
     @classmethod
     def get_schema(
         cls,
-        schema: Reference | Schema,
+        schema: Schema,
         context: OpenAPIContext,
     ) -> Schema:
         """Returns the openapi schema that this object represents."""
@@ -133,7 +132,7 @@ class FileBody(FileBodyLike):
             type=OpenAPIType.STRING,
             format=OpenAPIFormat.BINARY,
         )
-        if isinstance(schema, Schema) and schema.type == OpenAPIType.ARRAY:
+        if schema.type == OpenAPIType.ARRAY:
             return Schema(
                 type=OpenAPIType.ARRAY,
                 format=schema.format,
@@ -144,7 +143,7 @@ class FileBody(FileBodyLike):
     @classmethod
     def replace_schema(
         cls,
-        schema: Reference | Schema,
+        schema: Schema,
         context: OpenAPIContext,
     ) -> Schema:
         """
@@ -156,16 +155,34 @@ class FileBody(FileBodyLike):
         that this is a file in the OpenAPI schema. So, we place known models
         with the file specification here.
 
+        Unions like ``Model | None`` have their members replaced.
+
         .. versionadded:: 0.15.0
         """
         schema = context.registries.schema.maybe_resolve_reference(schema)
         return dataclasses.replace(
             schema,
-            properties={
-                property_name: cls.get_schema(second, context)
-                for property_name, second in (schema.properties or {}).items()
-            },
+            properties=(
+                None
+                if schema.properties is None
+                else {
+                    property_name: cls.get_schema(second, context)
+                    for property_name, second in schema.properties.items()
+                }
+            ),
+            any_of=cls._replace_members(schema.any_of, context),
+            one_of=cls._replace_members(schema.one_of, context),
         )
+
+    @classmethod
+    def _replace_members(
+        cls,
+        members: list[Schema] | None,
+        context: OpenAPIContext,
+    ) -> list[Schema] | None:
+        if not members:
+            return members
+        return [cls.replace_schema(member, context) for member in members]
 
     @classmethod
     def _encoding(
@@ -239,23 +256,11 @@ class FileResponseSpec(ResponseSpec):
         context: OpenAPIContext,
     ) -> Response:
         """Customize schema for the file response."""
-        response = ResponseSpec.get_schema(
+        # We know that we return files, `FileBody` is not a real model:
+        return context.generators.response.get_schema(
             self,
             metadata,
             controller_cls,
             context,
+            content_schema=self.return_type.get_schema(Schema(), context),
         )
-        # We know that we return files:
-        for media in (response.content or {}).values():
-            # for mypy: we've just built this response ourselves,
-            # so its media types are inline and their schemas are set
-            assert isinstance(media, MediaType)  # noqa: S101
-            assert media.schema  # noqa: S101
-            media.schema = self.return_type.get_schema(Schema(), context)
-        # We know that `FileBody` was a fake model, remove it:
-        context.registries.schema.try_unregister(
-            controller_cls.serializer.schema_generator.schema_name(
-                self.return_type,
-            ),
-        )
-        return response

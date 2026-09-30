@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 import uuid
-from typing import Final
+from typing import Any, Final
 
 import pydantic
 from faker import Faker
@@ -10,6 +10,7 @@ from pytest_codspeed import BenchmarkFixture
 
 from dmr.plugins.msgspec import MsgspecJsonParser, MsgspecJsonRenderer
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
+from dmr.plugins.pydantic.serializer import _get_cached_type_adapter  # noqa: PLC2701
 from dmr.test import DMRRequestFactory
 
 faker: Final = Faker()
@@ -67,7 +68,7 @@ def test_pyndatic_with_parser(
             body,
             parser=parser,
             request=request,
-            model=list[User],
+            model=Any,
         )
 
 
@@ -89,8 +90,10 @@ def test_pyndatic_fast_deserialize(
 ) -> None:
     """Test optimized version with a single deserialize call."""
 
+    model = list[User]
     parser = MsgspecJsonParser()
-    body = pydantic.TypeAdapter(list[User]).dump_json(_TO_SERIALIZE)
+    # Cache warm up:
+    body = _get_cached_type_adapter(model).dump_json(_TO_SERIALIZE)
     request = dmr_rf.post(
         '/test',
         data=body,
@@ -103,7 +106,7 @@ def test_pyndatic_fast_deserialize(
             body,
             parser=parser,
             request=request,
-            model=list[User],
+            model=model,
         )
 
 
@@ -113,6 +116,8 @@ def test_pydantic_fast_serialize(
     """Test optimized version with a single serialize call."""
 
     renderer = MsgspecJsonRenderer()
+    # Cache warm up:
+    _get_cached_type_adapter(Any)
 
     @benchmark
     def factory() -> None:

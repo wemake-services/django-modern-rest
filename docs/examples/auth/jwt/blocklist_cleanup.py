@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Any, final
+from typing import Any, Final, final
 
 from django.core.management.base import BaseCommand
 from typing_extensions import override
@@ -7,7 +7,7 @@ from typing_extensions import override
 from dmr.security.jwt.blocklist.models import BlocklistedJWToken
 
 #: Must be bigger than the `leeway` of all your jwt auth classes.
-GRACE_PERIOD = dt.timedelta(days=1)
+GRACE_PERIOD: Final = dt.timedelta(days=1)
 
 
 @final

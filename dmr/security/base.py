@@ -20,7 +20,7 @@ from typing_extensions import override
 from dmr.exceptions import NotAuthenticatedError
 from dmr.headers import HeaderSpec, NewHeader
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
-from dmr.semantic_schema import AuthProvider
+from dmr.semantic_schema import SecurityProvider
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -116,7 +116,7 @@ def _combined_www_authenticate(
     return ', '.join(challenges) or None
 
 
-class _BaseAuth(ResponseSpecProvider, AuthProvider):
+class _BaseAuth(ResponseSpecProvider, SecurityProvider):
     """
     Base class for all auth instances.
 

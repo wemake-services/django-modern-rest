@@ -19,7 +19,6 @@ from dmr.openapi.objects import (  # noqa: WPS235
     OpenAPIType,
     Parameter,
     ParameterMetadata,
-    Reference,
     Schema,
     Tag,
 )
@@ -229,7 +228,7 @@ def test_dump_value_dict(
                 'items': {'$dynamicRef': '#T'},
             },
         ),
-        # Concrete List<string> referencing the generic via Reference:
+        # Concrete List<string> referencing the generic via `$ref`:
         (
             Schema(
                 defs={
@@ -238,7 +237,7 @@ def test_dump_value_dict(
                         type=OpenAPIType.STRING,
                     ),
                 },
-                any_of=[Reference(ref='list-of-t')],
+                any_of=[Schema(ref='list-of-t')],
             ),
             {
                 '$defs': {
@@ -253,6 +252,27 @@ def test_dump_value_dict(
         (
             Header(description='test', required=False),
             {'description': 'test'},
+        ),
+        # A schema with `$ref` and its siblings, #1491:
+        (
+            Schema(
+                ref='#/components/schemas/Address',
+                default={'city': 'Moscow'},
+                description='Where the user lives',
+            ),
+            {
+                '$ref': '#/components/schemas/Address',
+                'default': {'city': 'Moscow'},
+                'description': 'Where the user lives',
+            },
+        ),
+        # Extensions are flattened next to the schema's own keys, #1491:
+        (
+            Schema(
+                type=OpenAPIType.STRING,
+                extensions={'x-range': {'min': 0}},
+            ),
+            {'type': 'string', 'x-range': {'min': 0}},
         ),
     ],
 )
