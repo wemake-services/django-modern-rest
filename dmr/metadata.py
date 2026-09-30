@@ -79,11 +79,13 @@ class ResponseSpec:
             ``Response.summary`` was added in OpenAPI ``'3.2.0'``,
             so setting it on an older version fails schema validation.
         links: Possible links to other OpenAPI operations.
+        x_extensions: Specification extensions of the response,
+            keys must start with ``x-``.
 
     We use this structure to validate responses and render them in OpenAPI.
 
     .. versionchanged:: 0.16.0
-        Added ``summary``.
+        Added ``summary`` and ``x_extensions``.
 
     """
 
@@ -117,6 +119,10 @@ class ResponseSpec:
         default=None,
     )
     links: Mapping[str, 'Link | Reference'] | None = dataclasses.field(
+        kw_only=True,
+        default=None,
+    )
+    x_extensions: Mapping[str, Any] | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
@@ -594,6 +600,10 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
             If a servers array is specified at the OpenAPI Object level,
             it will be overridden by this value.
             Already resolved from the endpoint and the controller.
+        x_extensions: Specification extensions of this operation,
+            keys must start with ``x-``. Endpoint-only field,
+            it is never resolved from the controller:
+            ``Controller.x_extensions`` describes the path item.
         ignore_from_spec: If set to ``True``, this endpoint
             would not be added to the final OpenAPI spec.
         extras: Extra settings for custom controllers,
@@ -656,6 +666,7 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
     external_docs: 'ExternalDocumentation | None'
     callbacks: dict[str, 'Callback | Reference'] | None
     servers: list['Server'] | None
+    x_extensions: dict[str, Any] | None
     ignore_from_spec: bool
 
     # Extras:

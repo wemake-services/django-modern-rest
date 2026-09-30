@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal, TypeAlias
+from typing import Any, Literal, TypeAlias
 
 #: Kind of an XML node that a `Schema` describes.
 XMLNodeType: TypeAlias = Literal[
@@ -25,6 +25,7 @@ class XML:
         both ``attribute`` and ``wrapped``.
         Those two now default to ``None`` and are only dumped
         into the schema when they are set explicitly.
+        Added ``x_extensions`` for specification extensions.
 
     """
 
@@ -40,3 +41,5 @@ class XML:
     # OpenAPI 3.2+ fields:
     #: Mutually exclusive with `attribute` and `wrapped`.
     node_type: XMLNodeType | None = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None

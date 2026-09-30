@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass(kw_only=True, slots=True)
@@ -15,6 +16,7 @@ class Discriminator:
 
     .. versionchanged:: 0.16.0
         Added ``default_mapping`` from OpenAPI 3.2.
+        Added ``x_extensions`` for specification extensions.
 
     """
 
@@ -26,3 +28,5 @@ class Discriminator:
     #: from the payload or holds an unmapped value.
     #: Required when the discriminating property is optional.
     default_mapping: str | None = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None

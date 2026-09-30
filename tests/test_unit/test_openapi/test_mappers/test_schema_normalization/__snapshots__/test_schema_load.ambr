@@ -5299,7 +5299,51 @@
     "externalDocs": {
       "url": "http://allauth.org",
       "description": "The django-allauth project."
-    }
+    },
+    "x-tagGroups": [
+      {
+        "name": "Overall",
+        "tags": [
+          "Configuration"
+        ]
+      },
+      {
+        "name": "Authentication",
+        "tags": [
+          "Authentication: Current Session",
+          "Authentication: Account",
+          "Authentication: Password Reset",
+          "Authentication: Providers",
+          "Authentication: 2FA",
+          "Authentication: Login By Code",
+          "Authentication: WebAuthn: Login",
+          "Authentication: WebAuthn: Signup"
+        ]
+      },
+      {
+        "name": "Account",
+        "tags": [
+          "Account: Email",
+          "Account: Password",
+          "Account: Phone",
+          "Account: Providers",
+          "Account: 2FA",
+          "Account: WebAuthn"
+        ]
+      },
+      {
+        "name": "Sessions",
+        "tags": [
+          "Sessions"
+        ]
+      },
+      {
+        "name": "Tokens",
+        "tags": [
+          "Tokens"
+        ]
+      }
+    ]
   }
   '''
 # ---

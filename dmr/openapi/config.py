@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Final
+from typing import Any, Final
 
 from typing_extensions import Sentinel
 
@@ -62,6 +62,8 @@ class OpenAPIConfig:
         tags: Metadata tags used to group operations in the documentation.
         webhooks: Webhook definitions that may be initiated by the API,
             keyed by name.
+        x_extensions: Specification extensions of the root document,
+            keys must start with ``x-``.
         self_uri: Self-assigned URI of the generated document,
             dumped as ``$self``. It also serves as the base URI
             to resolve references against. Added in OpenAPI ``'3.2.0'``.
@@ -71,7 +73,7 @@ class OpenAPIConfig:
        Added ``json_schema_dialect`` attribute.
 
     .. versionchanged:: 0.16.0
-        Added ``self_uri``.
+        Added ``self_uri`` and ``x_extensions``.
 
     """
 
@@ -93,6 +95,7 @@ class OpenAPIConfig:
     tags: list[Tag] | None = None
     webhooks: dict[str, PathItem | Reference] | None = None
     self_uri: str | None = None
+    x_extensions: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         """

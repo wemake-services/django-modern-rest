@@ -203,6 +203,14 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             to all operations in this controller.
             Can be overridden per endpoint.
             Set it to ``None`` to have no callbacks at all.
+        x_extensions: Specification extensions
+            of the :class:`~dmr.openapi.objects.PathItem`
+            of this controller, keys must start with ``x-``.
+            Unlike other OpenAPI attributes, it is not a default
+            for the operations: every OpenAPI object has its own
+            extensions, so nothing is inherited or merged.
+            Use ``x_extensions`` of :func:`~dmr.endpoint.modify`
+            or :func:`~dmr.endpoint.validate` for an operation.
         ignore_from_spec: If set to ``True``, all endpoints from this controller
             would not be added to the final OpenAPI spec.
         request: Current :class:`~django.http.HttpRequest` instance.
@@ -212,7 +220,8 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     .. versionchanged:: 0.16.0
         Explicit ``is_abstract`` definitions are now respected:
         abstract controllers do not build any endpoints.
-        Added ``deprecated``, ``external_docs``, and ``callbacks``.
+        Added ``deprecated``, ``external_docs``, ``callbacks``,
+        and ``x_extensions``.
         ``servers`` is now resolved per endpoint
         and dumped on operations, not on the path item.
 
@@ -277,6 +286,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     callbacks: ClassVar[
         Mapping[str, Callback | Reference] | Sentinel | None
     ] = EMPTY
+    x_extensions: ClassVar[Mapping[str, Any] | None] = None
     ignore_from_spec: ClassVar[bool] = False
 
     # Public instance API:
@@ -711,6 +721,9 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             additional_operations=additional_ops,
             summary=summary,
             description=description,
+            x_extensions=(
+                None if cls.x_extensions is None else dict(cls.x_extensions)
+            ),
         )
 
     @classproperty

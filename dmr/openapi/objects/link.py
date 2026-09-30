@@ -19,6 +19,7 @@ class Link:
     .. versionchanged:: 0.16.0
         ``request_body`` now defaults to :data:`~dmr.types.EMPTY`
         instead of ``None``, because ``None`` is a valid value for it.
+        Added ``x_extensions`` for specification extensions.
 
     """
 
@@ -28,3 +29,5 @@ class Link:
     request_body: Any = EMPTY
     description: str | None = None
     server: 'Server | None' = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None

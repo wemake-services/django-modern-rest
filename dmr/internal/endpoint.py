@@ -402,6 +402,11 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         servers: An alternative servers sequence to service this operation.
             Overrides the controller value.
             Set it to ``None`` to have no servers at all.
+        x_extensions: Specification extensions of this operation,
+            keys must start with ``x-``. Set only on this operation:
+            it is never inherited from or merged with
+            :attr:`~dmr.controller.Controller.x_extensions`,
+            which describes the path item, not its operations.
         links: Possible links to other OpenAPI operations.
         response_description: Description for the generated response object.
         ignore_from_spec: If set to ``True``, this endpoint
@@ -467,6 +472,7 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
@@ -504,6 +510,7 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
@@ -541,6 +548,7 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
@@ -581,6 +589,7 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
@@ -618,6 +627,7 @@ class ModifyEndpoint(Generic[_ExtrasT]):
                 external_docs=external_docs,
                 callbacks=callbacks,
                 servers=servers,
+                x_extensions=x_extensions,
                 links=links,
                 response_description=response_description,
                 ignore_from_spec=ignore_from_spec,
@@ -861,6 +871,11 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         servers: An alternative servers sequence to service this operation.
             Overrides the controller value.
             Set it to ``None`` to have no servers at all.
+        x_extensions: Specification extensions of this operation,
+            keys must start with ``x-``. Set only on this operation:
+            it is never inherited from or merged with
+            :attr:`~dmr.controller.Controller.x_extensions`,
+            which describes the path item, not its operations.
         ignore_from_spec: If set to ``True``, this endpoint
             would not be added to the final OpenAPI spec.
         extras: Extra settings for custom controllers.
@@ -921,6 +936,7 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
         extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ValidateAnyCallable: ...
@@ -954,6 +970,7 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
         extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ValidateAsyncCallable: ...
@@ -987,6 +1004,7 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
         extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ValidateSyncCallable: ...
@@ -1023,6 +1041,7 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
         callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
         extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ValidateAnyCallable | ValidateAsyncCallable | ValidateSyncCallable:
@@ -1055,6 +1074,7 @@ class ValidateEndpoint(Generic[_ExtrasT]):
                 external_docs=external_docs,
                 callbacks=callbacks,
                 servers=servers,
+                x_extensions=x_extensions,
                 ignore_from_spec=ignore_from_spec,
                 extras=extras,
                 extras_cls=self.extras_cls,  # type: ignore[arg-type]

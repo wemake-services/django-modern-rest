@@ -21,6 +21,7 @@ class Example:
         ``value`` and ``data_value`` now default to
         :data:`~dmr.types.EMPTY` instead of ``None``,
         because ``None`` is a valid value for them.
+        Added ``x_extensions`` for specification extensions.
 
     """
 
@@ -37,3 +38,5 @@ class Example:
     data_value: Any = EMPTY
     #: Example of the serialized form, as the media type requires it.
     serialized_value: str | None = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None
