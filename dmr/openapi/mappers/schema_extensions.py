@@ -37,7 +37,7 @@ def nest_extensions(raw: Any, annotation: Any) -> Any:
 
     model = _pick_dataclass(annotation, raw)  # pyright: ignore[reportUnknownArgumentType]
     if model is not None:
-        return _nest_object(raw, model)   # pyright: ignore[reportUnknownArgumentType]
+        return _nest_object(raw, model)  # pyright: ignore[reportUnknownArgumentType]
 
     value_type = _generic_arg(annotation, dict, index=1)
     return {
