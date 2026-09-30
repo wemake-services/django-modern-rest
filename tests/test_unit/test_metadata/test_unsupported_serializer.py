@@ -37,7 +37,7 @@ def test_unsupported_serializer_thing() -> None:
 
 def test_supported_serializer() -> None:
     """Ensures that it is possible to construct a supported object."""
-    class _Controller(Controller[_JsonPydanticSerializer]):
 
+    class _Controller(Controller[_JsonPydanticSerializer]):
         def get(self) -> str:
             raise NotImplementedError
