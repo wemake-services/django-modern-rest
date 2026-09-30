@@ -26,7 +26,9 @@ class BodyMsgspecComponent(BodyComponent):
     and parsers that decode into models, like
     :class:`~dmr.plugins.msgspec.MsgspecJsonParser`
     and :class:`~dmr.plugins.msgspec.MsgpackParser`.
-    Use :data:`BodyMsgspec` alias, see :ref:`msgspec-body-component`.
+
+    Use :data:`~dmr.plugins.msgspec.BodyMsgspec` alias,
+    see :ref:`msgspec-body-component`.
 
     .. versionadded:: 0.16.0
     """

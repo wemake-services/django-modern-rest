@@ -57,6 +57,11 @@ class MsgpackParser(Parser):
                 deserializer_hook,
                 strict=self.strict,
             ).decode(to_deserialize)
+        except msgspec.ValidationError:
+            # It is a `DecodeError` subclass, but it means that the bytes
+            # are fine and only the model does not match. Only happens
+            # for real models, decoding into `Any` never raises it:
+            raise
         except (msgspec.DecodeError, UnicodeDecodeError) as exc:
             # Corner case: when deserializing an empty body,
             # return `None` instead.
