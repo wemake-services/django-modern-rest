@@ -291,7 +291,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   for parameters, media types, and responses.
   Each setting describes its own object only,
   extensions are never inherited or merged across levels.
-  `load_schema` now keeps `x-` keys instead of silently dropping them, 
+  `load_schema` now keeps `x-` keys instead of silently dropping them, #1664
 - Component parameters can now have default values, like
   `parsed_body: Body[Model | None] = None`
   or `parsed_query: Query[Filters | None] = None`.
