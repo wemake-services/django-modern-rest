@@ -997,7 +997,7 @@ requires-dist = [
     { name = "polyfactory", marker = "extra == 'openapi'", specifier = ">=3.2" },
     { name = "pydantic", extras = ["email", "timezone"], marker = "extra == 'pydantic'", specifier = ">=2.12" },
     { name = "pydantic-extra-types", marker = "extra == 'pydantic'" },
-    { name = "pyjwt", extras = ["crypto"], marker = "extra == 'jwt'", specifier = ">=2.11" },
+    { name = "pyjwt", extras = ["crypto"], marker = "extra == 'jwt'", specifier = ">=2.15" },
     { name = "pyyaml", marker = "extra == 'openapi'" },
     { name = "typing-extensions", specifier = ">=4.12" },
 ]
