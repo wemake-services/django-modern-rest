@@ -10,7 +10,7 @@ from dmr.headers import HeaderSpec
 from dmr.metadata import EndpointMetadata, ResponseSpec, get_annotated_metadata
 from dmr.negotiation import get_conditional_types
 from dmr.openapi import OpenAPIContext
-from dmr.openapi.mappers.content_types import content_types
+from dmr.openapi.mappers.content_types import encoding_for_files
 from dmr.openapi.objects import (
     Encoding,
     MediaType,
@@ -192,11 +192,7 @@ class FileBody(FileBodyLike):
         schema: Schema,
     ) -> dict[str, Encoding] | None:
         """Returns the openapi encoding for the defined media type."""
-        return {
-            property_name: Encoding(content_type=content_type)
-            for property_name in (schema.properties or [])
-            if (content_type := content_types(model, property_name)) is not None
-        } or None
+        return encoding_for_files(model, schema)
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
