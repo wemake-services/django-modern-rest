@@ -26,7 +26,7 @@ Required docs (always reference first):
 
 ## Workflow
 
-### 1. Inventory DRF surface
+### Inventory DRF surface
 
 - Read project API entrypoints and URL wiring first.
 - Find usages of: `APIView`, `GenericAPIView`, `ViewSet`, `GenericViewSet`, `ModelViewSet`, `@api_view`, DRF routers, DRF serializer classes, parser/renderer classes, auth/permission/throttle classes, DRF exception handler hooks.
@@ -37,7 +37,7 @@ Required docs (always reference first):
   - expected statuses, expected headers,
   - known error paths.
 
-### 2. Inventory project-native batteries (required)
+### Inventory project-native batteries (required)
 
 - Before writing adapters, inspect existing project libraries and integrations
   that should power the migrated transport layer.
@@ -47,7 +47,7 @@ Required docs (always reference first):
   - rate limiting packages,
   - pagination and filtering libraries already wired in the repository.
 
-### 3. Freeze observable behavior
+### Freeze observable behavior
 
 - Capture behavior from existing tests + serializers + routing.
 - Mark blocking mismatches before coding:
@@ -58,7 +58,7 @@ Required docs (always reference first):
   - parser/renderer negotiation changes,
   - status/header changes.
 
-### 4. Decide error strategy (required gate)
+### Decide error strategy (required gate)
 
 Choose one and record it before edits:
 
@@ -70,7 +70,7 @@ Choose one and record it before edits:
   - update tests and docs expectations accordingly,
   - still preserve happy-path behavior and auth/permission/throttle behavior.
 
-### 5. Migrate by slice (app or endpoint group)
+### Migrate by slice (app or endpoint group)
 
 - Migrate one bounded slice at a time.
 - Keep module layout unless architecture/lint contracts require change.
@@ -80,7 +80,7 @@ Choose one and record it before edits:
   - keep usecases/services/repositories untouched,
   - change only DTOs/controllers/router wiring.
 
-### 6. Translate serializers and request/response contracts
+### Translate serializers and request/response contracts
 
 - Replace `Serializer` / `ModelSerializer` transport DTO usage with explicit typed DTOs compatible with DMR serializer.
 - Map request sources explicitly:
@@ -88,7 +88,7 @@ Choose one and record it before edits:
 - Split input/output DTOs when response contains server-owned fields.
 - Preserve field aliases, required/optional behavior, and validation constraints needed for contract parity.
 
-### 7. Translate DRF handlers to DMR
+### Translate DRF handlers to DMR
 
 - Replace function-based `@api_view` endpoints with explicit `Controller[...]` handlers.
 - Replace `APIView`/`GenericAPIView`/`ViewSet` actions with DMR controllers and router composition.
@@ -98,13 +98,13 @@ Choose one and record it before edits:
   - strict parity mode: preserve old statuses/payloads,
   - approved drift mode: keep DMR-native errors and update tests.
 
-### 8. Replace API wiring
+### Replace API wiring
 
 - Replace DRF router registration and URL wiring with DMR router + Django URL include wiring.
 - Keep namespace stability (`api:*` names) unless drift approved.
 - Add docs/openapi routes only if project already exposes them or user asks.
 
-### 9. Port auth, permissions, and throttling with native batteries
+### Port auth, permissions, and throttling with native batteries
 
 - Keep auth and permission expectations endpoint-by-endpoint.
 - If project is using Opaque Token auth from DRF or any 3rd party tools,
@@ -121,7 +121,7 @@ Choose one and record it before edits:
   If a temporary shim is unavoidable, mark it explicitly as temporary,
   document replacement plan, and list it in `unresolved gaps`.
 
-### 10. Update tests for DMR tooling
+### Update tests for DMR tooling
 
 - Replace DRF-specific API test assumptions where necessary with repository-native Django/DMR testing entrypoints.
 - Migrate API test fixtures and clients as first-class migration scope:
@@ -134,13 +134,13 @@ Choose one and record it before edits:
   `ResponseSpec` metadata.
 - Remove persistent DRF transport imports from fully migrated transport/test modules unless explicitly approved as temporary drift.
 
-### 11. Validate each slice with repository-native CI entrypoints
+### Validate each slice with repository-native CI entrypoints
 
 - Run the same commands CI uses in this repository.
 - Prefer official script entrypoints over ad-hoc command sets.
 - If docker-only CI/test environment is required, run in docker.
 
-### 12. Finish gate
+### Finish gate
 
 Do not mark slice done until:
 - linters pass,
