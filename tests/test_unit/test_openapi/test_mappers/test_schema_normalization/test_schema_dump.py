@@ -5,8 +5,8 @@ import pytest
 
 from dmr.internal.dataclass_aliases import Field
 from dmr.openapi.mappers.schema_normalization import (
-    _dump_field,
     _dump_value,
+    dump_field,
     dump_schema,
 )
 from dmr.openapi.objects import (  # noqa: WPS235
@@ -19,7 +19,6 @@ from dmr.openapi.objects import (  # noqa: WPS235
     OpenAPIType,
     Parameter,
     ParameterMetadata,
-    Reference,
     Schema,
     Tag,
 )
@@ -45,19 +44,19 @@ from dmr.openapi.objects import (  # noqa: WPS235
         ('numbers_123', 'numbers123'),
     ],
 )
-def test_dump_field(
+def testdump_field(
     *,
     input_key: str,
     expected_output: str,
 ) -> None:
     """Ensure that ``dump_field`` converts field names to OpenAPI keys."""
-    assert _dump_field(input_key, {}) == expected_output
+    assert dump_field(input_key, {}) == expected_output
 
 
-def test_dump_field_alias() -> None:
+def testdump_field_alias() -> None:
     """Ensure that ``dump_field`` converts field names to aliases."""
     assert (
-        _dump_field('whatever', Annotated[str, Field(alias='$test')]) == '$test'
+        dump_field('whatever', Annotated[str, Field(alias='$test')]) == '$test'
     )
 
 
@@ -229,7 +228,7 @@ def test_dump_value_dict(
                 'items': {'$dynamicRef': '#T'},
             },
         ),
-        # Concrete List<string> referencing the generic via Reference:
+        # Concrete List<string> referencing the generic via `$ref`:
         (
             Schema(
                 defs={
@@ -238,7 +237,7 @@ def test_dump_value_dict(
                         type=OpenAPIType.STRING,
                     ),
                 },
-                any_of=[Reference(ref='list-of-t')],
+                any_of=[Schema(ref='list-of-t')],
             ),
             {
                 '$defs': {
@@ -253,6 +252,27 @@ def test_dump_value_dict(
         (
             Header(description='test', required=False),
             {'description': 'test'},
+        ),
+        # A schema with `$ref` and its siblings, #1491:
+        (
+            Schema(
+                ref='#/components/schemas/Address',
+                default={'city': 'Moscow'},
+                description='Where the user lives',
+            ),
+            {
+                '$ref': '#/components/schemas/Address',
+                'default': {'city': 'Moscow'},
+                'description': 'Where the user lives',
+            },
+        ),
+        # Extensions are flattened next to the schema's own keys, #1491:
+        (
+            Schema(
+                type=OpenAPIType.STRING,
+                x_extensions={'x-range': {'min': 0}},
+            ),
+            {'type': 'string', 'x-range': {'min': 0}},
         ),
     ],
 )

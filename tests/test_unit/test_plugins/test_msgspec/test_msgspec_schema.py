@@ -22,7 +22,7 @@ from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.openapi import build_schema
 from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.schema import SchemaGenerator
-from dmr.openapi.objects import OpenAPIType, Reference, Schema
+from dmr.openapi.objects import OpenAPIType, Schema
 from dmr.routing import Router, path
 
 try:
@@ -279,7 +279,7 @@ def test_enum(
 ) -> None:
     """Ensure schema for enums is correct."""
     reference = schema_generator(_TestEnum, MsgspecSerializer)
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
 
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
@@ -308,10 +308,17 @@ def _assert_enum_parameter_schema(
     }
 
     for parameter_location in ('path', 'query', 'header', 'cookie'):
-        parameter = parameter_specs['enum_value', parameter_location]
-        assert parameter['schema'] == {
+        expected: dict[str, Any] = {
             '$ref': f'#/components/schemas/{component_name}',
         }
+        if parameter_location == 'query':
+            # Since OpenAPI 3.1, `$ref` keeps its sibling keywords,
+            # only the query model has a default value:
+            expected['default'] = expected_values[0]
+        assert (
+            parameter_specs['enum_value', parameter_location]['schema']
+            == expected
+        )
     assert schema['components']['schemas'][component_name] == {
         'enum': expected_values,
         'title': component_name,
@@ -535,7 +542,7 @@ def test_type_mapper_typeddict(
 ) -> None:
     """Ensure that schema for ``TypedDict`` returns ``None``."""
     reference = schema_generator(_TestTypedDict, MsgspecSerializer)
-    assert isinstance(reference, Reference)
+    assert reference.ref is not None
 
     schema = openapi_context.registries.schema.maybe_resolve_reference(
         reference,
@@ -565,10 +572,28 @@ class _OtherCustomType:
     """Another custom type without any schema support."""
 
 
+class _RefCustomType:
+    """Custom type that resolves to a ``$ref`` with sibling keywords."""
+
+
 def _schema_hook(typ: type[Any]) -> dict[str, Any]:
     """Describe custom types for the JSON schema generation."""
     if typ is _CustomType:
         return {'type': 'string'}
+    if typ is _RefCustomType:
+        return {
+            '$ref': '#/components/schemas/_Placeholder',
+            'default': {'city': 'Moscow'},
+            'x-source': 'schema-hook',
+            '$defs': {
+                '_Placeholder': {
+                    'title': '_Placeholder',
+                    'type': 'object',
+                    'properties': {'city': {'type': 'string'}},
+                    'required': ['city'],
+                },
+            },
+        }
     raise NotImplementedError(typ)
 
 
@@ -597,3 +622,61 @@ def test_schema_hook_fallback(schema_generator: SchemaGenerator) -> None:
         match='Cannot generate OpenAPI schema',
     ):
         schema_generator(_OtherCustomType, _HookedSerializer)
+
+
+def test_schema_ref_siblings_issue1491(
+    schema_generator: SchemaGenerator,
+    openapi_context: OpenAPIContext,
+) -> None:
+    """Keep the keywords that sit next to a top-level ``$ref``."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1491
+    generated = schema_generator(_RefCustomType, _HookedSerializer)
+
+    assert generated == snapshot(
+        Schema(
+            default={'city': 'Moscow'},
+            ref='#/components/schemas/_Placeholder',
+            x_extensions={'x-source': 'schema-hook'},
+        ),
+    )
+
+
+def test_ref_siblings_and_extensions_issue1491() -> None:
+    """Keep ``$ref`` siblings and explicit extras in the final schema."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1491
+
+    class _Address(msgspec.Struct, frozen=True):
+        city: str
+
+    class _User(msgspec.Struct, kw_only=True):
+        name: Annotated[
+            str,
+            msgspec.Meta(extra_json_schema={'x-display': 'Name'}),
+        ] = 'unknown'
+        address: _Address = _Address(city='Moscow')
+
+    class _IssueController(Controller[MsgspecSerializer]):
+        async def post(self, parsed_body: Body[_User]) -> None:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('test/', _IssueController.as_view())]),
+    ).convert()
+
+    assert schema['components']['schemas']['_User'] == snapshot({
+        'properties': {
+            'name': {
+                'type': 'string',
+                'default': 'unknown',
+                'x-display': 'Name',
+            },
+            'address': {
+                'default': {'city': 'Moscow'},
+                '$ref': '#/components/schemas/_Address',
+            },
+        },
+        'type': 'object',
+        'title': '_User',
+    })

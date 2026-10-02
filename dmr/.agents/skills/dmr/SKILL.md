@@ -64,8 +64,15 @@ class UserController(Controller[MsgspecSerializer]):
         return parsed_body
 ```
 
-Return models, not Django responses. `HttpResponse` bypasses negotiation,
-headers, cookies, and validation. Raise `APIError` for errors,
+Optional components keep `None` inside the annotation:
+`parsed_body: Body[UserModel | None] = None`.
+`Body[UserModel] | None = None` is an import-time error.
+
+Do not ever use `return HttpResponse(...)`, because it bypasses negotiation,
+headers, cookies, and validation.
+Instead use `self.to_response(...)` or `self.to_error(...)` in controllers.
+
+Raise `APIError` for errors,
 handle them in `handle_error` / `handle_async_error`, not in the endpoint body:
 
 ```python
@@ -75,6 +82,8 @@ raise APIError(
 )
 ```
 
+Prefer `@modify`-styled endpoints to `@validated`-styled endpoints.
+
 Use plain methods by default. Add `@modify(...)` only for a status code,
 headers, cookies, auth, throttling, or extra responses that differ
 from the inferred ones. Use `@validate(ResponseSpec(...))` only when
@@ -83,8 +92,14 @@ the endpoint returns an `HttpResponse` on purpose.
 Prefer `MsgspecSerializer`. With `pydantic` and JSON only,
 prefer `PydanticFastSerializer` over `PydanticSerializer`.
 
+Prefer `BodyMsgspec` over `Body` when `MsgspecSerializer` is used.
+
 Use `dmr.routing.path` and `Router`, and install
 `build_404_handler` / `build_500_handler` so API errors are JSON.
+
+If CSRF and ``csrf_exempt = False`` are used always set
+`CSRF_FAILURE_VIEW = build_csrf_handler(router.prefix, ...)`
+error handler.
 
 Keep `validate_responses` on in development and tests, turn it off only
 in production settings. Never disable `semantic_responses`,
@@ -116,6 +131,7 @@ Every rule links to the documentation page that explains it.
 Flag these when reviewing `dmr` code:
 
 - A component parameter with a name other than `parsed_*`.
+- `Body[Model] | None = None` instead of `Body[Model | None] = None`.
 - `HttpResponse(...)` or `JsonResponse(...)` returned from an endpoint.
 - `try` / `except` returning error responses inside an endpoint body.
 - `@modify` or `@validate` that changes nothing compared to the defaults.

@@ -16,7 +16,6 @@ from dmr.security.django_session import (
 )
 from dmr.test import DMRAsyncRequestFactory, DMRRequestFactory
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
-from dmr.throttling.backends import AsyncDjangoCache, SyncDjangoCache
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft
 
@@ -29,7 +28,6 @@ class _BeforeAuthController(Controller[PydanticSerializer]):
             SyncThrottle(
                 1,
                 Rate.second,
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
         auth=[DjangoSessionSyncAuth()],
@@ -68,7 +66,6 @@ class _AfterAuthController(Controller[PydanticSerializer]):
                 1,
                 Rate.second,
                 cache_key=RemoteAddr(runs_before_auth=False),
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
             ),
         ],
         auth=[DjangoSessionSyncAuth()],
@@ -96,14 +93,12 @@ class _AsyncBothController(Controller[PydanticSerializer]):
             1,
             Rate.second,
             response_headers=[RateLimitIETFDraft()],
-            backend=AsyncDjangoCache(allow_unsafe_cache=None),
         ),
         AsyncThrottle(
             1,
             Rate.minute,
             cache_key=RemoteAddr(runs_before_auth=False, name='per-minute'),
             response_headers=[RateLimitIETFDraft()],
-            backend=AsyncDjangoCache(allow_unsafe_cache=None),
         ),
     ]
 
@@ -186,14 +181,12 @@ class _SyncBothController(Controller[PydanticSerializer]):
             1,
             Rate.second,
             response_headers=[RateLimitIETFDraft()],
-            backend=SyncDjangoCache(allow_unsafe_cache=None),
         ),
         SyncThrottle(
             1,
             Rate.minute,
             cache_key=RemoteAddr(runs_before_auth=False, name='per-minute'),
             response_headers=[RateLimitIETFDraft()],
-            backend=SyncDjangoCache(allow_unsafe_cache=None),
         ),
     ]
 

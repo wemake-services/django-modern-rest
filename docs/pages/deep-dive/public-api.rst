@@ -134,7 +134,21 @@ Serialization
 .. autoclass:: dmr.serializer.BaseSchemaGenerator
   :members:
 
+.. autoclass:: dmr.serializer.ContextField
+  :members:
+
+.. autoclass:: dmr.serializer.ContextModel
+  :members:
+
+.. autofunction:: dmr.serializer.context_field_tuples
+
 .. autoclass:: dmr.components.ComponentParserBuilder
+  :members:
+
+.. autoclass:: dmr.components.ComponentParserSpec
+  :members:
+
+.. autoclass:: dmr.components.FunctionDefaults
   :members:
 
 
@@ -259,10 +273,16 @@ CSRF
 Semantic schema
 ---------------
 
-.. autoclass:: dmr.semantic_schema.AuthProvider
+.. autoclass:: dmr.semantic_schema.SecurityProvider
   :members:
 
 .. autoclass:: dmr.semantic_schema.ResponseValidationSpecProvider
+  :members:
+
+.. autoclass:: dmr.semantic_schema.SecurityRequirementMerger
+  :members:
+
+.. autoclass:: dmr.semantic_schema.OrSecurityRequirementMerger
   :members:
 
 
@@ -345,6 +365,12 @@ Msgspec
 
 .. autoclass:: dmr.plugins.msgspec.serializer.ToModelKwargs
   :members:
+
+.. autodata:: dmr.plugins.msgspec.BodyMsgspec
+
+.. autoclass:: dmr.plugins.msgspec.components.BodyMsgspecComponent
+  :members:
+  :show-inheritance:
 
 
 .. _openapi-reference:
@@ -477,9 +503,6 @@ OpenAPI Core
 .. autoclass:: dmr.openapi.core.registry.SchemaRegistry
   :members:
 
-.. autoclass:: dmr.openapi.core.registry.SchemaCallback
-  :members:
-
 .. autoclass:: dmr.openapi.core.registry.SecuritySchemeRegistry
   :members:
 
@@ -494,6 +517,9 @@ OpenAPI Generators
    :members:
 
 .. autoclass:: dmr.openapi.generators.ResponseGenerator
+   :members:
+
+.. autoclass:: dmr.openapi.generators.schema.LoadedSchema
    :members:
 
 .. autoclass:: dmr.openapi.generators.SchemaGenerator

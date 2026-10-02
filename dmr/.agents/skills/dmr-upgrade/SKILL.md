@@ -21,7 +21,7 @@ between the installed version and the target version and apply all of it.
 
 ## Workflow
 
-### 1. Find the current and the target versions
+### Find the current and the target versions
 
 - Current: `uv pip show django-modern-rest`, `pip show django-modern-rest`,
   or the pinned version in `uv.lock`, `poetry.lock`, or `requirements.txt`.
@@ -30,12 +30,12 @@ between the installed version and the target version and apply all of it.
 - Tell the user which releases lie in between and that each one
   is applied in order. Never skip a release.
 
-### 2. Bump the dependency
+### Bump the dependency
 
 Update `pyproject.toml` (or the requirements file) to the target version
 and install it, so the type checker sees the new API.
 
-### 3. Apply each migration prompt
+### Apply each migration prompt
 
 Read the prompt files for the selected releases, oldest first,
 and apply every numbered item to the whole project
@@ -61,7 +61,7 @@ When the installed docs matter, load the version-specific index:
 `https://django-modern-rest.readthedocs.io/en/<version>/llms.txt`
 (every page is also served as Markdown, replace `.html` with `.md`).
 
-### 4. Verify
+### Verify
 
 - Run the type checker of the project, it catches most renamed
   and re-typed APIs.

@@ -12,7 +12,6 @@ from dmr.openapi.objects import (
     ExternalDocumentation,
     OpenAPIFormat,
     OpenAPIType,
-    Reference,
     Schema,
 )
 from dmr.plugins.pydantic import PydanticSerializer
@@ -49,7 +48,6 @@ def test_forward_ref_rebuild_context() -> None:
         strict=False,
         extra_namespace={
             'Schema': Schema,
-            'Reference': Reference,
             'Discriminator': Discriminator,
             'ExternalDocumentation': ExternalDocumentation,
             'OpenAPIFormat': OpenAPIFormat,

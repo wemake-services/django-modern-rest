@@ -4,8 +4,10 @@ import pytest
 from inline_snapshot import snapshot
 from typing_extensions import override
 
+from dmr import modify
 from dmr.controller import Controller
 from dmr.endpoint import Endpoint
+from dmr.exceptions import EndpointMetadataError
 from dmr.metadata import EndpointMetadata
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
@@ -13,6 +15,7 @@ from dmr.openapi.generators.security_scheme import SecuritySchemeGenerator
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import SyncAuth
+from dmr.semantic_schema import SecurityRequirementMerger
 from dmr.serializer import BaseSerializer
 
 
@@ -124,6 +127,144 @@ def test_security_scheme_generator_with_schemes(
     assert openapi_context.registries.security_scheme.schemes == snapshot({
         'testScheme': SecurityScheme(type='http', scheme='bearer'),
     })
+
+
+def test_user_security_is_merged_with_auth(
+    generator: SecuritySchemeGenerator,
+    openapi_context: OpenAPIContext,
+) -> None:
+    """User provided `security` is added after `auth` as an alternative."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        auth = (_NoSchemeAuth(),)
+
+        @modify(security=[{'gateway': []}])
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _Controller.api_endpoints['GET'].metadata
+    requirements = generator(metadata, _Controller)
+
+    assert requirements == [{'noScheme': []}, {'gateway': []}]
+    # Schemes for user provided `security` are never registered:
+    assert len(openapi_context.registries.security_scheme.schemes) == 0
+
+
+def test_user_security_without_auth(
+    generator: SecuritySchemeGenerator,
+) -> None:
+    """User provided `security` is used as-is when there's no `auth`."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        auth = None
+
+        @modify(security=[{'gateway': []}, {'mesh': ['read']}])
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _Controller.api_endpoints['GET'].metadata
+
+    assert generator(metadata, _Controller) == [
+        {'gateway': []},
+        {'mesh': ['read']},
+    ]
+
+
+def test_user_security_duplicates_auth(
+    generator: SecuritySchemeGenerator,
+) -> None:
+    """Requirements that `auth` generates cannot be repeated."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        auth = (_NoSchemeAuth(),)
+
+        @modify(security=[{'noScheme': []}])
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _Controller.api_endpoints['GET'].metadata
+
+    with pytest.raises(EndpointMetadataError, match='noScheme'):
+        generator(metadata, _Controller)
+
+
+def test_user_security_duplicates_itself(
+    generator: SecuritySchemeGenerator,
+) -> None:
+    """The same requirement cannot be repeated inside `security`."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        @modify(security=[{'gateway': []}, {'gateway': []}])
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _Controller.api_endpoints['GET'].metadata
+
+    # One `gateway` item:
+    with pytest.raises(EndpointMetadataError, match=r"\[{'gateway': \[\]}\]"):
+        generator(metadata, _Controller)
+
+
+def test_different_scopes_are_not_duplicates(
+    generator: SecuritySchemeGenerator,
+) -> None:
+    """Requirements with the same scheme but different scopes are fine."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        auth = (_NoSchemeAuth(),)
+
+        @modify(security=[{'noScheme': ['admin']}])
+        def get(self) -> str:
+            raise NotImplementedError
+
+    metadata = _Controller.api_endpoints['GET'].metadata
+
+    assert generator(metadata, _Controller) == [
+        {'noScheme': []},
+        {'noScheme': ['admin']},
+    ]
+
+
+class _AndSecurityMerger(SecurityRequirementMerger):
+    @override
+    def merge_security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type[Controller[BaseSerializer]],
+        own_requirements: list[SecurityRequirement],
+        auth_requirements: list[SecurityRequirement],
+    ) -> list[SecurityRequirement]:
+        return [
+            {**auth, **own}
+            for auth in auth_requirements
+            for own in own_requirements
+        ]
+
+
+class _AndSecuritySchemeGenerator(SecuritySchemeGenerator):
+    security_merger = _AndSecurityMerger()
+
+
+class _AndOpenAPIContext(OpenAPIContext):
+    security_scheme_cls = _AndSecuritySchemeGenerator
+
+
+def test_custom_security_merger() -> None:
+    """Custom mergers can join `auth` and `security` differently."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        auth = (_NoSchemeAuth(),)
+
+        @modify(security=[{'gateway': []}])
+        def get(self) -> str:
+            raise NotImplementedError
+
+    generator = _AndOpenAPIContext().generators.security_scheme
+    metadata = _Controller.api_endpoints['GET'].metadata
+
+    assert generator(metadata, _Controller) == [
+        {'noScheme': [], 'gateway': []},
+    ]
 
 
 def test_no_auth_without_global_security(

@@ -19,7 +19,7 @@ from dmr.test import (
 )
 from dmr.test.throttling import ThrottlingWhen
 from dmr.throttling import AsyncThrottle, Rate, SyncThrottle
-from dmr.throttling.backends import AsyncDjangoCache, SyncDjangoCache
+from dmr.throttling.backends import SyncDjangoCache
 from dmr.throttling.cache_keys import RemoteAddr
 from dmr.throttling.headers import RateLimitIETFDraft, RetryAfter, XRateLimit
 
@@ -31,12 +31,10 @@ class _SyncController(Controller[PydanticFastSerializer]):
         SyncThrottle(
             5,
             Rate.minute,
-            backend=SyncDjangoCache(allow_unsafe_cache=None),
         ),
         SyncThrottle(
             10,
             Rate.hour,
-            backend=SyncDjangoCache(allow_unsafe_cache=None),
         ),
     )
 
@@ -114,7 +112,6 @@ class _AsyncController(Controller[PydanticFastSerializer]):
         AsyncThrottle(
             3,
             Rate.hour,
-            backend=AsyncDjangoCache(allow_unsafe_cache=None),
         ),
     )
 
@@ -169,7 +166,6 @@ class _AfterAuthController(Controller[PydanticFastSerializer]):
             5,
             Rate.minute,
             cache_key=RemoteAddr(runs_before_auth=False),
-            backend=SyncDjangoCache(allow_unsafe_cache=None),
         ),
     )
 
@@ -266,7 +262,7 @@ def test_assert_throttling_header_provider(
                 5,
                 Rate.minute,
                 response_headers=[headers],
-                backend=SyncDjangoCache(allow_unsafe_cache=None),
+                backend=SyncDjangoCache(allow_unsafe_cache=True),
             ),
         )
 

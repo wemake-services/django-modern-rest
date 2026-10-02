@@ -37,11 +37,12 @@ class _BasePayload:
     description: StrOrPromise | Sentinel | None
     tags: Sequence[str] | Sentinel | None
     operation_id: str | Sentinel
-    deprecated: bool
+    deprecated: bool | Sentinel
     security: Sequence['SecurityRequirement'] | Sentinel | None
-    external_docs: 'ExternalDocumentation | Sentinel'
-    callbacks: Mapping[str, 'Callback | Reference'] | Sentinel
+    external_docs: 'ExternalDocumentation | Sentinel | None'
+    callbacks: Mapping[str, 'Callback | Reference'] | Sentinel | None
     servers: Sequence['Server'] | Sentinel | None
+    x_extensions: Mapping[str, Any] | Sentinel
     ignore_from_spec: bool | Sentinel
 
     # Extras:
@@ -72,7 +73,8 @@ class _BasePayload:
 class ValidateEndpointPayload(_BasePayload):
     """Payload created by ``@validate``."""
 
-    responses: list[ResponseSpec]
+    # `EMPTY` is only used by `implicit()`, `@validate` always sets a list:
+    responses: list[ResponseSpec] | Sentinel
 
     @classmethod
     def implicit(cls) -> 'ValidateEndpointPayload':
@@ -81,19 +83,22 @@ class ValidateEndpointPayload(_BasePayload):
 
         Such endpoints do not have to use ``@validate`` explicitly,
         when responses are defined on the controller or settings level.
-        All values are the same as ``@validate`` defaults.
+        All values are the same as ``@validate`` defaults,
+        except ``responses`` which is ``EMPTY`` and not an explicit ``[]``,
+        so the controller and settings levels are used.
         """
         return cls(
-            responses=[],
+            responses=EMPTY,
             summary=EMPTY,
             description=EMPTY,
             tags=EMPTY,
             operation_id=EMPTY,
-            deprecated=False,
+            deprecated=EMPTY,
             security=EMPTY,
             external_docs=EMPTY,
             callbacks=EMPTY,
             servers=EMPTY,
+            x_extensions=EMPTY,
             ignore_from_spec=EMPTY,
             validate_responses=EMPTY,
             exclude_validate_responses=EMPTY,

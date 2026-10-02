@@ -1,6 +1,9 @@
 from dataclasses import dataclass
-from typing import Final
+from typing import Any, Final
 
+from typing_extensions import Sentinel
+
+from dmr.internal.types import EMPTY
 from dmr.openapi.objects import (  # noqa: WPS235
     Components,
     Contact,
@@ -47,7 +50,11 @@ class OpenAPIConfig:
         contact: Contact information for the exposed API.
         external_docs: Link to additional external documentation.
         security: Global security requirements applied across the API.
-            Each entry may be overridden per operation.
+            It is also used as the settings level of ``security``
+            for all controllers and endpoints, so it is merged
+            with the requirements generated from ``auth``.
+            Can be overridden per controller and per endpoint.
+            See :ref:`customizing_security_openapi`.
         license: License information for the exposed API.
         components: Reusable components (schemas, responses, parameters, etc.)
             to include in the spec.
@@ -55,6 +62,8 @@ class OpenAPIConfig:
         tags: Metadata tags used to group operations in the documentation.
         webhooks: Webhook definitions that may be initiated by the API,
             keyed by name.
+        x_extensions: Specification extensions of the root document,
+            keys must start with ``x-``.
         self_uri: Self-assigned URI of the generated document,
             dumped as ``$self``. It also serves as the base URI
             to resolve references against. Added in OpenAPI ``'3.2.0'``.
@@ -64,7 +73,7 @@ class OpenAPIConfig:
        Added ``json_schema_dialect`` attribute.
 
     .. versionchanged:: 0.16.0
-        Added ``self_uri``.
+        Added ``self_uri`` and ``x_extensions``.
 
     """
 
@@ -78,7 +87,7 @@ class OpenAPIConfig:
     terms_of_service: str | None = None
     contact: Contact | None = None
     external_docs: ExternalDocumentation | None = None
-    security: list[SecurityRequirement] | None = None
+    security: list[SecurityRequirement] | Sentinel | None = EMPTY
     license: License | None = None
     # Components can't be a list in the final schema, so we merge them together:
     components: Components | list[Components] | None = None
@@ -86,6 +95,7 @@ class OpenAPIConfig:
     tags: list[Tag] | None = None
     webhooks: dict[str, PathItem | Reference] | None = None
     self_uri: str | None = None
+    x_extensions: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         """

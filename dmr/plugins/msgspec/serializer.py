@@ -9,7 +9,13 @@ from dmr.errors import ErrorDetail, ErrorType
 from dmr.parsers import Parser, Raw
 from dmr.plugins.msgspec.schema import MsgspecSchemaGenerator
 from dmr.renderers import Renderer
-from dmr.serializer import BaseEndpointOptimizer, BaseSerializer
+from dmr.serializer import (
+    BaseEndpointOptimizer,
+    BaseSerializer,
+    ContextField,
+    ContextModel,
+    context_field_tuples,
+)
 
 if TYPE_CHECKING:
     from dmr.metadata import EndpointMetadata
@@ -43,6 +49,7 @@ class MsgspecEndpointOptimizer(BaseEndpointOptimizer):
         # `msgspec.convert` does not have any API
         # to pre-build validation schema.
         # Returning `Struct` or `list[Struct]` will be just fast enough.
+        # Creating first `Encoder` and `Decoder` objects are fast enough.
 
 
 class MsgspecSerializer(BaseSerializer):
@@ -145,6 +152,35 @@ class MsgspecSerializer(BaseSerializer):
             dec_hook=cls.deserialize_hook,
             **cls.to_model_kwargs,
         )
+
+    @override
+    @classmethod
+    def build_context_model(
+        cls,
+        name: str,
+        fields: Mapping[str, ContextField],
+    ) -> ContextModel:
+        """
+        Build the model to parse the whole request context at once.
+
+        We always build a :class:`msgspec.Struct` with ``gc=False``,
+        it is around x2 faster to validate than a :class:`typing.TypedDict`.
+        Struct instances are converted into keyword arguments
+        with :func:`msgspec.structs.asdict`.
+        Defaults are passed as-is, so ``msgspec`` rules apply:
+        mutable defaults like ``[1]`` or non-frozen structs are not allowed.
+
+        .. versionadded:: 0.16.0
+
+        """
+        model = msgspec.defstruct(
+            name,
+            context_field_tuples(fields),
+            # Instances live only for a single request and never have
+            # any cycles, there's no need to track them:
+            gc=False,
+        )
+        return ContextModel(model, to_kwargs=msgspec.structs.asdict)
 
     @override
     @classmethod

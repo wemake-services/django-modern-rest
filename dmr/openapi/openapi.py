@@ -1,5 +1,5 @@
 import dataclasses
-from typing import TYPE_CHECKING, Annotated, Protocol
+from typing import TYPE_CHECKING, Annotated, Any, Protocol
 
 from dmr.internal.dataclass_aliases import Field
 from dmr.openapi.mappers.schema_normalization import DumpedSchema, dump_schema
@@ -48,6 +48,7 @@ class OpenAPI:
 
     .. versionchanged:: 0.16.0
         Added ``self_uri`` for the ``$self`` field from OpenAPI 3.2.
+        Added ``x_extensions`` for specification extensions.
 
     """
 
@@ -64,7 +65,10 @@ class OpenAPI:
     security: list[SecurityRequirement] | None = None
     tags: list[Tag] | None = None
     external_docs: ExternalDocumentation | None = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None
 
+    # Internal fields:
     _validated: bool = dataclasses.field(
         default=False,
         init=False,

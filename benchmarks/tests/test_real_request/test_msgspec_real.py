@@ -5,11 +5,11 @@ import uuid
 from typing import Final
 
 import msgspec
-from django.http import HttpResponseBase
 from pytest_codspeed import BenchmarkFixture
 
 from dmr import Body, Controller
 from dmr.plugins.msgspec import (
+    BodyMsgspec,
     MsgspecSerializer,
 )
 from dmr.test import DMRRequestFactory
@@ -66,5 +66,31 @@ def test_msgspec_parse_and_validate(
     controller = _MsgspecController()
     controller.setup(request)
 
-    def factory() -> HttpResponseBase:
-        return controller.dispatch(request)
+    @benchmark
+    def factory() -> None:
+        for _ in range(100):
+            controller.dispatch(request)
+
+
+class _MsgspecFastController(Controller[MsgspecSerializer]):
+    def post(self, parsed_body: BodyMsgspec[list[User]]) -> int:
+        return len(parsed_body)
+
+
+def test_msgspec_fast_parse_and_validate(
+    benchmark: BenchmarkFixture,
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Benchmark through the request pipeline with the fast body."""
+    request = dmr_rf.post(
+        '/test',
+        data=_BODY,
+        content_type='application/json',
+    )
+    controller = _MsgspecFastController()
+    controller.setup(request)
+
+    @benchmark
+    def factory() -> None:
+        for _ in range(100):
+            controller.dispatch(request)

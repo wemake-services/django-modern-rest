@@ -36,6 +36,8 @@ Here we can detect all kinds of problems with how endpoints are defined:
 
 - Invalid :data:`~dmr.endpoint.modify`
   or :data:`~dmr.endpoint.validate` usage
+- Invalid component annotations, like ``parsed_body: Body[Model] | None``,
+  see :ref:`component-defaults`
 - Or invalid :class:`~dmr.settings.HttpSpec` usage
 
 See :class:`~dmr.validation.endpoint_metadata.EndpointMetadataBuilder`

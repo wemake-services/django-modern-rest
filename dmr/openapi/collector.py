@@ -72,13 +72,20 @@ def collect_normalized_paths(
 ) -> Iterable[tuple[str, str]]:
     """Collects all normalized paths from a router."""
     for url in urls:
-        original_path = _join_paths(original_prefix, str(url.pattern))
+        original_path = _join_paths(
+            original_prefix,
+            str(url.pattern),
+            normalize=False,
+        )
         if isinstance(url, URLPattern):
-            yield original_path, _join_paths(new_prefix, original_path)
+            yield (
+                _normalize_path(original_path),
+                _join_paths(new_prefix, original_path),
+            )
         else:
             yield from collect_normalized_paths(
                 url.url_patterns,
-                original_prefix=_join_paths(original_prefix, str(url.pattern)),
+                original_prefix=original_path,
                 new_prefix=new_prefix,
             )
 

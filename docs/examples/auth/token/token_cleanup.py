@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Any, final
+from typing import Any, Final, final
 
 from django.core.management.base import BaseCommand
 from django.db import models
@@ -8,7 +8,7 @@ from typing_extensions import override
 from dmr.security.token.app.models import Token
 
 #: How long dead tokens are kept around for auditing.
-GRACE_PERIOD = dt.timedelta(days=30)
+GRACE_PERIOD: Final = dt.timedelta(days=30)
 
 
 @final

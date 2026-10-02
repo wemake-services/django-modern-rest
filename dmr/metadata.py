@@ -11,7 +11,6 @@ from typing import (  # noqa: WPS235
     Final,
     Generic,
     Self,
-    TypeAlias,
     get_args,
     get_origin,
 )
@@ -25,7 +24,7 @@ from dmr.internal.types import (
 )
 
 if TYPE_CHECKING:
-    from dmr.components import ComponentParser
+    from dmr.components import ComponentParserSpec
     from dmr.controller import Controller
     from dmr.cookies import CookieSpec, NewCookie
     from dmr.errors import AsyncErrorHandler, SyncErrorHandler
@@ -37,6 +36,7 @@ if TYPE_CHECKING:
         Link,
         Reference,
         Response,
+        SecurityRequirement,
         Server,
     )
     from dmr.parsers import Parser
@@ -46,7 +46,6 @@ if TYPE_CHECKING:
     from dmr.settings import HttpSpec
     from dmr.throttling import AsyncThrottle, SyncThrottle
 
-ComponentParserSpec: TypeAlias = tuple['ComponentParser', Any, tuple[Any, ...]]
 
 _SpecT = TypeVar('_SpecT', 'HeaderSpec', 'CookieSpec')
 
@@ -80,11 +79,13 @@ class ResponseSpec:
             ``Response.summary`` was added in OpenAPI ``'3.2.0'``,
             so setting it on an older version fails schema validation.
         links: Possible links to other OpenAPI operations.
+        x_extensions: Specification extensions of the response,
+            keys must start with ``x-``.
 
     We use this structure to validate responses and render them in OpenAPI.
 
     .. versionchanged:: 0.16.0
-        Added ``summary``.
+        Added ``summary`` and ``x_extensions``.
 
     """
 
@@ -118,6 +119,10 @@ class ResponseSpec:
         default=None,
     )
     links: Mapping[str, 'Link | Reference'] | None = dataclasses.field(
+        kw_only=True,
+        default=None,
+    )
+    x_extensions: Mapping[str, Any] | None = dataclasses.field(
         kw_only=True,
         default=None,
     )
@@ -524,8 +529,8 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
         error_handler: Callback function to be called
             when this endpoint faces an exception.
         component_parsers: List of component parser specifications
-            from the controller. Each spec is a tuple
-            of (ComponentParser class, type args).
+            from the controller. Each spec is a named tuple
+            of (ComponentParser instance, model, model meta, default).
         parsers: List of instances to be used for this endpoint
             to parse incoming request's body. All instances must be of subtypes
             of :class:`~dmr.parsers.Parser`.
@@ -571,17 +576,34 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
             are used during the schema generation.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
+            Already resolved from the endpoint and the controller,
+            ``EMPTY`` means that the router-level value
+            is used during the schema generation.
         security: A declaration of which security mechanisms can be used
             for this operation. List of security requirement objects.
+            Already resolved from the endpoint, the controller,
+            and ``security`` of :class:`~dmr.openapi.OpenAPIConfig`
+            from the settings: the first explicitly defined level wins.
+            They are merged with the requirements from ``auth``
+            during the schema generation.
+            When set to ``None`` it means that no user provided
+            security is used for this endpoint.
         external_docs: Additional external documentation for this operation.
+            Already resolved from the endpoint and the controller.
         callbacks: A map of possible out-of band callbacks related to the
             parent operation. The key is a unique identifier for the Callback
             Object. Each value in the map is a Callback Object that describes
             a request that may be initiated by the API provider and the
             expected responses.
+            Already resolved from the endpoint and the controller.
         servers: An alternative servers array to service this operation.
-            If a servers array is specified at the Path Item Object or
-            OpenAPI Object level, it will be overridden by this value.
+            If a servers array is specified at the OpenAPI Object level,
+            it will be overridden by this value.
+            Already resolved from the endpoint and the controller.
+        x_extensions: Specification extensions of this operation,
+            keys must start with ``x-``. Endpoint-only field,
+            it is never resolved from the controller:
+            ``Controller.x_extensions`` describes the path item.
         ignore_from_spec: If set to ``True``, this endpoint
             would not be added to the final OpenAPI spec.
         extras: Extra settings for custom controllers,
@@ -614,7 +636,7 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
     method: str
     modification: ResponseModification | None
     error_handler: 'SyncErrorHandler | AsyncErrorHandler | None'
-    component_parsers: list[ComponentParserSpec]
+    component_parsers: list['ComponentParserSpec']
     parsers: dict[str, 'Parser']
     renderers: dict[str, 'Renderer']
     validate_negotiation: bool
@@ -639,10 +661,12 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
     description: StrOrPromise | None
     tags: list[str] | Sentinel | None
     operation_id: str | None
-    deprecated: bool
+    deprecated: bool | Sentinel
+    security: list['SecurityRequirement'] | None
     external_docs: 'ExternalDocumentation | None'
     callbacks: dict[str, 'Callback | Reference'] | None
     servers: list['Server'] | None
+    x_extensions: dict[str, Any] | None
     ignore_from_spec: bool
 
     # Extras:
@@ -731,7 +755,7 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
             return []
 
         return [
-            *[spec[0] for spec in self.component_parsers],
+            *[spec.parser for spec in self.component_parsers],
             *self.parsers.values(),
             *self.renderers.values(),
             *(self.auth or []),

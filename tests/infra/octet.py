@@ -18,7 +18,7 @@ from dmr.controller import Controller
 from dmr.files import FileBody, FileBodyLike
 from dmr.metadata import EndpointMetadata
 from dmr.openapi import OpenAPIContext
-from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Reference, Schema
+from dmr.openapi.objects import OpenAPIFormat, OpenAPIType, Schema
 from dmr.parsers import DeserializeFunc, Parser, Raw, SupportsFileParsing
 from dmr.serializer import BaseSerializer
 
@@ -32,7 +32,7 @@ class _ByteStreamFileBody(FileBody):
     @classmethod
     def get_schema(
         cls,
-        schema: Reference | Schema,
+        schema: Schema,
         context: OpenAPIContext,
     ) -> Schema:
         return Schema(
@@ -44,7 +44,7 @@ class _ByteStreamFileBody(FileBody):
     @classmethod
     def replace_schema(
         cls,
-        schema: Reference | Schema,
+        schema: Schema,
         context: OpenAPIContext,
     ) -> Schema:
         return cls.get_schema(schema, context)

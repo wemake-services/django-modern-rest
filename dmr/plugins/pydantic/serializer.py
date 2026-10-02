@@ -1,5 +1,5 @@
+import dataclasses
 from collections.abc import Callable, Mapping
-from dataclasses import is_dataclass
 from functools import lru_cache
 from typing import (
     TYPE_CHECKING,
@@ -20,13 +20,26 @@ from typing_extensions import TypedDict, override
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.errors import ErrorDetail, ErrorType
-from dmr.exceptions import DataParsingError, DataRenderingError
+from dmr.exceptions import (
+    DataParsingError,
+    DataRenderingError,
+    EndpointMetadataError,
+)
+from dmr.internal.json import NativeJson, json_loads
 from dmr.parsers import Parser, Raw
 from dmr.plugins.pydantic.schema import PydanticSchemaGenerator
 from dmr.renderers import Renderer
-from dmr.serializer import BaseEndpointOptimizer, BaseSerializer
+from dmr.serializer import (
+    BaseEndpointOptimizer,
+    BaseSerializer,
+    ContextField,
+    ContextModel,
+    context_field_tuples,
+)
+from dmr.types import EMPTY
 
 if TYPE_CHECKING:
+    from dmr.controller import Controller
     from dmr.metadata import EndpointMetadata
 
 #: Mode that we use for default serialization.
@@ -155,7 +168,7 @@ class PydanticSerializer(BaseSerializer):
         # We support dataclasses here, because raw `JsonRenderer`
         # does not support them, however, we use them in multiple places inside.
         # Or this is a pydantic field inside a `TypedDict`, `@dataclass`, etc:
-        if is_dataclass(to_serialize) or hasattr(
+        if dataclasses.is_dataclass(to_serialize) or hasattr(
             to_serialize,
             '__get_pydantic_core_schema__',
         ):
@@ -183,6 +196,8 @@ class PydanticSerializer(BaseSerializer):
             buffer,
             cls.deserialize_hook,
             request=request,
+            # Note: passing real `pydantic` model to `msgspec` parser
+            # is not supported, because it is SLOWER than using 2-phase parsing.
             model=model,
         )
 
@@ -233,6 +248,52 @@ class PydanticSerializer(BaseSerializer):
             strict=strict,
             **cls.to_model_kwargs,
         )
+
+    @override
+    @classmethod
+    def build_context_model(
+        cls,
+        name: str,
+        fields: Mapping[str, ContextField],
+    ) -> ContextModel:
+        """
+        Build the model to parse the whole request context at once.
+
+        We build a :class:`typing.TypedDict` when there are no defaults,
+        because it is the fastest thing that ``pydantic`` can validate
+        and it does not need any conversion into keyword arguments.
+
+        When some fields have defaults, we build a regular
+        :func:`dataclasses.dataclass`, since ``TypedDict`` cannot have them.
+        Defaults are passed as-is, so :mod:`dataclasses` rules apply:
+        mutable defaults like ``[]`` or non-frozen models are not allowed.
+
+        .. versionadded:: 0.16.0
+
+        """
+        if all(field.default is EMPTY for field in fields.values()):
+            annotations = {
+                field_name: field.annotation
+                for field_name, field in fields.items()
+            }
+            typed_dict = TypedDict(  # type: ignore[misc]
+                name,  # pyright: ignore[reportArgumentType]  # pyrefly: ignore[name-mismatch]
+                annotations,  # pyright: ignore[reportArgumentType]
+                total=True,
+                closed=True,
+            )
+            _get_cached_type_adapter(typed_dict)  # prepare during import time
+            return ContextModel(typed_dict)
+
+        # We don't use `slots=True` here on purpose:
+        # `vars()` is the fastest way to unpack a dataclass instance,
+        # it requires an instance `__dict__` to exist:
+        dataclass = dataclasses.make_dataclass(
+            name,
+            context_field_tuples(fields),
+        )
+        _get_cached_type_adapter(dataclass)  # prepare during import time
+        return ContextModel(dataclass, to_kwargs=vars)
 
     @override
     @classmethod
@@ -311,7 +372,9 @@ class PydanticFastSerializer(PydanticSerializer):
         *renderer* parameter is always ignored.
         """
         try:
-            return _get_cached_type_adapter(Any).dump_json(
+            return _get_cached_type_adapter(
+                type(structure),  # type: ignore[arg-type]
+            ).dump_json(
                 structure,
                 fallback=cls.serialize_hook,
                 **cls.to_json_kwargs,  # type: ignore[misc]
@@ -333,12 +396,13 @@ class PydanticFastSerializer(PydanticSerializer):
         Fast way to serializer pyndatic models into json bytestring.
 
         *parser* parameter is always ignored.
+
+        .. versionchanged:: 0.16.0
+            Now uses faster ``json_loads`` when it is available.
+
         """
         try:
-            return _get_cached_type_adapter(Any).validate_json(
-                buffer,
-                **cls.to_model_kwargs,
-            )
+            return _json_loads(buffer)
         except pydantic_core.ValidationError as exc:
             # Corner case: an empty body is `None` for us,
             # just like `JsonParser` treats it. Happens for `204` responses.
@@ -347,16 +411,35 @@ class PydanticFastSerializer(PydanticSerializer):
             if buffer == b'':
                 return None
             raise DataParsingError(exc.errors()[0]['msg']) from exc
+        except Exception as exc:  # which can be raise for non-pydantic loads
+            if buffer == b'':
+                return None
+            raise DataParsingError(str(exc)) from exc
 
     @classmethod
     @override
-    def is_supported(cls, pluggable: Parser | Renderer) -> bool:
+    def validate(
+        cls,
+        controller_cls: type['Controller[BaseSerializer]'],
+        metadata: 'EndpointMetadata',
+    ) -> None:
         """
-        Is this parser or renderer supported?
+        Validate that only ``json`` parsers and renderers are used.
 
-        We only support ``json`` parsers and renderers.
+        .. versionchanged:: 0.16.0
+            Replaces ``is_supported`` method.
+
         """
-        return pluggable.content_type == 'application/json'
+        pluggables: list[Parser | Renderer] = [
+            *metadata.parsers.values(),
+            *metadata.renderers.values(),
+        ]
+        for pluggable in pluggables:
+            if pluggable.content_type != 'application/json':
+                raise EndpointMetadataError(
+                    f'{metadata.endpoint_name!r} serializer '
+                    f'does not support {pluggable!r}, only json is supported',
+                )
 
 
 _ModelT = TypeVar('_ModelT')
@@ -377,3 +460,13 @@ def _get_cached_type_adapter(model: _ModelT) -> pydantic.TypeAdapter[_ModelT]:
     """
     # This is a function not to cache `self` or `cls` params.
     return pydantic.TypeAdapter(model, _parent_depth=4)
+
+
+#: Internal helper to load json for fast serializer.
+#: If `msgspec` is missing and the default `json` module is used, we fallback
+#: to the `pydantic` one, which is also rather slow.
+_json_loads: Final = (
+    _get_cached_type_adapter(Any).validate_json
+    if json_loads is NativeJson.loads
+    else json_loads
+)

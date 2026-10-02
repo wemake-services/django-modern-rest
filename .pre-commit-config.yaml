@@ -49,7 +49,7 @@ repos:
         files: ^docs/
 
   - repo: https://github.com/crate-ci/typos
-    rev: 5b5e71f127904bfb8d941c57c26c544b7075e025  # frozen: v1.50.2
+    rev: 4141ff14cb566df76c473c786332c186a4fd71d1  # frozen: v1.50.3
     hooks:
       - id: typos
 

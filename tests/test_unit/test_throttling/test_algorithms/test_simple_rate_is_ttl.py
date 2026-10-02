@@ -2,7 +2,6 @@ from typing import Final
 
 from dmr.throttling import Rate, SyncThrottle
 from dmr.throttling.algorithms import SimpleRate
-from dmr.throttling.backends import SyncDjangoCache
 from dmr.throttling.backends.base import CachedRateLimit
 
 _MAX_REQUESTS: Final = 5
@@ -23,7 +22,6 @@ def test_ttl_reset_uses_ttl_directly() -> None:
         _MAX_REQUESTS,
         _WINDOW,
         algorithm=algorithm,
-        backend=SyncDjangoCache(allow_unsafe_cache=None),
     )
 
     cache_object: CachedRateLimit = {
@@ -57,7 +55,6 @@ def test_expire_at_subtracts_now() -> None:
         _MAX_REQUESTS,
         _WINDOW,
         algorithm=algorithm,
-        backend=SyncDjangoCache(allow_unsafe_cache=None),
     )
 
     cache_object: CachedRateLimit = {
@@ -92,7 +89,6 @@ def test_ttl_skips_window_expiry() -> None:
         _MAX_REQUESTS,
         _WINDOW,
         algorithm=algorithm,
-        backend=SyncDjangoCache(allow_unsafe_cache=None),
     )
 
     cache_object: CachedRateLimit = {
@@ -118,7 +114,6 @@ def test_expire_at_resets_expired_window() -> None:
         _MAX_REQUESTS,
         _WINDOW,
         algorithm=algorithm,
-        backend=SyncDjangoCache(allow_unsafe_cache=None),
     )
 
     cache_object: CachedRateLimit = {

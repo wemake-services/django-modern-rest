@@ -1,0 +1,617 @@
+# serializer version: 1
+# name: test_component_defaults_schema
+  '''
+  {
+    "info": {
+      "title": "Your Awesome Project",
+      "version": "0.1.0"
+    },
+    "openapi": "3.1.0",
+    "paths": {
+      "/api/defaults/{user_id}/": {
+        "post": {
+          "operationId": "postDefaultsControllerApiDefaultsUserId",
+          "parameters": [
+            {
+              "description": "Query",
+              "name": "name",
+              "in": "query",
+              "schema": {
+                "type": "string",
+                "title": "Name"
+              }
+            },
+            {
+              "description": "Query",
+              "name": "age",
+              "in": "query",
+              "schema": {
+                "type": "integer",
+                "title": "Age",
+                "default": 0
+              }
+            },
+            {
+              "name": "name",
+              "in": "header",
+              "schema": {
+                "type": "string",
+                "title": "Name"
+              }
+            },
+            {
+              "name": "age",
+              "in": "header",
+              "schema": {
+                "type": "integer",
+                "title": "Age",
+                "default": 0
+              }
+            },
+            {
+              "name": "name",
+              "in": "cookie",
+              "schema": {
+                "type": "string",
+                "title": "Name"
+              }
+            },
+            {
+              "name": "age",
+              "in": "cookie",
+              "schema": {
+                "type": "integer",
+                "title": "Age",
+                "default": 0
+              }
+            },
+            {
+              "name": "user_id",
+              "in": "path",
+              "schema": {
+                "type": "integer",
+                "title": "User Id"
+              },
+              "required": true
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "format": "binary"
+                            }
+                          },
+                          "type": "object",
+                          "required": [
+                            "name"
+                          ],
+                          "title": "_FileModel"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/_Model"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "Raised when path parameters do not match",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/required/": {
+        "post": {
+          "operationId": "postRequiredBodyControllerApiRequired",
+          "requestBody": {
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "format": "binary"
+                            }
+                          },
+                          "type": "object",
+                          "required": [
+                            "name"
+                          ],
+                          "title": "_FileModel"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    {
+                      "$ref": "#/components/schemas/_Model"
+                    }
+                  ]
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "201": {
+              "description": "Created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "ErrorDetail": {
+          "properties": {
+            "msg": {
+              "type": "string",
+              "title": "Msg"
+            },
+            "type": {
+              "type": "string",
+              "title": "Type"
+            },
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Loc"
+            }
+          },
+          "type": "object",
+          "required": [
+            "msg"
+          ],
+          "title": "ErrorDetail",
+          "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
+        "_Model": {
+          "properties": {
+            "name": {
+              "type": "string",
+              "title": "Name"
+            },
+            "age": {
+              "type": "integer",
+              "title": "Age",
+              "default": 0
+            }
+          },
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "title": "_Model"
+        }
+      }
+    }
+  }
+  '''
+# ---
+# name: test_union_defaults_schema
+  '''
+  {
+    "info": {
+      "title": "Your Awesome Project",
+      "version": "0.1.0"
+    },
+    "openapi": "3.1.0",
+    "paths": {
+      "/api/required/": {
+        "get": {
+          "operationId": "getUnionRequiredControllerApiRequired",
+          "parameters": [
+            {
+              "name": "name",
+              "in": "query",
+              "schema": {
+                "type": "string",
+                "title": "Name"
+              },
+              "required": true
+            },
+            {
+              "name": "age",
+              "in": "query",
+              "schema": {
+                "type": "integer",
+                "title": "Age",
+                "default": 0
+              }
+            },
+            {
+              "name": "other",
+              "in": "query",
+              "schema": {
+                "type": "string",
+                "title": "Other"
+              }
+            },
+            {
+              "name": "name",
+              "in": "header",
+              "schema": {
+                "type": "string",
+                "title": "Name"
+              },
+              "required": true
+            },
+            {
+              "name": "age",
+              "in": "header",
+              "schema": {
+                "type": "integer",
+                "title": "Age",
+                "default": 0
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "OK",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/unions/": {
+        "post": {
+          "operationId": "postUnionDefaultsControllerApiUnions",
+          "parameters": [
+            {
+              "name": "name",
+              "in": "query",
+              "schema": {
+                "type": "string",
+                "title": "Name"
+              }
+            },
+            {
+              "name": "age",
+              "in": "query",
+              "schema": {
+                "type": "integer",
+                "title": "Age",
+                "default": 0
+              }
+            },
+            {
+              "name": "name",
+              "in": "header",
+              "schema": {
+                "type": "string",
+                "title": "Name"
+              }
+            },
+            {
+              "name": "age",
+              "in": "header",
+              "schema": {
+                "type": "integer",
+                "title": "Age",
+                "default": 0
+              }
+            },
+            {
+              "name": "other",
+              "in": "header",
+              "schema": {
+                "type": "string",
+                "title": "Other"
+              }
+            }
+          ],
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/_Model"
+                    },
+                    {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Created",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Raised when request components cannot be parsed",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "406": {
+              "description": "Raised when provided `Accept` header cannot be satisfied",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Raised when returned response does not match the response schema",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorModel"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "ErrorDetail": {
+          "properties": {
+            "msg": {
+              "type": "string",
+              "title": "Msg"
+            },
+            "type": {
+              "type": "string",
+              "title": "Type"
+            },
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Loc"
+            }
+          },
+          "type": "object",
+          "required": [
+            "msg"
+          ],
+          "title": "ErrorDetail",
+          "description": "Base schema for error details description."
+        },
+        "ErrorModel": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "required": [
+            "detail"
+          ],
+          "title": "ErrorModel",
+          "description": "Default error response schema.\n\nCan be customized.\nSee :ref:`customizing-error-messages` for more details."
+        },
+        "_Model": {
+          "properties": {
+            "name": {
+              "type": "string",
+              "title": "Name"
+            },
+            "age": {
+              "type": "integer",
+              "title": "Age",
+              "default": 0
+            }
+          },
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "title": "_Model"
+        }
+      }
+    }
+  }
+  '''
+# ---

@@ -24,6 +24,7 @@ class MediaTypeMetadata:
         ``prefix_encoding`` is now a list, as the spec requires.
         ``example`` now defaults to :data:`~dmr.types.EMPTY`
         instead of ``None``, because ``None`` is a valid value for it.
+        Added ``x_extensions`` for specification extensions.
 
     """
 
@@ -36,6 +37,8 @@ class MediaTypeMetadata:
     description: str | None = None
     item_encoding: 'Encoding | None' = None
     prefix_encoding: list['Encoding'] | None = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None
 
     @override
     def __hash__(self) -> int:
@@ -60,11 +63,12 @@ class MediaType:
         ``prefix_encoding`` is now a list, as the spec requires.
         ``example`` now defaults to :data:`~dmr.types.EMPTY`
         instead of ``None``, because ``None`` is a valid value for it.
+        Added ``x_extensions`` for specification extensions.
 
     """
 
     # Can be `None` only when `item_schema` is set:
-    schema: 'Reference | Schema | None' = None
+    schema: 'Schema | None' = None
     example: Any = EMPTY
     examples: dict[str, 'Example | Reference'] | None = None
     encoding: dict[str, 'Encoding'] | None = None
@@ -73,6 +77,8 @@ class MediaType:
     # NOTE: `encoding` is mutually exclusive with the two `*_encoding` ones,
     # we let `openapi-spec-validator` report that.
     description: str | None = None
-    item_schema: 'Reference | Schema | None' = None
+    item_schema: 'Schema | None' = None
     item_encoding: 'Encoding | None' = None
     prefix_encoding: list['Encoding'] | None = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None

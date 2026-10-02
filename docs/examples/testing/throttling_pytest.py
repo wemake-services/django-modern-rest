@@ -20,7 +20,7 @@ class ReportsController(Controller[PydanticFastSerializer]):
             1000,
             Rate.hour,
             # Tests use `LocMemCache`, so the unsafe cache check is disabled:
-            backend=SyncDjangoCache(allow_unsafe_cache=None),
+            backend=SyncDjangoCache(allow_unsafe_cache=True),
         ),
     )
 

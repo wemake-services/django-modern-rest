@@ -50,12 +50,23 @@ You can customize the serializer to know how to serializer / deserialize
 more types by extending it and customizing the method you need.
 
 
+.. _serializer-context:
+
 Customizing the serializer context
 ----------------------------------
 
 We use :class:`dmr.endpoint.SerializerContext` type
 to deserialize all components from a single model, so it would be much faster
 than parsing each component separately.
+
+The model itself is built by the serializer
+in :meth:`~dmr.serializer.BaseSerializer.build_context_model`,
+each serializer picks the fastest model type it can validate:
+:class:`~dmr.plugins.pydantic.PydanticSerializer`
+uses a :class:`typing.TypedDict` or a :func:`dataclasses.dataclass`
+when there are :ref:`default values <component-defaults>`,
+:class:`~dmr.plugins.msgspec.MsgspecSerializer`
+always uses a :class:`msgspec.Struct` with ``gc=False``.
 
 This class can be customized for several reasons.
 
@@ -113,6 +124,10 @@ You would need to:
 - Provide a way to serializer and deserialize your models
 - Provide serializer error converter by overriding
   :meth:`~dmr.serializer.BaseSerializer.serialize_validation_error` method
+- Optionally, validate how the serializer is used by overriding
+  :meth:`~dmr.serializer.BaseSerializer.validate` method,
+  which receives the complete endpoint metadata during the import time,
+  for example: to only allow some parsers and renderers
 - Provide a way to get the OpenAPI / JsonSchema schema from your models,
   see :class:`dmr.serializer.BaseSchemaGenerator`. Example implementations:
   :class:`~dmr.plugins.pydantic.schema.PydanticSchemaGenerator`

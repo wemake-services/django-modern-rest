@@ -42,6 +42,7 @@ if TYPE_CHECKING:
         ExternalDocumentation,
         Link,
         Reference,
+        SecurityRequirement,
         Server,
     )
     from dmr.parsers import Parser
@@ -270,14 +271,6 @@ class Extras(Generic[_BuiltExtrasT_co]):
 _ExtrasT = TypeVar('_ExtrasT', bound=Extras[Any] | Sentinel, default=Sentinel)
 
 
-def _payload_extras_cls(
-    extras_cls: type[object] | Sentinel,
-) -> type[Extras[Any]] | Sentinel:
-    if isinstance(extras_cls, Sentinel) or not issubclass(extras_cls, Extras):
-        return EMPTY
-    return extras_cls  # pyright: ignore[reportUnknownVariableType]
-
-
 @final
 @dataclasses.dataclass(frozen=True, slots=True)
 class ModifyEndpoint(Generic[_ExtrasT]):
@@ -381,14 +374,39 @@ class ModifyEndpoint(Generic[_ExtrasT]):
             Set it to ``None`` to have no tags at all.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
+            Overrides controller-level and router-level values.
+            Set it to ``False`` to explicitly mark this operation
+            as not deprecated, even if its controller or router is.
+        security: A sequence of security requirement objects for this operation.
+            Overrides the controller value and ``security``
+            of :class:`dmr.openapi.OpenAPIConfig`.
+            Set it to ``None`` to disable ``security`` of this endpoint.
+            It is merged with the requirements generated from ``auth``,
+            but it never affects the runtime auth.
+            Useful to document external security mechanisms,
+            for example, the ones enforced by an HTTP proxy.
+            Used security schemes must be declared
+            as ``security_schemes`` in ``components``
+            of :class:`dmr.openapi.OpenAPIConfig`.
+            See :ref:`customizing_security_openapi`.
         external_docs: Additional external documentation for this operation.
+            Overrides the controller value.
+            Set it to ``None`` to have no external docs at all.
         callbacks: A map of possible out-of band callbacks related to the
             parent operation. The key is a unique identifier
             for the Callback Object. Each value in the map
             is a Callback Object that describes
             a request that may be initiated by the API provider and the
-            expected responses.
+            expected responses. Overrides the controller value.
+            Set it to ``None`` to have no callbacks at all.
         servers: An alternative servers sequence to service this operation.
+            Overrides the controller value.
+            Set it to ``None`` to have no servers at all.
+        x_extensions: Specification extensions of this operation,
+            keys must start with ``x-``. Set only on this operation:
+            it is never inherited from or merged with
+            :attr:`~dmr.controller.Controller.x_extensions`,
+            which describes the path item, not its operations.
         links: Possible links to other OpenAPI operations.
         response_description: Description for the generated response object.
         ignore_from_spec: If set to ``True``, this endpoint
@@ -449,10 +467,12 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
-        deprecated: bool = False,
-        external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
+        deprecated: bool | Sentinel = EMPTY,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
+        external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
@@ -485,10 +505,12 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
-        deprecated: bool = False,
-        external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
+        deprecated: bool | Sentinel = EMPTY,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
+        external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
@@ -521,10 +543,12 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
-        deprecated: bool = False,
-        external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
+        deprecated: bool | Sentinel = EMPTY,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
+        external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
@@ -560,10 +584,12 @@ class ModifyEndpoint(Generic[_ExtrasT]):
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
-        deprecated: bool = False,
-        external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
+        deprecated: bool | Sentinel = EMPTY,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
+        external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         links: Mapping[str, Link | Reference] | Sentinel = EMPTY,
         response_description: str | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
@@ -590,7 +616,7 @@ class ModifyEndpoint(Generic[_ExtrasT]):
                 parsers=parsers,
                 renderers=renderers,
                 validate_negotiation=validate_negotiation,
-                security=EMPTY,  # TODO
+                security=security,
                 auth=auth,
                 throttling=throttling,
                 summary=summary,
@@ -601,11 +627,12 @@ class ModifyEndpoint(Generic[_ExtrasT]):
                 external_docs=external_docs,
                 callbacks=callbacks,
                 servers=servers,
+                x_extensions=x_extensions,
                 links=links,
                 response_description=response_description,
                 ignore_from_spec=ignore_from_spec,
                 extras=extras,
-                extras_cls=_payload_extras_cls(self.extras_cls),
+                extras_cls=self.extras_cls,  # type: ignore[arg-type]
             ),
         )
 
@@ -817,13 +844,38 @@ class ValidateEndpoint(Generic[_ExtrasT]):
             Set it to ``None`` to have no tags at all.
         operation_id: Unique string used to identify the operation.
         deprecated: Declares this operation to be deprecated.
+            Overrides controller-level and router-level values.
+            Set it to ``False`` to explicitly mark this operation
+            as not deprecated, even if its controller or router is.
+        security: A sequence of security requirement objects for this operation.
+            Overrides the controller value and ``security``
+            of :class:`dmr.openapi.OpenAPIConfig`.
+            Set it to ``None`` to disable ``security`` of this endpoint.
+            It is merged with the requirements generated from ``auth``,
+            but it never affects the runtime auth.
+            Useful to document external security mechanisms,
+            for example, the ones enforced by an HTTP proxy.
+            Used security schemes must be declared
+            as ``security_schemes`` in ``components``
+            of :class:`dmr.openapi.OpenAPIConfig`.
+            See :ref:`customizing_security_openapi`.
         external_docs: Additional external documentation for this operation.
+            Overrides the controller value.
+            Set it to ``None`` to have no external docs at all.
         callbacks: A map of possible out-of band callbacks related to the
             parent operation. The key is a unique identifier for the Callback
             Object. Each value in the map is a Callback Object that describes
             a request that may be initiated by the API provider and the
-            expected responses.
+            expected responses. Overrides the controller value.
+            Set it to ``None`` to have no callbacks at all.
         servers: An alternative servers sequence to service this operation.
+            Overrides the controller value.
+            Set it to ``None`` to have no servers at all.
+        x_extensions: Specification extensions of this operation,
+            keys must start with ``x-``. Set only on this operation:
+            it is never inherited from or merged with
+            :attr:`~dmr.controller.Controller.x_extensions`,
+            which describes the path item, not its operations.
         ignore_from_spec: If set to ``True``, this endpoint
             would not be added to the final OpenAPI spec.
         extras: Extra settings for custom controllers.
@@ -879,10 +931,12 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
-        deprecated: bool = False,
-        external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
+        deprecated: bool | Sentinel = EMPTY,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
+        external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
         extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ValidateAnyCallable: ...
@@ -911,10 +965,12 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
-        deprecated: bool = False,
-        external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
+        deprecated: bool | Sentinel = EMPTY,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
+        external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
         extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ValidateAsyncCallable: ...
@@ -943,10 +999,12 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
-        deprecated: bool = False,
-        external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
+        deprecated: bool | Sentinel = EMPTY,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
+        external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
         extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ValidateSyncCallable: ...
@@ -978,10 +1036,12 @@ class ValidateEndpoint(Generic[_ExtrasT]):
         description: StrOrPromise | Sentinel | None = EMPTY,
         tags: Sequence[str] | Sentinel | None = EMPTY,
         operation_id: str | Sentinel = EMPTY,
-        deprecated: bool = False,
-        external_docs: ExternalDocumentation | Sentinel = EMPTY,
-        callbacks: Mapping[str, Callback | Reference] | Sentinel = EMPTY,
+        deprecated: bool | Sentinel = EMPTY,
+        security: Sequence[SecurityRequirement] | Sentinel | None = EMPTY,
+        external_docs: ExternalDocumentation | Sentinel | None = EMPTY,
+        callbacks: Mapping[str, Callback | Reference] | Sentinel | None = EMPTY,
         servers: Sequence[Server] | Sentinel | None = EMPTY,
+        x_extensions: Mapping[str, Any] | Sentinel = EMPTY,
         ignore_from_spec: bool | Sentinel = EMPTY,
         extras: _ExtrasT | Sentinel = EMPTY,
     ) -> ValidateAnyCallable | ValidateAsyncCallable | ValidateSyncCallable:
@@ -1003,7 +1063,7 @@ class ValidateEndpoint(Generic[_ExtrasT]):
                 parsers=parsers,
                 renderers=renderers,
                 validate_negotiation=validate_negotiation,
-                security=EMPTY,  # TODO
+                security=security,
                 auth=auth,
                 throttling=throttling,
                 summary=summary,
@@ -1014,9 +1074,10 @@ class ValidateEndpoint(Generic[_ExtrasT]):
                 external_docs=external_docs,
                 callbacks=callbacks,
                 servers=servers,
+                x_extensions=x_extensions,
                 ignore_from_spec=ignore_from_spec,
                 extras=extras,
-                extras_cls=_payload_extras_cls(self.extras_cls),
+                extras_cls=self.extras_cls,  # type: ignore[arg-type]
             ),
         )
 

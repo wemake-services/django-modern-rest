@@ -56,7 +56,6 @@ class QueryModel(pydantic.BaseModel):
     per_page: int
     count: int
     page: int
-    filter: list[str]
 
 
 class HeadersModel(pydantic.BaseModel):
@@ -70,7 +69,7 @@ async def async_post(
     filters: Annotated[QueryModel, fastapi.Query()],
     headers: Annotated[HeadersModel, fastapi.Header()],
 ) -> UserModel:
-    assert filters.filter[0] == 'fastapi', filters.filter
+    assert filters
     return UserModel(
         uid=uuid.uuid4(),
         **data.model_dump(),
@@ -83,7 +82,7 @@ def sync_post(
     filters: Annotated[QueryModel, fastapi.Query()],
     headers: Annotated[HeadersModel, fastapi.Header()],
 ) -> UserModel:
-    assert filters.filter[0] == 'fastapi', filters.filter
+    assert filters
     return UserModel(
         uid=uuid.uuid4(),
         **data.model_dump(),

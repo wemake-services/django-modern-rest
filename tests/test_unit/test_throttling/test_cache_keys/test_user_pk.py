@@ -10,7 +10,6 @@ from dmr import Controller
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
 from dmr.throttling import Rate, SyncThrottle
-from dmr.throttling.backends import SyncDjangoCache
 from dmr.throttling.cache_keys import UserPk
 
 
@@ -20,7 +19,6 @@ class _SyncController(Controller[PydanticSerializer]):
             1,
             Rate.second,
             cache_key=UserPk(),
-            backend=SyncDjangoCache(allow_unsafe_cache=None),
         ),
     ]
 
@@ -34,7 +32,6 @@ class _NoExclusionsController(Controller[PydanticSerializer]):
             1,
             Rate.minute,
             cache_key=UserPk(exclude_superuser=False, exclude_stuff=False),
-            backend=SyncDjangoCache(allow_unsafe_cache=None),
         ),
     ]
 
