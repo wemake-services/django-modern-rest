@@ -387,7 +387,7 @@ class ComponentParserGenerator:  # noqa: WPS214
         return new_content
 
 
-def _is_path_param(param_spec: Parameter | Reference) -> TypeIs[Parameter]:
+def _is_path_param(param_spec: Parameter | Reference) -> TypeGuard[Parameter]:
     return isinstance(param_spec, Parameter) and param_spec.param_in == 'path'
 
 
