@@ -136,7 +136,23 @@ What is the difference from the raw ``path()`` model?
 .. important::
 
   Make sure that your ``path()`` URL pattern and ``Path`` model fields match.
-  We don't automatically validate it.
+  We check it only when generating the OpenAPI schema:
+
+  - A required model field must be in the URL pattern
+    or in the ``kwargs`` of :func:`django.urls.path`
+    or :func:`django.urls.include`,
+    otherwise :exc:`~dmr.exceptions.EndpointMetadataError` is raised
+  - Fields from ``kwargs`` are not sent by clients,
+    so they are not documented as path parameters
+  - Fields with default values are documented only for the URLs
+    that have them. This way a single controller can be routed
+    to several URLs, which differ in a single URL parameter,
+    like ``users/`` and ``users/<int:user_id>/``
+  - URL parameters that are not in the model are documented
+    from their converters or ``re_path()`` groups,
+    the same way as without ``Path`` component
+  - Documented path parameters always have ``required: true``,
+    even when their fields have default values
 
 .. note::
 
