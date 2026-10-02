@@ -313,3 +313,70 @@ def test_merged_body_without_description_schema(
         )
         == snapshot
     )
+
+
+class _OptionalFileModel(pydantic.BaseModel):
+    content_type: Literal['text/plain']
+    size: int
+
+
+class _OtherFileModel(pydantic.BaseModel):
+    content_type: Literal['image/png']
+    size: int
+
+
+class _OptionalFiles(pydantic.BaseModel):
+    first_file: _OptionalFileModel
+    second_file: _OptionalFileModel
+
+
+class _MixedFiles(pydantic.BaseModel):
+    first_file: _OtherFileModel
+    second_file: _OptionalFileModel
+
+
+class _OptionalFileController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(),)
+
+    def post(
+        self,
+        parsed_file_metadata: FileMetadata[_OptionalFiles | None] = None,
+    ) -> str:
+        raise NotImplementedError
+
+
+class _UnionFileController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(),)
+
+    def post(
+        self,
+        parsed_file_metadata: FileMetadata[_OptionalFiles | _MixedFiles],
+    ) -> str:
+        raise NotImplementedError
+
+
+def _multipart_encoding(
+    controller: type[Controller[PydanticSerializer]],
+) -> dict[str, object]:
+    schema = build_schema(
+        Router('', [path('file/', controller.as_view())]),
+    ).convert()
+    operation = schema['paths']['/file/']['post']
+    request_body = operation['requestBody']['content']
+    return request_body['multipart/form-data'].get('encoding')
+
+
+def test_optional_file_metadata_keeps_encoding() -> None:
+    """Optional FileMetadata still documents per-file content types."""
+    assert _multipart_encoding(_OptionalFileController) == {
+        'first_file': {'contentType': 'text/plain'},
+        'second_file': {'contentType': 'text/plain'},
+    }
+
+
+def test_union_file_metadata_merges_encoding() -> None:
+    """Unions of file models merge content types for a shared property."""
+    assert _multipart_encoding(_UnionFileController) == {
+        'first_file': {'contentType': 'text/plain, image/png'},
+        'second_file': {'contentType': 'text/plain'},
+    }
