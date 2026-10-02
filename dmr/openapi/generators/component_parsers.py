@@ -192,7 +192,7 @@ class ComponentParserGenerator:  # noqa: WPS214
         unknown = sorted(
             param_spec.name
             for param_spec in parameter_specs
-            if _is_path_param(param_spec)
+            if (_is_path_param(param_spec)
             and param_spec.required
             and param_spec.name not in url_params | route_metadata.extra_kwargs
         )
