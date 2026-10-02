@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.external_documentation import ExternalDocumentation
@@ -15,6 +15,7 @@ class Tag:
 
     .. versionchanged:: 0.16.0
         Added ``summary``, ``parent``, and ``kind`` from OpenAPI 3.2.
+        Added ``x_extensions`` for specification extensions.
 
     """
 
@@ -28,3 +29,5 @@ class Tag:
     parent: str | None = None
     #: Machine-readable tag category, like `nav`, `badge`, or `audience`.
     kind: str | None = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None

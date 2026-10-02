@@ -42,6 +42,7 @@ class _BasePayload:
     external_docs: 'ExternalDocumentation | Sentinel | None'
     callbacks: Mapping[str, 'Callback | Reference'] | Sentinel | None
     servers: Sequence['Server'] | Sentinel | None
+    x_extensions: Mapping[str, Any] | Sentinel
     ignore_from_spec: bool | Sentinel
 
     # Extras:
@@ -97,6 +98,7 @@ class ValidateEndpointPayload(_BasePayload):
             external_docs=EMPTY,
             callbacks=EMPTY,
             servers=EMPTY,
+            x_extensions=EMPTY,
             ignore_from_spec=EMPTY,
             validate_responses=EMPTY,
             exclude_validate_responses=EMPTY,

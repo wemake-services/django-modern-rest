@@ -47,6 +47,7 @@ class ConfigMerger:
                 else config.security
             ),
             webhooks=config.webhooks,
+            x_extensions=config.x_extensions,
             paths=paths,
             components=self._merge_components(config.components, components),
         )

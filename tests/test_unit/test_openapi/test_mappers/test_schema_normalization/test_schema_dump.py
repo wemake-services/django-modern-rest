@@ -5,8 +5,8 @@ import pytest
 
 from dmr.internal.dataclass_aliases import Field
 from dmr.openapi.mappers.schema_normalization import (
-    _dump_field,
     _dump_value,
+    dump_field,
     dump_schema,
 )
 from dmr.openapi.objects import (  # noqa: WPS235
@@ -44,19 +44,19 @@ from dmr.openapi.objects import (  # noqa: WPS235
         ('numbers_123', 'numbers123'),
     ],
 )
-def test_dump_field(
+def testdump_field(
     *,
     input_key: str,
     expected_output: str,
 ) -> None:
     """Ensure that ``dump_field`` converts field names to OpenAPI keys."""
-    assert _dump_field(input_key, {}) == expected_output
+    assert dump_field(input_key, {}) == expected_output
 
 
-def test_dump_field_alias() -> None:
+def testdump_field_alias() -> None:
     """Ensure that ``dump_field`` converts field names to aliases."""
     assert (
-        _dump_field('whatever', Annotated[str, Field(alias='$test')]) == '$test'
+        dump_field('whatever', Annotated[str, Field(alias='$test')]) == '$test'
     )
 
 
@@ -270,7 +270,7 @@ def test_dump_value_dict(
         (
             Schema(
                 type=OpenAPIType.STRING,
-                extensions={'x-range': {'min': 0}},
+                x_extensions={'x-range': {'min': 0}},
             ),
             {'type': 'string', 'x-range': {'min': 0}},
         ),

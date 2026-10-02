@@ -25,7 +25,7 @@ Required docs (always reference first):
 
 ## Workflow
 
-### 1. Inventory Ninja surface
+### Inventory Ninja surface
 
 - Read project API entrypoints and URL wiring first.
 - Find usages of: `NinjaExtraAPI`, `api_controller`, `http_get/http_post/...`, `ninja.Schema`, `ninja_jwt`, Ninja exception handlers, Ninja throttles.
@@ -34,7 +34,7 @@ Required docs (always reference first):
   - expected statuses, expected headers,
   - known error paths.
 
-### 2. Inventory project-native batteries (required)
+### Inventory project-native batteries (required)
 
 - Before writing adapters, inspect existing project libraries and integrations
   that should power the migrated transport layer.
@@ -46,7 +46,7 @@ Required docs (always reference first):
   - auth/account lockout: prefer existing project auth stack (e.g. axes/middleware)
     instead of reusing Ninja-specific auth internals.
 
-### 3. Freeze observable behavior
+### Freeze observable behavior
 
 - Capture behavior from existing tests + DTOs + routing.
 - Mark blocking mismatches before coding:
@@ -55,7 +55,7 @@ Required docs (always reference first):
   - auth/throttle changes,
   - status/header changes.
 
-### 4. Decide error strategy (required gate)
+### Decide error strategy (required gate)
 
 Choose one and record it before edits:
 
@@ -67,7 +67,7 @@ Choose one and record it before edits:
   - update tests and docs expectations accordingly,
   - still preserve happy-path behavior and auth/throttle behavior.
 
-### 5. Migrate by slice (app or endpoint group)
+### Migrate by slice (app or endpoint group)
 
 - Migrate one bounded slice at a time.
 - Keep module layout unless architecture/lint contracts require change.
@@ -77,14 +77,14 @@ Choose one and record it before edits:
   - keep usecases/services/repositories untouched,
   - change only DTOs/controllers/router wiring.
 
-### 6. Translate DTOs and components
+### Translate DTOs and components
 
 - Replace `ninja.Schema` with explicit typed DTOs compatible with DMR serializer.
 - Map request sources explicitly:
   - body `Body[...]`, query `Query[...]`, path `Path[...]`, headers `Headers[...]`, cookies `Cookies[...]`.
 - Split input/output DTOs when response contains server-owned fields.
 
-### 7. Translate handlers to DMR
+### Translate handlers to DMR
 
 - Single operation: `Controller[...]`.
 - Multi-method path: controllers + composition.
@@ -93,13 +93,13 @@ Choose one and record it before edits:
   - strict parity mode: preserve old statuses/payloads,
   - approved drift mode: keep DMR-native errors and update tests.
 
-### 8. Replace API wiring
+### Replace API wiring
 
 - Replace `NinjaExtraAPI` with DMR router + Django URL include wiring.
 - Keep namespace stability (`api:*` names) unless drift approved.
 - Add docs/openapi routes only if project already exposes them.
 
-### 9. Port auth and throttling with native batteries
+### Port auth and throttling with native batteries
 
 - Keep auth expectations endpoint-by-endpoint.
 - Keep throttling behavior and headers (e.g. `Retry-After`) unless drift approved.
@@ -111,7 +111,7 @@ Choose one and record it before edits:
   If a temporary shim is unavoidable, mark it explicitly as temporary,
   document replacement plan, and list it in `unresolved gaps`.
 
-### 10. Update tests for DMR tooling
+### Update tests for DMR tooling
 
 - Replace Ninja-specific test tooling (`ninja.testing.TestClient`,
   NinjaExtra helpers, Ninja URL setup fixtures) with repository-native
@@ -128,13 +128,13 @@ Choose one and record it before edits:
 - Remove persistent `django-ninja` / `ninja-extra` imports from migrated
   test modules unless explicitly approved as temporary drift.
 
-### 11. Validate each slice with repository-native CI entrypoints
+### Validate each slice with repository-native CI entrypoints
 
 - Run the same commands CI uses in this repository.
 - Prefer official script entrypoints over ad-hoc command sets.
 - If docker-only CI/test environment is required, run in docker.
 
-### 12. Finish gate
+### Finish gate
 
 Do not mark slice done until:
 - linters pass,

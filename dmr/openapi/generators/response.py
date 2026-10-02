@@ -111,6 +111,11 @@ class ResponseGenerator:
                 if response_spec.links is None
                 else dict(response_spec.links)
             ),
+            x_extensions=(
+                None
+                if response_spec.x_extensions is None
+                else dict(response_spec.x_extensions)
+            ),
             # Sorted by header name, not by the definition order:
             headers=dict(sorted(headers.items())) or None,
             content=self._get_content(

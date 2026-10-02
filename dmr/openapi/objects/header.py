@@ -24,6 +24,7 @@ class Header:
         ``content`` values can now be references.
         ``example`` now defaults to :data:`~dmr.types.EMPTY`
         instead of ``None``, because ``None`` is a valid value for it.
+        Added ``x_extensions`` for specification extensions.
 
     """
 
@@ -36,3 +37,5 @@ class Header:
     example: Any = EMPTY
     examples: dict[str, 'Example | Reference'] | None = None
     content: dict[str, 'MediaType | Reference'] | None = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None

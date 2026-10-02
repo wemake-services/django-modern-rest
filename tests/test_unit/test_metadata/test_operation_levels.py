@@ -50,6 +50,19 @@ def _operation(
     return schema['paths']['/api/user/'][method.lower()]  # type: ignore[no-any-return]
 
 
+def _path_item(
+    controller_cls: type[Controller[PydanticSerializer]],
+) -> dict[str, Any]:
+    schema = build_schema(
+        Router('api/', [path('user/', controller_cls.as_view())]),
+    ).convert()
+    return schema['paths']['/api/user/']  # type: ignore[no-any-return]
+
+
+def _extension_keys(openapi_object: dict[str, Any]) -> list[str]:
+    return [key for key in openapi_object if key.startswith('x-')]
+
+
 # `deprecated`:
 
 
@@ -398,3 +411,97 @@ def test_servers_endpoint_level() -> None:
         {'url': 'https://dev.example.com'},
     ]
     assert 'servers' not in _operation(_Controller, HTTPMethod.POST)
+
+
+# `x_extensions`:
+
+_CONTROLLER_EXTENSIONS: Final = MappingProxyType({
+    'x-owner': 'users-team',
+})
+_ENDPOINT_EXTENSIONS: Final = MappingProxyType({
+    'x-audience': 'public',
+    'x-rate-limit': 100,
+})
+
+
+def test_x_extensions_not_set() -> None:
+    """Nothing is set: metadata has `None` and the schema has no `x-` keys."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        def get(self) -> str:
+            raise NotImplementedError
+
+        @modify()
+        def post(self) -> str:
+            raise NotImplementedError
+
+    assert _Controller.api_endpoints['GET'].metadata.x_extensions is None
+    assert _Controller.api_endpoints['POST'].metadata.x_extensions is None
+    assert _extension_keys(_operation(_Controller, HTTPMethod.GET)) == []
+    assert _extension_keys(_path_item(_Controller)) == []
+
+
+def test_x_extensions_controller_level() -> None:
+    """Controller `x_extensions` describe the path item, not operations."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        x_extensions = _CONTROLLER_EXTENSIONS
+
+        def get(self) -> str:
+            raise NotImplementedError
+
+        @modify()
+        def post(self) -> str:
+            raise NotImplementedError
+
+        @validate(ResponseSpec(str, status_code=HTTPStatus.OK))
+        def put(self) -> HttpResponse:
+            raise NotImplementedError
+
+    for method in (HTTPMethod.GET, HTTPMethod.POST, HTTPMethod.PUT):
+        assert _Controller.api_endpoints[method].metadata.x_extensions is None
+        assert _extension_keys(_operation(_Controller, method)) == []
+    path_item = _path_item(_Controller)
+    assert _extension_keys(path_item) == ['x-owner']
+    assert path_item['x-owner'] == 'users-team'
+
+
+def test_x_extensions_endpoint_level() -> None:
+    """Endpoint `x_extensions` describe the operation, never the path item."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        x_extensions = _CONTROLLER_EXTENSIONS
+
+        @modify(x_extensions=_ENDPOINT_EXTENSIONS)
+        def get(self) -> str:
+            raise NotImplementedError
+
+        @validate(
+            ResponseSpec(str, status_code=HTTPStatus.OK),
+            x_extensions=_ENDPOINT_EXTENSIONS,
+        )
+        def put(self) -> HttpResponse:
+            raise NotImplementedError
+
+    for method in (HTTPMethod.GET, HTTPMethod.PUT):
+        metadata = _Controller.api_endpoints[method].metadata
+        assert metadata.x_extensions == _ENDPOINT_EXTENSIONS
+        assert isinstance(metadata.x_extensions, dict)
+        # Never merged with the controller value:
+        operation = _operation(_Controller, method)
+        assert _extension_keys(operation) == ['x-audience', 'x-rate-limit']
+    assert _extension_keys(_path_item(_Controller)) == ['x-owner']
+
+
+def test_x_extensions_explicit_empty() -> None:
+    """Explicit empty endpoint extensions are taken literally."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        x_extensions = _CONTROLLER_EXTENSIONS
+
+        @modify(x_extensions={})
+        def get(self) -> str:
+            raise NotImplementedError
+
+    assert _Controller.api_endpoints['GET'].metadata.x_extensions == {}
+    assert _extension_keys(_operation(_Controller, HTTPMethod.GET)) == []

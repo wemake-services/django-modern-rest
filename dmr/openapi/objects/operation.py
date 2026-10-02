@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from dmr.openapi.objects.callback import Callback
@@ -14,7 +14,13 @@ if TYPE_CHECKING:
 
 @dataclass(kw_only=True, slots=True)
 class Operation:
-    """Describes a single API operation on a path."""
+    """
+    Describes a single API operation on a path.
+
+    .. versionchanged:: 0.16.0
+        Added ``x_extensions`` for specification extensions.
+
+    """
 
     tags: list[str] | None = None
     summary: str | None = None
@@ -28,3 +34,5 @@ class Operation:
     deprecated: bool | None = None
     security: list['SecurityRequirement'] | None = None
     servers: list['Server'] | None = None
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None
