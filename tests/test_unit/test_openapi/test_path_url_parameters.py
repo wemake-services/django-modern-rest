@@ -51,6 +51,11 @@ class _OptionalUserController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
+class _DefaultPathController(Controller[PydanticSerializer]):
+    def get(self, parsed_path: Path[_UserPath | None] = None) -> None:
+        raise NotImplementedError
+
+
 def _path_params(url: URLPattern | URLResolver, openapi_path: str) -> Any:
     schema = build_schema(Router('api/', [url])).convert()
     return schema['paths'][openapi_path]['get'].get('parameters')
@@ -64,7 +69,7 @@ def _path_params(url: URLPattern | URLResolver, openapi_path: str) -> Any:
         path('users/<int:id>/', _ExtraFieldController.as_view(), {'id': 1}),
     ],
 )
-def test_path_field_not_in_url(url: URLPattern) -> None:
+def test_path_field_not_in_url(*, url: URLPattern) -> None:
     """Ensure that required `Path` fields must be in the url or its kwargs."""
     with pytest.raises(
         EndpointMetadataError,
@@ -104,57 +109,73 @@ def test_optional_path_field_in_several_urls() -> None:
     ])
 
 
-def test_url_param_not_in_model() -> None:
-    """Ensure that url params missing from `Path` use their converters."""
-    assert _path_params(
+@pytest.mark.parametrize(
+    'url',
+    [
         path('users/<int:id>/<slug:slug>/', _UserController.as_view()),
-        '/api/users/{id}/{slug}/',
-    ) == snapshot([
-        {
-            'name': 'id',
-            'in': 'path',
-            'schema': {'type': 'integer', 'title': 'Id'},
-            'required': True,
-        },
-        {
-            'name': 'slug',
-            'in': 'path',
-            'schema': {
-                'type': 'string',
-                'pattern': '^(?:[-a-zA-Z0-9_]+)$',
-                'title': 'Slug',
-            },
-            'required': True,
-        },
-    ])
-
-
-def test_re_path_group_not_in_model() -> None:
-    """Ensure that `re_path` groups missing from `Path` are documented."""
-    assert _path_params(
         re_path(
             r'^users/(?P<id>[0-9]+)/(?P<slug>[a-z]+)/$',
             _UserController.as_view(),
         ),
-        '/api/users/{id}/{slug}/',
-    ) == snapshot([
+    ],
+)
+def test_url_param_not_in_path(*, url: URLPattern) -> None:
+    """Ensure that all url params must be in `Path` fields."""
+    with pytest.raises(
+        EndpointMetadataError,
+        match=re.escape(
+            f"URL parameters ['slug'] of 'api/{url.pattern}' url "
+            f'are not found in path parameters of {_UserController!r}',
+        ),
+    ):
+        build_schema(Router('api/', [url]))
+
+
+def test_default_path_component() -> None:
+    """Ensure that `Path` defaults are used for urls without kwargs."""
+    schema = build_schema(
+        Router(
+            'api/',
+            [
+                path('users/', _DefaultPathController.as_view()),
+                path('users/<int:id>/', _DefaultPathController.as_view()),
+            ],
+        ),
+    ).convert()
+
+    assert 'parameters' not in schema['paths']['/api/users/']['get']
+    operation = schema['paths']['/api/users/{id}/']['get']
+    assert operation['parameters'] == snapshot([
         {
             'name': 'id',
             'in': 'path',
             'schema': {'type': 'integer', 'title': 'Id'},
             'required': True,
         },
-        {
-            'name': 'slug',
-            'in': 'path',
-            'schema': {
-                'type': 'string',
-                'pattern': '^(?:[a-z]+)$',
-                'title': 'Slug',
-            },
-            'required': True,
-        },
     ])
+
+
+def test_default_path_component_with_kwargs() -> None:
+    """Ensure that `Path` defaults are not used for urls with kwargs."""
+    with pytest.raises(
+        EndpointMetadataError,
+        match=re.escape(
+            f"Required path parameters ['id'] of {_DefaultPathController!r} "
+            "are not found in 'api/users/' url and its kwargs",
+        ),
+    ):
+        build_schema(
+            Router(
+                'api/',
+                [
+                    path(
+                        'users/',
+                        _DefaultPathController.as_view(),
+                        {'other': 1},
+                    ),
+                ],
+            ),
+        )
 
 
 @pytest.mark.parametrize(
@@ -168,7 +189,7 @@ def test_re_path_group_not_in_model() -> None:
         ),
     ],
 )
-def test_path_field_from_kwargs(url: URLPattern | URLResolver) -> None:
+def test_path_field_from_kwargs(*, url: URLPattern | URLResolver) -> None:
     """Ensure that `Path` fields from url kwargs are not in the schema."""
     assert _path_params(url, '/api/users/') is None
 

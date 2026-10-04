@@ -49,7 +49,7 @@ def controller_mapping_collector(
         extra_kwargs: Names of extra view kwargs that these URLs get
             from ``include()`` calls of their parents.
 
-    .. versionchanged:: 0.16.0
+    .. versionchanged:: 0.17.0
         Added *extra_kwargs* parameter.
 
     """
@@ -131,6 +131,8 @@ class InternalRouteMetadata(_BaseRouteMetadata):
     It is not used for routing and is only needed for metadata.
 
     .. versionadded:: 0.16.0
+    .. versionchanged:: 0.17.0
+        Added ``extra_kwargs`` field and ``path_parameters`` method.
     """
 
     #: Names of extra view kwargs from ``path(..., kwargs)`` and ``include()``,
@@ -151,6 +153,8 @@ class ExternalRouteMetadata(_BaseRouteMetadata):
     It is not used for routing and is only needed for metadata.
 
     .. versionadded:: 0.16.0
+    .. versionchanged:: 0.17.0
+        Added ``path_parameters`` method.
     """
 
     #: Optional path item, if set to `None`, it will be hidden from the spec.

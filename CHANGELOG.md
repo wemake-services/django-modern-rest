@@ -32,11 +32,11 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 #### OpenAPI
 
-- OpenAPI schema generation now checks that required `Path` model fields
-  are in the URL pattern or in the `kwargs` of `path()` or `include()`,
-  and raises `EndpointMetadataError` otherwise.
-  Django never passes such a field to the view,
-  so it is always a mistake.
+- OpenAPI schema generation now checks `Path` model fields
+  against the URL pattern and raises `EndpointMetadataError`
+  when they don't match: all URL parameters must be `Path` model fields,
+  and all required `Path` model fields must be URL parameters
+  or keys in the `kwargs` of `path()` or `include()`.
   `InternalRouteMetadata` got `extra_kwargs` and `path_parameters()`
   for this, #1616
 
@@ -45,13 +45,10 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 #### OpenAPI
 
 - Fixed invalid OpenAPI schema for endpoints with `Path` component,
-  when it does not match the URL pattern. URL parameters
-  that are not in the `Path` model are now documented
-  from their converters or `re_path()` groups,
-  and `Path` fields from the `kwargs` of `path()` or `include()`
-  are not documented as path parameters anymore.
-  `Path` fields with default values are documented only for the URLs
-  that have them, and always with `required: true`, #1616
+  when some of its fields are not URL parameters:
+  fields from the `kwargs` of `path()` or `include()`
+  and fields with default values are now documented
+  only for the URLs that have them, #1616
 
 
 ## 0.16.0 (2026-10-01)
