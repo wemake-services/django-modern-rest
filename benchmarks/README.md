@@ -48,17 +48,17 @@ abort the run. Benchmark dependencies are pinned in `requirements.txt`.
 
 | framework   | is_async   |      rps |   tpr ms |
 |-------------|------------|----------|----------|
-| fastapi     | True       | 2231.98  |      8.9 |
-| dmr         | True       | 1921.16  |     10.4 |
-| ninja       | True       |  696.699 |     28.6 |
+| dmr         | True       | 3972.57  |      5   |
+| fastapi     | True       | 3930.53  |      5.1 |
+| ninja       | True       |  787.876 |     25.2 |
 
 ### Sync
 
 | framework   | is_async   |      rps |   tpr ms |
 |-------------|------------|----------|----------|
-| dmr         | False      | 2368.02  |      8.4 |
-| ninja       | False      |  709.831 |     28.1 |
-| drf         | False      |  461.096 |     43.1 |
+| dmr         | False      | 3524.25  |      5.7 |
+| drf         | False      |  646.836 |     30.8 |
+| ninja       | False      |  602.789 |     33   |
 
 
 ## Running the script:

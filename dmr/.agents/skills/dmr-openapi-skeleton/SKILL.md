@@ -16,14 +16,14 @@ Primary framework documentation:
 
 ## Workflow
 
-### 1. Read the specification first
+### Read the specification first
 
 - Read the provided OpenAPI document before editing code.
 - Confirm that `openapi` is `3.1.x` or newer. If the document is older, ambiguous, or incomplete, say so before generating files.
 - Extract tags, path groups, operation IDs, parameters, request bodies, response codes, reusable schemas, and security declarations.
 - Detect difficult constructs early: `oneOf`, `anyOf`, `allOf`, discriminators, multiple media types, callbacks, and webhook sections.
 
-### 1a. Enter spec-fidelity mode when the source spec is authoritative
+### Enter spec-fidelity mode when the source spec is authoritative
 
 - If the user provides an existing OpenAPI document and expects the generated project to reproduce it, treat spec fidelity as a first-class requirement.
 - Compare the source spec against the built schema after generation whenever both artifacts are available.
@@ -31,7 +31,7 @@ Primary framework documentation:
 - When dmr adds framework-native documentation that is not present in the source spec, either disable it or tell the user explicitly.
 - Default objective in this mode is close public-contract parity for a runnable skeleton, not literal identity of every generated component schema.
 
-### 2. Bootstrap the environment when generating a new project
+### Bootstrap the environment when generating a new project
 
 - If the user asks for a new project in a fresh folder, create the environment and dependency manifest, not just source files.
 - For a new standalone project, prefer `wemake-django-template` as the project base unless the user explicitly asks for a plain Django skeleton.
@@ -48,7 +48,7 @@ Primary framework documentation:
 - Do not install extra schema-validation libraries just to compare source and built specs. Avoid adding `django-modern-rest[openapi]`, `openapi-spec-validator`, or `schemathesis` unless the repository already has them or the user explicitly asks for them.
 - When `wemake-django-template` is used, layer the generated DTOs, controllers, routers, docs wiring, and tests on top of its structure instead of rebuilding the project shell by hand.
 
-### 3. Plan the output shape
+### Plan the output shape
 
 - Mirror the nearest existing repository layout instead of inventing a new architecture.
 - Prefer one Django app per bounded area, usually by stable tag or first path segment.
@@ -57,14 +57,14 @@ Primary framework documentation:
 - Generate root `urls.py` OpenAPI docs wiring for every runnable project skeleton.
 - Generate minimal tests only for route, schema, and docs smoke coverage unless the user asks for more.
 
-### 4. Choose the serializer deliberately
+### Choose the serializer deliberately
 
 - Prefer `PydanticSerializer` by default.
 - Keep `MsgspecSerializer` only when the repository already standardizes on it or the user explicitly asks for it.
 - Fall back to `PydanticSerializer` for complex OpenAPI 3.1 features such as unions, discriminators, aliases, nullability, rich field constraints, or mixed content models.
 - If XML or other non-JSON media types are part of the source spec, choose the serializer independently from the parser and renderer strategy. Serializer choice alone does not preserve negotiation.
 
-### 5. Generate DTOs from OpenAPI parts
+### Generate DTOs from OpenAPI parts
 
 - Map request bodies to `Body[...]`.
 - Map query parameters to `Query[...]`.
@@ -77,13 +77,13 @@ Primary framework documentation:
 - Split input and output DTOs when the response adds server-owned fields such as identifiers, timestamps, tokens, URLs, or derived values.
 - Preserve reusable schemas when they drive request and response DTOs. Do not optimize for literal full `components.schemas` parity if the public API contract is already preserved.
 
-### 6. Generate views with the correct dmr construct
+### Generate views with the correct dmr construct
 
 - Use a minimal number of `Controller`s
 - Keep one class per operation. Let the router compose them instead of building giant mixed-purpose controllers.
 - Name classes from `operationId` when it is stable and explicit. Otherwise derive names from resource plus verb such as `UserListController`, `UserCreateController`, or `InvoiceRetrieveController`.
 
-### 7. Generate skeleton behavior, not fake business logic
+### Generate skeleton behavior, not fake business logic
 
 - Keep runtime handlers transport-only and deterministic.
 - Return schema-valid placeholder data, echoed request data, or empty collections.
@@ -93,7 +93,7 @@ Primary framework documentation:
 - Never generate domain workflows, service calls, data access logic, pricing rules, permissions rules, or side-effect orchestration unless the user explicitly requests it.
 - Do not invent Django models, services, repositories, or nontrivial auth implementations unless the user explicitly requests them.
 
-### 8. Generate routers and project wiring
+### Generate routers and project wiring
 
 - Build app routes with `Router([...], prefix='.../')`.
 - Use `path(...)` or `re_path(...)` inside the router exactly as local code does.
@@ -102,14 +102,14 @@ Primary framework documentation:
 - Ensure docs are always available for generated runnable skeletons by wiring `build_schema(...)`, `OpenAPIJsonView`, `RedocView`, `SwaggerView`, and `ScalarView`.
 - If the source spec is authoritative, preserve its public path contract. Do not add an `/api/` prefix, trailing slash, or kebab-case rewrite unless the user explicitly wants the public API shape changed.
 
-### 9. Generate runnable bootstrap files when requested
+### Generate runnable bootstrap files when requested
 
 - When scaffolding a fresh project, also generate `pyproject.toml` or the package-manager equivalent consistent with the chosen tool.
 - Generate `manage.py`, Django settings, root `urls.py`, and app package initializers when they do not exist yet.
 - Wire docs endpoints only when the project should expose OpenAPI UIs.
 - Add a short run section to the final response with exact commands such as `uv run python manage.py runserver` or `poetry run python manage.py runserver`.
 
-### 10. Generate minimal verification
+### Generate minimal verification
 
 - Add one smoke test per important route group for status code and response shape.
 - Add one OpenAPI smoke test when docs endpoints are generated.
@@ -118,7 +118,7 @@ Primary framework documentation:
 - Include a docs-availability smoke check for `openapi`, `redoc`, `swagger`, and `scalar` endpoints in runnable skeletons.
 - Do not require external validation tooling for this comparison. Prefer direct schema inspection and smoke tests.
 
-### 11. Apply a practical fidelity gate before finishing
+### Apply a practical fidelity gate before finishing
 
 - Treat these as blocking mismatches: missing or changed public path contract, missing source methods, missing primary source media types, missing important source response status codes, missing source response headers when they affect clients, missing source security schemes or operation-level security, missing important top-level metadata (`info`, `externalDocs`, `servers`, `tags`), or docs endpoints not opening.
 - Treat internal component-layout differences as non-blocking when request and response DTOs, media types, and public operations remain faithful enough for a usable scaffold.

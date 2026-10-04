@@ -53,7 +53,7 @@ long-lived maintenance burden. Do not build one silently.
 
 ## Workflow
 
-### 1. Inventory the dj-rest-auth surface
+### Inventory the dj-rest-auth surface
 
 - Find `dj_rest_auth` in `INSTALLED_APPS` and its URL includes
   (`dj_rest_auth.urls`, `dj_rest_auth.registration.urls`, `dj_rest_auth.mfa.urls`).
@@ -67,7 +67,7 @@ long-lived maintenance burden. Do not build one silently.
 - Record whether `django-allauth` is already installed and configured,
   which it usually is.
 
-### 2. Inventory custom behavior (required gate)
+### Inventory custom behavior (required gate)
 
 `dj-rest-auth` is often customized by subclassing. Before mapping anything,
 list for each overridden serializer or view:
@@ -78,7 +78,7 @@ list for each overridden serializer or view:
 Side effects are the part most likely to be lost silently.
 Each one must be re-attached to an allauth signal or to your own controller.
 
-### 3. Decide the target auth transport (required gate)
+### Decide the target auth transport (required gate)
 
 Pick one and record it. See the auth table in the local map.
 
@@ -91,7 +91,7 @@ Pick one and record it. See the auth table in the local map.
 Match the existing security posture. A project on `JWT_AUTH_HTTPONLY`
 cookies must not be silently moved to header tokens readable by JavaScript.
 
-### 4. Wire allauth headless
+### Wire allauth headless
 
 - Add `allauth`, `allauth.account`, `allauth.headless` to `INSTALLED_APPS`
   and `allauth.account.middleware.AccountMiddleware` to `MIDDLEWARE`.
@@ -102,7 +102,7 @@ cookies must not be silently moved to header tokens readable by JavaScript.
 - Expose allauth's endpoints in your OpenAPI schema with `external_path()`,
   allauth publishes its own specification.
 
-### 5. Migrate flow by flow
+### Migrate flow by flow
 
 Migrate one flow at a time, in this order, because later flows depend on
 being able to log in:
@@ -119,14 +119,14 @@ being able to log in:
 For each flow: map the endpoint, port custom validation and side effects,
 update the client, update tests, then run the repository's checks.
 
-### 6. Rebuild what allauth does not serve
+### Rebuild what allauth does not serve
 
 allauth headless has no user-details endpoint. `rest_user_details` becomes
 your own `Controller` over your user model, with typed DTOs.
 This is normal, and it is the right place for project-specific profile
 fields that never belonged in an auth library.
 
-### 7. Translate serializers into typed DTOs
+### Translate serializers into typed DTOs
 
 - `TypedDict` is the default for reusable controllers in this project.
 - Split input and output DTOs when the response carries server-owned fields.
@@ -139,7 +139,7 @@ fields that never belonged in an auth library.
 - Return `NO_STORE_HEADERS` from `dmr.security` in `@modify` for any view
   that issues or accepts credentials.
 
-### 8. Port token issuing
+### Port token issuing
 
 - If tokens were issued as cookies (`JWT_AUTH_COOKIE`), keep them as cookies
   with the same flags: `httponly`, `secure`, `samesite`, and the refresh
@@ -149,7 +149,7 @@ fields that never belonged in an auth library.
 - Declare every issued cookie with `CookieSpec` so response validation
   and the OpenAPI schema stay honest.
 
-### 9. Update tests
+### Update tests
 
 - Keep one test per flow asserting the same *outcome*, not the same payload:
   a user exists, a session works, a password no longer authenticates.
@@ -158,12 +158,12 @@ fields that never belonged in an auth library.
   A missing `httponly` is a silent security regression that no
   happy-path test will catch.
 
-### 10. Validate with repository-native entrypoints
+### Validate with repository-native entrypoints
 
 - Run the same commands CI runs.
 - Enable `validate_responses` in development and testing.
 
-### 11. Finish gate
+### Finish gate
 
 Do not mark a flow done until linters pass, tests pass, the client is
 updated, and the report is updated.
