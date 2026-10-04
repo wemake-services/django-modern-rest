@@ -1,10 +1,18 @@
 import dataclasses
 import uuid
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, final
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Final,
+    TypeAlias,
+    TypeGuard,
+    final,
+)
 
 from django.urls import converters
-from typing_extensions import TypedDict, TypeIs
+from typing_extensions import TypedDict
 
 from dmr.exceptions import EndpointMetadataError
 from dmr.internal.regex import parse_named_groups
@@ -183,8 +191,6 @@ class ComponentParserGenerator:  # noqa: WPS214
             dataclasses.replace(param_spec, required=True)
             if _is_path_param(param_spec)
             else param_spec
-        if any(
-            param_spec.param_in == _PATH_LOCATION
             for param_spec in parameter_specs
             if not _is_path_param(param_spec) or param_spec.name in url_params
         ]
@@ -216,9 +222,12 @@ class ComponentParserGenerator:  # noqa: WPS214
         unknown = sorted(
             param_spec.name
             for param_spec in parameter_specs
-            if (_is_path_param(param_spec)
-            and param_spec.required
-            and param_spec.name not in url_params | route_metadata.extra_kwargs
+            if (
+                _is_path_param(param_spec)
+                and param_spec.required
+                and param_spec.name
+                not in url_params | route_metadata.extra_kwargs
+            )
         )
         if unknown:
             raise EndpointMetadataError(
@@ -407,7 +416,10 @@ class ComponentParserGenerator:  # noqa: WPS214
 
 
 def _is_path_param(param_spec: Parameter | Reference) -> TypeGuard[Parameter]:
-    return isinstance(param_spec, Parameter) and param_spec.param_in == 'path'
+    return (
+        isinstance(param_spec, Parameter)
+        and param_spec.param_in == _PATH_LOCATION
+    )
 
 
 def _converter_models(

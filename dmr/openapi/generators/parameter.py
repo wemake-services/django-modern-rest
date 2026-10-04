@@ -86,14 +86,8 @@ class ParameterGenerator:
                 schema=property_schema,
                 # Path params are forced to be required later,
                 # when we know which of them are in the url:
-                required=property_name in schema.required or None,
-                # OpenAPI requires all path parameters to be required.
-                # But, path fields can still have defaults, because
-                # a controller can be routed to several urls,
-                # and not all of them might have this parameter:
                 required=(
-                    param_in == 'path'
-                    or all(
+                    all(
                         property_name in object_schema.required
                         for object_schema in object_schemas
                     )

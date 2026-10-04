@@ -26,6 +26,34 @@ Prompts of the three latest breaking releases also live in the
 ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 
+## 0.17.0 WIP
+
+### Features
+
+#### OpenAPI
+
+- OpenAPI schema generation now checks that required `Path` model fields
+  are in the URL pattern or in the `kwargs` of `path()` or `include()`,
+  and raises `EndpointMetadataError` otherwise.
+  Django never passes such a field to the view,
+  so it is always a mistake.
+  `InternalRouteMetadata` got `extra_kwargs` and `path_parameters()`
+  for this, #1616
+
+### Bugfixes
+
+#### OpenAPI
+
+- Fixed invalid OpenAPI schema for endpoints with `Path` component,
+  when it does not match the URL pattern. URL parameters
+  that are not in the `Path` model are now documented
+  from their converters or `re_path()` groups,
+  and `Path` fields from the `kwargs` of `path()` or `include()`
+  are not documented as path parameters anymore.
+  `Path` fields with default values are documented only for the URLs
+  that have them, and always with `required: true`, #1616
+
+
 ## 0.16.0 (2026-10-01)
 
 This release was a part of our community event #opensource_september.
@@ -322,16 +350,6 @@ This release was a part of our community event #opensource_september.
 
 ### Features
 
-- OpenAPI schema generation now checks that required `Path` model fields
-  are in the URL pattern or in the `kwargs` of `path()` or `include()`,
-  and raises `EndpointMetadataError` otherwise.
-  Django never passes such a field to the view,
-  so it is always a mistake.
-  `InternalRouteMetadata` got `extra_kwargs` and `path_parameters()`
-  for this, #1616
-- Auth and throttling instances now provide a `validate` hook for enforcing
-  instance-specific constraints during endpoint construction, #1600
-
 #### Configuration
 
 - Added `extras=` parameter to `@modify` and `@validate` for custom
@@ -528,33 +546,6 @@ This release was a part of our community event #opensource_september.
   of a union type. `ResponseSpecMetadata` is the first one to use it, #1460
 
 ### Bugfixes
-
-- Fixed invalid OpenAPI schema for endpoints with `Path` component,
-  when it does not match the URL pattern. URL parameters
-  that are not in the `Path` model are now documented
-  from their converters or `re_path()` groups,
-  and `Path` fields from the `kwargs` of `path()` or `include()`
-  are not documented as path parameters anymore.
-  `Path` fields with default values are documented only for the URLs
-  that have them, and always with `required: true`, #1616
-- Fixed `example` of `NewHeader` and `HeaderSpec` not being
-  in the OpenAPI schema. Now it is set on the `Header` object,
-  and such headers don't get generated examples, #1627
-- Fixed generated OpenAPI examples that are `None` being dropped,
-  for example, for `-> None` and `-> int | None` responses.
-  `dmr.openapi.mappers.example.generate_example` now returns `EMPTY`
-  instead of `None` when there's no example, #1626
-- Fixed seeded OpenAPI examples depending on `PYTHONHASHSEED`.
-  `Controller.api_endpoints` was built in the iteration order
-  of `allowed_http_methods`, which is a `frozenset`,
-  so endpoints got their examples in a different order in every process.
-  Now `api_endpoints` is sorted by controller method names, #1629
-- Fixed `default: null` being dropped from the OpenAPI schema,
-  for example, for `field: str | None = None` model fields.
-  The same was true for `const: null` and `example: null`, #1619
-- Path parameters now always have `required: true` in the OpenAPI schema,
-  even when their `Path` model fields have default values.
-  Previously, such parameters generated an invalid schema, #1610
 
 #### Controllers and endpoints
 
