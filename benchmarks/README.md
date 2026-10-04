@@ -22,47 +22,59 @@ Benchmarks do not test real performance, they test ideas of performance.
   any database features, we want to make sure that the part that
   we are covering is measured, not something else
 - We test the minimal possible app
-- We use the same exact data for all apps
+- We use semantically equivalent request and response data for all apps
+- We benchmark a 50-item response for JSON serialization throughput
 - We test production-like setups with `DEBUG=False`
-- We test both sync (`gunicorn`)
-  and async (`uvicorn`) version if the requested mode is supported
+- DMR uses its production setting `validate_responses=False`; every framework
+  otherwise follows its native typed-response serialization path
+- We test sync handlers with `gunicorn`, and async handlers with `gunicorn`
+  and four `uvicorn_worker.UvicornWorker` workers
   (yes, DRF, we are looking at you)
 - But, we don't compare sync to async and vice versa,
   because they have different logic, different deploy strategies, etc
+
+
+## Measurements
+
+Each target is measured once for three seconds with 20 concurrent requests
+using `hey` with HTTP keep-alive enabled. The final table reports RPS and
+average request time in milliseconds. Failed requests and non-2xx responses
+abort the run. Benchmark dependencies are pinned in `requirements.txt`.
 
 
 ## Results
 
 ### Async
 
-| framework   | is_async   |      rps |   tpr |
-|-------------|------------|----------|-------|
-| fastapi     | True       | 10854.6  | 1.843 |
-| dmr         | True       |  7026.27 | 2.846 |
-| ninja       | True       |  4359.12 | 4.588 |
+| framework   | is_async   |      rps |   tpr ms |
+|-------------|------------|----------|----------|
+| fastapi     | True       | 2231.98  |      8.9 |
+| dmr         | True       | 1921.16  |     10.4 |
+| ninja       | True       |  696.699 |     28.6 |
 
 ### Sync
 
-| framework   | is_async   |      rps |   tpr |
-|-------------|------------|----------|-------|
-| dmr         | False      |  5774.94 | 3.463 |
-| ninja       | False      |  3888.13 | 5.144 |
-| drf         | False      |  3024.24 | 6.613 |
+| framework   | is_async   |      rps |   tpr ms |
+|-------------|------------|----------|----------|
+| dmr         | False      | 2368.02  |      8.4 |
+| ninja       | False      |  709.831 |     28.1 |
+| drf         | False      |  461.096 |     43.1 |
 
 
 ## Running the script:
 
 Pre-requirements:
-- [`ab`](https://httpd.apache.org/docs/2.4/programs/ab.html)
+- `hey` (`brew install hey` on macOS)
 
-Run from `benchmarks/` directory:
+Run from the project root:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
 just bench::bench
 ```
+
+Shared benchmark settings are constants in `apps/config.py`: host, concurrency,
+measurement duration, workers, threads, and response size. Change `RESPONSE_ITEMS`
+there to update the response size for all frameworks at once.
 
 
 ## Manual debug
@@ -71,21 +83,18 @@ Single request:
 
 ```bash
 curl -X POST \
-  'http://127.0.0.1:8000/async/user/?per_page=1&count=2&page=3&filter=abc' \
+  'http://127.0.0.1:8000/async/users/' \
   -d @payload.json \
-  -H 'Content-Type: application/json' \
-  -H 'X-API-Token: some-token-example' \
-  -H 'X-Request-Origin: some-origin'
+  -H 'Content-Type: application/json'
 ```
 
 Manual bench:
 
 ```bash
-ab -c 20 -n 1000 -l -p payload.json \
-  -H 'X-API-Token: some-token-example' \
-  -H 'X-Request-Origin: some-origin' \
+hey -c 20 -z 3s -D payload.json \
+  -m POST \
   -T 'application/json' \
-  'http://127.0.0.1:8000/async/user/?per_page=1&count=2&page=3&filter=abc'
+  'http://127.0.0.1:8000/async/users/'
 ```
 
 
