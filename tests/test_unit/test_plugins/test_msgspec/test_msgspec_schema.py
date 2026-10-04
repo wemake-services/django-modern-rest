@@ -692,7 +692,7 @@ def test_schema_ref_siblings_issue1491(
         Schema(
             default={'city': 'Moscow'},
             ref='#/components/schemas/_Placeholder',
-            extensions={'x-source': 'schema-hook'},
+            x_extensions={'x-source': 'schema-hook'},
         ),
     )
 

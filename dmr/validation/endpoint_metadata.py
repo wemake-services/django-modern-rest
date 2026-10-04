@@ -609,6 +609,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             external_docs=self._build_external_docs(),
             callbacks=self._build_callbacks(),
             servers=self._build_servers(),
+            x_extensions=self._build_x_extensions(),
             ignore_from_spec=self._build_ignore_from_spec(),
             extras=self._build_extras(),
         )
@@ -681,6 +682,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             external_docs=self._build_external_docs(),
             callbacks=self._build_callbacks(),
             servers=self._build_servers(),
+            x_extensions=self._build_x_extensions(),
             ignore_from_spec=self._build_ignore_from_spec(),
             extras=self._build_extras(),
         )
@@ -740,6 +742,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             external_docs=self._build_external_docs(),
             callbacks=self._build_callbacks(),
             servers=self._build_servers(),
+            x_extensions=self._build_x_extensions(),
             ignore_from_spec=self._build_ignore_from_spec(),
             extras=self._build_extras(),
         )
@@ -823,6 +826,15 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         if callbacks is None or isinstance(callbacks, Sentinel):
             return None  # explicitly disabled or nothing is configured
         return dict(callbacks)
+
+    def _build_x_extensions(self) -> dict[str, Any] | None:
+        # Extensions are unique to each OpenAPI object, so this
+        # is an endpoint-only field: `Controller.x_extensions`
+        # describes the path item and is never merged in here.
+        x_extensions = self.merger('x_extensions').empty_to_none(
+            self.payload.x_extensions if self.payload else EMPTY,
+        )
+        return None if x_extensions is None else dict(x_extensions)  # pyright: ignore[reportArgumentType, reportCallIssue, reportReturnType]
 
     def _build_external_docs(self) -> 'ExternalDocumentation | None':
         external_docs = self.merger('external_docs').first_defined(

@@ -36,7 +36,7 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         as OpenAPI 3.1 requires. They are not
         :class:`~dmr.openapi.objects.Reference` objects anymore.
         Specification extensions, like ``x-thing``,
-        are now kept in :attr:`Schema.extensions`, #1491
+        are now kept in :attr:`Schema.x_extensions`, #1491
 
     """
     return Schema(
@@ -103,7 +103,7 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         comment=raw_data.get('$comment'),
         schema_uri=raw_data.get('$schema'),
         defs=_try_dict(raw_data.get('$defs')),
-        extensions=_try_extensions(raw_data),
+        x_extensions=_try_extensions(raw_data),
     )
 
 

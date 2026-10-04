@@ -612,6 +612,60 @@ would look like so:
   :language: python
   :linenos:
 
+Specification extensions
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+`Specification extensions <https://spec.openapis.org/oas/v3.1.0#specification-extensions>`_
+are custom keys that start with ``x-``,
+OpenAPI allows them on almost every object.
+All objects in ``dmr.openapi.objects`` that support them
+have the ``x_extensions`` field, its keys are dumped
+next to the object's own keys.
+Only :class:`~dmr.openapi.objects.Reference`
+and :data:`~dmr.openapi.objects.SecurityRequirement`
+cannot be extended, as the spec requires.
+
+Extensions can also be set without building the objects by hand,
+each setting describes exactly one object:
+
+- :attr:`~dmr.openapi.OpenAPIConfig.x_extensions`
+  for the root :class:`~dmr.openapi.openapi.OpenAPI` document
+- :attr:`~dmr.controller.Controller.x_extensions`
+  for the :class:`~dmr.openapi.objects.PathItem` of the controller
+- ``x_extensions`` of :data:`~dmr.endpoint.modify`
+  and :data:`~dmr.endpoint.validate`
+  for the :class:`~dmr.openapi.objects.Operation` of the endpoint
+- :class:`~dmr.openapi.objects.ParameterMetadata` for parameters
+- :class:`~dmr.openapi.objects.MediaTypeMetadata` for request body media types
+- :class:`~dmr.metadata.ResponseSpec` for responses
+
+.. important::
+
+  ``x_extensions`` is unique among our settings:
+  it is never inherited from a less specific level
+  and never merged across levels.
+  Other settings, like ``tags`` or ``servers``, configure
+  a single operation field, so a controller value is a sensible
+  default for all its operations.
+  Extensions belong to every OpenAPI object separately:
+  a path item and its operations are different objects
+  with different extensions, so a controller value describes
+  the path item only, and an endpoint value describes
+  the operation only. Inheriting or merging them would put
+  path item extensions on objects they were never meant for.
+
+.. literalinclude:: /examples/openapi/x_extensions.py
+  :caption: views.py
+  :language: python
+  :linenos:
+
+Keys must start with ``x-``,
+we let ``openapi-spec-validator`` report invalid ones.
+:func:`~dmr.openapi.load_schema` keeps extensions
+of external schemas as well.
+
+.. versionadded:: 0.16.0
+
 
 .. _openapi-examples-generation:
 

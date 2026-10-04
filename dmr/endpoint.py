@@ -339,6 +339,7 @@ class Endpoint:  # noqa: WPS214
                 if self.metadata.callbacks is None
                 else dict(self.metadata.callbacks)
             ),
+            x_extensions=self.metadata.x_extensions,
             operation_id=operation_id,
             request_body=request_body,
             responses=context.generators.response(

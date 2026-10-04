@@ -51,13 +51,16 @@ def test_load_schema_extensions() -> None:
     assert loaded == snapshot(
         Schema(
             ref='#/components/schemas/Address',
-            extensions={'x-display-name': 'Home address'},
+            x_extensions={'x-display-name': 'Home address'},
         ),
     )
 
     loaded = load_schema({'type': 'string', 'x-range': {'min': 0}})
     assert loaded == snapshot(
-        Schema(type=OpenAPIType.STRING, extensions={'x-range': {'min': 0}}),
+        Schema(
+            type=OpenAPIType.STRING,
+            x_extensions={'x-range': {'min': 0}},
+        ),
     )
 
     loaded = load_schema({'type': 'string'})

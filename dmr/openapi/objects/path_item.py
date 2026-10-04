@@ -37,6 +37,10 @@ class PathItem:
     A Path Item MAY be empty, due to ACL constraints.
     The path itself is still exposed to the documentation viewer but
     they will not know which operations and parameters are available.
+
+    .. versionchanged:: 0.16.0
+        Added ``x_extensions`` for specification extensions.
+
     """
 
     ref: Annotated[str | None, Field(alias='$ref')] = None
@@ -54,6 +58,9 @@ class PathItem:
     servers: list['Server'] | None = None
     parameters: list['Parameter | Reference'] | None = None
     additional_operations: dict[str, 'Operation'] | None = None
+
+    #: Specification extensions, keys must start with ``x-``.
+    x_extensions: dict[str, Any] | None = None
 
     @classmethod
     def split_operations(

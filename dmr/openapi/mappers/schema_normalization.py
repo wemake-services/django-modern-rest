@@ -30,6 +30,11 @@ def load_schema(
         pip install 'django-modern-rest[pydantic]'
 
     .. versionadded:: 0.13.0
+    .. versionchanged:: 0.16.0
+        Specification extensions, like ``x-thing``, are now kept
+        in ``x_extensions`` of the objects that support them.
+        They used to be silently dropped.
+
     """
     # So we can use it as a namespace:
     # Must be after our import:
@@ -37,6 +42,9 @@ def load_schema(
     from pydantic import alias_generators  # noqa: PLC0415, WPS458
 
     from dmr.openapi import objects  # noqa: PLC0415
+    from dmr.openapi.mappers.schema_extensions import (  # noqa: PLC0415
+        nest_extensions,
+    )
 
     # So it would have a nice error message:
     from dmr.plugins.pydantic import PydanticFastSerializer  # noqa: PLC0415
@@ -49,7 +57,7 @@ def load_schema(
     class CamelModel(model): ...  # type: ignore[valid-type, misc]  # noqa: WPS431, WPS604
 
     return PydanticFastSerializer.from_python(  # type: ignore[no-any-return]
-        unstructured,
+        nest_extensions(unstructured, model),
         CamelModel,
         strict=False,
         extra_namespace=objects.__dict__,
@@ -71,23 +79,26 @@ def dump_schema(to_convert: 'DataclassInstance') -> DumpedSchema:  # noqa: WPS23
 
     """
     schema: DumpedSchema = {}
+    extensions: DumpedSchema = {}
 
     for field in dataclasses.fields(to_convert):
         schema_value = getattr(to_convert, field.name, None)
         if field.name.startswith('_') or _is_unset(field, schema_value):
             continue
-        if field.name == 'extensions':
+        if field.name == 'x_extensions':
             # Specification extensions, like ``x-thing``,
-            # live next to the schema's own keys, not nested, #1491
-            schema.update(_dump_value(schema_value))
+            # live next to the object's own keys, not nested, #1491
+            extensions = _dump_value(schema_value)
             continue
         if field.name == 'required' and not schema_value:
             continue  # Skip empty `required` field
 
-        schema[_dump_field(field.name, field.type)] = _dump_value(
+        schema[dump_field(field.name, field.type)] = _dump_value(
             schema_value,
         )
 
+    # Always after the object's own keys, whatever the field order is:
+    schema.update(extensions)
     return schema
 
 
@@ -98,7 +109,7 @@ def _is_unset(field: 'dataclasses.Field[Any]', field_value: Any) -> bool:
     return field_value is None
 
 
-def _dump_field(key: str, field_type: Any) -> str:
+def dump_field(key: str, field_type: Any) -> str:
     """
     Convert a Python field name to an OpenAPI-compliant key.
 
