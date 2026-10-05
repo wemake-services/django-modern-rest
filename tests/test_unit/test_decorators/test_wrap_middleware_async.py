@@ -46,7 +46,6 @@ class _AsyncCatalogController(Controller[PydanticSerializer]):
 
 @pytest.mark.asyncio
 async def test_async_aware_decorator(
-    *,
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that Django's async decorators wrap async controllers."""
