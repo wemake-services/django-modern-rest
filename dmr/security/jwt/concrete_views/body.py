@@ -3,7 +3,7 @@ from collections.abc import Callable
 from typing import Any, final
 
 from django.http import HttpResponseBase
-from typing_extensions import Sentinel, TypeVar, override
+from typing_extensions import TypeVar, override
 
 from dmr.internal.concrete import build_concrete_controller
 from dmr.internal.types import EMPTY
@@ -77,7 +77,7 @@ class ObtainTokensSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
@@ -130,7 +130,7 @@ class ObtainTokensAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
@@ -189,7 +189,7 @@ class RefreshTokenSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
@@ -242,7 +242,7 @@ class RefreshTokenAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
@@ -298,7 +298,7 @@ class VerifyTokenSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
@@ -342,7 +342,7 @@ class VerifyTokenAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """

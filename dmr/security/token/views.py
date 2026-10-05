@@ -12,7 +12,7 @@ from django.views.decorators.debug import (
     sensitive_post_parameters,
     sensitive_variables,
 )
-from typing_extensions import Sentinel, TypedDict, TypeVar
+from typing_extensions import TypedDict, TypeVar
 
 from dmr import Body, Controller, ResponseSpec, modify
 from dmr.decorators import endpoint_decorator
@@ -140,7 +140,7 @@ class ObtainTokenSyncController(
         # Most frequent:
         user: _UserT,
         name: str | None = None,
-        expires_at: dt.datetime | Sentinel | None = EMPTY,
+        expires_at: dt.datetime | EMPTY | None = EMPTY,
         # Less frequent:
         token_size: int | None = None,
         token_secret: str | None = None,
@@ -256,7 +256,7 @@ class ObtainTokenAsyncController(
         # Most frequent:
         user: _UserT,
         name: str | None = None,
-        expires_at: dt.datetime | Sentinel | None = EMPTY,
+        expires_at: dt.datetime | EMPTY | None = EMPTY,
         # Less frequent:
         token_size: int | None = None,
         token_secret: str | None = None,

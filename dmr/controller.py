@@ -6,8 +6,8 @@ from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.utils.functional import classproperty
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from typing_extensions import Sentinel, override
 from typing_extensions import deprecated as typing_deprecated
+from typing_extensions import override
 
 from dmr import throttling as dmr_throttling
 from dmr.cookies import NewCookie
@@ -247,53 +247,49 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     login_required: ClassVar[bool] = False
     serializer: ClassVar[type[BaseSerializer]]
     endpoint_cls: ClassVar[type[Endpoint]] = Endpoint
-    no_validate_http_spec: ClassVar[Set[HttpSpec] | Sentinel | None] = EMPTY
-    validate_responses: ClassVar[bool | Sentinel] = EMPTY
-    exclude_validate_responses: ClassVar[Set[HTTPStatus] | Sentinel | None] = (
-        EMPTY
-    )
-    semantic_schema: ClassVar[bool | Sentinel] = EMPTY
-    semantic_responses: ClassVar[bool | Sentinel] = EMPTY
-    exclude_semantic_responses: ClassVar[Set[HTTPStatus] | Sentinel | None] = (
-        EMPTY
-    )
-    semantic_auth: bool | Sentinel = EMPTY
-    exclude_semantic_auth: Set[str] | Sentinel | None = EMPTY
-    responses: ClassVar[Sequence[ResponseSpec] | Sentinel | None] = EMPTY
+    no_validate_http_spec: ClassVar[Set[HttpSpec] | EMPTY | None] = EMPTY
+    validate_responses: ClassVar[bool | EMPTY] = EMPTY
+    exclude_validate_responses: ClassVar[Set[HTTPStatus] | EMPTY | None] = EMPTY
+    semantic_schema: ClassVar[bool | EMPTY] = EMPTY
+    semantic_responses: ClassVar[bool | EMPTY] = EMPTY
+    exclude_semantic_responses: ClassVar[Set[HTTPStatus] | EMPTY | None] = EMPTY
+    semantic_auth: bool | EMPTY = EMPTY
+    exclude_semantic_auth: Set[str] | EMPTY | None = EMPTY
+    responses: ClassVar[Sequence[ResponseSpec] | EMPTY | None] = EMPTY
     allowed_http_methods: ClassVar[Set[str]] = frozenset(
         # We replace old existing `View.options` method with modern `meta`:
         {method.name.lower() for method in HTTPMethod} - {'options'} | {'meta'},
     )
-    parsers: ClassVar[Sequence[Parser] | Sentinel] = EMPTY
-    renderers: ClassVar[Sequence[Renderer] | Sentinel] = EMPTY
-    validate_negotiation: ClassVar[bool | Sentinel] = EMPTY
-    auth: ClassVar[
-        Sequence[SyncAuth] | Sequence[AsyncAuth] | Sentinel | None
-    ] = EMPTY
+    parsers: ClassVar[Sequence[Parser] | EMPTY] = EMPTY
+    renderers: ClassVar[Sequence[Renderer] | EMPTY] = EMPTY
+    validate_negotiation: ClassVar[bool | EMPTY] = EMPTY
+    auth: ClassVar[Sequence[SyncAuth] | Sequence[AsyncAuth] | EMPTY | None] = (
+        EMPTY
+    )
     throttling: ClassVar[
         Sequence[dmr_throttling.SyncThrottle]
         | Sequence[dmr_throttling.AsyncThrottle]
-        | Sentinel
+        | EMPTY
         | None
     ] = EMPTY
     error_model: ClassVar[Any] = ErrorModel
     is_abstract: ClassVar[bool] = True
     is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
     streaming: ClassVar[bool] = False
-    extras: ClassVar[Extras[Any] | Sentinel] = EMPTY
+    extras: ClassVar[Extras[Any] | EMPTY] = EMPTY
     annotations_context: ClassVar[AnnotationsContext] = AnnotationsContext()
 
     # OpenAPI:
-    summary: ClassVar[StrOrPromise | Sentinel | None] = EMPTY
-    description: ClassVar[StrOrPromise | Sentinel | None] = EMPTY
-    tags: ClassVar[Sequence[str] | Sentinel | None] = EMPTY
-    servers: ClassVar[Sequence[Server] | Sentinel | None] = EMPTY
-    security: ClassVar[Sequence[SecurityRequirement] | Sentinel | None] = EMPTY
-    deprecated: ClassVar[bool | Sentinel] = EMPTY
-    external_docs: ClassVar[ExternalDocumentation | Sentinel | None] = EMPTY
-    callbacks: ClassVar[
-        Mapping[str, Callback | Reference] | Sentinel | None
-    ] = EMPTY
+    summary: ClassVar[StrOrPromise | EMPTY | None] = EMPTY
+    description: ClassVar[StrOrPromise | EMPTY | None] = EMPTY
+    tags: ClassVar[Sequence[str] | EMPTY | None] = EMPTY
+    servers: ClassVar[Sequence[Server] | EMPTY | None] = EMPTY
+    security: ClassVar[Sequence[SecurityRequirement] | EMPTY | None] = EMPTY
+    deprecated: ClassVar[bool | EMPTY] = EMPTY
+    external_docs: ClassVar[ExternalDocumentation | EMPTY | None] = EMPTY
+    callbacks: ClassVar[Mapping[str, Callback | Reference] | EMPTY | None] = (
+        EMPTY
+    )
     x_extensions: ClassVar[Mapping[str, Any] | None] = None
     ignore_from_spec: ClassVar[bool] = False
 

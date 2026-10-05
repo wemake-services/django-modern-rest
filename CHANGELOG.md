@@ -51,6 +51,14 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Added `Controller.class_only_attributes` with the names
   that `as_view` rejects, subclasses can extend it
   with their own class-level attributes, #1678
+- Replaced `Sentinel` class in all typing annotations to be `EMPTY`
+  sentinel value, since all type-checkers support this now, #1687
+
+### Misc
+
+#### Agent skills
+
+- Suggest `concrete_views` instead of `views` by default in `dmr` skill, #1670
 
 
 ## 0.16.0 (2026-10-01)

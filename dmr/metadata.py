@@ -15,9 +15,10 @@ from typing import (  # noqa: WPS235
     get_origin,
 )
 
-from typing_extensions import Sentinel, TypeVar, override
+from typing_extensions import TypeVar, override
 
 from dmr.internal.types import (
+    EMPTY,
     StrOrPromise,
     find_annotated_metadata,
     iter_union_members,
@@ -659,9 +660,9 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
     # OpenAPI documentation fields:
     summary: StrOrPromise | None
     description: StrOrPromise | None
-    tags: list[str] | Sentinel | None
+    tags: list[str] | EMPTY | None
     operation_id: str | None
-    deprecated: bool | Sentinel
+    deprecated: bool | EMPTY
     security: list['SecurityRequirement'] | None
     external_docs: 'ExternalDocumentation | None'
     callbacks: dict[str, 'Callback | Reference'] | None
