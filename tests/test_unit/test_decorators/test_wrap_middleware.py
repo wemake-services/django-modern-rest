@@ -77,7 +77,7 @@ class _SyncController(Controller[PydanticSerializer]):
         return 'inside'
 
 
-def test_invalid_middleware_response(*, dmr_rf: DMRRequestFactory) -> None:
+def test_invalid_middleware_response(dmr_rf: DMRRequestFactory) -> None:
     """Ensures that middleware responses are validated."""
     request = dmr_rf.get('/whatever/', headers={_MODE_HEADER: 'invalid'})
 
@@ -123,7 +123,7 @@ def test_undocumented_middleware_status(dmr_rf: DMRRequestFactory) -> None:
     })
 
 
-def test_valid_middleware_response(*, dmr_rf: DMRRequestFactory) -> None:
+def test_valid_middleware_response(dmr_rf: DMRRequestFactory) -> None:
     """Ensures that converted middleware responses pass validation."""
     request = dmr_rf.get('/whatever/', headers={_MODE_HEADER: 'valid'})
 
@@ -139,7 +139,7 @@ def test_valid_middleware_response(*, dmr_rf: DMRRequestFactory) -> None:
     })
 
 
-def test_view_response_is_validated_once(*, dmr_rf: DMRRequestFactory) -> None:
+def test_view_response_is_validated_once(dmr_rf: DMRRequestFactory) -> None:
     """Ensures that view responses are not validated again."""
     request = dmr_rf.get('/whatever/')
 
@@ -193,7 +193,6 @@ async def test_invalid_middleware_response_async(
 
 @pytest.mark.asyncio
 async def test_undocumented_middleware_status_async(
-    *,
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that middleware status codes must be documented for async."""
@@ -221,7 +220,6 @@ async def test_undocumented_middleware_status_async(
 
 @pytest.mark.asyncio
 async def test_valid_middleware_response_async(
-    *,
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that converted middleware responses pass validation in async."""
@@ -241,7 +239,6 @@ async def test_valid_middleware_response_async(
 
 @pytest.mark.asyncio
 async def test_view_response_is_validated_once_async(
-    *,
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that async view responses are not validated again."""
@@ -269,7 +266,6 @@ class _NoValidationController(Controller[PydanticSerializer]):
 
 
 def test_middleware_response_without_validation(
-    *,
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures that ``validate_responses = False`` is respected."""
