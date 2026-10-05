@@ -28,6 +28,28 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ## 0.17.0 WIP
 
+### Features
+
+#### OpenAPI
+
+- OpenAPI schema generation now checks `Path` model fields
+  against the URL pattern and raises `EndpointMetadataError`
+  when they don't match: all URL parameters must be `Path` model fields,
+  and all required `Path` model fields must be URL parameters
+  or keys in the `kwargs` of `path()` or `include()`.
+  `InternalRouteMetadata` got `extra_kwargs` and `path_parameters()`
+  for this, #1616
+
+### Bugfixes
+
+#### OpenAPI
+
+- Fixed invalid OpenAPI schema for endpoints with `Path` component,
+  when some of its fields are not URL parameters:
+  fields from the `kwargs` of `path()` or `include()`
+  and fields with default values are now documented
+  only for the URLs that have them, #1616
+
 ### Breaking changes
 
 - Replaced `Sentinel` class in all typing annotations to be `EMPTY`
