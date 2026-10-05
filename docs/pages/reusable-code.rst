@@ -511,24 +511,27 @@ But, user is free to modify any parts of the spec, if needed.
 Arguments of ``as_view``
 ------------------------
 
+Changing class-level attributes of a controller with ``as_view``
+arguments, like ``as_view(throttling=...)`` or ``as_view(auth=...)``,
+is not supported. Endpoint metadata is read when the controller class
+is created, while Django sets ``as_view`` arguments on the view instance,
+where they change nothing. Only ready-to-use ``concrete_views`` take
+a few of them: ``serializer``, ``token_cls``,
+and ``jwt_refresh_cookie_path``. Set the rest on a subclass instead.
+
+Such arguments are not rejected on purpose:
 :meth:`Controller.as_view <dmr.controller.Controller.as_view>`
-passes all keyword arguments to the next ``as_view`` in the MRO as is.
-So a mixin between the controller
-and :class:`~django.views.generic.base.View` can accept its own arguments,
-even the ones named like class-level attributes of the controller,
-like ``throttling``:
+passes all of them to the next ``as_view`` in the MRO as is,
+because other base classes of your controller can take any arguments,
+even the ones named like class-level attributes of the controller.
+For example, a mixin between the controller
+and :class:`~django.views.generic.base.View`
+can take ``throttling`` and apply it to a new subclass:
 
 .. literalinclude:: /examples/reusable_code/as_view_mixin.py
   :caption: urls.py
   :linenos:
   :language: python
-
-Endpoint metadata, like ``throttling``, ``auth``, or ``responses``,
-is read when the controller class is created. Arguments that no mixin
-accepts are set on the view instance by Django, where they change nothing.
-That's why the mixin above applies ``throttling`` to a new subclass.
-Ready-to-use ``concrete_views`` take their ``serializer``,
-``token_cls``, and ``jwt_refresh_cookie_path`` arguments the same way.
 
 
 Where is it actually helpful in practice?

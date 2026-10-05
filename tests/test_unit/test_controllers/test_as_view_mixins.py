@@ -87,3 +87,23 @@ def test_as_view_without_arguments(*, dmr_rf: DMRRequestFactory) -> None:
         HTTPStatus.OK,
         HTTPStatus.OK,
     ]
+
+
+@final
+class _PlainController(Controller[PydanticSerializer]):
+    def get(self) -> str:
+        return 'inside'
+
+
+def test_class_level_attributes_not_supported(
+    *,
+    dmr_rf: DMRRequestFactory,
+) -> None:
+    """Ensures that ``as_view`` arguments do not change endpoints."""
+    view = _PlainController.as_view(
+        throttling=[SyncThrottle(1, Rate.minute)],
+    )
+
+    statuses = [view(dmr_rf.get('/whatever/')).status_code for _ in range(2)]
+
+    assert statuses == [HTTPStatus.OK, HTTPStatus.OK]
