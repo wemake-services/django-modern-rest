@@ -26,6 +26,17 @@ Prompts of the three latest breaking releases also live in the
 ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 
+## 0.17.0 WIP
+
+### Misc
+
+#### Docs
+
+- Middleware docs and the `wrap_middleware` docstring now show
+  Django's `condition` decorator instead of wrapping `csrf_protect`,
+  and point to `csrf_exempt = False` for CSRF protection, #1681
+
+
 ## 0.16.0 (2026-10-01)
 
 This release was a part of our community event #opensource_september.

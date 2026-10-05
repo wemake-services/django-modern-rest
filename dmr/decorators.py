@@ -42,39 +42,33 @@ def wrap_middleware(
 
     .. code:: python
 
-        >>> from django.views.decorators.csrf import csrf_protect
-        >>> from django.http import HttpResponse
+        >>> from django.views.decorators.http import condition
+        >>> from django.http import HttpRequest, HttpResponse
         >>> from http import HTTPStatus
-        >>> from dmr import Controller, ResponseSpec
-        >>> from dmr.response import build_response
+        >>> from dmr import Controller, HeaderSpec, ResponseSpec
         >>> from dmr.plugins.pydantic import PydanticSerializer
-        >>> from dmr.errors import ErrorType, ErrorModel, format_error
+
+        >>> def catalog_etag(request: HttpRequest, **kwargs: object) -> str:
+        ...     return '"catalog-42"'
 
         >>> @wrap_middleware(
-        ...     csrf_protect,
+        ...     condition(etag_func=catalog_etag),
         ...     ResponseSpec(
-        ...         return_type=ErrorModel,
-        ...         status_code=HTTPStatus.FORBIDDEN,
+        ...         return_type=None,
+        ...         status_code=HTTPStatus.NOT_MODIFIED,
+        ...         headers={'ETag': HeaderSpec()},
         ...     ),
         ... )
-        ... def csrf_protect_json(response: HttpResponse) -> HttpResponse:
-        ...     return build_response(
-        ...         PydanticSerializer,
-        ...         raw_data=format_error(
-        ...             'CSRF verification failed. Request aborted.',
-        ...             error_type=ErrorType.user_msg,
-        ...         ),
-        ...         status_code=HTTPStatus(response.status_code),
-        ...     )
+        ... def catalog_etag_json(response: HttpResponse) -> HttpResponse:
+        ...     response['Content-Type'] = 'application/json'
+        ...     return response
 
-        >>> @csrf_protect_json
-        ... class MyController(Controller[PydanticSerializer]):
-        ...     responses = [
-        ...         *csrf_protect_json.responses,
-        ...     ]
+        >>> @catalog_etag_json
+        ... class CatalogController(Controller[PydanticSerializer]):
+        ...     responses = catalog_etag_json.responses
         ...
-        ...     def post(self) -> dict[str, str]:
-        ...         return {'message': 'ok'}
+        ...     def get(self) -> list[str]:
+        ...         return ['book', 'pen']
 
     """
 
