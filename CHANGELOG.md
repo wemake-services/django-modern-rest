@@ -37,11 +37,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 #### Agent skills
 
-- `dmr` skill now recommends routing ready-to-use `concrete_views`
-  instead of subclassing auth `views` that keep the default payload
-  and response, explains how to throttle them, and flags unscoped
-  `jwt_refresh_cookie_path` and `throttling=` or `auth=` passed
-  to `as_view()` in reviews, #1670
+- Suggest `concrete_views` instead of `views` by default in `dmr` skill, #1670
 
 
 ## 0.16.0 (2026-10-01)
