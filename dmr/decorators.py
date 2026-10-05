@@ -77,8 +77,9 @@ def wrap_middleware(
         ...         return {'message': 'ok'}
 
     .. versionchanged:: 0.17.0
-        Responses created by the middleware are now validated
-        after the converter, like the responses of endpoints.
+        Responses that the middleware returns without calling
+        the controller are now validated after the converter,
+        like the responses of endpoints.
 
     """
 

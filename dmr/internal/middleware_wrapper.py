@@ -1,5 +1,5 @@
 import inspect
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable
 from dataclasses import dataclass
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, TypeVar
@@ -51,20 +51,18 @@ def apply_converter(
 def validate_middleware_response(
     controller: 'Controller[BaseSerializer]',
     response: HttpResponseBase,
-    view_responses: list[HttpResponseBase],
+    *,
+    is_view_called: bool,
 ) -> HttpResponseBase:
     """
-    Validate a response that the middleware has created or replaced.
+    Validate a response that the middleware has returned on its own.
 
-    Responses from *view_responses* were returned by the original
-    ``dispatch``, so they are already validated by their endpoint.
+    When the middleware has called the original ``dispatch``,
+    its response is already validated by the endpoint.
     """
     method: str = controller.request.method  # type: ignore[assignment]
     endpoint = controller.api_endpoints.get(method)
-    from_view = any(
-        response is view_response for view_response in view_responses
-    )
-    if endpoint is None or from_view:
+    if endpoint is None or is_view_called:
         return response
     return endpoint.validate_response(controller, response)
 
@@ -85,27 +83,22 @@ def create_sync_dispatch(
         if request.method and request.method not in self.api_endpoints:
             return self.handle_method_not_allowed(request.method)
 
-        view_responses: list[HttpResponseBase] = []
+        is_view_called = False
 
         def view_callable(  # noqa: WPS430
             req: HttpRequest,
             *view_args: Any,
             **view_kwargs: Any,
-        ) -> HttpResponseBase:
-            view_response: HttpResponseBase = original_dispatch(
-                self,
-                req,
-                *view_args,
-                **view_kwargs,
-            )
-            view_responses.append(view_response)
-            return view_response
+        ) -> HttpResponse:
+            nonlocal is_view_called  # noqa: WPS420
+            is_view_called = True
+            return original_dispatch(self, req, *view_args, **view_kwargs)  # type: ignore[no-any-return]
 
         response = middleware(view_callable)(request, *args, **kwargs)
         return validate_middleware_response(
             self,
             apply_converter(response, converter),
-            view_responses,
+            is_view_called=is_view_called,
         )
 
     return dispatch
@@ -127,25 +120,16 @@ def create_async_dispatch(
         if request.method and request.method not in self.api_endpoints:
             return await self.handle_method_not_allowed(request.method)  # type: ignore[no-any-return, misc]
 
-        view_responses: list[HttpResponseBase] = []
-
-        async def remember_view_response(  # noqa: WPS430
-            view_coroutine: Awaitable[HttpResponseBase],
-        ) -> HttpResponseBase:
-            view_response = await view_coroutine
-            view_responses.append(view_response)
-            return view_response
+        is_view_called = False
 
         def view_callable(  # noqa: WPS430
             req: HttpRequest,
             *view_args: Any,
             **view_kwargs: Any,
-        ) -> Awaitable[HttpResponseBase]:
-            # Async controllers return coroutines from `dispatch`,
-            # we need to remember the response they resolve to:
-            return remember_view_response(
-                original_dispatch(self, req, *view_args, **view_kwargs),
-            )
+        ) -> HttpResponse:
+            nonlocal is_view_called  # noqa: WPS420
+            is_view_called = True
+            return original_dispatch(self, req, *view_args, **view_kwargs)  # type: ignore[no-any-return]
 
         response = middleware(view_callable)(request, *args, **kwargs)
         # Django middleware can be either sync or async. When we wrap an async
@@ -159,7 +143,7 @@ def create_async_dispatch(
         return validate_middleware_response(
             self,
             apply_converter(response, converter),
-            view_responses,
+            is_view_called=is_view_called,
         )
 
     return dispatch

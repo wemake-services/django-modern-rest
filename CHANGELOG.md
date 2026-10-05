@@ -39,8 +39,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 #### Controllers and endpoints
 
-- Responses that `wrap_middleware` creates or replaces are now validated
-  after the converter, like the responses of endpoints,
+- Responses that `wrap_middleware` returns without calling the controller
+  are now validated after the converter, like the responses of endpoints,
   as the middleware docs promised. A converter that returns something
   its `ResponseSpec` does not describe, or a status code
   that is not documented, now fails with `422`
