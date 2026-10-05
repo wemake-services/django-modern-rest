@@ -10,7 +10,6 @@ from django.http import HttpResponse, HttpResponseBase
 from django.urls import reverse
 from faker import Faker
 from inline_snapshot import snapshot
-from typing_extensions import Sentinel
 
 from dmr.test import DMRAsyncClient, DMRClient
 from dmr.types import EMPTY
@@ -84,7 +83,7 @@ def test_sync_valid_auth(
     dmr_client: DMRClient,
     api_user: _ApiUser,
     *,
-    expires_at: dt.datetime | Sentinel | None,
+    expires_at: dt.datetime | EMPTY | None,
 ) -> None:
     """Ensures that sync auth works with a custom user model."""
     token_model, _ = _get_models()
@@ -115,7 +114,7 @@ async def test_async_valid_auth(
     dmr_async_client: DMRAsyncClient,
     api_user: _ApiUser,
     *,
-    expires_at: dt.datetime | Sentinel | None,
+    expires_at: dt.datetime | EMPTY | None,
 ) -> None:
     """Ensures that async auth works with a custom user model."""
     token_model, _ = _get_models()

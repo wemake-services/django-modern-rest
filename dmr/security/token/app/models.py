@@ -7,7 +7,7 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.debug import sensitive_variables
-from typing_extensions import Sentinel, override
+from typing_extensions import override
 
 from dmr.internal.model_fields import (
     CharField,
@@ -148,7 +148,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
         *,
         user: AbstractBaseUser,
         name: str,
-        expires_at: dt.datetime | Sentinel | None = EMPTY,
+        expires_at: dt.datetime | EMPTY | None = EMPTY,
         token_size: int | None = None,
         token_secret: str | None = None,
         token_salt: str | None = None,
@@ -177,7 +177,7 @@ class Token(TokenLikeSync, TokenLikeAsync, models.Model):  # noqa: WPS214
         *,
         user: AbstractBaseUser,
         name: str,
-        expires_at: dt.datetime | Sentinel | None = EMPTY,
+        expires_at: dt.datetime | EMPTY | None = EMPTY,
         token_size: int | None = None,
         token_secret: str | None = None,
         token_salt: str | None = None,

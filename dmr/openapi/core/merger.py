@@ -1,8 +1,7 @@
 import dataclasses
 from typing import TYPE_CHECKING, TypeVar
 
-from typing_extensions import Sentinel
-
+from dmr.internal.types import EMPTY
 from dmr.openapi.objects import Components, Info, Paths
 from dmr.openapi.openapi import OpenAPI
 
@@ -41,11 +40,7 @@ class ConfigMerger:
             servers=config.servers,
             tags=config.tags,
             external_docs=config.external_docs,
-            security=(
-                None
-                if isinstance(config.security, Sentinel)
-                else config.security
-            ),
+            security=(None if config.security is EMPTY else config.security),
             webhooks=config.webhooks,
             x_extensions=config.x_extensions,
             paths=paths,
