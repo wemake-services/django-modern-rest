@@ -103,7 +103,7 @@ def test_invalid_middleware_response(*, dmr_rf: DMRRequestFactory) -> None:
     response = _SyncController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_CONTENT
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert dict(response.headers) == snapshot({
         'Content-Type': 'application/json',
     })
@@ -132,7 +132,7 @@ async def test_invalid_middleware_response_async(
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_CONTENT
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert dict(response.headers) == snapshot({
         'Content-Type': 'application/json',
     })
@@ -157,7 +157,7 @@ def test_undocumented_middleware_status(*, dmr_rf: DMRRequestFactory) -> None:
     response = _SyncController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_CONTENT
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
@@ -185,7 +185,7 @@ async def test_undocumented_middleware_status_async(
     response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_CONTENT
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
