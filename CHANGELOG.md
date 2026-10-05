@@ -31,7 +31,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 ### Breaking changes
 
 - Replaced `Sentinel` class in all typing annotations to be `EMPTY`
-  sentinel value, since all type-checkers support this now,
+  sentinel value, since all type-checkers support this now, #1687
 
 ### Misc
 
