@@ -13,7 +13,7 @@ from typing import (  # noqa: WPS235
     get_origin,
 )
 
-from typing_extensions import TypeAliasType
+from typing_extensions import TypeAliasType, TypeForm
 
 from dmr.internal.empty import EMPTY as EMPTY
 
@@ -49,7 +49,7 @@ _UNION_TYPES: Final = frozenset((ty.Union, builtin_types.UnionType))
 _MAX_ALIAS_DEPTH: Final = 15
 
 
-def unwrap_type_alias(annotation: Any) -> Any:
+def unwrap_type_alias(annotation: TypeForm[Any]) -> TypeForm[Any]:
     """
     Replaces a type alias with the type it points to.
 
@@ -69,22 +69,27 @@ def unwrap_type_alias(annotation: Any) -> Any:
     """
     from dmr.exceptions import UnsolvableAnnotationsError  # noqa: PLC0415
 
+    # Type checkers do not know about `__value__` of type aliases:
+    current: Any = annotation
     for _ in range(_MAX_ALIAS_DEPTH):
-        origin = get_origin(annotation)
-        if isinstance(annotation, _TYPE_ALIAS_TYPES):
-            annotation = annotation.__value__
+        origin = get_origin(current)
+        if isinstance(current, _TYPE_ALIAS_TYPES):
+            current = current.__value__
         elif isinstance(origin, _TYPE_ALIAS_TYPES):
             # Generic aliases keep their args outside of `__value__`,
             # we apply them back to get the real type:
-            annotation = origin.__value__[get_args(annotation)]
+            current = origin.__value__[get_args(current)]
         else:
-            return annotation
+            unwrapped: TypeForm[Any] = current
+            return unwrapped
     raise UnsolvableAnnotationsError(
-        f'Cannot unwrap {annotation!r}, too many nested type aliases',
+        f'Cannot unwrap {current!r}, too many nested type aliases',
     )
 
 
-def iter_union_members(annotation: Any) -> Iterator[Any]:
+def iter_union_members(
+    annotation: TypeForm[Any],
+) -> Iterator[TypeForm[Any]]:
     """
     Yield union members of *annotation*, unwrapping type aliases.
 
@@ -98,7 +103,7 @@ def iter_union_members(annotation: Any) -> Iterator[Any]:
 
 
 def find_annotated_metadata(
-    annotation: Any,
+    annotation: TypeForm[Any],
     metadata_type: type[_MetadataT],
 ) -> '_MetadataT | None':
     """
@@ -110,14 +115,16 @@ def find_annotated_metadata(
     annotation = unwrap_type_alias(annotation)
     if get_origin(annotation) is not Annotated:
         return None
-    for metadata in annotation.__metadata__:
+    # Type checkers do not know about `__metadata__` of `Annotated`:
+    annotated: Any = annotation
+    for metadata in annotated.__metadata__:
         if isinstance(metadata, metadata_type):
             return metadata
     return None
 
 
 def has_nested_annotated_metadata(
-    annotation: Any,
+    annotation: TypeForm[Any],
     metadata_type: type[Any],
 ) -> bool:
     """

@@ -12,7 +12,7 @@ from typing import Any, Generic, final
 
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.http import HttpResponseBase
-from typing_extensions import Sentinel, TypeVar, override
+from typing_extensions import TypeVar, override
 
 from dmr.internal.concrete import build_concrete_controller
 from dmr.internal.types import EMPTY
@@ -103,8 +103,8 @@ class ObtainTokenSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
-        token_cls: type[TokenLikeSync[_UserT]] | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
+        token_cls: type[TokenLikeSync[_UserT]] | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
@@ -176,8 +176,8 @@ class ObtainTokenAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
-        token_cls: type[TokenLikeAsync[_UserT]] | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
+        token_cls: type[TokenLikeAsync[_UserT]] | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """

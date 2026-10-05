@@ -6,7 +6,7 @@ from typing import Final, Self, final
 import pytest
 from django.conf import LazySettings
 from django.http import HttpResponse
-from typing_extensions import Sentinel, override
+from typing_extensions import override
 
 from dmr import Controller
 from dmr.endpoint import Extras, ModifyEndpoint
@@ -29,13 +29,13 @@ _ENDPOINT_PING: Final = 0.5
 @final
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class _CustomExtras(Extras[str]):
-    tag: str | Sentinel = EMPTY
+    tag: str | EMPTY = EMPTY
 
     @classmethod
     @override
     def build(  # pyright: ignore[reportIncompatibleMethodOverride]
         cls,
-        from_endpoint: Self | Sentinel,
+        from_endpoint: Self | EMPTY,
         from_controller: Self,
         controller_cls: type[Controller[BaseSerializer]],
         builder: EndpointMetadataBuilder,
@@ -43,9 +43,7 @@ class _CustomExtras(Extras[str]):
         merger = builder.merger('tag')
         return merger.not_empty(
             merger.first_set(
-                EMPTY
-                if isinstance(from_endpoint, Sentinel)
-                else from_endpoint.tag,
+                EMPTY if from_endpoint is EMPTY else from_endpoint.tag,
                 from_controller.tag,
                 'default',
             ),
@@ -59,23 +57,19 @@ _custom_modify: Final = ModifyEndpoint(_CustomExtras)
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class _RequiredExtras(Extras[str]):
     prefix: str  # required, no default
-    tag: str | Sentinel = EMPTY
+    tag: str | EMPTY = EMPTY
 
     @classmethod
     @override
     def build(  # pyright: ignore[reportIncompatibleMethodOverride]
         cls,
-        from_endpoint: Self | Sentinel,
+        from_endpoint: Self | EMPTY,
         from_controller: Self,
         controller_cls: type[Controller[BaseSerializer]],
         builder: EndpointMetadataBuilder,
     ) -> str:
         merger = builder.merger('tag')
-        layer = (
-            from_controller
-            if isinstance(from_endpoint, Sentinel)
-            else from_endpoint
-        )
+        layer = from_controller if from_endpoint is EMPTY else from_endpoint
         tag = merger.not_empty(
             merger.first_set(layer.tag, from_controller.tag, 'default'),
         )

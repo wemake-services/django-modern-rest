@@ -15,7 +15,6 @@ from django.http import HttpResponse
 from django.urls import path
 from faker import Faker
 from inline_snapshot import snapshot
-from typing_extensions import Sentinel
 
 from dmr import Body, Controller, Headers, modify
 from dmr.exceptions import EndpointMetadataError
@@ -67,7 +66,7 @@ def _at(loc: str, path: str = '') -> str:
 
 
 def _make_controller(
-    custom_parsers: Sequence[Parser] | Sentinel,
+    custom_parsers: Sequence[Parser] | EMPTY,
 ) -> type[Controller[Any]]:
     # Metadata is built when the class is created,
     # so `parsers` must be set in the class body, `EMPTY` means defaults:
@@ -90,7 +89,7 @@ def test_body_parses(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
     *,
-    parsers: Sequence[Parser] | Sentinel,
+    parsers: Sequence[Parser] | EMPTY,
     loc: str,
 ) -> None:
     """Ensures that fast bodies are parsed into models."""
@@ -113,7 +112,7 @@ def test_body_is_lax_by_default(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
     *,
-    parsers: Sequence[Parser] | Sentinel,
+    parsers: Sequence[Parser] | EMPTY,
     loc: str,
 ) -> None:
     """Ensures that fast bodies allow type coercion, like regular ones."""
@@ -135,7 +134,7 @@ def test_body_missing_field(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
     *,
-    parsers: Sequence[Parser] | Sentinel,
+    parsers: Sequence[Parser] | EMPTY,
     loc: str,
 ) -> None:
     """Ensures that error locations depend on the parsing mode."""
@@ -164,7 +163,7 @@ def test_body_wrong_type(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
     *,
-    parsers: Sequence[Parser] | Sentinel,
+    parsers: Sequence[Parser] | EMPTY,
     loc: str,
 ) -> None:
     """Ensures that nested error locations are preserved."""
@@ -192,7 +191,7 @@ def test_body_wrong_type(
 def test_body_wrong_top_level_type(
     dmr_rf: DMRRequestFactory,
     *,
-    parsers: Sequence[Parser] | Sentinel,
+    parsers: Sequence[Parser] | EMPTY,
     loc: str,
 ) -> None:
     """Ensures that top level errors point to the body."""
@@ -216,7 +215,7 @@ def test_body_wrong_top_level_type(
 def test_body_errors_come_first(
     dmr_rf: DMRRequestFactory,
     *,
-    parsers: Sequence[Parser] | Sentinel,
+    parsers: Sequence[Parser] | EMPTY,
     loc: str,
 ) -> None:
     """
@@ -245,7 +244,7 @@ def test_other_components_are_validated(
     dmr_rf: DMRRequestFactory,
     faker: Faker,
     *,
-    parsers: Sequence[Parser] | Sentinel,
+    parsers: Sequence[Parser] | EMPTY,
     loc: str,
 ) -> None:
     """Ensures that other components are validated when body is correct."""
@@ -275,7 +274,7 @@ def test_other_components_are_validated(
 def test_invalid_json(
     dmr_rf: DMRRequestFactory,
     *,
-    parsers: Sequence[Parser] | Sentinel,
+    parsers: Sequence[Parser] | EMPTY,
     loc: str,
 ) -> None:
     """Ensures that broken json is still a parsing error."""
@@ -296,7 +295,7 @@ def test_invalid_json(
 def test_empty_body(
     dmr_rf: DMRRequestFactory,
     *,
-    parsers: Sequence[Parser] | Sentinel,
+    parsers: Sequence[Parser] | EMPTY,
     loc: str,
 ) -> None:
     """Ensures that empty bodies are always validated as a part of context."""

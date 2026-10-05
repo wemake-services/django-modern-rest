@@ -16,7 +16,7 @@ from typing import (  # noqa: WPS235
 )
 
 from django.utils.translation import gettext_lazy as _
-from typing_extensions import override
+from typing_extensions import TypeForm, override
 
 from dmr.exceptions import (
     DataParsingError,
@@ -89,7 +89,7 @@ class ComponentParserSpec(NamedTuple):
     parser: 'ComponentParser'
     """Component parser instance, like :class:`BodyComponent`."""
 
-    model: Any
+    model: TypeForm[Any]
     """Model to parse the component data into."""
 
     model_meta: tuple[Any, ...]
@@ -218,7 +218,7 @@ class ComponentParserBuilder:
     def _validate_no_hidden_component(
         self,
         context_name: str,
-        annotation: Any,
+        annotation: TypeForm[Any],
     ) -> None:
         # Things like `parsed_body: Body[Model] | None` are not components,
         # because `Union` hides the component annotation from us.
@@ -247,7 +247,9 @@ class ComponentParserBuilder:
             # Component is not generic, just return whatever it has.
             return component_spec
 
-        type_map = self.type_var_inference_cls(
+        # Type vars are not type forms for type checkers,
+        # but generic components have them in runtime until resolved here:
+        type_map = self.type_var_inference_cls(  # type: ignore[unreachable]
             component_spec.model,
             self._controller_cls,
         )()
@@ -279,7 +281,7 @@ class ComponentParser(ResponseSpecProvider):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
         *,
-        field_model: Any,
+        field_model: TypeForm[Any],
         default: Any = EMPTY,
     ) -> Any | tuple[Any, ...]:
         """
@@ -327,7 +329,7 @@ class ComponentParser(ResponseSpecProvider):
 
     def conditional_types(
         self,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
     ) -> Mapping[str, Any]:
         """
@@ -356,7 +358,7 @@ class ComponentParser(ResponseSpecProvider):
     @abc.abstractmethod
     def get_schema(
         self,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
@@ -407,7 +409,7 @@ class QueryComponent(ComponentParser):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
         *,
-        field_model: Any,
+        field_model: TypeForm[Any],
         default: Any = EMPTY,
     ) -> dict[str, Any]:
         query = controller.request.GET
@@ -432,7 +434,7 @@ class QueryComponent(ComponentParser):
     @override
     def get_schema(
         self,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
@@ -510,7 +512,7 @@ class BodyComponent(ComponentParser):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
         *,
-        field_model: Any,
+        field_model: TypeForm[Any],
         default: Any = EMPTY,
     ) -> Any:
         if default is not EMPTY and not self._has_body(controller.request):
@@ -568,7 +570,7 @@ class BodyComponent(ComponentParser):
     @override
     def conditional_types(
         self,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
     ) -> Mapping[str, Any]:
         """
@@ -584,7 +586,7 @@ class BodyComponent(ComponentParser):
     @override
     def get_schema(  # noqa: WPS210
         self,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
@@ -680,7 +682,7 @@ class HeadersComponent(ComponentParser):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
         *,
-        field_model: Any,
+        field_model: TypeForm[Any],
         default: Any = EMPTY,
     ) -> Any:
         headers = controller.request.headers
@@ -698,7 +700,7 @@ class HeadersComponent(ComponentParser):
     @override
     def get_schema(
         self,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
@@ -810,7 +812,7 @@ class PathComponent(ComponentParser):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
         *,
-        field_model: Any,
+        field_model: TypeForm[Any],
         default: Any = EMPTY,
     ) -> Any:
         if controller.args:
@@ -828,7 +830,7 @@ class PathComponent(ComponentParser):
     @override
     def get_schema(
         self,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
@@ -886,7 +888,7 @@ class CookiesComponent(ComponentParser):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
         *,
-        field_model: Any,
+        field_model: TypeForm[Any],
         default: Any = EMPTY,
     ) -> Any:
         cookies = controller.request.COOKIES
@@ -897,7 +899,7 @@ class CookiesComponent(ComponentParser):
     @override
     def get_schema(
         self,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
@@ -1003,7 +1005,7 @@ class FileMetadataComponent(ComponentParser):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
         *,
-        field_model: Any,
+        field_model: TypeForm[Any],
         default: Any = EMPTY,
     ) -> Mapping[str, Any]:
         if default is not EMPTY and not controller.request.FILES:
@@ -1068,7 +1070,7 @@ class FileMetadataComponent(ComponentParser):
     @override
     def conditional_types(
         self,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
     ) -> Mapping[str, Any]:
         """
@@ -1084,7 +1086,7 @@ class FileMetadataComponent(ComponentParser):
     @override
     def get_schema(
         self,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],

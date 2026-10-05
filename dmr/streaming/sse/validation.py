@@ -1,7 +1,7 @@
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any, Final, TypeAlias, get_args
 
-from typing_extensions import override
+from typing_extensions import TypeForm, override
 
 from dmr.errors import ErrorDetail, ErrorType
 from dmr.exceptions import ValidationError
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 def validate_event_data(
     event: Any,
-    model: Any,
+    model: TypeForm[Any],
     serializer: type['BaseSerializer'],
 ) -> Any:
     """Validates ``SSEvent.data`` to be of the given type arg."""
@@ -81,7 +81,7 @@ def check_event_field(event_field: Any, field_name: str) -> None:
 
 def validate_event_fields(
     event: 'SSE',
-    model: Any,
+    model: TypeForm[Any],
     serializer: type['BaseSerializer'],
 ) -> 'SSE':
     """
@@ -102,7 +102,7 @@ def validate_event_fields(
 
 
 SSEPipeline: TypeAlias = Callable[
-    ['SSE', Any, type['BaseSerializer']],
+    ['SSE', TypeForm[Any], type['BaseSerializer']],
     'SSE',
 ]
 

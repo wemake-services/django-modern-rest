@@ -3,7 +3,7 @@ import secrets
 from typing import Final, Self, final
 
 from django.db import models
-from typing_extensions import Sentinel, override
+from typing_extensions import override
 
 from dmr.security.token.token import (
     TokenLikeAsync,
@@ -96,7 +96,7 @@ class ApiToken(  # noqa: WPS214
         *,
         user: ApiUser,
         name: str,  # unused
-        expires_at: dt.datetime | Sentinel | None = EMPTY,
+        expires_at: dt.datetime | EMPTY | None = EMPTY,
         token_size: int | None = None,
         token_secret: str | None = None,
         token_salt: str | None = None,
@@ -121,7 +121,7 @@ class ApiToken(  # noqa: WPS214
         *,
         user: ApiUser,
         name: str,  # unused
-        expires_at: dt.datetime | Sentinel | None = EMPTY,
+        expires_at: dt.datetime | EMPTY | None = EMPTY,
         token_size: int | None = None,
         token_secret: str | None = None,
         token_salt: str | None = None,
@@ -188,7 +188,7 @@ class ApiToken(  # noqa: WPS214
         cls,
         *,
         user: ApiUser,
-        expires_at: dt.datetime | Sentinel | None,
+        expires_at: dt.datetime | EMPTY | None,
         token_size: int | None,
         token_secret: str | None,
         token_salt: str | None,

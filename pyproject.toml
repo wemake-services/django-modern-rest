@@ -86,11 +86,10 @@ dmr = "dmr_pytest"
 [dependency-groups]
 dev = [
   "dennis>=1.2,<2",
-  "django-stubs[compatible-mypy]>=6.1,<6.2",
+  "django-stubs[compatible-mypy]>=6.1.2,<6.2",
   "import-linter>=2.5,<3",
   "phonenumbers>=9,<10",
   "pyrefly>=1,<2",
-  # TODO: update after `mypy` and `pyrefly` will support `EMPTY` as a type:
   "pyright>=1.1,<2",
   "ruff>=0.16,<0.17",
   "schemathesis==4.26.1",
@@ -126,7 +125,7 @@ docs = [
   "sphinx-tabs>=3.5,<4",
   "sphinxcontrib-mermaid>=2,<3",
   # Needed for our extension:
-  "uvicorn>=0.52,<0.54",
+  "uvicorn>=0.52,<0.55",
   # Needed for examples:
   "xmltodict-rs>=0.13,<0.14",
   "zapros>=0.15,<0.20",
@@ -190,7 +189,7 @@ fragments = [ { path = "README.md" } ]
 
 [tool.hatch.build.targets.wheel.hooks.mypyc]
 enable-by-default = false
-dependencies = [ "hatch-mypyc", "mypy==2.3.0" ]
+dependencies = [ "hatch-mypyc", "mypy==2.4.0" ]
 include = [ "dmr/_compiled" ]
 require-runtime-dependencies = true
 mypy-args = [ "--ignore-missing-imports" ]
