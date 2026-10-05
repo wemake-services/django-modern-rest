@@ -2,7 +2,7 @@ import datetime as dt
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Final
 
-from typing_extensions import Sentinel, override
+from typing_extensions import TypeForm, override
 
 from dmr.internal.types import EMPTY
 from dmr.openapi.objects import Example, Schema
@@ -38,9 +38,9 @@ except ImportError:  # pragma: no cover
         """Does nothing, since polyfactory is not installed."""
 
     def generate_example(
-        annotation: Any,
+        annotation: TypeForm[Any] | EMPTY,
         serializer: type['BaseSerializer'],
-    ) -> Any | Sentinel:
+    ) -> Any | EMPTY:
         """Does nothing, since polyfactory is not installed."""
         return EMPTY
 
@@ -117,13 +117,13 @@ else:
         from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
         seed = resolve_setting(Settings.openapi_examples_seed)
-        if not isinstance(seed, Sentinel):
+        if seed is not EMPTY:
             _ExampleFactory.seed_random(seed)
 
     def generate_example(
-        annotation: Any,
+        annotation: TypeForm[Any] | EMPTY,
         serializer: type['BaseSerializer'],
-    ) -> Any | Sentinel:
+    ) -> Any | EMPTY:
         """
         Generates examples based on the type annotation.
 
@@ -141,10 +141,7 @@ else:
         # Import cycle:
         from dmr.settings import Settings, resolve_setting  # noqa: PLC0415
 
-        if isinstance(
-            resolve_setting(Settings.openapi_examples_seed),
-            Sentinel,
-        ):
+        if resolve_setting(Settings.openapi_examples_seed) is EMPTY:
             # Example generation is disabled in settings.
             return EMPTY
 

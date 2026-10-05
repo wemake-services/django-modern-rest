@@ -12,7 +12,7 @@ from typing import (
 )
 
 from django.urls import converters
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, TypeForm
 
 from dmr.exceptions import EndpointMetadataError
 from dmr.internal.regex import parse_named_groups
@@ -60,7 +60,7 @@ class ConverterSchema:
     attribute. Explicit values always override the generated ones.
     """
 
-    model: Any = str
+    model: TypeForm[Any] = str
     pattern: str | None = None
     description: str | None = None
 

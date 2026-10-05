@@ -2,7 +2,7 @@ from collections.abc import Callable
 from typing import Any, ClassVar, Final, Generic, final
 
 from django.http import HttpResponseBase
-from typing_extensions import Sentinel, TypeVar, override
+from typing_extensions import TypeVar, override
 
 from dmr.internal.concrete import build_concrete_controller
 from dmr.internal.types import EMPTY, StrOrPromise
@@ -91,8 +91,8 @@ class CookieObtainTokensSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
-        jwt_refresh_cookie_path: StrOrPromise | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
+        jwt_refresh_cookie_path: StrOrPromise | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
@@ -151,8 +151,8 @@ class CookieObtainTokensAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
-        jwt_refresh_cookie_path: StrOrPromise | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
+        jwt_refresh_cookie_path: StrOrPromise | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
@@ -208,8 +208,8 @@ class CookieRefreshTokensSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
-        jwt_refresh_cookie_path: StrOrPromise | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
+        jwt_refresh_cookie_path: StrOrPromise | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
@@ -254,8 +254,8 @@ class CookieRefreshTokensAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
-        jwt_refresh_cookie_path: StrOrPromise | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
+        jwt_refresh_cookie_path: StrOrPromise | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
@@ -302,8 +302,8 @@ class CookieLogoutSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
-        jwt_refresh_cookie_path: StrOrPromise | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
+        jwt_refresh_cookie_path: StrOrPromise | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
@@ -348,8 +348,8 @@ class CookieLogoutAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
-        jwt_refresh_cookie_path: StrOrPromise | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
+        jwt_refresh_cookie_path: StrOrPromise | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """

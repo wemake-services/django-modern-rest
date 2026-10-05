@@ -224,8 +224,9 @@ nitpick_ignore = [
     (_PY_CLASS, 'Paths'),
     (_PY_CLASS, 'Responses'),
     # Typing parts from `internal/endpoint.py`:
-    (_PY_CLASS, 'Sentinel'),
     (_PY_CLASS, 'HTTPStatus'),
+    # `TypeForm` is documented as data, not as a class:
+    (_PY_CLASS, 'typing_extensions.TypeForm'),
     # Test fixtures:
     (_PY_FUNC, 'pytest_django.fixtures.settings'),
     (_PY_CLASS, 'LazySettings'),

@@ -211,7 +211,7 @@ class SerializerContext:
         try:
             parsed = serializer.from_python(
                 context,
-                context_model.model,  # pyright: ignore[reportUnknownMemberType]
+                context_model.model,  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
                 strict=self.strict_validation,
             )
         except serializer.validation_error as exc:

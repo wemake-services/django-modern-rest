@@ -50,6 +50,18 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   and fields with default values are now documented
   only for the URLs that have them, #1616
 
+### Breaking changes
+
+- Replaced `Sentinel` class in all typing annotations to be `EMPTY`
+  sentinel value, since all type-checkers support this now, #1687
+- Replaced multiple types from `Any` to be `TypeForm[Any]`, #1688
+
+### Misc
+
+#### Agent skills
+
+- Suggest `concrete_views` instead of `views` by default in `dmr` skill, #1670
+
 
 ## 0.16.0 (2026-10-01)
 

@@ -4,6 +4,7 @@ import re
 from collections.abc import (
     Callable,
     ItemsView,
+    Mapping,
     Sequence,
     Set,
 )
@@ -20,7 +21,7 @@ from typing import (
 )
 
 from django.http import HttpResponseBase
-from typing_extensions import ParamSpec, Sentinel
+from typing_extensions import ParamSpec, TypeForm
 
 from dmr.components import BodyComponent, ComponentParserSpec
 from dmr.cookies import CookieSpec, NewCookie
@@ -494,10 +495,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         .. versionadded:: 0.16.0
         """
         merger = self.merger('validate_responses')
-        settings_value: bool | Sentinel = resolve_setting(
+        settings_value: bool | EMPTY = resolve_setting(
             Settings.validate_responses,
         )
-        validate_responses = merger.first_set(
+        validate_responses: bool | EMPTY = merger.first_set(
             self.payload.validate_responses if self.payload else EMPTY,
             self.controller_cls.validate_responses,
             settings_value,
@@ -513,10 +514,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         .. versionadded:: 0.16.0
         """
         merger = self.merger('semantic_schema')
-        settings_value: bool | Sentinel = resolve_setting(
+        settings_value: bool | EMPTY = resolve_setting(
             Settings.semantic_schema,
         )
-        semantic_schema = merger.first_set(
+        semantic_schema: bool | EMPTY = merger.first_set(
             self.payload.semantic_schema if self.payload else EMPTY,
             self.controller_cls.semantic_schema,
             settings_value,
@@ -538,7 +539,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         self,
         method: str,
         allowed_http_methods: frozenset[str],
-        return_annotation: Any,
+        return_annotation: TypeForm[Any],
     ) -> EndpointMetadata:
         if isinstance(self.payload, ValidateEndpointPayload):
             return self._from_validate(
@@ -618,7 +619,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         self,
         payload: ModifyEndpointPayload,
         method: str,
-        return_annotation: Any,
+        return_annotation: TypeForm[Any],
         *,
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
@@ -690,7 +691,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     def _from_raw_data(  # noqa: WPS210
         self,
         method: str,
-        return_annotation: Any,
+        return_annotation: TypeForm[Any],
         *,
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
@@ -776,17 +777,13 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_pluggables(
         self,
-        *layers: Sequence[_PluggableT] | Sentinel | None,
+        *layers: Sequence[_PluggableT] | EMPTY | None,
         kind: str,
         field_name: str,
     ) -> dict[str, _PluggableT]:
         merger = self.merger(field_name)
         pluggables = merger.first_defined(*layers)
-        if (
-            pluggables is None
-            or isinstance(pluggables, Sentinel)
-            or not pluggables
-        ):
+        if pluggables is None or pluggables is EMPTY or not pluggables:
             # Explicit empty values are taken literally, so an endpoint
             # can end up without any parsers or renderers, which is an error:
             raise EndpointMetadataError(
@@ -797,33 +794,39 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         return {pluggable.content_type: pluggable for pluggable in pluggables}
 
     def _build_validate_negotiation(self) -> bool:
-        settings_value: bool | Sentinel = resolve_setting(
+        settings_value: bool | EMPTY = resolve_setting(
             Settings.validate_negotiation,
         )
-        validate_negotiation = self.merger('validate_negotiation').first_set(
+        validate_negotiation: bool | EMPTY = self.merger(
+            'validate_negotiation',
+        ).first_set(
             self.payload.validate_negotiation if self.payload else EMPTY,
             self.controller_cls.validate_negotiation,
             settings_value,
         )
-        if isinstance(validate_negotiation, Sentinel):
+        if validate_negotiation is EMPTY:
             return self.build_validate_responses()
         return validate_negotiation
 
     def _build_servers(self) -> list['Server'] | None:
-        servers = self.merger('servers').first_defined(
+        servers: Sequence[Server] | EMPTY | None = self.merger(
+            'servers',
+        ).first_defined(
             self.payload.servers if self.payload else EMPTY,
             self.controller_cls.servers,
         )
-        if servers is None or isinstance(servers, Sentinel):
+        if servers is None or servers is EMPTY:
             return None  # explicitly disabled or nothing is configured
         return list(servers)
 
     def _build_callbacks(self) -> 'dict[str, Callback | Reference] | None':
-        callbacks = self.merger('callbacks').first_defined(
-            self.payload.callbacks if self.payload else EMPTY,
-            self.controller_cls.callbacks,
+        callbacks: Mapping[str, Callback | Reference] | EMPTY | None = (
+            self.merger('callbacks').first_defined(
+                self.payload.callbacks if self.payload else EMPTY,
+                self.controller_cls.callbacks,
+            )
         )
-        if callbacks is None or isinstance(callbacks, Sentinel):
+        if callbacks is None or callbacks is EMPTY:
             return None  # explicitly disabled or nothing is configured
         return dict(callbacks)
 
@@ -831,19 +834,23 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         # Extensions are unique to each OpenAPI object, so this
         # is an endpoint-only field: `Controller.x_extensions`
         # describes the path item and is never merged in here.
-        x_extensions = self.merger('x_extensions').empty_to_none(
+        x_extensions: Mapping[str, Any] | None = self.merger(
+            'x_extensions',
+        ).empty_to_none(
             self.payload.x_extensions if self.payload else EMPTY,
         )
-        return None if x_extensions is None else dict(x_extensions)  # pyright: ignore[reportArgumentType, reportCallIssue, reportReturnType]
+        return None if x_extensions is None else dict(x_extensions)
 
     def _build_external_docs(self) -> 'ExternalDocumentation | None':
-        external_docs = self.merger('external_docs').first_defined(
+        external_docs: ExternalDocumentation | EMPTY | None = self.merger(
+            'external_docs',
+        ).first_defined(
             self.payload.external_docs if self.payload else EMPTY,
             self.controller_cls.external_docs,
         )
-        return None if isinstance(external_docs, Sentinel) else external_docs
+        return None if external_docs is EMPTY else external_docs
 
-    def _build_deprecated(self) -> bool | Sentinel:
+    def _build_deprecated(self) -> bool | EMPTY:
         # Router-level `deprecated` is resolved later during the schema
         # generation, that's why `EMPTY` is preserved here:
         return self.merger('deprecated').first_set(
@@ -862,8 +869,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         )
         for layer in layers:
             self._validate_security_shape(layer)
-        security = self.merger('security').first_defined(*layers)
-        if security is None or isinstance(security, Sentinel):
+        security: Sequence[SecurityRequirement] | EMPTY | None = self.merger(
+            'security',
+        ).first_defined(*layers)
+        if security is None or security is EMPTY:
             return None  # explicitly disabled or nothing is configured
         # Empty security list means that no auth is configured
         # and it is just `None`.
@@ -871,9 +880,9 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _validate_security_shape(
         self,
-        security: 'Sequence[SecurityRequirement] | Sentinel | None',
+        security: 'Sequence[SecurityRequirement] | EMPTY | None',
     ) -> None:
-        if security is None or isinstance(security, Sentinel):
+        if security is None or security is EMPTY:
             return
         if not isinstance(security, (list, tuple)) or not all(
             isinstance(requirement, dict)  # pyright: ignore[reportUnnecessaryIsInstance]
@@ -901,14 +910,14 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         ] = resolve_setting(Settings.auth)
         auth: (
             Sequence[SyncAuth | AsyncAuth | SyncOrAsyncAuth[Any, Any]]
-            | Sentinel
+            | EMPTY
             | None
         ) = self.merger('auth').first_defined(
             endpoint_auth,
             self.controller_cls.auth,
             settings_auth,
         )
-        if auth is None or isinstance(auth, Sentinel):
+        if auth is None or auth is EMPTY:
             return None  # explicitly disabled or nothing is configured
         # `SyncOrAsyncAuth` is resolved to the actual instance here:
         resolved_auth = [
@@ -953,14 +962,14 @@ class EndpointMetadataBuilder:  # noqa: WPS214
             Sequence[
                 SyncThrottle | AsyncThrottle | SyncOrAsyncThrottle[Any, Any]
             ]
-            | Sentinel
+            | EMPTY
             | None
         ) = self.merger('throttling').first_defined(
             endpoint_throttling,
             self.controller_cls.throttling,
             settings_throttling,
         )
-        if throttling is None or isinstance(throttling, Sentinel):
+        if throttling is None or throttling is EMPTY:
             # Explicitly disabled or nothing is configured:
             return (None, None)
         # `SyncOrAsyncThrottle` is resolved to the actual instance here:
@@ -1002,14 +1011,14 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _reject_settings_only(
         self,
-        *layers: Sequence[object] | Sentinel | None,
+        *layers: Sequence[object] | EMPTY | None,
         settings_only_type: type[
             SyncOrAsyncAuth[Any, Any] | SyncOrAsyncThrottle[Any, Any]
         ],
     ) -> None:
         """Reject instances that can only be used in settings."""
         for layer in layers:
-            if layer is None or isinstance(layer, Sentinel):
+            if layer is None or layer is EMPTY:
                 continue
             if any(
                 isinstance(candidate, settings_only_type) for candidate in layer
@@ -1021,20 +1030,22 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 )
 
     def _build_ignore_from_spec(self) -> bool:
-        ignore_from_spec = self.merger('ignore_from_spec').first_set(
+        ignore_from_spec: bool | EMPTY = self.merger(
+            'ignore_from_spec',
+        ).first_set(
             self.payload.ignore_from_spec if self.payload else EMPTY,
             self.controller_cls.ignore_from_spec,
         )
-        return not isinstance(ignore_from_spec, Sentinel) and ignore_from_spec
+        return ignore_from_spec is not EMPTY and ignore_from_spec
 
-    def _build_tags(self) -> list[str] | Sentinel | None:
+    def _build_tags(self) -> list[str] | EMPTY | None:
         # Router-level tags are resolved later during the schema generation,
         # that's why `EMPTY` is preserved here.
-        tags = self.merger('tags').first_defined(
+        tags: Sequence[str] | EMPTY | None = self.merger('tags').first_defined(
             self.payload.tags if self.payload else EMPTY,
             self.controller_cls.tags,
         )
-        if tags is None or isinstance(tags, Sentinel):
+        if tags is None or tags is EMPTY:
             return tags
         return list(tags)
 
@@ -1072,15 +1083,15 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_semantic_responses(self) -> bool:
         merger = self.merger('semantic_responses')
-        settings_value: bool | Sentinel = resolve_setting(
+        settings_value: bool | EMPTY = resolve_setting(
             Settings.semantic_responses,
         )
-        semantic_responses = merger.first_set(
+        semantic_responses: bool | EMPTY = merger.first_set(
             self.payload.semantic_responses if self.payload else EMPTY,
             self.controller_cls.semantic_responses,
             settings_value,
         )
-        if isinstance(semantic_responses, Sentinel):
+        if semantic_responses is EMPTY:
             return self.build_semantic_schema()
         return merger.not_empty(semantic_responses)
 
@@ -1108,15 +1119,15 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_semantic_auth(self) -> bool:
         merger = self.merger('semantic_auth')
-        settings_value: bool | Sentinel = resolve_setting(
+        settings_value: bool | EMPTY = resolve_setting(
             Settings.semantic_auth,
         )
-        semantic_auth = merger.first_set(
+        semantic_auth: bool | EMPTY = merger.first_set(
             self.payload.semantic_auth if self.payload else EMPTY,
             self.controller_cls.semantic_auth,
             settings_value,
         )
-        if isinstance(semantic_auth, Sentinel):
+        if semantic_auth is EMPTY:
             return self.build_semantic_schema()
         return merger.not_empty(semantic_auth)
 
@@ -1133,11 +1144,11 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _build_optional_set(
         self,
-        *layers: Set[_ItemT] | Sentinel | None,
+        *layers: Set[_ItemT] | EMPTY | None,
         field_name: str,
     ) -> frozenset[_ItemT]:
         resolved = self.merger(field_name).first_defined(*layers)
-        if resolved is None or isinstance(resolved, Sentinel):
+        if resolved is None or resolved is EMPTY:
             return frozenset()
         return frozenset(resolved)
 
@@ -1161,11 +1172,8 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         required_cls = (
             EMPTY if self.payload is None else self.payload.extras_cls
         )
-        if isinstance(controller_extras, Sentinel):
-            if not isinstance(payload_extras, Sentinel) or not isinstance(
-                required_cls,
-                Sentinel,
-            ):
+        if controller_extras is EMPTY:
+            if payload_extras is not EMPTY or required_cls is not EMPTY:
                 raise EndpointMetadataError(
                     f'{self.controller_cls!r} does not support extras, '
                     f'but {self.endpoint_name!r} uses them, '
@@ -1188,10 +1196,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     def _validate_extras_cls(
         self,
         extras_cls: type['Extras[Any]'],
-        required_cls: type['Extras[Any]'] | Sentinel,
-        payload_extras: 'Extras[Any] | Sentinel',
+        required_cls: type['Extras[Any]'] | EMPTY,
+        payload_extras: 'Extras[Any] | EMPTY',
     ) -> type['Extras[Any]']:
-        if not isinstance(required_cls, Sentinel) and not issubclass(
+        if required_cls is not EMPTY and not issubclass(
             extras_cls,
             required_cls,
         ):
@@ -1200,7 +1208,10 @@ class EndpointMetadataBuilder:  # noqa: WPS214
                 f'{required_cls.__name__!r} extras, '
                 f'but {self.controller_cls!r} uses {extras_cls.__name__!r}',
             )
-        if not isinstance(payload_extras, Sentinel | extras_cls):
+        if payload_extras is not EMPTY and not isinstance(
+            payload_extras,
+            extras_cls,
+        ):
             raise EndpointMetadataError(
                 f'{self.controller_cls!r} only supports '
                 f'{extras_cls.__name__!r} extras, but got {payload_extras!r}',
@@ -1238,7 +1249,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _validate_return_annotation(
         self,
-        return_annotation: Any,
+        return_annotation: TypeForm[Any],
     ) -> None:
         if is_safe_subclass(return_annotation, HttpResponseBase):
             if isinstance(self.payload, ModifyEndpointPayload):
@@ -1362,7 +1373,9 @@ class EndpointMetadataValidator:  # noqa: WPS214
         # to its real value.
         # In case it is not a type var, just return whatever it is.
         if isinstance(response.return_type, TypeVar):
-            return dataclasses.replace(
+            # Type vars are not type forms for type checkers,
+            # but generic controllers have them in runtime until resolved here:
+            return dataclasses.replace(  # type: ignore[unreachable]
                 response,
                 return_type=infer_annotation(
                     response.return_type,
@@ -1458,17 +1471,15 @@ def _build_responses(
     settings_responses: Sequence[ResponseSpec] = resolve_setting(
         Settings.responses,
     )
-    responses = metadata_merger_cls(field_name='responses').first_defined(
+    responses: Sequence[ResponseSpec] | EMPTY | None = metadata_merger_cls(
+        field_name='responses',
+    ).first_defined(
         payload.responses if payload else EMPTY,
         controller_cls.responses,
         settings_responses,
     )
     return [
-        *(
-            []
-            if responses is None or isinstance(responses, Sentinel)
-            else responses
-        ),
+        *([] if responses is None or responses is EMPTY else responses),
         *([] if modification is None else [modification.to_spec()]),
     ]
 

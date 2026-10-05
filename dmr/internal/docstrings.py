@@ -1,13 +1,12 @@
 from django.contrib.admindocs.utils import parse_docstring
-from typing_extensions import Sentinel
 
-from dmr.internal.types import StrOrPromise
+from dmr.internal.types import EMPTY, StrOrPromise
 
 
 def resolve_summary_and_description(
     docstring: str | None,
-    summary: StrOrPromise | Sentinel | None,
-    description: StrOrPromise | Sentinel | None,
+    summary: StrOrPromise | EMPTY | None,
+    description: StrOrPromise | EMPTY | None,
 ) -> tuple[str | None, str | None]:
     """
     Resolve OpenAPI ``summary`` and ``description`` against a docstring.
@@ -28,9 +27,9 @@ def resolve_summary_and_description(
 
 
 def _resolve_doc_field(
-    explicit: StrOrPromise | Sentinel | None,
+    explicit: StrOrPromise | EMPTY | None,
     parsed: str | None,
 ) -> str | None:
-    if isinstance(explicit, Sentinel):
+    if explicit is EMPTY:
         return parsed
     return None if explicit is None else str(explicit)
