@@ -108,6 +108,20 @@ never set empty `parsers` or `renderers`.
 Match sync and async: sync endpoints get sync error handlers and auth,
 async endpoints get async ones. Throttle login endpoints before auth.
 
+Route auth endpoints from `concrete_views` with `as_view(serializer=...)`,
+do not subclass `dmr.security.*.views` controllers
+only to restate the default payload and response.
+Subclass `views` only when the payload, the response, or a hook differs:
+
+```python
+path(
+    'auth/',
+    concrete_views.ObtainTokensSyncController.as_view(
+        serializer=MsgspecSerializer,
+    ),
+)
+```
+
 Test with `dmr_rf` (`DMRRequestFactory`) for unit tests and `dmr_client`
 (`DMRClient`) for full-stack tests, generate payloads with `polyfactory`,
 and use `schemathesis` against the OpenAPI schema.
@@ -120,7 +134,7 @@ and use `schemathesis` against the OpenAPI schema.
 | Routing, 404 / 500 handlers, sync and async app layout | 4 | [references/routing.md](references/routing.md) |
 | Error handlers, `APIError`, custom `error_model` | 4 | [references/errors.md](references/errors.md) |
 | Response validation, `HttpSpec`, settings | 5 | [references/validation.md](references/validation.md) |
-| Typed authenticated requests, throttling, `wrap_middleware` | 3 | [references/security.md](references/security.md) |
+| Ready-to-use auth `concrete_views`, typed authenticated requests, throttling, `wrap_middleware` | 4 | [references/security.md](references/security.md) |
 | `pytest` style, `DMRClient`, `DMRRequestFactory`, `polyfactory`, `schemathesis` | 5 | [references/testing.md](references/testing.md) |
 | Docstrings as OpenAPI descriptions | 1 | [references/openapi.md](references/openapi.md) |
 
@@ -140,6 +154,11 @@ Flag these when reviewing `dmr` code:
   `semantic_responses` disabled, or empty parsers / renderers.
 - A sync `handle_error` on an async controller, or the other way around.
 - `RemoteAddr(runs_before_auth=False)` on a login endpoint.
+- A subclass of an auth controller from `dmr.security.*.views`
+  that keeps the default payload and response,
+  where its `concrete_views` counterpart does the same.
+- Cookie `concrete_views` without `jwt_refresh_cookie_path`,
+  so the refresh token is sent with every request.
 - `RedirectTo(next_url)` with a user-provided URL and no
   `url_has_allowed_host_and_scheme` check.
 - `django.urls.path` where `dmr.routing.path` is a drop-in replacement.

@@ -26,6 +26,18 @@ Prompts of the three latest breaking releases also live in the
 ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 
+## 0.17.0 WIP
+
+### Misc
+
+#### Agent skills
+
+- `dmr` skill now recommends routing ready-to-use `concrete_views`
+  instead of subclassing auth `views` that keep the default payload
+  and response, and flags unscoped `jwt_refresh_cookie_path`
+  in reviews, #1670
+
+
 ## 0.16.0 (2026-10-01)
 
 This release was a part of our community event #opensource_september.

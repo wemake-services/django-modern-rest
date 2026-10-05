@@ -5,6 +5,171 @@ Reference for the `dmr` skill. Loaded on demand, see [SKILL.md](../SKILL.md).
 
 ## Authentication
 
+### Route `concrete_views` instead of writing auth controllers that change nothing
+
+Every auth flow ships ready-to-use login, refresh, verify, and logout controllers
+in a `concrete_views` module next to its `views` module.
+They already take the default payloads, return the default responses,
+and set `auth = None`, so only a serializer is missing.
+A subclass of a reusable `views` controller that passes the payload through
+and builds the default response by hand is the same controller,
+only with more code to maintain.
+
+Wrong:
+
+```python
+import datetime as dt
+
+from typing_extensions import override
+
+from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.routing import Router, path
+from dmr.security.jwt.views import (
+    ObtainTokensPayload,
+    ObtainTokensResponse,
+    ObtainTokensSyncController,
+)
+
+
+class ObtainTokensController(
+    ObtainTokensSyncController[
+        MsgspecSerializer,
+        ObtainTokensPayload,
+        ObtainTokensResponse,
+    ],
+):
+    @override
+    def convert_auth_payload(
+        self,
+        payload: ObtainTokensPayload,
+    ) -> ObtainTokensPayload:
+        return payload  # nothing is converted
+
+    @override
+    def make_api_response(self) -> ObtainTokensResponse:
+        now = dt.datetime.now(dt.UTC)
+        return {  # the default response, written by hand
+            'access_token': self.create_jwt_token(
+                expiration=now + self.jwt_expiration,
+                token_type='access',
+            ),
+            'refresh_token': self.create_jwt_token(
+                expiration=now + self.jwt_refresh_expiration,
+                token_type='refresh',
+            ),
+        }
+
+
+router = Router(
+    'api/',
+    [path('auth/', ObtainTokensController.as_view(), name='jwt_obtain')],
+)
+```
+
+Correct:
+
+```python
+from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.routing import Router, path
+from dmr.security.jwt import concrete_views
+
+router = Router(
+    'api/',
+    [
+        path(
+            'auth/',
+            concrete_views.ObtainTokensSyncController.as_view(
+                serializer=MsgspecSerializer,
+            ),
+            name='jwt_obtain',
+        ),
+        path(
+            'auth/refresh/',
+            concrete_views.RefreshTokenSyncController.as_view(
+                serializer=MsgspecSerializer,
+            ),
+            name='jwt_refresh',
+        ),
+    ],
+)
+```
+
+Pick the controllers of the auth flow the project uses,
+each one has a `Sync` and an `Async` version:
+
+| Auth flow | Module | Controllers |
+| --- | --- | --- |
+| JWT in the response body | `dmr.security.jwt.concrete_views` | `ObtainTokens*`, `RefreshToken*`, `VerifyToken*` |
+| JWT in cookies | `dmr.security.jwt.concrete_views` | `CookieObtainTokens*`, `CookieRefreshTokens*`, `CookieLogout*` |
+| Opaque tokens | `dmr.security.token.concrete_views` | `ObtainToken*` |
+| Django session | `dmr.security.django_session.concrete_views` | `DjangoSession*` |
+
+`as_view` requires `serializer=` and passes other keyword arguments
+to Django as `initkwargs`, so settings like `jwt_expiration=` need no subclass either.
+Two settings are typed keyword arguments of `as_view`:
+
+- `token_cls=` on the opaque token controllers,
+  pass it when the project swaps the bundled `Token` model.
+- `jwt_refresh_cookie_path=` on the cookie controllers.
+  It defaults to `'/'`, which sends the refresh token with every request.
+  Point it to the refresh endpoint on all three cookie controllers:
+
+```python
+from typing import Final
+
+from django.urls import reverse_lazy
+
+from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.routing import Router, path
+from dmr.security.jwt import concrete_views
+
+REFRESH_COOKIE_PATH: Final = reverse_lazy('api:jwt_refresh')
+
+router = Router(
+    'api/',
+    [
+        path(
+            'auth/',
+            concrete_views.CookieObtainTokensSyncController.as_view(
+                serializer=MsgspecSerializer,
+                jwt_refresh_cookie_path=REFRESH_COOKIE_PATH,
+            ),
+            name='jwt_obtain',
+        ),
+        path(
+            'auth/refresh/',
+            concrete_views.CookieRefreshTokensSyncController.as_view(
+                serializer=MsgspecSerializer,
+                jwt_refresh_cookie_path=REFRESH_COOKIE_PATH,
+            ),
+            name='jwt_refresh',
+        ),
+        path(
+            'auth/logout/',
+            concrete_views.CookieLogoutSyncController.as_view(
+                serializer=MsgspecSerializer,
+                jwt_refresh_cookie_path=REFRESH_COOKIE_PATH,
+            ),
+            name='jwt_logout',
+        ),
+    ],
+)
+
+urlpatterns = [router.to_urlpatterns(namespace='api')]
+```
+
+**Limitations:** `concrete_views` were added in `0.16.0`.
+They are final: do not subclass them.
+Subclass the reusable `views` controller only when something
+really differs from the defaults: the payload (login by email),
+the response body (extra fields), or a hook (`make_token_name`, `login`).
+
+Docs:
+
+- https://django-modern-rest.readthedocs.io/en/latest/pages/auth/jwt.html#jwt-concrete-views
+- https://django-modern-rest.readthedocs.io/en/latest/pages/auth/token.html#token-concrete-views
+- https://django-modern-rest.readthedocs.io/en/latest/pages/auth/django-session.html#django-session-concrete-views
+
 ### Use typed request for authenticated controllers
 
 Annotating `self.request` with a typed subclass of `HttpRequest` gives type-safe access to the authenticated user.
