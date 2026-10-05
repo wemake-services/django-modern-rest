@@ -123,7 +123,6 @@ def test_invalid_middleware_response(*, dmr_rf: DMRRequestFactory) -> None:
 
 @pytest.mark.asyncio
 async def test_invalid_middleware_response_async(
-    *,
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that middleware responses are validated for async views."""
