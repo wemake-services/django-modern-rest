@@ -26,6 +26,17 @@ Prompts of the three latest breaking releases also live in the
 ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 
+## 0.17.0 WIP
+
+### Misc
+
+#### Agent skills
+
+- `dmr` skill now turns CSRF checks on with `csrf_exempt = False`
+  instead of wrapping `csrf_protect`, and its `wrap_middleware` example
+  documents the `304` of Django's `condition` decorator, #1671
+
+
 ## 0.16.0 (2026-10-01)
 
 This release was a part of our community event #opensource_september.

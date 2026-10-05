@@ -97,9 +97,10 @@ Prefer `BodyMsgspec` over `Body` when `MsgspecSerializer` is used.
 Use `dmr.routing.path` and `Router`, and install
 `build_404_handler` / `build_500_handler` so API errors are JSON.
 
-If CSRF and ``csrf_exempt = False`` are used always set
-`CSRF_FAILURE_VIEW = build_csrf_handler(router.prefix, ...)`
-error handler.
+Turn CSRF checks on with `csrf_exempt = False` on the controller,
+not by wrapping `csrf_protect`, and always set
+`CSRF_FAILURE_VIEW = build_csrf_handler('api/', ...)`
+error handler with the router's prefix.
 
 Keep `validate_responses` on in development and tests, turn it off only
 in production settings. Never disable `semantic_responses`,
@@ -120,7 +121,7 @@ and use `schemathesis` against the OpenAPI schema.
 | Routing, 404 / 500 handlers, sync and async app layout | 4 | [references/routing.md](references/routing.md) |
 | Error handlers, `APIError`, custom `error_model` | 4 | [references/errors.md](references/errors.md) |
 | Response validation, `HttpSpec`, settings | 5 | [references/validation.md](references/validation.md) |
-| Typed authenticated requests, throttling, `wrap_middleware` | 3 | [references/security.md](references/security.md) |
+| Typed authenticated requests, throttling, CSRF with `csrf_exempt`, `wrap_middleware` | 4 | [references/security.md](references/security.md) |
 | `pytest` style, `DMRClient`, `DMRRequestFactory`, `polyfactory`, `schemathesis` | 5 | [references/testing.md](references/testing.md) |
 | Docstrings as OpenAPI descriptions | 1 | [references/openapi.md](references/openapi.md) |
 
@@ -140,6 +141,10 @@ Flag these when reviewing `dmr` code:
   `semantic_responses` disabled, or empty parsers / renderers.
 - A sync `handle_error` on an async controller, or the other way around.
 - `RemoteAddr(runs_before_auth=False)` on a login endpoint.
+- `csrf_protect` wrapped around a controller
+  where `csrf_exempt = False` does the same.
+- A Django decorator applied with `dispatch_decorator` or `method_decorator`
+  that returns its own responses, where `wrap_middleware` would document them.
 - `RedirectTo(next_url)` with a user-provided URL and no
   `url_has_allowed_host_and_scheme` check.
 - `django.urls.path` where `dmr.routing.path` is a drop-in replacement.
