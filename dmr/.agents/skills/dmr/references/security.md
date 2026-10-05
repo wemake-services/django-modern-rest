@@ -158,11 +158,87 @@ router = Router(
 urlpatterns = [router.to_urlpatterns(namespace='api')]
 ```
 
+`as_view` only sets instance attributes, while `throttling`, `auth`,
+`responses`, and other endpoint metadata are read from the class.
+Passing them to `as_view` is silently ignored, the endpoint stays unthrottled.
+Concrete views use `Settings.throttling` from `DMR_SETTINGS`,
+like every controller without its own `throttling`.
+When the login endpoint needs its own throttle, it really differs
+from the defaults: subclass the reusable `views` controller for it
+and keep `concrete_views` for the rest:
+
+```python
+import datetime as dt
+
+from typing_extensions import override
+
+from dmr.plugins.msgspec import MsgspecSerializer
+from dmr.routing import Router, path
+from dmr.security.jwt import concrete_views
+from dmr.security.jwt.views import (
+    ObtainTokensPayload,
+    ObtainTokensResponse,
+    ObtainTokensSyncController,
+)
+from dmr.throttling import Rate, SyncThrottle
+from dmr.throttling.cache_keys import RemoteAddr
+
+
+class LoginController(
+    ObtainTokensSyncController[
+        MsgspecSerializer,
+        ObtainTokensPayload,
+        ObtainTokensResponse,
+    ],
+):
+    # Reusable views do not set it, auth from the settings must not apply:
+    auth = None
+    # This is what `concrete_views.ObtainTokensSyncController` cannot do:
+    throttling = (SyncThrottle(5, Rate.minute, cache_key=RemoteAddr()),)
+
+    @override
+    def convert_auth_payload(
+        self,
+        payload: ObtainTokensPayload,
+    ) -> ObtainTokensPayload:
+        return payload
+
+    @override
+    def make_api_response(self) -> ObtainTokensResponse:
+        now = dt.datetime.now(dt.UTC)
+        return {
+            'access_token': self.create_jwt_token(
+                expiration=now + self.jwt_expiration,
+                token_type='access',
+            ),
+            'refresh_token': self.create_jwt_token(
+                expiration=now + self.jwt_refresh_expiration,
+                token_type='refresh',
+            ),
+        }
+
+
+router = Router(
+    'api/',
+    [
+        path('auth/', LoginController.as_view(), name='jwt_obtain'),
+        path(
+            'auth/refresh/',
+            concrete_views.RefreshTokenSyncController.as_view(
+                serializer=MsgspecSerializer,
+            ),
+            name='jwt_refresh',
+        ),
+    ],
+)
+```
+
 **Limitations:** `concrete_views` were added in `0.16.0`.
 They are final: do not subclass them.
 Subclass the reusable `views` controller only when something
 really differs from the defaults: the payload (login by email),
-the response body (extra fields), or a hook (`make_token_name`, `login`).
+the response body (extra fields), a hook (`make_token_name`, `login`),
+or endpoint metadata like a login-specific `throttling`.
 
 Docs:
 
@@ -272,7 +348,7 @@ class LoginController(Controller[PydanticSerializer]):
         return 'logged in'
 ```
 
-**Limitations:** `runs_before_auth=True` is the default for `RemoteAddr`, so you only need to be explicit when switching it off for non-auth endpoints.
+**Limitations:** `runs_before_auth=True` is the default for `RemoteAddr`, so you only need to be explicit when switching it off for non-auth endpoints. Ready-to-use `concrete_views` ignore `throttling=` passed to `as_view`, see [Route `concrete_views` instead of writing auth controllers that change nothing](#route-concrete_views-instead-of-writing-auth-controllers-that-change-nothing).
 
 Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/throttling.html
 
