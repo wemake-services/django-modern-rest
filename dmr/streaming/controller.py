@@ -3,12 +3,12 @@ from collections.abc import AsyncIterator, Iterable, Mapping
 from http import HTTPStatus
 from typing import Any, ClassVar, TypeVar
 
-from typing_extensions import Sentinel, override
+from typing_extensions import override
 
 from dmr.controller import Controller
 from dmr.cookies import NewCookie, set_cookies
 from dmr.endpoint import Endpoint
-from dmr.internal.types import call_init_subclass
+from dmr.internal.types import EMPTY, call_init_subclass
 from dmr.negotiation import request_renderer
 from dmr.renderers import Renderer
 from dmr.serializer import BaseSerializer
@@ -75,7 +75,7 @@ class StreamingController(Controller[_SerializerT_co]):
             return  # this is an abstract controller
 
         renderers = cls.renderers
-        if isinstance(renderers, Sentinel) or not renderers:
+        if renderers is EMPTY or not renderers:
             renderers = resolve_setting(Settings.renderers)
         cls.renderers = (
             *cls.streaming_renderers(serializer),

@@ -1,13 +1,14 @@
 from typing import Any, Final
 
 from django.conf import LazySettings
-from typing_extensions import Sentinel, override
+from typing_extensions import override
 
 from dmr import Controller, modify
 from dmr.endpoint import Endpoint
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.django_session import DjangoSessionSyncAuth
 from dmr.settings import Settings
+from dmr.types import EMPTY
 from dmr.validation import MetadataMerger
 
 _SETTINGS_AUTH: Final = DjangoSessionSyncAuth()
@@ -30,10 +31,7 @@ class _MetadataMergerKeepAuth(MetadataMerger):
         if any(layer is None for layer in layers):
             return None  # explicit `None` disables auth on all layers
         return [
-            auth
-            for layer in layers
-            if not isinstance(layer, Sentinel)
-            for auth in layer
+            auth for layer in layers if layer is not EMPTY for auth in layer
         ]
 
 

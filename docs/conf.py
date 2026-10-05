@@ -224,7 +224,6 @@ nitpick_ignore = [
     (_PY_CLASS, 'Paths'),
     (_PY_CLASS, 'Responses'),
     # Typing parts from `internal/endpoint.py`:
-    (_PY_CLASS, 'Sentinel'),
     (_PY_CLASS, 'HTTPStatus'),
     # Test fixtures:
     (_PY_FUNC, 'pytest_django.fixtures.settings'),
