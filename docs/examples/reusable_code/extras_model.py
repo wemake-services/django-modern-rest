@@ -1,7 +1,7 @@
 import dataclasses
 from typing import Self
 
-from typing_extensions import Sentinel, override
+from typing_extensions import override
 
 from dmr.controller import Controller
 from dmr.endpoint import Extras
@@ -12,13 +12,13 @@ from dmr.validation import EndpointMetadataBuilder
 
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True)
 class SmartResponse(Extras[str]):
-    response_text: str | Sentinel = EMPTY
+    response_text: str | EMPTY = EMPTY
 
     @classmethod
     @override
     def build(
         cls,
-        from_endpoint: Self | Sentinel,
+        from_endpoint: Self | EMPTY,
         from_controller: Self,
         controller_cls: type[Controller[BaseSerializer]],
         builder: EndpointMetadataBuilder,
@@ -28,7 +28,7 @@ class SmartResponse(Extras[str]):
             merger.first_set(
                 (
                     EMPTY
-                    if isinstance(from_endpoint, Sentinel)
+                    if from_endpoint is EMPTY
                     else from_endpoint.response_text
                 ),
                 from_controller.response_text,
