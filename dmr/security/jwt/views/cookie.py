@@ -122,6 +122,22 @@ class _BaseCookieTokensController(  # noqa: WPS214
         'Refresh token, only sent to the refresh endpoint.'
     )
 
+    # Cookie specs are built from the class, even in runtime.
+    # Expirations are also used for the `max_age` of the cookies:
+    class_only_attributes = BaseTokenController.class_only_attributes | {
+        'jwt_access_cookie',
+        'jwt_refresh_cookie',
+        'jwt_access_cookie_path',
+        'jwt_refresh_cookie_path',
+        'jwt_cookie_domain',
+        'jwt_cookie_secure',
+        'jwt_cookie_httponly',
+        'jwt_cookie_samesite',
+        'jwt_cookie_description',
+        'jwt_expiration',
+        'jwt_refresh_expiration',
+    }
+
     @classmethod
     def access_cookie_spec(cls) -> CookieSpec:
         """Describes the cookie that carries the access token."""

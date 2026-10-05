@@ -26,6 +26,33 @@ Prompts of the three latest breaking releases also live in the
 ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 
+## 0.17.0 WIP
+
+### Breaking changes
+
+#### Controllers and endpoints
+
+- `Controller.as_view` now raises `EndpointMetadataError`
+  for `initkwargs` that are only read from the class,
+  like `auth=`, `throttling=`, `responses=`, `csrf_exempt=`,
+  or `login_required=`. Django used to set them on the instance,
+  where nothing read them, so they were silently ignored.
+  Set them as class attributes of a subclass instead, #1678
+- Auth views from `dmr.security.*.views` and `concrete_views` also reject
+  `response_status_code=`, and the jwt cookie views reject
+  their cookie settings, `jwt_expiration=`, and `jwt_refresh_expiration=`.
+  Cookies are described with them on the class, so passing them
+  to `as_view` used to change the token, but not the cookie, #1678
+
+### Features
+
+#### Controllers and endpoints
+
+- Added `Controller.class_only_attributes` with the names
+  that `as_view` rejects, subclasses can extend it
+  with their own class-level attributes, #1678
+
+
 ## 0.16.0 (2026-10-01)
 
 This release was a part of our community event #opensource_september.

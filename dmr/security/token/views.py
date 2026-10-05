@@ -64,6 +64,11 @@ class _BaseTokenSettings(Controller[_SerializerT]):
     token_algorithm: str | None = None
     token_expiration: dt.timedelta = TOKEN_DEFAULT_EXPIRY
 
+    # It is passed to `@modify` when the class is created:
+    class_only_attributes = Controller.class_only_attributes | {
+        'response_status_code',
+    }
+
     def make_token_name(self) -> str:
         """Create unique token's name."""
         return uuid.uuid4().hex
