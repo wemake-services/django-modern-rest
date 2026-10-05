@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, final
 
 from django.urls import converters
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, TypeForm
 
 from dmr.internal.regex import parse_named_groups
 from dmr.internal.types import EMPTY
@@ -51,7 +51,7 @@ class ConverterSchema:
     attribute. Explicit values always override the generated ones.
     """
 
-    model: Any = str
+    model: TypeForm[Any] = str
     pattern: str | None = None
     description: str | None = None
 

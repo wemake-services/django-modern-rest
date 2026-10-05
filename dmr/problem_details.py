@@ -2,7 +2,7 @@ from collections.abc import Mapping
 from http import HTTPStatus
 from typing import Annotated, Any, ClassVar, Final
 
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, TypeForm
 
 from dmr.controller import Controller
 from dmr.cookies import NewCookie
@@ -54,7 +54,7 @@ class ProblemDetailsError(APIError[ProblemDetailsModel]):
     """
 
     content_type: ClassVar[str] = ContentType.json_problem_details
-    problem_details_model: ClassVar[Any] = ProblemDetailsModel
+    problem_details_model: ClassVar[TypeForm[Any]] = ProblemDetailsModel
 
     def __init__(
         self,

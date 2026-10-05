@@ -1,7 +1,7 @@
 from typing import Any, ClassVar, Literal, final
 
 from pydantic.json_schema import GenerateJsonSchema
-from typing_extensions import TypedDict, override
+from typing_extensions import TypedDict, TypeForm, override
 
 from dmr.serializer import BaseSchemaGenerator, SchemaDef
 
@@ -46,7 +46,7 @@ class PydanticSchemaGenerator(BaseSchemaGenerator):
     @classmethod
     def get_schema(
         cls,
-        model: Any,
+        model: TypeForm[Any],
         ref_template: str,
         *,
         used_for_response: bool = False,
@@ -56,7 +56,7 @@ class PydanticSchemaGenerator(BaseSchemaGenerator):
             _get_cached_type_adapter,  # pyright: ignore[reportPrivateUsage]
         )
 
-        schema = _get_cached_type_adapter(model).json_schema(
+        schema = _get_cached_type_adapter(model).json_schema(  # type: ignore[arg-type]
             ref_template=ref_template + '{model}',  # noqa: WPS336, RUF027
             mode='serialization' if used_for_response else 'validation',
             **cls.json_schema_kwargs,
@@ -66,7 +66,7 @@ class PydanticSchemaGenerator(BaseSchemaGenerator):
 
     @override
     @classmethod
-    def schema_name(cls, model: Any) -> str | None:
+    def schema_name(cls, model: TypeForm[Any]) -> str | None:
         """Return a schema name for a model, if it exists."""
         try:
             schema = cls.get_schema(model, ref_template='')

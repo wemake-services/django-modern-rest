@@ -1,7 +1,7 @@
 import dataclasses
 from typing import TYPE_CHECKING, Final, Self, final
 
-from typing_extensions import Sentinel, override
+from typing_extensions import override
 
 from dmr.exceptions import EndpointMetadataError
 from dmr.internal.endpoint import Extras, ModifyEndpoint, ValidateEndpoint
@@ -70,14 +70,14 @@ class Streaming(Extras[StreamingExtras]):
     .. versionadded:: 0.16.0
     """
 
-    validate_events: bool | Sentinel = EMPTY
-    ping_seconds: float | Sentinel | None = EMPTY
+    validate_events: bool | EMPTY = EMPTY
+    ping_seconds: float | EMPTY | None = EMPTY
 
     @classmethod
     @override
     def build(  # pyright: ignore[reportIncompatibleMethodOverride]
         cls,  # TODO: this looks like a pyright bug
-        from_endpoint: Self | Sentinel,
+        from_endpoint: Self | EMPTY,
         from_controller: Self,
         controller_cls: type['Controller[BaseSerializer]'],
         builder: 'EndpointMetadataBuilder',
@@ -104,42 +104,42 @@ class Streaming(Extras[StreamingExtras]):
     @classmethod
     def _build_validate_events(
         cls,
-        from_endpoint: Self | Sentinel,
+        from_endpoint: Self | EMPTY,
         from_controller: Self,
         builder: 'EndpointMetadataBuilder',
     ) -> bool:
-        settings_value: bool | Sentinel = resolve_setting(
+        settings_value: bool | EMPTY = resolve_setting(
             Settings.validate_events,
         )
-        validate_events = builder.merger('validate_events').first_set(
+        validate_events: bool | EMPTY = builder.merger(
+            'validate_events',
+        ).first_set(
             (
                 EMPTY
-                if isinstance(from_endpoint, Sentinel)
+                if from_endpoint is EMPTY
                 else from_endpoint.validate_events
             ),
             from_controller.validate_events,
             settings_value,
         )
-        if isinstance(validate_events, Sentinel):
+        if validate_events is EMPTY:
             return builder.build_validate_responses()
         return validate_events
 
     @classmethod
     def _build_ping_seconds(
         cls,
-        from_endpoint: Self | Sentinel,
+        from_endpoint: Self | EMPTY,
         from_controller: Self,
         builder: 'EndpointMetadataBuilder',
     ) -> float | None:
-        ping_seconds = builder.merger('ping_seconds').first_set(
-            (
-                EMPTY
-                if isinstance(from_endpoint, Sentinel)
-                else from_endpoint.ping_seconds
-            ),
+        ping_seconds: float | EMPTY | None = builder.merger(
+            'ping_seconds',
+        ).first_set(
+            (EMPTY if from_endpoint is EMPTY else from_endpoint.ping_seconds),
             from_controller.ping_seconds,
         )
-        return None if isinstance(ping_seconds, Sentinel) else ping_seconds
+        return None if ping_seconds is EMPTY else ping_seconds
 
 
 #: Same as :data:`dmr.modify`, but supports ``extras=Streaming(...)``.

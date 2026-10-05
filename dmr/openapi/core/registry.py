@@ -1,7 +1,7 @@
 import dataclasses
 from typing import Any, ClassVar
 
-from typing_extensions import Sentinel
+from typing_extensions import TypeForm
 
 from dmr.internal.types import EMPTY
 from dmr.openapi.objects import Reference, Schema, SecurityScheme
@@ -63,7 +63,7 @@ class SchemaRegistry:
         self,
         schema_name: str,
         schema: Schema,
-        annotation: Any | Sentinel = EMPTY,
+        annotation: TypeForm[Any] | EMPTY = EMPTY,
     ) -> Schema:
         """Register Schema in registry, return a reference to it."""
         existing_schema = self._schemas.get(schema_name)
@@ -81,7 +81,7 @@ class SchemaRegistry:
     def get_reference(
         self,
         schema_name: str | None,
-        annotation: Any | Sentinel = EMPTY,
+        annotation: TypeForm[Any] | EMPTY = EMPTY,
     ) -> Schema | None:
         """Get a reference to the registered schema, if it exists."""
         if schema_name:
@@ -191,13 +191,13 @@ def _overlay_ref_site(target: Schema, ref_site: Schema) -> Schema:
     }
     if not sibling_values:
         return target
-    return dataclasses.replace(target, **sibling_values)  # type: ignore[arg-type]
+    return dataclasses.replace(target, **sibling_values)
 
 
 def _is_sibling_set(
     ref_site: Schema,
     schema_field: dataclasses.Field[Any],
-) -> Any | Sentinel:
+) -> Any | EMPTY:
     """Check that a keyword next to ``$ref`` is really set on the schema."""
     field_value = getattr(ref_site, schema_field.name)
     # Ignore fields with default values and `ref` itself:
@@ -215,7 +215,7 @@ def _is_sibling_set(
 
 def _check_hashes(
     schema_name: str,
-    annotation: Any | Sentinel,
+    annotation: TypeForm[Any] | EMPTY,
     other_hash: int | None,
 ) -> None:
     if annotation is EMPTY:
@@ -231,7 +231,7 @@ def _check_hashes(
         )
 
 
-def _safe_hash(annotation: Any) -> int | None:
+def _safe_hash(annotation: TypeForm[Any] | EMPTY) -> int | None:
     if annotation is EMPTY:
         return None
     try:

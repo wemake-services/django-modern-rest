@@ -4,7 +4,7 @@ from typing import Any, ClassVar, TypeVar
 
 import msgspec
 from django.http import HttpRequest
-from typing_extensions import override
+from typing_extensions import TypeForm, override
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.exceptions import DataParsingError
@@ -29,7 +29,7 @@ class MsgpackParser(Parser):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        model: Any,
+        model: TypeForm[Any],
     ) -> Any:
         """
         Deserialize a raw msgpack string/bytes/bytearray into an object.
@@ -53,7 +53,7 @@ class MsgpackParser(Parser):
         """
         try:
             return _get_deserializer(
-                model,
+                model,  # type: ignore[arg-type]
                 deserializer_hook,
                 strict=self.strict,
             ).decode(to_deserialize)
