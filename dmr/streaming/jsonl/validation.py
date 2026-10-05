@@ -1,7 +1,7 @@
 from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING, Any, TypeAlias
 
-from typing_extensions import override
+from typing_extensions import TypeForm, override
 
 from dmr.streaming.validation import StreamingValidator, validate_event_type
 
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 JsonLinesPipeline: TypeAlias = Callable[
-    ['Json', Any, type['BaseSerializer']],
+    ['Json', TypeForm[Any], type['BaseSerializer']],
     'Json',
 ]
 

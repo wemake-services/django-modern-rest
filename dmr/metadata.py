@@ -15,9 +15,10 @@ from typing import (  # noqa: WPS235
     get_origin,
 )
 
-from typing_extensions import Sentinel, TypeVar, override
+from typing_extensions import TypeForm, TypeVar, override
 
 from dmr.internal.types import (
+    EMPTY,
     StrOrPromise,
     find_annotated_metadata,
     iter_union_members,
@@ -90,7 +91,7 @@ class ResponseSpec:
     """
 
     # `type[T]` limits some type annotations, like `Literal[1]`:
-    return_type: Any
+    return_type: TypeForm[Any]
     status_code: HTTPStatus = dataclasses.field(kw_only=True)
     headers: Mapping[str, 'HeaderSpec'] | None = dataclasses.field(
         kw_only=True,
@@ -217,7 +218,7 @@ class MergeableMetadata:
         raise NotImplementedError
 
     @classmethod
-    def from_union(cls, annotation: Any) -> 'Self | None':
+    def from_union(cls, annotation: TypeForm[Any]) -> 'Self | None':
         """Find and merge this metadata across all members of a union."""
         return functools.reduce(
             cls.merge,
@@ -363,7 +364,7 @@ class ResponseModification:
     response_spec_cls: ClassVar[type[ResponseSpec]] = ResponseSpec
 
     # `type[T]` limits some type annotations, like `Literal[1]`:
-    return_type: Any
+    return_type: TypeForm[Any]
     status_code: HTTPStatus
     headers: Mapping[str, 'NewHeader | HeaderSpec'] | None
     cookies: Mapping[str, 'NewCookie | CookieSpec'] | None
@@ -421,13 +422,13 @@ class ResponseModification:
             links=self.links,
         )
 
-    def _infer_return_type(self) -> Any:
+    def _infer_return_type(self) -> TypeForm[Any]:
         """Infers return type if it needs some extra love."""
         from dmr.exceptions import UnsolvableAnnotationsError  # noqa: PLC0415
 
         if self.streaming:
             origin = get_origin(self.return_type)
-            type_args = get_args(self.return_type)
+            type_args: tuple[TypeForm[Any], ...] = get_args(self.return_type)
             if type_args and origin in _ASYNC_ITERATOR_TYPES:
                 return type_args[0]
             raise UnsolvableAnnotationsError(
@@ -659,9 +660,9 @@ class EndpointMetadata(Generic[_ExtrasT, _AuthT, _ThrottlingT]):
     # OpenAPI documentation fields:
     summary: StrOrPromise | None
     description: StrOrPromise | None
-    tags: list[str] | Sentinel | None
+    tags: list[str] | EMPTY | None
     operation_id: str | None
-    deprecated: bool | Sentinel
+    deprecated: bool | EMPTY
     security: list['SecurityRequirement'] | None
     external_docs: 'ExternalDocumentation | None'
     callbacks: dict[str, 'Callback | Reference'] | None
@@ -770,7 +771,7 @@ _MetadataT = TypeVar('_MetadataT')
 
 
 def get_annotated_metadata(
-    model: Any,
+    model: TypeForm[Any],
     metadata_type: type[_MetadataT],
     *,
     model_meta: tuple[Any, ...] | None = None,

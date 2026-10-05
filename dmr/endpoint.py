@@ -6,7 +6,6 @@ from functools import wraps
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from django.http import HttpResponse, HttpResponseBase
-from typing_extensions import Sentinel
 
 from dmr.exceptions import (
     DataRenderingError,
@@ -16,6 +15,7 @@ from dmr.exceptions import (
     ValidationError,
 )
 from dmr.internal.context import SerializerContext as SerializerContext
+from dmr.internal.empty import EMPTY
 from dmr.internal.endpoint import Extras as Extras
 from dmr.internal.endpoint import ModifyAnyCallable as ModifyAnyCallable
 from dmr.internal.endpoint import ModifyAsyncCallable as ModifyAsyncCallable
@@ -327,7 +327,7 @@ class Endpoint:  # noqa: WPS214
         # router tags are the last level:
         tags = (
             router_metadata.tags
-            if isinstance(self.metadata.tags, Sentinel)
+            if self.metadata.tags is EMPTY
             else self.metadata.tags
         )
 
@@ -345,7 +345,7 @@ class Endpoint:  # noqa: WPS214
             ),
             deprecated=(
                 router_metadata.deprecated or None
-                if isinstance(self.metadata.deprecated, Sentinel)
+                if self.metadata.deprecated is EMPTY
                 else self.metadata.deprecated or None
             ),
             security=context.generators.security_scheme(

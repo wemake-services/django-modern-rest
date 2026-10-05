@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, final
 
 from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
+from typing_extensions import TypeForm
 
 from dmr.errors import ErrorDetail
 from dmr.exceptions import (
@@ -38,7 +39,7 @@ class ContextField:
     .. versionadded:: 0.16.0
     """
 
-    annotation: Any
+    annotation: TypeForm[Any]
     """Type annotation to parse the field into."""
 
     default: Any = EMPTY
@@ -87,7 +88,7 @@ class ContextModel:
     .. versionadded:: 0.16.0
     """
 
-    model: Any
+    model: TypeForm[Any]
     """Any type that :meth:`BaseSerializer.from_python` can parse into."""
 
     to_kwargs: Callable[[Any], dict[str, Any]] | None = None
@@ -130,7 +131,7 @@ class BaseSchemaGenerator:
     @abc.abstractmethod
     def get_schema(
         cls,
-        model: Any,
+        model: TypeForm[Any],
         ref_template: str,
         *,
         used_for_response: bool = False,
@@ -152,7 +153,7 @@ class BaseSchemaGenerator:
 
     @classmethod
     @abc.abstractmethod
-    def schema_name(cls, model: Any) -> str | None:
+    def schema_name(cls, model: TypeForm[Any]) -> str | None:
         """
         Return a schema name for a model, if it exists.
 
@@ -229,7 +230,7 @@ class BaseSerializer:  # noqa: WPS214
         *,
         parser: Parser,
         request: HttpRequest,
-        model: Any,
+        model: TypeForm[Any],
     ) -> Any:
         """Convert json bytestring to structured data."""
         raise NotImplementedError
@@ -259,7 +260,7 @@ class BaseSerializer:  # noqa: WPS214
     def from_python(
         cls,
         unstructured: Any,
-        model: Any,
+        model: TypeForm[Any],
         *,
         strict: bool | None,
         extra_namespace: Mapping[str, Any] | None = None,

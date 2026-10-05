@@ -42,6 +42,7 @@ def test_dataclass_with_defaults() -> None:
         },
     )
 
+    assert isinstance(context_model.model, type)
     assert dataclasses.is_dataclass(context_model.model)
     assert [
         field.name for field in dataclasses.fields(context_model.model)
