@@ -105,7 +105,11 @@ each one has a `Sync` and an `Async` version:
 | Django session | `dmr.security.django_session.concrete_views` | `DjangoSession*` |
 
 `as_view` requires `serializer=` and passes other keyword arguments
-to Django as `initkwargs`, so settings like `jwt_expiration=` need no subclass either.
+to Django as `initkwargs`, so settings that are read at request time
+need no subclass either, like `jwt_expiration=` of the body controllers.
+The cookie controllers also describe their cookies with the cookie settings,
+`jwt_expiration`, and `jwt_refresh_expiration`, so these have to be set
+on the class there, see the class-only attributes below.
 Two settings are typed keyword arguments of `as_view`:
 
 - `token_cls=` on the opaque token controllers,
@@ -158,9 +162,11 @@ router = Router(
 urlpatterns = [router.to_urlpatterns(namespace='api')]
 ```
 
-`as_view` only sets instance attributes, while `throttling`, `auth`,
-`responses`, and other endpoint metadata are read from the class.
-Passing them to `as_view` is silently ignored, the endpoint stays unthrottled.
+`throttling`, `auth`, `responses`, `response_status_code`,
+and other endpoint metadata are only read from the class,
+they are listed in `Controller.class_only_attributes`.
+Since `0.17.0` `as_view` raises `EndpointMetadataError` for them,
+older versions silently ignore them, so the endpoint stays unthrottled.
 Concrete views use `Settings.throttling` from `DMR_SETTINGS`,
 like every controller without its own `throttling`.
 When the login endpoint needs its own throttle, it really differs
@@ -348,7 +354,7 @@ class LoginController(Controller[PydanticSerializer]):
         return 'logged in'
 ```
 
-**Limitations:** `runs_before_auth=True` is the default for `RemoteAddr`, so you only need to be explicit when switching it off for non-auth endpoints. Ready-to-use `concrete_views` ignore `throttling=` passed to `as_view`, see [Route `concrete_views` instead of writing auth controllers that change nothing](#route-concrete_views-instead-of-writing-auth-controllers-that-change-nothing).
+**Limitations:** `runs_before_auth=True` is the default for `RemoteAddr`, so you only need to be explicit when switching it off for non-auth endpoints. Ready-to-use `concrete_views` can't take `throttling=` in `as_view`, see [Route `concrete_views` instead of writing auth controllers that change nothing](#route-concrete_views-instead-of-writing-auth-controllers-that-change-nothing).
 
 Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/throttling.html
 

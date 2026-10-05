@@ -59,6 +59,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 #### Agent skills
 
 - Suggest `concrete_views` instead of `views` by default in `dmr` skill, #1670
+- Mention that `as_view` rejects class-only attributes in `dmr` skill, #1678
 
 
 ## 0.16.0 (2026-10-01)
