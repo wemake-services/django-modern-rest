@@ -66,7 +66,6 @@ async def test_async_aware_decorator(
 
 @pytest.mark.asyncio
 async def test_async_aware_decorator_response(
-    *,
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that Django's async decorators can answer on their own."""
@@ -120,7 +119,6 @@ class _AsyncPlainController(Controller[PydanticSerializer]):
 
 @pytest.mark.asyncio
 async def test_plain_middleware_function(
-    *,
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that plain middleware functions still wrap async controllers."""
@@ -136,7 +134,6 @@ async def test_plain_middleware_function(
 
 @pytest.mark.asyncio
 async def test_plain_middleware_function_response(
-    *,
     dmr_async_rf: DMRAsyncRequestFactory,
 ) -> None:
     """Ensures that plain middleware functions can answer on their own."""
