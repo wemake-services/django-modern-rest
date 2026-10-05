@@ -60,11 +60,6 @@ class DjangoSessionSyncController(
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
 
-    # It is passed to `@modify` when the class is created:
-    class_only_attributes = Controller.class_only_attributes | {
-        'response_status_code',
-    }
-
     @classmethod
     def modify_spec(cls) -> ModifyAnyCallable:
         """Lazy endpoint spec."""
@@ -148,11 +143,6 @@ class DjangoSessionAsyncController(
     """
 
     response_status_code: ClassVar[HTTPStatus] = HTTPStatus.OK
-
-    # It is passed to `@modify` when the class is created:
-    class_only_attributes = Controller.class_only_attributes | {
-        'response_status_code',
-    }
 
     @classmethod
     def modify_spec(cls) -> ModifyAnyCallable:

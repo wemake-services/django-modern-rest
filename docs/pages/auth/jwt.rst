@@ -200,13 +200,6 @@ and return new tokens as :class:`~dmr.security.jwt.views.ObtainTokensResponse`.
 as typed keyword arguments and passes everything else
 to django as usual, see
 :meth:`~dmr.security.jwt.concrete_views.ObtainTokensSyncController.as_view`.
-Settings like ``jwt_expiration`` can be passed this way.
-Attributes that are only read from the class, like ``throttling``
-or ``response_status_code``, raise an error there,
-see :attr:`~dmr.controller.Controller.class_only_attributes`.
-So do the cookie settings of the cookie controllers,
-including ``jwt_expiration`` and ``jwt_refresh_expiration``,
-because the cookies are described with them.
 
 They all set ``auth = None``: they are the very endpoints
 that check credentials, so auth from the settings

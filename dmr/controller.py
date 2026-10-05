@@ -213,11 +213,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             or :func:`~dmr.endpoint.validate` for an operation.
         ignore_from_spec: If set to ``True``, all endpoints from this controller
             would not be added to the final OpenAPI spec.
-        class_only_attributes: Names of attributes that are only read
-            from the controller class, when it is created or routed.
-            :meth:`as_view` rejects them, because Django would set them
-            on the instance, where nothing reads them.
-            Subclasses with their own attributes like that should extend it.
         request: Current :class:`~django.http.HttpRequest` instance.
         args: Path positional parameters of the request.
         kwargs: Path named parameters of the request.
@@ -229,9 +224,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         and ``x_extensions``.
         ``servers`` is now resolved per endpoint
         and dumped on operations, not on the path item.
-
-    .. versionchanged:: 0.17.0
-        Added ``class_only_attributes``.
 
     """
 
@@ -293,48 +285,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
     x_extensions: ClassVar[Mapping[str, Any] | None] = None
     ignore_from_spec: ClassVar[bool] = False
 
-    class_only_attributes: ClassVar[frozenset[str]] = frozenset((
-        'controller_validator_cls',
-        'settings_validator_cls',
-        'api_endpoints',
-        'csrf_exempt',
-        'login_required',
-        'serializer',
-        'endpoint_cls',
-        'no_validate_http_spec',
-        'validate_responses',
-        'exclude_validate_responses',
-        'semantic_schema',
-        'semantic_responses',
-        'exclude_semantic_responses',
-        'semantic_auth',
-        'exclude_semantic_auth',
-        'responses',
-        'allowed_http_methods',
-        'parsers',
-        'renderers',
-        'validate_negotiation',
-        'auth',
-        'throttling',
-        'error_model',
-        'is_abstract',
-        'is_async',
-        'streaming',
-        'extras',
-        'annotations_context',
-        'summary',
-        'description',
-        'tags',
-        'servers',
-        'security',
-        'deprecated',
-        'external_docs',
-        'callbacks',
-        'x_extensions',
-        'ignore_from_spec',
-        'class_only_attributes',
-    ))
-
     # Public instance API:
     kwargs: dict[str, Any]
 
@@ -388,11 +338,14 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         Users should make use of authentication in ``django-modern-rest``.
         See :doc:`/pages/auth/common` for more details.
 
+        All *initkwargs* are passed to the next ``as_view`` in the MRO as is.
+        So mixins can accept their own keyword arguments, even the ones
+        named like class-level attributes of the controller,
+        see :ref:`as-view-arguments`.
+
         Raises:
             EndpointMetadataError: When called on an abstract controller,
                 because it has nothing to serve.
-                Or when *initkwargs* contain ``class_only_attributes``,
-                because the view would ignore them.
 
         .. versionchanged:: 0.16.0
 
@@ -404,13 +357,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
             in order to exempt controllers from
             Django's ``LoginRequiredMiddleware``.
 
-        .. versionchanged:: 0.17.0
-
-            *initkwargs* with ``class_only_attributes``, like ``auth=``
-            or ``throttling=``, now raise
-            :class:`~dmr.exceptions.EndpointMetadataError`
-            instead of being silently ignored.
-
         """
         if cls.is_abstract:
             raise EndpointMetadataError(
@@ -419,16 +365,6 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
                 'an exact serializer type or any endpoints. '
                 'Use a subclass with a real serializer '
                 'and at least one endpoint',
-            )
-        class_only = cls.class_only_attributes.intersection(initkwargs)
-        if class_only:
-            raise EndpointMetadataError(
-                f'{cls!r} got {sorted(class_only)!r} in `as_view()`, '
-                'but these attributes are only read from the class, '
-                'so passing them to `as_view()` has no effect. '
-                'Set them as class attributes instead: on a subclass, '
-                'or, for a final controller, on a subclass '
-                'of the reusable controller it is built on',
             )
         # We don't use `csrf_exempt()` decorator here, because it is slow:
         view = super().as_view(**initkwargs)

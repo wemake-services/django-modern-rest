@@ -122,8 +122,7 @@ path(
 )
 ```
 
-`as_view` rejects `throttling=`, `auth=`, and other class-only attributes
-since `0.17.0`, older versions silently ignore them. Concrete views
+`as_view` silently ignores `throttling=` and `auth=`. Concrete views
 use `Settings.throttling`, a login-specific throttle needs a `views` subclass.
 
 Test with `dmr_rf` (`DMRRequestFactory`) for unit tests and `dmr_client`
@@ -163,9 +162,8 @@ Flag these when reviewing `dmr` code:
   where its `concrete_views` counterpart does the same.
 - Cookie `concrete_views` without `jwt_refresh_cookie_path`,
   so the refresh token is sent with every request.
-- `throttling=`, `auth=`, `responses=`, or other class-only attributes
-  passed to `as_view()`, including `jwt_expiration=` of cookie controllers:
-  they raise since `0.17.0` and are silently ignored before it.
+- `throttling=`, `auth=`, or `responses=` passed to `as_view()`,
+  they are silently ignored there.
 - `RedirectTo(next_url)` with a user-provided URL and no
   `url_has_allowed_host_and_scheme` check.
 - `django.urls.path` where `dmr.routing.path` is a drop-in replacement.

@@ -54,11 +54,6 @@ class BaseTokenController(
 ):
     """Base for every controller that issues jwt tokens."""
 
-    # It is passed to `@modify` when the class is created:
-    class_only_attributes = Controller.class_only_attributes | {
-        'response_status_code',
-    }
-
     @sensitive_variables()
     def create_jwt_token(  # noqa: WPS211
         self,

@@ -506,6 +506,31 @@ But, user is free to modify any parts of the spec, if needed.
   so attribute access on it is not checked by type checkers.
 
 
+.. _as-view-arguments:
+
+Arguments of ``as_view``
+------------------------
+
+:meth:`Controller.as_view <dmr.controller.Controller.as_view>`
+passes all keyword arguments to the next ``as_view`` in the MRO as is.
+So a mixin between the controller
+and :class:`~django.views.generic.base.View` can accept its own arguments,
+even the ones named like class-level attributes of the controller,
+like ``throttling``:
+
+.. literalinclude:: /examples/reusable_code/as_view_mixin.py
+  :caption: urls.py
+  :linenos:
+  :language: python
+
+Endpoint metadata, like ``throttling``, ``auth``, or ``responses``,
+is read when the controller class is created. Arguments that no mixin
+accepts are set on the view instance by Django, where they change nothing.
+That's why the mixin above applies ``throttling`` to a new subclass.
+Ready-to-use ``concrete_views`` take their ``serializer``,
+``token_cls``, and ``jwt_refresh_cookie_path`` arguments the same way.
+
+
 Where is it actually helpful in practice?
 -----------------------------------------
 

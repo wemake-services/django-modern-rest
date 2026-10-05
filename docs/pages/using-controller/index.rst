@@ -197,9 +197,6 @@ If you need granular control, you can change anything.
   to customize how this controller resolves its annotations
 - :attr:`~dmr.controller.Controller.endpoint_cls`
   to customize how endpoints are created
-- :attr:`~dmr.controller.Controller.class_only_attributes`
-  to list your own class-level attributes that are only read
-  from the class, so ``as_view()`` rejects them instead of ignoring them
 
 You can also customize :class:`~dmr.endpoint.Endpoint`
 to change how API methods are executed:
