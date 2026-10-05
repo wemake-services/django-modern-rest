@@ -77,25 +77,6 @@ class _SyncController(Controller[PydanticSerializer]):
         return 'inside'
 
 
-@final
-@_middleware_json
-class _AsyncController(Controller[PydanticSerializer]):
-    responses = _middleware_json.responses
-
-    async def get(self) -> str:
-        return 'inside'
-
-
-@final
-@_middleware_json
-class _NoValidationController(Controller[PydanticSerializer]):
-    responses = _middleware_json.responses
-    validate_responses = False
-
-    def get(self) -> str:
-        raise NotImplementedError
-
-
 def test_invalid_middleware_response(*, dmr_rf: DMRRequestFactory) -> None:
     """Ensures that middleware responses are validated."""
     request = dmr_rf.get('/whatever/', headers={_MODE_HEADER: 'invalid'})
@@ -104,37 +85,9 @@ def test_invalid_middleware_response(*, dmr_rf: DMRRequestFactory) -> None:
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert dict(response.headers) == snapshot({
+    assert response.headers == {
         'Content-Type': 'application/json',
-    })
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': (
-                    "Response content type 'text/plain' "
-                    'is not listed as a possible to be returned '
-                    "['application/json']"
-                ),
-                'type': 'value_error',
-            },
-        ],
-    })
-
-
-@pytest.mark.asyncio
-async def test_invalid_middleware_response_async(
-    dmr_async_rf: DMRAsyncRequestFactory,
-) -> None:
-    """Ensures that middleware responses are validated for async views."""
-    request = dmr_async_rf.get('/whatever/', headers={_MODE_HEADER: 'invalid'})
-
-    response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-    assert dict(response.headers) == snapshot({
-        'Content-Type': 'application/json',
-    })
+    }
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
@@ -170,6 +123,74 @@ def test_undocumented_middleware_status(dmr_rf: DMRRequestFactory) -> None:
     })
 
 
+def test_valid_middleware_response(*, dmr_rf: DMRRequestFactory) -> None:
+    """Ensures that converted middleware responses pass validation."""
+    request = dmr_rf.get('/whatever/', headers={_MODE_HEADER: 'valid'})
+
+    response = _SyncController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.IM_A_TEAPOT
+    assert response.headers == {
+        'Content-Type': 'application/json',
+    }
+    assert json.loads(response.content) == snapshot({
+        'detail': [{'msg': 'Teapot'}],
+    })
+
+
+def test_view_response_is_validated_once(*, dmr_rf: DMRRequestFactory) -> None:
+    """Ensures that view responses are not validated again."""
+    request = dmr_rf.get('/whatever/')
+
+    response = _SyncController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK
+    assert response.headers == {
+        'Content-Type': 'application/json',
+        'X-Extra': 'added',
+    }
+    assert json.loads(response.content) == snapshot('inside')
+
+
+@final
+@_middleware_json
+class _AsyncController(Controller[PydanticSerializer]):
+    responses = _middleware_json.responses
+
+    async def get(self) -> str:
+        return 'inside'
+
+
+@pytest.mark.asyncio
+async def test_invalid_middleware_response_async(
+    dmr_async_rf: DMRAsyncRequestFactory,
+) -> None:
+    """Ensures that middleware responses are validated for async views."""
+    request = dmr_async_rf.get('/whatever/', headers={_MODE_HEADER: 'invalid'})
+
+    response = await dmr_async_rf.wrap(_AsyncController.as_view()(request))
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.headers == {
+        'Content-Type': 'application/json',
+    }
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    "Response content type 'text/plain' "
+                    'is not listed as a possible to be returned '
+                    "['application/json']"
+                ),
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
 @pytest.mark.asyncio
 async def test_undocumented_middleware_status_async(
     *,
@@ -198,22 +219,6 @@ async def test_undocumented_middleware_status_async(
     })
 
 
-def test_valid_middleware_response(*, dmr_rf: DMRRequestFactory) -> None:
-    """Ensures that converted middleware responses pass validation."""
-    request = dmr_rf.get('/whatever/', headers={_MODE_HEADER: 'valid'})
-
-    response = _SyncController.as_view()(request)
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.IM_A_TEAPOT
-    assert dict(response.headers) == snapshot({
-        'Content-Type': 'application/json',
-    })
-    assert json.loads(response.content) == snapshot({
-        'detail': [{'msg': 'Teapot'}],
-    })
-
-
 @pytest.mark.asyncio
 async def test_valid_middleware_response_async(
     *,
@@ -226,27 +231,12 @@ async def test_valid_middleware_response_async(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.IM_A_TEAPOT
-    assert dict(response.headers) == snapshot({
+    assert response.headers == {
         'Content-Type': 'application/json',
-    })
+    }
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'Teapot'}],
     })
-
-
-def test_view_response_is_validated_once(*, dmr_rf: DMRRequestFactory) -> None:
-    """Ensures that view responses are not validated again."""
-    request = dmr_rf.get('/whatever/')
-
-    response = _SyncController.as_view()(request)
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.OK
-    assert dict(response.headers) == snapshot({
-        'Content-Type': 'application/json',
-        'X-Extra': 'added',
-    })
-    assert json.loads(response.content) == snapshot('inside')
 
 
 @pytest.mark.asyncio
@@ -261,11 +251,21 @@ async def test_view_response_is_validated_once_async(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK
-    assert dict(response.headers) == snapshot({
+    assert response.headers == {
         'Content-Type': 'application/json',
         'X-Extra': 'added',
-    })
+    }
     assert json.loads(response.content) == snapshot('inside')
+
+
+@final
+@_middleware_json
+class _NoValidationController(Controller[PydanticSerializer]):
+    responses = _middleware_json.responses
+    validate_responses = False
+
+    def get(self) -> str:
+        raise NotImplementedError
 
 
 def test_middleware_response_without_validation(
@@ -279,5 +279,5 @@ def test_middleware_response_without_validation(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.IM_A_TEAPOT
-    assert dict(response.headers) == snapshot({'Content-Type': 'text/plain'})
+    assert response.headers == {'Content-Type': 'text/plain'}
     assert response.content == b'not json'
