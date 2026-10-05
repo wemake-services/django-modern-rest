@@ -2,7 +2,7 @@ import datetime as dt
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Final
 
-from typing_extensions import override
+from typing_extensions import TypeForm, override
 
 from dmr.internal.types import EMPTY
 from dmr.openapi.objects import Example, Schema
@@ -38,7 +38,7 @@ except ImportError:  # pragma: no cover
         """Does nothing, since polyfactory is not installed."""
 
     def generate_example(
-        annotation: Any,
+        annotation: TypeForm[Any] | EMPTY,
         serializer: type['BaseSerializer'],
     ) -> Any | EMPTY:
         """Does nothing, since polyfactory is not installed."""
@@ -121,7 +121,7 @@ else:
             _ExampleFactory.seed_random(seed)
 
     def generate_example(
-        annotation: Any,
+        annotation: TypeForm[Any] | EMPTY,
         serializer: type['BaseSerializer'],
     ) -> Any | EMPTY:
         """

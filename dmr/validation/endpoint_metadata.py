@@ -21,7 +21,7 @@ from typing import (
 )
 
 from django.http import HttpResponseBase
-from typing_extensions import ParamSpec
+from typing_extensions import ParamSpec, TypeForm
 
 from dmr.components import BodyComponent, ComponentParserSpec
 from dmr.cookies import CookieSpec, NewCookie
@@ -539,7 +539,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         self,
         method: str,
         allowed_http_methods: frozenset[str],
-        return_annotation: Any,
+        return_annotation: TypeForm[Any],
     ) -> EndpointMetadata:
         if isinstance(self.payload, ValidateEndpointPayload):
             return self._from_validate(
@@ -619,7 +619,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         self,
         payload: ModifyEndpointPayload,
         method: str,
-        return_annotation: Any,
+        return_annotation: TypeForm[Any],
         *,
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
@@ -691,7 +691,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
     def _from_raw_data(  # noqa: WPS210
         self,
         method: str,
-        return_annotation: Any,
+        return_annotation: TypeForm[Any],
         *,
         allowed_http_methods: frozenset[str],
     ) -> EndpointMetadata:
@@ -1249,7 +1249,7 @@ class EndpointMetadataBuilder:  # noqa: WPS214
 
     def _validate_return_annotation(
         self,
-        return_annotation: Any,
+        return_annotation: TypeForm[Any],
     ) -> None:
         if is_safe_subclass(return_annotation, HttpResponseBase):
             if isinstance(self.payload, ModifyEndpointPayload):
@@ -1373,7 +1373,9 @@ class EndpointMetadataValidator:  # noqa: WPS214
         # to its real value.
         # In case it is not a type var, just return whatever it is.
         if isinstance(response.return_type, TypeVar):
-            return dataclasses.replace(
+            # Type vars are not type forms for type checkers,
+            # but generic controllers have them in runtime until resolved here:
+            return dataclasses.replace(  # type: ignore[unreachable]
                 response,
                 return_type=infer_annotation(
                     response.return_type,

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Final, final
 from django.http.request import HttpRequest, MediaType
 from django.http.response import HttpResponseBase
 from django.utils.translation import gettext_lazy as _
+from typing_extensions import TypeForm
 
 from dmr.compiled import accepted_type
 from dmr.exceptions import NotAcceptableError, ResponseSchemaError
@@ -42,7 +43,7 @@ class ConditionalType:
 
 
 def get_conditional_types(
-    model: Any,
+    model: TypeForm[Any],
     model_meta: tuple[Any, ...],
 ) -> Mapping[str, Any] | None:
     """

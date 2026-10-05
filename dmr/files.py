@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any
 
-from typing_extensions import override
+from typing_extensions import TypeForm, override
 
 from dmr.headers import HeaderSpec
 from dmr.metadata import EndpointMetadata, ResponseSpec, get_annotated_metadata
@@ -56,7 +56,7 @@ class FileBodyLike:
     def media_type(  # noqa: WPS211
         cls,
         schema: Schema,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
@@ -92,7 +92,7 @@ class FileBody(FileBodyLike):
     def media_type(  # noqa: WPS211
         cls,
         schema: Schema,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
@@ -188,7 +188,7 @@ class FileBody(FileBodyLike):
     @classmethod
     def _encoding(
         cls,
-        model: Any,
+        model: TypeForm[Any],
         schema: Schema,
     ) -> dict[str, Encoding] | None:
         """Returns the openapi encoding for the defined media type."""

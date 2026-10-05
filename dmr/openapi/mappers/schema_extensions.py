@@ -5,6 +5,8 @@ import functools
 from types import UnionType
 from typing import Any, Final, Union, get_args, get_origin, get_type_hints
 
+from typing_extensions import TypeForm
+
 from dmr.openapi.mappers.schema_normalization import dump_field
 
 #: Name of the field that holds specification extensions on OpenAPI objects.
@@ -15,7 +17,7 @@ _EXTENSIONS_KEY: Final = dump_field(EXTENSIONS_FIELD, None)
 _UNION_ORIGINS: Final = (Union, UnionType)
 
 
-def nest_extensions(raw: Any, annotation: Any) -> Any:
+def nest_extensions(raw: Any, annotation: TypeForm[Any] | None) -> Any:
     """
     Move ``x-`` keys of *raw* into ``x_extensions`` of the matching object.
 
@@ -82,13 +84,16 @@ def _field_hints(model: Any) -> dict[str, Any]:
     }
 
 
-def _union_members(annotation: Any) -> tuple[Any, ...]:
+def _union_members(annotation: TypeForm[Any]) -> tuple[TypeForm[Any], ...]:
     if get_origin(annotation) in _UNION_ORIGINS:
         return get_args(annotation)
     return (annotation,)
 
 
-def _pick_dataclass(annotation: Any, raw: dict[str, Any]) -> type[Any] | None:
+def _pick_dataclass(
+    annotation: TypeForm[Any],
+    raw: dict[str, Any],
+) -> type[Any] | None:
     """Choose which dataclass of a union describes *raw*, if any."""
     candidates = [
         member
@@ -105,9 +110,15 @@ def _pick_dataclass(annotation: Any, raw: dict[str, Any]) -> type[Any] | None:
     return others[0] if others else None
 
 
-def _generic_arg(annotation: Any, origin: type[Any], *, index: int) -> Any:
+def _generic_arg(
+    annotation: TypeForm[Any],
+    origin: type[Any],
+    *,
+    index: int,
+) -> TypeForm[Any] | None:
     """Find the type argument of a ``list`` or ``dict`` member of a union."""
     for member in _union_members(annotation):
         if get_origin(member) is origin:
-            return get_args(member)[index]
+            type_args: tuple[TypeForm[Any], ...] = get_args(member)
+            return type_args[index]
     return None

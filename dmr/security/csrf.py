@@ -8,7 +8,7 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
-from typing_extensions import override
+from typing_extensions import TypeForm, override
 
 from dmr.errors import ErrorModel, format_error
 from dmr.internal.csrf import csrf_header_name, ensure_csrf
@@ -290,7 +290,7 @@ class CSRFSemanticSchemaProvider(
     """
 
     # Instance API:
-    error_model: Any = ErrorModel
+    error_model: TypeForm[Any] = ErrorModel
     status_code: HTTPStatus | None = None
     description: StrOrPromise | None = None
     security_scheme_name: str = CSRF_SCHEME_NAME
@@ -379,7 +379,7 @@ class CSRFSemanticSchemaProvider(
 
 def csrf_response_spec(
     *,
-    return_type: Any,
+    return_type: TypeForm[Any],
     status_code: HTTPStatus | None = None,
     description: StrOrPromise | None = None,
 ) -> ResponseSpec:
