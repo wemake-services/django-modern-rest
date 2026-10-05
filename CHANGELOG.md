@@ -28,6 +28,11 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ## 0.17.0 WIP
 
+### Breaking changes
+
+- Replaced `Sentinel` class in all typing annotations to be `EMPTY`
+  sentinel value, since all type-checkers support this now,
+
 ### Misc
 
 #### Agent skills
