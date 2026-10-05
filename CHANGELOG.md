@@ -28,14 +28,6 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ## 0.17.0 WIP
 
-### Misc
-
-#### Docs
-
-- Middleware docs and the `wrap_middleware` docstring now show
-  Django's `condition` decorator instead of wrapping `csrf_protect`,
-  and point to `csrf_exempt = False` for CSRF protection, #1681
-
 ### Breaking changes
 
 - Replaced `Sentinel` class in all typing annotations to be `EMPTY`

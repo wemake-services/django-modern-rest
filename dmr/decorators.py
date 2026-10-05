@@ -40,35 +40,10 @@ def wrap_middleware(
     Returns:
         A function that takes a converter and returns a class decorator
 
-    .. code:: python
-
-        >>> from django.views.decorators.http import condition
-        >>> from django.http import HttpRequest, HttpResponse
-        >>> from http import HTTPStatus
-        >>> from dmr import Controller, HeaderSpec, ResponseSpec
-        >>> from dmr.plugins.pydantic import PydanticSerializer
-
-        >>> def catalog_etag(request: HttpRequest, **kwargs: object) -> str:
-        ...     return '"catalog-42"'
-
-        >>> @wrap_middleware(
-        ...     condition(etag_func=catalog_etag),
-        ...     ResponseSpec(
-        ...         return_type=None,
-        ...         status_code=HTTPStatus.NOT_MODIFIED,
-        ...         headers={'ETag': HeaderSpec()},
-        ...     ),
-        ... )
-        ... def catalog_etag_json(response: HttpResponse) -> HttpResponse:
-        ...     response['Content-Type'] = 'application/json'
-        ...     return response
-
-        >>> @catalog_etag_json
-        ... class CatalogController(Controller[PydanticSerializer]):
-        ...     responses = catalog_etag_json.responses
-        ...
-        ...     def get(self) -> list[str]:
-        ...         return ['book', 'pen']
+    .. literalinclude:: /examples/middleware/condition_etag.py
+      :language: python
+      :linenos:
+      :no-run:
 
     """
 

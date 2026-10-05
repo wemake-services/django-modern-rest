@@ -54,3 +54,4 @@ class AsyncController(Controller[PydanticFastSerializer]):
 
 
 # run: {"controller": "AsyncController", "method": "get", "url": "/api/async/"}  # noqa: ERA001
+# openapi: {"controller": "AsyncController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
