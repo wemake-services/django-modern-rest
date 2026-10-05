@@ -5,7 +5,7 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Self, TypeVar
 
 from django.http import HttpResponseBase
-from typing_extensions import override
+from typing_extensions import TypeForm, override
 
 from dmr.exceptions import EndpointMetadataError, ValidationError
 from dmr.metadata import EndpointMetadata, ResponseModification
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 def validate_event_type(
     event: Any,
-    model: Any,
+    model: TypeForm[Any],
     serializer: type['BaseSerializer'],
 ) -> Any:
     """Validate that the event type matches the model."""
@@ -40,7 +40,7 @@ def validate_event_type(
 _EventT = TypeVar('_EventT')
 
 _ValidationPipeline = Callable[
-    [_EventT, Any, type['BaseSerializer']],
+    [_EventT, TypeForm[Any], type['BaseSerializer']],
     _EventT,
 ]
 
@@ -67,7 +67,7 @@ class StreamingValidator:
 
     def __init__(
         self,
-        event_model: Any,
+        event_model: TypeForm[Any],
         serializer: type['BaseSerializer'],
         *,
         validate_events: bool,
@@ -153,7 +153,7 @@ def _resolve_event_model(
     status_code: HTTPStatus,
     *,
     validate_events: bool,
-) -> Any:
+) -> TypeForm[Any]:
     try:
         return metadata.responses[status_code].return_type
     except (KeyError, ValueError):

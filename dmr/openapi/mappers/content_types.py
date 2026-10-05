@@ -1,10 +1,10 @@
 from contextlib import suppress
 from typing import Any, Literal, get_origin
 
-from typing_extensions import get_type_hints
+from typing_extensions import TypeForm, get_type_hints
 
 
-def content_types(model: Any, property_name: str) -> str | None:
+def content_types(model: TypeForm[Any], property_name: str) -> str | None:
     """
     Get content types string from a model definition.
 
