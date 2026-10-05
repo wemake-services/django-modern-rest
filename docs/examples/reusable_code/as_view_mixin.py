@@ -1,40 +1,43 @@
-from collections.abc import Callable, Sequence
-from typing import Any
+import logging
+from typing import Any, Final
 
-from django.http import HttpResponseBase
+from django.http import HttpRequest, HttpResponseBase
 from django.views import View
 from typing_extensions import override
 
 from dmr import Controller
+from dmr.openapi import build_schema
+from dmr.openapi.views import OpenAPIJsonView
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import Router, path
-from dmr.throttling import Rate, SyncThrottle
+
+_LOGGER: Final = logging.getLogger(__name__)
 
 
-class ThrottlingMixin(View):
-    """Applies ``throttling`` passed to ``as_view``."""
+class LoggingMixin(View):
+    """Logs the status code of every response."""
+
+    log_format: str = '{method} {path}: {status_code}'
 
     @override
-    @classmethod
-    def as_view(
-        cls,
-        *,
-        throttling: Sequence[SyncThrottle] | None = None,
-        **initkwargs: Any,
-    ) -> Callable[..., HttpResponseBase]:
-        if throttling is None:
-            return super().as_view(**initkwargs)
-        # `throttling` is read when a controller class is created,
-        # so we apply it to a new subclass:
-        throttled_cls: type[ThrottlingMixin] = type(
-            cls.__name__,
-            (cls,),
-            {'throttling': throttling, '__module__': cls.__module__},
+    def dispatch(
+        self,
+        request: HttpRequest,
+        *args: Any,
+        **kwargs: Any,
+    ) -> HttpResponseBase:
+        response = super().dispatch(request, *args, **kwargs)
+        _LOGGER.info(
+            self.log_format.format(
+                method=request.method,
+                path=request.path,
+                status_code=response.status_code,
+            ),
         )
-        return throttled_cls.as_view(**initkwargs)
+        return response
 
 
-class CatalogController(Controller[PydanticFastSerializer], ThrottlingMixin):
+class CatalogController(LoggingMixin, Controller[PydanticFastSerializer]):
     def get(self) -> list[str]:
         return ['book', 'pen']
 
@@ -44,15 +47,20 @@ router = Router(
     [
         path(
             'catalog/',
-            CatalogController.as_view(
-                throttling=[SyncThrottle(1, Rate.minute)],
-            ),
+            CatalogController.as_view(log_format='Catalog: {status_code}'),
             name='catalog',
         ),
     ],
 )
 
-urlpatterns = [router.to_urlpatterns(namespace='api')]
+urlpatterns = [
+    router.to_urlpatterns(namespace='api'),
+    path(
+        'docs/openapi.json/',
+        OpenAPIJsonView.as_view(build_schema(router)),
+        name='openapi_json',
+    ),
+]
 
 # run: {"method": "get", "url": "/api/catalog/", "use_urlpatterns": true}  # noqa: ERA001
-# run: {"method": "get", "url": "/api/catalog/", "use_urlpatterns": true, "curl_args": ["-D", "-"], "assert-error-text": "Too many requests", "fail-with-body": false}  # noqa: ERA001, E501
+# openapi: {"openapi_url": "/docs/openapi.json/", "use_urlpatterns": true}  # noqa: ERA001

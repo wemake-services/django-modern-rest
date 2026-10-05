@@ -524,14 +524,18 @@ Such arguments are not rejected on purpose:
 passes all of them to the next ``as_view`` in the MRO as is,
 because other base classes of your controller can take any arguments,
 even the ones named like class-level attributes of the controller.
-For example, a mixin between the controller
-and :class:`~django.views.generic.base.View`
-can take ``throttling`` and apply it to a new subclass:
+That's what ``as_view`` arguments are for: values that the view
+instance reads at request time. For example, a logging mixin
+can take the format of its message:
 
 .. literalinclude:: /examples/reusable_code/as_view_mixin.py
   :caption: urls.py
   :linenos:
   :language: python
+
+The mixin goes before the controller,
+because :meth:`Controller.dispatch <dmr.controller.Controller.dispatch>`
+calls the endpoint directly, not the ``dispatch`` of the next class.
 
 
 Where is it actually helpful in practice?
