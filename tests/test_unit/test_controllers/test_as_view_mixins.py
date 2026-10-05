@@ -59,7 +59,7 @@ def test_controller_mro() -> None:
     assert mro.index(Controller) < mro.index(_ThrottlingMixin) < mro.index(View)
 
 
-def test_as_view_passes_arguments(*, dmr_rf: DMRRequestFactory) -> None:
+def test_as_view_passes_arguments(dmr_rf: DMRRequestFactory) -> None:
     """Ensures that the controller passes ``as_view`` arguments to mixins."""
     view = _CatalogController.as_view(
         throttling=[
@@ -76,7 +76,7 @@ def test_as_view_passes_arguments(*, dmr_rf: DMRRequestFactory) -> None:
     assert statuses == [HTTPStatus.OK, HTTPStatus.TOO_MANY_REQUESTS]
 
 
-def test_as_view_without_arguments(*, dmr_rf: DMRRequestFactory) -> None:
+def test_as_view_without_arguments(dmr_rf: DMRRequestFactory) -> None:
     """Ensures that the controller works the same without the arguments."""
     view = _CatalogController.as_view()
 
@@ -96,7 +96,6 @@ class _PlainController(Controller[PydanticSerializer]):
 
 
 def test_class_level_attributes_not_supported(
-    *,
     dmr_rf: DMRRequestFactory,
 ) -> None:
     """Ensures that ``as_view`` arguments do not change endpoints."""
