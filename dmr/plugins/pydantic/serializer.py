@@ -16,7 +16,7 @@ import pydantic
 import pydantic_core
 from django.http import HttpRequest
 from pydantic.config import ExtraValues
-from typing_extensions import TypedDict, override
+from typing_extensions import TypedDict, TypeForm, override
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.errors import ErrorDetail, ErrorType
@@ -98,7 +98,7 @@ class PydanticEndpointOptimizer(BaseEndpointOptimizer):
         # Just build all `TypeAdapter` instances
         # during import time and cache them for later use in runtime.
         for response in metadata.responses.values():
-            _get_cached_type_adapter(response.return_type)
+            _get_cached_type_adapter(response.return_type)  # type: ignore[arg-type]
         # It is used in many places:
         _get_cached_type_adapter(Any)
 
@@ -189,7 +189,7 @@ class PydanticSerializer(BaseSerializer):
         *,
         parser: Parser,
         request: HttpRequest,
-        model: Any,
+        model: TypeForm[Any],
     ) -> Any:
         """Convert string or bytestring to simple python object."""
         return parser.parse(
@@ -206,7 +206,7 @@ class PydanticSerializer(BaseSerializer):
     def from_python(
         cls,
         unstructured: Any,
-        model: Any,
+        model: TypeForm[Any],
         *,
         strict: bool | None,
         extra_namespace: Mapping[str, Any] | None = None,
@@ -240,7 +240,7 @@ class PydanticSerializer(BaseSerializer):
         """
         # At this point `_get_cached_type_adapter(model)` was already called
         # during the optimizer stage, so it will be very fast to use in runtime.
-        adapter = _get_cached_type_adapter(model)
+        adapter = _get_cached_type_adapter(model)  # type: ignore[arg-type]
         if extra_namespace is not None:
             adapter.rebuild(_types_namespace=extra_namespace)
         return adapter.validate_python(
@@ -390,7 +390,7 @@ class PydanticFastSerializer(PydanticSerializer):
         *,
         parser: Parser,
         request: HttpRequest,
-        model: Any,
+        model: TypeForm[Any],
     ) -> Any:
         """
         Fast way to serializer pyndatic models into json bytestring.

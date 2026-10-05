@@ -6,8 +6,8 @@ from django.http import HttpRequest, HttpResponse, HttpResponseBase
 from django.utils.functional import classproperty
 from django.utils.translation import gettext_lazy as _
 from django.views import View
+from typing_extensions import TypeForm, override
 from typing_extensions import deprecated as typing_deprecated
-from typing_extensions import override
 
 from dmr import throttling as dmr_throttling
 from dmr.cookies import NewCookie
@@ -272,7 +272,7 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         | EMPTY
         | None
     ] = EMPTY
-    error_model: ClassVar[Any] = ErrorModel
+    error_model: ClassVar[TypeForm[Any]] = ErrorModel
     is_abstract: ClassVar[bool] = True
     is_async: ClassVar[bool | None] = None  # `None` means that nothing's found
     streaming: ClassVar[bool] = False
@@ -821,14 +821,15 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         if isinstance(serializer, TypeVar):
             return None  # This is a generic subclass of a controller.
         if (
-            not issubclass(serializer, BaseSerializer)
+            not isinstance(serializer, type)
+            or not issubclass(serializer, BaseSerializer)
             or serializer is BaseSerializer
         ):
             raise UnsolvableAnnotationsError(
                 f'Type arg {serializer} is not correct for {cls}, '
                 'it must be a BaseSerializer subclass',
             )
-        return serializer  # type: ignore[no-any-return]
+        return serializer  # type: ignore[return-value]
 
     @classmethod
     def _maybe_wrap(

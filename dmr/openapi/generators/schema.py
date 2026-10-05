@@ -1,6 +1,8 @@
 import dataclasses
 from typing import TYPE_CHECKING, Any, final
 
+from typing_extensions import TypeForm
+
 from dmr.exceptions import UnsolvableAnnotationsError
 from dmr.internal.types import EMPTY
 from dmr.openapi.mappers.example import (
@@ -38,7 +40,7 @@ class LoadedSchema:
     #: All components that :attr:`schema` might reference, by name.
     defs: dict[str, Schema]
     #: Annotation this schema was generated from.
-    annotation: Any
+    annotation: TypeForm[Any]
     #: Name of the component in :attr:`defs`
     #: that describes the annotation itself, if there's one.
     name: str | None
@@ -66,7 +68,7 @@ class SchemaGenerator:
 
     def __call__(
         self,
-        annotation: Any,
+        annotation: TypeForm[Any],
         serializer: type['BaseSerializer'],
         *,
         used_for_response: bool = False,
@@ -97,7 +99,7 @@ class SchemaGenerator:
 
     def load(
         self,
-        annotation: Any,
+        annotation: TypeForm[Any],
         serializer: type['BaseSerializer'],
         *,
         used_for_response: bool = False,
@@ -179,7 +181,7 @@ class SchemaGenerator:
 
     def _load(
         self,
-        annotation: Any,
+        annotation: TypeForm[Any],
         serializer: type['BaseSerializer'],
         used_for_response: bool,  # noqa: FBT001
     ) -> LoadedSchema:
@@ -226,7 +228,7 @@ class SchemaGenerator:
     def _maybe_generate_example(
         self,
         schema: Schema,
-        annotation: Any,
+        annotation: TypeForm[Any],
         serializer: type['BaseSerializer'],
     ) -> None:
         if schema.example is EMPTY and not schema.examples:  # pragma: no branch
@@ -237,7 +239,7 @@ class SchemaGenerator:
 
 
 def _get_raw_schema(
-    annotation: Any,
+    annotation: TypeForm[Any],
     serializer: type['BaseSerializer'],
     *,
     ref_template: str,
@@ -299,7 +301,7 @@ def _reference_name(
 def _find_component(
     component_name: str,
     loaded: tuple[LoadedSchema, ...],
-) -> tuple[Schema, Any] | None:
+) -> tuple[Schema, TypeForm[Any] | EMPTY] | None:
     """Find a component with its annotation, if it describes the annotation."""
     for loaded_schema in loaded:
         component = loaded_schema.defs.get(component_name)

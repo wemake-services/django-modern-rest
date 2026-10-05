@@ -13,6 +13,7 @@ from typing import (
 
 from typing_extensions import (
     Format,
+    TypeForm,
     TypeIs,
     get_original_bases,
     get_type_hints,
@@ -114,7 +115,7 @@ def safe_typevar(
 def infer_type_args(
     orig_cls: type[Any],
     given_type: type[Any],
-) -> tuple[Any, ...]:
+) -> tuple[TypeForm[Any] | TypeVar, ...]:
     """
     Return type args for the closest given type.
 
@@ -150,7 +151,7 @@ def infer_bases(
     given_type: type[Any],
     *,
     use_origin: bool = True,
-) -> list[Any]:
+) -> list[TypeForm[Any]]:
     """
     Infers ``__origin_bases__`` from the given type.
 
@@ -170,7 +171,10 @@ def infer_bases(
     ]
 
 
-def infer_annotation(annotation: Any, context: type[Any]) -> Any:
+def infer_annotation(
+    annotation: TypeForm[Any] | TypeVar,
+    context: type[Any],
+) -> TypeForm[Any]:
     """Infers annotation in the class definition context."""
     if not isinstance(annotation, TypeVar):
         return annotation  # It is already inferred
@@ -184,7 +188,7 @@ _TypeT = TypeVar('_TypeT')
 def is_safe_subclass(
     annotation: Any,
     base_class: type[_TypeT],
-) -> TypeIs[_TypeT]:
+) -> TypeIs[type[_TypeT]]:
     """Possibly unwraps subscribed class before checking for subclassing."""
     if annotation is None:
         annotation = type(None)
@@ -303,7 +307,7 @@ class TypeVarInference:
         self._to_infer = to_infer
         self._context = context
 
-    def __call__(self) -> dict[TypeVar, Any]:
+    def __call__(self) -> dict[TypeVar, TypeForm[Any]]:
         """
         Run the inference.
 
@@ -365,8 +369,8 @@ class TypeVarInference:
         self,
         type_map: dict[str, Any],
         type_parameters: tuple[TypeVar, ...],
-    ) -> dict[TypeVar, Any]:
-        inferenced: dict[TypeVar, Any] = {}
+    ) -> dict[TypeVar, TypeForm[Any]]:
+        inferenced: dict[TypeVar, TypeForm[Any]] = {}
         type_param: Any
         for type_param in type_parameters:
             orig_type_param = type_param

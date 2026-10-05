@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 import msgspec
 from django.http import HttpRequest
-from typing_extensions import TypedDict, override
+from typing_extensions import TypedDict, TypeForm, override
 
 from dmr.errors import ErrorDetail, ErrorType
 from dmr.parsers import Parser, Raw
@@ -101,7 +101,7 @@ class MsgspecSerializer(BaseSerializer):
         *,
         parser: Parser,
         request: HttpRequest,
-        model: Any,
+        model: TypeForm[Any],
     ) -> Any:
         """Convert string or bytestring to simple python object."""
         return parser.parse(
@@ -116,7 +116,7 @@ class MsgspecSerializer(BaseSerializer):
     def from_python(
         cls,
         unstructured: Any,
-        model: Any,
+        model: TypeForm[Any],
         *,
         strict: bool | None,
         extra_namespace: Mapping[str, Any] | None = None,
