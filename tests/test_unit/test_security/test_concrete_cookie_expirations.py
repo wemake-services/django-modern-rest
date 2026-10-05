@@ -82,10 +82,10 @@ def user(faker: Faker, password: str) -> User:
     ],
 )
 def test_cookies_expire_with_tokens(
-    *,
     dmr_rf: DMRRequestFactory,
     user: User,
     password: str,
+    *,
     cookie_name: str,
     expiration: dt.timedelta,
 ) -> None:
