@@ -76,6 +76,10 @@ def wrap_middleware(
         ...     def post(self) -> dict[str, str]:
         ...         return {'message': 'ok'}
 
+    .. versionchanged:: 0.17.0
+        Responses created by the middleware are now validated
+        after the converter, like the responses of endpoints.
+
     """
 
     def factory(

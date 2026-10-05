@@ -98,6 +98,18 @@ of the provided response descriptions. This allows you to:
 The converter function receives the original response and should
 return a modified :class:`django.http.HttpResponse`.
 
+Responses that the middleware creates or replaces are validated
+after the converter, just like the responses of your endpoints:
+their status code must be documented and their body, headers,
+and cookies must match the response description.
+Responses that come from the controller itself
+are already validated by their endpoint, so they are not validated again.
+Validation follows the same settings,
+see :ref:`response_validation`.
+
+.. versionchanged:: 0.17.0
+  Responses created by the middleware are now validated.
+
 Understanding the Two-Phase Middleware Pattern
 -----------------------------------------------
 
