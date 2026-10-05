@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Final, Generic, Self
 
 from django.utils.crypto import salted_hmac
 from django.views.decorators.debug import sensitive_variables
-from typing_extensions import Sentinel, TypeVar
+from typing_extensions import TypeVar
 
 from dmr.internal.types import EMPTY
 from dmr.security.token.constants import TOKEN_DEFAULT_EXPIRY
@@ -78,7 +78,7 @@ class TokenLikeSync(_TokenLikeBase, Generic[_UserT]):
         *,
         user: _UserT,
         name: str,
-        expires_at: dt.datetime | Sentinel | None = EMPTY,
+        expires_at: dt.datetime | EMPTY | None = EMPTY,
         token_size: int | None = None,
         token_secret: str | None = None,
         token_salt: str | None = None,
@@ -165,7 +165,7 @@ class TokenLikeAsync(_TokenLikeBase, Generic[_UserT]):
         *,
         user: _UserT,
         name: str,
-        expires_at: dt.datetime | Sentinel | None = EMPTY,
+        expires_at: dt.datetime | EMPTY | None = EMPTY,
         token_size: int | None = None,
         token_secret: str | None = None,
         token_salt: str | None = None,
@@ -221,7 +221,7 @@ def get_token_hash(
 
 
 def resolve_expiry(
-    expires_at: dt.datetime | Sentinel | None,
+    expires_at: dt.datetime | EMPTY | None,
     *,
     expiration: dt.timedelta | None = None,
 ) -> dt.datetime | None:
@@ -231,7 +231,7 @@ def resolve_expiry(
     .. versionadded:: 0.12.0
     """
     # TODO: fix after sentinels are fully supported
-    if not isinstance(expires_at, Sentinel):
+    if expires_at is not EMPTY:
         return expires_at
 
     resolved_expiration = expiration or TOKEN_DEFAULT_EXPIRY

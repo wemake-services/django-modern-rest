@@ -1,8 +1,6 @@
 import dataclasses
 from typing import TypeVar
 
-from typing_extensions import Sentinel
-
 from dmr.exceptions import EndpointMetadataError
 from dmr.internal.types import EMPTY
 
@@ -33,8 +31,8 @@ class MetadataMerger:
 
     def first_defined(
         self,
-        *layers: _LayerT | Sentinel | None,
-    ) -> _LayerT | Sentinel | None:
+        *layers: _LayerT | EMPTY | None,
+    ) -> _LayerT | EMPTY | None:
         """
         Return the first explicitly defined configuration layer.
 
@@ -48,14 +46,14 @@ class MetadataMerger:
         they also disable all less specific layers.
         """
         for layer in layers:
-            if not isinstance(layer, Sentinel):
+            if layer is not EMPTY:
                 return layer
         return EMPTY
 
     def first_set(
         self,
-        *layers: _LayerT | Sentinel,
-    ) -> _LayerT | Sentinel:
+        *layers: _LayerT | EMPTY,
+    ) -> _LayerT | EMPTY:
         """
         Return the first configuration layer that is not ``EMPTY``.
 
@@ -64,13 +62,13 @@ class MetadataMerger:
         It returns ``EMPTY`` if all layers are ``EMPTY``.
         """
         for layer in layers:
-            if not isinstance(layer, Sentinel):
+            if layer is not EMPTY:
                 return layer
         return EMPTY
 
     def empty_to_none(
         self,
-        layer: _LayerT | Sentinel,
+        layer: _LayerT | EMPTY,
     ) -> _LayerT | None:
         """
         Convert ``EMPTY`` to ``None`` for the resolved metadata.
@@ -79,11 +77,11 @@ class MetadataMerger:
         so ``None`` is used there for missing optional values.
         It is used for endpoint-only fields, which have a single layer.
         """
-        return None if isinstance(layer, Sentinel) else layer
+        return None if layer is EMPTY else layer
 
-    def not_empty(self, to_check: _LayerT | Sentinel) -> _LayerT:
+    def not_empty(self, to_check: _LayerT | EMPTY) -> _LayerT:
         """Check that a value is not empty."""
-        if isinstance(to_check, Sentinel):
+        if to_check is EMPTY:
             raise EndpointMetadataError(
                 f'Field {self.field_name} is required to be set, '
                 'but it is empty',

@@ -1,6 +1,8 @@
 import dataclasses
 from typing import TYPE_CHECKING, Any
 
+from typing_extensions import TypeForm
+
 from dmr.openapi.objects import (
     Parameter,
     ParameterLocation,
@@ -25,7 +27,7 @@ class ParameterGenerator:
 
     def __call__(
         self,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],

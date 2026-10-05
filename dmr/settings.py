@@ -6,7 +6,7 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Final, final
 
 from django.utils import module_loading
-from typing_extensions import Sentinel, TypedDict
+from typing_extensions import TypedDict
 
 from dmr.envs import MAX_CACHE_SIZE
 from dmr.internal.cache import clear_settings_cache as clear_settings_cache
@@ -126,7 +126,7 @@ class SettingsDict(TypedDict, total=False):
 
     parsers: Sequence['Parser']
     renderers: Sequence['Renderer']
-    validate_negotiation: bool | Sentinel
+    validate_negotiation: bool | EMPTY
     auth: (
         Sequence['AsyncAuth | SyncOrAsyncAuth[Any, Any]']
         | Sequence['SyncAuth | SyncOrAsyncAuth[Any, Any]']
@@ -139,18 +139,18 @@ class SettingsDict(TypedDict, total=False):
     validate_responses: bool
     exclude_validate_responses: Set[HTTPStatus]
     semantic_schema: bool
-    semantic_responses: bool | Sentinel
+    semantic_responses: bool | EMPTY
     exclude_semantic_responses: Set[HTTPStatus]
     semantic_schema_providers: Sequence[
         'ResponseSpecProvider | SecurityProvider'
     ]
-    semantic_auth: bool | Sentinel
+    semantic_auth: bool | EMPTY
     exclude_semantic_auth: Set[str]
-    validate_events: bool | Sentinel
+    validate_events: bool | EMPTY
     responses: Sequence['ResponseSpec']
     global_error_handler: Callable[[Any, Any, Any], Any] | str
     openapi_config: OpenAPIConfig
-    openapi_examples_seed: int | Sentinel
+    openapi_examples_seed: int | EMPTY
     openapi_static_cdn: Mapping[str, str]
     django_treat_as_post: Set[str]
 

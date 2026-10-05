@@ -2,7 +2,7 @@ from collections.abc import Callable
 from typing import Any, ClassVar, final
 
 from msgspec.json import schema
-from typing_extensions import TypedDict, override
+from typing_extensions import TypedDict, TypeForm, override
 
 from dmr.serializer import BaseSchemaGenerator, SchemaDef
 
@@ -43,7 +43,7 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
     @classmethod
     def get_schema(
         cls,
-        model: Any,
+        model: TypeForm[Any],
         ref_template: str,
         *,
         used_for_response: bool = False,  # not used
@@ -59,7 +59,7 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
 
     @override
     @classmethod
-    def schema_name(cls, model: Any) -> str | None:
+    def schema_name(cls, model: TypeForm[Any]) -> str | None:
         """Return a schema name for a model, if it exists."""
         try:
             schema = cls.get_schema(model, ref_template='')

@@ -9,7 +9,6 @@ from dirty_equals import IsStr
 from django.conf import LazySettings
 from django.http import HttpResponse
 from inline_snapshot import snapshot
-from typing_extensions import Sentinel
 
 from dmr import APIError, ResponseSpec
 from dmr.errors import ErrorModel, format_error
@@ -382,7 +381,7 @@ async def test_sse_api_error(
     dmr_async_rf: DMRAsyncRequestFactory,
     *,
     serializer: type[BaseSerializer],
-    validate_responses: bool | Sentinel,
+    validate_responses: bool | EMPTY,
 ) -> None:
     """Ensures that raising API errors is supported in SSE."""
 
@@ -459,7 +458,7 @@ async def test_sse_api_error_validation(
     dmr_async_rf: DMRAsyncRequestFactory,
     *,
     serializer: type[BaseSerializer],
-    validate_responses: bool | Sentinel,
+    validate_responses: bool | EMPTY,
 ) -> None:
     """Ensures that raising API errors is supported in SSE."""
 

@@ -1,7 +1,7 @@
 import json
 from collections.abc import Callable
 from http import HTTPStatus
-from typing import final
+from typing import Any, ClassVar, final
 
 import pytest
 from dirty_equals import IsStr
@@ -9,7 +9,7 @@ from django.conf import LazySettings
 from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpRequest, HttpResponse
 from inline_snapshot import snapshot
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, TypeForm
 
 from dmr import APIError, Body, Controller, ResponseSpec, modify
 from dmr.errors import ErrorType, format_error
@@ -29,7 +29,7 @@ class _CustomErrorModel(TypedDict):
 
 
 class _CustomErrorMixin:
-    error_model = _CustomErrorModel
+    error_model: ClassVar[TypeForm[Any]] = _CustomErrorModel
 
     def format_error(
         self,

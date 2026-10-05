@@ -4,7 +4,7 @@ from http import HTTPStatus
 from types import MappingProxyType
 from typing import Any, Final, final
 
-from typing_extensions import override
+from typing_extensions import TypeForm, override
 
 from dmr.cookies import CookieSpec
 from dmr.headers import HeaderSpec, NewHeader
@@ -44,7 +44,7 @@ class StreamingResponseModification(ResponseModification):
 
 
 def streaming_response_spec(  # noqa: WPS211
-    return_type: Any,
+    return_type: TypeForm[Any],
     *,
     content_type: str | set[str],
     status_code: HTTPStatus = HTTPStatus.OK,
