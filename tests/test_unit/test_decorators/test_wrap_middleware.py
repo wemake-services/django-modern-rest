@@ -150,7 +150,7 @@ async def test_invalid_middleware_response_async(
     })
 
 
-def test_undocumented_middleware_status(*, dmr_rf: DMRRequestFactory) -> None:
+def test_undocumented_middleware_status(dmr_rf: DMRRequestFactory) -> None:
     """Ensures that middleware status codes must be documented."""
     request = dmr_rf.get('/whatever/', headers={_MODE_HEADER: 'undocumented'})
 
