@@ -1,7 +1,7 @@
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Annotated, Any, TypeAlias, TypeVar
 
-from typing_extensions import override
+from typing_extensions import TypeForm, override
 
 from dmr.components import BodyComponent
 from dmr.exceptions import EndpointMetadataError, ValidationError
@@ -66,7 +66,7 @@ class BodyMsgspecComponent(BodyComponent):
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
         *,
-        field_model: Any,
+        field_model: TypeForm[Any],
         default: Any = EMPTY,
     ) -> Any:
         serializer = controller.serializer

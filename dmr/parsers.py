@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, TypeAlias, final
 from django.core.exceptions import BadRequest, TooManyFilesSent
 from django.http import HttpRequest
 from django.http.multipartparser import MultiPartParserError
-from typing_extensions import override
+from typing_extensions import TypeForm, override
 
 from dmr.exceptions import DataParsingError, RequestSerializationError
 from dmr.internal.django import parse_as_post
@@ -64,7 +64,7 @@ class Parser(ResponseSpecProvider):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        model: Any,
+        model: TypeForm[Any],
     ) -> Any:
         """
         Deserialize a raw string/bytes/bytearray into an object.
@@ -142,7 +142,7 @@ class JsonParser(Parser):
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        model: Any,
+        model: TypeForm[Any],
     ) -> Any:
         """
         Decode a JSON string/bytes/bytearray into an object.
@@ -190,7 +190,7 @@ class SupportsFileParsing:
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        model: Any,
+        model: TypeForm[Any],
     ) -> None:
         """Populate ``request.FILES`` if possible."""
         raise NotImplementedError
@@ -198,7 +198,7 @@ class SupportsFileParsing:
     @abc.abstractmethod
     def schema_metadata(
         self,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
@@ -246,7 +246,7 @@ class SupportsDjangoDefaultParsing:
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        model: Any,
+        model: TypeForm[Any],
     ) -> None:
         """Populate ``request.POST`` and ``request.FILES`` if possible."""
         raise NotImplementedError
@@ -278,7 +278,7 @@ class MultiPartParser(
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        model: Any,
+        model: TypeForm[Any],
     ) -> None:
         """Returns parsed multipart form data."""
         # Circular import:
@@ -309,7 +309,7 @@ class MultiPartParser(
     @override
     def schema_metadata(
         self,
-        model: Any,
+        model: TypeForm[Any],
         model_meta: tuple[Any, ...],
         metadata: EndpointMetadata,
         controller_cls: type['Controller[BaseSerializer]'],
@@ -346,7 +346,7 @@ class FormUrlEncodedParser(
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        model: Any,
+        model: TypeForm[Any],
     ) -> None:
         """
         Returns parsed form data.
@@ -395,6 +395,6 @@ class _NoOpParser(Parser):  # pyright: ignore[reportUnusedClass]
         deserializer_hook: DeserializeFunc | None = None,
         *,
         request: HttpRequest,
-        model: Any,
+        model: TypeForm[Any],
     ) -> Any:
         raise NotImplementedError('NoOpParser.parse() should not be used')

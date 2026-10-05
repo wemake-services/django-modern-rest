@@ -20,6 +20,7 @@ def test_struct_without_defaults() -> None:
         {'parsed_body': ContextField(_Model)},
     )
 
+    assert isinstance(context_model.model, type)
     assert issubclass(context_model.model, msgspec.Struct)
     assert context_model.model.__struct_config__.gc is False
     assert context_model.to_kwargs is not None
@@ -45,6 +46,8 @@ def test_struct_with_defaults() -> None:
         },
     )
 
+    assert isinstance(context_model.model, type)
+    assert issubclass(context_model.model, msgspec.Struct)
     assert context_model.model.__struct_fields__ == (
         'parsed_body',
         'parsed_query',

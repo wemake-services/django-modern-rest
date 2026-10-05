@@ -3,8 +3,6 @@ from collections.abc import Callable, Mapping, Sequence, Set
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, final
 
-from typing_extensions import Sentinel
-
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.errors import AsyncErrorHandler, SyncErrorHandler
 from dmr.headers import HeaderSpec, NewHeader
@@ -33,38 +31,38 @@ if TYPE_CHECKING:
 @dataclasses.dataclass(slots=True, frozen=True, kw_only=True, init=False)
 class _BasePayload:
     # OpenAPI stuff:
-    summary: StrOrPromise | Sentinel | None
-    description: StrOrPromise | Sentinel | None
-    tags: Sequence[str] | Sentinel | None
-    operation_id: str | Sentinel
-    deprecated: bool | Sentinel
-    security: Sequence['SecurityRequirement'] | Sentinel | None
-    external_docs: 'ExternalDocumentation | Sentinel | None'
-    callbacks: Mapping[str, 'Callback | Reference'] | Sentinel | None
-    servers: Sequence['Server'] | Sentinel | None
-    x_extensions: Mapping[str, Any] | Sentinel
-    ignore_from_spec: bool | Sentinel
+    summary: StrOrPromise | EMPTY | None
+    description: StrOrPromise | EMPTY | None
+    tags: Sequence[str] | EMPTY | None
+    operation_id: str | EMPTY
+    deprecated: bool | EMPTY
+    security: Sequence['SecurityRequirement'] | EMPTY | None
+    external_docs: 'ExternalDocumentation | EMPTY | None'
+    callbacks: Mapping[str, 'Callback | Reference'] | EMPTY | None
+    servers: Sequence['Server'] | EMPTY | None
+    x_extensions: Mapping[str, Any] | EMPTY
+    ignore_from_spec: bool | EMPTY
 
     # Extras:
-    extras: 'Extras[Any] | Sentinel'
-    extras_cls: 'type[Extras[Any]] | Sentinel'
+    extras: 'Extras[Any] | EMPTY'
+    extras_cls: 'type[Extras[Any]] | EMPTY'
 
     # Common fields:
-    validate_responses: bool | Sentinel
-    exclude_validate_responses: Set[HTTPStatus] | Sentinel | None
-    semantic_schema: bool | Sentinel
-    semantic_responses: bool | Sentinel
-    exclude_semantic_responses: Set[HTTPStatus] | Sentinel | None
-    semantic_auth: bool | Sentinel
-    exclude_semantic_auth: Set[str] | Sentinel | None
-    error_handler: SyncErrorHandler | AsyncErrorHandler | Sentinel
-    no_validate_http_spec: Set[HttpSpec] | Sentinel | None
-    parsers: Sequence[Parser] | Sentinel
-    renderers: Sequence[Renderer] | Sentinel
-    validate_negotiation: bool | Sentinel
-    auth: Sequence['SyncAuth'] | Sequence['AsyncAuth'] | Sentinel | None
+    validate_responses: bool | EMPTY
+    exclude_validate_responses: Set[HTTPStatus] | EMPTY | None
+    semantic_schema: bool | EMPTY
+    semantic_responses: bool | EMPTY
+    exclude_semantic_responses: Set[HTTPStatus] | EMPTY | None
+    semantic_auth: bool | EMPTY
+    exclude_semantic_auth: Set[str] | EMPTY | None
+    error_handler: SyncErrorHandler | AsyncErrorHandler | EMPTY
+    no_validate_http_spec: Set[HttpSpec] | EMPTY | None
+    parsers: Sequence[Parser] | EMPTY
+    renderers: Sequence[Renderer] | EMPTY
+    validate_negotiation: bool | EMPTY
+    auth: Sequence['SyncAuth'] | Sequence['AsyncAuth'] | EMPTY | None
     throttling: (
-        Sequence['SyncThrottle'] | Sequence['AsyncThrottle'] | Sentinel | None
+        Sequence['SyncThrottle'] | Sequence['AsyncThrottle'] | EMPTY | None
     )
 
 
@@ -74,7 +72,7 @@ class ValidateEndpointPayload(_BasePayload):
     """Payload created by ``@validate``."""
 
     # `EMPTY` is only used by `implicit()`, `@validate` always sets a list:
-    responses: list[ResponseSpec] | Sentinel
+    responses: list[ResponseSpec] | EMPTY
 
     @classmethod
     def implicit(cls) -> 'ValidateEndpointPayload':
@@ -124,17 +122,17 @@ class ValidateEndpointPayload(_BasePayload):
 class ModifyEndpointPayload(_BasePayload):
     """Payload created by ``@modify``."""
 
-    responses: Sequence[ResponseSpec] | Sentinel | None
-    status_code: HTTPStatus | Sentinel
+    responses: Sequence[ResponseSpec] | EMPTY | None
+    status_code: HTTPStatus | EMPTY
     # Headers and cookies can be set via a middleware
     # after a response itself is formed. We need a way to describe this.
     # That's why `HeaderSpec` and `CookieSpec` are allowed.
-    headers: Mapping[str, NewHeader | HeaderSpec] | Sentinel
-    cookies: Mapping[str, NewCookie | CookieSpec] | Sentinel
+    headers: Mapping[str, NewHeader | HeaderSpec] | EMPTY
+    cookies: Mapping[str, NewCookie | CookieSpec] | EMPTY
 
     # OpenAPI metadata:
-    response_description: str | Sentinel
-    links: Mapping[str, 'Link | Reference'] | Sentinel
+    response_description: str | EMPTY
+    links: Mapping[str, 'Link | Reference'] | EMPTY
 
 
 #: Alias for different payload types:

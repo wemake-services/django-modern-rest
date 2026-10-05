@@ -6,11 +6,12 @@ import pydantic
 import pytest
 from django.http import HttpResponse, HttpResponseBase
 from inline_snapshot import snapshot
-from typing_extensions import Sentinel, TypedDict
+from typing_extensions import TypedDict
 
 from dmr import Controller, ResponseSpec, modify, validate
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.test import DMRRequestFactory
+from dmr.types import EMPTY
 
 
 @final
@@ -224,7 +225,7 @@ def test_validation_disabled_endpoint(
 
 @final
 class _ValidationDisabledController(Controller[PydanticSerializer]):
-    validate_responses: ClassVar[bool | Sentinel] = False
+    validate_responses: ClassVar[bool | EMPTY] = False
 
     def post(self) -> list[int]:
         return ['a']  # type: ignore[list-item]
