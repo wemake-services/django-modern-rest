@@ -26,6 +26,18 @@ Prompts of the three latest breaking releases also live in the
 ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 
+## 0.17.0 WIP
+
+### Bugfixes
+
+#### Controllers and endpoints
+
+- Fixed Django's decorators that support async views, like `condition`
+  or `cache_control`, failing on async controllers with `wrap_middleware`.
+  They got a sync view that returned a coroutine, so they treated
+  the coroutine as a response, #1684
+
+
 ## 0.16.0 (2026-10-01)
 
 This release was a part of our community event #opensource_september.

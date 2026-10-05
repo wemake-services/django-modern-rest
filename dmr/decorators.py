@@ -76,6 +76,11 @@ def wrap_middleware(
         ...     def post(self) -> dict[str, str]:
         ...         return {'message': 'ok'}
 
+    .. versionchanged:: 0.17.0
+        Django's decorators that support async views, like
+        :func:`~django.views.decorators.http.condition`,
+        now wrap async controllers as async views.
+
     """
 
     def factory(
