@@ -28,6 +28,27 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ## 0.17.0 WIP
 
+### Features
+
+#### Controllers and endpoints
+
+- Added `Endpoint.validate_response` to validate a response
+  that was created outside of the endpoint, #1682
+
+### Bugfixes
+
+#### Controllers and endpoints
+
+- Responses that `wrap_middleware` returns without calling the controller
+  are now validated after the converter, like the responses of endpoints,
+  as the middleware docs promised. A converter that returns something
+  its `ResponseSpec` does not describe, or a status code
+  that is not documented, now fails with `422`
+  where `validate_responses` is on, #1682
+- Fixed the `login_required` example in the middleware docs:
+  its redirect was never converted to `401`,
+  because `302` was not in the listed responses, #1682
+
 ### Breaking changes
 
 - Replaced `Sentinel` class in all typing annotations to be `EMPTY`

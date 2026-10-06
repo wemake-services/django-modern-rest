@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias, TypeVar
 
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseBase
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -48,6 +48,25 @@ def apply_converter(
     return response
 
 
+def validate_middleware_response(
+    controller: 'Controller[BaseSerializer]',
+    response: HttpResponseBase,
+    *,
+    is_view_called: bool,
+) -> HttpResponseBase:
+    """
+    Validate a response that the middleware has returned on its own.
+
+    When the middleware has called the original ``dispatch``,
+    its response is already validated by the endpoint.
+    """
+    method: str = controller.request.method  # type: ignore[assignment]
+    endpoint = controller.api_endpoints.get(method)
+    if endpoint is None or is_view_called:
+        return response
+    return endpoint.validate_response(controller, response)
+
+
 def create_sync_dispatch(
     original_dispatch: _CallableAny,
     middleware: MiddlewareDecorator,
@@ -60,19 +79,27 @@ def create_sync_dispatch(
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
-    ) -> HttpResponse:
+    ) -> HttpResponseBase:
         if request.method and request.method not in self.api_endpoints:
             return self.handle_method_not_allowed(request.method)
+
+        is_view_called = False
 
         def view_callable(  # noqa: WPS430
             req: HttpRequest,
             *view_args: Any,
             **view_kwargs: Any,
         ) -> HttpResponse:
+            nonlocal is_view_called  # noqa: WPS420
+            is_view_called = True
             return original_dispatch(self, req, *view_args, **view_kwargs)  # type: ignore[no-any-return]
 
         response = middleware(view_callable)(request, *args, **kwargs)
-        return apply_converter(response, converter)
+        return validate_middleware_response(
+            self,
+            apply_converter(response, converter),
+            is_view_called=is_view_called,
+        )
 
     return dispatch
 
@@ -89,15 +116,19 @@ def create_async_dispatch(
         request: HttpRequest,
         *args: Any,
         **kwargs: Any,
-    ) -> HttpResponse:
+    ) -> HttpResponseBase:
         if request.method and request.method not in self.api_endpoints:
             return await self.handle_method_not_allowed(request.method)  # type: ignore[no-any-return, misc]
+
+        is_view_called = False
 
         def view_callable(  # noqa: WPS430
             req: HttpRequest,
             *view_args: Any,
             **view_kwargs: Any,
         ) -> HttpResponse:
+            nonlocal is_view_called  # noqa: WPS420
+            is_view_called = True
             return original_dispatch(self, req, *view_args, **view_kwargs)  # type: ignore[no-any-return]
 
         response = middleware(view_callable)(request, *args, **kwargs)
@@ -109,7 +140,11 @@ def create_async_dispatch(
         # a "cannot await non-coroutine" error.
         if inspect.isawaitable(response):
             response = await response
-        return apply_converter(response, converter)
+        return validate_middleware_response(
+            self,
+            apply_converter(response, converter),
+            is_view_called=is_view_called,
+        )
 
     return dispatch
 
