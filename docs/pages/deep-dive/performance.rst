@@ -17,21 +17,21 @@ Sync
         "datasets": [
           {
             "label": "dmr",
-            "data": [5774.94],
+            "data": [3524.25],
             "backgroundColor": ["rgba(37, 108, 86, 0.7)"],
             "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
           },
           {
             "label": "ninja",
-            "data": [3888.13],
+            "data": [602.789],
             "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
             "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
           },
           {
             "label": "drf",
-            "data": [3024.24],
+            "data": [646.836],
             "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
             "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
@@ -73,21 +73,21 @@ Sync
         "datasets": [
           {
             "label": "dmr",
-            "data": [5774.94],
+            "data": [3524.25],
             "backgroundColor": ["rgba(80, 130, 100, 0.7)"],
             "borderColor": ["rgba(168, 211, 187, 1)"],
             "borderWidth": 2
           },
           {
             "label": "ninja",
-            "data": [3888.13],
+            "data": [602.789],
             "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
             "borderColor": ["rgba(255, 255, 255, 0.7)"],
             "borderWidth": 2
           },
           {
             "label": "drf",
-            "data": [3024.24],
+            "data": [646.836],
             "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
             "borderColor": ["rgba(255, 255, 255, 0.7)"],
             "borderWidth": 2
@@ -170,21 +170,21 @@ Async
         "datasets": [
           {
             "label": "fastapi",
-            "data": [10854.6],
+            "data": [3930.53],
             "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
             "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
           },
           {
             "label": "dmr",
-            "data": [7026.27],
+            "data": [3972.57],
             "backgroundColor": ["rgba(37, 108, 86, 0.7)"],
             "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
           },
           {
             "label": "ninja",
-            "data": [4359.12],
+            "data": [787.876],
             "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
             "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
@@ -226,21 +226,21 @@ Async
         "datasets": [
           {
             "label": "fastapi",
-            "data": [10854.6],
+            "data": [3930.53],
             "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
             "borderColor": ["rgba(255, 255, 255, 0.7)"],
             "borderWidth": 2
           },
           {
             "label": "dmr",
-            "data": [7026.27],
+            "data": [3972.57],
             "backgroundColor": ["rgba(80, 130, 100, 0.7)"],
             "borderColor": ["rgba(168, 211, 187, 1)"],
             "borderWidth": 2
           },
           {
             "label": "ninja",
-            "data": [4359.12],
+            "data": [787.876],
             "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
             "borderColor": ["rgba(255, 255, 255, 0.7)"],
             "borderWidth": 2
@@ -290,12 +290,9 @@ Async
     }
   }
 
-While ``fastapi`` is faster at the moment, we have several ideas
-to optimize ``django-modern-rest`` even further,
-so it can be on par (or even faster!)
-with the fastest Python web frameworks in existence.
-
-While keeping 100% of compatibility with the older libs and tools.
+In our async benchmark, ``django-modern-rest`` performs on par with
+``fastapi``. We continue to improve performance while keeping
+compatibility with existing Django libraries and tools.
 
 
 .. _mypyc:
