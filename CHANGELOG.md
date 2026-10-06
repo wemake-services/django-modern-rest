@@ -39,7 +39,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 #### Serializers
 
 - Added `MsgspecSerializer.enable_component_gc` flag to optionally
-  enable the GC for the component parsing model, 
+  enable the GC for the component parsing model, #1697
 
 ### Bugfixes
 
