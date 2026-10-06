@@ -169,16 +169,16 @@ Async
         "labels": ["Requests Per Second"],
         "datasets": [
           {
-            "label": "fastapi",
-            "data": [3930.53],
-            "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
+            "label": "dmr",
+            "data": [3972.57],
+            "backgroundColor": ["rgba(37, 108, 86, 0.7)"],
             "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
           },
           {
-            "label": "dmr",
-            "data": [3972.57],
-            "backgroundColor": ["rgba(37, 108, 86, 0.7)"],
+            "label": "fastapi",
+            "data": [3930.53],
+            "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
             "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
           },
@@ -225,17 +225,17 @@ Async
         "labels": ["Requests Per Second"],
         "datasets": [
           {
-            "label": "fastapi",
-            "data": [3930.53],
-            "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
-            "borderColor": ["rgba(255, 255, 255, 0.7)"],
-            "borderWidth": 2
-          },
-          {
             "label": "dmr",
             "data": [3972.57],
             "backgroundColor": ["rgba(80, 130, 100, 0.7)"],
             "borderColor": ["rgba(168, 211, 187, 1)"],
+            "borderWidth": 2
+          },
+          {
+            "label": "fastapi",
+            "data": [3930.53],
+            "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
+            "borderColor": ["rgba(255, 255, 255, 0.7)"],
             "borderWidth": 2
           },
           {
