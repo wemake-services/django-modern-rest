@@ -34,6 +34,13 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   sentinel value, since all type-checkers support this now, #1687
 - Replaced multiple types from `Any` to be `TypeForm[Any]`, #1688
 
+### Features
+
+#### Serializers
+
+- Added `MsgspecSerializer.enable_component_gc` flag to optionally
+  enable the GC for the component parsing model, 
+
 ### Bugfixes
 
 #### Auth and security

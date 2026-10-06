@@ -68,6 +68,12 @@ class MsgspecSerializer(BaseSerializer):
             to model serialization callbacks.
         to_model_kwargs: Dictionary of kwargs that will be passed
             to model deserialization callbacks.
+        enable_component_gc: Allows to optionally enable
+            the GC for the internal component parsing unified model.
+            When enabled, it works slower for parsing, but can better
+            find reference cycles in some cornder cases. Only enable it, if you
+            really encouter any memory leaks connected to this serializer,
+            which would be unlikely. Disabled by default.
 
     """
 
@@ -81,6 +87,7 @@ class MsgspecSerializer(BaseSerializer):
     # Custom API:
     to_json_kwargs: ClassVar[ToJsonKwargs] = {}
     to_model_kwargs: ClassVar[ToModelKwargs] = {}
+    enable_component_gc: ClassVar[bool] = False
 
     @override
     @classmethod
@@ -178,7 +185,7 @@ class MsgspecSerializer(BaseSerializer):
             context_field_tuples(fields),
             # Instances live only for a single request and never have
             # any cycles, there's no need to track them:
-            gc=False,
+            gc=cls.enable_component_gc,
         )
         return ContextModel(model, to_kwargs=msgspec.structs.asdict)
 
