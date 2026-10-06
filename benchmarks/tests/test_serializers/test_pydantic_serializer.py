@@ -13,7 +13,14 @@ from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.plugins.pydantic.serializer import _get_cached_type_adapter  # noqa: PLC2701
 from dmr.test import DMRRequestFactory
 
+# All data is fixed, CodSpeed must measure the same thing on every run:
 faker: Final = Faker()
+faker.seed_instance(0)
+_CREATED_AT: Final = dt.datetime(2026, 1, 2, 3, 4, 5, 678901, tzinfo=dt.UTC)
+
+#: A single call is measured in simulation mode,
+#: repeat the work so that the cold first pass doesn't dominate:
+_SERIALIZE_TIMES: Final = 10
 
 
 class Role(pydantic.BaseModel):
@@ -38,13 +45,13 @@ class User(pydantic.BaseModel):
 _TO_SERIALIZE: Final = [
     User.model_validate({
         'email': faker.email(),
-        'uid': uuid.uuid4(),
+        'uid': uuid.UUID(int=index),
         'is_active': True,
-        'created_at': dt.datetime.now(dt.UTC),
+        'created_at': _CREATED_AT,
         'tags': [{'name': faker.name(), 'premium': False}],
-        'role': {'name': faker.name(), 'uid': uuid.uuid4()},
+        'role': {'name': faker.name(), 'uid': uuid.UUID(int=index + 1000)},
     })
-    for _ in range(100)  # big, but realistic number
+    for index in range(100)  # big, but realistic number
 ]
 
 
@@ -81,7 +88,8 @@ def test_pyndatic_with_renderer(
 
     @benchmark
     def factory() -> None:
-        PydanticSerializer.serialize(_TO_SERIALIZE, renderer=renderer)
+        for _ in range(_SERIALIZE_TIMES):
+            PydanticSerializer.serialize(_TO_SERIALIZE, renderer=renderer)
 
 
 def test_pyndatic_fast_deserialize(
@@ -121,4 +129,5 @@ def test_pydantic_fast_serialize(
 
     @benchmark
     def factory() -> None:
-        PydanticFastSerializer.serialize(_TO_SERIALIZE, renderer=renderer)
+        for _ in range(_SERIALIZE_TIMES):
+            PydanticFastSerializer.serialize(_TO_SERIALIZE, renderer=renderer)

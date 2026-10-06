@@ -506,6 +506,38 @@ But, user is free to modify any parts of the spec, if needed.
   so attribute access on it is not checked by type checkers.
 
 
+.. _as-view-arguments:
+
+Arguments of ``as_view``
+------------------------
+
+Changing class-level attributes of a controller with ``as_view``
+arguments, like ``as_view(throttling=...)`` or ``as_view(auth=...)``,
+is not supported. Endpoint metadata is read when the controller class
+is created, while Django sets ``as_view`` arguments on the view instance,
+where they change nothing. Only ready-to-use ``concrete_views`` take
+a few of them: ``serializer``, ``token_cls``,
+and ``jwt_refresh_cookie_path``. Set the rest on a subclass instead.
+
+Such arguments are not rejected on purpose:
+:meth:`Controller.as_view <dmr.controller.Controller.as_view>`
+passes all of them to the next ``as_view`` in the MRO as is,
+because other base classes of your controller can take any arguments,
+even the ones named like class-level attributes of the controller.
+That's what ``as_view`` arguments are for: values that the view
+instance reads at request time. For example, a logging mixin
+can take the format of its message:
+
+.. literalinclude:: /examples/reusable_code/as_view_mixin.py
+  :caption: urls.py
+  :linenos:
+  :language: python
+
+The mixin goes before the controller,
+because :meth:`Controller.dispatch <dmr.controller.Controller.dispatch>`
+calls the endpoint directly, not the ``dispatch`` of the next class.
+
+
 Where is it actually helpful in practice?
 -----------------------------------------
 

@@ -4,11 +4,12 @@ import enum
 import uuid
 
 import msgspec
+from apps import config
 from django.conf import settings
 from django.core.handlers import asgi, wsgi
 from django.urls import include
 
-from dmr import Controller, Headers, Query
+from dmr import Controller
 from dmr.plugins.msgspec import BodyMsgspec, MsgspecSerializer
 from dmr.routing import Router, path
 
@@ -65,50 +66,35 @@ class UserModel(UserCreateModel):
     uid: uuid.UUID
 
 
-class HeadersModel(msgspec.Struct):
-    token: str = msgspec.field(name='X-API-Token')
-    origin: str = msgspec.field(name='X-Request-Origin')
-
-
-class QueryModel(msgspec.Struct):
-    per_page: int
-    count: int
-    page: int
-
-
 class UserAsyncController(Controller[MsgspecSerializer]):
     async def post(
         self,
         parsed_body: BodyMsgspec[UserCreateModel],
-        parsed_headers: Headers[HeadersModel],
-        parsed_query: Query[QueryModel],
-    ) -> UserModel:
-        assert parsed_query
-        return UserModel(
+    ) -> list[UserModel]:
+        result = UserModel(
             uid=uuid.uuid4(),
             **msgspec.to_builtins(parsed_body),
         )
+        return [result] * config.RESPONSE_ITEMS
 
 
 class UserSyncController(Controller[MsgspecSerializer]):
     def post(
         self,
         parsed_body: BodyMsgspec[UserCreateModel],
-        parsed_headers: Headers[HeadersModel],
-        parsed_query: Query[QueryModel],
-    ) -> UserModel:
-        assert parsed_query
-        return UserModel(
+    ) -> list[UserModel]:
+        result = UserModel(
             uid=uuid.uuid4(),
             **msgspec.to_builtins(parsed_body),
         )
+        return [result] * config.RESPONSE_ITEMS
 
 
 router = Router(
     '',
     [
-        path('async/user/', UserAsyncController.as_view(), name='async_users'),
-        path('sync/user/', UserSyncController.as_view(), name='sync_users'),
+        path('async/users/', UserAsyncController.as_view(), name='async_users'),
+        path('sync/users/', UserSyncController.as_view(), name='sync_users'),
     ],
 )
 urlpatterns = [
