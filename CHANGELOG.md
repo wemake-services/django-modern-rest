@@ -559,6 +559,29 @@ This release was a part of our community event #opensource_september.
 
 ### Bugfixes
 
+- Fixed the merged `requestBody` of an endpoint with several body
+  components depending on the order they are declared in.
+  With `Body[]` and `FileMetadata[]` on one endpoint, whichever came last
+  decided the documented content types, and the other one silently lost
+  both the types only it supported and its `encoding` metadata.
+  Now we document the content types that every *required* body component
+  supports, which is also what the endpoint really accepts. A component
+  with a default value is optional, so it no longer rules out the content
+  types it cannot parse: `FileMetadata[Files | None] = None` next to
+  a `Body[]` keeps `application/json` in the schema, and such a request
+  really does succeed, with no files, #1537
+- `SchemaRegistry.maybe_resolve_reference` now puts the keywords
+  that sit next to `$ref`, like `default` and `description`,
+  on top of the component's own schema without modifying
+  the component itself. Custom `x-` schema extensions
+  are now kept through loading and dumping, for both `pydantic`
+  and `msgspec`, #1491
+- Fixed models that are only used as `Query`, `Headers`, `Cookies`,
+  `Path`, and `FileMetadata` components, being added to `components.schemas`
+  of the OpenAPI schema. Such models are inlined and never referenced,
+  now only components that are referenced
+  from the final schema are registered, #1647
+
 #### Controllers and endpoints
 
 - Fixed `@modify` and `@validate` types: now `tags`, `servers`,

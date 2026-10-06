@@ -77,9 +77,31 @@
           ],
           "requestBody": {
             "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/_Model"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
               "multipart/form-data": {
                 "schema": {
                   "allOf": [
+                    {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/_Model"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     {
                       "anyOf": [
                         {
@@ -94,16 +116,6 @@
                             "name"
                           ],
                           "title": "_FileModel"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/components/schemas/_Model"
                         },
                         {
                           "type": "null"
@@ -174,9 +186,17 @@
           "operationId": "postRequiredBodyControllerApiRequired",
           "requestBody": {
             "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/_Model"
+                }
+              },
               "multipart/form-data": {
                 "schema": {
                   "allOf": [
+                    {
+                      "$ref": "#/components/schemas/_Model"
+                    },
                     {
                       "anyOf": [
                         {
@@ -196,9 +216,6 @@
                           "type": "null"
                         }
                       ]
-                    },
-                    {
-                      "$ref": "#/components/schemas/_Model"
                     }
                   ]
                 }
