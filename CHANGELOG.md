@@ -62,6 +62,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 #### Agent skills
 
+- `dmr` skill now turns CSRF checks on with `csrf_exempt = False`
+  instead of wrapping `csrf_protect`, and its `wrap_middleware` example
+  documents the `304` of Django's `condition` decorator, #1671
 - Suggest `concrete_views` instead of `views` by default in `dmr` skill, #1670
 - Mention typed expirations of cookie `concrete_views` in `dmr` skill, #1690
 
