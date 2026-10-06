@@ -72,7 +72,7 @@ class MsgspecSerializer(BaseSerializer):
             the GC for the internal component parsing unified model.
             When enabled, it works slower for parsing, but can better
             find reference cycles in some cornder cases. Only enable it, if you
-            really encouter any memory leaks connected to this serializer,
+            really encounter any memory leaks connected to this serializer,
             which would be unlikely. Disabled by default.
 
     """
