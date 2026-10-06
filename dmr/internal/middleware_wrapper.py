@@ -93,12 +93,14 @@ def create_async_dispatch(
         if request.method and request.method not in self.api_endpoints:
             return await self.handle_method_not_allowed(request.method)  # type: ignore[no-any-return, misc]
 
-        def view_callable(  # noqa: WPS430
+        # It must be a coroutine function, because Django's decorators
+        # check that to decide whether the view they wrap is async:
+        async def view_callable(  # noqa: WPS430
             req: HttpRequest,
             *view_args: Any,
             **view_kwargs: Any,
         ) -> HttpResponse:
-            return original_dispatch(self, req, *view_args, **view_kwargs)  # type: ignore[no-any-return]
+            return await original_dispatch(self, req, *view_args, **view_kwargs)  # type: ignore[no-any-return]
 
         response = middleware(view_callable)(request, *args, **kwargs)
         # Django middleware can be either sync or async. When we wrap an async
