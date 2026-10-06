@@ -167,16 +167,4 @@ Things worth knowing before choosing this auth:
 If you only need plain token auth without ``allauth``'s account features,
 :doc:`token` is simpler and has no third-party dependency.
 
-
-API Reference
--------------
-
-.. autoclass:: dmr.security.allauth.auth.XSessionTokenSyncAuth
-  :members:
-  :inherited-members:
-
-.. autoclass:: dmr.security.allauth.auth.XSessionTokenAsyncAuth
-  :members:
-  :inherited-members:
-
-.. autofunction:: dmr.security.allauth.auth.request_allauth_session
+See :doc:`API reference </pages/api-reference/auth/allauth>`.

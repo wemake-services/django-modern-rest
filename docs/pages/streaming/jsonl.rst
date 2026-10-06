@@ -134,26 +134,4 @@ with ``@modify(extras=Streaming(ping_seconds=30))``.
 And :meth:`~dmr.streaming.controller.StreamingController.ping_event`
 for the event payload.
 
-
-API Reference
--------------
-
-Controller
-~~~~~~~~~~
-
-.. autoclass:: dmr.streaming.jsonl.controller.JsonLinesController
-  :members:
-  :show-inheritance:
-
-Renderer
-~~~~~~~~
-
-.. autoclass:: dmr.streaming.jsonl.renderer.JsonLinesRenderer
-  :members:
-
-Validation
-~~~~~~~~~~
-
-.. autoclass:: dmr.streaming.jsonl.validation.JsonLinesStreamingValidator
-  :members:
-  :show-inheritance:
+See :doc:`API reference </pages/api-reference/streaming/jsonl>`.

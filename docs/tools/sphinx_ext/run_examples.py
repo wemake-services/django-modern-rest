@@ -1521,8 +1521,16 @@ class LiteralInclude(_LiteralInclude):  # noqa: WPS214
         tmp_file.write_text(clean_content)
 
 
+def _configure_docs_django(_app: Sphinx) -> None:
+    """Make model imports safe before autodoc reads any reference page."""
+    _BaseBuilder(_BASE_DIR / 'docs' / 'conf.py', {})._configure_settings()  # noqa: SLF001
+
+
 def setup(app: Sphinx) -> None:
     """Register Sphinx extension directives."""
+    # Autodoc can import Django models before the first executable example.
+    # Configure the same example environment before Sphinx reads sources.
+    app.connect('builder-inited', _configure_docs_django)
     tmp_examples_path = Path.cwd() / _PATH_TO_TMP_EXAMPLES
     tmp_examples_path.mkdir(exist_ok=True, parents=True)
     # In Markdown, imports are shown in full, and the example code

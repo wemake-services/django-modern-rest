@@ -478,26 +478,4 @@ If you need to skip a database lookup on every request
 and can tolerate tokens staying valid until they expire,
 use :doc:`JWT <jwt>`.
 
-
-API Reference
--------------
-
-.. autoclass:: dmr.security.SyncAuth
-  :members:
-  :inherited-members:
-
-.. autoclass:: dmr.security.AsyncAuth
-  :members:
-  :inherited-members:
-
-.. autoclass:: dmr.security.SyncOrAsyncAuth
-  :members:
-
-.. autofunction:: dmr.security.request_auth
-
-.. autofunction:: dmr.security.add_www_authenticate
-
-.. autodata:: dmr.security.NO_STORE_HEADERS
-
-.. autoclass:: dmr.security.AuthenticatedHttpRequest
-  :members:
+See :doc:`API reference </pages/api-reference/auth/common>`.

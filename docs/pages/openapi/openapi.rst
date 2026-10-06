@@ -766,23 +766,4 @@ Useful APIs for users to override:
   and :meth:`dmr.security.SyncAuth.security_requirements` to change how
   :class:`~dmr.openapi.objects.SecurityScheme` and requirements are generated
 
-
-API Reference
--------------
-
-This is the API every user needs:
-
-.. autofunction:: dmr.openapi.build_schema
-
-.. autoclass:: dmr.openapi.OpenAPIConfig
-   :members:
-
-.. autofunction:: dmr.openapi.default_config
-
-.. autoclass:: dmr.openapi.OpenAPIContext
-   :members:
-
-.. autofunction:: dmr.openapi.load_schema
-
-All other objects that are only used if you decide to customize the schema
-are listed in :ref:`openapi-reference`.
+See :doc:`API reference </pages/api-reference/openapi/index>`.
