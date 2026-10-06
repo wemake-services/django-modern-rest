@@ -196,10 +196,14 @@ a refresh token as :class:`~dmr.security.jwt.views.RefreshTokenPayload`,
 or an access token as :class:`~dmr.security.jwt.views.VerifyTokenPayload`,
 and return new tokens as :class:`~dmr.security.jwt.views.ObtainTokensResponse`.
 ``as_view`` takes the serializer, and the optional
-``jwt_refresh_cookie_path`` of the cookie controllers,
+``jwt_refresh_cookie_path``, ``jwt_expiration``,
+and ``jwt_refresh_expiration`` of the cookie controllers,
 as typed keyword arguments and passes everything else
 to django as usual, see
 :meth:`~dmr.security.jwt.concrete_views.ObtainTokensSyncController.as_view`.
+The cookie controllers describe their cookies with the expirations,
+so they take them as typed arguments: this way the tokens,
+their cookies, and the API schema use the same values.
 
 They all set ``auth = None``: they are the very endpoints
 that check credentials, so auth from the settings

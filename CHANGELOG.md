@@ -34,11 +34,20 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   sentinel value, since all type-checkers support this now, #1687
 - Replaced multiple types from `Any` to be `TypeForm[Any]`, #1688
 
+### Bugfixes
+
+#### Auth and security
+
+- Fixed `jwt_expiration` and `jwt_refresh_expiration` passed to `as_view`
+  of the cookie `concrete_views` changing the tokens, but not their cookies.
+  They are typed `as_view` arguments now and are set on the class, #1690
+
 ### Misc
 
 #### Agent skills
 
 - Suggest `concrete_views` instead of `views` by default in `dmr` skill, #1670
+- Mention typed expirations of cookie `concrete_views` in `dmr` skill, #1690
 
 
 ## 0.16.0 (2026-10-01)
