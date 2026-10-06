@@ -1526,7 +1526,7 @@ def _configure_docs_django(_app: Sphinx) -> None:
     _BaseBuilder(_BASE_DIR / 'docs' / 'conf.py', {})._configure_settings()  # noqa: SLF001
 
 
-def setup(app: Sphinx) -> None:
+def setup(app: Sphinx) -> None:  # noqa: WPS213
     """Register Sphinx extension directives."""
     # Autodoc can import Django models before the first executable example.
     # Configure the same example environment before Sphinx reads sources.
