@@ -48,14 +48,14 @@
 <p align="center">
    <a href="https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html">
       <picture>
-         <source srcset="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-dark.svg" media="(prefers-color-scheme: dark)">
-         <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/sync-light.svg#gh-light-mode-only" alt="Sync benchmark" width="49%" />
+         <source srcset="docs/_static/images/benchmarks/sync-dark.svg" media="(prefers-color-scheme: dark)">
+         <img src="docs/_static/images/benchmarks/sync-light.svg#gh-light-mode-only" alt="Sync benchmark" width="49%" />
       </picture>
    </a>
    <a href="https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html">
       <picture>
-         <source srcset="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/async-dark.svg" media="(prefers-color-scheme: dark)">
-         <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/async-light.svg#gh-light-mode-only" alt="Async benchmark" width="49%" />
+         <source srcset="docs/_static/images/benchmarks/async-dark.svg" media="(prefers-color-scheme: dark)">
+         <img src="docs/_static/images/benchmarks/async-light.svg#gh-light-mode-only" alt="Async benchmark" width="49%" />
       </picture>
    </a>
 </p>
