@@ -58,8 +58,6 @@
          <img src="https://raw.githubusercontent.com/wemake-services/django-modern-rest/master/docs/_static/images/benchmarks/async-light.svg#gh-light-mode-only" alt="Async benchmark" width="49%" />
       </picture>
    </a>
-   <br>
-   <em>Sync mode &nbsp;·&nbsp; Async mode</em>
 </p>
 
 
