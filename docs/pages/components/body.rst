@@ -330,12 +330,4 @@ for different request content types.
 
 See :ref:`conditional-types` to learn more.
 
-
-API Reference
--------------
-
-.. autodata:: dmr.components.Body
-
-.. autoclass:: dmr.components.BodyComponent
-  :members:
-  :show-inheritance:
+See :doc:`API reference </pages/api-reference/components/body>`.

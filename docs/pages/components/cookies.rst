@@ -46,12 +46,4 @@ Customizing OpenAPI metadata for Cookies
 
 See :ref:`customizing_parameter_openapi`.
 
-
-API Reference
--------------
-
-.. autodata:: dmr.components.Cookies
-
-.. autoclass:: dmr.components.CookiesComponent
-  :members:
-  :show-inheritance:
+See :doc:`API reference </pages/api-reference/components/cookies>`.

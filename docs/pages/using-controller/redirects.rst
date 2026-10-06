@@ -49,9 +49,4 @@ in a response spec.
     :language: python
     :linenos:
 
-
-API Reference
--------------
-
-.. autoexception:: dmr.response.RedirectTo
-  :members:
+See :doc:`API reference </pages/api-reference/returning-redirects>`.
