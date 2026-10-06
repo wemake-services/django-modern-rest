@@ -46,13 +46,13 @@
 ---------
 
 <p align="center">
-   <a href="https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html">
+   <a href="https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html#sync">
       <picture>
          <source srcset="docs/_static/images/benchmarks/sync-dark.svg" media="(prefers-color-scheme: dark)">
          <img src="docs/_static/images/benchmarks/sync-light.svg#gh-light-mode-only" alt="Sync benchmark" width="49%" />
       </picture>
    </a>
-   <a href="https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html">
+   <a href="https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/performance.html#async">
       <picture>
          <source srcset="docs/_static/images/benchmarks/async-dark.svg" media="(prefers-color-scheme: dark)">
          <img src="docs/_static/images/benchmarks/async-light.svg#gh-light-mode-only" alt="Async benchmark" width="49%" />
