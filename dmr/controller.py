@@ -338,6 +338,12 @@ class Controller(View, Generic[_SerializerT_co]):  # noqa: WPS214
         Users should make use of authentication in ``django-modern-rest``.
         See :doc:`/pages/auth/common` for more details.
 
+        Changing class-level attributes, like ``throttling``,
+        with *initkwargs* is not supported. But they are not rejected:
+        all *initkwargs* are passed to the next ``as_view`` in the MRO as is,
+        so other base classes can accept their own keyword arguments,
+        see :ref:`as-view-arguments`.
+
         Raises:
             EndpointMetadataError: When called on an abstract controller,
                 because it has nothing to serve.

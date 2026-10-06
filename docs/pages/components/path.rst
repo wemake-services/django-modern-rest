@@ -166,12 +166,4 @@ Customizing OpenAPI metadata for Path
 
 See :ref:`customizing_parameter_openapi`.
 
-
-API Reference
--------------
-
-.. autodata:: dmr.components.Path
-
-.. autoclass:: dmr.components.PathComponent
-  :members:
-  :show-inheritance:
+See :doc:`API reference </pages/api-reference/components/path>`.

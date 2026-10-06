@@ -216,7 +216,7 @@ so you can redefine anything that you want to redefine.
 
 Customizability is a **design goal**.
 
-Check out our :doc:`Public API <../deep-dive/public-api>`
+Check out our :doc:`API Reference <../api-reference/index>`
 for the most advanced features.
 
 

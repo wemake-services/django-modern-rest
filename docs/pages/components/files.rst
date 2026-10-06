@@ -158,12 +158,4 @@ See :ref:`conditional-types` to learn more.
   This is not something we recommend doing, because uploading files
   with Django is slow and can cause performance / network issues.
 
-
-API Reference
--------------
-
-.. autodata:: dmr.components.FileMetadata
-
-.. autoclass:: dmr.components.FileMetadataComponent
-  :members:
-  :show-inheritance:
+See :doc:`API reference </pages/api-reference/components/files>`.

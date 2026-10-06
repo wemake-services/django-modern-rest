@@ -28,11 +28,35 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ## 0.17.0 WIP
 
+### Bugfixes
+
+#### Controllers and endpoints
+
+- Fixed Django's decorators that support async views, like `condition`
+  or `cache_control`, failing on async controllers with `wrap_middleware`.
+  They got a sync view that returned a coroutine, so they treated
+  the coroutine as a response, #1684
+
 ### Breaking changes
 
 - Replaced `Sentinel` class in all typing annotations to be `EMPTY`
   sentinel value, since all type-checkers support this now, #1687
 - Replaced multiple types from `Any` to be `TypeForm[Any]`, #1688
+
+### Features
+
+#### Serializers
+
+- Added `MsgspecSerializer.enable_component_gc` flag to optionally
+  enable the GC for the component parsing model, #1697
+
+### Bugfixes
+
+#### Auth and security
+
+- Fixed `jwt_expiration` and `jwt_refresh_expiration` passed to `as_view`
+  of the cookie `concrete_views` changing the tokens, but not their cookies.
+  They are typed `as_view` arguments now and are set on the class, #1690
 
 ### Misc
 
@@ -42,6 +66,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   instead of wrapping `csrf_protect`, and its `wrap_middleware` example
   documents the `304` of Django's `condition` decorator, #1671
 - Suggest `concrete_views` instead of `views` by default in `dmr` skill, #1670
+- Mention typed expirations of cookie `concrete_views` in `dmr` skill, #1690
 
 
 ## 0.16.0 (2026-10-01)

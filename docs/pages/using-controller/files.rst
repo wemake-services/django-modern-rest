@@ -47,19 +47,4 @@ The difference comes from the ``Content-Disposition`` HTTP header:
 it tells clients whether the response body is expected to be displayed inline
 or downloaded as an attachment.
 
-
-API Reference
--------------
-
-.. autoclass:: dmr.files.FileBodyLike
-  :members:
-
-.. autoclass:: dmr.files.FileBody
-  :members:
-  :show-inheritance:
-
-.. autoclass:: dmr.files.FileResponseSpec
-  :members:
-  :show-inheritance:
-
-.. autofunction:: dmr.files.file_response_headers
+See :doc:`API reference </pages/api-reference/returning-files>`.

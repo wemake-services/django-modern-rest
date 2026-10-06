@@ -136,7 +136,8 @@ async controller responses must be awaited.
 
 The DMR ``pytest`` plugin is registered automatically when `pytest-django`_ is
 installed; no ``conftest.py`` configuration is required. See the
-:doc:`pytest plugin API reference <api-reference>` for all available fixtures.
+:doc:`pytest plugin API reference </pages/api-reference/testing>`
+for all available fixtures.
 
 
 Sending data and checking responses

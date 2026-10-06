@@ -15,7 +15,14 @@ from dmr.plugins.msgspec import (
 )
 from dmr.test import DMRRequestFactory
 
+# All data is fixed, CodSpeed must measure the same thing on every run:
 faker: Final = Faker()
+faker.seed_instance(0)
+_CREATED_AT: Final = dt.datetime(2026, 1, 2, 3, 4, 5, 678901, tzinfo=dt.UTC)
+
+#: A single call is measured in simulation mode,
+#: repeat the work so that the cold first pass doesn't dominate:
+_SERIALIZE_TIMES: Final = 10
 
 
 class Role(msgspec.Struct):
@@ -41,15 +48,15 @@ _TO_SERIALIZE: Final = [
     msgspec.convert(
         {
             'email': faker.email(),
-            'uid': uuid.uuid4(),
+            'uid': uuid.UUID(int=index),
             'is_active': True,
-            'created_at': dt.datetime.now(dt.UTC),
+            'created_at': _CREATED_AT,
             'tags': [{'name': faker.name(), 'premium': False}],
-            'role': {'name': faker.name(), 'uid': uuid.uuid4()},
+            'role': {'name': faker.name(), 'uid': uuid.UUID(int=index + 1000)},
         },
         User,
     )
-    for _ in range(100)  # big, but realistic number
+    for index in range(100)  # big, but realistic number
 ]
 
 
@@ -86,4 +93,5 @@ def test_msgspec_with_renderer(
 
     @benchmark
     def factory() -> None:
-        MsgspecSerializer.serialize(_TO_SERIALIZE, renderer=renderer)
+        for _ in range(_SERIALIZE_TIMES):
+            MsgspecSerializer.serialize(_TO_SERIALIZE, renderer=renderer)

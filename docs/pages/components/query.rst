@@ -85,12 +85,4 @@ that into ``__dmr_cast_null__``:
 We don't infer ``__dmr_cast_null__`` value in any way,
 it is up to users to set.
 
-
-API Reference
--------------
-
-.. autodata:: dmr.components.Query
-
-.. autoclass:: dmr.components.QueryComponent
-  :members:
-  :show-inheritance:
+See :doc:`API reference </pages/api-reference/components/query>`.
