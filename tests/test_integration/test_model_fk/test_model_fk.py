@@ -99,6 +99,22 @@ def test_user_create_name_too_long_rejected(
 
 
 @pytest.mark.django_db
+def test_user_create_invalid_email_rejected(dmr_client: DMRClient) -> None:
+    """Reject malformed email addresses before creating a user."""
+    response = dmr_client.post(
+        reverse('api:model_fk:user'),
+        data={
+            'email': 'not-an-email',
+            'role': {'name': 'admin'},
+            'tags': [],
+        },
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.json()['detail'][0]['loc'] == ['parsed_body', 'email']
+
+
+@pytest.mark.django_db
 def test_user_create_unique_email_error(
     dmr_client: DMRClient,
     faker: Faker,
