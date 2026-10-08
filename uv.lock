@@ -1075,7 +1075,7 @@ docs = [
     { name = "sphinx-copybutton", specifier = ">=0.5,<0.6" },
     { name = "sphinx-design", specifier = ">=0.7,<0.8" },
     { name = "sphinx-iconify", specifier = ">=0.3,<0.4" },
-    { name = "sphinx-llm-friendly", specifier = ">=0.5,<0.6" },
+    { name = "sphinx-llm-friendly", specifier = ">=0.5,<0.7" },
     { name = "sphinx-tabs", specifier = ">=3.5,<4" },
     { name = "sphinxcontrib-mermaid", specifier = ">=2,<3" },
     { name = "uvicorn", specifier = ">=0.52,<0.55" },
@@ -3792,7 +3792,7 @@ wheels = [
 
 [[package]]
 name = "sphinx-llm-friendly"
-version = "0.5.1"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docutils" },
@@ -3801,9 +3801,9 @@ dependencies = [
     { name = "tabulate" },
     { name = "tiktoken" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/00/ae/98ef3008e8cfb7b9ed12ea22c7423e487ba2d32f36c5595f5d6476e64201/sphinx_llm_friendly-0.5.1.tar.gz", hash = "sha256:e86ffadb0dd78094f126e8c3cbe2b5e409a71de502637fe1867f47cbe627d220", size = 68292, upload-time = "2026-09-25T08:23:46.741Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/57/05/97e9a26828896e106a8c870603fc781bd8ef26e98d10f66d060b9d6c203a/sphinx_llm_friendly-0.6.0.tar.gz", hash = "sha256:ba50aa092359cc93ff49d08ec4121d456b871925fdbf91ed455fe480d7318267", size = 68646, upload-time = "2026-09-30T17:40:10.589Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/17/cb/f549910c07eff2e872d501896d68b38c8d6a9ab179b9945ca32661762226/sphinx_llm_friendly-0.5.1-py3-none-any.whl", hash = "sha256:56216b3b6d5d3468b3c2c45dc76af2b674c096ff36d53e1690ff4bb870293d02", size = 28183, upload-time = "2026-09-25T08:23:45.447Z" },
+    { url = "https://files.pythonhosted.org/packages/6c/20/6e63a4c4e085b1965369b8984171ae1ba3555ee7f7b480c2d8af3020dcc1/sphinx_llm_friendly-0.6.0-py3-none-any.whl", hash = "sha256:75bd6b15b9ce7b3afdd157789dd74be5dc8c232b370a95a553a68ff9f5edd867", size = 28474, upload-time = "2026-09-30T17:40:09.39Z" },
 ]
 
 [[package]]
