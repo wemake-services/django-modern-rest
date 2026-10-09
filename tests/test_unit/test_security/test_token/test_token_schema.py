@@ -8,7 +8,7 @@ from dmr.controller import Controller
 from dmr.openapi.objects import SecurityScheme
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security import AsyncAuth, SyncAuth
-from dmr.security.csrf import CSRF_SCHEME_NAME
+from dmr.security.csrf import CSRF_HEADER_SCHEME_NAME, CSRF_SCHEME_NAME
 from dmr.security.token import (
     CookieTokenAsyncAuth,
     CookieTokenSyncAuth,
@@ -129,18 +129,24 @@ def test_header_schema_for_authorization(
 @pytest.mark.parametrize('cookie_name', ['token', 'custom'])
 @pytest.mark.parametrize('security_scheme_name', ['token', 'customName'])
 @pytest.mark.parametrize('csrf_scheme_name', [CSRF_SCHEME_NAME, 'custom_csrf'])
+@pytest.mark.parametrize(
+    'csrf_header_scheme_name',
+    [CSRF_HEADER_SCHEME_NAME, 'custom_csrf_header'],
+)
 def test_cookie_token_schema(
     *,
     typ: type[CookieTokenSyncAuth] | type[CookieTokenAsyncAuth],
     cookie_name: str,
     security_scheme_name: str,
     csrf_scheme_name: str,
+    csrf_header_scheme_name: str,
 ) -> None:
     """Ensures CookieToken auth emits an apiKey cookie security scheme."""
     instance = typ(
         cookie_name=cookie_name,
         security_scheme_name=security_scheme_name,
         csrf_scheme_name=csrf_scheme_name,
+        csrf_header_scheme_name=csrf_header_scheme_name,
     )
 
     controller = _make_controller(instance)
@@ -161,6 +167,15 @@ def test_cookie_token_schema(
             security_scheme_in='cookie',
             description='CSRF protection',
         ),
+        csrf_header_scheme_name: SecurityScheme(
+            type='apiKey',
+            name='X-Csrftoken',
+            security_scheme_in='header',
+            description=(
+                'CSRF header — echo the CSRF cookie value here on '
+                'unsafe requests'
+            ),
+        ),
     }
     assert instance.security_requirements(metadata, controller) == [
         {security_scheme_name: []},
@@ -173,7 +188,11 @@ def test_cookie_token_schema(
         controller,
     ) == instance.security_schemes(metadata, controller)
     assert instance.security_requirements(unsafe_metadata, controller) == [
-        {security_scheme_name: [], csrf_scheme_name: []},
+        {
+            security_scheme_name: [],
+            csrf_scheme_name: [],
+            csrf_header_scheme_name: [],
+        },
     ]
 
 
