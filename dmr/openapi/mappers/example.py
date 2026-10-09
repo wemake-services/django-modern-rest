@@ -1,6 +1,6 @@
 import datetime as dt
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias
 
 from typing_extensions import TypeForm, override
 
@@ -8,7 +8,7 @@ from dmr.internal.types import EMPTY
 from dmr.openapi.objects import Example, Schema
 
 if TYPE_CHECKING:
-    from dmr.serializer import BaseSerializer
+    from dmr.serializer import BaseSchemaGenerator, BaseSerializer
 
 
 def set_generated_example(schema: Schema, example: Any) -> Schema:
@@ -50,6 +50,59 @@ else:
     # https://github.com/litestar-org/litestar/blob/main/litestar/_openapi/schema_generation/examples.py
     from polyfactory.field_meta import FieldMeta
 
+    if TYPE_CHECKING:
+        from polyfactory.factories.base import BaseFactory, BuildContext
+
+        # Type checkers need to know what `super()` is in this mixin,
+        # but in runtime it must not be a real factory:
+        _MixinBase: TypeAlias = BaseFactory[Any]
+    else:
+        _MixinBase = object
+
+    class _FieldExamplesMixin(_MixinBase):
+        """
+        Uses hand-written examples of fields instead of random values.
+
+        polyfactory only generates values from types and constraints.
+        Serializers know how their models declare field examples,
+        so we ask them, see
+        :meth:`dmr.serializer.BaseSchemaGenerator.field_examples`.
+        """
+
+        __slots__ = ()
+
+        #: Schema generator of the serializer we generate examples for.
+        _schema_generator: ClassVar[type['BaseSchemaGenerator']]
+
+        @override
+        @classmethod
+        def get_field_value(
+            cls,
+            field_meta: FieldMeta,
+            field_build_parameters: Any | None = None,
+            build_context: 'BuildContext | None' = None,
+        ) -> Any:
+            """Returns the first hand-written example of a field, if any."""
+            examples = cls._schema_generator.field_examples(field_meta)
+            if examples:
+                return examples[0]
+            return super().get_field_value(
+                field_meta,
+                field_build_parameters=field_build_parameters,
+                build_context=build_context,
+            )
+
+        @override
+        @classmethod
+        def _get_config(cls) -> dict[str, Any]:
+            # polyfactory creates factories for nested models with this
+            # config, so they use this mixin and the same schema generator:
+            return {
+                **super()._get_config(),
+                'bases': (_FieldExamplesMixin,),
+                '_schema_generator': cls._schema_generator,
+            }
+
     #: Faker's defaults for dates and times end at the current time,
     #: so seeded examples would change with the clock. We use fixed bounds.
     _EXAMPLES_START: Final = dt.datetime.fromisoformat('2000-01-01T00:00Z')
@@ -57,7 +110,7 @@ else:
     _MAX_TIMEDELTA_SECONDS: Final = 7 * 24 * 60 * 60  # a week
     _EPOCH: Final = dt.datetime.fromisoformat('1970-01-01T00:00')
 
-    class _ExampleFactory(DataclassFactory[Example]):
+    class _ExampleFactory(_FieldExamplesMixin, DataclassFactory[Example]):
         # NOTE: don't set `__random_seed__` here, it only seeds the factory
         # once, when this class is created. `seed_examples` does the seeding,
         # because the seed comes from settings.
@@ -145,9 +198,12 @@ else:
             # Example generation is disabled in settings.
             return EMPTY
 
+        factory = _ExampleFactory.create_factory(
+            _schema_generator=serializer.schema_generator,
+        )
         try:  # noqa: WPS505
             return serializer.to_python(
-                _ExampleFactory.get_field_value(
+                factory.get_field_value(
                     FieldMeta.from_type(annotation=annotation),
                 ),
             )

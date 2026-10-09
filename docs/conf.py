@@ -215,6 +215,7 @@ nitpick_ignore = [
     # OpenAPI types used in TYPE_CHECKING blocks:
     (_PY_CLASS, 'DataclassInstance'),
     (_PY_CLASS, 'FieldInfo'),
+    (_PY_CLASS, 'FieldMeta'),
     (_PY_CLASS, 'NoneType'),
     (_PY_CLASS, 'SecurityRequirement'),
     (_PY_CLASS, 'ExternalDocumentation'),

@@ -697,6 +697,14 @@ but sometimes it is better than nothing.
   inside Schema Objects. Examples that you write by hand
   are never rewritten.
 
+  Generated examples of models use the examples of their fields,
+  when a field has one, like ``pydantic.Field(examples=[...])``
+  or ``msgspec.Meta(examples=[...])``. Nested models,
+  lists and ``X | None`` fields are supported.
+  Serializers find field examples with
+  :meth:`~dmr.serializer.BaseSchemaGenerator.field_examples`,
+  custom serializers can override it.
+
 .. note::
 
   The seed is a global setting, it cannot be changed

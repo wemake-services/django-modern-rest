@@ -1,6 +1,6 @@
 import abc
 import dataclasses
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, final
 
 from django.http import HttpRequest
@@ -17,6 +17,8 @@ from dmr.parsers import Parser, Raw
 from dmr.renderers import Renderer
 
 if TYPE_CHECKING:
+    from polyfactory.field_meta import FieldMeta
+
     from dmr.controller import Controller
     from dmr.metadata import EndpointMetadata
 
@@ -161,6 +163,27 @@ class BaseSchemaGenerator:
         we don't store any specific logic for it.
         """
         raise NotImplementedError
+
+    @classmethod
+    def field_examples(cls, field_meta: 'FieldMeta') -> Sequence[Any]:
+        """
+        Return hand-written examples of a model field.
+
+        When examples are generated, see
+        :data:`~dmr.settings.Settings.openapi_examples_seed`,
+        the first example of a field is used instead of a random value.
+
+        Every model library declares field examples in its own way,
+        so serializers override this method to support them.
+        By default, fields have no examples.
+
+        Args:
+            field_meta: `polyfactory <https://github.com/litestar-org/polyfactory>`_
+                description of the field, which is generated.
+
+        .. versionadded:: 0.16.0
+        """
+        return ()
 
 
 class BaseSerializer:  # noqa: WPS214

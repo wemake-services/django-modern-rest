@@ -14,6 +14,7 @@ from typing import (
 )
 
 import pytest
+from django.conf import LazySettings
 from inline_snapshot import snapshot
 from typing_extensions import TypedDict
 
@@ -24,6 +25,7 @@ from dmr.openapi.core.context import OpenAPIContext
 from dmr.openapi.generators.schema import SchemaGenerator
 from dmr.openapi.objects import OpenAPIType, Schema
 from dmr.routing import Router, path
+from dmr.settings import Settings
 
 try:
     import msgspec
@@ -510,6 +512,59 @@ def test_none_default() -> None:
         'type': 'object',
         'required': ['first'],
         'title': '_NoneDefaultStruct',
+    })
+
+
+class _ProfileStruct(msgspec.Struct):
+    bio: Annotated[str, msgspec.Meta(examples=['Hello'])]
+
+
+class _AccountStruct(msgspec.Struct):
+    username: Annotated[str, msgspec.Meta(examples=['admin'])]
+    profile: _ProfileStruct
+
+
+def test_field_examples(*, settings: LazySettings) -> None:
+    """Ensure that generated examples use hand-written field examples."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1639
+    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
+
+    class _AccountController(Controller[MsgspecSerializer]):
+        def get(self) -> _AccountStruct:
+            raise NotImplementedError
+
+        def post(self) -> list[_AccountStruct]:
+            raise NotImplementedError
+
+    schema = build_schema(
+        Router('api/', [path('accounts/', _AccountController.as_view())]),
+    ).convert()
+
+    components = schema['components']['schemas']
+    assert components['_AccountStruct'] == snapshot({
+        'properties': {
+            'username': {'type': 'string', 'examples': ['admin']},
+            'profile': {'$ref': '#/components/schemas/_ProfileStruct'},
+        },
+        'type': 'object',
+        'required': ['username', 'profile'],
+        'title': '_AccountStruct',
+        'examples': [{'username': 'admin', 'profile': {'bio': 'Hello'}}],
+    })
+    assert components['_ProfileStruct'] == snapshot({
+        'properties': {'bio': {'type': 'string', 'examples': ['Hello']}},
+        'type': 'object',
+        'required': ['bio'],
+        'title': '_ProfileStruct',
+    })
+    # Inline schemas use field examples of their items too:
+    operation = schema['paths']['/api/accounts/']['post']
+    response = operation['responses']['201']['content']['application/json']
+    assert response['schema'] == snapshot({
+        'items': {'$ref': '#/components/schemas/_AccountStruct'},
+        'type': 'array',
+        'examples': [[{'username': 'admin', 'profile': {'bio': 'Hello'}}]],
     })
 
 

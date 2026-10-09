@@ -1,9 +1,15 @@
-from typing import Any, ClassVar, Literal, final
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, final
 
+from pydantic.fields import FieldInfo
 from pydantic.json_schema import GenerateJsonSchema
 from typing_extensions import TypedDict, TypeForm, override
 
+from dmr.internal.types import find_annotated_metadata
 from dmr.serializer import BaseSchemaGenerator, SchemaDef
+
+if TYPE_CHECKING:
+    from polyfactory.field_meta import FieldMeta
 
 
 @final
@@ -73,3 +79,26 @@ class PydanticSchemaGenerator(BaseSchemaGenerator):
         except Exception:
             return None
         return schema[0].get('title')
+
+    @override
+    @classmethod
+    def field_examples(cls, field_meta: 'FieldMeta') -> Sequence[Any]:
+        """
+        Return examples from ``pydantic.Field(examples=[...])``.
+
+        polyfactory keeps them in the field description of ``pydantic``
+        models. Other models, like dataclasses, can have ``pydantic.Field``
+        in ``Annotated`` metadata.
+
+        .. versionadded:: 0.16.0
+        """
+        examples: Sequence[Any] | None = getattr(field_meta, 'examples', None)
+        if examples:
+            return examples
+        field_info = find_annotated_metadata(field_meta.annotation, FieldInfo)
+        annotated_examples: Sequence[Any] | None = getattr(
+            field_info,
+            'examples',
+            None,
+        )
+        return annotated_examples or ()

@@ -1,18 +1,22 @@
-from collections.abc import Callable
-from typing import Any
+from collections.abc import Callable, Sequence
+from typing import Annotated, Any, final
 
 import pydantic
 import pytest
 from django.conf import LazySettings
 from django.urls import path
 from inline_snapshot import snapshot
+from polyfactory.field_meta import FieldMeta
+from typing_extensions import override
 
 from dmr import Body, Controller
 from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.openapi.mappers.example import generate_example, set_generated_example
 from dmr.openapi.objects import Schema
 from dmr.plugins.pydantic import PydanticSerializer
+from dmr.plugins.pydantic.schema import PydanticSchemaGenerator
 from dmr.routing import Router
+from dmr.serializer import BaseSchemaGenerator
 from dmr.settings import Settings
 from dmr.types import EMPTY
 
@@ -155,3 +159,61 @@ def test_none_example_is_kept(*, settings: LazySettings) -> None:
     model_schema = schema['components']['schemas']['_NoneExampleModel']
     assert model_schema['example'] is None
     assert 'examples' not in model_schema
+
+
+def test_no_field_examples_by_default() -> None:
+    """Ensure that fields have no examples, unless a serializer finds them."""
+    field_meta = FieldMeta.from_type(annotation=str, name='username')
+
+    assert not BaseSchemaGenerator.field_examples(field_meta)
+
+
+@final
+class _CustomExamplesGenerator(PydanticSchemaGenerator):
+    @override
+    @classmethod
+    def field_examples(cls, field_meta: FieldMeta) -> Sequence[Any]:
+        # Custom serializers can find field examples however they want:
+        if field_meta.name == 'username':
+            return ['custom']
+        return super().field_examples(field_meta)
+
+
+@final
+class _CustomExamplesSerializer(PydanticSerializer):
+    schema_generator = _CustomExamplesGenerator
+
+
+class _CustomAccount(pydantic.BaseModel):
+    username: str
+    bio: Annotated[str, pydantic.Field(examples=['Hello'])]
+
+
+class _CustomAccountController(Controller[_CustomExamplesSerializer]):
+    def get(self) -> _CustomAccount:
+        raise NotImplementedError
+
+
+def test_custom_field_examples(*, settings: LazySettings) -> None:
+    """Ensure that serializers can provide their own field examples."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1639
+    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
+
+    schema = build_schema(
+        Router(
+            'api/v1/',
+            [path('account/', _CustomAccountController.as_view())],
+        ),
+    ).convert()
+
+    assert schema['components']['schemas']['_CustomAccount'] == snapshot({
+        'properties': {
+            'username': {'type': 'string', 'title': 'Username'},
+            'bio': {'type': 'string', 'title': 'Bio', 'examples': ['Hello']},
+        },
+        'type': 'object',
+        'required': ['username', 'bio'],
+        'title': '_CustomAccount',
+        'examples': [{'username': 'custom', 'bio': 'Hello'}],
+    })

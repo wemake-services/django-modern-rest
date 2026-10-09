@@ -362,6 +362,10 @@ This release was a part of our community event #opensource_september.
 
 ### Features
 
+- Added `BaseSchemaGenerator.field_examples` method. Custom serializers
+  can override it to provide hand-written examples of their model fields
+  for the generated OpenAPI examples, #1639
+
 #### Configuration
 
 - Added `extras=` parameter to `@modify` and `@validate` for custom
@@ -558,6 +562,23 @@ This release was a part of our community event #opensource_september.
   of a union type. `ResponseSpecMetadata` is the first one to use it, #1460
 
 ### Bugfixes
+
+- Fixed generated OpenAPI examples of models ignoring hand-written
+  examples of their fields, like `pydantic.Field(examples=[...])`
+  or `msgspec.Meta(examples=[...])`. Such fields used to get
+  random values in the model example, now they get their own examples.
+  Both `pydantic` and `msgspec` serializers support it, #1639
+- `SchemaRegistry.maybe_resolve_reference` now puts the keywords
+  that sit next to `$ref`, like `default` and `description`,
+  on top of the component's own schema without modifying
+  the component itself. Custom `x-` schema extensions
+  are now kept through loading and dumping, for both `pydantic`
+  and `msgspec`, #1491
+- Fixed models that are only used as `Query`, `Headers`, `Cookies`,
+  `Path`, and `FileMetadata` components, being added to `components.schemas`
+  of the OpenAPI schema. Such models are inlined and never referenced,
+  now only components that are referenced
+  from the final schema are registered, #1647
 
 #### Controllers and endpoints
 
