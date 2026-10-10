@@ -64,6 +64,8 @@ class RetryAfter(BaseResponseHeadersProvider):
                     'Indicates how long the user agent should wait '
                     'before making a follow-up request'
                 ),
+                type=int,
+                example=60,
             ),
         }
 
@@ -111,18 +113,24 @@ class XRateLimit(BaseResponseHeadersProvider):
                     'The maximum number of requests permitted '
                     'in the current time window'
                 ),
+                type=int,
+                example=100,
             ),
             'X-RateLimit-Remaining': HeaderSpec(
                 description=(
                     'The number of requests remaining '
                     'in the current time window'
                 ),
+                type=int,
+                example=10,
             ),
             'X-RateLimit-Reset': HeaderSpec(
                 description=(
                     'The number of seconds until the current '
                     'rate limit window resets'
                 ),
+                type=int,
+                example=60,
             ),
         }
 

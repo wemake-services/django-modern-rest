@@ -1,6 +1,7 @@
 from http import HTTPMethod, HTTPStatus
 from typing import Final
 
+import pydantic
 import pytest
 from django.conf import LazySettings
 from inline_snapshot import snapshot
@@ -307,3 +308,71 @@ def test_header_examples_schema(*, openapi_version: str) -> None:
             'example': 'secret',
         },
     })
+
+
+class _ControllerWithTypedHeaders(Controller[PydanticSerializer]):
+    @modify(
+        headers={
+            'X-Count': HeaderSpec(type=int, example=5, skip_validation=True),
+            'X-Name': HeaderSpec(skip_validation=True),
+        },
+    )
+    def get(self) -> str:
+        raise NotImplementedError
+
+
+def test_header_type(generator: ResponseGenerator) -> None:
+    """Ensure that ``HeaderSpec.type`` is used for the header schema."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1706
+    response = generator(
+        _ControllerWithTypedHeaders.api_endpoints[HTTPMethod.GET].metadata,
+        _ControllerWithTypedHeaders,
+    )['200']
+
+    assert isinstance(response, Response)
+    assert response.headers is not None
+    count = response.headers['X-Count']
+    name = response.headers['X-Name']
+    assert isinstance(count, Header)
+    assert isinstance(name, Header)
+    assert isinstance(count.schema, Schema)
+    assert isinstance(name.schema, Schema)
+    assert count.schema.type == OpenAPIType.INTEGER
+    assert count.example == 5
+    assert name.schema.type == OpenAPIType.STRING
+
+
+class _HeaderModel(pydantic.BaseModel):
+    count: int
+
+
+class _ControllerWithModelHeader(Controller[PydanticSerializer]):
+    @modify(
+        headers={
+            'X-Model': HeaderSpec(
+                type=_HeaderModel,
+                example={'count': 1},
+                skip_validation=True,
+            ),
+        },
+    )
+    def get(self) -> str:
+        raise NotImplementedError
+
+
+def test_header_type_reference(generator: ResponseGenerator) -> None:
+    """Ensure that header types that produce references are supported."""
+    response = generator(
+        _ControllerWithModelHeader.api_endpoints[HTTPMethod.GET].metadata,
+        _ControllerWithModelHeader,
+    )['200']
+
+    assert isinstance(response, Response)
+    assert response.headers is not None
+    header = response.headers['X-Model']
+    assert isinstance(header, Header)
+    assert isinstance(header.schema, Schema)
+    assert header.schema.ref == '#/components/schemas/_HeaderModel'
+    assert header.schema.examples is None
+    assert header.example == {'count': 1}
