@@ -165,7 +165,7 @@ class ResponseGenerator:
             schema=schema,
         )
         if header_spec.example is not None:
-            # for mypy: primitive types cannot return a reference
+            # for mypy: the generator returns `Schema`, even for references
             assert isinstance(schema, Schema)  # noqa: S101
             # Examples written by hand replace the generated ones:
             header.example = header_spec.example
