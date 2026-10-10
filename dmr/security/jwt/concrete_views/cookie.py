@@ -1,8 +1,9 @@
+import datetime as dt
 from collections.abc import Callable
 from typing import Any, ClassVar, Final, Generic, final
 
 from django.http import HttpResponseBase
-from typing_extensions import Sentinel, TypeVar, override
+from typing_extensions import TypeVar, override
 
 from dmr.internal.concrete import build_concrete_controller
 from dmr.internal.types import EMPTY, StrOrPromise
@@ -81,6 +82,7 @@ class CookieObtainTokensSyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
@@ -91,20 +93,30 @@ class CookieObtainTokensSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
-        jwt_refresh_cookie_path: StrOrPromise | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
+        jwt_refresh_cookie_path: StrOrPromise | EMPTY = EMPTY,
+        jwt_expiration: dt.timedelta | EMPTY = EMPTY,
+        jwt_refresh_expiration: dt.timedelta | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with its required fields filled in.
 
         *serializer* is required, *jwt_refresh_cookie_path* replaces
-        the default ``'/'``. *initkwargs* go to django as usual.
+        the default ``'/'``. *jwt_expiration* and *jwt_refresh_expiration*
+        set the lifetime of both the tokens and their cookies,
+        so they have to be passed here and not as *initkwargs*.
+        *initkwargs* go to django as usual.
+
+        .. versionchanged:: 0.17.0
+            Added *jwt_expiration* and *jwt_refresh_expiration*.
         """
         concrete_cls = build_concrete_controller(
             cls,
             serializer=serializer,
             jwt_refresh_cookie_path=jwt_refresh_cookie_path,
+            jwt_expiration=jwt_expiration,
+            jwt_refresh_expiration=jwt_refresh_expiration,
         )
         if concrete_cls is None:
             return super().as_view(**initkwargs)
@@ -141,6 +153,7 @@ class CookieObtainTokensAsyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
@@ -151,20 +164,30 @@ class CookieObtainTokensAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
-        jwt_refresh_cookie_path: StrOrPromise | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
+        jwt_refresh_cookie_path: StrOrPromise | EMPTY = EMPTY,
+        jwt_expiration: dt.timedelta | EMPTY = EMPTY,
+        jwt_refresh_expiration: dt.timedelta | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with its required fields filled in.
 
         *serializer* is required, *jwt_refresh_cookie_path* replaces
-        the default ``'/'``. *initkwargs* go to django as usual.
+        the default ``'/'``. *jwt_expiration* and *jwt_refresh_expiration*
+        set the lifetime of both the tokens and their cookies,
+        so they have to be passed here and not as *initkwargs*.
+        *initkwargs* go to django as usual.
+
+        .. versionchanged:: 0.17.0
+            Added *jwt_expiration* and *jwt_refresh_expiration*.
         """
         concrete_cls = build_concrete_controller(
             cls,
             serializer=serializer,
             jwt_refresh_cookie_path=jwt_refresh_cookie_path,
+            jwt_expiration=jwt_expiration,
+            jwt_refresh_expiration=jwt_refresh_expiration,
         )
         if concrete_cls is None:
             return super().as_view(**initkwargs)
@@ -198,6 +221,7 @@ class CookieRefreshTokensSyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
@@ -208,20 +232,30 @@ class CookieRefreshTokensSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
-        jwt_refresh_cookie_path: StrOrPromise | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
+        jwt_refresh_cookie_path: StrOrPromise | EMPTY = EMPTY,
+        jwt_expiration: dt.timedelta | EMPTY = EMPTY,
+        jwt_refresh_expiration: dt.timedelta | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with its required fields filled in.
 
         *serializer* is required, *jwt_refresh_cookie_path* replaces
-        the default ``'/'``. *initkwargs* go to django as usual.
+        the default ``'/'``. *jwt_expiration* and *jwt_refresh_expiration*
+        set the lifetime of both the tokens and their cookies,
+        so they have to be passed here and not as *initkwargs*.
+        *initkwargs* go to django as usual.
+
+        .. versionchanged:: 0.17.0
+            Added *jwt_expiration* and *jwt_refresh_expiration*.
         """
         concrete_cls = build_concrete_controller(
             cls,
             serializer=serializer,
             jwt_refresh_cookie_path=jwt_refresh_cookie_path,
+            jwt_expiration=jwt_expiration,
+            jwt_refresh_expiration=jwt_refresh_expiration,
         )
         if concrete_cls is None:
             return super().as_view(**initkwargs)
@@ -244,6 +278,7 @@ class CookieRefreshTokensAsyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
@@ -254,20 +289,30 @@ class CookieRefreshTokensAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
-        jwt_refresh_cookie_path: StrOrPromise | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
+        jwt_refresh_cookie_path: StrOrPromise | EMPTY = EMPTY,
+        jwt_expiration: dt.timedelta | EMPTY = EMPTY,
+        jwt_refresh_expiration: dt.timedelta | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with its required fields filled in.
 
         *serializer* is required, *jwt_refresh_cookie_path* replaces
-        the default ``'/'``. *initkwargs* go to django as usual.
+        the default ``'/'``. *jwt_expiration* and *jwt_refresh_expiration*
+        set the lifetime of both the tokens and their cookies,
+        so they have to be passed here and not as *initkwargs*.
+        *initkwargs* go to django as usual.
+
+        .. versionchanged:: 0.17.0
+            Added *jwt_expiration* and *jwt_refresh_expiration*.
         """
         concrete_cls = build_concrete_controller(
             cls,
             serializer=serializer,
             jwt_refresh_cookie_path=jwt_refresh_cookie_path,
+            jwt_expiration=jwt_expiration,
+            jwt_refresh_expiration=jwt_refresh_expiration,
         )
         if concrete_cls is None:
             return super().as_view(**initkwargs)
@@ -292,6 +337,7 @@ class CookieLogoutSyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
@@ -302,20 +348,30 @@ class CookieLogoutSyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
-        jwt_refresh_cookie_path: StrOrPromise | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
+        jwt_refresh_cookie_path: StrOrPromise | EMPTY = EMPTY,
+        jwt_expiration: dt.timedelta | EMPTY = EMPTY,
+        jwt_refresh_expiration: dt.timedelta | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with its required fields filled in.
 
         *serializer* is required, *jwt_refresh_cookie_path* replaces
-        the default ``'/'``. *initkwargs* go to django as usual.
+        the default ``'/'``. *jwt_expiration* and *jwt_refresh_expiration*
+        set the lifetime of both the tokens and their cookies,
+        so they have to be passed here and not as *initkwargs*.
+        *initkwargs* go to django as usual.
+
+        .. versionchanged:: 0.17.0
+            Added *jwt_expiration* and *jwt_refresh_expiration*.
         """
         concrete_cls = build_concrete_controller(
             cls,
             serializer=serializer,
             jwt_refresh_cookie_path=jwt_refresh_cookie_path,
+            jwt_expiration=jwt_expiration,
+            jwt_refresh_expiration=jwt_refresh_expiration,
         )
         if concrete_cls is None:
             return super().as_view(**initkwargs)
@@ -338,6 +394,7 @@ class CookieLogoutAsyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
@@ -348,20 +405,30 @@ class CookieLogoutAsyncController(
     def as_view(
         cls,
         *,
-        serializer: type[BaseSerializer] | Sentinel = EMPTY,
-        jwt_refresh_cookie_path: StrOrPromise | Sentinel = EMPTY,
+        serializer: type[BaseSerializer] | EMPTY = EMPTY,
+        jwt_refresh_cookie_path: StrOrPromise | EMPTY = EMPTY,
+        jwt_expiration: dt.timedelta | EMPTY = EMPTY,
+        jwt_refresh_expiration: dt.timedelta | EMPTY = EMPTY,
         **initkwargs: Any,
     ) -> Callable[..., HttpResponseBase]:
         """
         Route this controller with its required fields filled in.
 
         *serializer* is required, *jwt_refresh_cookie_path* replaces
-        the default ``'/'``. *initkwargs* go to django as usual.
+        the default ``'/'``. *jwt_expiration* and *jwt_refresh_expiration*
+        set the lifetime of both the tokens and their cookies,
+        so they have to be passed here and not as *initkwargs*.
+        *initkwargs* go to django as usual.
+
+        .. versionchanged:: 0.17.0
+            Added *jwt_expiration* and *jwt_refresh_expiration*.
         """
         concrete_cls = build_concrete_controller(
             cls,
             serializer=serializer,
             jwt_refresh_cookie_path=jwt_refresh_cookie_path,
+            jwt_expiration=jwt_expiration,
+            jwt_refresh_expiration=jwt_refresh_expiration,
         )
         if concrete_cls is None:
             return super().as_view(**initkwargs)
