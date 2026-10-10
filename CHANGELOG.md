@@ -57,6 +57,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Fixed `jwt_expiration` and `jwt_refresh_expiration` passed to `as_view`
   of the cookie `concrete_views` changing the tokens, but not their cookies.
   They are typed `as_view` arguments now and are set on the class, #1690
+- Fixed OpenAPI security scheme in cookie mode (`CSRF_USE_SESSIONS = False`)
+  omitting the `CSRF_HEADER_NAME` request header (`csrf_header`) that Django
+  validates on unsafe requests, #1712
 
 ### Misc
 

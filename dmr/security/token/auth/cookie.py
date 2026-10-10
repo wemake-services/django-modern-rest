@@ -4,7 +4,11 @@ from django.http import HttpRequest
 from typing_extensions import override
 
 from dmr.openapi.objects import SecurityScheme
-from dmr.security.csrf import CSRF_SCHEME_NAME, CSRFAuthMixin
+from dmr.security.csrf import (
+    CSRF_HEADER_SCHEME_NAME,
+    CSRF_SCHEME_NAME,
+    CSRFAuthMixin,
+)
 from dmr.security.token.auth.base import BaseTokenAsyncAuth, BaseTokenSyncAuth
 from dmr.security.token.token import DEFAULT_TOKEN_ALGORITHM, DEFAULT_TOKEN_SALT
 
@@ -60,7 +64,7 @@ class CookieTokenSyncAuth(_BaseCookieTokenAuth, BaseTokenSyncAuth):
 
     """
 
-    __slots__ = ('cookie_name', 'csrf_scheme_name')
+    __slots__ = ('cookie_name', 'csrf_header_scheme_name', 'csrf_scheme_name')
 
     def __init__(  # noqa: WPS211
         self,
@@ -68,6 +72,7 @@ class CookieTokenSyncAuth(_BaseCookieTokenAuth, BaseTokenSyncAuth):
         cookie_name: str = _DEFAULT_PARAM,
         security_scheme_name: str = _DEFAULT_PARAM,
         csrf_scheme_name: str = CSRF_SCHEME_NAME,
+        csrf_header_scheme_name: str = CSRF_HEADER_SCHEME_NAME,
         update_last_used: bool = False,
         token_secret: str | None = None,
         token_salt: str = DEFAULT_TOKEN_SALT,
@@ -82,6 +87,7 @@ class CookieTokenSyncAuth(_BaseCookieTokenAuth, BaseTokenSyncAuth):
             token_algorithm=token_algorithm,
         )
         self.csrf_scheme_name = csrf_scheme_name
+        self.csrf_header_scheme_name = csrf_header_scheme_name
         self.cookie_name = cookie_name
 
     @override
@@ -107,7 +113,7 @@ class CookieTokenAsyncAuth(_BaseCookieTokenAuth, BaseTokenAsyncAuth):
 
     """
 
-    __slots__ = ('cookie_name', 'csrf_scheme_name')
+    __slots__ = ('cookie_name', 'csrf_header_scheme_name', 'csrf_scheme_name')
 
     def __init__(  # noqa: WPS211
         self,
@@ -115,6 +121,7 @@ class CookieTokenAsyncAuth(_BaseCookieTokenAuth, BaseTokenAsyncAuth):
         cookie_name: str = _DEFAULT_PARAM,
         security_scheme_name: str = _DEFAULT_PARAM,
         csrf_scheme_name: str = CSRF_SCHEME_NAME,
+        csrf_header_scheme_name: str = CSRF_HEADER_SCHEME_NAME,
         update_last_used: bool = False,
         token_secret: str | None = None,
         token_salt: str = DEFAULT_TOKEN_SALT,
@@ -129,6 +136,7 @@ class CookieTokenAsyncAuth(_BaseCookieTokenAuth, BaseTokenAsyncAuth):
             token_algorithm=token_algorithm,
         )
         self.csrf_scheme_name = csrf_scheme_name
+        self.csrf_header_scheme_name = csrf_header_scheme_name
         self.cookie_name = cookie_name
 
     @override

@@ -287,6 +287,15 @@ def test_schema_with_csrf_cookie(
             name='csrftoken',
             security_scheme_in='cookie',
         ),
+        'csrf_header': SecurityScheme(
+            type='apiKey',
+            description=(
+                'CSRF header — echo the CSRF cookie value here on '
+                'unsafe requests'
+            ),
+            name='X-Csrftoken',
+            security_scheme_in='header',
+        ),
     })
     assert instance.security_requirements(
         metadata,
@@ -302,7 +311,7 @@ def test_schema_with_csrf_cookie(
     assert instance.security_requirements(
         unsafe_metadata,
         _SyncController,
-    ) == snapshot([{'django_session': [], 'csrf': []}])
+    ) == snapshot([{'django_session': [], 'csrf': [], 'csrf_header': []}])
 
 
 @pytest.mark.parametrize('typ', [DjangoSessionSyncAuth, DjangoSessionAsyncAuth])
@@ -402,7 +411,66 @@ def test_schema_with_custom_cookie_names(
             name='custom_csrf_token',
             security_scheme_in='cookie',
         ),
+        'csrf_header': SecurityScheme(
+            type='apiKey',
+            description=(
+                'CSRF header — echo the CSRF cookie value here on '
+                'unsafe requests'
+            ),
+            name='X-Csrftoken',
+            security_scheme_in='header',
+        ),
     })
+
+
+@pytest.mark.parametrize('typ', [DjangoSessionSyncAuth, DjangoSessionAsyncAuth])
+def test_schema_with_custom_scheme_names(
+    settings: LazySettings,
+    *,
+    typ: type[DjangoSessionSyncAuth] | type[DjangoSessionAsyncAuth],
+) -> None:
+    """Ensures that custom scheme names are respected."""
+    settings.CSRF_USE_SESSIONS = False
+    metadata = _SyncController.api_endpoints['GET'].metadata
+    instance = typ(
+        security_scheme_name='my_session',
+        csrf_scheme_name='my_csrf',
+        csrf_header_scheme_name='my_csrf_header',
+    )
+
+    assert instance.security_schemes(metadata, _SyncController) == snapshot({
+        'my_session': SecurityScheme(
+            type='apiKey',
+            description='Reusing standard Django auth flow for API',
+            name='sessionid',
+            security_scheme_in='cookie',
+        ),
+        'my_csrf': SecurityScheme(
+            type='apiKey',
+            description='CSRF protection',
+            name='csrftoken',
+            security_scheme_in='cookie',
+        ),
+        'my_csrf_header': SecurityScheme(
+            type='apiKey',
+            description=(
+                'CSRF header — echo the CSRF cookie value here on '
+                'unsafe requests'
+            ),
+            name='X-Csrftoken',
+            security_scheme_in='header',
+        ),
+    })
+    assert instance.security_requirements(
+        metadata,
+        _SyncController,
+    ) == snapshot([{'my_session': []}])
+
+    unsafe_metadata = _SyncController.api_endpoints['POST'].metadata
+    assert instance.security_requirements(
+        unsafe_metadata,
+        _SyncController,
+    ) == snapshot([{'my_session': [], 'my_csrf': [], 'my_csrf_header': []}])
 
 
 @final
