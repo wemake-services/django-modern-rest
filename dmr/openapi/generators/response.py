@@ -150,7 +150,10 @@ class ResponseGenerator:
         controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> Header:
-        schema = context.generators.schema(str, controller_cls.serializer)
+        schema = context.generators.schema(
+            header_spec.type,
+            controller_cls.serializer,
+        )
         header = Header(
             description=(
                 None
@@ -162,7 +165,7 @@ class ResponseGenerator:
             schema=schema,
         )
         if header_spec.example is not None:
-            # for mypy: `str` cannot return a reference, it is a primitive
+            # for mypy: primitive types cannot return a reference
             assert isinstance(schema, Schema)  # noqa: S101
             # Examples written by hand replace the generated ones:
             header.example = header_spec.example

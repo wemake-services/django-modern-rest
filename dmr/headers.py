@@ -1,5 +1,7 @@
 import dataclasses
-from typing import ClassVar, Literal, Self, final
+from typing import Any, ClassVar, Literal, Self, final
+
+from typing_extensions import TypeForm
 
 from dmr.internal.types import StrOrPromise
 
@@ -15,7 +17,7 @@ class _BaseResponseHeader:
 
     description: StrOrPromise | None = None
     deprecated: bool = False
-    example: str | None = None
+    example: Any = None
 
 
 @final
@@ -62,6 +64,10 @@ class HeaderSpec(_BaseResponseHeader):
         description: Documentation, why this header is needed and what it does.
         deprecated: Whether this header is deprecated.
         example: Documentation, what can be given as values in this header.
+            Should match ``type``, for example ``60`` for ``type=int``.
+        type: Type of the header's value in the OpenAPI schema.
+            Defaults to ``str``, because all headers are strings in HTTP.
+            Use other types, like ``int``, to document numeric headers.
         required: Whether or not this header can be missing.
         skip_validation: Is true, when header is only used for schema purposes,
             without any runtime validation. This might be useful, when
@@ -75,6 +81,7 @@ class HeaderSpec(_BaseResponseHeader):
 
     is_actionable: ClassVar[Literal[False]] = False
 
+    type: TypeForm[Any] = str  # noqa: WPS125
     required: bool = True
     skip_validation: bool = False
 

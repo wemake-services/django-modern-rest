@@ -30,6 +30,12 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Bugfixes
 
+#### OpenAPI
+
+- Added `HeaderSpec.type` to document non-string response headers.
+  Throttling `Retry-After` and `X-RateLimit-*` headers are now
+  documented as integers with examples instead of strings, #1706
+
 #### Controllers and endpoints
 
 - Fixed Django's decorators that support async views, like `condition`
