@@ -60,6 +60,11 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Misc
 
+#### Documentation
+
+- Corrected the routing performance claim to describe measured resolver
+  speedups and their limitations, #1710
+
 #### Agent skills
 
 - Suggest `concrete_views` instead of `views` by default in `dmr` skill, #1670
