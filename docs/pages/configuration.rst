@@ -108,26 +108,21 @@ Settings
 
 Class with all possible setting keys as enum:
 
-.. autoclass:: dmr.settings.Settings
-  :show-inheritance:
+To get settings use :func:`~dmr.settings.resolve_setting`
+function together with ``Settings`` keys:
 
-  To get settings use
-  :func:`~dmr.settings.resolve_setting` function
-  together with ``Settings`` keys:
+.. code:: python
 
-  .. code:: python
+  >>> from dmr.settings import Settings, resolve_setting
 
-    >>> from dmr.settings import Settings, resolve_setting
+  >>> resolve_setting(Settings.responses)
+  []
 
-    >>> resolve_setting(Settings.responses)
-    []
+To set settings use:
 
-  To set settings use:
+.. code:: python
 
-  .. code:: python
-
-    >>> DMR_SETTINGS = {Settings.responses: []}
-
+  >>> DMR_SETTINGS = {Settings.responses: []}
 
 Class that can be used to properly type settings in user's code:
 :class:`dmr.settings.SettingsDict`.
@@ -597,9 +592,7 @@ HTTP Spec validation
     Controller and endpoint values are not merged anymore.
 
 
-.. autoclass:: dmr.settings.HttpSpec
-  :show-inheritance:
-  :members:
+See :class:`dmr.settings.HttpSpec` for the available keys.
 
 
 Streaming
@@ -775,13 +768,4 @@ Environment variables
   It is only recommended for debugging.
   It should be set to ``1`` in production for maximum speed.
 
-
-API Reference
--------------
-
-.. autofunction:: dmr.settings.resolve_setting
-
-.. autofunction:: dmr.settings.clear_settings_cache
-
-.. autoclass:: dmr.settings.SettingsDict
-  :members:
+See :doc:`API reference </pages/api-reference/configuration>`.

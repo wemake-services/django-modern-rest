@@ -105,11 +105,16 @@ each one has a `Sync` and an `Async` version:
 | Django session | `dmr.security.django_session.concrete_views` | `DjangoSession*` |
 
 `as_view` requires `serializer=` and passes other keyword arguments
-to Django as `initkwargs`, so settings like `jwt_expiration=` need no subclass either.
-Two settings are typed keyword arguments of `as_view`:
+to Django as `initkwargs`, so settings like `jwt_expiration=` of the body
+controllers need no subclass either.
+These settings are typed keyword arguments of `as_view`:
 
 - `token_cls=` on the opaque token controllers,
   pass it when the project swaps the bundled `Token` model.
+- `jwt_expiration=` and `jwt_refresh_expiration=` on the cookie controllers,
+  so the cookies expire together with their tokens.
+  Before `0.17.0` they went to `initkwargs` there
+  and changed the tokens, but not the `max-age` of the cookies.
 - `jwt_refresh_cookie_path=` on the cookie controllers.
   It defaults to `'/'`, which sends the refresh token with every request.
   Point it to the refresh endpoint on all three cookie controllers:

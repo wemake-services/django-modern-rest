@@ -295,8 +295,4 @@ unchanged. You will probably want:
 - :doc:`/pages/testing/authentication` for testing endpoints behind it
 - :doc:`/pages/openapi/openapi` for the generated schema
 
-
-API Reference
--------------
-
-.. autofunction:: dmr.security.base.unauth_response_spec
+See :doc:`API reference </pages/api-reference/auth/custom>`.

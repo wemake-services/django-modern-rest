@@ -172,10 +172,11 @@ integration_db_start *containers:
 benchmarks-type-check:
     uv run python -m mypy tests/
 
-# Compile with mypyc then run feature benchmarks
+# Compile with mypyc then run feature benchmarks in the same setup every time
 [group('benchmarks')]
+[env('PYTHONHASHSEED', '0')]
 benchmarks *args='benchmarks/tests': mypyc
-    uv run python -m pytest -o 'addopts="--codspeed"' {{args}}
+    uv run python -m pytest -p no:randomly -o 'addopts="--codspeed"' {{args}}
 
 # Compile code with mypyc
 [group('build')]

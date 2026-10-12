@@ -176,13 +176,7 @@ Browse components
 
       Uploading files.
 
-
-API Reference
--------------
-
-.. autoclass:: dmr.components.ComponentParser
-   :members:
-
+See :doc:`API reference </pages/api-reference/components/index>`.
 
 .. toctree::
    :hidden:

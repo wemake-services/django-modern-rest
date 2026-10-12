@@ -75,6 +75,10 @@ st.openapi.format(
     'phone',
     strategies.from_regex(r'^\+7-495-[0-9]{3}-[0-9]{2}-[0-9]{2}$'),
 )
+st.openapi.format(
+    'email',
+    strategies.emails(domains=strategies.just('example.com')),
+)
 
 # TODO: provide `Token` auth as well
 # TODO: restore `django_session` auth, removed in #1550

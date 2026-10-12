@@ -1,7 +1,11 @@
--e ..[msgspec,jwt]
-fastapi
-djangorestframework
-django-ninja
-uvicorn
-gunicorn
-tabulate
+-e ..[msgspec]
+django==5.2.17
+django-ninja==1.7.1
+djangorestframework==3.18.1
+fastapi==0.142.2
+gunicorn==26.2.0
+msgspec==0.22.0
+pydantic==2.13.5
+tabulate==0.10.0
+uvicorn==0.53.0
+uvicorn-worker==0.4.0

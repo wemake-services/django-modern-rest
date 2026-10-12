@@ -12,7 +12,7 @@ import pydantic
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import HttpRequest
 from django.utils.http import parse_header_parameters
-from typing_extensions import override
+from typing_extensions import TypeForm, override
 
 from dmr.controller import Controller
 from dmr.files import FileBody, FileBodyLike
@@ -120,7 +120,7 @@ class OctetFileModel(pydantic.BaseModel, Generic[_ModelT]):
 
     @classmethod
     @override
-    def model_parametrized_name(cls, params: tuple[type[Any], ...]) -> str:  # noqa: WPS110
+    def model_parametrized_name(cls, params: tuple[TypeForm[Any], ...]) -> str:  # noqa: WPS110
         return (
             super()
             .model_parametrized_name(params)
