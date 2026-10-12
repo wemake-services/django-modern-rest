@@ -113,36 +113,4 @@ It can be :ref:`turned off <response_validation>`.
 
 See :class:`~dmr.validation.response.ResponseValidator` for the API.
 
-
-API Reference
--------------
-
-Settings
-~~~~~~~~
-
-.. autoclass:: dmr.validation.settings.SettingsValidator
-  :members:
-
-Endpoint
-~~~~~~~~
-
-.. autoclass:: dmr.validation.endpoint_metadata.EndpointMetadataBuilder
-  :members:
-
-.. autoclass:: dmr.validation.endpoint_metadata.EndpointMetadataValidator
-  :members:
-
-.. autoclass:: dmr.validation.metadata_merger.MetadataMerger
-  :members:
-
-Controller
-~~~~~~~~~~
-
-.. autoclass:: dmr.validation.controller.ControllerValidator
-  :members:
-
-Response
-~~~~~~~~
-
-.. autoclass:: dmr.validation.response.ResponseValidator
-  :members:
+See :doc:`API reference </pages/api-reference/validation>`.

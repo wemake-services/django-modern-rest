@@ -37,6 +37,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
   "Topic :: Internet :: WWW/HTTP",
@@ -91,12 +92,12 @@ dev = [
   "phonenumbers>=9,<10",
   "pyrefly>=1,<2",
   "pyright>=1.1,<2",
-  "ruff>=0.16,<0.17",
+  "ruff>=0.17,<0.18",
   "schemathesis==4.26.1",
   "skills-ref>=0.1,<0.2",
   "slotscheck>=0.19,<0.22",
   # TODO: relax the pin after a stable `ty` release:
-  "ty==0.0.84",
+  "ty==0.0.86",
   "types-django-filter>=25.2,<27",
   "types-docker>=7.2,<8",
   "types-docutils>=0.22,<0.24",
@@ -121,19 +122,19 @@ docs = [
   "sphinx-copybutton>=0.5,<0.6",
   "sphinx-design>=0.7,<0.8",
   "sphinx-iconify>=0.3,<0.4",
-  "sphinx-llm-friendly>=0.5,<0.6",
+  "sphinx-llm-friendly>=0.5,<0.7",
   "sphinx-tabs>=3.5,<4",
   "sphinxcontrib-mermaid>=2,<3",
   # Needed for our extension:
   "uvicorn>=0.52,<0.55",
   # Needed for examples:
   "xmltodict-rs>=0.13,<0.14",
-  "zapros>=0.15,<0.20",
+  "zapros>=0.20,<1",
   { include-group = "dev-and-docs" },
 ]
 build = [
   # NOTE: Keep cibuildwheel in sync with action version in build-wheels.yml
-  "cibuildwheel==4.2.1",
+  "cibuildwheel==4.3.1",
   "pypyp>=1.3,<2",
 ]
 dev-and-docs = [
@@ -146,7 +147,7 @@ dev-and-docs = [
 integration = [
   "pytest-codspeed>=4.3,<6",
   "testcontainers[redis]>=4.15,<5",
-  "tracecov>=0.23,<0.25",
+  "tracecov>=0.23,<0.26",
 ]
 integration-drivers = [
   "mysqlclient>=2.2.8,<3",
@@ -165,7 +166,7 @@ unit-test = [
   "django-allauth",
   "django-csp>=4,<5",
   "faker>=40.36,<41",
-  "inline-snapshot>=0.35,<0.36",
+  "inline-snapshot>=0.35,<1",
   # We don't install `orjson` on 3.14, because we run `3.14t` as well,
   # but no way to disable it specifically for `t` version :(
   "orjson>=3.11,<4; python_version<'3.14' and implementation_name=='cpython'",
