@@ -10,7 +10,7 @@ description: Migrate an existing Django auth API from dj-rest-auth to django-mod
 Migrate a `dj-rest-auth` installation to `django-modern-rest`.
 
 Required docs (always reference first):
-- DMR LLM docs: https://django-modern-rest.readthedocs.io/llms-full.txt
+- DMR LLM docs: https://django-modern-rest.readthedocs.io/llms.txt
 - dj-rest-auth docs: https://dj-rest-auth.readthedocs.io/en/latest/
 - allauth headless docs: https://docs.allauth.org/en/latest/headless/index.html
 - Local map: [references/dj-rest-auth-to-dmr-map.md](references/dj-rest-auth-to-dmr-map.md)
