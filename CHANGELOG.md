@@ -64,6 +64,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 - Suggest `concrete_views` instead of `views` by default in `dmr` skill, #1670
 - Mention typed expirations of cookie `concrete_views` in `dmr` skill, #1690
+- Updated documentation and agent skills to link to `llms.txt` instead of
+  the removed `llms-full.txt`, #1727
 
 
 ## 0.16.0 (2026-10-01)
@@ -1410,7 +1412,7 @@ to a newer version using AI tool of your choice.
 ### Migration Prompt
 
 To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
-1. Load the latest documentation from https://django-modern-rest.readthedocs.io/llms-full.txt
+1. Load the latest documentation from https://django-modern-rest.readthedocs.io/llms.txt
 2. Convert component parsing from old class-based API to new method-based API.
   Before:
 

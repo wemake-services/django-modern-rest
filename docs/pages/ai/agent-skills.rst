@@ -75,7 +75,7 @@ of the installed version. These are the entry points:
 
 - https://django-modern-rest.readthedocs.io/llms.txt
   is the index of all pages, with the version in its summary
-- https://django-modern-rest.readthedocs.io/llms-full.txt
+- https://django-modern-rest.readthedocs.io/llms.txt
   is the complete documentation in a single file,
   including the code of every example
 - every page is also published as Markdown: replace ``.html``
