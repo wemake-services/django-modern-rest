@@ -1410,7 +1410,7 @@ to a newer version using AI tool of your choice.
 ### Migration Prompt
 
 To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
-1. Load the latest documentation from https://django-modern-rest.readthedocs.io/llms-full.txt
+1. Load the latest documentation from https://django-modern-rest.readthedocs.io/llms.txt
 2. Convert component parsing from old class-based API to new method-based API.
   Before:
 
