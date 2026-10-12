@@ -12,7 +12,7 @@ Generate runnable transport-layer skeletons for `django-modern-rest` from OpenAP
 Use the repository examples under `django_test_app/server/apps/*` and `tests/*` as the local source of truth. Read [references/framework-patterns.md](references/framework-patterns.md) when choosing dmr constructs, [references/project-map.md](references/project-map.md) when deciding where generated files should live, and [references/spec-fidelity.md](references/spec-fidelity.md) whenever a source OpenAPI document is authoritative and the generated project should preserve the public contract closely enough for a useful boilerplate.
 
 Primary framework documentation:
-- https://django-modern-rest.readthedocs.io/llms-full.txt
+- https://django-modern-rest.readthedocs.io/llms.txt
 
 ## Workflow
 
