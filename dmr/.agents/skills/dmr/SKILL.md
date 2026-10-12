@@ -39,7 +39,7 @@ For scaffolding from an OpenAPI document use `dmr-openapi-skeleton`.
      for example
      `https://django-modern-rest.readthedocs.io/en/latest/pages/routing.md`
    - everything at once:
-     `https://django-modern-rest.readthedocs.io/en/<version>/llms-full.txt`
+     `https://django-modern-rest.readthedocs.io/en/<version>/llms.txt`
 3. **Read the reference for the area you are changing**
    (see the table below), it holds the full rules with correct and wrong
    examples.
