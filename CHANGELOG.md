@@ -64,6 +64,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 - Suggest `concrete_views` instead of `views` by default in `dmr` skill, #1670
 - Mention typed expirations of cookie `concrete_views` in `dmr` skill, #1690
+- Updated documentation and agent skills to link to `llms.txt` instead of
+  the removed `llms-full.txt`, #1727
 
 
 ## 0.16.0 (2026-10-01)
