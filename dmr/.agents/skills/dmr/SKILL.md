@@ -97,8 +97,9 @@ Prefer `BodyMsgspec` over `Body` when `MsgspecSerializer` is used.
 Use `dmr.routing.path` and `Router`, and install
 `build_404_handler` / `build_500_handler` so API errors are JSON.
 
-Turn CSRF checks on with `csrf_exempt = False` on the controller,
-not by wrapping `csrf_protect`, and always set
+When cookies authenticate requests, turn CSRF checks on
+with `csrf_exempt = False` on the controller, not by wrapping `csrf_protect`
+(wrap it only when `CsrfViewMiddleware` is disabled), and always set
 `CSRF_FAILURE_VIEW = build_csrf_handler('api/', ...)`
 error handler with the router's prefix.
 

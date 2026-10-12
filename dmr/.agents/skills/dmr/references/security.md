@@ -360,9 +360,15 @@ Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/throttling.html
 
 ## CSRF
 
-### Turn CSRF checks on with `csrf_exempt = False`
+### Turn CSRF checks on with `csrf_exempt = False` when cookies authenticate requests
 
 `dmr` exempts every controller from CSRF checks by default.
+Turn them on when browsers call the controller with cookies
+that authenticate the user, but its `auth` does not check them,
+like when it reads `request.user` set by Django's `AuthenticationMiddleware`:
+browsers send these cookies with requests from other sites too.
+Controllers that authenticate with headers, like `HeaderJWTSyncAuth`,
+need no CSRF checks.
 Set `csrf_exempt = False` on a controller, and Django's `CsrfViewMiddleware`
 checks its unsafe methods like for any Django view.
 `dmr` then documents the `403` response and the `csrf` security scheme
@@ -456,8 +462,11 @@ class CsrfTokenController(Controller[MsgspecSerializer]):
 ```
 
 **Limitations:** `CsrfViewMiddleware` must be in `MIDDLEWARE`, without it
-`csrf_exempt = False` checks nothing. `DjangoSessionSyncAuth`,
-`CookieJWTSyncAuth`, and their async versions check CSRF themselves,
+`csrf_exempt = False` checks nothing. The `csrf_protect` decorator
+checks CSRF even when the middleware is disabled:
+in that case wrap it with `wrap_middleware`, like `csrf_protect_json` above.
+`DjangoSessionSyncAuth`, `CookieJWTSyncAuth`, `CookieTokenSyncAuth`,
+and their async versions check CSRF themselves,
 controllers that use them need no `csrf_exempt = False`.
 `DMRClient` skips CSRF checks like Django's test client,
 use `DMRClient(enforce_csrf_checks=True)` to test them.
@@ -538,7 +547,7 @@ class CatalogController(Controller[MsgspecSerializer]):
         return ['book', 'pen']
 ```
 
-**Limitations:** `wrap_middleware` handles both sync and async automatically — always add `responses = wrapped_func.responses` to the controller for OpenAPI docs. Do not wrap `csrf_protect`, use `csrf_exempt = False` instead.
+**Limitations:** `wrap_middleware` handles both sync and async automatically — always add `responses = wrapped_func.responses` to the controller for OpenAPI docs. Do not wrap `csrf_protect` while `CsrfViewMiddleware` is enabled, use `csrf_exempt = False` instead.
 
 Docs:
 
