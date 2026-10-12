@@ -72,16 +72,4 @@ But, when the prefix does match and the credentials still cannot be decoded,
 :exc:`~dmr.exceptions.NotAuthenticatedError` is raised right away
 and no other auth classes are tried.
 
-
-API Reference
--------------
-
-.. autoclass:: dmr.security.http.HttpBasicSyncAuth
-  :members:
-  :inherited-members:
-
-.. autoclass:: dmr.security.http.HttpBasicAsyncAuth
-  :members:
-  :inherited-members:
-
-.. autofunction:: dmr.security.http.basic_auth
+See :doc:`API reference </pages/api-reference/auth/http-basic>`.

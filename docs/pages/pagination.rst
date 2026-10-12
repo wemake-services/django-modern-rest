@@ -232,32 +232,4 @@ Any other Django-compatible pagination tool should work out of the box.
 Like `django-cursor-pagination <https://github.com/photocrowd/django-cursor-pagination>`_
 or even your custom implementation.
 
-
-API Reference
--------------
-
-Limit offset
-~~~~~~~~~~~~
-
-.. autoclass:: dmr.pagination.Paginated
-  :members:
-
-.. autoclass:: dmr.pagination.Page
-  :members:
-
-Cursor
-~~~~~~
-
-.. autoclass:: dmr.pagination.CursorPaginator
-  :members:
-  :inherited-members:
-  :special-members: __init__
-
-.. autoclass:: dmr.pagination.CursorPage
-  :members:
-
-.. autoclass:: dmr.pagination.CursorPaginated
-  :members:
-
-.. autoclass:: dmr.pagination.cursor.InvalidCursorError
-  :members:
+See :doc:`API reference </pages/api-reference/pagination>`.

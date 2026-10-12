@@ -1,6 +1,6 @@
 # Run HTTP load benchmarks
 bench:
-    uv run python run_benchmark.py
+    uv run --isolated --with-requirements requirements.txt python -u run_benchmark.py
 
 # Run URL resolver benchmarks with hyperfine
 bench-resolver:
