@@ -74,11 +74,11 @@ class AsyncAndSyncMixedModify(Controller[PydanticSerializer]):
             auth=[DjangoSessionAsyncAuth()],
         )
 
-    @modify.lazy(_sync_spec)  # type: ignore[deprecated]
+    @modify.lazy(_sync_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated]
     async def get(self) -> int:
         return 1
 
-    @modify.lazy(_sync_spec)  # type: ignore[deprecated]
+    @modify.lazy(_sync_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated]
     def post(self) -> HttpResponse:
         return self.to_response(1)
 
@@ -94,11 +94,11 @@ class SyncAndAsyncMixedModify(Controller[PydanticSerializer]):
             auth=[DjangoSessionSyncAuth()],
         )
 
-    @modify.lazy(_async_spec)  # type: ignore[deprecated]
+    @modify.lazy(_async_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated]
     def get(self) -> int:
         return 1
 
-    @modify.lazy(_async_spec)  # type: ignore[deprecated]
+    @modify.lazy(_async_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated]
     async def post(self) -> HttpResponse:
         return self.to_response(1)
 
@@ -122,7 +122,7 @@ class AnyMixedModify(Controller[PydanticSerializer]):
     async def put(self) -> int:
         return 1
 
-    @modify.lazy(_any_spec)  # type: ignore[deprecated]
+    @modify.lazy(_any_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated]
     async def post(self) -> HttpResponse:
         return self.to_response(1)
 

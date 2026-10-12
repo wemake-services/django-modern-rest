@@ -6,7 +6,7 @@ import pydantic
 from django.urls import path
 from pydantic_extra_types import Color
 from syrupy.assertion import SnapshotAssertion
-from typing_extensions import override
+from typing_extensions import TypeForm, override
 
 from dmr import Body, Controller
 from dmr.openapi import build_schema
@@ -70,7 +70,7 @@ class _UserDocument(pydantic.BaseModel, Generic[_ModelT]):
 
     @classmethod
     @override
-    def model_parametrized_name(cls, params: tuple[type[Any], ...]) -> str:  # noqa: WPS110
+    def model_parametrized_name(cls, params: tuple[TypeForm[Any], ...]) -> str:  # noqa: WPS110
         return (
             super()
             .model_parametrized_name(params)

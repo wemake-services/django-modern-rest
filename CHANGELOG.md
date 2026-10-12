@@ -28,15 +28,6 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ## 0.17.0 WIP
 
-### Bugfixes
-
-#### Controllers and endpoints
-
-- Fixed Django's decorators that support async views, like `condition`
-  or `cache_control`, failing on async controllers with `wrap_middleware`.
-  They got a sync view that returned a coroutine, so they treated
-  the coroutine as a response, #1684
-
 ### Breaking changes
 
 - Replaced `Sentinel` class in all typing annotations to be `EMPTY`
@@ -44,6 +35,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Replaced multiple types from `Any` to be `TypeForm[Any]`, #1688
 
 ### Features
+
+- Python 3.15 official support, #1675
 
 #### Serializers
 
@@ -57,6 +50,13 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Fixed `jwt_expiration` and `jwt_refresh_expiration` passed to `as_view`
   of the cookie `concrete_views` changing the tokens, but not their cookies.
   They are typed `as_view` arguments now and are set on the class, #1690
+
+#### Controllers and endpoints
+
+- Fixed Django's decorators that support async views, like `condition`
+  or `cache_control`, failing on async controllers with `wrap_middleware`.
+  They got a sync view that returned a coroutine, so they treated
+  the coroutine as a response, #1684
 
 ### Misc
 
