@@ -15,6 +15,12 @@ max_concurrency = 4
 max_retries = 5
 retry_wait_time = 4
 
+# lychee 0.24.2 doesn't retry 5xx responses at any `max_retries`,
+# and github.com answers 502, 503 or 504 now and then:
+# https://github.com/lycheeverse/lychee/issues/2319
+# The first two ranges are lychee's default.
+accept = ["100..=103", "200..=299", "502..=504"]
+
 
 # Require all checked web links to use HTTPS.
 require_https = true
