@@ -179,9 +179,9 @@ unit-test = [
   "pytest-randomly>=4,<6",
   "pytest-timeout>=2.4,<3",
   "pytest-xdist>=3.8,<4",
+  "strict-no-cover>=0.1,<1",
   "syrupy>=5.1,<7",
   "xmltodict-rs>=0.13,<0.14",
-  "strict-no-cover>=0.1,<1.0",
 ]
 
 
