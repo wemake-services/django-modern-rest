@@ -55,11 +55,38 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   sentinel value, since all type-checkers support this now, #1687
 - Replaced multiple types from `Any` to be `TypeForm[Any]`, #1688
 
+### Features
+
+- Python 3.15 official support, #1675
+
+#### Serializers
+
+- Added `MsgspecSerializer.enable_component_gc` flag to optionally
+  enable the GC for the component parsing model, #1697
+
+### Bugfixes
+
+#### Auth and security
+
+- Fixed `jwt_expiration` and `jwt_refresh_expiration` passed to `as_view`
+  of the cookie `concrete_views` changing the tokens, but not their cookies.
+  They are typed `as_view` arguments now and are set on the class, #1690
+
+#### Controllers and endpoints
+
+- Fixed Django's decorators that support async views, like `condition`
+  or `cache_control`, failing on async controllers with `wrap_middleware`.
+  They got a sync view that returned a coroutine, so they treated
+  the coroutine as a response, #1684
+
 ### Misc
 
 #### Agent skills
 
 - Suggest `concrete_views` instead of `views` by default in `dmr` skill, #1670
+- Mention typed expirations of cookie `concrete_views` in `dmr` skill, #1690
+- Updated documentation and agent skills to link to `llms.txt` instead of
+  the removed `llms-full.txt`, #1727
 
 
 ## 0.16.0 (2026-10-01)
@@ -1406,7 +1433,7 @@ to a newer version using AI tool of your choice.
 ### Migration Prompt
 
 To migrate `django-modern-rest` to version `0.4.0` and above, you need to:
-1. Load the latest documentation from https://django-modern-rest.readthedocs.io/llms-full.txt
+1. Load the latest documentation from https://django-modern-rest.readthedocs.io/llms.txt
 2. Convert component parsing from old class-based API to new method-based API.
   Before:
 

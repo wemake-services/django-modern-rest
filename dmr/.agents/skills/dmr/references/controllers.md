@@ -195,7 +195,7 @@ class UserController(Controller[PydanticFastSerializer]):
 
 Because `PydanticFastSerializer` is at least 3 times faster in this case.
 
-Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/deep-dive/public-api.html#dmr.plugins.pydantic.PydanticFastSerializer
+Docs: https://django-modern-rest.readthedocs.io/en/latest/pages/api-reference/plugins.html#dmr.plugins.pydantic.PydanticFastSerializer
 
 ### Never return Django `HttpResponse` directly — use `to_response`, `to_error`, or `APIError`
 

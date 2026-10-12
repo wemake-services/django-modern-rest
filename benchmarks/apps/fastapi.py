@@ -2,10 +2,10 @@ import datetime as dt
 import decimal
 import enum
 import uuid
-from typing import Annotated
 
 import fastapi
 import pydantic
+from apps import config
 
 async_app = fastapi.FastAPI()
 sync_app = fastapi.FastAPI()
@@ -52,38 +52,23 @@ class UserModel(UserCreateModel):
     uid: uuid.UUID
 
 
-class QueryModel(pydantic.BaseModel):
-    per_page: int
-    count: int
-    page: int
-
-
-class HeadersModel(pydantic.BaseModel):
-    x_api_token: str
-    x_request_origin: str
-
-
-@async_app.post('/async/user/')
+@async_app.post('/async/users/')
 async def async_post(
     data: UserCreateModel,
-    filters: Annotated[QueryModel, fastapi.Query()],
-    headers: Annotated[HeadersModel, fastapi.Header()],
-) -> UserModel:
-    assert filters
-    return UserModel(
+) -> list[UserModel]:
+    result = UserModel(
         uid=uuid.uuid4(),
         **data.model_dump(),
     )
+    return [result] * config.RESPONSE_ITEMS
 
 
-@sync_app.post('/sync/user/')
+@sync_app.post('/sync/users/')
 def sync_post(
     data: UserCreateModel,
-    filters: Annotated[QueryModel, fastapi.Query()],
-    headers: Annotated[HeadersModel, fastapi.Header()],
-) -> UserModel:
-    assert filters
-    return UserModel(
+) -> list[UserModel]:
+    result = UserModel(
         uid=uuid.uuid4(),
         **data.model_dump(),
     )
+    return [result] * config.RESPONSE_ITEMS

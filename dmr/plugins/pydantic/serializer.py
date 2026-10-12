@@ -175,7 +175,7 @@ class PydanticSerializer(BaseSerializer):
             return _get_cached_type_adapter(
                 type(to_serialize),  # type: ignore[arg-type]
             ).dump_python(
-                to_serialize,
+                to_serialize,  # pyright: ignore[reportArgumentType]
                 mode=_JSON_MODE,
                 **cls.to_json_kwargs,
             )
@@ -442,7 +442,7 @@ class PydanticFastSerializer(PydanticSerializer):
                 )
 
 
-_ModelT = TypeVar('_ModelT')
+_ModelT = TypeVar('_ModelT', bound=TypeForm[Any])
 
 
 @lru_cache(maxsize=MAX_CACHE_SIZE)
