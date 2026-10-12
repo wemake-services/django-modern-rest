@@ -93,12 +93,4 @@ Customizing OpenAPI metadata for Headers
 
 See :ref:`customizing_parameter_openapi`.
 
-
-API Reference
--------------
-
-.. autodata:: dmr.components.Headers
-
-.. autoclass:: dmr.components.HeadersComponent
-  :members:
-  :show-inheritance:
+See :doc:`API reference </pages/api-reference/components/headers>`.

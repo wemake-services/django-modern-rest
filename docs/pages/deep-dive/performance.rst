@@ -17,21 +17,21 @@ Sync
         "datasets": [
           {
             "label": "dmr",
-            "data": [5774.94],
+            "data": [3524.25],
             "backgroundColor": ["rgba(37, 108, 86, 0.7)"],
             "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
           },
           {
             "label": "ninja",
-            "data": [3888.13],
+            "data": [602.789],
             "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
             "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
           },
           {
             "label": "drf",
-            "data": [3024.24],
+            "data": [646.836],
             "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
             "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
@@ -73,21 +73,21 @@ Sync
         "datasets": [
           {
             "label": "dmr",
-            "data": [5774.94],
+            "data": [3524.25],
             "backgroundColor": ["rgba(80, 130, 100, 0.7)"],
             "borderColor": ["rgba(168, 211, 187, 1)"],
             "borderWidth": 2
           },
           {
             "label": "ninja",
-            "data": [3888.13],
+            "data": [602.789],
             "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
             "borderColor": ["rgba(255, 255, 255, 0.7)"],
             "borderWidth": 2
           },
           {
             "label": "drf",
-            "data": [3024.24],
+            "data": [646.836],
             "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
             "borderColor": ["rgba(255, 255, 255, 0.7)"],
             "borderWidth": 2
@@ -145,9 +145,20 @@ Why so fast?
 - We :ref:`compile <mypyc>` some hot paths of the framework
   with `mypyc <https://mypyc.readthedocs.io/en/latest/>`_ to C code,
   while keeping fallback Python code in-place
-- We provide a :func:`django.urls.path` drop-in :doc:`../routing` replacement
-  which is `x51 times <https://habr.com/ru/companies/tochka/articles/822431/>`_
-  as fast as the default one
+- We provide :func:`dmr.routing.path`, a drop-in :func:`django.urls.path`
+  replacement using static string matching and prefix-gated regex matching.
+  The optimization idea comes from
+  `Tochka's article <https://habr.com/ru/companies/tochka/articles/822431/>`_.
+  The reporter's per-case ``timeit`` measurements on an M4 in
+  `#1710 <https://github.com/wemake-services/django-modern-rest/issues/1710>`_
+  showed roughly 1.1–1.3 times Django's resolver speed (rounded),
+  including unsuccessful resolution (404).
+  These measurements use the cases in our
+  `routing benchmark source <https://github.com/wemake-services/django-modern-rest/blob/master/benchmarks/tests/test_router/test_path.py>`_,
+  whose CodSpeed tests aggregate the cases rather than measure each separately.
+  Gains depend on the route set, match position, and environment;
+  these are resolver timings, not end-to-end request throughput gains.
+  See :doc:`../routing` for details.
 - We validate data smartly: we prepare models for validation in advance,
   so no runtime magic ever happens
 - We have a special :ref:`"production mode" <response_validation>`
@@ -169,22 +180,22 @@ Async
         "labels": ["Requests Per Second"],
         "datasets": [
           {
-            "label": "fastapi",
-            "data": [10854.6],
-            "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
-            "borderColor": ["rgba(53, 84, 74, 1)"],
-            "borderWidth": 2
-          },
-          {
             "label": "dmr",
-            "data": [7026.27],
+            "data": [3972.57],
             "backgroundColor": ["rgba(37, 108, 86, 0.7)"],
             "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
           },
           {
+            "label": "fastapi",
+            "data": [3930.53],
+            "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
+            "borderColor": ["rgba(53, 84, 74, 1)"],
+            "borderWidth": 2
+          },
+          {
             "label": "ninja",
-            "data": [4359.12],
+            "data": [787.876],
             "backgroundColor": ["rgba(53, 84, 74, 0.4)"],
             "borderColor": ["rgba(53, 84, 74, 1)"],
             "borderWidth": 2
@@ -225,22 +236,22 @@ Async
         "labels": ["Requests Per Second"],
         "datasets": [
           {
-            "label": "fastapi",
-            "data": [10854.6],
-            "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
-            "borderColor": ["rgba(255, 255, 255, 0.7)"],
-            "borderWidth": 2
-          },
-          {
             "label": "dmr",
-            "data": [7026.27],
+            "data": [3972.57],
             "backgroundColor": ["rgba(80, 130, 100, 0.7)"],
             "borderColor": ["rgba(168, 211, 187, 1)"],
             "borderWidth": 2
           },
           {
+            "label": "fastapi",
+            "data": [3930.53],
+            "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
+            "borderColor": ["rgba(255, 255, 255, 0.7)"],
+            "borderWidth": 2
+          },
+          {
             "label": "ninja",
-            "data": [4359.12],
+            "data": [787.876],
             "backgroundColor": ["rgba(210, 245, 220, 0.4)"],
             "borderColor": ["rgba(255, 255, 255, 0.7)"],
             "borderWidth": 2
@@ -290,12 +301,9 @@ Async
     }
   }
 
-While ``fastapi`` is faster at the moment, we have several ideas
-to optimize ``django-modern-rest`` even further,
-so it can be on par (or even faster!)
-with the fastest Python web frameworks in existence.
-
-While keeping 100% of compatibility with the older libs and tools.
+In our async benchmark, ``django-modern-rest`` performs on par with
+``fastapi``. We continue to improve performance while keeping
+compatibility with existing Django libraries and tools.
 
 
 .. _mypyc:

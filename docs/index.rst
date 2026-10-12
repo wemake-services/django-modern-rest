@@ -160,7 +160,7 @@ and extend ``django-modern-rest`` framework.
       Just drop this package into any existing Django application!
 
     .. grid-item-card:: :octicon:`gear` Customizable to the core
-      :link: pages/deep-dive/public-api
+      :link: pages/api-reference/index
       :link-type: doc
 
       Every part of the framework can be customized and extended.
@@ -251,7 +251,6 @@ Here are our amazing people who made this project possible.
   pages/testing/throttling.rst
   pages/testing/property-based.rst
   pages/testing/tracecov.rst
-  pages/testing/api-reference.rst
 
 
 .. toctree::
@@ -279,11 +278,16 @@ Here are our amazing people who made this project possible.
   :hidden:
 
   pages/deep-dive/performance.rst
-  pages/deep-dive/public-api.rst
-  pages/deep-dive/internal-api.rst
   pages/deep-dive/security.rst
   pages/deep-dive/changelog.rst
   pages/deep-dive/contributing.rst
+
+
+.. toctree::
+  :caption: API Reference
+  :hidden:
+
+  pages/api-reference/index.rst
 
 
 .. toctree::

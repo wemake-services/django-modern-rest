@@ -17,7 +17,8 @@ if not settings.configured:
         SECRET_KEY=get_random_string(50),
     )
 
-from ninja import Header, NinjaAPI, Query, Schema
+from apps import config
+from ninja import NinjaAPI, Schema
 
 async_app = asgi.ASGIHandler()
 sync_app = wsgi.WSGIHandler()
@@ -64,43 +65,31 @@ class UserModel(UserCreateModel):
     uid: uuid.UUID
 
 
-class QueryModel(Schema):
-    per_page: int
-    count: int
-    page: int
-
-
 api = NinjaAPI()
 
 
-@api.post('/async/user/')
+@api.post('/async/users/')
 async def async_post(
     request: HttpRequest,
     data: UserCreateModel,
-    filters: Query[QueryModel],
-    token: str = Header(alias='X-API-Token'),
-    origin: str = Header(alias='X-Request-Origin'),
-) -> UserModel:
-    assert filters
-    return UserModel(
+) -> list[UserModel]:
+    result = UserModel(
         uid=uuid.uuid4(),
         **data.model_dump(),
     )
+    return [result] * config.RESPONSE_ITEMS
 
 
-@api.post('/sync/user/')
+@api.post('/sync/users/')
 def sync_post(
     request: HttpRequest,
     data: UserCreateModel,
-    filters: Query[QueryModel],
-    token: str = Header(alias='X-API-Token'),
-    origin: str = Header(alias='X-Request-Origin'),
-) -> UserModel:
-    assert filters
-    return UserModel(
+) -> list[UserModel]:
+    result = UserModel(
         uid=uuid.uuid4(),
         **data.model_dump(),
     )
+    return [result] * config.RESPONSE_ITEMS
 
 
 urlpatterns = [
