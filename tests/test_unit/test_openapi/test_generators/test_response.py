@@ -314,7 +314,10 @@ class _ControllerWithoutBody(Controller[PydanticSerializer]):
     def post(self) -> None:
         raise NotImplementedError
 
-    @modify(status_code=HTTPStatus.NO_CONTENT)
+    @modify(
+        status_code=HTTPStatus.NO_CONTENT,
+        headers={'X-Test-Header': _HEADER},
+    )
     def delete(self) -> None:
         raise NotImplementedError
 
@@ -328,7 +331,7 @@ def test_response_without_body(
     http_method: HTTPMethod,
     status_code: str,
 ) -> None:
-    """Ensure that endpoints returning `None` do not document a content."""
+    """Ensure that `None` responses have no content, but keep headers."""
     response = generator(
         _ControllerWithoutBody.api_endpoints[http_method].metadata,
         _ControllerWithoutBody,
@@ -337,20 +340,7 @@ def test_response_without_body(
 
     assert isinstance(response_without_body, Response)
     assert response_without_body.content is None
-
-
-def test_response_without_body_keeps_headers(
-    generator: ResponseGenerator,
-) -> None:
-    """Ensure that dropping the content does not drop the headers."""
-    response = generator(
-        _ControllerWithoutBody.api_endpoints[HTTPMethod.POST].metadata,
-        _ControllerWithoutBody,
-    )
-    response_created = response['201']
-
-    assert isinstance(response_created, Response)
-    assert response_created.headers == snapshot({
+    assert response_without_body.headers == snapshot({
         'X-Test-Header': Header(
             schema=Schema(type=OpenAPIType.STRING),
             description='Other Test Header',
