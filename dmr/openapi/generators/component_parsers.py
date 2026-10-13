@@ -1,7 +1,15 @@
 import dataclasses
 import uuid
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, final
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Final,
+    TypeAlias,
+    TypeVar,
+    final,
+)
 
 from django.urls import converters
 from typing_extensions import TypedDict, TypeForm
@@ -314,26 +322,77 @@ class ComponentParserGenerator:  # noqa: WPS214
         new_schema: RequestBody,
         schema: RequestBody,
     ) -> dict[str, MediaType | Reference]:
-        new_content: dict[str, MediaType | Reference] = {}
+        # A required body component has to parse every request, so it rules
+        # out the content types it does not support. An optional one does
+        # not: a request it cannot parse is simply a request without it.
+        merged: dict[str, MediaType | Reference] = {}
         # Sorted by content type, custom components can return any order:
-        for media_name, media_type in sorted(new_schema.content.items()):
-            # We've just built these bodies from component parsers,
-            # so all of them have inline media types, never references:
-            assert isinstance(media_type, MediaType)  # noqa: S101
-            media_items: list[Schema] = []
-            if media_type.schema:  # pragma: no cover:
-                media_items.append(media_type.schema)
-            existing_content = schema.content.get(media_name)
-            assert not isinstance(existing_content, Reference)  # noqa: S101
-            # TODO: remove pragma after implementing conditional types
-            # for `FileMetadata[]` component
-            if existing_content and existing_content.schema:  # pragma: no cover
-                media_items.append(existing_content.schema)
-            new_content[media_name] = dataclasses.replace(
-                media_type,
-                schema=Schema(all_of=media_items),
+        media_names = new_schema.content.keys() | schema.content.keys()
+        for media_name in sorted(media_names):
+            media_type = _merge_media_types(
+                schema.content.get(media_name),
+                new_schema.content.get(media_name),
+                # A content type only one of them supports survives
+                # when the other one is optional:
+                keep_lonely_existing=not new_schema.required,
+                keep_lonely_new=not schema.required,
             )
-        return new_content
+            if media_type is not None:
+                merged[media_name] = media_type
+        return merged
+
+
+_MergedT = TypeVar('_MergedT')
+
+
+def _merge_optional(
+    existing: dict[str, _MergedT] | None,
+    to_merge: dict[str, _MergedT] | None,
+) -> dict[str, _MergedT] | None:
+    """Merge two optional mappings, ``None`` when nothing is left."""
+    return {**(existing or {}), **(to_merge or {})} or None
+
+
+def _merge_media_types(
+    existing: 'MediaType | Reference | None',
+    to_merge: 'MediaType | Reference | None',
+    *,
+    keep_lonely_existing: bool,
+    keep_lonely_new: bool,
+) -> 'MediaType | Reference | None':
+    """Merge what two body components say about one content type."""
+    if existing is None:
+        return to_merge if keep_lonely_new else None
+    if to_merge is None:
+        return existing if keep_lonely_existing else None
+
+    inline_existing = _inline_media_type(existing)
+    inline_new = _inline_media_type(to_merge)
+    # Body components always describe themselves with `schema`,
+    # `item_schema` is only used for streaming responses:
+    assert inline_existing.schema is not None  # noqa: S101
+    assert inline_new.schema is not None  # noqa: S101
+    return dataclasses.replace(
+        inline_new,
+        # Declaration order, the existing body came first:
+        schema=Schema(all_of=[inline_existing.schema, inline_new.schema]),
+        # Both are keyed by property name and describe different parts
+        # of the same body, so neither of them may be lost:
+        encoding=_merge_optional(
+            inline_existing.encoding,
+            inline_new.encoding,
+        ),
+        examples=_merge_optional(
+            inline_existing.examples,
+            inline_new.examples,
+        ),
+    )
+
+
+def _inline_media_type(media_type: 'MediaType | Reference') -> 'MediaType':
+    """Body components build inline media types, never references."""
+    assert isinstance(media_type, MediaType)  # noqa: S101
+    return media_type
 
 
 def _converter_models(

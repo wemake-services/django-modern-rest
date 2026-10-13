@@ -1,9 +1,11 @@
 import json
-from typing import Annotated, ClassVar, Literal, TypeAlias
+import re
+from typing import Annotated, Any, ClassVar, Final, Literal, TypeAlias
 
 import pydantic
 from django.http import FileResponse
 from django.urls import path
+from inline_snapshot import snapshot
 from syrupy.assertion import SnapshotAssertion
 
 from dmr import Body, Controller, FileMetadata, modify, validate
@@ -313,3 +315,181 @@ def test_merged_body_without_description_schema(
         )
         == snapshot
     )
+
+
+class _FileFirstController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(), JsonParser())
+
+    async def post(
+        self,
+        parsed_file_metadata: FileMetadata[_SeveralSimpleFiles],
+        parsed_body: Body[dict[str, str]],
+    ) -> str:
+        raise NotImplementedError
+
+
+class _BodyFirstController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(), JsonParser())
+
+    async def post(
+        self,
+        parsed_body: Body[dict[str, str]],
+        parsed_file_metadata: FileMetadata[_SeveralSimpleFiles],
+    ) -> str:
+        raise NotImplementedError
+
+
+class _OneFile(pydantic.BaseModel):
+    first_file: _FileModel
+
+
+class _OptionalFileController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(), JsonParser())
+
+    async def post(
+        self,
+        parsed_body: Body[dict[str, str]],
+        # A default makes this component optional, so a request without
+        # any files is valid. `JsonParser` cannot parse files, but an
+        # `application/json` request simply arrives without them:
+        parsed_file_metadata: FileMetadata[_OneFile | None] = None,
+    ) -> str:
+        raise NotImplementedError
+
+
+_MULTIPART: Final = str(ContentType.multipart_form_data)
+_SCHEMAS_PREFIX: Final = '#/components/schemas/'
+
+
+def _built_document(
+    controller: type[Controller[PydanticSerializer]],
+) -> Any:
+    return build_schema(
+        Router('', [path('merged/', controller.as_view())]),
+    ).convert()
+
+
+def _merged_request_body(
+    controller: type[Controller[PydanticSerializer]],
+) -> Any:
+    document = _built_document(controller)
+    return document['paths']['/merged/']['post']['requestBody']
+
+
+def test_required_file_merged_body() -> None:
+    """Ensure that a required file component rules out `application/json`."""
+    # `FileMetadata[]` is required here, so it has to parse every request,
+    # and `JsonParser` cannot parse files. Sending `application/json`
+    # to this endpoint is a `400`, so it is not documented.
+    assert _merged_request_body(_BodyFirstController) == snapshot({
+        'content': {
+            'multipart/form-data': {
+                'schema': {
+                    'allOf': [
+                        {
+                            'additionalProperties': {'type': 'string'},
+                            'type': 'object',
+                        },
+                        {
+                            'properties': {
+                                'first_file': {
+                                    'type': 'string',
+                                    'format': 'binary',
+                                },
+                                'second_file': {
+                                    'type': 'string',
+                                    'format': 'binary',
+                                },
+                            },
+                            'type': 'object',
+                            'required': ['first_file', 'second_file'],
+                            'title': '_SeveralSimpleFiles',
+                        },
+                    ],
+                },
+                'encoding': {
+                    'first_file': {
+                        'contentType': 'application/json, text/plain',
+                    },
+                    'second_file': {
+                        'contentType': 'application/json, text/plain',
+                    },
+                },
+            },
+        },
+        'required': True,
+    })
+
+
+def test_optional_file_merged_body() -> None:
+    """Ensure that an optional file component keeps `application/json`."""
+    assert _merged_request_body(_OptionalFileController) == snapshot({
+        'content': {
+            'application/json': {
+                'schema': {
+                    'additionalProperties': {'type': 'string'},
+                    'type': 'object',
+                },
+            },
+            'multipart/form-data': {
+                'schema': {
+                    'allOf': [
+                        {
+                            'additionalProperties': {'type': 'string'},
+                            'type': 'object',
+                        },
+                        {
+                            'anyOf': [
+                                {
+                                    'properties': {
+                                        'first_file': {
+                                            'type': 'string',
+                                            'format': 'binary',
+                                        },
+                                    },
+                                    'type': 'object',
+                                    'required': ['first_file'],
+                                    'title': '_OneFile',
+                                },
+                                {'type': 'null'},
+                            ],
+                        },
+                    ],
+                },
+            },
+        },
+        'required': True,
+    })
+
+
+def test_file_model_is_inlined_not_referenced() -> None:
+    """Ensure that a file model does not leave a `$ref` to nothing."""
+    document = _built_document(_OptionalFileController)
+    registered = document['components']['schemas']
+
+    # `FileMetadata[]` swaps its model for the file representation, so
+    # `_OneFile` is inlined and never becomes a component on its own.
+    # Referencing it anyway would leave a `$ref` that resolves to nothing,
+    # which `openapi-spec-validator` does not catch:
+    dangling = {
+        ref
+        for ref in re.findall(r'"\$ref": "(.+?)"', json.dumps(document))
+        if ref.removeprefix(_SCHEMAS_PREFIX) not in registered
+    }
+
+    assert '_OneFile' not in registered
+    assert dangling == set()
+
+
+def test_merged_body_ignores_component_order() -> None:
+    """Ensure that component order does not change the merged body."""
+    file_first = _merged_request_body(_FileFirstController)
+    body_first = _merged_request_body(_BodyFirstController)
+    # `allOf` lists the component schemas in declaration order, and the
+    # order of its members does not change what it allows. Everything
+    # else used to depend on which component came last:
+    for body in (file_first, body_first):
+        multipart = body['content'][_MULTIPART]
+        multipart['schema']['allOf'].sort(key=repr)
+
+    assert file_first == body_first
