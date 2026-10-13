@@ -64,4 +64,7 @@ exclude = [
   "^https://t\\.me/.*$",
   # DeepWiki rate limits (HTTP 429) requests from CI runners.
   "^https://deepwiki\\.com/.*$",
+  # GitHub redirects the private vulnerability reporting form to the login
+  # page for unauthenticated CI requests.
+  "^https://github\\.com/wemake-services/django-modern-rest/security/advisories/new$",
 ]
