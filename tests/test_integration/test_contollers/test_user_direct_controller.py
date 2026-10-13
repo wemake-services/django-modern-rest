@@ -10,7 +10,7 @@ from dmr.test import DMRAsyncClient, DMRClient
 def test_user_update_direct_view(dmr_client: DMRClient, faker: Faker) -> None:
     """Ensure that direct routes work."""
     email = faker.email()
-    user_id = faker.unique.random_int()
+    user_id = faker.unique.random_int(min=1)
 
     response = dmr_client.patch(
         reverse(
@@ -35,7 +35,7 @@ async def test_user_update_direct_view_async_client(
 ) -> None:
     """Ensure that direct routes work."""
     email = faker.email()
-    user_id = faker.unique.random_int()
+    user_id = faker.unique.random_int(min=1)
 
     response = await dmr_async_client.patch(
         reverse(
