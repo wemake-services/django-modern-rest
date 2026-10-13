@@ -58,6 +58,12 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   They got a sync view that returned a coroutine, so they treated
   the coroutine as a response, #1684
 
+#### OpenAPI
+
+- Fixed endpoints returning `None` documenting a response `content`
+  of `{"type": "null"}` while sending an empty body, which made
+  generated clients parse a body that doesn't exist, #1733
+
 ### Misc
 
 #### Agent skills
