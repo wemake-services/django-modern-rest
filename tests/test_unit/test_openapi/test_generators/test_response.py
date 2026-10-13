@@ -307,3 +307,53 @@ def test_header_examples_schema(*, openapi_version: str) -> None:
             'example': 'secret',
         },
     })
+
+
+class _ControllerWithoutBody(Controller[PydanticSerializer]):
+    @modify(status_code=HTTPStatus.CREATED, headers={'X-Test-Header': _HEADER})
+    def post(self) -> None:
+        raise NotImplementedError
+
+    @modify(status_code=HTTPStatus.NO_CONTENT)
+    def delete(self) -> None:
+        raise NotImplementedError
+
+
+@pytest.mark.parametrize(
+    ('http_method', 'status_code'),
+    [(HTTPMethod.POST, '201'), (HTTPMethod.DELETE, '204')],
+)
+def test_response_without_body(
+    generator: ResponseGenerator,
+    http_method: HTTPMethod,
+    status_code: str,
+) -> None:
+    """Ensure that endpoints returning `None` do not document a content."""
+    response = generator(
+        _ControllerWithoutBody.api_endpoints[http_method].metadata,
+        _ControllerWithoutBody,
+    )
+    response_without_body = response[status_code]
+
+    assert isinstance(response_without_body, Response)
+    assert response_without_body.content is None
+
+
+def test_response_without_body_keeps_headers(
+    generator: ResponseGenerator,
+) -> None:
+    """Ensure that dropping the content does not drop the headers."""
+    response = generator(
+        _ControllerWithoutBody.api_endpoints[HTTPMethod.POST].metadata,
+        _ControllerWithoutBody,
+    )
+    response_created = response['201']
+
+    assert isinstance(response_created, Response)
+    assert response_created.headers == snapshot({
+        'X-Test-Header': Header(
+            schema=Schema(type=OpenAPIType.STRING),
+            description='Other Test Header',
+            required=True,
+        ),
+    })

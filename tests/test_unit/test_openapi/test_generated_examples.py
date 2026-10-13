@@ -5,7 +5,6 @@ import pydantic
 import pytest
 from django.conf import LazySettings
 from django.urls import path
-from inline_snapshot import snapshot
 
 from dmr import Body, Controller
 from dmr.openapi import OpenAPIConfig, build_schema
@@ -72,29 +71,6 @@ def test_disabled_examples_write_nothing(settings: LazySettings) -> None:
 
     assert 'example' not in schema
     assert 'examples' not in schema
-
-
-class _NoneController(Controller[PydanticSerializer]):
-    def get(self) -> None:
-        raise NotImplementedError
-
-
-def test_generated_none_example(*, settings: LazySettings) -> None:
-    """Ensure that generated ``None`` examples are not dropped."""
-    # Regression test for
-    # https://github.com/wemake-services/django-modern-rest/issues/1626
-    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
-
-    schema = build_schema(
-        Router('api/v1/', [path('none/', _NoneController.as_view())]),
-    ).convert()
-
-    operation = schema['paths']['/api/v1/none/']['get']
-    response = operation['responses']['200']
-    assert response['content']['application/json']['schema'] == snapshot({
-        'type': 'null',
-        'examples': [None],
-    })
 
 
 def test_generate_example_none(*, settings: LazySettings) -> None:
