@@ -57,6 +57,15 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   or `cache_control`, failing on async controllers with `wrap_middleware`.
   They got a sync view that returned a coroutine, so they treated
   the coroutine as a response, #1684
+- Responses that `wrap_middleware` returns without calling the controller
+  are now validated after the converter, like the responses of endpoints,
+  as the middleware docs promised. A converter that returns something
+  its `ResponseSpec` does not describe, or a status code
+  that is not documented, now fails with `422`
+  where `validate_responses` is on, #1682
+- Fixed the `login_required` example in the middleware docs:
+  its redirect was never converted to `401`,
+  because `302` was not in the listed responses, #1682
 
 #### OpenAPI
 
