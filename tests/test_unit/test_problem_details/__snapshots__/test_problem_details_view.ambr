@@ -344,6 +344,12 @@
           "name": "csrftoken",
           "in": "cookie"
         },
+        "csrf_header": {
+          "type": "apiKey",
+          "description": "CSRF header \u2014 echo the CSRF cookie value here on unsafe requests",
+          "name": "X-Csrftoken",
+          "in": "header"
+        },
         "django_session": {
           "type": "apiKey",
           "description": "Reusing standard Django auth flow for API",
