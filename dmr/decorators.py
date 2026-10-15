@@ -40,41 +40,10 @@ def wrap_middleware(
     Returns:
         A function that takes a converter and returns a class decorator
 
-    .. code:: python
-
-        >>> from django.views.decorators.csrf import csrf_protect
-        >>> from django.http import HttpResponse
-        >>> from http import HTTPStatus
-        >>> from dmr import Controller, ResponseSpec
-        >>> from dmr.response import build_response
-        >>> from dmr.plugins.pydantic import PydanticSerializer
-        >>> from dmr.errors import ErrorType, ErrorModel, format_error
-
-        >>> @wrap_middleware(
-        ...     csrf_protect,
-        ...     ResponseSpec(
-        ...         return_type=ErrorModel,
-        ...         status_code=HTTPStatus.FORBIDDEN,
-        ...     ),
-        ... )
-        ... def csrf_protect_json(response: HttpResponse) -> HttpResponse:
-        ...     return build_response(
-        ...         PydanticSerializer,
-        ...         raw_data=format_error(
-        ...             'CSRF verification failed. Request aborted.',
-        ...             error_type=ErrorType.user_msg,
-        ...         ),
-        ...         status_code=HTTPStatus(response.status_code),
-        ...     )
-
-        >>> @csrf_protect_json
-        ... class MyController(Controller[PydanticSerializer]):
-        ...     responses = [
-        ...         *csrf_protect_json.responses,
-        ...     ]
-        ...
-        ...     def post(self) -> dict[str, str]:
-        ...         return {'message': 'ok'}
+    .. literalinclude:: /examples/middleware/condition_etag.py
+      :language: python
+      :linenos:
+      :no-run:
 
     """
 
