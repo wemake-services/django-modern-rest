@@ -145,9 +145,20 @@ Why so fast?
 - We :ref:`compile <mypyc>` some hot paths of the framework
   with `mypyc <https://mypyc.readthedocs.io/en/latest/>`_ to C code,
   while keeping fallback Python code in-place
-- We provide a :func:`django.urls.path` drop-in :doc:`../routing` replacement
-  which is `x51 times <https://habr.com/ru/companies/tochka/articles/822431/>`_
-  as fast as the default one
+- We provide :func:`dmr.routing.path`, a drop-in :func:`django.urls.path`
+  replacement using static string matching and prefix-gated regex matching.
+  The optimization idea comes from
+  `Tochka's article <https://habr.com/ru/companies/tochka/articles/822431/>`_.
+  The reporter's per-case ``timeit`` measurements on an M4 in
+  `#1710 <https://github.com/wemake-services/django-modern-rest/issues/1710>`_
+  showed roughly 1.1–1.3 times Django's resolver speed (rounded),
+  including unsuccessful resolution (404).
+  These measurements use the cases in our
+  `routing benchmark source <https://github.com/wemake-services/django-modern-rest/blob/master/benchmarks/tests/test_router/test_path.py>`_,
+  whose CodSpeed tests aggregate the cases rather than measure each separately.
+  Gains depend on the route set, match position, and environment;
+  these are resolver timings, not end-to-end request throughput gains.
+  See :doc:`../routing` for details.
 - We validate data smartly: we prepare models for validation in advance,
   so no runtime magic ever happens
 - We have a special :ref:`"production mode" <response_validation>`

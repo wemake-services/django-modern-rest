@@ -120,15 +120,15 @@ assert_type(controller.put, Callable[[], JsonResponse])  # ty: ignore[assert-typ
 
 
 class WrongModifyController(Controller[PydanticSerializer]):
-    @modify(status_code=HTTPStatus.OK)  # type: ignore[deprecated]
+    @modify(status_code=HTTPStatus.OK)  # type: ignore[deprecated]  # ty: ignore[deprecated]
     def get(self) -> JsonResponse:
         return JsonResponse([])
 
-    @modify(status_code=HTTPStatus.OK)  # type: ignore[deprecated]
+    @modify(status_code=HTTPStatus.OK)  # type: ignore[deprecated]  # ty: ignore[deprecated]
     async def post(self) -> HttpResponse:
         return HttpResponse()
 
-    @modify()  # type: ignore[deprecated]
+    @modify()  # type: ignore[deprecated]  # ty: ignore[deprecated]
     def put(self) -> HttpResponse:
         return HttpResponse()
 
@@ -167,7 +167,7 @@ class WrongValidateController(Controller[PydanticSerializer]):
 
 
 class WrongAuthMixedController(Controller[PydanticSerializer]):
-    auth = (DjangoSessionSyncAuth(), DjangoSessionAsyncAuth())  # type: ignore[assignment]
+    auth = (DjangoSessionSyncAuth(), DjangoSessionAsyncAuth())  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
     @modify(auth=[DjangoSessionSyncAuth(), DjangoSessionAsyncAuth()])  # type: ignore[list-item]  # ty: ignore[no-matching-overload, dynamic-function-decorator-return]
     def get(self) -> str:
@@ -180,11 +180,11 @@ class WrongAuthMixedController(Controller[PydanticSerializer]):
     async def meta(self) -> HttpResponse:
         return HttpResponse()
 
-    @modify(auth=[DjangoSessionAsyncAuth()])  # type: ignore[deprecated]
+    @modify(auth=[DjangoSessionAsyncAuth()])  # type: ignore[deprecated]  # ty: ignore[deprecated]
     def wrong_async_auth(self) -> str:
         return 'mixed'
 
-    @modify(auth=[DjangoSessionSyncAuth()])  # type: ignore[deprecated]
+    @modify(auth=[DjangoSessionSyncAuth()])  # type: ignore[deprecated]  # ty: ignore[deprecated]
     async def wrong_sync_auth(self) -> str:
         return 'mixed'
 
@@ -204,7 +204,7 @@ class WrongAuthMixedController(Controller[PydanticSerializer]):
 
 
 class WrongThrottlingMixedController(Controller[PydanticSerializer]):
-    throttling = (SyncThrottle(1, 2), AsyncThrottle(1, 2))  # type: ignore[assignment]
+    throttling = (SyncThrottle(1, 2), AsyncThrottle(1, 2))  # type: ignore[assignment]  # ty: ignore[invalid-assignment]
 
     @modify(throttling=[SyncThrottle(1, 2), AsyncThrottle(1, 2)])  # type: ignore[list-item]  # ty: ignore[no-matching-overload, dynamic-function-decorator-return]
     def get(self) -> str:
@@ -217,11 +217,11 @@ class WrongThrottlingMixedController(Controller[PydanticSerializer]):
     async def meta(self) -> HttpResponse:
         return HttpResponse()
 
-    @modify(throttling=[AsyncThrottle(1, 2)])  # type: ignore[deprecated]
+    @modify(throttling=[AsyncThrottle(1, 2)])  # type: ignore[deprecated]  # ty: ignore[deprecated]
     def wrong_async_throttle(self) -> str:
         return 'mixed'
 
-    @modify(throttling=[SyncThrottle(1, 2)])  # type: ignore[deprecated]
+    @modify(throttling=[SyncThrottle(1, 2)])  # type: ignore[deprecated]  # ty: ignore[deprecated]
     async def wrong_sync_throttle(self) -> str:
         return 'mixed'
 
@@ -303,11 +303,11 @@ class CorrectColoredController(Controller[PydanticSerializer]):
 
 
 class WrongErrorHandlerController(Controller[PydanticSerializer]):
-    @modify(error_handler=_async_error_handler)  # type: ignore[deprecated]
+    @modify(error_handler=_async_error_handler)  # type: ignore[deprecated]  # ty: ignore[deprecated]
     def get(self) -> str:
         return 'sync'
 
-    @modify(error_handler=_sync_error_handler)  # type: ignore[deprecated]
+    @modify(error_handler=_sync_error_handler)  # type: ignore[deprecated]  # ty: ignore[deprecated]
     async def post(self) -> str:
         return 'async'
 

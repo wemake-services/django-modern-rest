@@ -376,3 +376,43 @@ def test_header_type_reference(generator: ResponseGenerator) -> None:
     assert header.schema.ref == '#/components/schemas/_HeaderModel'
     assert header.schema.examples is None
     assert header.example == {'count': 1}
+
+
+class _ControllerWithoutBody(Controller[PydanticSerializer]):
+    @modify(status_code=HTTPStatus.CREATED, headers={'X-Test-Header': _HEADER})
+    def post(self) -> None:
+        raise NotImplementedError
+
+    @modify(
+        status_code=HTTPStatus.NO_CONTENT,
+        headers={'X-Test-Header': _HEADER},
+    )
+    def delete(self) -> None:
+        raise NotImplementedError
+
+
+@pytest.mark.parametrize(
+    ('http_method', 'status_code'),
+    [(HTTPMethod.POST, '201'), (HTTPMethod.DELETE, '204')],
+)
+def test_response_without_body(
+    generator: ResponseGenerator,
+    http_method: HTTPMethod,
+    status_code: str,
+) -> None:
+    """Ensure that `None` responses have no content, but keep headers."""
+    response = generator(
+        _ControllerWithoutBody.api_endpoints[http_method].metadata,
+        _ControllerWithoutBody,
+    )
+    response_without_body = response[status_code]
+
+    assert isinstance(response_without_body, Response)
+    assert response_without_body.content is None
+    assert response_without_body.headers == snapshot({
+        'X-Test-Header': Header(
+            schema=Schema(type=OpenAPIType.STRING),
+            description='Other Test Header',
+            required=True,
+        ),
+    })
