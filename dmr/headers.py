@@ -64,10 +64,7 @@ class HeaderSpec(_BaseResponseHeader):
         description: Documentation, why this header is needed and what it does.
         deprecated: Whether this header is deprecated.
         example: Documentation, what can be given as values in this header.
-            Should match ``type``, for example ``60`` for ``type=int``.
-        type: Type of the header's value in the OpenAPI schema.
-            Defaults to ``str``, because all headers are strings in HTTP.
-            Use other types, like ``int``, to document numeric headers.
+            Should match the header's type, for example ``60`` for ``int``.
         required: Whether or not this header can be missing.
         skip_validation: Is true, when header is only used for schema purposes,
             without any runtime validation. This might be useful, when
@@ -76,6 +73,11 @@ class HeaderSpec(_BaseResponseHeader):
             by :class:`django.contrib.sessions.middleware.SessionMiddleware`
             or by HTTP proxy.
             This header might be present in runtime or might be missing.
+
+    The type of the header's value in the OpenAPI schema is set
+    with the ``type`` argument. It defaults to ``str``,
+    because all headers are strings in HTTP.
+    Pass other types, like ``int``, to document numeric headers.
 
     """
 
