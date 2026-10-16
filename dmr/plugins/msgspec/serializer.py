@@ -187,7 +187,13 @@ class MsgspecSerializer(BaseSerializer):
             # any cycles, there's no need to track them:
             gc=cls.enable_component_gc,
         )
-        return ContextModel(model, to_kwargs=msgspec.structs.asdict)
+        return ContextModel(
+            model,
+            # This function is faster then `struct.asdict()` for small inputs:
+            to_kwargs=lambda struct: {
+                field: getattr(struct, field) for field in fields
+            },
+        )
 
     @override
     @classmethod
