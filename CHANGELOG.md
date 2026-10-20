@@ -63,6 +63,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Fixed endpoints returning `None` documenting a response `content`
   of `{"type": "null"}` while sending an empty body, which made
   generated clients parse a body that doesn't exist, #1733
+- Fixed a `$ref` outside of `#/components/schemas/` in a `Query`, `Headers`,
+  `Path` or `Cookies` model raising `KeyError` when building the schema, #1708
 
 ### Misc
 
