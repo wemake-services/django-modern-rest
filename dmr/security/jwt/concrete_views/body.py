@@ -71,6 +71,7 @@ class ObtainTokensSyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     @override
     @classmethod
@@ -124,6 +125,7 @@ class ObtainTokensAsyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     @override
     @classmethod
@@ -183,6 +185,7 @@ class RefreshTokenSyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     @override
     @classmethod
@@ -236,6 +239,7 @@ class RefreshTokenAsyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     @override
     @classmethod
@@ -292,6 +296,7 @@ class VerifyTokenSyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     @override
     @classmethod
@@ -336,6 +341,7 @@ class VerifyTokenAsyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     @override
     @classmethod
