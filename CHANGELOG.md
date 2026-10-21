@@ -83,6 +83,12 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Fixed a `$ref` outside of `#/components/schemas/` in a `Query`, `Headers`,
   `Path` or `Cookies` model raising `KeyError` when building the schema, #1708
 
+#### Throttling
+
+- Fixed `SyncRedis` and `AsyncRedis` with `SimpleRate` reporting
+  a negative reset (`X-RateLimit-Reset: -2`) for a throttle with
+  no requests in the current window, other backends report the full window
+
 ### Misc
 
 #### Agent skills
