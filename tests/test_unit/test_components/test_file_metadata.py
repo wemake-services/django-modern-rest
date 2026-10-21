@@ -234,7 +234,7 @@ def test_file_metadata_missing_parser() -> None:
 
 
 def test_file_metadata_required_mixed_parsers() -> None:
-    """Required FileMetadata with mixed parsers must raise EndpointMetadataError."""
+    """Required FileMetadata with mixed parsers must raise."""
     with pytest.raises(EndpointMetadataError, match='all parsers'):
 
         @final
@@ -502,7 +502,7 @@ class _FakeParser(SupportsFileParsing, Parser):
 
 
 def test_send_files_with_body_wrong_parsers() -> None:
-    """Required FileMetadata with a non-file parser must fail at class definition."""
+    """Required FileMetadata with a non-file parser must fail."""
     with pytest.raises(EndpointMetadataError, match='all parsers'):
 
         @final
