@@ -152,9 +152,12 @@ class ResponseGenerator:
         controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> Header:
-        schema = context.generators.schema(
-            header_spec.type,
-            controller_cls.serializer,
+        # Custom types can produce a `$ref`, headers use the schema itself:
+        schema = context.registries.schema.maybe_resolve_reference(
+            context.generators.schema(
+                header_spec.type,
+                controller_cls.serializer,
+            ),
         )
         header = Header(
             description=(
@@ -167,9 +170,9 @@ class ResponseGenerator:
             schema=schema,
         )
         if header_spec.example is not None:
-            # for mypy: the generator returns `Schema`, even for references
-            assert isinstance(schema, Schema)  # noqa: S101
-            # Examples written by hand replace the generated ones:
+            # Examples written by hand replace the generated ones.
+            # `replace` copies the schema, so a shared component
+            # that the `$ref` pointed to keeps its own examples:
             header.example = header_spec.example
             header.schema = dataclasses.replace(schema, examples=None)
         return header
