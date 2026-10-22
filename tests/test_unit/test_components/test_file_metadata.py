@@ -269,7 +269,9 @@ def test_file_metadata_optional_no_file_parsers() -> None:
 
             def post(
                 self,
-                parsed_file_metadata: FileMetadata[_MultipleFiles | None] = None,
+                parsed_file_metadata: FileMetadata[
+                    _MultipleFiles | None
+                ] = None,
             ) -> str:
                 raise NotImplementedError
 
