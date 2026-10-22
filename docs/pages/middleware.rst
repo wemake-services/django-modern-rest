@@ -35,9 +35,10 @@ The created decorator:
 Basic Usage
 -----------
 
-Let's create a simple middleware decorator for CSRF protection:
+Let's add conditional requests to a controller
+with Django's :func:`~django.views.decorators.http.condition` decorator:
 
-.. literalinclude:: /examples/middleware/csrf_protect_json.py
+.. literalinclude:: /examples/middleware/condition_etag.py
     :linenos:
     :language: python
 
@@ -45,10 +46,15 @@ Let's create a simple middleware decorator for CSRF protection:
 In this example:
 
 1. We create a middleware decorator using ``wrap_middleware``
-2. The decorator wraps ``csrf_protect`` middleware around the controller
-3. When CSRF verification fails, our converter function
-   transforms the response to JSON
-4. The response description is automatically added to the OpenAPI schema
+2. The decorator wraps ``condition`` around the controller,
+   which answers ``304 Not Modified`` when the client
+   sends the current ``ETag`` in ``If-None-Match``
+3. Our converter function adds the ``Content-Type``
+   that Django's ``304`` response does not have
+4. The ``304`` response description is automatically added
+   to the OpenAPI schema
+
+See :ref:`conditional-requests` for more about ``ETag`` support.
 
 .. _custom-middleware:
 
@@ -74,7 +80,8 @@ You can specify multiple response descriptions for different status codes:
 Async Controllers
 -----------------
 
-``wrap_middleware`` works seamlessly with both sync and async controllers:
+``wrap_middleware`` works seamlessly with both sync and async controllers.
+Here's a maintenance mode middleware on an async controller:
 
 .. literalinclude:: /examples/middleware/async_controller.py
   :linenos:
@@ -82,6 +89,11 @@ Async Controllers
 
 The middleware will automatically detect whether the controller is async
 and handle it appropriately.
+
+For async controllers ``get_response`` returns a coroutine.
+A middleware can return it as is, like the one above.
+To change the response, define the inner function with ``async def``
+and ``await get_response(request)`` first.
 
 Response Converter Function
 ---------------------------
@@ -218,11 +230,17 @@ Best Practices
 5. **Document your middleware**: Add docstrings to explain what
    your middleware does and when it's triggered.
 
-Example: Complete CSRF Protection Setup
-----------------------------------------
+CSRF protection
+---------------
 
-Here's a complete example showing how to set up CSRF protection for a REST API:
+Do not wrap :func:`~django.views.decorators.csrf.csrf_protect`
+around your controllers, set ``csrf_exempt = False`` instead.
+Then ``django-modern-rest`` documents the ``403`` response
+and the ``csrf`` security scheme for unsafe methods only,
+and :func:`~dmr.security.csrf.build_csrf_handler`
+returns CSRF failures in the error format of your API.
+See :ref:`controller-csrf`.
 
-.. literalinclude:: /examples/middleware/complete_csrf_setup.py
-  :linenos:
-  :language: python
+Clients send the ``csrftoken`` cookie and the same value
+in the ``X-CSRFToken`` header. Django sets the cookie on login
+and whenever ``django.middleware.csrf.get_token`` is called.
