@@ -1098,30 +1098,29 @@
             "content": {
               "multipart/form-data": {
                 "schema": {
-                  "properties": {
-                    "first_file": {
-                      "type": "string",
-                      "format": "binary"
+                  "anyOf": [
+                    {
+                      "properties": {
+                        "first_file": {
+                          "type": "string",
+                          "format": "binary"
+                        },
+                        "second_file": {
+                          "type": "string",
+                          "format": "binary"
+                        }
+                      },
+                      "type": "object",
+                      "required": [
+                        "first_file",
+                        "second_file"
+                      ],
+                      "title": "_SeveralSimpleFiles"
                     },
-                    "second_file": {
-                      "type": "string",
-                      "format": "binary"
+                    {
+                      "type": "null"
                     }
-                  },
-                  "type": "object",
-                  "required": [
-                    "first_file",
-                    "second_file"
-                  ],
-                  "title": "_SeveralSimpleFiles"
-                },
-                "encoding": {
-                  "first_file": {
-                    "contentType": "application/json, text/plain"
-                  },
-                  "second_file": {
-                    "contentType": "application/json, text/plain"
-                  }
+                  ]
                 }
               }
             }
