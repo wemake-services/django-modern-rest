@@ -5,7 +5,11 @@ from typing_extensions import override
 
 from dmr.openapi.objects import SecurityScheme
 from dmr.security.base import AsyncAuth, SyncAuth
-from dmr.security.csrf import CSRF_SCHEME_NAME, CSRFAuthMixin
+from dmr.security.csrf import (
+    CSRF_HEADER_SCHEME_NAME,
+    CSRF_SCHEME_NAME,
+    CSRFAuthMixin,
+)
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
@@ -19,6 +23,7 @@ class _DjangoSessionAuth(CSRFAuthMixin):
     """Reuses the user that Django's session middleware already resolved."""
 
     __slots__ = (
+        'csrf_header_scheme_name',
         'csrf_scheme_name',
         'security_scheme_name',
     )
@@ -27,9 +32,11 @@ class _DjangoSessionAuth(CSRFAuthMixin):
         self,
         security_scheme_name: str = 'django_session',
         csrf_scheme_name: str = CSRF_SCHEME_NAME,
+        csrf_header_scheme_name: str = CSRF_HEADER_SCHEME_NAME,
     ) -> None:
         self.security_scheme_name = security_scheme_name
         self.csrf_scheme_name = csrf_scheme_name
+        self.csrf_header_scheme_name = csrf_header_scheme_name
 
     @override
     def auth_security_scheme(self) -> SecurityScheme:

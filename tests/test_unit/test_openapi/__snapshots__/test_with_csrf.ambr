@@ -134,7 +134,8 @@
           "security": [
             {
               "jwt": [],
-              "csrf": []
+              "csrf": [],
+              "csrf_header": []
             }
           ]
         }
@@ -198,6 +199,12 @@
           "description": "CSRF protection",
           "name": "csrftoken",
           "in": "cookie"
+        },
+        "csrf_header": {
+          "type": "apiKey",
+          "description": "CSRF header \u2014 echo the CSRF cookie value here on unsafe requests",
+          "name": "X-Csrftoken",
+          "in": "header"
         },
         "jwt": {
           "type": "http",
@@ -272,7 +279,8 @@
           },
           "security": [
             {
-              "csrf": []
+              "csrf": [],
+              "csrf_header": []
             }
           ]
         }
@@ -336,6 +344,12 @@
           "description": "CSRF protection",
           "name": "csrftoken",
           "in": "cookie"
+        },
+        "csrf_header": {
+          "type": "apiKey",
+          "description": "CSRF header \u2014 echo the CSRF cookie value here on unsafe requests",
+          "name": "X-Csrftoken",
+          "in": "header"
         }
       }
     }
@@ -394,7 +408,8 @@
           },
           "security": [
             {
-              "csrf": []
+              "csrf": [],
+              "csrf_header": []
             }
           ]
         }
@@ -407,6 +422,12 @@
           "description": "CSRF protection",
           "name": "csrftoken",
           "in": "cookie"
+        },
+        "csrf_header": {
+          "type": "apiKey",
+          "description": "CSRF header \u2014 echo the CSRF cookie value here on unsafe requests",
+          "name": "X-Csrftoken",
+          "in": "header"
         }
       }
     }
@@ -504,7 +525,8 @@
           },
           "security": [
             {
-              "csrf": []
+              "csrf": [],
+              "csrf_header": []
             }
           ]
         }
@@ -568,6 +590,12 @@
           "description": "CSRF protection",
           "name": "csrftoken",
           "in": "cookie"
+        },
+        "csrf_header": {
+          "type": "apiKey",
+          "description": "CSRF header \u2014 echo the CSRF cookie value here on unsafe requests",
+          "name": "X-Csrftoken",
+          "in": "header"
         }
       }
     }
@@ -924,7 +952,8 @@
           },
           "security": [
             {
-              "csrf": []
+              "csrf": [],
+              "csrf_header": []
             }
           ]
         }
@@ -988,6 +1017,12 @@
           "description": "CSRF protection",
           "name": "csrftoken",
           "in": "cookie"
+        },
+        "csrf_header": {
+          "type": "apiKey",
+          "description": "CSRF header \u2014 echo the CSRF cookie value here on unsafe requests",
+          "name": "X-Csrftoken",
+          "in": "header"
         }
       }
     }

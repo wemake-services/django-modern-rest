@@ -5,7 +5,11 @@ from django.http import HttpRequest
 from typing_extensions import override
 
 from dmr.openapi.objects import SecurityScheme
-from dmr.security.csrf import CSRF_SCHEME_NAME, CSRFAuthMixin
+from dmr.security.csrf import (
+    CSRF_HEADER_SCHEME_NAME,
+    CSRF_SCHEME_NAME,
+    CSRFAuthMixin,
+)
 from dmr.security.jwt.auth.base import BaseJWTAsyncAuth, BaseJWTSyncAuth
 from dmr.security.jwt.token import JWToken
 
@@ -79,7 +83,7 @@ class CookieJWTSyncAuth(_BaseCookieJWTAuth, BaseJWTSyncAuth):
         Default *security_scheme_name* is now ``jwt_cookie``.
     """
 
-    __slots__ = ('cookie_name', 'csrf_scheme_name')
+    __slots__ = ('cookie_name', 'csrf_header_scheme_name', 'csrf_scheme_name')
 
     def __init__(  # noqa: WPS211
         self,
@@ -89,6 +93,7 @@ class CookieJWTSyncAuth(_BaseCookieJWTAuth, BaseJWTSyncAuth):
         algorithm: str = 'HS256',
         security_scheme_name: str = 'jwt_cookie',
         csrf_scheme_name: str = CSRF_SCHEME_NAME,
+        csrf_header_scheme_name: str = CSRF_HEADER_SCHEME_NAME,
         secret: str | None = None,
         token_cls: type[JWToken] = JWToken,
         leeway: int = 0,  # seconds
@@ -130,6 +135,7 @@ class CookieJWTSyncAuth(_BaseCookieJWTAuth, BaseJWTSyncAuth):
         )
         self.cookie_name = cookie_name
         self.csrf_scheme_name = csrf_scheme_name
+        self.csrf_header_scheme_name = csrf_header_scheme_name
 
     @override
     def __call__(
@@ -159,7 +165,7 @@ class CookieJWTAsyncAuth(_BaseCookieJWTAuth, BaseJWTAsyncAuth):
         Default *security_scheme_name* is now ``jwt_cookie``.
     """
 
-    __slots__ = ('cookie_name', 'csrf_scheme_name')
+    __slots__ = ('cookie_name', 'csrf_header_scheme_name', 'csrf_scheme_name')
 
     def __init__(  # noqa: WPS211
         self,
@@ -169,6 +175,7 @@ class CookieJWTAsyncAuth(_BaseCookieJWTAuth, BaseJWTAsyncAuth):
         algorithm: str = 'HS256',
         security_scheme_name: str = 'jwt_cookie',
         csrf_scheme_name: str = CSRF_SCHEME_NAME,
+        csrf_header_scheme_name: str = CSRF_HEADER_SCHEME_NAME,
         secret: str | None = None,
         token_cls: type[JWToken] = JWToken,
         leeway: int = 0,  # seconds
@@ -210,6 +217,7 @@ class CookieJWTAsyncAuth(_BaseCookieJWTAuth, BaseJWTAsyncAuth):
         )
         self.cookie_name = cookie_name
         self.csrf_scheme_name = csrf_scheme_name
+        self.csrf_header_scheme_name = csrf_header_scheme_name
 
     @override
     async def __call__(

@@ -95,6 +95,15 @@ def test_cookie_jwt_schema(
             name='csrftoken',
             security_scheme_in='cookie',
         ),
+        'csrf_header': SecurityScheme(
+            type='apiKey',
+            description=(
+                'CSRF header — echo the CSRF cookie value here on '
+                'unsafe requests'
+            ),
+            name='X-Csrftoken',
+            security_scheme_in='header',
+        ),
     })
     assert instance.security_requirements(metadata, controller) == snapshot([
         {'jwt_cookie': []},
@@ -111,7 +120,7 @@ def test_cookie_jwt_schema(
         unsafe_metadata,
         controller,
     ) == snapshot([
-        {'jwt_cookie': [], 'csrf': []},
+        {'jwt_cookie': [], 'csrf': [], 'csrf_header': []},
     ])
 
 
@@ -125,6 +134,7 @@ def test_cookie_jwt_custom_schema(
         cookie_name='my-jwt',
         security_scheme_name='my-scheme',
         csrf_scheme_name='my-csrf',
+        csrf_header_scheme_name='my-csrf-header',
     )
     controller = _make_controller(instance)
     metadata = controller.api_endpoints['GET'].metadata
@@ -144,6 +154,15 @@ def test_cookie_jwt_custom_schema(
             name='csrftoken',
             security_scheme_in='cookie',
         ),
+        'my-csrf-header': SecurityScheme(
+            type='apiKey',
+            description=(
+                'CSRF header — echo the CSRF cookie value here on '
+                'unsafe requests'
+            ),
+            name='X-Csrftoken',
+            security_scheme_in='header',
+        ),
     })
     assert instance.security_requirements(metadata, controller) == snapshot([
         {'my-scheme': []},
@@ -160,7 +179,7 @@ def test_cookie_jwt_custom_schema(
         unsafe_metadata,
         controller,
     ) == snapshot([
-        {'my-scheme': [], 'my-csrf': []},
+        {'my-scheme': [], 'my-csrf': [], 'my-csrf-header': []},
     ])
 
 
@@ -235,6 +254,15 @@ def test_cookie_and_header_jwt_schema(
             description='CSRF protection',
             name='csrftoken',
             security_scheme_in='cookie',
+        ),
+        'csrf_header': SecurityScheme(
+            type='apiKey',
+            description=(
+                'CSRF header — echo the CSRF cookie value here on '
+                'unsafe requests'
+            ),
+            name='X-Csrftoken',
+            security_scheme_in='header',
         ),
         'jwt': SecurityScheme(
             type='http',

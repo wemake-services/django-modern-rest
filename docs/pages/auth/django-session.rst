@@ -54,8 +54,10 @@ We additionally require CSRF checks to pass on non-safe HTTP methods like
 ``POST``, ``PUT``, ``DELETE``, etc.
 
 Security requirement generated for these methods will reflect that:
-they will need both ``django_session`` and ``csrf`` security requirements
-to be present for successful login.
+they will need ``django_session`` alongside CSRF security requirements
+to be present for successful login. In cookie mode (the default),
+both ``csrf`` (cookie) and ``csrf_header`` (header) are required;
+with ``CSRF_USE_SESSIONS = True``, only the ``csrf`` header is required.
 
 .. seealso::
 
@@ -152,13 +154,16 @@ in the login response (alongside the session cookie).
   appears in the login response — the token is already embedded in the
   session used for authentication.
 
-  The OpenAPI schema reflects this as well: with a CSRF cookie
-  the ``csrf`` security scheme is an ``apiKey`` in ``cookie``,
-  with ``CSRF_USE_SESSIONS`` it is an ``apiKey`` in ``header``
-  named after ``CSRF_HEADER_NAME``, like ``X-Csrftoken``.
+  The OpenAPI schema reflects this as well: in cookie mode
+  (``CSRF_USE_SESSIONS = False``, the default), Django expects the token
+  stored in the ``CSRF_COOKIE_NAME`` cookie (``csrf`` scheme) to be echoed
+  back in the ``CSRF_HEADER_NAME`` header (``csrf_header`` scheme).
+  With ``CSRF_USE_SESSIONS = True``, the secret is stored in the session,
+  so only the header is needed (``csrf`` scheme).
   The session cookie itself is described only once,
   by the ``django_session`` security scheme.
-  See :func:`~dmr.security.csrf.csrf_security_scheme`.
+  See :func:`~dmr.security.csrf.csrf_security_scheme`
+  and :func:`~dmr.security.csrf.csrf_header_security_scheme`.
 
 .. seealso::
 
