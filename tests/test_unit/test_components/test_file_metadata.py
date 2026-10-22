@@ -237,7 +237,6 @@ def test_file_metadata_required_mixed_parsers() -> None:
     """Required FileMetadata with mixed parsers must raise."""
     with pytest.raises(EndpointMetadataError, match='all parsers'):
 
-        @final
         class _Controller(Controller[PydanticSerializer]):
             parsers = (MultiPartParser(), JsonParser())
 
@@ -251,7 +250,6 @@ def test_file_metadata_required_mixed_parsers() -> None:
 def test_file_metadata_optional_mixed_parsers() -> None:
     """Optional FileMetadata with mixed parsers must not raise."""
 
-    @final
     class _Controller(Controller[PydanticSerializer]):
         parsers = (MultiPartParser(), JsonParser())
 
@@ -260,6 +258,20 @@ def test_file_metadata_optional_mixed_parsers() -> None:
             parsed_file_metadata: FileMetadata[_MultipleFiles] = None,  # type: ignore[assignment]
         ) -> str:
             raise NotImplementedError
+
+
+def test_file_metadata_optional_no_file_parsers() -> None:
+    """Optional FileMetadata with no file-capable parsers must raise."""
+    with pytest.raises(EndpointMetadataError, match='can parse files'):
+
+        class _Controller(Controller[PydanticSerializer]):
+            parsers = (_WrongBodyParser(),)
+
+            def post(
+                self,
+                parsed_file_metadata: FileMetadata[_MultipleFiles] = None,  # type: ignore[assignment]
+            ) -> str:
+                raise NotImplementedError
 
 
 @final
@@ -505,7 +517,6 @@ def test_send_files_with_body_wrong_parsers() -> None:
     """Required FileMetadata with a non-file parser must fail."""
     with pytest.raises(EndpointMetadataError, match='all parsers'):
 
-        @final
         class _ControllerWithWrongParsers(Controller[PydanticSerializer]):
             parsers = (_FakeParser(), _WrongBodyParser())
 

@@ -1124,8 +1124,7 @@
                   }
                 }
               }
-            },
-            "required": true
+            }
           },
           "responses": {
             "201": {

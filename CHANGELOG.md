@@ -89,6 +89,13 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   a negative reset (`X-RateLimit-Reset: -2`) for a throttle with
   no requests in the current window, other backends report the full window
 
+#### File handling
+
+- Fixed `FileMetadataComponent.validate()` always using `any()` to check
+  if parsers support file parsing. When `FileMetadata` is required, all parsers
+  must now support `SupportsFileParsing`. When it is optional, at least one
+  must, #1493
+
 ### Misc
 
 #### Agent skills
