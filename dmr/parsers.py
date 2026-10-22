@@ -2,7 +2,7 @@ import abc
 import importlib
 from collections.abc import Callable, Mapping
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, TypeAlias, final
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, final
 
 from django.core.exceptions import BadRequest, TooManyFilesSent
 from django.http import HttpRequest
@@ -42,6 +42,17 @@ class Parser(ResponseSpecProvider):
     Content-Type that this parser works with.
 
     Must be defined for all subclasses.
+    """
+
+    decodes_into_model: ClassVar[bool] = False
+    """
+    Whether or not this parser decodes bytes directly into the passed model.
+
+    Required by :data:`~dmr.plugins.msgspec.BodyMsgspec`.
+    Must return a validated ``model`` instance
+    and raise ``msgspec.ValidationError`` for invalid bodies.
+
+    .. versionadded:: 0.17.0
     """
 
     def validate(

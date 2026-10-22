@@ -2,10 +2,10 @@
 django==5.2.17
 django-ninja==1.7.1
 djangorestframework==3.18.3
-fastapi==0.142.4
+fastapi==0.143.1
 gunicorn==26.2.0
 msgspec==0.22.0
-pydantic==2.13.5
+pydantic==2.14.1
 tabulate==0.10.0
 uvicorn==0.53.0
 uvicorn-worker==0.4.0

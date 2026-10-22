@@ -185,15 +185,15 @@ class SerializerContext:
         controller: 'Controller[BaseSerializer]',
     ) -> dict[str, Any]:
         """Collect raw data for all components into a mapping."""
-        context: dict[str, Any] = {}
-        for context_name, component, submodel, default in self._collect_plan:
-            context[context_name] = component.provide_context_data(
+        return {
+            context_name: component.provide_context_data(
                 endpoint,
                 controller,
                 field_model=submodel,  # just the exact field for the exact key
                 default=default,
             )
-        return context
+            for context_name, component, submodel, default in self._collect_plan
+        }
 
     def _validate_context(
         self,

@@ -65,8 +65,7 @@ def test_all_objects_support_x_extensions() -> None:
         dataclasses.is_dataclass,
     ):
         field_names = {
-            field.name
-            for field in dataclasses.fields(openapi_object)  # pyrefly: ignore[bad-argument-type]
+            field.name for field in dataclasses.fields(openapi_object)
         }
         assert ('x_extensions' in field_names) is (
             openapi_object is not objects.Reference
