@@ -2,11 +2,13 @@ import abc
 import dataclasses
 from collections.abc import Mapping
 from http import HTTPStatus
+from types import NoneType
 from typing import TYPE_CHECKING, Any
 
 from typing_extensions import TypeForm, override
 
 from dmr.headers import HeaderSpec
+from dmr.internal.types import iter_union_members
 from dmr.metadata import EndpointMetadata, ResponseSpec, get_annotated_metadata
 from dmr.negotiation import get_conditional_types
 from dmr.openapi import OpenAPIContext
@@ -40,6 +42,19 @@ def file_response_headers(
     if as_attachment:
         response_headers['Content-Disposition'] = HeaderSpec()
     return response_headers
+
+
+def _member_content_types(
+    member: TypeForm[Any],
+    property_name: str,
+) -> dict[str, None]:
+    """Content types a single union member declares, de-duplicated."""
+    if member is NoneType:
+        return {}
+    member_types = content_types(member, property_name)
+    if member_types is None:
+        return {}
+    return dict.fromkeys(member_types.split(', '))
 
 
 class FileBodyLike:
@@ -102,9 +117,10 @@ class FileBody(FileBodyLike):
         """Returns the media type for the given file."""
         schema = cls.replace_schema(schema, context)
         conditional_models = get_conditional_types(model, model_meta) or {}
+        resolved_model = conditional_models.get(parser.content_type, model)
         media_type_meta = (
             get_annotated_metadata(
-                conditional_models.get(parser.content_type, model),
+                resolved_model,
                 MediaTypeMetadata,
                 model_meta=model_meta,
             )
@@ -113,7 +129,10 @@ class FileBody(FileBodyLike):
         return MediaType(
             schema=schema,
             description=media_type_meta.description,
-            encoding=media_type_meta.encoding or cls._encoding(model, schema),
+            encoding=(
+                media_type_meta.encoding
+                or cls._encoding(resolved_model, schema)
+            ),
             example=media_type_meta.example,
             examples=media_type_meta.examples,
             item_encoding=media_type_meta.item_encoding,
@@ -194,9 +213,44 @@ class FileBody(FileBodyLike):
         """Returns the openapi encoding for the defined media type."""
         return {
             property_name: Encoding(content_type=content_type)
-            for property_name in (schema.properties or [])
-            if (content_type := content_types(model, property_name)) is not None
+            for property_name in cls._property_names(schema)
+            if (content_type := cls._content_type(model, property_name))
+            is not None
         } or None
+
+    @classmethod
+    def _property_names(cls, schema: Schema) -> list[str]:
+        """
+        Collect property names, looking into union members.
+
+        ``replace_schema`` moves the properties of a union
+        like ``Model | None`` into its ``any_of`` / ``one_of`` members,
+        so the top-level schema alone does not name them all.
+        """
+        names: dict[str, None] = dict.fromkeys(schema.properties or ())
+        for member in (*(schema.any_of or ()), *(schema.one_of or ())):
+            names.update(dict.fromkeys(cls._property_names(member)))
+        return list(names)
+
+    @classmethod
+    def _content_type(
+        cls,
+        model: TypeForm[Any],
+        property_name: str,
+    ) -> str | None:
+        """
+        Merge the content types every union member declares.
+
+        ``content_types`` cannot resolve a union itself:
+        ``get_type_hints`` raises on it. When two members declare
+        different types for the same property, they are merged
+        into one comma-separated value, the same way
+        ``content_types`` joins a multi-value ``Literal``.
+        """
+        found: dict[str, None] = {}
+        for member in iter_union_members(model):
+            found.update(_member_content_types(member, property_name))
+        return ', '.join(found) or None
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
