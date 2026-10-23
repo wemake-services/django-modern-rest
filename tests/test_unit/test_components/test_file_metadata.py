@@ -742,7 +742,7 @@ def test_octet_stream_content_disposition(
 def test_file_metadata_optional_non_file_parser_with_files(
     rf: RequestFactory,
 ) -> None:
-    """Optional FileMetadata with files present but non-file parser selected must raise."""
+    """Non-file parser selected with files present must raise."""
 
     class _Controller(Controller[PydanticSerializer]):
         parsers = (_FakeParser(), _WrongBodyParser())
