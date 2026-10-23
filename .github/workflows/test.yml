@@ -27,6 +27,9 @@ jobs:
           - python-version: '3.14t'
             redis-image: 'redis:7-alpine'
             force-free-gil: true
+          - python-version: '3.15t'
+            redis-image: 'redis:8-alpine'
+            force-free-gil: true
           - python-version: '3.13'
             redis-image: 'valkey/valkey:9-alpine'
           # Integration tests with different databases.
