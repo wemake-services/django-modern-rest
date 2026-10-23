@@ -44,6 +44,19 @@ def file_response_headers(
     return response_headers
 
 
+def _member_content_types(
+    member: TypeForm[Any],
+    property_name: str,
+) -> dict[str, None]:
+    """Content types a single union member declares, de-duplicated."""
+    if member is NoneType:
+        return {}
+    member_types = content_types(member, property_name)
+    if member_types is None:
+        return {}
+    return dict.fromkeys(member_types.split(', '))
+
+
 class FileBodyLike:
     """
     Interface that describes objects that can return media type schema.
@@ -234,16 +247,9 @@ class FileBody(FileBodyLike):
         into one comma-separated value, the same way
         ``content_types`` joins a multi-value ``Literal``.
         """
-        found: list[str] = []
+        found: dict[str, None] = {}
         for member in iter_union_members(model):
-            if member is NoneType:
-                continue
-            member_types = content_types(member, property_name)
-            if member_types is None:
-                continue
-            for single in member_types.split(', '):
-                if single not in found:
-                    found.append(single)
+            found.update(_member_content_types(member, property_name))
         return ', '.join(found) or None
 
 
