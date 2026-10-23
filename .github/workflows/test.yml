@@ -20,12 +20,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.11', '3.12', '3.13', '3.14']
+        python-version: ['3.11', '3.12', '3.13', '3.14', '3.15']
         redis-image: ['redis:8-alpine']
         just-recipy: ['test']
         include:
           - python-version: '3.14t'
             redis-image: 'redis:7-alpine'
+            force-free-gil: true
+          - python-version: '3.15t'
+            redis-image: 'redis:8-alpine'
             force-free-gil: true
           - python-version: '3.13'
             redis-image: 'valkey/valkey:9-alpine'
