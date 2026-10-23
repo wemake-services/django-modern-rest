@@ -1,6 +1,5 @@
 import json
 from http import HTTPStatus
-from types import MappingProxyType
 from typing import Annotated, Any, Final, final
 
 import pytest
@@ -18,6 +17,7 @@ from typing_extensions import override
 
 from dmr import Body, Controller, Headers, modify
 from dmr.exceptions import EndpointMetadataError
+from dmr.internal.compat import frozen
 from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import build_schema
 from dmr.parsers import (
@@ -50,7 +50,7 @@ class _AuthHeaders(msgspec.Struct, rename={'token': 'X-API-Token'}):
     token: str
 
 
-_HEADERS: Final = MappingProxyType({'X-API-Token': 'token'})
+_HEADERS: Final = frozen({'X-API-Token': 'token'})
 
 
 @final

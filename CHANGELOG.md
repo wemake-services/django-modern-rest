@@ -36,7 +36,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Features
 
-- Python 3.15 official support, #1675
+- Python 3.15 official support, #1675 and #1762
 
 #### Serializers
 

@@ -1,9 +1,9 @@
 import dataclasses
-import types
 from collections.abc import Sequence
 from typing import Any, ClassVar, Final, TypeAlias
 
 from dmr.exceptions import EndpointMetadataError
+from dmr.internal.compat import frozen
 from dmr.internal.enums import stringify
 from dmr.internal.types import EMPTY
 from dmr.metadata import ResponseSpec, ResponseSpecProvider
@@ -52,7 +52,7 @@ assert _SettingsModel.__optional_keys__ == set(Settings), (  # noqa: S101
 _AllowedTypes: TypeAlias = tuple[type, ...]
 
 # Sequence settings and the types their items are allowed to have:
-_SEQUENCE_TYPES: Final = types.MappingProxyType({
+_SEQUENCE_TYPES: Final = frozen({
     'parsers': (Parser,),
     'renderers': (Renderer,),
     'auth': (SyncAuth, AsyncAuth, SyncOrAsyncAuth),
