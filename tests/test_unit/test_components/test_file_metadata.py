@@ -21,7 +21,7 @@ from inline_snapshot import snapshot
 from typing_extensions import override
 
 from dmr import Body, Controller, FileMetadata, modify
-from dmr.exceptions import EndpointMetadataError, RequestSerializationError
+from dmr.exceptions import EndpointMetadataError
 from dmr.files import FileBodyLike
 from dmr.metadata import EndpointMetadata
 from dmr.negotiation import ContentType, conditional_type
