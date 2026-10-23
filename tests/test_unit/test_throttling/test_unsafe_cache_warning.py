@@ -1,6 +1,5 @@
 import warnings
 from http import HTTPStatus
-from types import MappingProxyType
 from typing import Any, Final
 
 import pytest
@@ -10,6 +9,7 @@ from typing_extensions import override
 
 from dmr import Controller, ResponseSpec, validate
 from dmr.exceptions import EndpointMetadataError
+from dmr.internal.compat import frozen
 from dmr.metadata import EndpointMetadata
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.serializer import BaseSerializer
@@ -20,17 +20,17 @@ from dmr.throttling.backends.django_cache import (
     UnsafeCacheBackendWarning,
 )
 
-_LOCMEM_CACHES: Final = MappingProxyType({
+_LOCMEM_CACHES: Final = frozen({
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
 })
-_DUMMY_CACHES: Final = MappingProxyType({
+_DUMMY_CACHES: Final = frozen({
     'default': {
         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
     },
 })
-_REDIS_CACHES: Final = MappingProxyType({
+_REDIS_CACHES: Final = frozen({
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': 'redis://localhost:6379',

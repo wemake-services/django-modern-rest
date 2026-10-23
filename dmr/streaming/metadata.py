@@ -1,17 +1,17 @@
 import dataclasses
 from collections.abc import Mapping
 from http import HTTPStatus
-from types import MappingProxyType
 from typing import Any, Final, final
 
 from typing_extensions import TypeForm, override
 
 from dmr.cookies import CookieSpec
 from dmr.headers import HeaderSpec, NewHeader
+from dmr.internal.compat import frozen
 from dmr.metadata import ResponseModification, ResponseSpec
 from dmr.openapi.objects import Link, Reference
 
-STREAMING_HEADERS_SPEC: Final = MappingProxyType({
+STREAMING_HEADERS_SPEC: Final = frozen({
     'Cache-Control': HeaderSpec(),
     'X-Accel-Buffering': HeaderSpec(),
     # WSGI cannot provide `Connection` header in `DEBUG` mode:

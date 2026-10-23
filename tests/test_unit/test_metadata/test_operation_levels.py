@@ -1,5 +1,5 @@
+from collections.abc import Mapping
 from http import HTTPMethod, HTTPStatus
-from types import MappingProxyType
 from typing import Any, Final, TypeAlias
 
 import pytest
@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.urls import path
 
 from dmr import Controller, ResponseSpec, modify, validate
+from dmr.internal.compat import frozen
 from dmr.openapi import build_schema
 from dmr.openapi.objects import (
     Callback,
@@ -19,7 +20,7 @@ from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import Router
 from dmr.types import EMPTY
 
-_CallbackMapping: TypeAlias = MappingProxyType[str, Callback | Reference]
+_CallbackMapping: TypeAlias = Mapping[str, Callback | Reference]
 
 _CONTROLLER_DOCS: Final = ExternalDocumentation(
     url='https://example.com/controller',
@@ -27,10 +28,10 @@ _CONTROLLER_DOCS: Final = ExternalDocumentation(
 _ENDPOINT_DOCS: Final = ExternalDocumentation(
     url='https://example.com/endpoint',
 )
-_CONTROLLER_CALLBACKS: Final[_CallbackMapping] = MappingProxyType({
+_CONTROLLER_CALLBACKS: Final[_CallbackMapping] = frozen({
     'onEvent': Callback({'{$request.body#/url}': PathItem()}),
 })
-_ENDPOINT_CALLBACKS: Final[_CallbackMapping] = MappingProxyType({
+_ENDPOINT_CALLBACKS: Final[_CallbackMapping] = frozen({
     'onDone': Reference(ref='#/components/callbacks/onDone'),
 })
 
@@ -415,10 +416,10 @@ def test_servers_endpoint_level() -> None:
 
 # `x_extensions`:
 
-_CONTROLLER_EXTENSIONS: Final = MappingProxyType({
+_CONTROLLER_EXTENSIONS: Final = frozen({
     'x-owner': 'users-team',
 })
-_ENDPOINT_EXTENSIONS: Final = MappingProxyType({
+_ENDPOINT_EXTENSIONS: Final = frozen({
     'x-audience': 'public',
     'x-rate-limit': 100,
 })
