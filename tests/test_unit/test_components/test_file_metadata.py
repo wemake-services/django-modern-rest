@@ -21,7 +21,7 @@ from inline_snapshot import snapshot
 from typing_extensions import override
 
 from dmr import Body, Controller, FileMetadata, modify
-from dmr.exceptions import EndpointMetadataError
+from dmr.exceptions import EndpointMetadataError, RequestSerializationError
 from dmr.files import FileBodyLike
 from dmr.metadata import EndpointMetadata
 from dmr.negotiation import ContentType, conditional_type
@@ -737,3 +737,32 @@ def test_octet_stream_content_disposition(
             'name': 'custom.bin',
         },
     }
+
+
+def test_file_metadata_optional_non_file_parser_with_files(
+    rf: RequestFactory,
+) -> None:
+    """Optional FileMetadata with files present but non-file parser selected must raise."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        parsers = (_FakeParser(), _WrongBodyParser())
+
+        def post(
+            self,
+            parsed_file_metadata: FileMetadata[_MultipleFiles | None] = None,
+        ) -> str:
+            raise NotImplementedError
+
+    request = rf.post(
+        '/whatever/',
+        {
+            'receipt': SimpleUploadedFile('receipt.txt', b'content'),
+            'rules': SimpleUploadedFile('rules.txt', b'content'),
+        },
+        content_type=MULTIPART_CONTENT,
+    )
+
+    response = _Controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST
