@@ -62,11 +62,11 @@ class SerializerContext:  # noqa: WPS214
     _conditional_models: dict[str, ContextModel]
 
     __slots__ = (
-        '__call__',
         '_collect_plan',
         '_conditional_models',
         '_default_model',
         'component_parsers',
+        'parse',
     )
 
     def __init__(
@@ -108,7 +108,7 @@ class SerializerContext:  # noqa: WPS214
         )
 
         # Select parsing strategy:
-        self.__call__ = self._select_parse_strategy()
+        self.parse = self._select_parse_strategy()
 
     # Strategies:
 
