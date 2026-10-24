@@ -38,7 +38,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 - Optimized `SerializerContext.__call__` for common cases: zero components,
   and a single `BodyMsgspec` component, now users can also specify their own
-  parsing strategies for other contexts, #1740
+  parsing strategies for other contexts. Context parsing is around x1.3 faster
+  for endpoints without components and around x1.6 faster for a single
+  `BodyMsgspec` component, #1740
 
 ### Features
 
