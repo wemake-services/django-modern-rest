@@ -28,6 +28,7 @@ from dmr.negotiation import ContentType, conditional_type
 from dmr.openapi import OpenAPIContext
 from dmr.parsers import (
     DeserializeFunc,
+    JsonParser,
     MultiPartParser,
     Parser,
     Raw,
@@ -219,8 +220,8 @@ def test_file_metadata_multiple_uploads(
 
 
 def test_file_metadata_missing_parser() -> None:
-    """Ensures that FileMetadata needs file parsers."""
-    with pytest.raises(EndpointMetadataError, match='can parse files'):
+    """Ensures that required FileMetadata needs all parsers to support files."""
+    with pytest.raises(EndpointMetadataError, match='all parsers'):
 
         class _Controller(
             Controller[PydanticSerializer],
@@ -228,6 +229,49 @@ def test_file_metadata_missing_parser() -> None:
             def post(
                 self,
                 parsed_file_metadata: FileMetadata[_MultipleFiles],
+            ) -> str:
+                raise NotImplementedError
+
+
+def test_file_metadata_required_mixed_parsers() -> None:
+    """Required FileMetadata with mixed parsers must raise."""
+    with pytest.raises(EndpointMetadataError, match='all parsers'):
+
+        class _Controller(Controller[PydanticSerializer]):
+            parsers = (MultiPartParser(), JsonParser())
+
+            def post(
+                self,
+                parsed_file_metadata: FileMetadata[_MultipleFiles],
+            ) -> str:
+                raise NotImplementedError
+
+
+def test_file_metadata_optional_mixed_parsers() -> None:
+    """Optional FileMetadata with mixed parsers must not raise."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        parsers = (MultiPartParser(), JsonParser())
+
+        def post(
+            self,
+            parsed_file_metadata: FileMetadata[_MultipleFiles | None] = None,
+        ) -> str:
+            raise NotImplementedError
+
+
+def test_file_metadata_optional_no_file_parsers() -> None:
+    """Optional FileMetadata with no file-capable parsers must raise."""
+    with pytest.raises(EndpointMetadataError, match='can parse files'):
+
+        class _Controller(Controller[PydanticSerializer]):
+            parsers = (_WrongBodyParser(),)
+
+            def post(
+                self,
+                parsed_file_metadata: FileMetadata[
+                    _MultipleFiles | None
+                ] = None,
             ) -> str:
                 raise NotImplementedError
 
@@ -471,43 +515,18 @@ class _FakeParser(SupportsFileParsing, Parser):
         raise NotImplementedError
 
 
-@final
-class _ControllerWithWrongParsers(Controller[PydanticSerializer]):
-    parsers = (_FakeParser(), _WrongBodyParser())
+def test_send_files_with_body_wrong_parsers() -> None:
+    """Required FileMetadata with a non-file parser must fail."""
+    with pytest.raises(EndpointMetadataError, match='all parsers'):
 
-    def post(
-        self,
-        parsed_file_metadata: FileMetadata[_UploadedFiles],
-    ) -> _OutputPayload:
-        raise NotImplementedError
+        class _ControllerWithWrongParsers(Controller[PydanticSerializer]):
+            parsers = (_FakeParser(), _WrongBodyParser())
 
-
-def test_send_files_with_body_wrong_parsers(
-    dmr_rf: DMRRequestFactory,
-) -> None:
-    """Ensures that when selecting non-files ready parser, it raises."""
-    request = dmr_rf.post(
-        '/whatever/',
-        {},
-        content_type=MULTIPART_CONTENT,
-    )
-
-    response = _ControllerWithWrongParsers.as_view()(request)
-
-    assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
-    assert response.headers == {'Content-Type': 'application/json'}
-    assert json.loads(response.content) == snapshot({
-        'detail': [
-            {
-                'msg': (
-                    "Trying to parse files with '_WrongBodyParser' "
-                    'that does not support SupportsFileParsing protocol'
-                ),
-                'type': 'value_error',
-            },
-        ],
-    })
+            def post(
+                self,
+                parsed_file_metadata: FileMetadata[_UploadedFiles],
+            ) -> _OutputPayload:
+                raise NotImplementedError
 
 
 @final
@@ -718,3 +737,32 @@ def test_octet_stream_content_disposition(
             'name': 'custom.bin',
         },
     }
+
+
+def test_file_metadata_optional_non_file_parser_with_files(
+    rf: RequestFactory,
+) -> None:
+    """Non-file parser selected with files present must raise."""
+
+    class _Controller(Controller[PydanticSerializer]):
+        parsers = (_FakeParser(), _WrongBodyParser())
+
+        def post(
+            self,
+            parsed_file_metadata: FileMetadata[_MultipleFiles | None] = None,
+        ) -> str:
+            raise NotImplementedError
+
+    request = rf.post(
+        '/whatever/',
+        {
+            'receipt': SimpleUploadedFile('receipt.txt', b'content'),
+            'rules': SimpleUploadedFile('rules.txt', b'content'),
+        },
+        content_type=MULTIPART_CONTENT,
+    )
+
+    response = _Controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST
