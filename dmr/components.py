@@ -280,7 +280,7 @@ class ComponentParser(ResponseSpecProvider):
     Does this component need a final ``.from_python()`` call when parsing?
 
     This is needed for optimizations in some components, like ``BodyMsgspec``
-    that do not need the final convertion call. When all parsed components
+    that do not need the final conversion call. When all parsed components
     do not need this step, we skip it.
     """
 
