@@ -33,6 +33,8 @@ class BodyMsgspecComponent(BodyComponent):
     .. versionadded:: 0.16.0
     """
 
+    needs_from_python = False
+
     __slots__ = ()
 
     def __init__(self) -> None:

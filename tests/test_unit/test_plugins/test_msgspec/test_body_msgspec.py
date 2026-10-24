@@ -241,6 +241,61 @@ def test_empty_body(dmr_rf: DMRRequestFactory) -> None:
     })
 
 
+def test_optimized_body_used(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ensures that fast bodies are optimized."""
+    monkeypatch.setattr(
+        Controller.endpoint_cls.serializer_context_cls,
+        '_noconvert_parse_strategy',
+        lambda *args, **kwargs: 1 / 0,  # noqa: WPS344  # pyrefly: ignore[division-by-zero]
+    )
+
+    class _OptimizedController(Controller[MsgspecSerializer]):
+        def put(self, parsed_body: BodyMsgspec[_User]) -> _User:
+            raise NotImplementedError
+
+    request = dmr_rf.put('/whatever/')
+
+    with pytest.raises(ZeroDivisionError):
+        _OptimizedController.as_view()(request)
+
+
+def test_body_optimized(dmr_rf: DMRRequestFactory, faker: Faker) -> None:
+    """Ensures that fast bodies work with no default."""
+
+    class _OptimizedController(Controller[MsgspecSerializer]):
+        def put(self, parsed_body: BodyMsgspec[_User]) -> _User:
+            return parsed_body
+
+    request_data = {'username': faker.name(), 'age': faker.pyint()}
+    request = dmr_rf.put(
+        '/whatever/',
+        data=request_data,
+    )
+    response = _OptimizedController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert json.loads(response.content) == request_data
+
+    request = dmr_rf.put('/whatever/', {})
+    response = _OptimizedController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'Object missing required field `username`',
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
 @final
 class _DefaultController(Controller[MsgspecSerializer]):
     def put(self, parsed_body: BodyMsgspec[_User | None] = None) -> bool:
@@ -265,6 +320,21 @@ def test_body_default(dmr_rf: DMRRequestFactory, faker: Faker) -> None:
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert json.loads(response.content) is False
+
+    # Wrong schema still does not work:
+    request = dmr_rf.put('/whatever/', {})
+    response = _DefaultController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'Object missing required field `username`',
+                'type': 'value_error',
+            },
+        ],
+    })
 
 
 @final

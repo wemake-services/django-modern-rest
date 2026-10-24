@@ -34,64 +34,45 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   sentinel value, since all type-checkers support this now, #1687
 - Replaced multiple types from `Any` to be `TypeForm[Any]`, #1688
 
+### Performance
+
+- Optimized `SerializerContext.__call__` for common cases: zero components,
+  and a single `BodyMsgspec` component, now users can also specify their own
+  parsing strategies for other contexts, #1740
+
 ### Features
 
 - Python 3.15 official support, #1675 and #1762
-
-#### Serializers
-
 - Added `MsgspecSerializer.enable_component_gc` flag to optionally
   enable the GC for the component parsing model, #1697
-
-#### OpenAPI
-
 - Added `HeaderSpec.type` to document non-string response headers.
   Throttling `Retry-After` and `X-RateLimit-*` headers are now
   documented as integers with examples instead of strings, #1706
-
-#### Content negotiation
-
 - Added `Parser.decodes_into_model` flag for parsers
   that decode bodies directly into models, #1740
 
 ### Bugfixes
 
-#### Auth and security
-
 - Fixed `jwt_expiration` and `jwt_refresh_expiration` passed to `as_view`
   of the cookie `concrete_views` changing the tokens, but not their cookies.
   They are typed `as_view` arguments now and are set on the class, #1690
-
-#### Components and serializers
-
 - Fixed `BodyMsgspec` being allowed with parsers
   that don't decode into models, like `JsonParser` or forms.
   It raises `EndpointMetadataError` now, #1740
-
-#### Controllers and endpoints
-
 - Fixed Django's decorators that support async views, like `condition`
   or `cache_control`, failing on async controllers with `wrap_middleware`.
   They got a sync view that returned a coroutine, so they treated
   the coroutine as a response, #1684
-
-#### OpenAPI
-
 - Fixed endpoints returning `None` documenting a response `content`
   of `{"type": "null"}` while sending an empty body, which made
   generated clients parse a body that doesn't exist, #1733
 - Fixed a `$ref` outside of `#/components/schemas/` in a `Query`, `Headers`,
   `Path` or `Cookies` model raising `KeyError` when building the schema, #1708
-
-#### Throttling
-
 - Fixed `SyncRedis` and `AsyncRedis` with `SimpleRate` reporting
   a negative reset (`X-RateLimit-Reset: -2`) for a throttle with
   no requests in the current window, other backends report the full window
 
 ### Misc
-
-#### Agent skills
 
 - Suggest `concrete_views` instead of `views` by default in `dmr` skill, #1670
 - Mention typed expirations of cookie `concrete_views` in `dmr` skill, #1690
