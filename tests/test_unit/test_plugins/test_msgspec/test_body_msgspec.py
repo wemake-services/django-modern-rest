@@ -296,6 +296,44 @@ def test_body_optimized(dmr_rf: DMRRequestFactory, faker: Faker) -> None:
     })
 
 
+@pytest.mark.parametrize(
+    'content_type',
+    [
+        ContentType.json,
+        ContentType.msgpack,
+    ],
+)
+def test_empty_body_optimized(
+    dmr_rf: DMRRequestFactory,
+    *,
+    content_type: ContentType,
+) -> None:
+    """Ensures that empty bodies are validated without other components."""
+
+    class _OptimizedController(Controller[MsgspecSerializer]):
+        parsers = (MsgspecJsonParser(), MsgpackParser())
+
+        def put(self, parsed_body: BodyMsgspec[_User]) -> _User:
+            raise NotImplementedError
+
+    request = dmr_rf.put(
+        '/whatever/',
+        headers={'Content-Type': str(content_type)},
+    )
+    response = _OptimizedController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'Expected `object`, got `null` - at `$.parsed_body`',
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
 @final
 class _DefaultController(Controller[MsgspecSerializer]):
     def put(self, parsed_body: BodyMsgspec[_User | None] = None) -> bool:
