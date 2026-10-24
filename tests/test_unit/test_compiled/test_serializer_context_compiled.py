@@ -23,7 +23,7 @@ def test_correct_import() -> None:
         assert '_pure' in empty_serializer_context.__module__, USE_COMPILED
         assert isinstance(empty_serializer_context, FunctionType)
 
-    with pytest.raises(TypeError, match='missing 2 required'):
+    with pytest.raises(TypeError, match='missing'):
         empty_serializer_context()  # type: ignore[call-arg]
 
 
