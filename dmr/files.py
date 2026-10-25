@@ -214,8 +214,10 @@ class FileBody(FileBodyLike):
         return {
             property_name: Encoding(content_type=content_type)
             for property_name in cls._property_names(schema)
-            if (content_type := cls._content_type(model, property_name))
-            is not None
+            if (
+                (content_type := cls._content_type(model, property_name))
+                is not None
+            )
         } or None
 
     @classmethod
