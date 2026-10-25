@@ -51,6 +51,8 @@ class Parser(ResponseSpecProvider):
     Required by :data:`~dmr.plugins.msgspec.BodyMsgspec`.
     Must return a validated ``model`` instance
     and raise ``msgspec.ValidationError`` for invalid bodies.
+    Empty bodies must be validated as an empty value
+    (``null`` / ``nil``) against the ``model``.
 
     .. versionadded:: 0.17.0
     """

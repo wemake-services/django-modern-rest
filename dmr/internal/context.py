@@ -146,11 +146,7 @@ class SerializerContext:  # noqa: WPS214
         controller: 'Controller[BaseSerializer]',
     ) -> dict[str, Any]:
         """Optimized parsing strategy: since no components need convert call."""
-        context = self._collect_context(endpoint, controller)
-        # Empty bodies are not decoded into models, they are `None`:
-        if None in context.values():
-            return self._validate_context(context, controller)
-        return context
+        return self._collect_context(endpoint, controller)
 
     # Import time methods:
 
