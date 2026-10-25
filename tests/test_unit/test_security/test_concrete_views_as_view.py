@@ -6,6 +6,7 @@ from django.conf import LazySettings
 from dmr import Controller
 from dmr.exceptions import EndpointMetadataError
 from dmr.internal.concrete import build_concrete_controller
+from dmr.openapi import OpenAPIConfig
 from dmr.plugins.pydantic import PydanticFastSerializer, PydanticSerializer
 from dmr.security.base import SyncOrAsyncAuth
 from dmr.security.django_session import concrete_views as session_views
@@ -284,3 +285,37 @@ def test_concrete_views_ignore_settings_auth(view_cls: _AnyController) -> None:
         endpoint.metadata.auth is None
         for endpoint in routed_cls.api_endpoints.values()
     )
+
+
+#: Login views, the only concrete views that must be public in the schema.
+_LOGIN_VIEWS: Final = (
+    jwt_views.ObtainTokensSyncController,
+    jwt_views.ObtainTokensAsyncController,
+    jwt_views.CookieObtainTokensSyncController,
+    jwt_views.CookieObtainTokensAsyncController,
+    token_views.ObtainTokenSyncController,
+    token_views.ObtainTokenAsyncController,
+    session_views.DjangoSessionSyncController,
+    session_views.DjangoSessionAsyncController,
+)
+
+
+@pytest.mark.parametrize('view_cls', _LOGIN_VIEWS)
+def test_login_views_ignore_settings_security(
+    settings: LazySettings,
+    view_cls: _AnyController,
+) -> None:
+    """Ensures that login views opt out of the global `security`."""
+    settings.DMR_SETTINGS = {
+        Settings.openapi_config: OpenAPIConfig(
+            title='Security API',
+            version='1.0.0',
+            security=[{'proxy': []}],
+        ),
+    }
+
+    view = view_cls.as_view(serializer=PydanticSerializer)
+
+    routed_cls = view.view_class  # type: ignore[attr-defined]
+    for endpoint in routed_cls.api_endpoints.values():
+        assert endpoint.metadata.security is None

@@ -47,6 +47,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 #### Auth and security
 
+- Fixed login `concrete_views` inheriting `security`
+  from `OpenAPIConfig`, they now set `security = None`
+  and are documented as public endpoints, #1719
 - Fixed `jwt_expiration` and `jwt_refresh_expiration` passed to `as_view`
   of the cookie `concrete_views` changing the tokens, but not their cookies.
   They are typed `as_view` arguments now and are set on the class, #1690

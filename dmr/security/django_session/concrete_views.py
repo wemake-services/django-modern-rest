@@ -61,6 +61,7 @@ class DjangoSessionSyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     @override
     @classmethod
@@ -114,6 +115,7 @@ class DjangoSessionAsyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     @override
     @classmethod
