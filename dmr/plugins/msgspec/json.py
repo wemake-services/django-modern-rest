@@ -67,7 +67,12 @@ class MsgspecJsonParser(Parser):
             raise
         except (msgspec.DecodeError, UnicodeDecodeError) as exc:
             # Corner case: an empty body is decoded as `null`,
-            # so it is still validated against the *model*.
+            # so it is still validated against the *model*:
+            # - when *model* is `Any`, we return `None`
+            # - when *model* is a specific type, we return `None`
+            #   if the type allows it (like `User | None`),
+            #   otherwise `msgspec.ValidationError` is raised,
+            #   the same way as for any other invalid body
             # We do this here, because we don't want
             # a penalty for all positive cases.
             if to_deserialize == b'':
