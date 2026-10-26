@@ -232,10 +232,12 @@ def _policy_name(
     same_name = [
         other
         for other in endpoint_throttles
-        if other.cache_key.name == name
-        and any(
-            isinstance(provider, RateLimitIETFDraft)
-            for provider in other.response_headers
+        if (
+            other.cache_key.name == name
+            and any(
+                isinstance(provider, RateLimitIETFDraft)
+                for provider in other.response_headers
+            )
         )
     ]
     if len(same_name) < 2:
