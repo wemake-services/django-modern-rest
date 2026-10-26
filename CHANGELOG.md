@@ -74,6 +74,10 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Fixed `SyncRedis` and `AsyncRedis` with `SimpleRate` reporting
   a negative reset (`X-RateLimit-Reset: -2`) for a throttle with
   no requests in the current window, other backends report the full window
+- Fixed throttles with the same cache key name getting the same policy name
+  in `RateLimit-Policy` and `RateLimit` headers of `RateLimitIETFDraft`.
+  Now we add the window to the name, like `RemoteAddr-60`,
+  and the number of requests too, when the window is the same, #1705
 
 ### Misc
 

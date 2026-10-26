@@ -68,3 +68,93 @@ def test_throttle_multiple_specs(
     assert json.loads(response.content) == snapshot({
         'detail': [{'msg': 'Too many requests', 'type': 'ratelimit'}],
     })
+
+
+class _SameNameController(Controller[PydanticSerializer]):
+    throttling = [
+        SyncThrottle(
+            1,
+            Rate.second,
+            response_headers=[RateLimitIETFDraft()],
+        ),
+        SyncThrottle(
+            5,
+            Rate.minute,
+            response_headers=[RateLimitIETFDraft()],
+        ),
+    ]
+
+    def get(self) -> str:
+        return 'inside'
+
+
+def test_throttle_same_cache_key_name(
+    dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Ensures that policies with the same name get different names."""
+    # The first request passes:
+    request = dmr_rf.get('/whatever/')
+    response = _SameNameController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+
+    # The second one hits the limit of one request per second:
+    request = dmr_rf.get('/whatever/')
+    response = _SameNameController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
+        response.content
+    )
+    assert response.headers == {
+        'RateLimit-Policy': (
+            '1;w=1;name="RemoteAddr-1", 5;w=60;name="RemoteAddr-60"'
+        ),
+        'RateLimit': '"RemoteAddr-1";r=0;t=1',
+        'Content-Type': 'application/json',
+    }
+
+
+class _SameWindowController(Controller[PydanticSerializer]):
+    throttling = [
+        SyncThrottle(
+            1,
+            Rate.minute,
+            response_headers=[RateLimitIETFDraft()],
+        ),
+        SyncThrottle(
+            5,
+            Rate.minute,
+            response_headers=[RateLimitIETFDraft()],
+        ),
+    ]
+
+    def get(self) -> str:
+        return 'inside'
+
+
+def test_throttle_same_cache_key_name_and_window(
+    dmr_rf: DMRRequestFactory,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """Ensures that policies with the same name and window are different."""
+    # The first request passes:
+    request = dmr_rf.get('/whatever/')
+    response = _SameWindowController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+
+    # The second one hits the limit of one request per minute:
+    request = dmr_rf.get('/whatever/')
+    response = _SameWindowController.as_view()(request)
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS, (
+        response.content
+    )
+    assert response.headers == {
+        'RateLimit-Policy': (
+            '1;w=60;name="RemoteAddr-60-1", 5;w=60;name="RemoteAddr-60-5"'
+        ),
+        'RateLimit': '"RemoteAddr-60-1";r=0;t=60',
+        'Content-Type': 'application/json',
+    }
