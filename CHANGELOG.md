@@ -100,6 +100,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Fixed the `login_required` example in the middleware docs:
   its redirect was never converted to `401`,
   because `302` was not in the listed responses, #1682
+- `dmr` skill now turns CSRF checks on with `csrf_exempt = False`
+  instead of wrapping `csrf_protect`, and its `wrap_middleware` example
+  documents the `304` of Django's `condition` decorator, #1671
 
 
 ## 0.16.0 (2026-10-01)
