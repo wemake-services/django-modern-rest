@@ -245,6 +245,8 @@ If you use OpenAPI UIs, see :doc:`openapi/openapi`
 for renderer-specific guidance.
 
 
+.. _conditional-requests:
+
 Conditional requests (ETag)
 ---------------------------
 
