@@ -78,6 +78,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   in `RateLimit-Policy` and `RateLimit` headers of `RateLimitIETFDraft`.
   Now we add the window to the name, like `RemoteAddr-60`,
   and the number of requests too, when the window is the same, #1705
+- Fixed `RateLimit-Policy` header of `RateLimitIETFDraft` not following
+  the IETF draft. Now every policy is a quoted name with `q` and `w`
+  parameters, like `"RemoteAddr";q=5;w=60`, #1703
 
 ### Misc
 
