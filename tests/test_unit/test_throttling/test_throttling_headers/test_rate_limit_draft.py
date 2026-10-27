@@ -61,7 +61,7 @@ def test_throttle_multiple_specs(
         response.content
     )
     assert response.headers == {
-        'RateLimit-Policy': '1;w=1;name="RemoteAddr", 5;w=60;name="test"',
+        'RateLimit-Policy': '"RemoteAddr";q=1;w=1, "test";q=5;w=60',
         'RateLimit': '"RemoteAddr";r=0;t=1',
         'Content-Type': 'application/json',
     }
@@ -108,7 +108,7 @@ def test_throttle_same_cache_key_name(
     )
     assert response.headers == {
         'RateLimit-Policy': (
-            '1;w=1;name="RemoteAddr-1", 5;w=60;name="RemoteAddr-60"'
+            '"RemoteAddr-1";q=1;w=1, "RemoteAddr-60";q=5;w=60'
         ),
         'RateLimit': '"RemoteAddr-1";r=0;t=1',
         'Content-Type': 'application/json',
@@ -153,7 +153,7 @@ def test_throttle_same_cache_key_name_and_window(
     )
     assert response.headers == {
         'RateLimit-Policy': (
-            '1;w=60;name="RemoteAddr-60-1", 5;w=60;name="RemoteAddr-60-5"'
+            '"RemoteAddr-60-1";q=1;w=60, "RemoteAddr-60-5";q=5;w=60'
         ),
         'RateLimit': '"RemoteAddr-60-1";r=0;t=60',
         'Content-Type': 'application/json',

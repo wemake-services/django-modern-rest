@@ -288,7 +288,7 @@ async def test_leaky_bucket_async(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS
     assert response.headers == {
-        'RateLimit-Policy': '3;w=10;name="RemoteAddr", 30;w=60;name="min"',
+        'RateLimit-Policy': '"RemoteAddr";q=3;w=10, "min";q=30;w=60',
         'RateLimit': '"RemoteAddr";r=0;t=4',
         'Content-Type': 'application/json',
     }
@@ -316,7 +316,7 @@ async def test_leaky_bucket_async(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS
     assert response.headers == {
-        'RateLimit-Policy': '3;w=10;name="RemoteAddr", 30;w=60;name="min"',
+        'RateLimit-Policy': '"RemoteAddr";q=3;w=10, "min";q=30;w=60',
         'RateLimit': '"RemoteAddr";r=0;t=4',
         'Content-Type': 'application/json',
     }
