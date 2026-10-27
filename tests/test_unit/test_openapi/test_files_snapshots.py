@@ -252,7 +252,7 @@ class _SeveralParsersController(Controller[PydanticSerializer]):
     def post(
         self,
         # `JsonParser` can't parse files, so it must not be present:
-        parsed_file_metadata: FileMetadata[_SeveralSimpleFiles],
+        parsed_file_metadata: FileMetadata[_SeveralSimpleFiles | None] = None,
     ) -> str:
         raise NotImplementedError
 

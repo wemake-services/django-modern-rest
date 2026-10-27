@@ -57,6 +57,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Bugfixes
 
+- Fixed login `concrete_views` inheriting `security`
+  from `OpenAPIConfig`, they now set `security = None`
+  and are documented as public endpoints, #1719
 - Fixed `jwt_expiration` and `jwt_refresh_expiration` passed to `as_view`
   of the cookie `concrete_views` changing the tokens, but not their cookies.
   They are typed `as_view` arguments now and are set on the class, #1690
@@ -79,6 +82,19 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   in `RateLimit-Policy` and `RateLimit` headers of `RateLimitIETFDraft`.
   Now we add the window to the name, like `RemoteAddr-60`,
   and the number of requests too, when the window is the same, #1705
+- Fixed `RateLimit-Policy` header of `RateLimitIETFDraft` not following
+  the IETF draft. Now every policy is a quoted name with `q` and `w`
+  parameters, like `"RemoteAddr";q=5;w=60`, #1703
+- Responses that `wrap_middleware` returns without calling the controller
+  are now validated after the converter, like the responses of endpoints,
+  as the middleware docs promised. A converter that returns something
+  its `ResponseSpec` does not describe, or a status code
+  that is not documented, now fails with `422`
+  where `validate_responses` is on, #1682
+- Fixed `FileMetadataComponent.validate()` always using `any()` to check
+  if parsers support file parsing. When `FileMetadata` is required, all parsers
+  must now support `SupportsFileParsing`. When it is optional, at least one
+  must, #1493
 
 ### Misc
 
@@ -86,6 +102,13 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Mention typed expirations of cookie `concrete_views` in `dmr` skill, #1690
 - Updated documentation and agent skills to link to `llms.txt` instead of
   the removed `llms-full.txt`, #1727
+- Fixed the `login_required` example in the middleware docs:
+  its redirect was never converted to `401`,
+  because `302` was not in the listed responses, #1682
+- `dmr` skill now turns CSRF checks on with `csrf_exempt = False`
+  instead of wrapping `csrf_protect`, and its `wrap_middleware` example
+  documents the `304` of Django's `condition` decorator, #1671
+- Added isiXhosa (`xh`) translation, #718
 
 
 ## 0.16.0 (2026-10-01)

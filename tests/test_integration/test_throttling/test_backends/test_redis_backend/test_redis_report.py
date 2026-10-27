@@ -66,7 +66,7 @@ def test_throttle_multiple_headers(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {
-        'RateLimit-Policy': '1;w=60;name="RemoteAddr"',
+        'RateLimit-Policy': '"RemoteAddr";q=1;w=60',
         'RateLimit': IsOneOf('"RemoteAddr";r=0;t=60', '"RemoteAddr";r=0;t=59'),
         'X-RateLimit-Limit': '5',
         'X-RateLimit-Remaining': '4',
@@ -125,7 +125,7 @@ def test_throttle_sync_leaky_bucket(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {
-        'RateLimit-Policy': '2;w=60;name="RemoteAddr"',
+        'RateLimit-Policy': '"RemoteAddr";q=2;w=60',
         'RateLimit': IsOneOf('"RemoteAddr";r=1;t=30', '"RemoteAddr";r=1;t=29'),
         'Content-Type': 'application/json',
     }
@@ -181,7 +181,7 @@ def test_throttle_sync_leaky_bucket_limit_reached(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {
-        'RateLimit-Policy': '1;w=3600;name="RemoteAddr"',
+        'RateLimit-Policy': '"RemoteAddr";q=1;w=3600',
         'RateLimit': IsOneOf(
             '"RemoteAddr";r=0;t=3600',
             '"RemoteAddr";r=0;t=3599',
@@ -238,7 +238,7 @@ async def test_throttle_multiple_headers_async(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {
-        'RateLimit-Policy': '1;w=60;name="RemoteAddr"',
+        'RateLimit-Policy': '"RemoteAddr";q=1;w=60',
         'RateLimit': IsOneOf('"RemoteAddr";r=0;t=60', '"RemoteAddr";r=0;t=59'),
         'X-RateLimit-Limit': '5',
         'X-RateLimit-Remaining': '4',

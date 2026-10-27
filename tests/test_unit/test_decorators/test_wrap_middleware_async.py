@@ -105,6 +105,7 @@ def _plain_middleware(
     ResponseSpec(None, status_code=HTTPStatus.NO_CONTENT),
 )
 def _plain_json(response: HttpResponse) -> HttpResponse:
+    response['Content-Type'] = 'application/json'
     return response
 
 
@@ -146,4 +147,5 @@ async def test_plain_middleware_function_response(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.NO_CONTENT
+    assert response.headers == {'Content-Type': 'application/json'}
     assert response.content == b''
