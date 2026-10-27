@@ -92,7 +92,9 @@ the endpoint returns an `HttpResponse` on purpose.
 Prefer `MsgspecSerializer`. With `pydantic` and JSON only,
 prefer `PydanticFastSerializer` over `PydanticSerializer`.
 
-Prefer `BodyMsgspec` over `Body` when `MsgspecSerializer` is used.
+Prefer `BodyMsgspec` over `Body` when `MsgspecSerializer` is used
+and all endpoint parsers decode into models,
+like `MsgspecJsonParser` and `MsgpackParser`.
 
 Use `dmr.routing.path` and `Router`, and install
 `build_404_handler` / `build_500_handler` so API errors are JSON.

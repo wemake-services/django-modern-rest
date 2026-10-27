@@ -33,6 +33,8 @@ class BodyMsgspecComponent(BodyComponent):
     .. versionadded:: 0.16.0
     """
 
+    needs_from_python = False
+
     __slots__ = ()
 
     def __init__(self) -> None:
@@ -46,9 +48,11 @@ class BodyMsgspecComponent(BodyComponent):
         metadata: 'EndpointMetadata',
     ) -> None:
         """
-        Validate that the controller uses ``msgspec`` serializer.
+        Validate that the controller uses ``msgspec`` serializer and parsers.
 
-        Other serializers cannot parse bodies directly into their models,
+        Other serializers and parsers
+        without :attr:`~dmr.parsers.Parser.decodes_into_model`
+        cannot parse bodies directly into models,
         so we raise :exc:`~dmr.exceptions.EndpointMetadataError`
         for them during the import time.
         """
@@ -59,6 +63,13 @@ class BodyMsgspecComponent(BodyComponent):
                 f'{serializer.__qualname__} is not a `MsgspecSerializer`, '
                 'use `Body` instead',
             )
+        for parser in metadata.parsers.values():
+            if not parser.decodes_into_model:
+                raise EndpointMetadataError(
+                    f'{metadata.endpoint_name!r} uses `BodyMsgspec`, but '
+                    f'{type(parser).__qualname__} does not decode '
+                    'into models, use `Body` instead',
+                )
 
     @override
     def provide_context_data(

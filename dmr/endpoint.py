@@ -274,6 +274,26 @@ class Endpoint:  # noqa: WPS214
             # And the last option is to handle error globally:
             return self._global_error_handler(controller, new_exc)
 
+    def validate_response(
+        self,
+        controller: 'Controller[BaseSerializer]',
+        response: HttpResponseBase,
+    ) -> HttpResponseBase:
+        """
+        Validate a response that was created outside of this endpoint.
+
+        For example, by a middleware from
+        :func:`~dmr.decorators.wrap_middleware`.
+        Responses of the endpoint itself are already validated.
+
+        Returns the same *response* when it is valid,
+        or an error response when it is not,
+        just like the endpoint does for its own responses.
+
+        .. versionadded:: 0.17.0
+        """
+        return self._make_http_response(controller, response)
+
     def get_schema(
         self,
         route_metadata: InternalRouteMetadata,
@@ -373,7 +393,7 @@ class Endpoint:  # noqa: WPS214
                 # into error reports of any endpoint.
                 func_result = await func(
                     controller,
-                    **self._serializer_context(self, controller),
+                    **self._serializer_context.parse(self, controller),
                 )
             except (APIError, RedirectTo) as exc:
                 func_result = controller.to_error(
@@ -413,7 +433,7 @@ class Endpoint:  # noqa: WPS214
                 # into error reports of any endpoint.
                 func_result = func(
                     controller,
-                    **self._serializer_context(self, controller),
+                    **self._serializer_context.parse(self, controller),
                 )
             except (APIError, RedirectTo) as exc:
                 func_result = controller.to_error(

@@ -1,6 +1,7 @@
 import dataclasses
 from http import HTTPStatus
 from operator import attrgetter
+from types import NoneType
 from typing import TYPE_CHECKING, Literal
 
 from dmr.internal.types import EMPTY
@@ -13,6 +14,7 @@ from dmr.openapi.objects import (
     Responses,
     Schema,
 )
+from dmr.types import is_safe_subclass
 
 if TYPE_CHECKING:
     from dmr.controller import Controller
@@ -150,7 +152,13 @@ class ResponseGenerator:
         controller_cls: type['Controller[BaseSerializer]'],
         context: 'OpenAPIContext',
     ) -> Header:
-        schema = context.generators.schema(str, controller_cls.serializer)
+        # Custom types can produce a `$ref`, headers use the schema itself:
+        schema = context.registries.schema.maybe_resolve_reference(
+            context.generators.schema(
+                header_spec.type,
+                controller_cls.serializer,
+            ),
+        )
         header = Header(
             description=(
                 None
@@ -162,9 +170,9 @@ class ResponseGenerator:
             schema=schema,
         )
         if header_spec.example is not None:
-            # for mypy: `str` cannot return a reference, it is a primitive
-            assert isinstance(schema, Schema)  # noqa: S101
-            # Examples written by hand replace the generated ones:
+            # Examples written by hand replace the generated ones.
+            # `replace` copies the schema, so a shared component
+            # that the `$ref` pointed to keeps its own examples:
             header.example = header_spec.example
             header.schema = dataclasses.replace(schema, examples=None)
         return header
@@ -214,11 +222,14 @@ class ResponseGenerator:
         schema_field_name: str,
         used_for_response: bool,
         content_schema: Schema | None,
-    ) -> dict[str, MediaType | Reference]:
+    ) -> dict[str, MediaType | Reference] | None:
         # Import cycle:
         from dmr.internal.negotiation import (  # noqa: PLC0415
             get_conditional_types,
         )
+
+        if is_safe_subclass(response_spec.return_type, NoneType):
+            return None
 
         return_types = (
             get_conditional_types(response_spec.return_type, ()) or {}

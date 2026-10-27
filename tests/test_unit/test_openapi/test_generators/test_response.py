@@ -1,6 +1,7 @@
 from http import HTTPMethod, HTTPStatus
 from typing import Final
 
+import pydantic
 import pytest
 from django.conf import LazySettings
 from inline_snapshot import snapshot
@@ -9,6 +10,7 @@ from dmr.controller import Controller
 from dmr.cookies import CookieSpec, NewCookie
 from dmr.endpoint import modify
 from dmr.headers import HeaderSpec, NewHeader
+from dmr.internal.types import EMPTY
 from dmr.openapi import build_schema
 from dmr.openapi.config import OpenAPIConfig
 from dmr.openapi.core.context import OpenAPIContext
@@ -306,4 +308,150 @@ def test_header_examples_schema(*, openapi_version: str) -> None:
             'required': True,
             'example': 'secret',
         },
+    })
+
+
+class _ControllerWithTypedHeaders(Controller[PydanticSerializer]):
+    @modify(
+        headers={
+            'X-Count': HeaderSpec(type=int, example=5, skip_validation=True),
+            'X-Name': HeaderSpec(skip_validation=True),
+        },
+    )
+    def get(self) -> str:
+        raise NotImplementedError
+
+
+def test_header_type(generator: ResponseGenerator) -> None:
+    """Ensure that ``HeaderSpec.type`` is used for the header schema."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1706
+    response = generator(
+        _ControllerWithTypedHeaders.api_endpoints[HTTPMethod.GET].metadata,
+        _ControllerWithTypedHeaders,
+    )['200']
+
+    assert isinstance(response, Response)
+    assert response.headers is not None
+    count = response.headers['X-Count']
+    name = response.headers['X-Name']
+    assert isinstance(count, Header)
+    assert isinstance(name, Header)
+    assert isinstance(count.schema, Schema)
+    assert isinstance(name.schema, Schema)
+    assert count.schema.type == OpenAPIType.INTEGER
+    assert count.example == 5
+    assert name.schema.type == OpenAPIType.STRING
+
+
+class _HeaderModel(pydantic.BaseModel):
+    model_config = pydantic.ConfigDict(
+        json_schema_extra={'examples': [{'count': 7}]},
+    )
+
+    count: int
+
+
+class _ControllerWithModelHeaders(Controller[PydanticSerializer]):
+    @modify(
+        headers={
+            'X-Model': HeaderSpec(type=_HeaderModel, skip_validation=True),
+            'X-Model-Example': HeaderSpec(
+                type=_HeaderModel,
+                example={'count': 1},
+                skip_validation=True,
+            ),
+        },
+    )
+    def get(self) -> str:
+        raise NotImplementedError
+
+
+def _model_headers(
+    context: OpenAPIContext,
+) -> tuple[Header, Header]:
+    response = context.generators.response(
+        _ControllerWithModelHeaders.api_endpoints[HTTPMethod.GET].metadata,
+        _ControllerWithModelHeaders,
+    )['200']
+
+    assert isinstance(response, Response)
+    assert response.headers is not None
+    plain = response.headers['X-Model']
+    with_example = response.headers['X-Model-Example']
+    assert isinstance(plain, Header)
+    assert isinstance(with_example, Header)
+    return plain, with_example
+
+
+def test_header_type_reference_is_resolved(
+    openapi_context: OpenAPIContext,
+) -> None:
+    """Ensure that a ``$ref`` for a custom header type is resolved."""
+    plain, with_example = _model_headers(openapi_context)
+
+    for header in (plain, with_example):
+        assert isinstance(header.schema, Schema)
+        assert header.schema.ref is None
+        assert header.schema.type == OpenAPIType.OBJECT
+        assert header.schema.properties is not None
+        assert list(header.schema.properties) == ['count']
+
+
+def test_header_schema_examples_are_kept(
+    openapi_context: OpenAPIContext,
+) -> None:
+    """Ensure that existing schema examples are not overwritten."""
+    plain, with_example = _model_headers(openapi_context)
+
+    # Examples of the schema are used when the header has no example:
+    assert isinstance(plain.schema, Schema)
+    assert plain.schema.examples == [{'count': 7}]
+    assert plain.example is EMPTY
+    # A header example replaces them only in this header's schema copy,
+    # the shared component keeps its own examples:
+    assert with_example.example == {'count': 1}
+    assert isinstance(with_example.schema, Schema)
+    assert with_example.schema.examples is None
+    component = openapi_context.registries.schema.schemas['_HeaderModel']
+    assert component.examples == [{'count': 7}]
+
+
+class _ControllerWithoutBody(Controller[PydanticSerializer]):
+    @modify(status_code=HTTPStatus.CREATED, headers={'X-Test-Header': _HEADER})
+    def post(self) -> None:
+        raise NotImplementedError
+
+    @modify(
+        status_code=HTTPStatus.NO_CONTENT,
+        headers={'X-Test-Header': _HEADER},
+    )
+    def delete(self) -> None:
+        raise NotImplementedError
+
+
+@pytest.mark.parametrize(
+    ('http_method', 'status_code'),
+    [(HTTPMethod.POST, '201'), (HTTPMethod.DELETE, '204')],
+)
+def test_response_without_body(
+    generator: ResponseGenerator,
+    http_method: HTTPMethod,
+    status_code: str,
+) -> None:
+    """Ensure that `None` responses have no content, but keep headers."""
+    response = generator(
+        _ControllerWithoutBody.api_endpoints[http_method].metadata,
+        _ControllerWithoutBody,
+    )
+    response_without_body = response[status_code]
+
+    assert isinstance(response_without_body, Response)
+    assert response_without_body.content is None
+    assert response_without_body.headers == snapshot({
+        'X-Test-Header': Header(
+            schema=Schema(type=OpenAPIType.STRING),
+            description='Other Test Header',
+            required=True,
+        ),
     })
