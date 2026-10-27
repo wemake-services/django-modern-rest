@@ -87,7 +87,7 @@ jobs:
           enable-cache: false
 
       # NOTE: Keep cibuildwheel version in sync with pyproject.toml
-      - uses: pypa/cibuildwheel@b3395e271a35f73dad77f21802abe9b986dfe299 # v4.3.1
+      - uses: pypa/cibuildwheel@f11181315571b24e4a3c67f1a828532793f2df55 # v4.3.2
         with:
           only: ${{ matrix.only }}
 
