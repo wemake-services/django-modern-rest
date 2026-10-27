@@ -666,10 +666,22 @@ def test_conditional_file_metadata_multipart(
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
     assert json.loads(response.content) == {
         'receipt': {'content_type': 'text/plain', 'size': len(receipt)},
         'rules': {'content_type': 'text/plain', 'size': len(rules)},
     }
+
+
+@final
+class _ConditionalFilePutController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(), OctetStreamParser())
+
+    def put(
+        self,
+        parsed_file_metadata: FileMetadata[_ConditionalUploadedFiles],
+    ) -> _UploadedFiles | OctetFileModel[_OctetFileMeta]:
+        return parsed_file_metadata
 
 
 def test_conditional_file_metadata_octet_stream(
@@ -678,16 +690,16 @@ def test_conditional_file_metadata_octet_stream(
 ) -> None:
     """Ensures conditional file metadata works with application/octet-stream."""
     raw_data = faker.name().encode('utf8')
-    request = dmr_rf.post(
+    request = dmr_rf.put(
         '/whatever/',
         raw_data,
         headers={'Content-Type': OCTET_STREAM},
     )
 
-    response = _ConditionalFileController.as_view()(request)
+    response = _ConditionalFilePutController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.CREATED, response.content
+    assert response.status_code == HTTPStatus.OK, response.content
     assert json.loads(response.content) == {
         'uploaded_file': {
             'content_type': 'application/octet-stream',
@@ -697,16 +709,31 @@ def test_conditional_file_metadata_octet_stream(
     }
 
     # Now the same, but with wrong content-type:
-    request = dmr_rf.post(
+    request = dmr_rf.put(
         '/whatever/',
         raw_data,
-        content_type=str(ContentType.multipart_form_data),
+        content_type=MULTIPART_CONTENT,
     )
 
-    response = _ConditionalFileController.as_view()(request)
+    response = _ConditionalFilePutController.as_view()(request)
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'Field required',
+                'loc': ['parsed_file_metadata', 'receipt'],
+                'type': 'value_error',
+            },
+            {
+                'msg': 'Field required',
+                'loc': ['parsed_file_metadata', 'rules'],
+                'type': 'value_error',
+            },
+        ],
+    })
 
 
 def test_octet_stream_content_disposition(
@@ -739,7 +766,7 @@ def test_octet_stream_content_disposition(
     }
 
 
-def test_file_metadata_optional_non_file_parser_with_files(
+def test_optional_non_file_parser_with_files(
     rf: RequestFactory,
 ) -> None:
     """Non-file parser selected with files present must raise."""
@@ -765,4 +792,16 @@ def test_file_metadata_optional_non_file_parser_with_files(
     response = _Controller.as_view()(request)
 
     assert isinstance(response, HttpResponse)
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.headers == {'Content-Type': 'application/json'}
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': (
+                    "Trying to parse files with '_WrongBodyParser' "
+                    'that does not support SupportsFileParsing protocol'
+                ),
+                'type': 'value_error',
+            },
+        ],
+    })
