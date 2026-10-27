@@ -221,7 +221,7 @@ def test_invalid_json(dmr_rf: DMRRequestFactory) -> None:
 
 
 def test_empty_body(dmr_rf: DMRRequestFactory) -> None:
-    """Ensures that empty bodies are always validated as a part of context."""
+    """Ensures that empty bodies are validated with other components."""
     request = dmr_rf.put(
         '/whatever/',
         headers={**_HEADERS, 'Content-Type': 'application/json'},
@@ -234,11 +234,188 @@ def test_empty_body(dmr_rf: DMRRequestFactory) -> None:
     assert json.loads(response.content) == snapshot({
         'detail': [
             {
-                'msg': 'Expected `object`, got `null` - at `$.parsed_body`',
+                'msg': 'Expected `object`, got `null`',
                 'type': 'value_error',
             },
         ],
     })
+
+
+def test_optimized_body_used(
+    dmr_rf: DMRRequestFactory,
+    faker: Faker,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ensures that fast bodies are optimized."""
+    monkeypatch.setattr(
+        Controller.endpoint_cls.serializer_context_cls,
+        '_noconvert_parse_strategy',
+        lambda *args, **kwargs: 1 / 0,  # noqa: WPS344  # pyrefly: ignore[division-by-zero]
+    )
+
+    class _OptimizedController(Controller[MsgspecSerializer]):
+        def put(self, parsed_body: BodyMsgspec[_User]) -> _User:
+            raise NotImplementedError
+
+    request = dmr_rf.put('/whatever/')
+
+    with pytest.raises(ZeroDivisionError):
+        _OptimizedController.as_view()(request)
+
+
+def test_body_optimized(dmr_rf: DMRRequestFactory, faker: Faker) -> None:
+    """Ensures that fast bodies work with no default."""
+
+    class _OptimizedController(Controller[MsgspecSerializer]):
+        def put(self, parsed_body: BodyMsgspec[_User]) -> _User:
+            return parsed_body
+
+    request_data = {'username': faker.name(), 'age': faker.pyint()}
+    request = dmr_rf.put(
+        '/whatever/',
+        data=request_data,
+    )
+    response = _OptimizedController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.OK, response.content
+    assert json.loads(response.content) == request_data
+
+    request = dmr_rf.put('/whatever/', {})
+    response = _OptimizedController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'Object missing required field `username`',
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
+@pytest.mark.parametrize(
+    ('content_type', 'error_message'),
+    [
+        (ContentType.json, 'Expected `object`, got `null`'),
+        (ContentType.msgpack, 'Expected `object`, got `None`'),
+    ],
+)
+def test_empty_body_optimized(
+    dmr_rf: DMRRequestFactory,
+    *,
+    content_type: ContentType,
+    error_message: str,
+) -> None:
+    """Ensures that empty bodies are validated without other components."""
+
+    class _OptimizedController(Controller[MsgspecSerializer]):
+        parsers = (MsgspecJsonParser(), MsgpackParser())
+
+        def put(self, parsed_body: BodyMsgspec[_User]) -> _User:
+            raise NotImplementedError
+
+    request = dmr_rf.put(
+        '/whatever/',
+        headers={'Content-Type': str(content_type)},
+    )
+    response = _OptimizedController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert json.loads(response.content) == {
+        'detail': [{'msg': error_message, 'type': 'value_error'}],
+    }
+
+
+@final
+class _AnyBodyController(Controller[MsgspecSerializer]):
+    parsers = (MsgspecJsonParser(), MsgpackParser())
+
+    def put(self, parsed_body: Body[Any]) -> bool:
+        return parsed_body is None
+
+    def post(self, parsed_body: Body[Any] = None) -> bool:
+        return parsed_body is None
+
+
+@final
+class _OptionalBodyController(Controller[MsgspecSerializer]):
+    parsers = (MsgspecJsonParser(), MsgpackParser())
+
+    def put(self, parsed_body: Body[_User | None]) -> bool:
+        return parsed_body is None
+
+    def post(self, parsed_body: Body[_User | None] = None) -> bool:
+        return parsed_body is None
+
+
+@final
+class _AnyBodyMsgspecController(Controller[MsgspecSerializer]):
+    parsers = (MsgspecJsonParser(), MsgpackParser())
+
+    def put(self, parsed_body: BodyMsgspec[Any]) -> bool:
+        return parsed_body is None
+
+    def post(self, parsed_body: BodyMsgspec[Any] = None) -> bool:
+        return parsed_body is None
+
+
+@final
+class _OptionalBodyMsgspecController(Controller[MsgspecSerializer]):
+    parsers = (MsgspecJsonParser(), MsgpackParser())
+
+    def put(self, parsed_body: BodyMsgspec[_User | None]) -> bool:
+        return parsed_body is None
+
+    def post(self, parsed_body: BodyMsgspec[_User | None] = None) -> bool:
+        return parsed_body is None
+
+
+@pytest.mark.parametrize(
+    'controller',
+    [
+        _AnyBodyController,
+        _OptionalBodyController,
+        _AnyBodyMsgspecController,
+        _OptionalBodyMsgspecController,
+    ],
+)
+@pytest.mark.parametrize(
+    ('method', 'status_code'),
+    [
+        ('put', HTTPStatus.OK),
+        # With a default, an empty body is never parsed:
+        ('post', HTTPStatus.CREATED),
+    ],
+)
+@pytest.mark.parametrize(
+    'content_type',
+    [
+        ContentType.json,
+        ContentType.msgpack,
+    ],
+)
+def test_empty_body_nullable(
+    dmr_rf: DMRRequestFactory,
+    *,
+    controller: type[Controller[MsgspecSerializer]],
+    method: str,
+    status_code: HTTPStatus,
+    content_type: ContentType,
+) -> None:
+    """Ensures that empty bodies are `None` for models that allow it."""
+    request = getattr(dmr_rf, method)(
+        '/whatever/',
+        headers={'Content-Type': str(content_type)},
+    )
+    response = controller.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == status_code, response.content
+    assert json.loads(response.content) is True
 
 
 @final
@@ -265,6 +442,21 @@ def test_body_default(dmr_rf: DMRRequestFactory, faker: Faker) -> None:
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert json.loads(response.content) is False
+
+    # Wrong schema still does not work:
+    request = dmr_rf.put('/whatever/', {})
+    response = _DefaultController.as_view()(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert json.loads(response.content) == snapshot({
+        'detail': [
+            {
+                'msg': 'Object missing required field `username`',
+                'type': 'value_error',
+            },
+        ],
+    })
 
 
 @final
