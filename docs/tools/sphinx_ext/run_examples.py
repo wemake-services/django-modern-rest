@@ -27,7 +27,7 @@ from collections.abc import Callable, Generator, Mapping
 from contextlib import contextmanager, redirect_stderr, suppress
 from functools import partial
 from pathlib import Path
-from types import MappingProxyType, ModuleType
+from types import ModuleType
 from typing import TYPE_CHECKING, Any, ClassVar, Final, Literal, TypeAlias
 from urllib.parse import urlencode
 
@@ -63,6 +63,7 @@ from sphinx.application import Sphinx
 from sphinx.directives.code import LiteralInclude as _LiteralInclude
 from typing_extensions import override
 
+from dmr.internal.compat import frozen
 from dmr.openapi import OpenAPIConfig
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.routing import build_404_handler, build_500_handler
@@ -106,7 +107,7 @@ _JWT_REFRESH_TOKEN_TEMPLATE: Final = '$JWT_REFRESH_TOKEN'  # noqa: S105
 _CSRF_TOKEN_TEMPLATE: Final = '$CSRF_TOKEN'  # noqa: S105
 
 #: Same defaults our own jwt controllers use.
-_JWT_EXPIRATIONS: Final = MappingProxyType({
+_JWT_EXPIRATIONS: Final = frozen({
     'access': dt.timedelta(days=1),
     'refresh': dt.timedelta(days=10),
 })
@@ -1137,7 +1138,7 @@ class _IssuedJWTokens:
 
 
 #: What each template in a `# run:` comment is replaced with.
-_TOKEN_TEMPLATES: Final[Mapping[str, _TokenLoader]] = MappingProxyType({
+_TOKEN_TEMPLATES: Final[Mapping[str, _TokenLoader]] = frozen({
     _TOKEN_TEMPLATE: _StoredToken.load,
     _JWT_ACCESS_TOKEN_TEMPLATE: partial(_IssuedJWTokens.load, 'access'),
     _JWT_REFRESH_TOKEN_TEMPLATE: partial(_IssuedJWTokens.load, 'refresh'),

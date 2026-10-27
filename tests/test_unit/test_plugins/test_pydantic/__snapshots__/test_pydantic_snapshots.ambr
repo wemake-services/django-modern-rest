@@ -223,14 +223,7 @@
           },
           "responses": {
             "201": {
-              "description": "Created",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "null"
-                  }
-                }
-              }
+              "description": "Created"
             },
             "400": {
               "description": "Raised when request components cannot be parsed",
@@ -280,14 +273,7 @@
           },
           "responses": {
             "201": {
-              "description": "Created",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "null"
-                  }
-                }
-              }
+              "description": "Created"
             },
             "400": {
               "description": "Raised when request components cannot be parsed",

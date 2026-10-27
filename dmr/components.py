@@ -275,6 +275,15 @@ class ComponentParser(ResponseSpecProvider):
     will live under a dict field with this name.
     """
 
+    needs_from_python: ClassVar[bool] = True
+    """
+    Does this component need a final ``.from_python()`` call when parsing?
+
+    This is needed for optimizations in some components, like ``BodyMsgspec``
+    that do not need the final conversion call. When all parsed components
+    do not need this step, we skip it.
+    """
+
     @abc.abstractmethod
     def provide_context_data(
         self,

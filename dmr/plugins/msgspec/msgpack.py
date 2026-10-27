@@ -18,6 +18,7 @@ class MsgpackParser(Parser):
     __slots__ = ()
 
     content_type = 'application/msgpack'
+    decodes_into_model = True
 
     #: Default strictness of the parser.
     strict: ClassVar[bool] = False
@@ -51,24 +52,31 @@ class MsgpackParser(Parser):
                 :data:`~dmr.plugins.msgspec.BodyMsgspec`.
 
         """
+        decoder = _get_deserializer(
+            model,  # type: ignore[arg-type]
+            deserializer_hook,
+            strict=self.strict,
+        )
         try:
-            return _get_deserializer(
-                model,  # type: ignore[arg-type]
-                deserializer_hook,
-                strict=self.strict,
-            ).decode(to_deserialize)
+            return decoder.decode(to_deserialize)
         except msgspec.ValidationError:
             # It is a `DecodeError` subclass, but it means that the bytes
             # are fine and only the model does not match. Only happens
             # for real models, decoding into `Any` never raises it:
             raise
         except (msgspec.DecodeError, UnicodeDecodeError) as exc:
-            # Corner case: when deserializing an empty body,
-            # return `None` instead.
+            # Corner case: an empty body is decoded as `b'\xc0'`
+            # (msgpack's `None`), so it is still validated
+            # against the *model*:
+            # - when *model* is `Any`, we return `None`
+            # - when *model* is a specific type, we return `None`
+            #   if the type allows it (like `User | None`),
+            #   otherwise `msgspec.ValidationError` is raised,
+            #   the same way as for any other invalid body
             # We do this here, because we don't want
             # a penalty for all positive cases.
             if to_deserialize == b'':
-                return None
+                return decoder.decode(b'\xc0')
             raise DataParsingError(str(exc)) from exc
 
 

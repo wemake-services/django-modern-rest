@@ -34,47 +34,72 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   sentinel value, since all type-checkers support this now, #1687
 - Replaced multiple types from `Any` to be `TypeForm[Any]`, #1688
 
+### Performance
+
+- Optimized `SerializerContext.__call__` for common cases: zero components,
+  and a single `BodyMsgspec` component, now users can also specify their own
+  parsing strategies for other contexts. Context parsing is around x1.3 faster
+  for endpoints without components and around x1.6 faster for a single
+  `BodyMsgspec` component, #1740
+
 ### Features
 
-- Python 3.15 official support, #1675
-
-#### Serializers
-
+- Python 3.15 official support, #1675 and #1762
 - Added `MsgspecSerializer.enable_component_gc` flag to optionally
   enable the GC for the component parsing model, #1697
+- Added `HeaderSpec.type` to document non-string response headers.
+  Throttling `Retry-After` and `X-RateLimit-*` headers are now
+  documented as integers with examples instead of strings, #1706
+- Added `Parser.decodes_into_model` flag for parsers
+  that decode bodies directly into models, #1740
+- Added isiXhosa (`xh`) translation, #718
 
 ### Bugfixes
 
-#### Auth and security
-
+- Fixed login `concrete_views` inheriting `security`
+  from `OpenAPIConfig`, they now set `security = None`
+  and are documented as public endpoints, #1719
 - Fixed `jwt_expiration` and `jwt_refresh_expiration` passed to `as_view`
   of the cookie `concrete_views` changing the tokens, but not their cookies.
   They are typed `as_view` arguments now and are set on the class, #1690
-
-#### Controllers and endpoints
-
+- Fixed `BodyMsgspec` being allowed with parsers
+  that don't decode into models, like `JsonParser` or forms.
+  It raises `EndpointMetadataError` now, #1740
 - Fixed Django's decorators that support async views, like `condition`
   or `cache_control`, failing on async controllers with `wrap_middleware`.
   They got a sync view that returned a coroutine, so they treated
   the coroutine as a response, #1684
+- Fixed endpoints returning `None` documenting a response `content`
+  of `{"type": "null"}` while sending an empty body, which made
+  generated clients parse a body that doesn't exist, #1733
+- Fixed a `$ref` outside of `#/components/schemas/` in a `Query`, `Headers`,
+  `Path` or `Cookies` model raising `KeyError` when building the schema, #1708
+- Fixed `SyncRedis` and `AsyncRedis` with `SimpleRate` reporting
+  a negative reset (`X-RateLimit-Reset: -2`) for a throttle with
+  no requests in the current window, other backends report the full window
+- Fixed throttles with the same cache key name getting the same policy name
+  in `RateLimit-Policy` and `RateLimit` headers of `RateLimitIETFDraft`.
+  Now we add the window to the name, like `RemoteAddr-60`,
+  and the number of requests too, when the window is the same, #1705
+- Fixed `RateLimit-Policy` header of `RateLimitIETFDraft` not following
+  the IETF draft. Now every policy is a quoted name with `q` and `w`
+  parameters, like `"RemoteAddr";q=5;w=60`, #1703
 - Responses that `wrap_middleware` returns without calling the controller
   are now validated after the converter, like the responses of endpoints,
   as the middleware docs promised. A converter that returns something
   its `ResponseSpec` does not describe, or a status code
   that is not documented, now fails with `422`
   where `validate_responses` is on, #1682
-- Fixed the `login_required` example in the middleware docs:
-  its redirect was never converted to `401`,
-  because `302` was not in the listed responses, #1682
 
 ### Misc
-
-#### Agent skills
 
 - Suggest `concrete_views` instead of `views` by default in `dmr` skill, #1670
 - Mention typed expirations of cookie `concrete_views` in `dmr` skill, #1690
 - Updated documentation and agent skills to link to `llms.txt` instead of
   the removed `llms-full.txt`, #1727
+- Fixed the `login_required` example in the middleware docs:
+  its redirect was never converted to `401`,
+  because `302` was not in the listed responses, #1682
 
 
 ## 0.16.0 (2026-10-01)

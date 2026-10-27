@@ -393,7 +393,7 @@ class Endpoint:  # noqa: WPS214
                 # into error reports of any endpoint.
                 func_result = await func(
                     controller,
-                    **self._serializer_context(self, controller),
+                    **self._serializer_context.parse(self, controller),
                 )
             except (APIError, RedirectTo) as exc:
                 func_result = controller.to_error(
@@ -433,7 +433,7 @@ class Endpoint:  # noqa: WPS214
                 # into error reports of any endpoint.
                 func_result = func(
                     controller,
-                    **self._serializer_context(self, controller),
+                    **self._serializer_context.parse(self, controller),
                 )
             except (APIError, RedirectTo) as exc:
                 func_result = controller.to_error(
