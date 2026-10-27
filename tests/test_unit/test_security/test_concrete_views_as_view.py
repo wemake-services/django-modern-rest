@@ -318,4 +318,5 @@ def test_login_views_ignore_settings_security(
 
     routed_cls = view.view_class  # type: ignore[attr-defined]
     for endpoint in routed_cls.api_endpoints.values():
+        assert endpoint.metadata.auth is None
         assert endpoint.metadata.security is None
