@@ -3,6 +3,7 @@ from collections.abc import Callable
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias
 
+from dmr.compiled import empty_serializer_context
 from dmr.components import ComponentParser, ComponentParserBuilder
 from dmr.exceptions import ValidationError
 from dmr.serializer import ContextField, ContextModel
@@ -18,7 +19,7 @@ _ContentTypeOverrides: TypeAlias = dict[str, dict[str, Any]]
 _CollectPlan: TypeAlias = tuple[tuple[str, ComponentParser, Any, Any], ...]
 
 
-class SerializerContext:
+class SerializerContext:  # noqa: WPS214
     """
     Parse and bind request components for a controller.
 
@@ -42,6 +43,9 @@ class SerializerContext:
         Models are now built by ``serializer.build_context_model``,
         defaults of component parameters are now supported.
 
+    .. versionchanged:: 0.17.0
+        Now we can optimize the parsing logic in import time.
+
     """
 
     # Public API:
@@ -62,6 +66,7 @@ class SerializerContext:
         '_conditional_models',
         '_default_model',
         'component_parsers',
+        'parse',
     )
 
     def __init__(
@@ -70,7 +75,11 @@ class SerializerContext:
         controller_cls: type['Controller[BaseSerializer]'],
         type_annotations: dict[str, Any],
     ) -> None:
-        """Eagerly build context for a given controller and serializer."""
+        """
+        Eagerly build context for a given controller and serializer.
+
+        Runs in import time.
+        """
         # Build component parsers:
         self.component_parsers = self.component_builder_cls(
             func,
@@ -98,22 +107,46 @@ class SerializerContext:
             for spec in self.component_parsers
         )
 
-    def __call__(
+        # Select parsing strategy:
+        self.parse = self._select_parse_strategy()
+
+    # Strategies:
+
+    def _select_parse_strategy(
+        self,
+    ) -> Callable[['Endpoint', 'Controller[BaseSerializer]'], dict[str, Any]]:
+        """Selects the optimized callable that will run per-request."""
+        # Empty context always returns `{}`, skip any parsing:
+        if not self._collect_plan:
+            return empty_serializer_context  # compiled
+
+        # We only optimize a common case (all must apply):
+        # 1. components that do not have conditional models
+        # 2. all components do not need `.from_python` call
+        if not self._conditional_models and all(
+            not plan[1].needs_from_python for plan in self._collect_plan
+        ):
+            return self._noconvert_parse_strategy
+
+        # Default case:
+        return self._default_parse_strategy
+
+    def _default_parse_strategy(
         self,
         endpoint: 'Endpoint',
         controller: 'Controller[BaseSerializer]',
     ) -> dict[str, Any]:
-        """
-        Collect, validate, and bind component data to the controller.
-
-        Raises ``serializer.validation_error`` when provided
-        data does not match the expected model.
-        """
-        if not self._collect_plan:
-            return {}
-
+        """Default parsing strategy: collects and converts the context."""
         context = self._collect_context(endpoint, controller)
         return self._validate_context(context, controller)
+
+    def _noconvert_parse_strategy(
+        self,
+        endpoint: 'Endpoint',
+        controller: 'Controller[BaseSerializer]',
+    ) -> dict[str, Any]:
+        """Optimized parsing strategy: since no components need convert call."""
+        return self._collect_context(endpoint, controller)
 
     # Import time methods:
 

@@ -130,6 +130,10 @@ class SyncRedis(BaseThrottleSyncBackend):
                 _READ,
             ],
         )
+        if script_result[2] < 0:
+            # `SimpleRate` returns the key's TTL, `-2` for a missing key:
+            # there is no state yet, the algorithm starts a fresh window.
+            return None
         return CachedRateLimit(
             history=[script_result[1]],
             time=script_result[2],  # pyright: ignore[reportUnknownArgumentType]
@@ -232,6 +236,10 @@ class AsyncRedis(BaseThrottleAsyncBackend):
             # read-only request with the last `1`:
             args=[throttle.max_requests, throttle.duration_in_seconds, 1],
         )
+        if script_result[2] < 0:
+            # `SimpleRate` returns the key's TTL, `-2` for a missing key:
+            # there is no state yet, the algorithm starts a fresh window.
+            return None
         return CachedRateLimit(
             history=[script_result[1]],
             time=script_result[2],  # pyright: ignore[reportUnknownArgumentType]

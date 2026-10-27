@@ -216,12 +216,14 @@ The OpenAPI schema is always the same for ``Body`` and ``BodyMsgspec``.
 
 .. note::
 
-  Only parsers that decode into models really support ``BodyMsgspec``:
+  Only parsers that decode into models support ``BodyMsgspec``:
   :class:`~dmr.plugins.msgspec.MsgspecJsonParser`
   and :class:`~dmr.plugins.msgspec.MsgpackParser`.
+  Other parsers, like :class:`~dmr.parsers.JsonParser` or forms,
+  raise :exc:`~dmr.exceptions.EndpointMetadataError` during the import time.
 
-  Custom parsers can also learn to respect the model,
-  but it needs a support from the core library's serializer side.
+  Custom parsers that decode into the passed model can set
+  :attr:`~dmr.parsers.Parser.decodes_into_model` to ``True``.
 
 
 Customizing the OpenAPI metadata for Body
