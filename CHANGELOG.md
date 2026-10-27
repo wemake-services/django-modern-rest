@@ -52,7 +52,6 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   documented as integers with examples instead of strings, #1706
 - Added `Parser.decodes_into_model` flag for parsers
   that decode bodies directly into models, #1740
-- Added isiXhosa (`xh`) translation, #718
 
 ### Bugfixes
 
@@ -90,6 +89,10 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   its `ResponseSpec` does not describe, or a status code
   that is not documented, now fails with `422`
   where `validate_responses` is on, #1682
+- Fixed `FileMetadataComponent.validate()` always using `any()` to check
+  if parsers support file parsing. When `FileMetadata` is required, all parsers
+  must now support `SupportsFileParsing`. When it is optional, at least one
+  must, #1493
 
 ### Misc
 
@@ -103,6 +106,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - `dmr` skill now turns CSRF checks on with `csrf_exempt = False`
   instead of wrapping `csrf_protect`, and its `wrap_middleware` example
   documents the `304` of Django's `condition` decorator, #1671
+- Added isiXhosa (`xh`) translation, #718
 
 
 ## 0.16.0 (2026-10-01)
