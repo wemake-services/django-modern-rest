@@ -5,12 +5,20 @@
 
 from abc import abstractmethod
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Final, Literal, Self, overload
+from typing import (
+    TYPE_CHECKING,
+    Final,
+    Literal,
+    NotRequired,
+    Self,
+    Unpack,
+    overload,
+)
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.http import HttpRequest
 from django.views.decorators.debug import sensitive_variables
-from typing_extensions import override
+from typing_extensions import TypedDict, override
 
 from dmr.exceptions import NotAuthenticatedError
 from dmr.metadata import EndpointMetadata
@@ -40,17 +48,44 @@ USER_LOOKUP_ERRORS: Final = (
 )
 
 
-class _BaseJWTAuth:  # noqa: WPS230
+class JWTokenAuthParams(TypedDict):
     """
-    Transport-agnostic part of jwt auth.
+    Keyword arguments accepted by ``JWTokenHandler`` initialization.
 
-    Knows how to decode and validate a token,
-    but not where the token comes from.
-    Subclasses define the transport by implementing
-    :meth:`get_token_from_request` and :meth:`split_encoded_token`.
+    All fields are optional because the handler
+    provides default values for each setting.
+
+    These options configure JWT decoding and validation
     """
 
-    expected_token_type: str = 'access'  # noqa: S105
+    algorithm: NotRequired[str]
+    secret: NotRequired[str | None]
+    token_cls: NotRequired[type[JWToken]]
+    leeway: NotRequired[int]
+    accepted_audiences: NotRequired[str | Sequence[str] | None]
+    accepted_issuers: NotRequired[str | Sequence[str] | None]
+    require_claims: NotRequired[Sequence[str] | None]
+    verify_expiry: NotRequired[bool]
+    verify_issued_at: NotRequired[bool]
+    verify_jwt_id: NotRequired[bool]
+    verify_not_before: NotRequired[bool]
+    verify_subject: NotRequired[bool]
+    strict_audience: NotRequired[bool]
+    enforce_minimum_key_length: NotRequired[bool]
+
+
+class JWTokenHandler:  # noqa: WPS230
+    """
+    Base class providing reusable JWT token handling functionality.
+
+    This class provides JWT configuration, token extraction, decoding,
+    and validation without defining how the authenticated subject is resolved
+    or how the authentication pipeline is implemented.
+
+    Subclasses must implement the methods responsible for extracting
+    a token from the request and separating the encoded JWT
+    from the raw transport value.
+    """
 
     __slots__ = (
         'accepted_audiences',
@@ -60,10 +95,8 @@ class _BaseJWTAuth:  # noqa: WPS230
         'leeway',
         'require_claims',
         'secret',
-        'security_scheme_name',
         'strict_audience',
         'token_cls',
-        'user_id_field',
         'verify_expiry',
         'verify_issued_at',
         'verify_jwt_id',
@@ -74,12 +107,10 @@ class _BaseJWTAuth:  # noqa: WPS230
     def __init__(  # noqa: WPS211
         self,
         *,
-        user_id_field: str = 'pk',
         algorithm: str = 'HS256',
-        security_scheme_name: str = 'jwt',
         secret: str | None = None,
         token_cls: type[JWToken] = JWToken,
-        leeway: int = 0,  # seconds
+        leeway: int = 0,
         accepted_audiences: str | Sequence[str] | None = None,
         accepted_issuers: str | Sequence[str] | None = None,
         require_claims: Sequence[str] | None = None,
@@ -92,13 +123,8 @@ class _BaseJWTAuth:  # noqa: WPS230
         enforce_minimum_key_length: bool = True,
     ) -> None:
         """
-        Apply possible customizations.
+        Initializes JWT authentication.
 
-        What can be modified?
-
-        - *user_id_field* can be changed, it is used to get user model.
-          By default we search by ``pk``, but it can be changed to be ``email``
-          or any other unique user key.
         - *secret* can be changed, by default we use ``settings.SECRET_KEY``,
           but if you need some other secret for signing tokens - it is possible.
         - *token_cls* can use :class:`dmr.security.jwt.token.JWToken`
@@ -109,10 +135,8 @@ class _BaseJWTAuth:  # noqa: WPS230
         """
         from django.conf import settings  # noqa: PLC0415
 
-        self.user_id_field = user_id_field
         self.algorithm = algorithm
-        self.security_scheme_name = security_scheme_name
-        self.secret: str = secret or settings.SECRET_KEY
+        self.secret = secret or settings.SECRET_KEY
         self.token_cls = token_cls
         self.leeway = leeway
         self.accepted_audiences = accepted_audiences
@@ -126,14 +150,6 @@ class _BaseJWTAuth:  # noqa: WPS230
         self.strict_audience = strict_audience
         self.enforce_minimum_key_length = enforce_minimum_key_length
 
-    def security_requirements(
-        self,
-        metadata: EndpointMetadata,
-        controller_cls: type['Controller[BaseSerializer]'],
-    ) -> list[SecurityRequirement]:
-        """Provides a security schema usage requirement."""
-        return [{self.security_scheme_name: []}]
-
     @sensitive_variables()
     def prepare_token(self, request: HttpRequest) -> JWToken | None:
         """Fetches JWToken instance from the request."""
@@ -146,8 +162,9 @@ class _BaseJWTAuth:  # noqa: WPS230
         if encoded_token is None:
             return None
         # After this point we are sure that this is a jwt token.
+        decoded_token = self.decode_token(encoded_token)
         # We can raise `NotAuthenticatedError` below this point.
-        return self.decode_token(encoded_token)
+        return self.validate_token(decoded_token)
 
     @abstractmethod
     def get_token_from_request(self, request: HttpRequest) -> str | None:
@@ -162,7 +179,7 @@ class _BaseJWTAuth:  # noqa: WPS230
     @sensitive_variables()
     def decode_token(self, encoded_token: str) -> JWToken:
         """Decodes token object from the encoded string."""
-        token = self.token_cls.decode(
+        return self.token_cls.decode(
             encoded_token=encoded_token,
             secret=self.secret,
             algorithm=self.algorithm,
@@ -178,9 +195,10 @@ class _BaseJWTAuth:  # noqa: WPS230
             strict_audience=self.strict_audience,
             enforce_minimum_key_length=self.enforce_minimum_key_length,
         )
-        if token.extras.get('type') != self.expected_token_type:
-            raise NotAuthenticatedError
-        return token
+
+    def validate_token(self, decoded_token: JWToken) -> JWToken | None:
+        """Validate a decoded JWT according to the auth custom policy."""
+        return decoded_token
 
     def claim_from_token(self, token: JWToken) -> str:
         """
@@ -194,6 +212,56 @@ class _BaseJWTAuth:  # noqa: WPS230
         So, you would need to use: ``token.extras['email']``.
         """
         return token.sub
+
+
+class _BaseJWTAuth(JWTokenHandler):  # noqa: WPS230
+    """
+    Transport-agnostic part of jwt auth.
+
+    Knows how to decode and validate a token,
+    but not where the token comes from.
+    Subclasses define the transport by implementing
+    :meth:`get_token_from_request` and :meth:`split_encoded_token`.
+    """
+
+    expected_token_type: str = 'access'  # noqa: S105
+
+    __slots__ = ('security_scheme_name', 'user_id_field')
+
+    def __init__(  # noqa: WPS211
+        self,
+        *,
+        user_id_field: str = 'pk',
+        security_scheme_name: str = 'jwt',
+        **kwargs: Unpack[JWTokenAuthParams],
+    ) -> None:
+        """
+        Apply possible customizations.
+
+        What can be modified?
+
+        - *user_id_field* can be changed, it is used to get user model.
+          By default we search by ``pk``, but it can be changed to be ``email``
+          or any other unique user key.
+        """
+        super().__init__(**kwargs)  # pyrefly: ignore[open-unpacking]
+        self.user_id_field = user_id_field
+        self.security_scheme_name = security_scheme_name
+
+    def security_requirements(
+        self,
+        metadata: EndpointMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> list[SecurityRequirement]:
+        """Provides a security schema usage requirement."""
+        return [{self.security_scheme_name: []}]
+
+    @override
+    def validate_token(self, decoded_token: JWToken) -> JWToken | None:
+        """Reject tokens whose type does not match the expected token type."""
+        if decoded_token.extras.get('type') != self.expected_token_type:
+            raise NotAuthenticatedError
+        return decoded_token
 
 
 class BaseJWTSyncAuth(_BaseJWTAuth, SyncAuth):
