@@ -84,6 +84,12 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Fixed `RateLimit-Policy` header of `RateLimitIETFDraft` not following
   the IETF draft. Now every policy is a quoted name with `q` and `w`
   parameters, like `"RemoteAddr";q=5;w=60`, #1703
+- Responses that `wrap_middleware` returns without calling the controller
+  are now validated after the converter, like the responses of endpoints,
+  as the middleware docs promised. A converter that returns something
+  its `ResponseSpec` does not describe, or a status code
+  that is not documented, now fails with `422`
+  where `validate_responses` is on, #1682
 
 ### Misc
 
@@ -91,6 +97,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Mention typed expirations of cookie `concrete_views` in `dmr` skill, #1690
 - Updated documentation and agent skills to link to `llms.txt` instead of
   the removed `llms-full.txt`, #1727
+- Fixed the `login_required` example in the middleware docs:
+  its redirect was never converted to `401`,
+  because `302` was not in the listed responses, #1682
 
 
 ## 0.16.0 (2026-10-01)
