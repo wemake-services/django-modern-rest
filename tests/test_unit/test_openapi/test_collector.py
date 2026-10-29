@@ -190,3 +190,55 @@ def test_controller_mapping_collector_with_router() -> None:
         '/api/direct/',
         '/api/nested/inner/',
     }
+
+
+def test_collector_extra_kwargs() -> None:
+    """Ensure that extra kwargs are collected from all url levels."""
+    router = Router(
+        'api/',
+        [
+            path('direct/', _GetController.as_view(), {'direct': 1}),
+            path(
+                'nested/',
+                include([
+                    path('inner/', _PostController.as_view(), {'inner': 2}),
+                    path('plain/', _FullController.as_view()),
+                ]),
+                {'outer': 3},
+            ),
+        ],
+    )
+
+    mappings = controller_mapping_collector(router.urls, router.prefix)
+
+    assert {
+        route_metadata.normalized_path: route_metadata.extra_kwargs
+        for route_metadata, _ in mappings
+        if isinstance(route_metadata, InternalRouteMetadata)
+    } == {
+        '/api/direct/': {'direct'},
+        '/api/nested/inner/': {'inner', 'outer'},
+        '/api/nested/plain/': {'outer'},
+    }
+
+
+@pytest.mark.parametrize(
+    ('route', 'is_regex', 'expected'),
+    [
+        ('api/users/', False, set()),
+        ('api/users/<int:id>/posts/<slug:post>/', False, {'id', 'post'}),
+        (r'^api/(?P<year>[0-9]{4})/$', True, {'year'}),
+        # `re_path()` inside `include()` with a `path()` prefix:
+        (r'api/<int:org>/^users/(?P<id>[0-9]+)/$', True, {'org', 'id'}),
+    ],
+)
+def test_path_parameters(
+    *,
+    route: str,
+    is_regex: bool,
+    expected: set[str],
+) -> None:
+    """Ensure that path parameters are found in any url format."""
+    route_metadata = InternalRouteMetadata(route, is_regex=is_regex)
+
+    assert route_metadata.path_parameters() == expected
