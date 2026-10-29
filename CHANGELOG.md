@@ -55,6 +55,11 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Bugfixes
 
+- Fixed streaming with `Streaming(ping_seconds=...)` leaving the pending
+  event task running when the stream is cancelled or closed, for example,
+  on a client disconnect. Closing the events producer failed with
+  `RuntimeError: aclose(): asynchronous generator is already running`
+  and the task later failed on the already closed response, #1791
 - Fixed login `concrete_views` inheriting `security`
   from `OpenAPIConfig`, they now set `security = None`
   and are documented as public endpoints, #1719
