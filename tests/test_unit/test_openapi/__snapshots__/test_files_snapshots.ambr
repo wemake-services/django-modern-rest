@@ -335,6 +335,14 @@
                     "second_file"
                   ],
                   "title": "_SeveralSimpleFiles"
+                },
+                "encoding": {
+                  "first_file": {
+                    "contentType": "application/json, text/plain"
+                  },
+                  "second_file": {
+                    "contentType": "application/json, text/plain"
+                  }
                 }
               }
             },

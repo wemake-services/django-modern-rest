@@ -313,3 +313,80 @@ def test_merged_body_without_description_schema(
         )
         == snapshot
     )
+
+
+class _SingleTypeFileModel(pydantic.BaseModel):
+    content_type: Literal['text/plain']
+    size: int
+
+
+class _TwoFiles(pydantic.BaseModel):
+    first_file: _SingleTypeFileModel
+    second_file: _SingleTypeFileModel
+
+
+class _RequiredFilesController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(),)
+
+    def post(
+        self,
+        parsed_file_metadata: FileMetadata[_TwoFiles],
+    ) -> str:
+        raise NotImplementedError
+
+
+class _OptionalFilesController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(),)
+
+    def post(
+        self,
+        parsed_file_metadata: FileMetadata[_TwoFiles | None] = None,
+    ) -> str:
+        raise NotImplementedError
+
+
+def _request_encoding(controller: type[Controller]) -> dict | None:
+    schema = build_schema(
+        Router('', [path('files/', controller.as_view())]),
+    ).convert()
+    operation = schema['paths']['/files/']['post']
+    media_type = operation['requestBody']['content']['multipart/form-data']
+    return media_type.get('encoding')
+
+
+def test_optional_file_metadata_keeps_encoding() -> None:
+    """Optional ``FileMetadata[...]`` documents the same encoding."""
+    expected = {
+        'first_file': {'contentType': 'text/plain'},
+        'second_file': {'contentType': 'text/plain'},
+    }
+    assert _request_encoding(_RequiredFilesController) == expected
+    assert _request_encoding(_OptionalFilesController) == expected
+
+
+class _PngFileModel(pydantic.BaseModel):
+    content_type: Literal['image/png']
+    size: int
+
+
+class _TwoPngFiles(pydantic.BaseModel):
+    first_file: _PngFileModel
+    second_file: _PngFileModel
+
+
+class _EitherFilesController(Controller[PydanticSerializer]):
+    parsers = (MultiPartParser(),)
+
+    def post(
+        self,
+        parsed_file_metadata: FileMetadata[_TwoFiles | _TwoPngFiles],
+    ) -> str:
+        raise NotImplementedError
+
+
+def test_union_of_file_models_merges_encoding() -> None:
+    """Two file models in a union merge into one ``contentType``."""
+    assert _request_encoding(_EitherFilesController) == {
+        'first_file': {'contentType': 'text/plain, image/png'},
+        'second_file': {'contentType': 'text/plain, image/png'},
+    }
