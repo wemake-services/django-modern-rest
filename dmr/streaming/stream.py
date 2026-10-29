@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 from collections.abc import AsyncIterator, Iterator, Mapping
 from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Final
@@ -168,39 +169,33 @@ class StreamingResponse(HttpResponseBase):  # noqa: WPS338
     ) -> AsyncIterator[Any]:
         event_task: asyncio.Task[Any] | None = None
 
-        while True:
-            if event_task is None:
-                event_task = asyncio.ensure_future(self._next_event())
+        try:  # noqa: WPS501
+            while True:
+                if event_task is None:
+                    event_task = asyncio.ensure_future(self._next_event())
 
-            ping_task: asyncio.Task[None] = asyncio.ensure_future(
-                asyncio.sleep(ping_seconds),
-            )
-            done, _ = await asyncio.wait(
-                [event_task, ping_task],
-                return_when=asyncio.FIRST_COMPLETED,
-            )
-
-            # The ping timer is recreated on each iteration,
-            # so a still pending one must not be left running.
-            ping_task.cancel()
-
-            if ping_task in done and event_task not in done:
-                # Ping fired before the next real event: send the
-                # ping comment and do not touch the original task.
-                event = self._controller.ping_event()
-            else:
-                # Event fired before the ping:
-                try:  # noqa: WPS501
-                    event = event_task.result()
-                finally:
+                await asyncio.wait([event_task], timeout=ping_seconds)
+                if event_task.done():
                     # Now we need to clean the task, because
                     # we would need a new event on the next iteration:
-                    event_task = None
+                    finished_task, event_task = event_task, None
+                    event = finished_task.result()
+                else:
+                    # Ping fired before the next real event:
+                    event = self._controller.ping_event()
 
-            yield self._controller.serializer.serialize(
-                event,
-                renderer=self.streaming_renderer,
-            )
+                yield self._controller.serializer.serialize(
+                    event,
+                    renderer=self.streaming_renderer,
+                )
+        finally:
+            # A pending event task is still inside the producer,
+            # it must be done before the producer is closed:
+            if event_task is not None:
+                event_task.cancel()
+                # `_next_event` turns cancellation into `StreamingCloseError`:
+                with contextlib.suppress(StreamingCloseError):
+                    await event_task
 
     async def _next_event(self) -> Any:
         try:
