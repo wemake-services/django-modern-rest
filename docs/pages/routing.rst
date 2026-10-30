@@ -115,6 +115,12 @@ Here is how you can use it in your root ``urls.py``
 This returns JSON responses for ``api/`` prefixed paths.
 But, will still return regular Django HTML responses for any other path.
 
+If you use :func:`django.conf.urls.i18n.i18n_patterns`,
+paths like ``/en/api/missing/`` are also matched by the ``api/`` prefix.
+We cut the language part from the path before checking the prefixes.
+The same works for :func:`~dmr.routing.build_500_handler`
+and :func:`~dmr.security.csrf.build_csrf_handler`.
+
 
 .. _handler500:
 
