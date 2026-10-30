@@ -52,6 +52,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   documented as integers with examples instead of strings, #1706
 - Added `Parser.decodes_into_model` flag for parsers
   that decode bodies directly into models, #1740
+- Added isiXhosa (`xh`) translation, #718
+- Added reusable `JWTokenHandler` for JWT processing independent of user resolution,
 
 ### Bugfixes
 
