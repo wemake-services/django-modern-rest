@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+import pytest
 from django.http import HttpResponse
 from django.middleware.csrf import _get_new_csrf_string, _mask_cipher_secret  # type: ignore[attr-defined]
 from django.test import override_settings
@@ -11,7 +12,7 @@ from dmr.errors import ErrorType
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import path
 from dmr.security.csrf import build_csrf_handler
-from dmr.test import DMRClient
+from dmr.test import DMRClient, DMRRequestFactory
 
 
 class _CsrfController(Controller[PydanticFastSerializer]):
@@ -41,11 +42,65 @@ urlpatterns = [
 ]
 
 csrf_handler = build_csrf_handler('api/', serializer=PydanticFastSerializer)
+csrf_handler_languages = build_csrf_handler(
+    'api/',
+    serializer=PydanticFastSerializer,
+    languages=['en', 'ru'],
+)
 csrf_handler_custom_error = build_csrf_handler(
     'api/',
     serializer=PydanticFastSerializer,
     format_error=_errors_as_list,
 )
+
+
+@pytest.mark.parametrize(
+    ('path', 'content_type'),
+    [
+        ('/api/csrf/', 'application/json'),
+        ('/en-us/api/csrf/', 'application/json'),
+        ('/ru/api/csrf/', 'application/json'),
+        ('/en-us/other/csrf/', 'text/html'),
+        ('/shop/api/csrf/', 'text/html'),
+    ],
+)
+def test_csrf_handler_language_prefix(
+    dmr_rf: DMRRequestFactory,
+    *,
+    path: str,
+    content_type: str,
+) -> None:
+    """Ensure that a language before the prefix is supported."""
+    request = dmr_rf.post(path, data={})
+
+    response = csrf_handler(request, 'reason')
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response['Content-Type'].startswith(content_type)
+
+
+@pytest.mark.parametrize(
+    ('path', 'content_type'),
+    [
+        ('/api/csrf/', 'application/json'),
+        ('/ru/api/csrf/', 'application/json'),
+        ('/en-gb/api/csrf/', 'text/html'),
+        ('/kk/api/csrf/', 'text/html'),
+    ],
+)
+def test_csrf_handler_languages(
+    dmr_rf: DMRRequestFactory,
+    *,
+    path: str,
+    content_type: str,
+) -> None:
+    """Ensure that only the given languages are allowed before the prefix."""
+    request = dmr_rf.post(path, data={})
+
+    response = csrf_handler_languages(request, 'reason')
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response['Content-Type'].startswith(content_type)
 
 
 @override_settings(ROOT_URLCONF=__name__, CSRF_FAILURE_VIEW=csrf_handler)

@@ -3,6 +3,7 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, final
 
 from django.http import HttpRequest, HttpResponse
+from django.utils.translation import get_language_from_path
 
 from dmr.exceptions import NotAcceptableError
 from dmr.internal.negotiation import negotiate_renderer
@@ -28,6 +29,54 @@ def normalize_prefixes(prefix: str, *prefixes: str) -> tuple[str, ...]:
     """
     all_prefixes = [prefix, *prefixes]
     return tuple(f'/{pref.strip("/")}/' for pref in all_prefixes)
+
+
+def normalize_languages(
+    languages: Sequence[str] | None,
+) -> tuple[str, ...] | None:
+    """
+    Make languages lower case, so they can be compared with the path.
+
+    .. code-block:: python
+
+        >>> normalize_languages(['en', 'RU-ru'])
+        ('en', 'ru-ru')
+
+        >>> normalize_languages(None) is None
+        True
+
+    """
+    if languages is None:
+        return None
+    return tuple(language.lower() for language in languages)
+
+
+def has_path_prefix(
+    request: HttpRequest,
+    prefixes: tuple[str, ...],
+    languages: tuple[str, ...] | None = None,
+) -> bool:
+    """
+    Tell whether the request path starts with one of the prefixes.
+
+    With ``i18n_patterns`` the path starts with a language,
+    like ``/en/api/missing/``. When the path does not match as it is,
+    we cut that language and check the rest of the path again.
+
+    When ``languages`` is ``None``, any language that Django knows is cut.
+    Otherwise, only the languages from the list are cut.
+    They must be written in the path exactly, ``en`` does not match ``en-gb``.
+    """
+    path = request.path
+    if path.startswith(prefixes):
+        return True
+    language, _, path_after_language = path[1:].partition('/')
+    if languages is None:
+        if get_language_from_path(path) is None:
+            return False
+    elif language.lower() not in languages:
+        return False
+    return f'/{path_after_language}'.startswith(prefixes)
 
 
 @final

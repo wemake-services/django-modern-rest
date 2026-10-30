@@ -13,6 +13,8 @@ from dmr.errors import ErrorType, format_error
 from dmr.exceptions import InternalServerError
 from dmr.internal.error_handlers import (
     NegotiatedErrorRenderer,
+    has_path_prefix,
+    normalize_languages,
     normalize_prefixes,
 )
 from dmr.internal.routing import PrefixRoutePattern, RouterMetadata
@@ -303,6 +305,7 @@ def build_404_handler(
     serializer: type['BaseSerializer'],
     format_error: FormatError = format_error,
     renderers: Sequence['Renderer'] | None = None,
+    languages: Sequence[str] | None = None,
 ) -> Callable[[HttpRequest, Exception], HttpResponse]:
     """
     Create a 404 handler that returns a response with content negotiation.
@@ -322,12 +325,21 @@ def build_404_handler(
         serializer: Serializer class used to serialize the error body.
         renderers: Optional sequence of renderers. If omitted, uses
             :attr:`~dmr.settings.Settings.renderers` from settings.
+        languages: Optional languages that can start the path, like
+            ``('en', 'ru')`` for ``i18n_patterns``. Only these languages
+            are allowed and they must match the path exactly,
+            so ``en`` does not match ``/en-gb/api/``.
+            If omitted, all languages of Django are allowed.
 
     See also:
         https://docs.djangoproject.com/en/stable/ref/views/#the-404-page-not-found-view
 
+    .. versionchanged:: 0.17.0
+        Added ``languages`` argument.
+
     """
     all_prefixes = normalize_prefixes(prefix, *prefixes)
+    all_languages = normalize_languages(languages)
     render_error = NegotiatedErrorRenderer(
         serializer=serializer,
         format_error=format_error,
@@ -338,7 +350,7 @@ def build_404_handler(
         request: HttpRequest,
         exception: Exception,
     ) -> HttpResponse:
-        if not request.path.startswith(all_prefixes):
+        if not has_path_prefix(request, all_prefixes, all_languages):
             return defaults.page_not_found(request, exception)
         return render_error(
             request,
@@ -360,6 +372,7 @@ def build_500_handler(
     serializer: type['BaseSerializer'],
     format_error: FormatError = format_error,
     renderers: Sequence['Renderer'] | None = None,
+    languages: Sequence[str] | None = None,
 ) -> Callable[[HttpRequest], HttpResponse]:
     """
     Create a 500 handler that returns a response with content negotiation.
@@ -379,12 +392,21 @@ def build_500_handler(
         serializer: Serializer class used to serialize the error body.
         renderers: Optional sequence of renderers. If omitted, uses
             :attr:`~dmr.settings.Settings.renderers` from settings.
+        languages: Optional languages that can start the path, like
+            ``('en', 'ru')`` for ``i18n_patterns``. Only these languages
+            are allowed and they must match the path exactly,
+            so ``en`` does not match ``/en-gb/api/``.
+            If omitted, all languages of Django are allowed.
 
     See also:
         https://docs.djangoproject.com/en/stable/ref/views/#the-500-server-error-view
 
+    .. versionchanged:: 0.17.0
+        Added ``languages`` argument.
+
     """
     all_prefixes = normalize_prefixes(prefix, *prefixes)
+    all_languages = normalize_languages(languages)
     render_error = NegotiatedErrorRenderer(
         serializer=serializer,
         format_error=format_error,
@@ -392,7 +414,7 @@ def build_500_handler(
     )
 
     def factory(request: HttpRequest) -> HttpResponse:
-        if not request.path.startswith(all_prefixes):
+        if not has_path_prefix(request, all_prefixes, all_languages):
             return defaults.server_error(request)
         return render_error(
             request,

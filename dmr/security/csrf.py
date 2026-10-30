@@ -14,6 +14,8 @@ from dmr.errors import ErrorModel, format_error
 from dmr.internal.csrf import csrf_header_name, ensure_csrf
 from dmr.internal.error_handlers import (
     NegotiatedErrorRenderer,
+    has_path_prefix,
+    normalize_languages,
     normalize_prefixes,
 )
 from dmr.internal.types import FormatError, StrOrPromise
@@ -193,7 +195,7 @@ class _CSRFViewProtocol(Protocol):
     ) -> HttpResponse: ...
 
 
-def build_csrf_handler(
+def build_csrf_handler(  # noqa: WPS211
     prefix: str,
     /,
     *prefixes: str,
@@ -201,6 +203,7 @@ def build_csrf_handler(
     format_error: FormatError = format_error,
     renderers: Sequence['Renderer'] | None = None,
     status_code: HTTPStatus = HTTPStatus.FORBIDDEN,
+    languages: Sequence[str] | None = None,
 ) -> _CSRFViewProtocol:
     """
     Create a CSRF error handler that returns a response with negotiation.
@@ -223,13 +226,22 @@ def build_csrf_handler(
         renderers: Optional sequence of renderers. If omitted, uses
             :attr:`~dmr.settings.Settings.renderers` from settings.
         status_code: Status code to be returned. Defaults to ``403``.
+        languages: Optional languages that can start the path, like
+            ``('en', 'ru')`` for ``i18n_patterns``. Only these languages
+            are allowed and they must match the path exactly,
+            so ``en`` does not match ``/en-gb/api/``.
+            If omitted, all languages of Django are allowed.
 
     See also:
         https://docs.djangoproject.com/en/6.1/ref/settings/#csrf-failure-view
 
     .. versionadded:: 0.16.0
+
+    .. versionchanged:: 0.17.0
+        Added ``languages`` argument.
     """
     all_prefixes = normalize_prefixes(prefix, *prefixes)
+    all_languages = normalize_languages(languages)
     render_error = NegotiatedErrorRenderer(
         serializer=serializer,
         format_error=format_error,
@@ -239,7 +251,7 @@ def build_csrf_handler(
     def factory(request: HttpRequest, reason: str = '') -> HttpResponse:
         from django.views.csrf import csrf_failure  # noqa: PLC0415
 
-        if not request.path.startswith(all_prefixes):
+        if not has_path_prefix(request, all_prefixes, all_languages):
             return csrf_failure(request, reason)
         return render_error(
             request,
