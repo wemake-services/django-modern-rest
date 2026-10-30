@@ -246,3 +246,34 @@ def test_not_found_format_by_accept_header(
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.headers == expected_headers
     assert response.content == expected_data
+
+
+@pytest.mark.parametrize(
+    ('path', 'content_type'),
+    [
+        ('/api/missing/', 'application/json'),
+        ('/en/api/missing/', 'application/json'),
+        ('/ru/api/missing/', 'application/json'),
+        ('/en-gb/api/missing/', 'text/html'),
+        ('/en-us/api/missing/', 'text/html'),
+        ('/kk/api/missing/', 'text/html'),
+    ],
+)
+def test_languages_parameter(
+    dmr_rf: DMRRequestFactory,
+    *,
+    path: str,
+    content_type: str,
+) -> None:
+    """Ensure that only the given languages are allowed before the prefix."""
+    not_found_view = build_404_handler(
+        'api/',
+        serializer=PydanticSerializer,
+        languages=['en', 'ru'],
+    )
+    request = dmr_rf.get(path)
+
+    response = not_found_view(request, Exception())
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response['Content-Type'].startswith(content_type)

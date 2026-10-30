@@ -213,3 +213,33 @@ def test_not_acceptable(dmr_rf: DMRRequestFactory) -> None:
             },
         ],
     })
+
+
+@pytest.mark.parametrize(
+    ('path', 'content_type'),
+    [
+        ('/api/existing/', 'application/json'),
+        ('/en/api/existing/', 'application/json'),
+        ('/ru/api/existing/', 'application/json'),
+        ('/en-gb/api/existing/', 'text/html'),
+        ('/kk/api/existing/', 'text/html'),
+    ],
+)
+def test_languages_parameter(
+    dmr_rf: DMRRequestFactory,
+    *,
+    path: str,
+    content_type: str,
+) -> None:
+    """Ensure that only the given languages are allowed before the prefix."""
+    view = build_500_handler(
+        'api/',
+        serializer=PydanticSerializer,
+        languages=['en', 'ru'],
+    )
+    request = dmr_rf.get(path)
+
+    response = view(request)
+
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert response['Content-Type'].startswith(content_type)

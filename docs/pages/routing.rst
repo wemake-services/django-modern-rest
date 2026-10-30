@@ -121,6 +121,10 @@ We cut the language part from the path before checking the prefixes.
 The same works for :func:`~dmr.routing.build_500_handler`
 and :func:`~dmr.security.csrf.build_csrf_handler`.
 
+By default, all languages of your project are allowed.
+Pass ``languages=('en', 'ru')`` to allow only these languages.
+They must match the path exactly, so ``en`` does not allow ``/en-gb/api/``.
+
 
 .. _handler500:
 

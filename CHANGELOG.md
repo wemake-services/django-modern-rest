@@ -58,7 +58,9 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Fixed `build_404_handler`, `build_500_handler`, and `build_csrf_handler`
   not matching their prefixes when the path starts with a language
   of `i18n_patterns`, like `/en/api/missing/`. Such requests got
-  the default Django HTML error page instead of the API error, #1702
+  the default Django HTML error page instead of the API error.
+  Added the `languages` argument to choose which languages are allowed,
+  by default all languages of Django are allowed, #1702
 - Fixed streaming with `Streaming(ping_seconds=...)` leaving the pending
   event task running when the stream is cancelled or closed, for example,
   on a client disconnect. Closing the events producer failed with

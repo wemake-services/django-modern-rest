@@ -42,6 +42,11 @@ urlpatterns = [
 ]
 
 csrf_handler = build_csrf_handler('api/', serializer=PydanticFastSerializer)
+csrf_handler_languages = build_csrf_handler(
+    'api/',
+    serializer=PydanticFastSerializer,
+    languages=['en', 'ru'],
+)
 csrf_handler_custom_error = build_csrf_handler(
     'api/',
     serializer=PydanticFastSerializer,
@@ -69,6 +74,30 @@ def test_csrf_handler_language_prefix(
     request = dmr_rf.post(path, data={})
 
     response = csrf_handler(request, 'reason')
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+    assert response['Content-Type'].startswith(content_type)
+
+
+@pytest.mark.parametrize(
+    ('path', 'content_type'),
+    [
+        ('/api/csrf/', 'application/json'),
+        ('/ru/api/csrf/', 'application/json'),
+        ('/en-gb/api/csrf/', 'text/html'),
+        ('/kk/api/csrf/', 'text/html'),
+    ],
+)
+def test_csrf_handler_languages(
+    dmr_rf: DMRRequestFactory,
+    *,
+    path: str,
+    content_type: str,
+) -> None:
+    """Ensure that only the given languages are allowed before the prefix."""
+    request = dmr_rf.post(path, data={})
+
+    response = csrf_handler_languages(request, 'reason')
 
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert response['Content-Type'].startswith(content_type)
