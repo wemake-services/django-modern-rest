@@ -13,6 +13,7 @@ from dmr.errors import ErrorType, format_error
 from dmr.exceptions import InternalServerError
 from dmr.internal.error_handlers import (
     NegotiatedErrorRenderer,
+    has_path_prefix,
     normalize_prefixes,
 )
 from dmr.internal.routing import PrefixRoutePattern, RouterMetadata
@@ -338,7 +339,7 @@ def build_404_handler(
         request: HttpRequest,
         exception: Exception,
     ) -> HttpResponse:
-        if not request.path.startswith(all_prefixes):
+        if not has_path_prefix(request, all_prefixes):
             return defaults.page_not_found(request, exception)
         return render_error(
             request,
@@ -392,7 +393,7 @@ def build_500_handler(
     )
 
     def factory(request: HttpRequest) -> HttpResponse:
-        if not request.path.startswith(all_prefixes):
+        if not has_path_prefix(request, all_prefixes):
             return defaults.server_error(request)
         return render_error(
             request,

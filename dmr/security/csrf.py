@@ -14,6 +14,7 @@ from dmr.errors import ErrorModel, format_error
 from dmr.internal.csrf import csrf_header_name, ensure_csrf
 from dmr.internal.error_handlers import (
     NegotiatedErrorRenderer,
+    has_path_prefix,
     normalize_prefixes,
 )
 from dmr.internal.types import FormatError, StrOrPromise
@@ -239,7 +240,7 @@ def build_csrf_handler(
     def factory(request: HttpRequest, reason: str = '') -> HttpResponse:
         from django.views.csrf import csrf_failure  # noqa: PLC0415
 
-        if not request.path.startswith(all_prefixes):
+        if not has_path_prefix(request, all_prefixes):
             return csrf_failure(request, reason)
         return render_error(
             request,
