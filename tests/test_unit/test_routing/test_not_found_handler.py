@@ -108,6 +108,11 @@ def test_prefix_normalization(
         (('api/', 'v1/'), '/other/missing/', 'text/html'),
         (('api',), '/apiary/test/', 'text/html'),
         (('api',), '/api/ary/test/', 'application/json'),
+        (('api/',), '/en-us/api/missing/', 'application/json'),
+        (('api/',), '/ru/api/missing/', 'application/json'),
+        (('api/',), '/en-gb/api/missing/', 'application/json'),
+        (('api/',), '/en-us/other/missing/', 'text/html'),
+        (('api/',), '/shop/api/missing/', 'text/html'),
     ],
 )
 def test_prefix_matching(

@@ -42,6 +42,8 @@ def test_prefix_normalization(
     [
         (('api/', 'v1/'), '/v1/existing/', 'application/json'),
         (('api/', 'v1/'), '/other/existing/', 'text/html'),
+        (('api/', 'v1/'), '/ru/v1/existing/', 'application/json'),
+        (('api/', 'v1/'), '/ru/other/existing/', 'text/html'),
     ],
 )
 def test_multiple_prefixes(
