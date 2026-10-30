@@ -54,7 +54,7 @@ def normalize_languages(
 def has_path_prefix(
     request: HttpRequest,
     prefixes: tuple[str, ...],
-    languages: tuple[str, ...] | None,
+    languages: tuple[str, ...] | None = None,
 ) -> bool:
     """
     Tell whether the request path starts with one of the prefixes.
