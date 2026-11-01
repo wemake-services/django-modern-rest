@@ -12,6 +12,12 @@ from dmr.response import build_response
 
 @wrap_middleware(
     login_required,
+    # The converter only runs for listed status codes,
+    # so Django's redirect has to be listed to be converted:
+    ResponseSpec(
+        return_type=None,
+        status_code=HTTPStatus.FOUND,
+    ),
     ResponseSpec(
         return_type=ErrorModel,
         status_code=HTTPStatus.UNAUTHORIZED,

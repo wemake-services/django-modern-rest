@@ -61,31 +61,35 @@
                 },
                 "Retry-After": {
                   "schema": {
-                    "type": "string"
+                    "type": "integer"
                   },
                   "description": "Indicates how long the user agent should wait before making a follow-up request",
-                  "required": true
+                  "required": true,
+                  "example": 60
                 },
                 "X-RateLimit-Limit": {
                   "schema": {
-                    "type": "string"
+                    "type": "integer"
                   },
                   "description": "The maximum number of requests permitted in the current time window",
-                  "required": true
+                  "required": true,
+                  "example": 100
                 },
                 "X-RateLimit-Remaining": {
                   "schema": {
-                    "type": "string"
+                    "type": "integer"
                   },
                   "description": "The number of requests remaining in the current time window",
-                  "required": true
+                  "required": true,
+                  "example": 10
                 },
                 "X-RateLimit-Reset": {
                   "schema": {
-                    "type": "string"
+                    "type": "integer"
                   },
                   "description": "The number of seconds until the current rate limit window resets",
-                  "required": true
+                  "required": true,
+                  "example": 60
                 }
               },
               "content": {
@@ -138,31 +142,35 @@
               "headers": {
                 "Retry-After": {
                   "schema": {
-                    "type": "string"
+                    "type": "integer"
                   },
                   "description": "Indicates how long the user agent should wait before making a follow-up request",
-                  "required": true
+                  "required": true,
+                  "example": 60
                 },
                 "X-RateLimit-Limit": {
                   "schema": {
-                    "type": "string"
+                    "type": "integer"
                   },
                   "description": "The maximum number of requests permitted in the current time window",
-                  "required": true
+                  "required": true,
+                  "example": 100
                 },
                 "X-RateLimit-Remaining": {
                   "schema": {
-                    "type": "string"
+                    "type": "integer"
                   },
                   "description": "The number of requests remaining in the current time window",
-                  "required": true
+                  "required": true,
+                  "example": 10
                 },
                 "X-RateLimit-Reset": {
                   "schema": {
-                    "type": "string"
+                    "type": "integer"
                   },
                   "description": "The number of seconds until the current rate limit window resets",
-                  "required": true
+                  "required": true,
+                  "example": 60
                 }
               },
               "content": {

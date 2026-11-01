@@ -1,5 +1,6 @@
 import asyncio
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator, AsyncIterator
+from contextlib import aclosing
 from http import HTTPStatus
 from typing import Any
 
@@ -123,3 +124,58 @@ async def test_sse_ping_with_last(
         b'data: 3\r\n'
         b'\r\n'
     )
+
+
+class _HangingSSE(SSEController[PydanticSerializer]):
+    @modify(extras=Streaming(ping_seconds=0.1))
+    async def get(self) -> AsyncIterator[SSEvent[int]]:
+        return self._hanging_events()
+
+    async def _hanging_events(self) -> AsyncIterator[SSEvent[int]]:
+        yield SSEvent(1)
+        await asyncio.Event().wait()  # the next event never comes
+
+
+@pytest.mark.asyncio
+async def test_sse_ping_consumer_cancelled(
+    dmr_async_rf: DMRAsyncRequestFactory,
+) -> None:
+    """Ensures that cancelling the consumer cancels the pending event."""
+    request = dmr_async_rf.get('/whatever/')
+    response = await dmr_async_rf.wrap(_HangingSSE.as_view()(request))
+    first_event = asyncio.Event()
+
+    stream: AsyncGenerator[bytes, None] = aiter(response)  # type: ignore[arg-type]
+
+    async def consume() -> None:
+        async with aclosing(stream):
+            async for _ in stream:
+                first_event.set()
+
+    consumer = asyncio.create_task(consume())
+    await first_event.wait()
+    consumer.cancel()
+
+    with pytest.raises(asyncio.CancelledError):
+        await consumer
+    assert asyncio.all_tasks() == {asyncio.current_task()}
+
+
+@pytest.mark.asyncio
+async def test_sse_ping_consumer_closed(
+    dmr_async_rf: DMRAsyncRequestFactory,
+) -> None:
+    """Ensures that closing the stream on ping cancels the pending event."""
+    request = dmr_async_rf.get('/whatever/')
+    response = await dmr_async_rf.wrap(_HangingSSE.as_view()(request))
+
+    stream: AsyncGenerator[bytes, None] = aiter(response)  # type: ignore[arg-type]
+
+    async def consume() -> None:
+        assert await anext(stream) == b'data: 1\r\n\r\n'
+        assert await anext(stream) == b': ping\r\n\r\n'
+        await stream.aclose()
+
+    # Closing in the same task loses the next lines in coverage on 3.11:
+    await asyncio.create_task(consume())
+    assert asyncio.all_tasks() == {asyncio.current_task()}

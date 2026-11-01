@@ -65,7 +65,7 @@ def custom_header_json(response: HttpResponse) -> HttpResponse:
 @wrap_middleware(
     rate_limit_middleware,
     ResponseSpec(
-        return_type=dict[str, str],
+        return_type=ErrorModel,
         status_code=HTTPStatus.TOO_MANY_REQUESTS,
     ),
 )

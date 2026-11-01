@@ -1,10 +1,3 @@
 # Run HTTP load benchmarks
 bench:
     uv run --isolated --with-requirements requirements.txt python -u run_benchmark.py
-
-# Run URL resolver benchmarks with hyperfine
-bench-resolver:
-    hyperfine --warmup 1 --shell=none -L impl django,dmr --show-output \
-        -L case best,avg,worst --min-runs=5 \
-        -n {impl}-{case} \
-        "python features/url_resolver.py --impl {impl} --case {case}"

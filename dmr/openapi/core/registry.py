@@ -119,7 +119,10 @@ class SchemaRegistry:
             Keywords next to ``$ref`` are kept in the result.
 
         """
-        if reference.ref is None:
+        if reference.ref is None or not reference.ref.startswith(
+            self.schema_prefix,
+        ):
+            # References to external or local ``$defs`` are not components.
             return reference
         schema_name = reference.ref.removeprefix(self.schema_prefix)
         if resolution_context and schema_name in resolution_context:

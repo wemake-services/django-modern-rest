@@ -14,14 +14,7 @@
             "operationId": "purgePurgeControllerApiV1Items",
             "responses": {
               "200": {
-                "description": "OK",
-                "content": {
-                  "application/json": {
-                    "schema": {
-                      "type": "null"
-                    }
-                  }
-                }
+                "description": "OK"
               },
               "406": {
                 "description": "Raised when provided `Accept` header cannot be satisfied",
@@ -167,13 +160,6 @@
                     "type": "string"
                   },
                   "required": true
-                }
-              },
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "null"
-                  }
                 }
               }
             },

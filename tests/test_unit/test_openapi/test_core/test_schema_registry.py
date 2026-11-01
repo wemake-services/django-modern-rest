@@ -121,3 +121,23 @@ def test_resolve_schema_without_ref(openapi_context: OpenAPIContext) -> None:
     flat = Schema(type=OpenAPIType.BOOLEAN)
 
     assert registry.maybe_resolve_reference(flat) is flat
+
+
+@pytest.mark.parametrize(
+    'ref',
+    [
+        'https://example.com/schemas/area.json',
+        '#/$defs/Area',
+    ],
+)
+def test_resolve_foreign_ref(
+    openapi_context: OpenAPIContext,
+    ref: str,
+) -> None:
+    """A ``$ref`` that is not a registered component is kept as is."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1708
+    registry = openapi_context.registries.schema
+    foreign = Schema(ref=ref)
+
+    assert registry.maybe_resolve_reference(foreign) is foreign

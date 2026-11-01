@@ -86,6 +86,7 @@ type-check:
 unit *args='':
     uv run python -m pytest -n auto --max-worker-restart=1 \
       --inline-snapshot=disable {{ args }}
+    uv run strict-no-cover
 
 # Check package imports without django.setup();
 # extras are optional, e.g. `just smoke jwt msgspec`

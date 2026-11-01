@@ -74,7 +74,7 @@ knows our framework:
 
 - https://django-modern-rest.readthedocs.io/llms.txt
   for indexes with links to different pages and topics
-- https://django-modern-rest.readthedocs.io/llms-full.txt
+- https://django-modern-rest.readthedocs.io/llms.txt
   for complete docs
 - Every documentation page is also served as Markdown,
   replace ``.html`` with ``.md`` in its URL,

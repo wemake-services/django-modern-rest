@@ -467,6 +467,14 @@ about ``RateLimit`` and ``RateLimit-Policy`` headers, you can use:
   :linenos:
   :language: python
 
+Each policy in these headers needs its own name.
+If several throttles of one endpoint have the same cache key name,
+we add the window to the name, like ``RemoteAddr-60``.
+If the window is also the same, we add the number of requests too,
+like ``RemoteAddr-60-5``.
+Names that are already different stay as they are.
+You can also set your own name with ``RemoteAddr(name='per-minute')``.
+
 You can also combine these headers with each other in any combinations.
 You can write your own classes with custom headers support.
 To do so, subclass :class:`dmr.throttling.headers.BaseResponseHeadersProvider`.

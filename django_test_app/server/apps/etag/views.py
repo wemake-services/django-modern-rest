@@ -1,6 +1,5 @@
 from datetime import UTC, datetime
 from http import HTTPStatus
-from types import MappingProxyType
 from typing import Any, Final, final
 
 import pydantic
@@ -10,6 +9,7 @@ from django.views.decorators.http import condition
 from dmr import Controller, HeaderSpec, Path, ResponseSpec
 from dmr.decorators import wrap_middleware
 from dmr.errors import ErrorType
+from dmr.internal.compat import frozen
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.response import APIError
 
@@ -33,7 +33,7 @@ class _ResponseModel(pydantic.BaseModel):
 
 
 # Imitate DB
-_USERS: Final = MappingProxyType({
+_USERS: Final = frozen({
     1: _UserModel(
         user_id=1,
         updated_at=datetime(2026, 3, 23, 12, 30, tzinfo=UTC),  # noqa: WPS432

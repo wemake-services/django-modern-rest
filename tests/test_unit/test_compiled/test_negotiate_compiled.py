@@ -1,36 +1,11 @@
 import os
-import sys
-from collections.abc import Callable, Generator
-from contextlib import AbstractContextManager, contextmanager
-from types import BuiltinFunctionType, FunctionType, ModuleType
-from typing import TypeAlias
+from types import BuiltinFunctionType, FunctionType
+from typing import TYPE_CHECKING
 
 import pytest
 
-_CleanModules: TypeAlias = Callable[
-    [set[str]],
-    AbstractContextManager[dict[str, ModuleType]],
-]
-
-
-@pytest.fixture
-def clean_modules() -> _CleanModules:
-    """Fixture to clean required modules."""
-
-    @contextmanager
-    def factory(names: set[str]) -> Generator[dict[str, ModuleType]]:
-        orig_modules = {}
-        prefixes = tuple(f'{name}.' for name in names)
-        for modname in list(sys.modules):
-            if modname in names or modname.startswith(prefixes):
-                orig_modules[modname] = sys.modules.pop(modname)
-
-        try:
-            yield orig_modules
-        finally:
-            sys.modules.update(orig_modules)
-
-    return factory
+if TYPE_CHECKING:
+    from tests.test_unit.test_compiled.conftest import CleanModules
 
 
 @pytest.mark.parametrize(
@@ -104,7 +79,7 @@ def clean_modules() -> _CleanModules:
 @pytest.mark.parametrize('compiled', [True, False])
 def test_accept_best_match(
     monkeypatch: pytest.MonkeyPatch,
-    clean_modules: _CleanModules,
+    clean_modules: 'CleanModules',
     *,
     accept: str,
     provided_types: list[str],
@@ -201,7 +176,7 @@ def test_accept_correct_type() -> None:  # pragma: no cover
 @pytest.mark.parametrize('compiled', [True, False])
 def test_accepted_header(
     monkeypatch: pytest.MonkeyPatch,
-    clean_modules: _CleanModules,
+    clean_modules: 'CleanModules',
     *,
     accept_value: str,
     media_type: str,

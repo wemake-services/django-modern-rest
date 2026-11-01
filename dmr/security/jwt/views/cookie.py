@@ -3,7 +3,6 @@ import datetime as dt
 from abc import abstractmethod
 from collections.abc import Mapping
 from http import HTTPStatus
-from types import MappingProxyType
 from typing import (
     Any,
     ClassVar,
@@ -28,6 +27,7 @@ from dmr.decorators import endpoint_decorator
 from dmr.endpoint import ValidateAnyCallable
 from dmr.exceptions import EndpointMetadataError, NotAuthenticatedError
 from dmr.headers import HeaderSpec
+from dmr.internal.compat import frozen
 from dmr.internal.csrf import ensure_csrf
 from dmr.internal.types import StrOrPromise
 from dmr.security.base import NO_STORE_HEADERS
@@ -62,11 +62,11 @@ _COOKIE_RESPONSE_TYPE: Final = safe_typevar('_CookieResponseT')
 
 # `@validate` describes headers and sets them by hand,
 # both parts are built from `NO_STORE_HEADERS`, so they can't diverge:
-_NO_STORE_SPEC: Final = MappingProxyType({
+_NO_STORE_SPEC: Final = frozen({
     header_name: header.to_spec()
     for header_name, header in NO_STORE_HEADERS.items()
 })
-_NO_STORE_VALUES: Final = MappingProxyType({
+_NO_STORE_VALUES: Final = frozen({
     header_name: header.value
     for header_name, header in NO_STORE_HEADERS.items()
 })

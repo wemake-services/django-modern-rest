@@ -11,7 +11,7 @@ Migrate `Django REST Framework` transport layer to `django-modern-rest` incremen
 Keep business logic unchanged unless user explicitly asks.
 
 Required docs (always reference first):
-- DMR LLM docs: https://django-modern-rest.readthedocs.io/llms-full.txt
+- DMR LLM docs: https://django-modern-rest.readthedocs.io/llms.txt
 - DRF docs: https://www.django-rest-framework.org
 - Local map: [references/drf-to-dmr-map.md](references/drf-to-dmr-map.md)
 

@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from http import HTTPStatus
-from types import MappingProxyType
 from typing import Any, Self
 
 import pytest
@@ -12,6 +11,7 @@ from typing_extensions import override
 from dmr import Controller, ResponseSpec, modify, validate
 from dmr.endpoint import Endpoint
 from dmr.exceptions import EndpointMetadataError
+from dmr.internal.compat import frozen
 from dmr.metadata import EndpointMetadata
 from dmr.openapi import OpenAPIConfig, build_schema
 from dmr.openapi.objects import Reference, SecurityRequirement, SecurityScheme
@@ -560,7 +560,7 @@ def test_settings_security_duplicates_auth() -> None:
         pytest.param(b'gateway', "b'gateway'", id='bytes'),
         # Requirements themselves must be dicts:
         pytest.param(
-            [MappingProxyType({'gateway': []})],
+            [frozen({'gateway': []})],
             "[mappingproxy({'gateway': []})]",
             id='requirement-not-a-dict',
         ),

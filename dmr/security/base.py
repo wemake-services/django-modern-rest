@@ -2,7 +2,6 @@ import dataclasses
 from abc import abstractmethod
 from collections.abc import Mapping, Sequence
 from http import HTTPStatus
-from types import MappingProxyType
 from typing import (
     TYPE_CHECKING,
     Final,
@@ -19,6 +18,7 @@ from typing_extensions import override
 
 from dmr.exceptions import NotAuthenticatedError
 from dmr.headers import HeaderSpec, NewHeader
+from dmr.internal.compat import frozen
 from dmr.metadata import EndpointMetadata, ResponseSpec, ResponseSpecProvider
 from dmr.semantic_schema import SecurityProvider
 
@@ -44,7 +44,7 @@ _WWW_AUTHENTICATE_SPEC: Final = HeaderSpec(
 #: Headers that every view issuing or accepting credentials must return.
 #: Responses of such views must never be written to any cache,
 #: neither shared, nor local.
-NO_STORE_HEADERS: Final = MappingProxyType({
+NO_STORE_HEADERS: Final = frozen({
     'Cache-Control': NewHeader(
         value='no-store',
         description='Credentials must not be stored in any cache.',

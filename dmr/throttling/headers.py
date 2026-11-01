@@ -1,4 +1,5 @@
 import abc
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
 from typing_extensions import override
@@ -64,6 +65,8 @@ class RetryAfter(BaseResponseHeadersProvider):
                     'Indicates how long the user agent should wait '
                     'before making a follow-up request'
                 ),
+                type=int,
+                example=60,
             ),
         }
 
@@ -111,18 +114,24 @@ class XRateLimit(BaseResponseHeadersProvider):
                     'The maximum number of requests permitted '
                     'in the current time window'
                 ),
+                type=int,
+                example=100,
             ),
             'X-RateLimit-Remaining': HeaderSpec(
                 description=(
                     'The number of requests remaining '
                     'in the current time window'
                 ),
+                type=int,
+                example=10,
             ),
             'X-RateLimit-Reset': HeaderSpec(
                 description=(
                     'The number of seconds until the current '
                     'rate limit window resets'
                 ),
+                type=int,
+                example=60,
             ),
         }
 
@@ -185,22 +194,61 @@ class RateLimitIETFDraft(BaseResponseHeadersProvider):
     ) -> dict[str, str]:
         """Returns the formatted response headers."""
         # Example headers:
-        # `RateLimit-Policy: 30;w=60;name="ip", 100;w=3600;name="user"`
+        # `RateLimit-Policy: "ip";q=30;w=60, "user";q=100;w=3600`
         # `RateLimit: "problemPolicy";r=0;t=10`
-        throttles = (
-            (endpoint.metadata.throttling or ()) if report_all else [throttle]
-        )
+        endpoint_throttles = endpoint.metadata.throttling or ()
+        throttles = endpoint_throttles if report_all else [throttle]
         return {
             'RateLimit-Policy': ', '.join(
                 (
-                    f'{throttle.max_requests};'  # noqa: WPS237
-                    f'w={throttle.duration_in_seconds};'
-                    f'name="{throttle.cache_key.name}"'
+                    f'"{_policy_name(throttle, endpoint_throttles)}";'  # noqa: WPS237
+                    f'q={throttle.max_requests};'
+                    f'w={throttle.duration_in_seconds}'
                 )
                 # However, it can't be `None`, since we are here:
                 for throttle in throttles
             ),
             'RateLimit': (
-                f'"{throttle.cache_key.name}";r={remaining};t={reset}'  # noqa: WPS237
+                f'"{_policy_name(throttle, endpoint_throttles)}";'  # noqa: WPS237
+                f'r={remaining};t={reset}'
             ),
         }
+
+
+def _policy_name(
+    throttle: '_BaseThrottle[Any]',
+    endpoint_throttles: Sequence['_BaseThrottle[Any]'],
+) -> str:
+    """
+    Returns a policy name that is different for every throttle of the endpoint.
+
+    The default cache key name is the same for all throttles,
+    so two throttles can end up with one name.
+    In this case we add the window to the name, like RemoteAddr-60.
+    If the window is also the same, we add the number of requests too.
+    A name that is already unique stays as it is.
+    """
+    name = throttle.cache_key.name
+    same_name = [
+        other
+        for other in endpoint_throttles
+        if (
+            other.cache_key.name == name
+            and any(
+                isinstance(provider, RateLimitIETFDraft)
+                for provider in other.response_headers
+            )
+        )
+    ]
+    if len(same_name) < 2:
+        return name
+
+    name = f'{name}-{throttle.duration_in_seconds}'
+    same_window = sum(
+        1
+        for other in same_name
+        if other.duration_in_seconds == throttle.duration_in_seconds
+    )
+    if same_window > 1:
+        return f'{name}-{throttle.max_requests}'
+    return name

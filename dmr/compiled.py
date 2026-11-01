@@ -12,12 +12,16 @@ from dmr.envs import USE_COMPILED
 if TYPE_CHECKING:
     from dmr._compiled.negotiation import accepted_header as accepted_header
     from dmr._compiled.negotiation import accepted_type as accepted_type
+    from dmr._compiled.serializer_context import (
+        empty_serializer_context as empty_serializer_context,
+    )
 
 if USE_COMPILED:
     from dmr._compiled.negotiation import (  # noqa: WPS474
         accepted_header,
         accepted_type,
     )
+    from dmr._compiled.serializer_context import empty_serializer_context  # noqa: WPS474
 else:
     import sys
     import types
@@ -45,9 +49,14 @@ else:
 
         return mod
 
-    # Add new objects here:
+    # Negotiation module:
     _mod = _import_pure('negotiation')
     accepted_type = _mod.accepted_type
     accepted_header = _mod.accepted_header
 
+    # Serializer context module:
+    _mod = _import_pure('serializer_context')
+    empty_serializer_context = _mod.empty_serializer_context
+
+    # Cleanup:
     del sys, types, _import_pure, _mod  # noqa: WPS420

@@ -11,7 +11,7 @@ Migrate `django-ninja` / `ninja-extra` transport layer to `django-modern-rest` i
 Keep business logic unchanged unless user explicitly asks.
 
 Required docs (always reference first):
-- DMR LLM docs: https://django-modern-rest.readthedocs.io/llms-full.txt
+- DMR LLM docs: https://django-modern-rest.readthedocs.io/llms.txt
 - Local map: [references/ninja-to-dmr-map.md](references/ninja-to-dmr-map.md)
 
 ## Migration Policy
