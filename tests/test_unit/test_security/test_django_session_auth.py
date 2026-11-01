@@ -283,16 +283,13 @@ def test_schema_with_csrf_cookie(
         ),
         'csrf': SecurityScheme(
             type='apiKey',
-            description='CSRF protection',
+            description='CSRF protection, the secret is stored in the cookie',
             name='csrftoken',
             security_scheme_in='cookie',
         ),
         'csrf_header': SecurityScheme(
             type='apiKey',
-            description=(
-                'CSRF header — echo the CSRF cookie value here on '
-                'unsafe requests'
-            ),
+            description=('CSRF protection, the token value in the header'),
             name='X-Csrftoken',
             security_scheme_in='header',
         ),
@@ -327,17 +324,17 @@ def test_schema_with_csrf_sessions(
 
     assert HTTPStatus.FORBIDDEN not in metadata.responses
     assert instance.security_schemes(metadata, _SyncController) == snapshot({
+        'csrf_header': SecurityScheme(
+            type='apiKey',
+            description='CSRF protection, the secret is stored in the session',
+            name='X-Csrftoken',
+            security_scheme_in='header',
+        ),
         'django_session': SecurityScheme(
             type='apiKey',
             description='Reusing standard Django auth flow for API',
             name='sessionid',
             security_scheme_in='cookie',
-        ),
-        'csrf': SecurityScheme(
-            type='apiKey',
-            description='CSRF protection, the secret is stored in the session',
-            name='X-Csrftoken',
-            security_scheme_in='header',
         ),
     })
     assert instance.security_requirements(
@@ -354,7 +351,7 @@ def test_schema_with_csrf_sessions(
     assert instance.security_requirements(
         unsafe_metadata,
         _SyncController,
-    ) == snapshot([{'django_session': [], 'csrf': []}])
+    ) == snapshot([{'django_session': [], 'csrf_header': []}])
 
 
 @pytest.mark.parametrize('typ', [DjangoSessionSyncAuth, DjangoSessionAsyncAuth])
@@ -370,17 +367,17 @@ def test_schema_with_csrf_sessions_custom_header(
     instance = typ()
 
     assert instance.security_schemes(metadata, _SyncController) == snapshot({
+        'csrf_header': SecurityScheme(
+            type='apiKey',
+            description='CSRF protection, the secret is stored in the session',
+            name='X-Xsrf-Token',
+            security_scheme_in='header',
+        ),
         'django_session': SecurityScheme(
             type='apiKey',
             description='Reusing standard Django auth flow for API',
             name='sessionid',
             security_scheme_in='cookie',
-        ),
-        'csrf': SecurityScheme(
-            type='apiKey',
-            description='CSRF protection, the secret is stored in the session',
-            name='X-Xsrf-Token',
-            security_scheme_in='header',
         ),
     })
 
@@ -407,16 +404,13 @@ def test_schema_with_custom_cookie_names(
         ),
         'csrf': SecurityScheme(
             type='apiKey',
-            description='CSRF protection',
+            description='CSRF protection, the secret is stored in the cookie',
             name='custom_csrf_token',
             security_scheme_in='cookie',
         ),
         'csrf_header': SecurityScheme(
             type='apiKey',
-            description=(
-                'CSRF header — echo the CSRF cookie value here on '
-                'unsafe requests'
-            ),
+            description=('CSRF protection, the token value in the header'),
             name='X-Csrftoken',
             security_scheme_in='header',
         ),
@@ -447,16 +441,13 @@ def test_schema_with_custom_scheme_names(
         ),
         'my_csrf': SecurityScheme(
             type='apiKey',
-            description='CSRF protection',
+            description='CSRF protection, the secret is stored in the cookie',
             name='csrftoken',
             security_scheme_in='cookie',
         ),
         'my_csrf_header': SecurityScheme(
             type='apiKey',
-            description=(
-                'CSRF header — echo the CSRF cookie value here on '
-                'unsafe requests'
-            ),
+            description=('CSRF protection, the token value in the header'),
             name='X-Csrftoken',
             security_scheme_in='header',
         ),

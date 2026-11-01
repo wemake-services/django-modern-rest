@@ -91,16 +91,13 @@ def test_cookie_jwt_schema(
         ),
         'csrf': SecurityScheme(
             type='apiKey',
-            description='CSRF protection',
+            description='CSRF protection, the secret is stored in the cookie',
             name='csrftoken',
             security_scheme_in='cookie',
         ),
         'csrf_header': SecurityScheme(
             type='apiKey',
-            description=(
-                'CSRF header — echo the CSRF cookie value here on '
-                'unsafe requests'
-            ),
+            description=('CSRF protection, the token value in the header'),
             name='X-Csrftoken',
             security_scheme_in='header',
         ),
@@ -150,16 +147,13 @@ def test_cookie_jwt_custom_schema(
         ),
         'my-csrf': SecurityScheme(
             type='apiKey',
-            description='CSRF protection',
+            description='CSRF protection, the secret is stored in the cookie',
             name='csrftoken',
             security_scheme_in='cookie',
         ),
         'my-csrf-header': SecurityScheme(
             type='apiKey',
-            description=(
-                'CSRF header — echo the CSRF cookie value here on '
-                'unsafe requests'
-            ),
+            description=('CSRF protection, the token value in the header'),
             name='X-Csrftoken',
             security_scheme_in='header',
         ),
@@ -198,17 +192,17 @@ def test_cookie_jwt_csrf_session(
     assert HTTPStatus.FORBIDDEN not in metadata.responses
     assert instance.www_authenticate_challenge is None
     assert instance.security_schemes(metadata, controller) == snapshot({
+        'csrf_header': SecurityScheme(
+            type='apiKey',
+            description='CSRF protection, the secret is stored in the session',
+            name='X-Csrftoken',
+            security_scheme_in='header',
+        ),
         'jwt_cookie': SecurityScheme(
             type='apiKey',
             description='JWT token auth via cookie',
             name='access_token',
             security_scheme_in='cookie',
-        ),
-        'csrf': SecurityScheme(
-            type='apiKey',
-            description='CSRF protection, the secret is stored in the session',
-            name='X-Csrftoken',
-            security_scheme_in='header',
         ),
     })
     assert instance.security_requirements(metadata, controller) == snapshot([
@@ -221,7 +215,7 @@ def test_cookie_jwt_csrf_session(
         unsafe_metadata,
         controller,
     ) == snapshot([
-        {'jwt_cookie': [], 'csrf': []},
+        {'jwt_cookie': [], 'csrf_header': []},
     ])
 
 
@@ -251,16 +245,13 @@ def test_cookie_and_header_jwt_schema(
     assert openapi_context.registries.security_scheme.schemes == snapshot({
         'csrf': SecurityScheme(
             type='apiKey',
-            description='CSRF protection',
+            description='CSRF protection, the secret is stored in the cookie',
             name='csrftoken',
             security_scheme_in='cookie',
         ),
         'csrf_header': SecurityScheme(
             type='apiKey',
-            description=(
-                'CSRF header — echo the CSRF cookie value here on '
-                'unsafe requests'
-            ),
+            description=('CSRF protection, the token value in the header'),
             name='X-Csrftoken',
             security_scheme_in='header',
         ),

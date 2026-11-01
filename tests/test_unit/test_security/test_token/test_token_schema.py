@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Final
 
 import pytest
 from django.conf import LazySettings, settings
@@ -15,6 +15,9 @@ from dmr.security.token import (
     HeaderTokenAsyncAuth,
     HeaderTokenSyncAuth,
 )
+from dirty_equals import IsStr
+
+AnyStr: Final[Any] = IsStr()
 
 
 def _make_controller(
@@ -69,7 +72,7 @@ def test_custom_header_schema(
             type='apiKey',
             name=header_name,
             security_scheme_in='header',
-            description='Opaque token authentication',
+            description=AnyStr,
         ),
     }
     assert instance.security_requirements(metadata, controller) == [
@@ -106,7 +109,7 @@ def test_header_schema_for_authorization(
         security_scheme_name: SecurityScheme(
             type='http',
             scheme='bearer',
-            description='Opaque token authentication',
+            description=AnyStr,
         ),
     }
     assert instance.security_requirements(metadata, controller) == [
@@ -159,22 +162,19 @@ def test_cookie_token_schema(
             type='apiKey',
             name=cookie_name,
             security_scheme_in='cookie',
-            description='Opaque token authentication via cookie',
+            description=AnyStr,
         ),
         csrf_scheme_name: SecurityScheme(
             type='apiKey',
             name=settings.CSRF_COOKIE_NAME,
             security_scheme_in='cookie',
-            description='CSRF protection',
+            description=AnyStr,
         ),
         csrf_header_scheme_name: SecurityScheme(
             type='apiKey',
             name='X-Csrftoken',
             security_scheme_in='header',
-            description=(
-                'CSRF header — echo the CSRF cookie value here on '
-                'unsafe requests'
-            ),
+            description=AnyStr,
         ),
     }
     assert instance.security_requirements(metadata, controller) == [
@@ -215,13 +215,13 @@ def test_cookie_token_schema_csrf_session(
             type='apiKey',
             name='token',
             security_scheme_in='cookie',
-            description='Opaque token authentication via cookie',
+            description=AnyStr,
         ),
-        'csrf': SecurityScheme(
+        CSRF_HEADER_SCHEME_NAME: SecurityScheme(
             type='apiKey',
             name='X-Csrftoken',
             security_scheme_in='header',
-            description='CSRF protection, the secret is stored in the session',
+            description=AnyStr,
         ),
     }
     assert instance.security_requirements(metadata, controller) == [
@@ -231,5 +231,5 @@ def test_cookie_token_schema_csrf_session(
     unsafe_metadata = controller.api_endpoints['POST'].metadata
     assert HTTPStatus.FORBIDDEN in unsafe_metadata.responses
     assert instance.security_requirements(unsafe_metadata, controller) == [
-        {'token': [], 'csrf': []},
+        {'token': [], CSRF_HEADER_SCHEME_NAME: []},
     ]

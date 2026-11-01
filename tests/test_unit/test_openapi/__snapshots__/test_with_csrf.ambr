@@ -134,8 +134,8 @@
           "security": [
             {
               "jwt": [],
-              "csrf": [],
-              "csrf_header": []
+              "csrf_header": [],
+              "csrf": []
             }
           ]
         }
@@ -196,13 +196,13 @@
       "securitySchemes": {
         "csrf": {
           "type": "apiKey",
-          "description": "CSRF protection",
+          "description": "CSRF protection, the secret is stored in the cookie",
           "name": "csrftoken",
           "in": "cookie"
         },
         "csrf_header": {
           "type": "apiKey",
-          "description": "CSRF header \u2014 echo the CSRF cookie value here on unsafe requests",
+          "description": "CSRF protection, the token value in the header",
           "name": "X-Csrftoken",
           "in": "header"
         },
@@ -279,8 +279,8 @@
           },
           "security": [
             {
-              "csrf": [],
-              "csrf_header": []
+              "csrf_header": [],
+              "csrf": []
             }
           ]
         }
@@ -341,13 +341,13 @@
       "securitySchemes": {
         "csrf": {
           "type": "apiKey",
-          "description": "CSRF protection",
+          "description": "CSRF protection, the secret is stored in the cookie",
           "name": "csrftoken",
           "in": "cookie"
         },
         "csrf_header": {
           "type": "apiKey",
-          "description": "CSRF header \u2014 echo the CSRF cookie value here on unsafe requests",
+          "description": "CSRF protection, the token value in the header",
           "name": "X-Csrftoken",
           "in": "header"
         }
@@ -408,8 +408,8 @@
           },
           "security": [
             {
-              "csrf": [],
-              "csrf_header": []
+              "csrf_header": [],
+              "csrf": []
             }
           ]
         }
@@ -419,13 +419,13 @@
       "securitySchemes": {
         "csrf": {
           "type": "apiKey",
-          "description": "CSRF protection",
+          "description": "CSRF protection, the secret is stored in the cookie",
           "name": "csrftoken",
           "in": "cookie"
         },
         "csrf_header": {
           "type": "apiKey",
-          "description": "CSRF header \u2014 echo the CSRF cookie value here on unsafe requests",
+          "description": "CSRF protection, the token value in the header",
           "name": "X-Csrftoken",
           "in": "header"
         }
@@ -525,8 +525,8 @@
           },
           "security": [
             {
-              "csrf": [],
-              "csrf_header": []
+              "csrf_header": [],
+              "csrf": []
             }
           ]
         }
@@ -587,13 +587,13 @@
       "securitySchemes": {
         "csrf": {
           "type": "apiKey",
-          "description": "CSRF protection",
+          "description": "CSRF protection, the secret is stored in the cookie",
           "name": "csrftoken",
           "in": "cookie"
         },
         "csrf_header": {
           "type": "apiKey",
-          "description": "CSRF header \u2014 echo the CSRF cookie value here on unsafe requests",
+          "description": "CSRF protection, the token value in the header",
           "name": "X-Csrftoken",
           "in": "header"
         }
@@ -737,7 +737,7 @@
           "security": [
             {
               "jwt": [],
-              "csrf": []
+              "csrf_header": []
             }
           ]
         }
@@ -796,7 +796,7 @@
         }
       },
       "securitySchemes": {
-        "csrf": {
+        "csrf_header": {
           "type": "apiKey",
           "description": "CSRF protection, the secret is stored in the session",
           "name": "X-Csrftoken",
@@ -952,8 +952,8 @@
           },
           "security": [
             {
-              "csrf": [],
-              "csrf_header": []
+              "csrf_header": [],
+              "csrf": []
             }
           ]
         }
@@ -1014,13 +1014,13 @@
       "securitySchemes": {
         "csrf": {
           "type": "apiKey",
-          "description": "CSRF protection",
+          "description": "CSRF protection, the secret is stored in the cookie",
           "name": "csrftoken",
           "in": "cookie"
         },
         "csrf_header": {
           "type": "apiKey",
-          "description": "CSRF header \u2014 echo the CSRF cookie value here on unsafe requests",
+          "description": "CSRF protection, the token value in the header",
           "name": "X-Csrftoken",
           "in": "header"
         }
