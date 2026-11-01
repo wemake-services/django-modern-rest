@@ -27,7 +27,7 @@ class ProblemDetailsModel(TypedDict, total=False, closed=False):
     See https://datatracker.ietf.org/doc/html/rfc9457
     for the detailed description of each field.
 
-    It is explictily not closed. It can contain other fields.
+    It is explicitly not closed. It can contain other fields.
     """
 
     detail: str
