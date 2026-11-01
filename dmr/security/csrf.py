@@ -46,7 +46,10 @@ CSRF_SCHEME_NAME: Final = 'csrf'
 CSRF_HEADER_SCHEME_NAME: Final = 'csrf_header'
 
 
-def csrf_security_scheme() -> SecurityScheme:
+def csrf_security_scheme(
+    scheme_name: str,
+    header_scheme_name: str,
+) -> dict[str, SecurityScheme | Reference]:
     """
     Build the security scheme that describes where the CSRF secret is stored.
 
@@ -57,57 +60,45 @@ def csrf_security_scheme() -> SecurityScheme:
     (``CSRF_HEADER_NAME``). In that mode there is no separate cookie scheme;
     the header alone is the complete requirement.
 
-    .. note::
-
-        In cookie mode (``CSRF_USE_SESSIONS = False``) this scheme only
-        describes the *storage* of the secret.  Django actually validates the
-        ``CSRF_HEADER_NAME`` header on unsafe requests, so the full requirement
-        includes a second scheme — see :func:`csrf_header_security_scheme`.
+    Args:
+        scheme_name: Security scheme name that we use for the CSRF token secret.
+        header_scheme_name: Security scheme name
+            that we use for the CSRF token value.
 
     .. versionadded:: 0.16.0
+    .. versionchanged:: 0.17.0
+        Now this function returns a :class:`dict` object of schemes.
+        And accepts the names for these schemes.
+        Now when ``CSRF_USE_SESSIONS`` is defined,
+        we return the header security scheme.
+
     """
     if settings.CSRF_USE_SESSIONS:
-        return SecurityScheme(
+        return {
+            header_scheme_name: SecurityScheme(
+                type='apiKey',
+                name=csrf_header_name(),
+                security_scheme_in='header',
+                description=(
+                    'CSRF protection, the secret is stored in the session'
+                ),
+            ),
+        }
+
+    return {
+        scheme_name: SecurityScheme(
+            type='apiKey',
+            name=settings.CSRF_COOKIE_NAME,
+            security_scheme_in='cookie',
+            description='CSRF protection, the secret is stored in the cookie',
+        ),
+        header_scheme_name: SecurityScheme(
             type='apiKey',
             name=csrf_header_name(),
             security_scheme_in='header',
-            description='CSRF protection, the secret is stored in the session',
-        )
-    return SecurityScheme(
-        type='apiKey',
-        name=settings.CSRF_COOKIE_NAME,
-        security_scheme_in='cookie',
-        description='CSRF protection',
-    )
-
-
-def csrf_header_security_scheme() -> SecurityScheme:
-    """
-    Build the security scheme for the CSRF header that Django validates.
-
-    When ``CSRF_USE_SESSIONS = False`` (the default), Django stores the CSRF
-    secret in the ``CSRF_COOKIE_NAME`` cookie but validates that the client
-    echoes it back in the ``CSRF_HEADER_NAME`` request header (e.g.
-    ``X-CSRFToken``).  A client that only sends the cookie will receive a
-    ``403 Forbidden``.
-
-    This scheme describes that *header* requirement so that OpenAPI clients
-    know they must send it on unsafe methods (``POST``, ``PUT``, etc.).
-
-    This scheme is only relevant in cookie mode.  In session mode
-    (``CSRF_USE_SESSIONS = True``) :func:`csrf_security_scheme` already
-    describes the header, so this function is not used.
-
-    .. versionadded:: 0.17.0
-    """
-    return SecurityScheme(
-        type='apiKey',
-        name=csrf_header_name(),
-        security_scheme_in='header',
-        description=(
-            'CSRF header — echo the CSRF cookie value here on unsafe requests'
+            description='CSRF protection, the token value in the header',
         ),
-    )
+    }
 
 
 class CSRFAuthMixin(ResponseSpecProvider, SecurityProvider):  # noqa: WPS214
@@ -147,17 +138,20 @@ class CSRFAuthMixin(ResponseSpecProvider, SecurityProvider):  # noqa: WPS214
         """Provides the security scheme of the auth itself, without CSRF."""
         raise NotImplementedError
 
-    def csrf_security_scheme(self) -> SecurityScheme:
-        """Provides the security scheme for CSRF cookie/session storage."""
-        return csrf_security_scheme()
-
-    def csrf_header_security_scheme(self) -> SecurityScheme:
+    def csrf_security_scheme(self) -> dict[str, SecurityScheme | Reference]:
         """
-        Provides the security scheme for the CSRF header.
+        Provides the security scheme for CSRF cookie/session storage.
 
-        Only used in cookie mode (``CSRF_USE_SESSIONS = False``).
+        .. versionchanged:: 0.17.0
+            Now this method returns a :class:`dict` object of schemes.
+            Now when ``CSRF_USE_SESSIONS`` is defined,
+            we return the header security scheme.
+
         """
-        return csrf_header_security_scheme()
+        return csrf_security_scheme(
+            scheme_name=self.csrf_scheme_name,
+            header_scheme_name=self.csrf_header_scheme_name,
+        )
 
     @override
     def security_schemes(
@@ -166,15 +160,10 @@ class CSRFAuthMixin(ResponseSpecProvider, SecurityProvider):  # noqa: WPS214
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> dict[str, 'SecurityScheme | Reference']:
         """Provides the auth security scheme together with the CSRF one(s)."""
-        schemes: dict[str, SecurityScheme | Reference] = {
+        return {
+            **self.csrf_security_scheme(),
             self.security_scheme_name: self.auth_security_scheme(),
-            self.csrf_scheme_name: self.csrf_security_scheme(),
         }
-        if not settings.CSRF_USE_SESSIONS:
-            schemes[self.csrf_header_scheme_name] = (
-                self.csrf_header_security_scheme()
-            )
-        return schemes
 
     @override
     def security_requirements(
@@ -184,10 +173,12 @@ class CSRFAuthMixin(ResponseSpecProvider, SecurityProvider):  # noqa: WPS214
     ) -> list[SecurityRequirement]:
         """Requires the auth scheme and CSRF for unsafe HTTP methods."""
         requirement: SecurityRequirement = {self.security_scheme_name: []}
+        # CSRF is not required for safe http methods:
         if not self._is_safe_http_method(metadata):
-            requirement[self.csrf_scheme_name] = []
+            requirement[self.csrf_header_scheme_name] = []
+            # When CSRF is sent via sessions, we only need the header scheme:
             if not settings.CSRF_USE_SESSIONS:
-                requirement[self.csrf_header_scheme_name] = []
+                requirement[self.csrf_scheme_name] = []
         return [requirement]
 
     @override
@@ -353,7 +344,7 @@ class CSRFSemanticSchemaProvider(
     status_code: HTTPStatus | None = None
     description: StrOrPromise | None = None
     security_scheme_name: str = CSRF_SCHEME_NAME
-    csrf_header_scheme_name: str = CSRF_HEADER_SCHEME_NAME
+    security_header_scheme_name: str = CSRF_HEADER_SCHEME_NAME
     safe_http_methods: Set[HTTPMethod] = SAFE_HTTP_METHODS
 
     @override
@@ -392,14 +383,10 @@ class CSRFSemanticSchemaProvider(
         """Provides a security schema definition."""
         if self._is_csrf_disabled(metadata, controller_cls):
             return {}
-        schemes: dict[str, SecurityScheme | Reference] = {
-            self.security_scheme_name: csrf_security_scheme(),
-        }
-        if not settings.CSRF_USE_SESSIONS:
-            schemes[self.csrf_header_scheme_name] = (
-                csrf_header_security_scheme()
-            )
-        return schemes
+        return csrf_security_scheme(
+            scheme_name=self.security_scheme_name,
+            header_scheme_name=self.security_header_scheme_name,
+        )
 
     @override
     def security_requirements(
@@ -410,9 +397,12 @@ class CSRFSemanticSchemaProvider(
         """Provides a security schema usage requirement."""
         if self._is_csrf_disabled(metadata, controller_cls):
             return []
-        requirement: SecurityRequirement = {self.security_scheme_name: []}
+        requirement: SecurityRequirement = {
+            self.security_header_scheme_name: [],
+        }
+        # When CSRF is sent via sessions, we only need the header scheme:
         if not settings.CSRF_USE_SESSIONS:
-            requirement[self.csrf_header_scheme_name] = []
+            requirement[self.security_scheme_name] = []
         return [requirement]
 
     @override

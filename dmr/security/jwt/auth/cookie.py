@@ -81,6 +81,9 @@ class CookieJWTSyncAuth(_BaseCookieJWTAuth, BaseJWTSyncAuth):
     .. versionchanged:: 0.16.0
         Fixed how CSRF schema is generated.
         Default *security_scheme_name* is now ``jwt_cookie``.
+    .. versionchanged:: 0.17.0
+        Added ``csrf_header_scheme_name`` parameter.
+
     """
 
     __slots__ = ('cookie_name', 'csrf_header_scheme_name', 'csrf_scheme_name')
@@ -163,6 +166,9 @@ class CookieJWTAsyncAuth(_BaseCookieJWTAuth, BaseJWTAsyncAuth):
     .. versionadded:: 0.15.0
     .. versionchanged:: 0.16.0
         Default *security_scheme_name* is now ``jwt_cookie``.
+    .. versionchanged:: 0.17.0
+        Added ``csrf_header_scheme_name`` parameter.
+
     """
 
     __slots__ = ('cookie_name', 'csrf_header_scheme_name', 'csrf_scheme_name')

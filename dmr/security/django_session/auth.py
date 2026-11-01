@@ -67,6 +67,8 @@ class DjangoSessionSyncAuth(_DjangoSessionAuth, SyncAuth):
 
     .. versionchanged:: 0.16.0
         Fixed how CSRF schema is generated.
+    .. versionchanged:: 0.17.0
+        Added ``csrf_header_scheme_name`` parameter.
 
     """
 
@@ -111,6 +113,8 @@ class DjangoSessionAsyncAuth(_DjangoSessionAuth, AsyncAuth):
 
     .. versionchanged:: 0.16.0
         Fixed how CSRF schema is generated.
+    .. versionchanged:: 0.17.0
+        Added ``csrf_header_scheme_name`` parameter.
 
     """
 

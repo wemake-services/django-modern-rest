@@ -57,7 +57,7 @@ Security requirement generated for these methods will reflect that:
 they will need ``django_session`` alongside CSRF security requirements
 to be present for successful login. In cookie mode (the default),
 both ``csrf`` (cookie) and ``csrf_header`` (header) are required;
-with ``CSRF_USE_SESSIONS = True``, only the ``csrf`` header is required.
+with ``CSRF_USE_SESSIONS = True``, only the ``csrf_header`` header is required.
 
 .. seealso::
 
@@ -159,7 +159,7 @@ in the login response (alongside the session cookie).
   stored in the ``CSRF_COOKIE_NAME`` cookie (``csrf`` scheme) to be echoed
   back in the ``CSRF_HEADER_NAME`` header (``csrf_header`` scheme).
   With ``CSRF_USE_SESSIONS = True``, the secret is stored in the session,
-  so only the header is needed (``csrf`` scheme).
+  so only the header is needed (``csrf_header`` scheme).
   The session cookie itself is described only once,
   by the ``django_session`` security scheme.
   See :func:`~dmr.security.csrf.csrf_security_scheme`

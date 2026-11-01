@@ -100,7 +100,7 @@ response spec provider.
   CSRF security requirement specs are injected with ``AND`` logic.
   In cookie mode (``CSRF_USE_SESSIONS = False``), both ``csrf`` (cookie)
   and ``csrf_header`` (header) are injected. In session mode
-  (``CSRF_USE_SESSIONS = True``), only ``csrf`` (header) is injected.
+  (``CSRF_USE_SESSIONS = True``), only ``csrf_header`` (header) is injected.
   If you have existing auth instances, you will have to satisfy
   both auth and CSRF requirements. Just like in the runtime.
 

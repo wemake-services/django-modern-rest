@@ -61,6 +61,8 @@ class CookieTokenSyncAuth(_BaseCookieTokenAuth, BaseTokenSyncAuth):
     .. versionadded:: 0.12.0
     .. versionchanged:: 0.16.0
         Fixed how CSRF schema is generated.
+    .. versionchanged:: 0.17.0
+        Added ``csrf_header_scheme_name`` parameter.
 
     """
 
@@ -110,6 +112,8 @@ class CookieTokenAsyncAuth(_BaseCookieTokenAuth, BaseTokenAsyncAuth):
     .. versionadded:: 0.12.0
     .. versionchanged:: 0.16.0
         Fixed how CSRF schema is generated.
+    .. versionchanged:: 0.17.0
+        Added ``csrf_header_scheme_name`` parameter.
 
     """
 

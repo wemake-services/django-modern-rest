@@ -38,14 +38,12 @@ CSRF
 
 .. autofunction:: dmr.security.csrf.csrf_security_scheme
 
-.. autofunction:: dmr.security.csrf.csrf_header_security_scheme
+.. autoclass:: dmr.security.csrf.CSRFAuthMixin
+  :members:
 
 .. autodata:: dmr.security.csrf.CSRF_SCHEME_NAME
 
 .. autodata:: dmr.security.csrf.CSRF_HEADER_SCHEME_NAME
-
-.. autoclass:: dmr.security.csrf.CSRFAuthMixin
-  :members:
 
 Semantic schema
 ---------------
