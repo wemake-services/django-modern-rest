@@ -2,6 +2,7 @@ from http import HTTPStatus
 from typing import Any, Final
 
 import pytest
+from dirty_equals import IsStr
 from django.conf import LazySettings, settings
 
 from dmr.controller import Controller
@@ -15,7 +16,6 @@ from dmr.security.token import (
     HeaderTokenAsyncAuth,
     HeaderTokenSyncAuth,
 )
-from dirty_equals import IsStr
 
 AnyStr: Final[Any] = IsStr()
 
