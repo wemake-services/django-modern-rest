@@ -230,7 +230,10 @@ class FileBody(FileBodyLike):
         so the top-level schema alone does not name them all.
         """
         names: dict[str, None] = dict.fromkeys(schema.properties or ())
-        for member in (*(schema.any_of or ()), *(schema.one_of or ())):
+        for member in (
+            *(schema.any_of or ()),
+            *(schema.one_of or ()),
+        ):
             names.update(dict.fromkeys(cls._property_names(member)))
         return list(names)
 

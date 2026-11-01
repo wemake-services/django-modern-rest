@@ -15,6 +15,7 @@ from dmr.parsers import JsonParser, MultiPartParser
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.renderers import FileRenderer
 from dmr.routing import Router
+from dmr.serializer import BaseSerializer
 from dmr.settings import HttpSpec
 from tests.infra.octet import OCTET_STREAM, OctetFileModel, OctetStreamParser
 
@@ -345,13 +346,15 @@ class _OptionalFilesController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def _request_encoding(controller: type[Controller]) -> dict | None:
+def _request_encoding(
+    controller: type[Controller[BaseSerializer]],
+) -> dict[str, dict[str, str]] | None:
     schema = build_schema(
         Router('', [path('files/', controller.as_view())]),
     ).convert()
     operation = schema['paths']['/files/']['post']
     media_type = operation['requestBody']['content']['multipart/form-data']
-    return media_type.get('encoding')
+    return media_type.get('encoding')  # type: ignore[no-any-return]
 
 
 def test_optional_file_metadata_keeps_encoding() -> None:
