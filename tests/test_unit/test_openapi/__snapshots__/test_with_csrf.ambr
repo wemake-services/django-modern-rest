@@ -134,6 +134,7 @@
           "security": [
             {
               "jwt": [],
+              "csrf_header": [],
               "csrf": []
             }
           ]
@@ -195,9 +196,15 @@
       "securitySchemes": {
         "csrf": {
           "type": "apiKey",
-          "description": "CSRF protection",
+          "description": "CSRF protection, the secret is stored in the cookie",
           "name": "csrftoken",
           "in": "cookie"
+        },
+        "csrf_header": {
+          "type": "apiKey",
+          "description": "CSRF protection, the token value in the header",
+          "name": "X-Csrftoken",
+          "in": "header"
         },
         "jwt": {
           "type": "http",
@@ -272,6 +279,7 @@
           },
           "security": [
             {
+              "csrf_header": [],
               "csrf": []
             }
           ]
@@ -333,9 +341,15 @@
       "securitySchemes": {
         "csrf": {
           "type": "apiKey",
-          "description": "CSRF protection",
+          "description": "CSRF protection, the secret is stored in the cookie",
           "name": "csrftoken",
           "in": "cookie"
+        },
+        "csrf_header": {
+          "type": "apiKey",
+          "description": "CSRF protection, the token value in the header",
+          "name": "X-Csrftoken",
+          "in": "header"
         }
       }
     }
@@ -394,6 +408,7 @@
           },
           "security": [
             {
+              "csrf_header": [],
               "csrf": []
             }
           ]
@@ -404,9 +419,15 @@
       "securitySchemes": {
         "csrf": {
           "type": "apiKey",
-          "description": "CSRF protection",
+          "description": "CSRF protection, the secret is stored in the cookie",
           "name": "csrftoken",
           "in": "cookie"
+        },
+        "csrf_header": {
+          "type": "apiKey",
+          "description": "CSRF protection, the token value in the header",
+          "name": "X-Csrftoken",
+          "in": "header"
         }
       }
     }
@@ -504,6 +525,7 @@
           },
           "security": [
             {
+              "csrf_header": [],
               "csrf": []
             }
           ]
@@ -565,9 +587,15 @@
       "securitySchemes": {
         "csrf": {
           "type": "apiKey",
-          "description": "CSRF protection",
+          "description": "CSRF protection, the secret is stored in the cookie",
           "name": "csrftoken",
           "in": "cookie"
+        },
+        "csrf_header": {
+          "type": "apiKey",
+          "description": "CSRF protection, the token value in the header",
+          "name": "X-Csrftoken",
+          "in": "header"
         }
       }
     }
@@ -709,7 +737,7 @@
           "security": [
             {
               "jwt": [],
-              "csrf": []
+              "csrf_header": []
             }
           ]
         }
@@ -768,7 +796,7 @@
         }
       },
       "securitySchemes": {
-        "csrf": {
+        "csrf_header": {
           "type": "apiKey",
           "description": "CSRF protection, the secret is stored in the session",
           "name": "X-Csrftoken",
@@ -924,6 +952,7 @@
           },
           "security": [
             {
+              "csrf_header": [],
               "csrf": []
             }
           ]
@@ -985,9 +1014,15 @@
       "securitySchemes": {
         "csrf": {
           "type": "apiKey",
-          "description": "CSRF protection",
+          "description": "CSRF protection, the secret is stored in the cookie",
           "name": "csrftoken",
           "in": "cookie"
+        },
+        "csrf_header": {
+          "type": "apiKey",
+          "description": "CSRF protection, the token value in the header",
+          "name": "X-Csrftoken",
+          "in": "header"
         }
       }
     }
