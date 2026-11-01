@@ -334,7 +334,7 @@
           },
           "type": "object",
           "title": "ProblemDetailsModel",
-          "description": "Error payload model for Problem Details.\n\nSee https://datatracker.ietf.org/doc/html/rfc9457\nfor the detailed description of each field."
+          "description": "Error payload model for Problem Details.\n\nSee https://datatracker.ietf.org/doc/html/rfc9457\nfor the detailed description of each field.\n\nIt is explictily not closed. It can contain other fields."
         }
       },
       "securitySchemes": {
