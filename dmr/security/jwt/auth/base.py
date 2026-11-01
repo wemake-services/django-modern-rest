@@ -9,9 +9,9 @@ from typing import (
     TYPE_CHECKING,
     Final,
     Literal,
-    NotRequired,
     Self,
     Unpack,
+    final,
     overload,
 )
 
@@ -48,35 +48,40 @@ USER_LOOKUP_ERRORS: Final = (
 )
 
 
-class JWTokenAuthParams(TypedDict):
+@final
+class BaseJWTokenHandlerParams(TypedDict, total=False, closed=True):
     """
-    Keyword arguments accepted by ``JWTokenHandler`` initialization.
+    Keyword arguments accepted by ``BaseJWTokenHandler`` initialization.
 
     All fields are optional because the handler
     provides default values for each setting.
 
-    These options configure JWT decoding and validation
+    These options configure JWT decoding and validation.
+    It is useful for the inheritance with typing ``**kwargs``.
+
+    .. versionadded:: 0.17.0
     """
 
-    algorithm: NotRequired[str]
-    secret: NotRequired[str | None]
-    token_cls: NotRequired[type[JWToken]]
-    leeway: NotRequired[int]
-    accepted_audiences: NotRequired[str | Sequence[str] | None]
-    accepted_issuers: NotRequired[str | Sequence[str] | None]
-    require_claims: NotRequired[Sequence[str] | None]
-    verify_expiry: NotRequired[bool]
-    verify_issued_at: NotRequired[bool]
-    verify_jwt_id: NotRequired[bool]
-    verify_not_before: NotRequired[bool]
-    verify_subject: NotRequired[bool]
-    strict_audience: NotRequired[bool]
-    enforce_minimum_key_length: NotRequired[bool]
+    # NOTE: must match `BaseJWTokenHandler.__init__` params:
+    algorithm: str
+    secret: str | None
+    token_cls: type[JWToken]
+    leeway: int
+    accepted_audiences: str | Sequence[str] | None
+    accepted_issuers: str | Sequence[str] | None
+    require_claims: Sequence[str] | None
+    verify_expiry: bool
+    verify_issued_at: bool
+    verify_jwt_id: bool
+    verify_not_before: bool
+    verify_subject: bool
+    strict_audience: bool
+    enforce_minimum_key_length: bool
 
 
-class JWTokenHandler:  # noqa: WPS230
+class BaseJWTokenHandler:  # noqa: WPS230
     """
-    Base class providing reusable JWT token handling functionality.
+    Public base class providing reusable JWT token handling functionality.
 
     This class provides JWT configuration, token extraction, decoding,
     and validation without defining how the authenticated subject is resolved
@@ -85,6 +90,15 @@ class JWTokenHandler:  # noqa: WPS230
     Subclasses must implement the methods responsible for extracting
     a token from the request and separating the encoded JWT
     from the raw transport value.
+
+    Should be used for custom JWT auth classes.
+    For example, when you need a JWT auth class
+    that is not bound to the database.
+
+    .. seealso::
+        https://github.com/wemake-services/django-modern-rest/discussions/1763
+
+    .. versionadded:: 0.17.0
     """
 
     __slots__ = (
@@ -107,10 +121,11 @@ class JWTokenHandler:  # noqa: WPS230
     def __init__(  # noqa: WPS211
         self,
         *,
+        # NOTE: must match `BaseJWTokenHandlerParams`:
         algorithm: str = 'HS256',
         secret: str | None = None,
         token_cls: type[JWToken] = JWToken,
-        leeway: int = 0,
+        leeway: int = 0,  # seconds
         accepted_audiences: str | Sequence[str] | None = None,
         accepted_issuers: str | Sequence[str] | None = None,
         require_claims: Sequence[str] | None = None,
@@ -214,7 +229,7 @@ class JWTokenHandler:  # noqa: WPS230
         return token.sub
 
 
-class _BaseJWTAuth(JWTokenHandler):  # noqa: WPS230
+class _BaseJWTAuth(BaseJWTokenHandler):
     """
     Transport-agnostic part of jwt auth.
 
@@ -233,7 +248,7 @@ class _BaseJWTAuth(JWTokenHandler):  # noqa: WPS230
         *,
         user_id_field: str = 'pk',
         security_scheme_name: str = 'jwt',
-        **kwargs: Unpack[JWTokenAuthParams],
+        **kwargs: Unpack[BaseJWTokenHandlerParams],
     ) -> None:
         """
         Apply possible customizations.
@@ -243,8 +258,11 @@ class _BaseJWTAuth(JWTokenHandler):  # noqa: WPS230
         - *user_id_field* can be changed, it is used to get user model.
           By default we search by ``pk``, but it can be changed to be ``email``
           or any other unique user key.
+        - *security_scheme_name* can be changed, it is used
+          to define the security scheme name.
+
         """
-        super().__init__(**kwargs)  # pyrefly: ignore[open-unpacking]
+        super().__init__(**kwargs)
         self.user_id_field = user_id_field
         self.security_scheme_name = security_scheme_name
 
@@ -261,7 +279,7 @@ class _BaseJWTAuth(JWTokenHandler):  # noqa: WPS230
         """Reject tokens whose type does not match the expected token type."""
         if decoded_token.extras.get('type') != self.expected_token_type:
             raise NotAuthenticatedError
-        return decoded_token
+        return super().validate_token(decoded_token)
 
 
 class BaseJWTSyncAuth(_BaseJWTAuth, SyncAuth):
