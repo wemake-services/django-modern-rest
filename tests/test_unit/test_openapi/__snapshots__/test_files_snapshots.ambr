@@ -1129,6 +1129,14 @@
                       "type": "null"
                     }
                   ]
+                },
+                "encoding": {
+                  "first_file": {
+                    "contentType": "application/json, text/plain"
+                  },
+                  "second_file": {
+                    "contentType": "application/json, text/plain"
+                  }
                 }
               }
             }
