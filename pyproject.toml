@@ -567,10 +567,10 @@ addopts = [
 xfail_strict = true
 # Fail on warnings:
 filterwarnings = [ "error" ]
+asyncio_default_fixture_loop_scope = "function"
 # pytest-asyncio configuration:
 # https://pytest-asyncio.readthedocs.io/en/stable/reference/configuration.html
 asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
 # Django options:
 # https://pytest-django.readthedocs.io/en/latest/
 DJANGO_SETTINGS_MODULE = "server.settings"
