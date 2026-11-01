@@ -17,7 +17,6 @@ Base types
 
 .. autoclass:: dmr.security.jwt.auth.base.BaseJWTokenHandlerParams
   :members:
-  :inherited-members:
 
 Header auth
 ~~~~~~~~~~~

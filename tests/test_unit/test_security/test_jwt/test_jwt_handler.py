@@ -74,7 +74,7 @@ class _CustomJWTSyncAuth(SyncAuth, BaseJWTokenHandler):
             return None
         if auth_scheme == self.auth_scheme:
             return token
-        return None
+        raise NotImplementedError
 
     # Override via SecurityProvider Contract.
     @override

@@ -20,12 +20,16 @@ _PROBLEM_DETAILS_FIELDS: Final = frozenset((
 ))
 
 
-class ProblemDetailsModel(TypedDict, total=False):
+class ProblemDetailsModel(TypedDict, total=False, closed=True):
     """
     Error payload model for Problem Details.
 
     See https://datatracker.ietf.org/doc/html/rfc9457
     for the detailed description of each field.
+
+    .. versionchanged:: 0.17.0
+        Now ``ProblemDetailsModel`` is a closed typed dict.
+
     """
 
     detail: str
