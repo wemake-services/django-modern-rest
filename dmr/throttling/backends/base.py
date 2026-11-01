@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from dmr.throttling.algorithms import BaseThrottleAlgorithm
 
 
-class CachedRateLimit(TypedDict):
+class CachedRateLimit(TypedDict, closed=True):
     """Representation of a cached object's metadata."""
 
     # When ``True``, ``time`` stores the remaining ``ttl``
