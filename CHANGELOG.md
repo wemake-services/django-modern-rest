@@ -26,7 +26,7 @@ Prompts of the three latest breaking releases also live in the
 ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 
-## 0.17.0 WIP
+## 0.17.0
 
 ### Breaking changes
 
