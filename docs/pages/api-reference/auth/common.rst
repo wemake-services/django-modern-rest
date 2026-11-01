@@ -41,6 +41,10 @@ CSRF
 .. autoclass:: dmr.security.csrf.CSRFAuthMixin
   :members:
 
+.. autodata:: dmr.security.csrf.CSRF_SCHEME_NAME
+
+.. autodata:: dmr.security.csrf.CSRF_HEADER_SCHEME_NAME
+
 Semantic schema
 ---------------
 

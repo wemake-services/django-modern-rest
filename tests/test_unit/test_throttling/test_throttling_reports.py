@@ -67,7 +67,7 @@ def test_throttle_multiple_headers(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {
-        'RateLimit-Policy': '1;w=1;name="RemoteAddr"',
+        'RateLimit-Policy': '"RemoteAddr";q=1;w=1',
         'RateLimit': '"RemoteAddr";r=0;t=1',
         'X-RateLimit-Limit': '5',
         'X-RateLimit-Remaining': '4',
@@ -122,7 +122,7 @@ async def test_throttle_multiple_headers_async(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {
-        'RateLimit-Policy': '1;w=1;name="RemoteAddr"',
+        'RateLimit-Policy': '"RemoteAddr";q=1;w=1',
         'RateLimit': '"RemoteAddr";r=0;t=1',
         'X-RateLimit-Limit': '5',
         'X-RateLimit-Remaining': '4',
@@ -173,7 +173,7 @@ def test_throttle_multiple_throttles(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {
-        'RateLimit-Policy': '1;w=1;name="one", 5;w=60;name="two"',
+        'RateLimit-Policy': '"one";q=1;w=1, "two";q=5;w=60',
         'RateLimit': '"one";r=0;t=1, "two";r=4;t=60',
         'Content-Type': 'application/json',
     }
@@ -224,7 +224,7 @@ async def test_throttle_multiple_throttles_async(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {
-        'RateLimit-Policy': '1;w=1;name="one", 5;w=60;name="two"',
+        'RateLimit-Policy': '"one";q=1;w=1, "two";q=5;w=60',
         'RateLimit': '"one";r=0;t=1, "two";r=4;t=60',
         'Content-Type': 'application/json',
     }
@@ -297,7 +297,7 @@ def test_throttle_from_errors(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
     assert response.headers == {
-        'RateLimit-Policy': '1;w=1;name="per-second", 5;w=60;name="per-minute"',
+        'RateLimit-Policy': '"per-second";q=1;w=1, "per-minute";q=5;w=60',
         'RateLimit': '"per-second";r=0;t=1, "per-minute";r=4;t=60',
         'Content-Type': 'application/json',
     }
@@ -322,7 +322,7 @@ def test_throttle_from_errors(
         response.content
     )
     assert response.headers == {
-        'RateLimit-Policy': '1;w=1;name="per-second", 5;w=60;name="per-minute"',
+        'RateLimit-Policy': '"per-second";q=1;w=1, "per-minute";q=5;w=60',
         'RateLimit': '"per-second";r=0;t=1',
         'Content-Type': 'application/json',
     }
@@ -339,7 +339,7 @@ def test_throttle_from_errors(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {
-        'RateLimit-Policy': '1;w=1;name="per-second", 5;w=60;name="per-minute"',
+        'RateLimit-Policy': '"per-second";q=1;w=1, "per-minute";q=5;w=60',
         'RateLimit': '"per-second";r=0;t=1, "per-minute";r=3;t=59',
         'Content-Type': 'application/json',
     }
@@ -439,7 +439,7 @@ async def test_leaky_bucket_async(
     assert isinstance(response, HttpResponse)
     assert response.status_code == HTTPStatus.OK, response.content
     assert response.headers == {
-        'RateLimit-Policy': '1;w=1;name="one", 5;w=60;name="two"',
+        'RateLimit-Policy': '"one";q=1;w=1, "two";q=5;w=60',
         'RateLimit': '"one";r=0;t=1, "two";r=4;t=12',
         'Retry-After': '1',
         'Content-Type': 'application/json',

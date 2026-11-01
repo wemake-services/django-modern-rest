@@ -97,9 +97,12 @@ response spec provider.
 
 .. note::
 
-  ``csrf`` security requirement spec is injected with ``AND`` logic.
-  So, if you have existing auth instances, you will have to satisfy
-  both this auth and ``csrf`` requirements. Just like in the runtime.
+  CSRF security requirement specs are injected with ``AND`` logic.
+  In cookie mode (``CSRF_USE_SESSIONS = False``), both ``csrf`` (cookie)
+  and ``csrf_header`` (header) are injected. In session mode
+  (``CSRF_USE_SESSIONS = True``), only ``csrf_header`` (header) is injected.
+  If you have existing auth instances, you will have to satisfy
+  both auth and CSRF requirements. Just like in the runtime.
 
 Customizing error model
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -244,6 +247,8 @@ Example ``django-csp`` setup can be found in
 If you use OpenAPI UIs, see :doc:`openapi/openapi`
 for renderer-specific guidance.
 
+
+.. _conditional-requests:
 
 Conditional requests (ETag)
 ---------------------------

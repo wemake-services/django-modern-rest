@@ -246,7 +246,7 @@ async def test_redis_async_simple_rate(
         assert response.status_code == HTTPStatus.OK, response.content
         assert response.headers == {
             'Content-Type': 'application/json',
-            'RateLimit-Policy': '2;w=60;name="RemoteAddr"',
+            'RateLimit-Policy': '"RemoteAddr";q=2;w=60',
             # Time can vary:
             'RateLimit': IsOneOf(
                 f'"RemoteAddr";r={expected_remaining[attempt]};t=60',
@@ -262,7 +262,7 @@ async def test_redis_async_simple_rate(
     assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS
     assert response.headers == {
         'Content-Type': 'application/json',
-        'RateLimit-Policy': '2;w=60;name="RemoteAddr"',
+        'RateLimit-Policy': '"RemoteAddr";q=2;w=60',
         # Time can vary:
         'RateLimit': IsOneOf('"RemoteAddr";r=0;t=60', '"RemoteAddr";r=0;t=59'),
         'Retry-After': IsOneOf('60', '59'),
@@ -304,7 +304,7 @@ async def test_redis_async_leaky_bucket(
     assert response.status_code == HTTPStatus.TOO_MANY_REQUESTS
     assert response.headers == {
         'Content-Type': 'application/json',
-        'RateLimit-Policy': '2;w=60;name="RemoteAddr"',
+        'RateLimit-Policy': '"RemoteAddr";q=2;w=60',
         # Time can vary:
         'RateLimit': IsOneOf('"RemoteAddr";r=0;t=30', '"RemoteAddr";r=0;t=29'),
         'Retry-After': IsOneOf('30', '29'),

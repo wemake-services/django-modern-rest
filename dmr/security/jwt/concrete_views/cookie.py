@@ -82,6 +82,7 @@ class CookieObtainTokensSyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH
@@ -152,6 +153,7 @@ class CookieObtainTokensAsyncController(
     # Auth endpoints handle credentials on their own,
     # so auth from the settings must never be required for them:
     auth = None
+    security = None
 
     jwt_refresh_cookie_path: ClassVar[StrOrPromise | None] = (
         DEFAULT_REFRESH_COOKIE_PATH

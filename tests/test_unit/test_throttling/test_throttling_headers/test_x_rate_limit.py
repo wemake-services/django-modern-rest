@@ -95,7 +95,7 @@ def test_throttle_sync_all_headers(
         'X-RateLimit-Limit': '1',
         'X-RateLimit-Remaining': '0',
         'X-RateLimit-Reset': '1',
-        'RateLimit-Policy': '1;w=1;name="RemoteAddr"',
+        'RateLimit-Policy': '"RemoteAddr";q=1;w=1',
         'RateLimit': '"RemoteAddr";r=0;t=1',
         'Content-Type': 'application/json',
     }

@@ -275,6 +275,15 @@ class ComponentParser(ResponseSpecProvider):
     will live under a dict field with this name.
     """
 
+    needs_from_python: ClassVar[bool] = True
+    """
+    Does this component need a final ``.from_python()`` call when parsing?
+
+    This is needed for optimizations in some components, like ``BodyMsgspec``
+    that do not need the final conversion call. When all parsed components
+    do not need this step, we skip it.
+    """
+
     @abc.abstractmethod
     def provide_context_data(
         self,
@@ -1051,20 +1060,30 @@ class FileMetadataComponent(ComponentParser):
         """
         Validates that the component is correctly defined.
 
-        This component requires at least one
-        :class:`dmr.parsers.SupportsFileParsing` instance
-        to be present in parsers.
+        When ``FileMetadata`` is required, all parsers must support
+        :class:`dmr.parsers.SupportsFileParsing`.
+        When it is optional (has a default), at least one must.
 
         Runs in import time.
         """
-        if not any(
+        is_optional = any(
+            spec.parser is self and spec.default is not EMPTY
+            for spec in metadata.component_parsers
+        )
+        check = any if is_optional else all
+        if not check(
             isinstance(parser, SupportsFileParsing)
             for parser in metadata.parsers.values()
         ):
             hint = list(metadata.parsers.keys())
+            if is_optional:
+                raise EndpointMetadataError(
+                    f'Class {controller_cls!r} requires at least one parser '
+                    f'that can parse files, found: {hint}',
+                )
             raise EndpointMetadataError(
-                f'Class {controller_cls!r} requires at least one parser '
-                f'that can parse files, found: {hint}',
+                f'Class {controller_cls!r} requires all parsers '
+                f'to support file parsing, found: {hint}',
             )
 
     @override

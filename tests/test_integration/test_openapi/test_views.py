@@ -1,5 +1,4 @@
 from http import HTTPMethod, HTTPStatus
-from types import MappingProxyType
 from typing import Final
 
 import pytest
@@ -7,6 +6,7 @@ import yaml
 from django.conf import LazySettings
 from django.urls import reverse
 
+from dmr.internal.compat import frozen
 from dmr.settings import Settings
 from dmr.test import DMRClient
 
@@ -40,7 +40,7 @@ def _modify_cdn_settings(
     }
 
 
-_ENDPOINTS: Final = MappingProxyType({
+_ENDPOINTS: Final = frozen({
     'openapi_json': 'application/json',
     'openapi_yaml': 'application/yaml',
     'stoplight': 'text/html',
