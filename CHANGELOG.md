@@ -33,6 +33,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 - Replaced `Sentinel` class in all typing annotations to be `EMPTY`
   sentinel value, since all type-checkers support this now, #1687
 - Replaced multiple types from `Any` to be `TypeForm[Any]`, #1688
+- Changed parameters and return type of `csrf_security_scheme`, #1718
+- Changed CSRF security scheme name with `CSRF_USE_SESSIONS` enabled, #1718
 
 ### Performance
 
@@ -104,6 +106,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   if parsers support file parsing. When `FileMetadata` is required, all parsers
   must now support `SupportsFileParsing`. When it is optional, at least one
   must, #1493
+- Fixed that CSRF auth schemes were not showing `csrf_header` scheme, #1718
 
 ### Misc
 

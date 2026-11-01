@@ -171,7 +171,9 @@ unit-test = [
   # but no way to disable it specifically for `t` version :(
   "orjson>=3.11,<4; python_version<'3.14' and implementation_name=='cpython'",
   "polyfactory>=3.2,<4",
-  "pytest>=9,<10",
+  # TODO: update together with `schemathesis`,
+  # see https://github.com/schemathesis/schemathesis/issues/5850
+  "pytest>=9,<9.2",
   "pytest-asyncio>=1.3,<2",
   "pytest-cov>=7,<8",
   "pytest-django>=4.12,<4.15",
@@ -565,6 +567,7 @@ addopts = [
 xfail_strict = true
 # Fail on warnings:
 filterwarnings = [ "error" ]
+asyncio_default_fixture_loop_scope = "function"
 # pytest-asyncio configuration:
 # https://pytest-asyncio.readthedocs.io/en/stable/reference/configuration.html
 asyncio_mode = "auto"

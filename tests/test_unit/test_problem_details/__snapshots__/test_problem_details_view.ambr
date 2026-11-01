@@ -340,9 +340,15 @@
       "securitySchemes": {
         "csrf": {
           "type": "apiKey",
-          "description": "CSRF protection",
+          "description": "CSRF protection, the secret is stored in the cookie",
           "name": "csrftoken",
           "in": "cookie"
+        },
+        "csrf_header": {
+          "type": "apiKey",
+          "description": "CSRF protection, the token value in the header",
+          "name": "X-Csrftoken",
+          "in": "header"
         },
         "django_session": {
           "type": "apiKey",
