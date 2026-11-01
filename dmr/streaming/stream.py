@@ -172,7 +172,7 @@ class StreamingResponse(HttpResponseBase):  # noqa: WPS338
         try:  # noqa: WPS501
             while True:
                 if event_task is None:
-                    event_task = asyncio.ensure_future(self._next_event())
+                    event_task = asyncio.create_task(self._next_event())
 
                 await asyncio.wait([event_task], timeout=ping_seconds)
                 if event_task.done():
