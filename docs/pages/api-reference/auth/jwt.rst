@@ -8,6 +8,16 @@ JWT Auth
   :members:
   :show-inheritance:
 
+Base types
+~~~~~~~~~~
+
+.. autoclass:: dmr.security.jwt.auth.base.BaseJWTokenHandler
+  :members:
+  :inherited-members:
+
+.. autoclass:: dmr.security.jwt.auth.base.BaseJWTokenHandlerParams
+  :members:
+
 Header auth
 ~~~~~~~~~~~
 
