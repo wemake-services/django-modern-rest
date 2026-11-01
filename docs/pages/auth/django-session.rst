@@ -162,8 +162,7 @@ in the login response (alongside the session cookie).
   so only the header is needed (``csrf_header`` scheme).
   The session cookie itself is described only once,
   by the ``django_session`` security scheme.
-  See :func:`~dmr.security.csrf.csrf_security_scheme`
-  and :func:`~dmr.security.csrf.csrf_header_security_scheme`.
+  See :func:`~dmr.security.csrf.csrf_security_scheme`.
 
 .. seealso::
 
