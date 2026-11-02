@@ -123,6 +123,7 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   instead of wrapping `csrf_protect`, and its `wrap_middleware` example
   documents the `304` of Django's `condition` decorator, #1671
 - Added isiXhosa (`xh`) translation, #718
+- Added a usage guide and example for `BaseJWTokenHandler`, #1779
 
 
 ## 0.16.0 (2026-10-01)
