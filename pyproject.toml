@@ -142,7 +142,7 @@ dev-and-docs = [
   # Needed for auth examples:
   "django-allauth>=65.4,<66",
   # Needed for the micro-framework examples:
-  "nanodjango>=0.16,<0.17",
+  "nanodjango>=0.16,<0.18",
   "punq>=0.8,<1",
 ]
 integration = [
