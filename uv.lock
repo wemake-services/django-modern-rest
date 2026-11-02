@@ -1032,7 +1032,7 @@ dev = [
     { name = "faker", specifier = ">=40.36,<41" },
     { name = "import-linter", specifier = ">=2.5,<3" },
     { name = "inline-snapshot", specifier = ">=0.35,<1" },
-    { name = "nanodjango", specifier = ">=0.16,<0.17" },
+    { name = "nanodjango", specifier = ">=0.16,<0.18" },
     { name = "orjson", marker = "python_full_version < '3.14' and implementation_name == 'cpython'", specifier = ">=3.11,<4" },
     { name = "phonenumbers", specifier = ">=9,<10" },
     { name = "polyfactory", specifier = ">=3.2,<4" },
@@ -1068,7 +1068,7 @@ dev = [
 ]
 dev-and-docs = [
     { name = "django-allauth", specifier = ">=65.4,<66" },
-    { name = "nanodjango", specifier = ">=0.16,<0.17" },
+    { name = "nanodjango", specifier = ">=0.16,<0.18" },
     { name = "punq", specifier = ">=0.8,<1" },
 ]
 docs = [
@@ -1078,7 +1078,7 @@ docs = [
     { name = "django-modern-schemas", specifier = ">=0.1.1,<0.2" },
     { name = "docutils", specifier = ">=0.22,<0.23" },
     { name = "myst-parser", specifier = ">=5,<6" },
-    { name = "nanodjango", specifier = ">=0.16,<0.17" },
+    { name = "nanodjango", specifier = ">=0.16,<0.18" },
     { name = "punq", specifier = ">=0.8,<1" },
     { name = "shibuya", specifier = ">=2026.1,<2027" },
     { name = "sphinx", specifier = ">=9,<10" },
@@ -2417,7 +2417,7 @@ wheels = [
 
 [[package]]
 name = "nanodjango"
-version = "0.16.4"
+version = "0.17.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "black" },
@@ -2430,9 +2430,9 @@ dependencies = [
     { name = "uvicorn" },
     { name = "whitenoise" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/eb/b4/6d66ad4c96d7ff7bda8a4e57da811fef679c1c10dc1f7673654535d61848/nanodjango-0.16.4.tar.gz", hash = "sha256:1ce5365c090799bbec6723b4efe91efd0ef1033a6c654b6af67d0e044ece2adb", size = 62678, upload-time = "2026-09-24T07:41:10.207Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/50/7f/c15afd718447da7947aa8194524d2f27048f42b4b18106799c80362769fb/nanodjango-0.17.1.tar.gz", hash = "sha256:fd1af192ceee50e61a79c3f868da91d1d5a43a8a29eee4f789965e6b545dc845", size = 64330, upload-time = "2026-10-24T23:56:09.068Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/51/b1/0cb4f124eee581f49e55b6f779aab097c4852ba408fc9607f6190289c129/nanodjango-0.16.4-py3-none-any.whl", hash = "sha256:a66eea211bb33986dc2b5b23741898c2875eccdef1831173dabc52219d79e104", size = 56577, upload-time = "2026-09-24T07:41:08.517Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/fb/4c66dc27af8bcdfd9b459d65e736b880701a3a171fe278e74ffa67fec9ec/nanodjango-0.17.1-py3-none-any.whl", hash = "sha256:262341cb82eff41fb9e13242d250fc9470395845f28a414fe0c52cf865e9b46f", size = 57556, upload-time = "2026-10-24T23:56:07.49Z" },
 ]
 
 [[package]]
