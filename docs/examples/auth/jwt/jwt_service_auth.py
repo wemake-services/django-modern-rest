@@ -104,15 +104,15 @@ class HeaderPermissionJWTSyncAuth(SyncAuth, BaseJWTokenHandler):  # noqa: WPS214
         return [{self.schema_name: []}]
 
 
-
-
 class ServiceController(Controller[PydanticFastSerializer]):
     """Controller using custom JWT authentication."""
 
-    auth = (HeaderPermissionJWTSyncAuth(
-       permission='report',
-       accepted_issuers='VerifyServiceId',
-     ),)
+    auth = (
+        HeaderPermissionJWTSyncAuth(
+            permission='report',
+            accepted_issuers='VerifyServiceId',
+        ),
+    )
 
     def get(self) -> str:
         return 'Authenticated'
