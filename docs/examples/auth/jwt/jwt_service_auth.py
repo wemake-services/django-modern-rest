@@ -1,4 +1,4 @@
-from typing import Final, Literal, Self, Unpack, final
+from typing import Self, Unpack
 
 from django.http import HttpRequest
 from django.views.decorators.debug import sensitive_variables
@@ -22,7 +22,6 @@ from dmr.security.jwt.auth.base import (
 from dmr.serializer import BaseSerializer
 
 
-@final
 class HeaderPermissionJWTSyncAuth(SyncAuth, BaseJWTokenHandler):  # noqa: WPS214
     """Extract service JWTs from the Authorization header."""
 
@@ -105,19 +104,17 @@ class HeaderPermissionJWTSyncAuth(SyncAuth, BaseJWTokenHandler):  # noqa: WPS214
         return [{self.schema_name: []}]
 
 
-ReportSyncAuth: Final = HeaderPermissionJWTSyncAuth(
-    permission='report',
-    accepted_issuers='VerifyServiceId',
-)
 
 
-@final
 class ServiceController(Controller[PydanticFastSerializer]):
     """Controller using custom JWT authentication."""
 
-    auth = (ReportSyncAuth,)
+    auth = (HeaderPermissionJWTSyncAuth(
+       permission='report',
+       accepted_issuers='VerifyServiceId',
+     ),)
 
-    def get(self) -> Literal['Authenticated']:
+    def get(self) -> str:
         return 'Authenticated'
 
 
