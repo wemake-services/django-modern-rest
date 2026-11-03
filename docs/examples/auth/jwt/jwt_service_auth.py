@@ -23,7 +23,7 @@ from dmr.serializer import BaseSerializer
 
 
 @final
-class HeaderPermissionJWTSyncAuth(SyncAuth, BaseJWTokenHandler):
+class HeaderPermissionJWTSyncAuth(SyncAuth, BaseJWTokenHandler):  # noqa: WPS214
     """Extract service JWTs from the Authorization header."""
 
     __slots__ = ('auth_header', 'auth_scheme', 'permission', 'schema_name')
