@@ -642,4 +642,37 @@ Then run this task as a periodic job.
   :class:`~dmr.security.token.app.models.Token` model,
   see :ref:`cleaning-up-old-tokens`.
 
+
+JWT authentication without a Django user
+----------------------------------------
+
+Built-in JWT authentication classes resolve the token subject to a Django user
+and expose it as ``request.user``. If the subject represents another entity,
+such as a service or API client, you can use
+:class:`~dmr.security.jwt.auth.base.BaseJWTokenHandler`
+to implement custom JWT authentication.
+
+``BaseJWTokenHandler`` provides token extraction, decoding, and validation
+without resolving the subject to a Django user or defining the authentication pipeline.
+
+.. note::
+  For your authentication class, combine ``BaseJWTokenHandler`` with either
+  ``SyncAuth`` or ``AsyncAuth`` using multiple inheritance
+  and implement the members required by their respective contracts.
+
+The ``prepare_token()`` method handles the token processing pipeline.
+By default, ``validate_token()`` returns the decoded token unchanged,
+while ``claim_from_token()`` extracts the ``sub`` claim.
+Override them to customize validation or subject extraction.
+
+The following example demonstrates service-to-service authentication with separate access permissions:
+
+.. literalinclude:: /examples/auth/jwt/jwt_service_auth.py
+   :caption: jwt_service_auth.py
+   :linenos:
+   :language: python
+
+In this example, ``ReportSyncAuth`` is configured to accept tokens
+with the ``report`` permission and is used by ``ServiceController``.
+
 See :doc:`API reference </pages/api-reference/auth/jwt>`.
