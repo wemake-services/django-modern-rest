@@ -26,7 +26,7 @@ from dmr.serializer import BaseSerializer
 class HeaderPermissionJWTSyncAuth(SyncAuth, BaseJWTokenHandler):
     """Extract service JWTs from the Authorization header."""
 
-    __slots__ = ('permission', 'auth_header', 'auth_scheme', 'schema_name')
+    __slots__ = ('auth_header', 'auth_scheme', 'permission', 'schema_name')
 
     def __init__(  # noqa: WPS211
         self,
@@ -119,5 +119,6 @@ class ServiceController(Controller[PydanticFastSerializer]):
 
     def get(self) -> Literal['Authenticated']:
         return 'Authenticated'
+
 
 # openapi: {"controller": "ServiceController", "openapi_url": "/docs/openapi.json/"}  # noqa: ERA001, E501
