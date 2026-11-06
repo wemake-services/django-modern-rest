@@ -91,12 +91,19 @@ and extend ``django-modern-rest`` framework.
 
   .. epigraph::
 
-      I rarely see frameworks that treat their OpenAPI schema
-      as a first-class citizen. ``django-modern-rest`` not only generates
-      a schema that accurately reflects your code,
-      but also gives you the tools to verify it.
+    I rarely see frameworks that treat their OpenAPI schema
+    as a first-class citizen. ``django-modern-rest`` not only generates
+    a schema that accurately reflects your code,
+    but also gives you the tools to verify it.
 
-      -- `Dmitry Dygalo <https://github.com/Stranger6667>`_, author of Schemathesis
+    -- `Dmitry Dygalo <https://github.com/Stranger6667>`_, author of Schemathesis
+
+  .. epigraph::
+
+    ``django-modern-rest`` is a fantastic showcase of modern Python typing.
+    When I need inspiration for typing in Python, I often refer to its codebase.
+
+    -- `Sergey Miryanov <https://github.com/sergey-miryanov>`_, CPython core developer
 
 
 .. rubric:: Main features include:
