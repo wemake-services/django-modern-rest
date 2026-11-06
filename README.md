@@ -57,9 +57,9 @@
 
 ## Testimonials
 
-> The one thing I really love about **django-modern-rest** is its pluggable
+> The one thing I really love about `django-modern-rest` is its pluggable
 > serializers and validators. Frameworks that are tightly coupled
-> with **pydantic** can be really painful to work with.
+> with `pydantic` can be really painful to work with.
 
 — **[Kirill Podoprigora](https://github.com/Eclips4)**, CPython core developer
 
