@@ -73,7 +73,7 @@
 
 > `django-modern-rest` is a fantastic showcase of modern Python typing. When I need inspiration for typing in Python, I often refer to its codebase.
 
-- **[Sergey Miryanov](https://github.com/sergey-miryanov)**, CPython core developer
+— **[Sergey Miryanov](https://github.com/sergey-miryanov)**, CPython core developer
 
 ## Installation
 
