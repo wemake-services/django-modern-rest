@@ -1,6 +1,6 @@
 -e ..[msgspec]
 django==5.2.18
-django-ninja==1.7.1
+django-ninja==1.7.3
 djangorestframework==3.18.3
 fastapi==0.162.0
 gunicorn==26.2.0
