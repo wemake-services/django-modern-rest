@@ -109,6 +109,11 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
   must now support `SupportsFileParsing`. When it is optional, at least one
   must, #1493
 - Fixed that CSRF auth schemes were not showing `csrf_header` scheme, #1718
+- Fixed identified JSON Schema resources losing their `$id`,
+  which made references like `#/$defs/Point` resolve against the OpenAPI root
+  and failed validation with `PointerToNowhere`. Definitions of such resources
+  are now referenced with document-local pointers
+  and the identifiers are removed with a `SchemaResourceWarning`, #1707
 
 ### Misc
 
