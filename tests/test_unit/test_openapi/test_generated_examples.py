@@ -131,3 +131,73 @@ def test_none_example_is_kept(*, settings: LazySettings) -> None:
     model_schema = schema['components']['schemas']['_NoneExampleModel']
     assert model_schema['example'] is None
     assert 'examples' not in model_schema
+
+
+class _FieldExamplePydanticModel(pydantic.BaseModel):
+    username: str = pydantic.Field(examples=['admin'])
+
+
+class _FieldExamplePydanticController(Controller[PydanticSerializer]):
+    def get(self) -> _FieldExamplePydanticModel:
+        raise NotImplementedError
+
+
+def test_field_examples_used_in_pydantic_model_example(
+    *,
+    settings: LazySettings,
+) -> None:
+    """Ensure field examples are used in generated model example."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1639
+    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 1}
+
+    schema = build_schema(
+        Router(
+            'api/v1/',
+            [path('user/', _FieldExamplePydanticController.as_view())],
+        ),
+    ).convert()
+
+    model_schema = schema['components']['schemas']['_FieldExamplePydanticModel']
+    assert model_schema['examples'] == [{'username': 'admin'}]
+
+
+_has_msgspec = True
+try:
+    import msgspec
+
+    from dmr.plugins.msgspec import MsgspecSerializer
+except ImportError:  # pragma: no cover
+    _has_msgspec = False
+
+
+if _has_msgspec:
+    from typing import Annotated
+
+    class _FieldExampleMsgspecModel(msgspec.Struct):
+        username: Annotated[str, msgspec.Meta(examples=['admin'])]
+
+    class _FieldExampleMsgspecController(Controller[MsgspecSerializer]):
+        def get(self) -> _FieldExampleMsgspecModel:
+            raise NotImplementedError
+
+    def test_field_examples_used_in_msgspec_model_example(
+        *,
+        settings: LazySettings,
+    ) -> None:
+        """Ensure msgspec Meta examples are used in generated model example."""
+        # Regression test for
+        # https://github.com/wemake-services/django-modern-rest/issues/1639
+        settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 1}
+
+        schema = build_schema(
+            Router(
+                'api/v1/',
+                [path('user/', _FieldExampleMsgspecController.as_view())],
+            ),
+        ).convert()
+
+        model_schema = schema['components']['schemas'][
+            '_FieldExampleMsgspecModel'
+        ]
+        assert model_schema['examples'] == [{'username': 'admin'}]
