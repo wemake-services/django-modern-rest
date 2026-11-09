@@ -19,7 +19,7 @@ This is the API every user needs:
 .. autofunction:: dmr.openapi.load_schema
 
 Identified JSON Schema resources
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``load_schema`` preserves ``$id`` as ``Schema.resource_id``. During
 ``OpenAPI.convert()``, bundled resource references are rewritten to their
