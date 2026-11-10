@@ -148,7 +148,7 @@ dev-and-docs = [
 integration = [
   "pytest-codspeed>=4.3,<6",
   "testcontainers[redis]>=4.15,<5",
-  "tracecov>=0.23,<0.26",
+  "tracecov>=0.23,<0.27",
 ]
 integration-drivers = [
   "mysqlclient>=2.2.8,<3",
