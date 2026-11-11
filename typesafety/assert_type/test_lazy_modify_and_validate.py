@@ -74,11 +74,11 @@ class AsyncAndSyncMixedModify(Controller[PydanticSerializer]):
             auth=[DjangoSessionAsyncAuth()],
         )
 
-    @modify.lazy(_sync_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated]
+    @modify.lazy(_sync_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated, dynamic-function-decorator-return]
     async def get(self) -> int:
         return 1
 
-    @modify.lazy(_sync_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated]
+    @modify.lazy(_sync_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated, dynamic-function-decorator-return]
     def post(self) -> HttpResponse:
         return self.to_response(1)
 
@@ -94,11 +94,11 @@ class SyncAndAsyncMixedModify(Controller[PydanticSerializer]):
             auth=[DjangoSessionSyncAuth()],
         )
 
-    @modify.lazy(_async_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated]
+    @modify.lazy(_async_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated, dynamic-function-decorator-return]
     def get(self) -> int:
         return 1
 
-    @modify.lazy(_async_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated]
+    @modify.lazy(_async_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated, dynamic-function-decorator-return]
     async def post(self) -> HttpResponse:
         return self.to_response(1)
 
@@ -122,7 +122,7 @@ class AnyMixedModify(Controller[PydanticSerializer]):
     async def put(self) -> int:
         return 1
 
-    @modify.lazy(_any_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated]
+    @modify.lazy(_any_spec)  # type: ignore[deprecated]  # ty: ignore[deprecated, dynamic-function-decorator-return]
     async def post(self) -> HttpResponse:
         return self.to_response(1)
 
@@ -248,8 +248,8 @@ class MixedSpec(Controller[PydanticSerializer]):
     def _validate_spec(cls) -> ValidateAnyCallable:
         return validate(ResponseSpec(int, status_code=cls.status_code))
 
-    validate.lazy(_modify_spec)  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
-    modify.lazy(_validate_spec)  # type: ignore[type-var]  # ty: ignore[invalid-argument-type]
+    validate.lazy(_modify_spec)  # type: ignore[type-var]
+    modify.lazy(_validate_spec)  # type: ignore[type-var]
 
 
 # Lambda tests
