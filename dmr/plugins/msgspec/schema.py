@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import Any, ClassVar, final
 
-from msgspec.json import schema
+from msgspec.json import schema_components
 from typing_extensions import TypedDict, TypeForm, override
 
 from dmr.serializer import BaseSchemaGenerator, SchemaDef
@@ -49,12 +49,16 @@ class MsgspecSchemaGenerator(BaseSchemaGenerator):
         used_for_response: bool = False,  # not used
     ) -> SchemaDef:
         """Proxies the JSON schema generation to msgspec itself."""
-        out = schema(
-            model,
+        roots, components = schema_components(
+            (model,),
             ref_template=ref_template + '{name}',  # noqa: WPS336
             **cls.json_schema_kwargs,
         )
-        components = out.pop('$defs', {})
+        out = roots[0]
+        # Historically custom hooks used root $defs to supply components.
+        # Identified resources, however, own their definitions locally.
+        if '$id' not in out:
+            components.update(out.pop('$defs', {}))
         return out, components
 
     @override

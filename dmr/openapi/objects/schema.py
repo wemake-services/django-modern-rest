@@ -92,6 +92,7 @@ class Schema:
     anchor: Annotated[str | None, Field(alias='$anchor')] = None
     comment: Annotated[str | None, Field(alias='$comment')] = None
     schema_uri: Annotated[str | None, Field(alias='$schema')] = None
+    resource_id: Annotated[str | None, Field(alias='$id')] = None
     defs: Annotated[
         dict[str, 'Schema'] | None,
         Field(alias='$defs'),

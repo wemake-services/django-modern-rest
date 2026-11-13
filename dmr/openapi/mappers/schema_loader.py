@@ -102,6 +102,7 @@ def load_schema(raw_data: dict[str, Any]) -> Schema:
         anchor=raw_data.get('$anchor'),
         comment=raw_data.get('$comment'),
         schema_uri=raw_data.get('$schema'),
+        resource_id=raw_data.get('$id'),
         defs=_try_dict(raw_data.get('$defs')),
         x_extensions=_try_extensions(raw_data),
     )

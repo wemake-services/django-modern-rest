@@ -18,6 +18,23 @@ This is the API every user needs:
 
 .. autofunction:: dmr.openapi.load_schema
 
+Identified JSON Schema resources
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``load_schema`` preserves ``$id`` as ``Schema.resource_id``. During
+``OpenAPI.convert()``, bundled resource references are rewritten to their
+locations in the OpenAPI document, and the corresponding ``$id`` and
+resource-local ``$anchor`` values are removed. Definitions remain nested,
+so independent resources can use the same definition names.
+
+This conversion emits :class:`~dmr.openapi.mappers.schema_resources.SchemaResourceWarning`.
+Relative references to external resources are resolved against the original
+resource identifier. Dynamic references involving a bundled resource and
+conflicting resource identifiers or anchors raise ``ValueError`` instead of
+producing a document with changed reference semantics.
+
+.. autoclass:: dmr.openapi.mappers.schema_resources.SchemaResourceWarning
+
 Objects and customization hooks are listed in :ref:`openapi-reference`.
 
 .. _openapi-reference:
