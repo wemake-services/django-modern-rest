@@ -1,8 +1,13 @@
 from typing import Annotated
 
-import msgspec
+import pytest
 from django.conf import LazySettings
 from django.urls import path
+
+try:
+    import msgspec
+except ImportError:  # pragma: no cover
+    pytest.skip(reason='msgspec is not installed', allow_module_level=True)
 
 from dmr import Controller
 from dmr.openapi import build_schema
