@@ -105,12 +105,10 @@ def _authenticate(token: str) -> tuple['AbstractBaseUser', 'SessionBase']:
 
     # `django-allauth` already checks that the user is active,
     # and returns `None` for unknown / expired / anonymous sessions.
-    authenticated: tuple[AbstractBaseUser, SessionBase] | None = (  # pyright: ignore[reportUnknownVariableType]
-        authenticate_by_x_session_token(token)
-    )
-    if authenticated is None:
+    authenticated = authenticate_by_x_session_token(token)
+    if authenticated is None or authenticated.user is None:
         raise NotAuthenticatedError
-    return authenticated
+    return authenticated.user, authenticated.session
 
 
 class XSessionTokenSyncAuth(_BaseXSessionTokenAuth, SyncAuth):

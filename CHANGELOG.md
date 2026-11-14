@@ -26,7 +26,14 @@ Prompts of the three latest breaking releases also live in the
 ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 
-## 0.17.0
+## WIP
+
+### Features
+
+- Support `django-allauth>=65.22`, 
+
+
+## 0.17.0 (2026-11-01)
 
 ### Breaking changes
 
