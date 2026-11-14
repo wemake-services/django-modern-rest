@@ -142,7 +142,7 @@ class _FieldExamplePydanticController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def test_field_examples_used_in_pydantic_model_example(
+def test_field_examples_used_model_example(
     settings: LazySettings,
 ) -> None:
     """Ensure field examples are used in generated model example."""

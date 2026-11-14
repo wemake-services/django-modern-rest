@@ -20,7 +20,7 @@ class _FieldExampleMsgspecController(Controller[MsgspecSerializer]):
         raise NotImplementedError
 
 
-def test_field_examples_used_in_msgspec_model_example(
+def test_field_examples_used_model_example(
     settings: LazySettings,
 ) -> None:
     """Ensure msgspec Meta examples are used in generated model example."""
