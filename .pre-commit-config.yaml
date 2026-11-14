@@ -18,7 +18,7 @@ repos:
           - "github.com/wasilibs/go-shellcheck/cmd/shellcheck@latest"
 
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: c92afdf2c6ca336aaa8f39e2bd8d48f62dbd8e1f  # frozen: v1.31.1
+    rev: 06a39750ec31860bb44f2acf67182c40016cd1e7  # frozen: v1.32.0
     hooks:
       - id: zizmor
         args: ["--no-progress", "--fix"]
@@ -30,12 +30,12 @@ repos:
         args: ["--severity=style"]
 
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "50e0f3aee9dc5747a5f173f79a7417403c18dda6"  # frozen: v2.30.3
+    rev: "3c6e76e10abcae02303212289efed3413350769c"  # frozen: v2.30.6
     hooks:
       - id: pyproject-fmt
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 25bcf95026b96e2dd3c0aec3090c3d6ef6ca2e6c  # frozen: v0.17.3
+    rev: ef6cf06c079dd6b299dfc720b0f14400c9d168e1  # frozen: v0.17.5
     hooks:
       - id: ruff-check
         args: ["--exit-non-zero-on-fix"]
@@ -49,7 +49,7 @@ repos:
         files: ^docs/
 
   - repo: https://github.com/crate-ci/typos
-    rev: 9023c1f779400877cafdd98052113fc777e2cfdc  # frozen: v1.51.1
+    rev: 6b8d5532f97e7efe2bf6907daac17b3c9f8926ba  # frozen: v1.52.2
     hooks:
       - id: typos
 
