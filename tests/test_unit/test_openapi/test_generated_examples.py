@@ -73,14 +73,14 @@ def test_disabled_examples_write_nothing(settings: LazySettings) -> None:
     assert 'examples' not in schema
 
 
-def test_generate_example_none(*, settings: LazySettings) -> None:
+def test_generate_example_none(settings: LazySettings) -> None:
     """Ensure that ``None`` is a generated example, not a missing one."""
     settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
 
     assert generate_example(None, PydanticSerializer) is None
 
 
-def test_generate_example_disabled(*, settings: LazySettings) -> None:
+def test_generate_example_disabled(settings: LazySettings) -> None:
     """Ensure that ``EMPTY`` is returned when examples are disabled."""
     settings.DMR_SETTINGS = {Settings.openapi_examples_seed: EMPTY}
 
@@ -118,7 +118,7 @@ class _NoneExampleController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def test_none_example_is_kept(*, settings: LazySettings) -> None:
+def test_none_example_is_kept(settings: LazySettings) -> None:
     """Ensure that ``example: null`` is not replaced with generated ones."""
     # Regression test for
     # https://github.com/wemake-services/django-modern-rest/issues/1619
@@ -131,3 +131,31 @@ def test_none_example_is_kept(*, settings: LazySettings) -> None:
     model_schema = schema['components']['schemas']['_NoneExampleModel']
     assert model_schema['example'] is None
     assert 'examples' not in model_schema
+
+
+class _FieldExamplePydanticModel(pydantic.BaseModel):
+    username: str = pydantic.Field(examples=['admin'])
+
+
+class _FieldExamplePydanticController(Controller[PydanticSerializer]):
+    def get(self) -> _FieldExamplePydanticModel:
+        raise NotImplementedError
+
+
+def test_field_examples_used_model_example(
+    settings: LazySettings,
+) -> None:
+    """Ensure field examples are used in generated model example."""
+    # Regression test for
+    # https://github.com/wemake-services/django-modern-rest/issues/1639
+    settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 1}
+
+    schema = build_schema(
+        Router(
+            'api/v1/',
+            [path('user/', _FieldExamplePydanticController.as_view())],
+        ),
+    ).convert()
+
+    model_schema = schema['components']['schemas']['_FieldExamplePydanticModel']
+    assert model_schema['examples'] == [{'username': 'admin'}]

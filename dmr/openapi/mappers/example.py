@@ -63,6 +63,7 @@ else:
         # because the seed comes from settings.
         __model__ = Example
         __check_model__ = True
+        __use_examples__ = True
 
         @override
         @classmethod

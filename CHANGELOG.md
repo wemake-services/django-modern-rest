@@ -30,7 +30,11 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Features
 
-- Support `django-allauth>=65.22`, #1834
+- Added `django-allauth>=65.22` support, #1834
+
+### Bugfixes
+
+- Fixed preserving existing examples in schemas with `polyfactory`, #1816
 
 
 ## 0.17.0 (2026-11-01)

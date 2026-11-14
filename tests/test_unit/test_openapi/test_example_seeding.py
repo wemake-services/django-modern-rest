@@ -180,7 +180,7 @@ def test_date_examples_do_not_depend_on_now(
                 'day': '2019-04-15',
                 'at': '22:52:44.444129',
                 'duration': 'P6DT10H23M7S',
-                'deadline': '2000-10-02T11:06:13.220020',
+                'deadline': '2030-01-01T00:00:00Z',
             },
         ],
     })
