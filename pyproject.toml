@@ -140,7 +140,7 @@ build = [
 ]
 dev-and-docs = [
   # Needed for auth examples:
-  "django-allauth>=65.4,<66",
+  "django-allauth>=65.22,<66",
   # Needed for the micro-framework examples:
   "nanodjango>=0.16,<0.18",
   "punq>=0.8,<1",
@@ -164,7 +164,7 @@ unit-test = [
   # requires Python 3.12+. CI runs different django versions as separate jobs
   "dj-database-url>=3.1.2,<4",
   "django~=5.2.0",
-  "django-allauth",
+  "django-allauth>=65.22,<66",
   "django-csp>=4,<5",
   "faker>=40.36,<41",
   "inline-snapshot>=0.35,<1",

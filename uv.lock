@@ -1025,8 +1025,7 @@ dev = [
     { name = "dirty-equals", specifier = ">=0.11,<0.12" },
     { name = "dj-database-url", specifier = ">=3.1.2,<4" },
     { name = "django", specifier = "~=5.2.0" },
-    { name = "django-allauth" },
-    { name = "django-allauth", specifier = ">=65.4,<66" },
+    { name = "django-allauth", specifier = ">=65.22,<66" },
     { name = "django-csp", specifier = ">=4,<5" },
     { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=6.1.2,<6.2" },
     { name = "faker", specifier = ">=40.36,<41" },
@@ -1067,12 +1066,12 @@ dev = [
     { name = "xmltodict-rs", specifier = ">=0.13,<0.14" },
 ]
 dev-and-docs = [
-    { name = "django-allauth", specifier = ">=65.4,<66" },
+    { name = "django-allauth", specifier = ">=65.22,<66" },
     { name = "nanodjango", specifier = ">=0.16,<0.18" },
     { name = "punq", specifier = ">=0.8,<1" },
 ]
 docs = [
-    { name = "django-allauth", specifier = ">=65.4,<66" },
+    { name = "django-allauth", specifier = ">=65.22,<66" },
     { name = "django-filter", specifier = ">=25.2,<27" },
     { name = "django-mantle", specifier = ">=26.6,<27" },
     { name = "django-modern-schemas", specifier = ">=0.1.1,<0.2" },
@@ -1109,7 +1108,7 @@ unit-test = [
     { name = "dirty-equals", specifier = ">=0.11,<0.12" },
     { name = "dj-database-url", specifier = ">=3.1.2,<4" },
     { name = "django", specifier = "~=5.2.0" },
-    { name = "django-allauth" },
+    { name = "django-allauth", specifier = ">=65.22,<66" },
     { name = "django-csp", specifier = ">=4,<5" },
     { name = "faker", specifier = ">=40.36,<41" },
     { name = "inline-snapshot", specifier = ">=0.35,<1" },
