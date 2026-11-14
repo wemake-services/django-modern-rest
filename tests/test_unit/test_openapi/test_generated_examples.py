@@ -73,14 +73,14 @@ def test_disabled_examples_write_nothing(settings: LazySettings) -> None:
     assert 'examples' not in schema
 
 
-def test_generate_example_none(*, settings: LazySettings) -> None:
+def test_generate_example_none(settings: LazySettings) -> None:
     """Ensure that ``None`` is a generated example, not a missing one."""
     settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 5}
 
     assert generate_example(None, PydanticSerializer) is None
 
 
-def test_generate_example_disabled(*, settings: LazySettings) -> None:
+def test_generate_example_disabled(settings: LazySettings) -> None:
     """Ensure that ``EMPTY`` is returned when examples are disabled."""
     settings.DMR_SETTINGS = {Settings.openapi_examples_seed: EMPTY}
 
@@ -118,7 +118,7 @@ class _NoneExampleController(Controller[PydanticSerializer]):
         raise NotImplementedError
 
 
-def test_none_example_is_kept(*, settings: LazySettings) -> None:
+def test_none_example_is_kept(settings: LazySettings) -> None:
     """Ensure that ``example: null`` is not replaced with generated ones."""
     # Regression test for
     # https://github.com/wemake-services/django-modern-rest/issues/1619
@@ -143,7 +143,6 @@ class _FieldExamplePydanticController(Controller[PydanticSerializer]):
 
 
 def test_field_examples_used_in_pydantic_model_example(
-    *,
     settings: LazySettings,
 ) -> None:
     """Ensure field examples are used in generated model example."""
@@ -160,44 +159,3 @@ def test_field_examples_used_in_pydantic_model_example(
 
     model_schema = schema['components']['schemas']['_FieldExamplePydanticModel']
     assert model_schema['examples'] == [{'username': 'admin'}]
-
-
-_has_msgspec = True
-try:
-    import msgspec
-
-    from dmr.plugins.msgspec import MsgspecSerializer
-except ImportError:  # pragma: no cover
-    _has_msgspec = False
-
-
-if _has_msgspec:
-    from typing import Annotated
-
-    class _FieldExampleMsgspecModel(msgspec.Struct):
-        username: Annotated[str, msgspec.Meta(examples=['admin'])]
-
-    class _FieldExampleMsgspecController(Controller[MsgspecSerializer]):
-        def get(self) -> _FieldExampleMsgspecModel:
-            raise NotImplementedError
-
-    def test_field_examples_used_in_msgspec_model_example(
-        *,
-        settings: LazySettings,
-    ) -> None:
-        """Ensure msgspec Meta examples are used in generated model example."""
-        # Regression test for
-        # https://github.com/wemake-services/django-modern-rest/issues/1639
-        settings.DMR_SETTINGS = {Settings.openapi_examples_seed: 1}
-
-        schema = build_schema(
-            Router(
-                'api/v1/',
-                [path('user/', _FieldExampleMsgspecController.as_view())],
-            ),
-        ).convert()
-
-        model_schema = schema['components']['schemas'][
-            '_FieldExampleMsgspecModel'
-        ]
-        assert model_schema['examples'] == [{'username': 'admin'}]

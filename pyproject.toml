@@ -171,7 +171,7 @@ unit-test = [
   # We don't install `orjson` on 3.14, because we run `3.14t` as well,
   # but no way to disable it specifically for `t` version :(
   "orjson>=3.11,<4; python_version<'3.14' and implementation_name=='cpython'",
-  "polyfactory>=3.2,<4",
+  "polyfactory>=3.5,<4",
   # TODO: update together with `schemathesis`,
   # see https://github.com/schemathesis/schemathesis/issues/5850
   "pytest>=9,<10",
