@@ -68,5 +68,5 @@ exclude = [
   # page for unauthenticated CI requests.
   "^https://github\\.com/wemake-services/django-modern-rest/security/advisories/new$",
   # Codspeed does not support many requests:
-  "^https://app\\.codspeed\\.io/wemake-services/django-modern-rest$",
+  "^https://app\\.codspeed\\.io/wemake-services/django-modern-rest",
 ]
