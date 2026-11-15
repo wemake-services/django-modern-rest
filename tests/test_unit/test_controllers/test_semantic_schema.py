@@ -9,6 +9,8 @@ from dmr.openapi.generators import SecuritySchemeGenerator
 from dmr.plugins.pydantic import PydanticSerializer
 from dmr.security.jwt import HeaderJWTAsyncAuth, HeaderJWTSyncAuth
 from dmr.settings import Settings
+from dmr.throttling import Rate, SyncThrottle
+from dmr.throttling.backends import SyncDjangoCache
 
 
 def test_semantic_schema_settings(
@@ -66,6 +68,33 @@ def test_semantic_schema_controller(
     assert openapi_context.registries.security_scheme.schemes == {}
 
 
+def test_semantic_schema_validate_throttling() -> None:
+    """Ensure that semantic throttling can be disabled on endpoint level."""
+
+    class _PerEndpoint(Controller[PydanticSerializer]):
+        @validate(
+            ResponseSpec(str, status_code=HTTPStatus.OK),
+            throttling=[
+                SyncThrottle(
+                    1,
+                    Rate.minute,
+                    backend=SyncDjangoCache(allow_unsafe_cache=True),
+                ),
+            ],
+            semantic_schema=False,
+        )
+        def get(self) -> HttpResponse:
+            raise NotImplementedError
+
+    metadata = _PerEndpoint.api_endpoints['GET'].metadata
+
+    assert metadata.semantic_schema is False
+    assert metadata.semantic_auth is False
+    assert metadata.semantic_responses is False
+    assert HTTPStatus.OK in metadata.responses
+    assert HTTPStatus.TOO_MANY_REQUESTS not in metadata.responses
+
+
 def test_semantic_schema_modify(
     openapi_context: OpenAPIContext,
 ) -> None:
@@ -97,7 +126,7 @@ def test_semantic_schema_modify(
 def test_semantic_schema_async_validate(
     openapi_context: OpenAPIContext,
 ) -> None:
-    """Ensure that semantic auth can be disabled on endpoint level."""
+    """Ensure that semantic schema can be disabled on endpoint level."""
 
     class _PerEndpoint(Controller[PydanticSerializer]):
         @validate(
@@ -126,7 +155,7 @@ def test_semantic_schema_async_validate(
 def test_semantic_schema_csrf(
     openapi_context: OpenAPIContext,
 ) -> None:
-    """Ensure that semantic auth can be disabled on endpoint level."""
+    """Ensure that semantic schema can be disabled on endpoint level."""
 
     class _PerEndpoint(Controller[PydanticSerializer]):
         csrf_exempt = False
