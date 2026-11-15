@@ -488,6 +488,45 @@ Full list of header providers that we ship in ``django-modern-rest``:
 - :class:`~dmr.throttling.headers.RateLimitIETFDraft`
 
 
+OpenAPI schema
+--------------
+
+There are multiple things that you might want to configure
+in the final OpenAPI schema, when working with throttling.
+
+See :doc:`openapi/schema` for more details.
+
+Custom throttling response
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Throttling generates semantic responses
+if ``semantic_responses`` settings is activated.
+We only generate the ``429`` response once per endpoint,
+so if you want to have different headers for different throttling instances,
+you would have to describe the schema manually.
+Or if you want some very specific customization applied.
+
+The simplest way is to disable ``429`` in ``exclude_semantic_responses``.
+
+.. literalinclude:: /examples/throttling/custom_response.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+Adding custom ``x-`` extensions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You may also want to add custom
+`specification extensions <https://spec.openapis.org/oas/v3.1.0#specification-extensions>`_
+aka ``x-`` extensions
+to describe your specific rate limits in the OpenAPI schema.
+
+.. literalinclude:: /examples/throttling/x_extensions.py
+  :caption: views.py
+  :linenos:
+  :language: python
+
+
 Security
 --------
 

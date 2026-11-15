@@ -285,6 +285,17 @@ Or disable semantic auth completely:
   When disabling semantic auth on controller / endpoint levels,
   security schemes can still be registered if some other endpoints need them.
 
+.. tip::
+
+  Semantic responses from auth still won't be disabled by default
+  when setting ``semantic_auth=False``. If you need to disable them as well
+  also set ``exclude_semantic_responses`` to excluded the needed responses.
+
+  .. literalinclude:: /examples/openapi/semantic_auth_no_responses.py
+    :caption: views.py
+    :linenos:
+    :language: python
+
 You can mix these configurations
 in any way that makes sense for your application.
 

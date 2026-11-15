@@ -260,6 +260,7 @@ class _BaseThrottle(ResponseSpecProvider, Generic[_BackendT]):
     def _headers_spec(self) -> dict[str, HeaderSpec]:
         headers_spec: dict[str, HeaderSpec] = {}
         for header_provider in self.response_headers:
+            # TODO: should we validate that there are no duplicates here?
             headers_spec.update(header_provider.provide_headers_specs())
         return headers_spec
 
