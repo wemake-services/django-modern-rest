@@ -506,7 +506,7 @@ so if you want to have different headers for different throttling instances,
 you would have to describe the schema manually.
 Or if you want some very specific customization applied.
 
-The simpliest way is to disable ``429`` in ``exclude_semantic_responses``.
+The simplest way is to disable ``429`` in ``exclude_semantic_responses``.
 
 .. literalinclude:: /examples/throttling/custom_response.py
   :caption: views.py

@@ -289,7 +289,7 @@ Or disable semantic auth completely:
 
   Semantic responses from auth still won't be disabled by default
   when setting ``semantic_auth=False``. If you need to disable them as well
-  also set ``exclude_sementic_responses`` to excluded the needed responses.
+  also set ``exclude_semantic_responses`` to excluded the needed responses.
 
   .. literalinclude:: /examples/openapi/semantic_auth_no_responses.py
     :caption: views.py
