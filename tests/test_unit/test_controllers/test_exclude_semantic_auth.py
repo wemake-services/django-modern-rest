@@ -271,6 +271,7 @@ def test_disable_semantic_auth_modify(
         @modify(
             auth=(HeaderJWTSyncAuth(), _CustomSyncAuth()),
             semantic_auth=False,
+            exclude_semantic_responses={HTTPStatus.UNAUTHORIZED},
         )
         def get(self) -> str:
             raise NotImplementedError
@@ -285,7 +286,7 @@ def test_disable_semantic_auth_modify(
     assert metadata.semantic_responses is True
     assert metadata.semantic_auth is False
     assert requirements is None
-    assert HTTPStatus.UNAUTHORIZED in metadata.responses
+    assert HTTPStatus.UNAUTHORIZED not in metadata.responses  # excluded
     assert openapi_context.registries.security_scheme.schemes == {}
 
 
