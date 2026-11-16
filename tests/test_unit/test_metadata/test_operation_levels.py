@@ -512,6 +512,7 @@ def test_x_extensions_explicit_empty() -> None:
 def test_x_extensions_invalid_key() -> None:
     """Every top-level key in `x_extensions` must start with `'x-'`."""
     with pytest.raises(EndpointMetadataError, match="must start with 'x-'"):
+
         class _Controller(Controller[PydanticSerializer]):
             @modify(x_extensions={'owner': 'team'})
             def get(self) -> str:
