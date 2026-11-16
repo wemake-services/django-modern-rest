@@ -659,8 +659,10 @@ each setting describes exactly one object:
   :language: python
   :linenos:
 
-Keys must start with ``x-``,
-we let ``openapi-spec-validator`` report invalid ones.
+Keys must start with ``x-``.
+We validate ``x_extensions`` of :data:`~dmr.endpoint.modify`
+and :data:`~dmr.endpoint.validate` at import time
+and let ``openapi-spec-validator`` report invalid ones elsewhere.
 :func:`~dmr.openapi.load_schema` keeps extensions
 of external schemas as well.
 

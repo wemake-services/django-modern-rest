@@ -31,6 +31,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 ### Features
 
 - Added `django-allauth>=65.22` support, #1834
+- Invalid `x_extensions` keys now raise `EndpointMetadataError`
+  at import time, #1840
 
 ### Bugfixes
 
