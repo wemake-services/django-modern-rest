@@ -34,6 +34,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Bugfixes
 
+- Fixed `build_schema()` raising `KeyError` on translated lazy routes when
+  the active language differs from the language active at router creation, #1700
 - Fixed preserving existing examples in schemas with `polyfactory`, #1816
 
 

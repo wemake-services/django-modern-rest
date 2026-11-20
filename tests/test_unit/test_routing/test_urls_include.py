@@ -2,12 +2,25 @@ import json
 
 import pytest
 from django.urls import URLResolver, include
+from django.urls import path as django_path
+from django.utils import translation
+from django.utils.functional import lazy
 from syrupy.assertion import SnapshotAssertion
 
 from dmr import Controller
+from dmr.internal.types import StrOrPromise
 from dmr.openapi import build_schema
 from dmr.plugins.pydantic import PydanticFastSerializer
 from dmr.routing import Router, path
+
+
+def _lazy_route(english: str, russian: str) -> StrOrPromise:
+    def translate() -> str:
+        if translation.get_language() == 'ru':
+            return russian
+        return english
+
+    return lazy(translate, str)()
 
 
 class _UserController(Controller[PydanticFastSerializer]):
@@ -197,3 +210,128 @@ def test_router_nested_empty_patterns() -> None:
     assert schema.paths is not None
     assert set(schema.paths) == {'/users/'}
     assert router.metadata_for('/users/inner/').ignore_from_spec is True
+
+
+def test_translated_route_build_schema() -> None:
+    """Ensure ``build_schema()`` works across active languages, #1700."""
+    router = Router(
+        'api/',
+        [
+            path(
+                _lazy_route('books/<int:pk>/', 'knigi/<int:pk>/'),
+                _UserController.as_view(),
+            ),
+        ],
+        tags=['library'],
+    )
+
+    with translation.override('en'):
+        en_schema = build_schema(router).convert()
+        assert set(en_schema['paths']) == {'/api/books/{pk}/'}
+        assert en_schema['paths']['/api/books/{pk}/']['get']['tags'] == [
+            'library',
+        ]
+        assert router.metadata_for('/api/books/{pk}/').tags == ['library']
+        with pytest.raises(KeyError, match=r'/api/knigi/\{pk\}/'):
+            router.metadata_for('/api/knigi/{pk}/')
+
+    with translation.override('ru'):
+        ru_schema = build_schema(router).convert()
+        assert set(ru_schema['paths']) == {'/api/knigi/{pk}/'}
+        assert ru_schema['paths']['/api/knigi/{pk}/']['get']['tags'] == [
+            'library',
+        ]
+        assert router.metadata_for('/api/knigi/{pk}/').tags == ['library']
+        with pytest.raises(KeyError, match=r'/api/books/\{pk\}/'):
+            router.metadata_for('/api/books/{pk}/')
+
+
+def test_translated_route_included_routers() -> None:
+    """Ensure ``Router.include()`` preserves metadata across languages."""
+    books = Router(
+        '',
+        [
+            path(
+                _lazy_route('books/<int:pk>/', 'knigi/<int:pk>/'),
+                _UserController.as_view(),
+            ),
+            django_path(
+                _lazy_route('shop/', 'magazin/'),
+                include([
+                    django_path(
+                        _lazy_route('nested/', 'vlozh/'),
+                        _OtherController.as_view(),
+                    ),
+                ]),
+            ),
+        ],
+        tags=['books'],
+        deprecated=True,
+    )
+    hidden = Router(
+        '',
+        [
+            django_path(
+                _lazy_route('secret/', 'sekret/'),
+                _OtherController.as_view(),
+            ),
+        ],
+        ignore_from_spec=True,
+    )
+    router = Router('api/', tags=['api'])
+    router.include(books)
+    router.include(hidden)
+
+    with translation.override('en'):
+        en_schema = build_schema(router).convert()
+        assert set(en_schema['paths']) == {
+            '/api/books/{pk}/',
+            '/api/shop/nested/',
+        }
+        assert en_schema['paths']['/api/books/{pk}/']['get']['tags'] == [
+            'api',
+            'books',
+        ]
+        assert (
+            en_schema['paths']['/api/books/{pk}/']['get']['deprecated'] is True
+        )
+        assert router.metadata_for('/api/secret/').ignore_from_spec is True
+
+    with translation.override('ru'):
+        ru_schema = build_schema(router).convert()
+        assert set(ru_schema['paths']) == {
+            '/api/knigi/{pk}/',
+            '/api/magazin/vlozh/',
+        }
+        assert ru_schema['paths']['/api/knigi/{pk}/']['get']['tags'] == [
+            'api',
+            'books',
+        ]
+        assert (
+            ru_schema['paths']['/api/knigi/{pk}/']['get']['deprecated'] is True
+        )
+        assert router.metadata_for('/api/sekret/').ignore_from_spec is True
+
+
+def test_reused_subrouter_metadata() -> None:
+    """Ensure the same sub-router included twice keeps distinct metadata."""
+    shared = Router(
+        'items/',
+        [path('', _UserController.as_view())],
+        tags=['shared'],
+    )
+    v1 = Router('v1/', tags=['v1'], deprecated=True)
+    v1.include(shared)
+    v2 = Router('v2/', tags=['v2'], deprecated=False)
+    v2.include(shared)
+
+    api = Router('api/')
+    api.include(v1)
+    api.include(v2)
+
+    schema = build_schema(api).convert()
+
+    assert schema['paths']['/api/v1/items/']['get']['tags'] == ['v1', 'shared']
+    assert schema['paths']['/api/v1/items/']['get']['deprecated'] is True
+    assert schema['paths']['/api/v2/items/']['get']['tags'] == ['v2', 'shared']
+    assert 'deprecated' not in schema['paths']['/api/v2/items/']['get']

@@ -322,7 +322,7 @@ class Endpoint:  # noqa: WPS214
             controller_cls,
         )
 
-        router_metadata = router.metadata_for(route_metadata.normalized_path)
+        router_metadata = router.metadata_for(route_metadata.pattern_chain)
         # Endpoint and controller tags are already resolved,
         # router tags are the last level:
         tags = (
