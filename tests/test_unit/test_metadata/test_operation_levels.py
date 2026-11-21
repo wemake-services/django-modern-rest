@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.urls import path
 
 from dmr import Controller, ResponseSpec, modify, validate
+from dmr.exceptions import EndpointMetadataError
 from dmr.internal.compat import frozen
 from dmr.openapi import build_schema
 from dmr.openapi.objects import (
@@ -506,3 +507,26 @@ def test_x_extensions_explicit_empty() -> None:
 
     assert _Controller.api_endpoints['GET'].metadata.x_extensions == {}
     assert _extension_keys(_operation(_Controller, HTTPMethod.GET)) == []
+
+
+def test_x_extensions_wrong_modify_keys() -> None:
+    """All `@modify` extension keys must start with `x-`."""
+    with pytest.raises(EndpointMetadataError, match="'owner'"):
+
+        class _Controller(Controller[PydanticSerializer]):
+            @modify(x_extensions={'x-audience': 'public', 'owner': 'team'})
+            def get(self) -> str:
+                raise NotImplementedError
+
+
+def test_x_extensions_wrong_validate_keys() -> None:
+    """All `@validate` extension keys must start with `x-`."""
+    with pytest.raises(EndpointMetadataError, match="'rate-limit'"):
+
+        class _Controller(Controller[PydanticSerializer]):
+            @validate(
+                ResponseSpec(str, status_code=HTTPStatus.OK),
+                x_extensions={'rate-limit': 100},
+            )
+            def get(self) -> HttpResponse:
+                raise NotImplementedError

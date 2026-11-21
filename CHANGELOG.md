@@ -31,6 +31,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 ### Features
 
 - Added `django-allauth>=65.22` support, #1834
+- Added validation that `x_extensions` keys of `@modify` and `@validate`
+  start with `x-`, #1840
 
 ### Bugfixes
 
