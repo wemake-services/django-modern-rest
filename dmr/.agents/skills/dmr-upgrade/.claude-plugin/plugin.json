@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
   "name": "dmr-upgrade",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Upgrade a project to a newer django-modern-rest release using the official migration prompts",
   "author": {
     "name": "wemake-services",

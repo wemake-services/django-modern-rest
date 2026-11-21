@@ -5,11 +5,13 @@ By example, you can use agent skill
 `dmr-upgrade <https://github.com/wemake-services/django-modern-rest/tree/master/dmr/.agents/skills/dmr-upgrade>`_
 to upgrade a project to a newer ``django-modern-rest`` release.
 
-Every release with breaking changes ships an official migration prompt.
-The prompts of the three latest breaking releases live in the skill,
-one file per release in its ``references/`` directory.
-Older ones are in the :doc:`changelog <../deep-dive/changelog>`
-and in the `release notes <https://github.com/wemake-services/django-modern-rest/releases>`_.
+The skill bundles migration guides for the three latest releases with
+breaking changes, one file per release in its ``references/`` directory.
+The guides are based on the changelog and the release notes, and use the
+official migration prompt where one is published.
+Older transitions are covered by the skill's instructions: from ``0.13.0``
+they use the release notes of each release, before that the
+:doc:`changelog <../deep-dive/changelog>`.
 
 .. important::
 
@@ -32,9 +34,12 @@ You can use a prompt like this:
 .. code-block:: text
 
    $dmr-upgrade Upgrade this project from django-modern-rest 0.14.0
-   to 0.16.0. Apply every migration prompt
+   to 0.17.0. Apply every migration guide
    in order, run mypy and the test suite after each release,
    and list every change you could not resolve.
+
+This example crosses three releases, so the skill applies three migration
+guides, oldest first.
 
 How to use in Claude Code
 -------------------------
@@ -69,7 +74,7 @@ What is migrated
 - Renamed and moved classes, functions, and modules, including imports
 - Renamed keyword arguments, like ``FileResponseSpec(file_body=...)``
 - Everything else that a release changed, described step by step
-  in the migration prompt of that release
+  in the migration guide of that release
 
 Business logic, response contracts, and settings are not changed
-unless a migration prompt requires it.
+unless a migration guide requires it.
