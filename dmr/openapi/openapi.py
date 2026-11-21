@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Annotated, Any, Protocol
 
 from dmr.internal.dataclass_aliases import Field
 from dmr.openapi.mappers.schema_normalization import DumpedSchema, dump_schema
+from dmr.openapi.mappers.schema_resources import bundle_schema_resources
 from dmr.openapi.objects.components import Components
 from dmr.openapi.objects.external_documentation import ExternalDocumentation
 from dmr.openapi.objects.info import Info
@@ -105,7 +106,9 @@ class OpenAPI:
         """
         # Do not reconvert the same spec.
         if self._converted is None:
-            self._converted = dump_schema(self)
+            converted = dump_schema(self)
+            bundle_schema_resources(converted, self)
+            self._converted = converted
         if (
             not skip_validation
             and not self._validated
