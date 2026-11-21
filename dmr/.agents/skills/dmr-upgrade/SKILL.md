@@ -1,6 +1,6 @@
 ---
 name: dmr-upgrade
-description: Upgrade a project to a newer django-modern-rest (dmr) release. Use when bumping the django-modern-rest version, when a dependency update breaks imports from `dmr`, or when asked to migrate to a new dmr release. Applies the bundled migration guides for the supported releases in order, and checks the release notes for the rest.
+description: Upgrade a project to a newer django-modern-rest (dmr) release. Use when bumping the django-modern-rest version, when a dependency update breaks imports from `dmr`, or when asked to migrate to a new dmr release. Applies bundled migration prompts in order and checks release notes and the changelog for other releases.
 license: MIT
 metadata:
   author: wemake-services
@@ -11,16 +11,11 @@ metadata:
 
 ## Overview
 
-The migration guides of the three latest `django-modern-rest` releases
-with breaking changes live in this skill, one file per release in
-[references/](references/).
-They are based on the package `CHANGELOG.md` and the release notes,
-using the official migration prompt where one is published.
-The `CHANGELOG.md` of the package lists the breaking changes themselves.
-
-Do not guess how an API changed. Read the bundled guide or the release
-notes for every release between the installed version and the target
-version and apply all of it.
+This skill bundles migration prompts in [references/](references/).
+The table below highlights the three latest releases with breaking changes.
+Older prompts can remain bundled for historical transitions.
+The prompts are based on `CHANGELOG.md`, release notes, and tagged sources,
+using the official release prompt when one is published.
 
 ## Workflow
 
@@ -30,8 +25,38 @@ version and apply all of it.
   or the pinned version in `uv.lock`, `poetry.lock`, or `requirements.txt`.
 - Target: the version the user asked for, otherwise the latest release
   on https://pypi.org/project/django-modern-rest/.
-- Tell the user which releases lie in between and that each one
-  is applied in order. Never skip a release.
+- If the current and target versions are the same, report that there is
+  nothing to upgrade and stop.
+
+### Resolve the migration path
+
+Before editing dependencies or installing anything, list every published
+release in `installed < release <= target`, using the project's version
+ordering. Check them oldest first and tell the user which ones you will cross.
+For each release, select its bundled prompt by destination version:
+
+| Upgrade across | Prompt |
+| --- | --- |
+| 0.14 to 0.15 | [references/0.14-to-0.15.md](references/0.14-to-0.15.md) |
+| 0.15 to 0.16 | [references/0.15-to-0.16.md](references/0.15-to-0.16.md) |
+| 0.16 to 0.17 | [references/0.16-to-0.17.md](references/0.16-to-0.17.md) |
+
+For `0.13` to `0.14`, read the bundled
+[historical prompt](references/0.13-to-0.14.md). The
+[copy in the `0.17.0` tag](https://raw.githubusercontent.com/wemake-services/django-modern-rest/0.17.0/dmr/.agents/skills/dmr-upgrade/references/0.13-to-0.14.md)
+is the fallback if the local file is missing. The `0.14.0` release notes
+have the right `ExternalURL` to `external_path` replacement but the wrong
+transition in the preamble and an obsolete `llms-full.txt` link.
+
+Do not assume unlisted releases have no breaking changes. For a release
+without a bundled prompt, check its exact release notes and `CHANGELOG.md`
+before ruling out incompatibilities. Before `0.13.0`, use `CHANGELOG.md`
+as the primary source. If no official prompt is available, corroborate
+the migration steps against the docs and sources of the release tag.
+
+If you cannot establish the full release sequence or confirm an applicable
+transition, report what is unresolved and why. Stop before changing the
+dependency, lockfile, or environment.
 
 ### Bump the dependency
 
@@ -40,41 +65,8 @@ and install it, so the type checker sees the new API.
 
 ### Apply each migration prompt
 
-Read the prompt files for the selected releases, oldest first,
-and apply every numbered item to the whole project
-(source, tests, fixtures, settings, management commands):
-
-| Upgrade across | Prompt |
-| --- | --- |
-| 0.14 to 0.15 | [references/0.14-to-0.15.md](references/0.14-to-0.15.md) |
-| 0.15 to 0.16 | [references/0.15-to-0.16.md](references/0.15-to-0.16.md) |
-| 0.16 to 0.17 | [references/0.16-to-0.17.md](references/0.16-to-0.17.md) |
-
-For `0.13` to `0.14`, read the pinned copy of the prompt in the `0.17.0` tag:
-https://raw.githubusercontent.com/wemake-services/django-modern-rest/0.17.0/dmr/.agents/skills/dmr-upgrade/references/0.13-to-0.14.md
-
-It is the corrected copy of the `0.14.0` release notes: the release page
-mistakenly calls the transition `0.12.0` to `0.13.0` and links the removed
-`llms-full.txt`. If the raw URL is not reachable, read
-`dmr/.agents/skills/dmr-upgrade/references/0.13-to-0.14.md` from the
-`0.17.0` git tag, or the `0.14.0` release notes, and use the
-`ExternalURL` to `external_path` replacement from it. Ignore the wrong
-versions and the `llms-full.txt` link in the release notes preamble.
-
-Do not assume that a release missing from the table had no breaking
-changes. Check every release in `installed < release <= target` against its
-release notes and `CHANGELOG.md` before concluding that nothing is
-incompatible. Pick a bundled guide by its destination version, and use the
-pinned `0.13` to `0.14` archive for `0.14.0`. For any other release since
-`0.13.0` without a bundled guide, read the release notes of that exact
-release; before `0.13.0`, read `CHANGELOG.md`.
-
-When a release has no official migration prompt, check its
-`Breaking changes` section and the docs and sources of its tag, and apply
-only the changes they confirm. If the sources are unavailable and an
-incompatibility cannot be excluded, list that release and the reason among
-the unresolved items; do not move through an unverified transition.
-Apply the releases from the oldest to the newest, the same way.
+Apply the confirmed steps from oldest to newest. Search the whole project,
+including source, tests, fixtures, settings, and management commands.
 
 Apply one release at a time and keep its edits together,
 so the user can review them release by release.
@@ -91,13 +83,9 @@ When the installed docs matter, load the version-specific index:
 - Run `python manage.py check` and, when OpenAPI is used,
   `python manage.py dmr_export_schema <schema-path>` and diff the output
   against the previous schema: only intended changes should appear.
-- Search for the remaining outdated forms of the changed APIs, not for
-  the presence of the new names. An `EMPTY` import does not remove a
-  `Sentinel` annotation, a `TypeForm` import does not fix an override still
-  typed `Any`, a bare `csrf_security_scheme()` call is still the old
-  signature, and a cookie-mode requirement that lists `csrf` without
-  `csrf_header` is still outdated. The upgrade is complete when no
-  outdated usage remains.
+- For each transition you crossed, search for the API forms that became
+  outdated in that transition. Check the actual usages, not just imports.
+  Leave usages that are still valid on the requested target version alone.
 
 ## Reporting
 

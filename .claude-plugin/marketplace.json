@@ -90,7 +90,7 @@
     {
       "name": "dmr-upgrade",
       "source": "./dmr/.agents/skills/dmr-upgrade",
-      "description": "Upgrade a project to a newer django-modern-rest release using the official migration prompts",
+      "description": "Upgrade a project to a newer django-modern-rest release using bundled migration prompts and release notes",
       "category": "development",
       "keywords": [
         "django",
