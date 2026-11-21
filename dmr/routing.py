@@ -21,8 +21,10 @@ from dmr.internal.routing import PrefixRoutePattern, RouterMetadata
 from dmr.internal.types import FormatError, StrOrPromise
 from dmr.openapi.collector import (
     ExternalRouteMetadata,
-    collect_normalized_paths,
+    PatternChain,
+    collect_pattern_chains,
     controller_mapping_collector,
+    normalize_pattern_chain,
 )
 from dmr.openapi.objects import PathItem, Paths
 from dmr.openapi.openapi import OpenAPI
@@ -102,13 +104,9 @@ class Router:
         self.deprecated = deprecated
         self.ignore_from_spec = ignore_from_spec
         # Construct metadata for this new router:
-        self._path_metadata: dict[str, RouterMetadata] = {
-            new_path: RouterMetadata.from_router(self)
-            for _, new_path in collect_normalized_paths(
-                self.urls,
-                original_prefix='',
-                new_prefix=self.prefix,
-            )
+        self._path_metadata: dict[PatternChain, RouterMetadata] = {
+            pattern_chain: RouterMetadata.from_router(self)
+            for pattern_chain in collect_pattern_chains(self.urls)
         }
 
     def get_schema(self, context: 'OpenAPIContext') -> OpenAPI:  # noqa: WPS231
@@ -127,7 +125,7 @@ class Router:
             base_path=self.prefix,
         ):
             if self.metadata_for(
-                route_metadata.normalized_path,
+                route_metadata.pattern_chain,
             ).ignore_from_spec:
                 # Skip paths hidden by any router in the inclusion chain:
                 continue
@@ -170,21 +168,19 @@ class Router:
 
         .. versionadded:: 0.13.0
         """
-        self._path_metadata.update({
-            new_path: RouterMetadata.from_included(
-                self,
-                router.metadata_for(original_path),
-            )
-            for original_path, new_path in collect_normalized_paths(
-                router.urls,
-                original_prefix=router.prefix,
-                new_prefix=self.prefix,
-            )
-        })
-
-        self.urls.append(
-            router.to_urlpatterns(namespace=namespace, app_name=app_name),
+        included = router.to_urlpatterns(
+            namespace=namespace,
+            app_name=app_name,
         )
+        for pattern_chain in collect_pattern_chains(router.urls):
+            self._path_metadata[included, *pattern_chain] = (
+                RouterMetadata.from_included(
+                    self,
+                    router.metadata_for(pattern_chain),
+                )
+            )
+
+        self.urls.append(included)
 
     def to_urlpatterns(
         self,
@@ -208,7 +204,10 @@ class Router:
         path_spec = self.urls if app_name is None else (self.urls, app_name)
         return path(self.prefix, include(path_spec, namespace=namespace))
 
-    def metadata_for(self, openapi_path: str) -> RouterMetadata:
+    def metadata_for(
+        self,
+        openapi_path: str | PatternChain,
+    ) -> RouterMetadata:
         """
         Returns applied nested metadata from all router layers.
 
@@ -217,6 +216,14 @@ class Router:
 
         .. versionadded:: 0.15.0
         """
+        if isinstance(openapi_path, str):
+            for pattern_chain, metadata in self._path_metadata.items():
+                if (
+                    normalize_pattern_chain(self.prefix, pattern_chain)
+                    == openapi_path
+                ):
+                    return metadata
+            raise KeyError(openapi_path)
         return self._path_metadata[openapi_path]
 
 

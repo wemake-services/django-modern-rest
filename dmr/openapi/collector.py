@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from dmr.serializer import BaseSerializer
 
 _AnyPattern: TypeAlias = URLPattern | URLResolver
+PatternChain: TypeAlias = tuple[_AnyPattern, ...]
 _RouteMetadata: TypeAlias = (
     tuple['InternalRouteMetadata', type['Controller[BaseSerializer]']]
     | tuple['ExternalRouteMetadata', None]
@@ -44,40 +45,25 @@ def controller_mapping_collector(
         base_path: Common prefix that these URLs have. In a Django format.
 
     """
-    for url in urls:
-        if isinstance(url, URLPattern):
-            yield _process_pattern(url, base_path)
-        else:
-            yield from controller_mapping_collector(
-                url.url_patterns,
-                _join_paths(base_path, str(url.pattern), normalize=False),
-            )
+    yield from _collect_controller_mappings(urls, base_path)
 
 
-def collect_normalized_paths(
+def collect_pattern_chains(
     urls: Iterable[_AnyPattern],
-    *,
-    original_prefix: str,
-    new_prefix: str,
-) -> Iterable[tuple[str, str]]:
-    """Collects all normalized paths from a router."""
-    for url in urls:
-        original_path = _join_paths(
-            original_prefix,
-            str(url.pattern),
-            normalize=False,
-        )
-        if isinstance(url, URLPattern):
-            yield (
-                _normalize_path(original_path),
-                _join_paths(new_prefix, original_path),
-            )
-        else:
-            yield from collect_normalized_paths(
-                url.url_patterns,
-                original_prefix=original_path,
-                new_prefix=new_prefix,
-            )
+) -> Iterable[PatternChain]:
+    """Collects all pattern chains from a router."""
+    yield from _collect_pattern_chains(urls)
+
+
+def normalize_pattern_chain(
+    base_path: str,
+    pattern_chain: PatternChain,
+) -> str:
+    """Normalizes a pattern chain into an OpenAPI path."""
+    path = base_path
+    for url in pattern_chain:
+        path = _join_paths(path, str(url.pattern), normalize=False)
+    return _normalize_path(path)
 
 
 @dataclasses.dataclass(frozen=True, slots=True)
@@ -85,6 +71,7 @@ class _BaseRouteMetadata:
     path: str
     is_regex: bool
 
+    pattern_chain: PatternChain = dataclasses.field(default=(), kw_only=True)
     _normalized_path: str | None = dataclasses.field(init=False, default=None)
 
     @property
@@ -136,9 +123,45 @@ class ExternalRouteMetadata(_BaseRouteMetadata):
     openapi: PathItem | None
 
 
+def _collect_controller_mappings(
+    urls: Iterable[_AnyPattern],
+    base_path: str,
+    resolvers: tuple[URLResolver, ...] = (),
+) -> Iterable[_RouteMetadata]:
+    for url in urls:
+        if isinstance(url, URLPattern):
+            yield _process_pattern(
+                url,
+                base_path,
+                pattern_chain=(*resolvers, url),
+            )
+        else:
+            yield from _collect_controller_mappings(
+                url.url_patterns,
+                _join_paths(base_path, str(url.pattern), normalize=False),
+                (*resolvers, url),
+            )
+
+
+def _collect_pattern_chains(
+    urls: Iterable[_AnyPattern],
+    resolvers: tuple[URLResolver, ...] = (),
+) -> Iterable[PatternChain]:
+    for url in urls:
+        if isinstance(url, URLPattern):
+            yield (*resolvers, url)
+        else:
+            yield from _collect_pattern_chains(
+                url.url_patterns,
+                (*resolvers, url),
+            )
+
+
 def _process_pattern(
     url_pattern: URLPattern,
     base_path: str,
+    *,
+    pattern_chain: PatternChain = (),
 ) -> _RouteMetadata:
     joined = _join_paths(base_path, str(url_pattern.pattern), normalize=False)
 
@@ -149,6 +172,7 @@ def _process_pattern(
                 joined,
                 is_regex=False,
                 openapi=url_pattern.pattern.__dmr_external_openapi__,  # type: ignore[union-attr]
+                pattern_chain=pattern_chain,
             ),
             None,
         )
@@ -158,6 +182,7 @@ def _process_pattern(
             InternalRouteMetadata(
                 joined,
                 is_regex=isinstance(url_pattern.pattern, RegexPattern),
+                pattern_chain=pattern_chain,
             ),
             url_pattern.callback.view_class,  # type: ignore[attr-defined]
         )
