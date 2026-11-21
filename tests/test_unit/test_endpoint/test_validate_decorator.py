@@ -639,3 +639,16 @@ def test_validate_wrong_cookie_skip_validation(
         'Set-Cookie: test=value; Path=/; SameSite=lax',
     )
     assert json.loads(response.content) == snapshot(1)
+
+
+def test_validate_wrong_x_extensions() -> None:
+    """Ensures `@validate` requires `x-` prefix in `x_extensions` keys."""
+    with pytest.raises(EndpointMetadataError, match='x-'):
+
+        class _WrongExtensionsController(Controller[PydanticSerializer]):
+            @validate(
+                ResponseSpec(return_type=str, status_code=HTTPStatus.OK),
+                x_extensions={'wrong': 'value'},
+            )
+            def get(self) -> HttpResponse:
+                raise NotImplementedError

@@ -839,7 +839,15 @@ class EndpointMetadataBuilder:  # noqa: WPS214
         ).empty_to_none(
             self.payload.x_extensions if self.payload else EMPTY,
         )
-        return None if x_extensions is None else dict(x_extensions)
+        if x_extensions is None:
+            return None
+        for key in x_extensions:
+            if not key.startswith('x-'):
+                raise EndpointMetadataError(
+                    '`x_extensions` keys must start with `x-` prefix, '
+                    f'got {key!r} for {self.endpoint_name=}',
+                )
+        return dict(x_extensions)
 
     def _build_external_docs(self) -> 'ExternalDocumentation | None':
         external_docs: ExternalDocumentation | EMPTY | None = self.merger(

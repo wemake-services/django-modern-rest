@@ -379,3 +379,13 @@ def test_modify_with_set_cookie(
             )
             def post(self) -> dict[str, str]:
                 return {'result': 'done'}  # pragma: no cover
+
+
+def test_modify_wrong_x_extensions() -> None:
+    """Ensures `@modify` requires `x-` prefix in `x_extensions` keys."""
+    with pytest.raises(EndpointMetadataError, match='x-'):
+
+        class _WrongExtensionsController(Controller[PydanticSerializer]):
+            @modify(x_extensions={'wrong': 'value'})
+            def get(self) -> str:
+                raise NotImplementedError
