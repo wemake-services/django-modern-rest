@@ -16,7 +16,7 @@ _SplitOperations: TypeAlias = tuple[
     dict[str, 'Operation'] | None,
 ]
 
-_STANDARD_HTTP_METHODS: Final = frozenset((
+STANDARD_HTTP_METHODS: Final = frozenset((
     'get',
     'put',
     'post',
@@ -72,7 +72,7 @@ class PathItem:
         additional: dict[str, Operation] = {}
         # Sorted, so the schema does not depend on the definition order:
         for method_name, operation in sorted(operations.items()):
-            if method_name in _STANDARD_HTTP_METHODS:
+            if method_name in STANDARD_HTTP_METHODS:
                 standard[method_name] = operation
             else:
                 additional[method_name.upper()] = operation
