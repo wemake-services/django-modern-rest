@@ -5,11 +5,12 @@ By example, you can use agent skill
 `dmr-upgrade <https://github.com/wemake-services/django-modern-rest/tree/master/dmr/.agents/skills/dmr-upgrade>`_
 to upgrade a project to a newer ``django-modern-rest`` release.
 
-Every release with breaking changes ships an official migration prompt.
-The prompts of the three latest breaking releases live in the skill,
-one file per release in its ``references/`` directory.
-Older ones are in the :doc:`changelog <../deep-dive/changelog>`
-and in the `release notes <https://github.com/wemake-services/django-modern-rest/releases>`_.
+The skill lists migration prompts for the three latest releases with
+breaking changes and keeps the historical prompt for ``0.13.0`` to
+``0.14.0`` bundled. If that file is missing, it uses the corrected copy
+in the ``0.17.0`` tag, not the uncorrected release prompt.
+For transitions without a bundled prompt, the skill uses the release notes
+and the :doc:`changelog <../deep-dive/changelog>` to check what changed.
 
 .. important::
 
@@ -20,10 +21,9 @@ and in the `release notes <https://github.com/wemake-services/django-modern-rest
 How to use in Codex
 -------------------
 
-1. Note the version you are on, then bump ``django-modern-rest``
-   in your dependencies and install it.
-2. Ask Codex to use the skill ``$dmr-upgrade``,
-   naming both the old and the new version.
+1. Note the version you are on. Leave your installed dependency unchanged.
+2. Ask Codex to use the skill ``$dmr-upgrade``, naming both the old and
+   the new version. It checks the migration path before updating the dependency.
 3. Review the report: releases applied, changes made,
    and unresolved items.
 
@@ -32,9 +32,12 @@ You can use a prompt like this:
 .. code-block:: text
 
    $dmr-upgrade Upgrade this project from django-modern-rest 0.14.0
-   to 0.16.0. Apply every migration prompt
-   in order, run mypy and the test suite after each release,
+   to 0.17.0. Check the migration path before updating the dependency.
+   Apply the migration prompts in order, run mypy and the test suite,
    and list every change you could not resolve.
+
+This example crosses three releases, so the skill applies three migration
+prompts, oldest first.
 
 How to use in Claude Code
 -------------------------
@@ -68,8 +71,8 @@ What is migrated
 
 - Renamed and moved classes, functions, and modules, including imports
 - Renamed keyword arguments, like ``FileResponseSpec(file_body=...)``
-- Everything else that a release changed, described step by step
-  in the migration prompt of that release
+- Other applicable release changes identified in the migration prompts
+  or release notes
 
 Business logic, response contracts, and settings are not changed
-unless a migration prompt requires it.
+unless an applicable migration step requires it.
