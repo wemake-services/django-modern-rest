@@ -136,10 +136,14 @@ class JwtToken(BaseThrottleCacheKey):
 
         jwt_id = getattr(jwt_token, 'jti', None)
         if jwt_id is not None:
-            return hashlib.sha256(str(jwt_id).encode('utf-8')).hexdigest()
+            return self._hash(jwt_id)
 
         jwt_sub = getattr(jwt_token, 'sub', None)
         if jwt_sub is None:
             return None
+        return self._hash(jwt_sub)
 
-        return hashlib.sha256(str(jwt_sub).encode('utf-8')).hexdigest()
+    def _hash(self, jwt_payload: object) -> str:
+        return hashlib.sha256(
+            str(jwt_payload).encode('utf-8'),
+        ).hexdigest()

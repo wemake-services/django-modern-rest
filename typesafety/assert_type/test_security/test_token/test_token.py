@@ -10,7 +10,7 @@ from dmr.security.token.token import TokenLikeAsync, TokenLikeSync
 
 
 def accepts_token(token: Token) -> None:
-    assert_type(token.user, AbstractBaseUser)  # pyrefly: ignore[assert-type]
+    assert_type(token.user, AbstractBaseUser)
     assert_type(token.name, str)
     assert_type(token.token_hash, str)
     assert_type(token.expires_at, dt.datetime | None)

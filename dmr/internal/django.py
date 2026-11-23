@@ -161,7 +161,7 @@ def parse_as_post(request: HttpRequest) -> None:
         request_data = getattr(request, '_stream', request)
 
         # This was introduced in Django 6.1:
-        multipart_parser_cls = getattr(
+        multipart_parser_cls: type[MultiPartParser] = getattr(  # pyrefly: ignore[bad-assignment]
             request,
             'multipart_parser_class',
             MultiPartParser,
@@ -169,7 +169,7 @@ def parse_as_post(request: HttpRequest) -> None:
         try:
             post, files = multipart_parser_cls(
                 request.META,
-                request_data,
+                request_data,  # pyrefly: ignore[bad-argument-type]
                 request.upload_handlers,
                 request.encoding,
             ).parse()
