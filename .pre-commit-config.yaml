@@ -18,7 +18,7 @@ repos:
           - "github.com/wasilibs/go-shellcheck/cmd/shellcheck@latest"
 
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: 0eb9e4a60caf04df64b499ed1e8bef55f4440eae  # frozen: v1.33.0
+    rev: c7d31dc612dffdd4d3b2f2b88b9660d3ab057ee8  # frozen: v1.33.1
     hooks:
       - id: zizmor
         args: ["--no-progress", "--fix"]
