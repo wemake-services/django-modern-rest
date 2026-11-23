@@ -5,7 +5,7 @@ root_package = dmr
 include_external_packages = True
 exclude_type_checking_imports = True
 
-[importlinter:contract:layers]
+[importlinter:contract-layers]
 name = Layered architecture of our project
 type = layers
 
@@ -48,7 +48,7 @@ ignore_imports =
   # it needs the auth chain to know what challenge to send:
   dmr.errors -> dmr.security.base
 
-[importlinter:contract:no-optional-deps]
+[importlinter:contract-no-optional-deps]
 name = Do not use these optional dependencies outside of plugins
 type = forbidden
 
@@ -100,14 +100,14 @@ ignore_imports =
   # Optional jwt support:
   dmr.internal.jwt -> jwt
 
-[importlinter:contract:plugins-independence]
+[importlinter:contract-plugins-independence]
 name = All `plugins` must be independent
 type = independence
 
 modules =
   dmr.plugins.*
 
-[importlinter:contract:security-token-no-direct-model-import]
+[importlinter:contract-security-token-no-direct-model-import]
 name = All `dmr.security.token` logic must be independent from the Token model
 type = forbidden
 
@@ -117,7 +117,7 @@ source_modules =
 forbidden_modules =
   dmr.security.token.app
 
-[importlinter:streaming:layers]
+[importlinter:streaming-layers]
 name = Enforce correct layers in streaming
 type = layers
 
@@ -133,7 +133,7 @@ layers =
   endpoint
   exceptions
 
-[importlinter:openapi:layers]
+[importlinter:openapi-layers]
 name = Layered architecture of OpenAPI schema generation
 type = layers
 
@@ -148,21 +148,21 @@ layers =
   collector | config
   objects
 
-[importlinter:openapi:generators-independence]
+[importlinter:openapi-generators-independence]
 name = All OpenAPI `generators` must be independent
 type = independence
 
 modules =
   dmr.openapi.generators.*
 
-[importlinter:openapi:objects-independence]
+[importlinter:openapi-objects-independence]
 name = All OpenAPI `objects` must be independent
 type = independence
 
 modules =
   dmr.openapi.objects.*
 
-[importlinter:openapi:views-independence]
+[importlinter:openapi-views-independence]
 name = All OpenAPI `views` must be independent
 type = independence
 

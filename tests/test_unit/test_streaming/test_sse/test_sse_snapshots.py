@@ -89,7 +89,7 @@ _PossibleEvents: TypeAlias = _UserEvent | _PaymentEvent
 async def _complex_events(x_header: str) -> AsyncIterator[_PossibleEvents]:
     yield _UserEvent(id=1, data=x_header)
     yield _PaymentEvent(
-        data=_Payment(  # pyright: ignore[reportArgumentType]
+        data=_Payment(  # pyright: ignore[reportArgumentType]  # pyrefly: ignore[bad-argument-type]
             amount=10,
             currency='$',
         ).model_dump_json(),

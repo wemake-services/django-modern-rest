@@ -30,7 +30,7 @@ class OpenAPIYamlView(OpenAPIView):
     def get(self, request: HttpRequest) -> HttpResponse:
         """Render the OpenAPI schema as YAML response."""
         return HttpResponse(
-            content=yaml.safe_dump(
+            content=yaml.safe_dump(  # pyright: ignore[reportUnknownMemberType]
                 self.schema.convert(skip_validation=self.skip_validation),
             ),
             content_type=self.content_type,

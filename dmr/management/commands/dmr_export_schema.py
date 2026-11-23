@@ -85,7 +85,7 @@ class Command(BaseCommand):
                 ) from exc
 
             self.stdout.write(
-                yaml.safe_dump(
+                yaml.safe_dump(  # pyright: ignore[reportUnknownMemberType]
                     converted_schema,
                     indent=options['indent'],
                     sort_keys=options['sort_keys'],

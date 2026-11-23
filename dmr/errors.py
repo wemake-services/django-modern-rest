@@ -65,14 +65,14 @@ class ErrorType(enum.StrEnum):
 class ErrorDetail(TypedDict):
     """Base schema for error details description."""
 
-    """Text message of the error."""
     msg: str
+    """Text message of the error."""
 
-    """Optional error type identifier."""
     type: NotRequired[str]
+    """Optional error type identifier."""
 
-    """Optional location where this error happened."""
     loc: NotRequired[list[int | str]]
+    """Optional location where this error happened."""
 
 
 class ErrorModel(TypedDict):
@@ -83,8 +83,8 @@ class ErrorModel(TypedDict):
     See :ref:`customizing-error-messages` for more details.
     """
 
-    """Wrapped collection of errors."""
     detail: list[ErrorDetail]
+    """Wrapped collection of errors."""
 
 
 def format_error(  # noqa: C901, WPS231
