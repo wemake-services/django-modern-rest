@@ -15,7 +15,7 @@ from dmr.openapi.objects import (  # noqa: WPS235
 )
 
 #: Oldest OpenAPI version we support: earlier ones are not JSON Schema based.
-_MIN_OPENAPI_VERSION: Final = (3, 1)
+MIN_OPENAPI_VERSION: Final = (3, 1)
 
 
 @dataclass(slots=True, frozen=True, kw_only=True)
@@ -107,7 +107,7 @@ class OpenAPIConfig:
         # we would only limit in the future if case
         # of a real incompatibility. There's a high chance
         # that it will just work (c)
-        if self.openapi_version_info[:2] < _MIN_OPENAPI_VERSION:
+        if self.openapi_version_info[:2] < MIN_OPENAPI_VERSION:
             raise ValueError(
                 'OpenAPI versions before 3.1.0 are not supported, because '
                 'they are not based on JSON Schema, which is what we use '

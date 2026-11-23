@@ -3,14 +3,14 @@ import re
 from collections.abc import Iterator
 from typing import Final, Literal, TypeAlias, final
 
+from dmr.openapi.config import MIN_OPENAPI_VERSION
 from dmr.openapi.mappers.schema_normalization import DumpedSchema
 from dmr.openapi.objects.path_item import STANDARD_HTTP_METHODS
+from dmr.types import Json
 
 _Direction: TypeAlias = Literal['request', 'response']
 _Level: TypeAlias = Literal['breaking', 'unknown']
-_JsonScalar: TypeAlias = str | float | bool | None
-_Json: TypeAlias = dict[str, '_Json'] | list['_Json'] | _JsonScalar
-_JsonObject: TypeAlias = dict[str, _Json]
+_JsonObject: TypeAlias = dict[str, Json]
 
 _PATH_PARAMETER: Final = re.compile(r'\{([^}]+)\}')
 
@@ -84,12 +84,13 @@ def _validate_version(document: DumpedSchema) -> None:
     version = str(document.get('openapi'))
     major_minor = version.split('.')[:2]
     try:
-        supported = tuple(map(int, major_minor)) >= (3, 1)
+        supported = tuple(map(int, major_minor)) >= MIN_OPENAPI_VERSION
     except ValueError:
         supported = False
     if not supported:
+        minimum = '.'.join(map(str, MIN_OPENAPI_VERSION))
         raise ValueError(
-            f'Only OpenAPI 3.1+ schemas are supported, got {version}',
+            f'Only OpenAPI {minimum}+ schemas are supported, got {version}',
         )
 
 
