@@ -54,17 +54,17 @@ def _responding(
     }
 
 
-def _spec(
-    paths: DumpedSchema,
-    *,
-    schemas: DumpedSchema | None = None,
-) -> DumpedSchema:
+def _spec(paths: DumpedSchema, **components: DumpedSchema) -> DumpedSchema:
     return {
         'openapi': '3.1.0',
         'info': {'title': 'test', 'version': '1'},
         'paths': paths,
-        'components': {'schemas': schemas or {}},
+        'components': components,
     }
+
+
+def _ref(section: str, name: str) -> DumpedSchema:
+    return {'$ref': f'#/components/{section}/{name}'}
 
 
 @pytest.mark.parametrize(
@@ -293,21 +293,21 @@ def _spec(
             id='optional-parameter-added',
         ),
         pytest.param(
-            _spec({
-                '/users': {
-                    'get': _operation(
-                        parameters=[{'$ref': '#/components/parameters/Q'}],
-                    ),
+            _spec(
+                {'/users': {'get': _operation(parameters=[_parameter('q')])}},
+            ),
+            _spec(
+                {
+                    '/users': {
+                        'get': _operation(parameters=[_ref('parameters', 'Q')]),
+                    },
                 },
-            }),
-            _spec({
-                '/users': {
-                    'get': _operation(
-                        parameters=[{'$ref': '#/components/parameters/Q'}],
-                    ),
+                parameters={
+                    'Q': _ref('parameters', 'Shared'),
+                    'Shared': _parameter('q'),
                 },
-            }),
-            id='parameter-reference-kept',
+            ),
+            id='parameter-moved-to-components',
         ),
         pytest.param(
             _spec({
@@ -871,6 +871,161 @@ def _change(
                 ),
             ],
             id='request-schema-narrowed-under-range',
+        ),
+        pytest.param(
+            _spec(
+                {
+                    '/users': {
+                        'post': _operation(
+                            parameters=[_ref('parameters', 'Q')],
+                        ),
+                    },
+                },
+                parameters={'Q': _parameter('q')},
+            ),
+            _spec(
+                {
+                    '/users': {
+                        'post': _operation(
+                            parameters=[_ref('parameters', 'Q')],
+                        ),
+                    },
+                },
+                parameters={'Q': _parameter('q', required=True)},
+            ),
+            [
+                _change(
+                    '#/components/parameters/Q',
+                    'query parameter "q" became required',
+                ),
+            ],
+            id='referenced-parameter-became-required',
+        ),
+        pytest.param(
+            _spec(
+                {
+                    '/users': {
+                        'post': {
+                            **_operation(),
+                            'requestBody': _ref('requestBodies', 'User'),
+                        },
+                    },
+                },
+                requestBodies={'User': _media(_STRING)},
+            ),
+            _spec(
+                {
+                    '/users': {
+                        'post': {
+                            **_operation(),
+                            'requestBody': _ref('requestBodies', 'User'),
+                        },
+                    },
+                },
+                requestBodies={'User': _media(_INTEGER)},
+            ),
+            [
+                _change(
+                    '#/components/requestBodies/User/content/application~1json/schema',
+                    'schema accepts fewer values',
+                ),
+            ],
+            id='referenced-request-body-schema-narrowed',
+        ),
+        pytest.param(
+            _spec(
+                {
+                    '/users': {
+                        'post': {'responses': {'200': _ref('responses', 'Ok')}},
+                    },
+                },
+                responses={'Ok': {'description': 'ok', **_media(_STRING)}},
+            ),
+            _spec(
+                {
+                    '/users': {
+                        'post': {'responses': {'200': _ref('responses', 'Ok')}},
+                    },
+                },
+                responses={
+                    'Ok': {
+                        'description': 'ok',
+                        'content': {_JSON: _ref('mediaTypes', 'Text')},
+                    },
+                },
+                mediaTypes={'Text': {'schema': _INTEGER}},
+            ),
+            [
+                _change(
+                    '#/components/mediaTypes/Text/schema',
+                    'schema allows more values',
+                    direction='response',
+                ),
+            ],
+            id='referenced-response-schema-widened',
+        ),
+        pytest.param(
+            _spec(
+                {'/users': _ref('pathItems', 'Users')},
+                pathItems={
+                    'Users': {'get': _operation(), 'post': _operation()},
+                },
+            ),
+            _spec(
+                {'/users': _ref('pathItems', 'Users')},
+                pathItems={'Users': {'get': _operation()}},
+            ),
+            [
+                _change(
+                    '#/components/pathItems/Users/post',
+                    'operation removed',
+                ),
+            ],
+            id='referenced-path-item-operation-removed',
+        ),
+        pytest.param(
+            _spec(
+                {
+                    '/users': {
+                        **_ref('pathItems', 'Users'),
+                        'post': _operation(),
+                    },
+                },
+                pathItems={'Users': {'get': _operation()}},
+            ),
+            _spec(
+                {'/users': _ref('pathItems', 'Users')},
+                pathItems={'Users': {'get': _operation()}},
+            ),
+            [_change('#/paths/~1users/post', 'operation removed')],
+            id='operation-next-to-path-item-reference-removed',
+        ),
+        pytest.param(
+            _spec(
+                {
+                    '/users': {
+                        **_ref('pathItems', 'Users'),
+                        'parameters': [_parameter('q')],
+                    },
+                },
+                pathItems={'Users': {'post': _operation()}},
+            ),
+            _spec(
+                {
+                    '/users': {
+                        **_ref('pathItems', 'Users'),
+                        'parameters': [_parameter('q', required=True)],
+                    },
+                },
+                pathItems={'Users': {'post': _operation()}},
+            ),
+            [
+                _change(
+                    '#/paths/~1users/parameters/0',
+                    'query parameter "q" became required',
+                ),
+            ],
+            id='parameter-next-to-path-item-reference-became-required',
         ),
     ],
 )

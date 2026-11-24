@@ -2,7 +2,7 @@ import dataclasses
 import re
 from collections.abc import Iterator
 from typing import Final, Literal, TypeAlias, final, get_args
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 from django.http.request import MediaType
 from typing_extensions import TypeIs
@@ -71,12 +71,14 @@ class _Node:
 
     spec: _JsonObject
     pointer: str
+    resolver: jsonschema_rs.Resolver
     exists: bool = True
 
     def child(self, key: str) -> '_Node':
         return _Node(
-            spec=_section(self.spec, key),
+            spec=_as_object(self.spec.get(key)),
             pointer=_join(self.pointer, key),
+            resolver=self.resolver,
             exists=key in self.spec,
         )
 
@@ -84,10 +86,30 @@ class _Node:
         found = self.spec.get(key)
         listed = found if isinstance(found, list) else ()
         return [
-            _Node(spec=element, pointer=_join(self.pointer, key, index))
+            _Node(
+                spec=element,
+                pointer=_join(self.pointer, key, index),
+                resolver=self.resolver,
+            )
             for index, element in enumerate(listed)
             if isinstance(element, dict)
         ]
+
+    def referenced(self, key: str) -> '_Node':
+        return self.child(key).resolved()
+
+    def resolved(self) -> '_Node':
+        """Follows references to other parts of the document."""
+        reference = self.spec.get('$ref')
+        if not isinstance(reference, str):
+            return self
+        found = self.resolver.lookup(reference)
+        _, _, fragment = reference.partition('#')
+        return _Node(
+            spec=_as_object(found.contents),
+            pointer=unquote(fragment),
+            resolver=found.resolver,
+        ).resolved()
 
 
 @final
@@ -118,7 +140,8 @@ class _Parameter:
 class _Operation:
     path: str
     method: str
-    path_item: _JsonObject
+    node: _Node
+    path_items: tuple[_Node, ...]
 
     @property
     def key(self) -> tuple[str, str]:
@@ -131,25 +154,14 @@ class _Operation:
         return f'{verb} {self.path}'
 
     @property
-    def node(self) -> _Node:
-        return self._path_item_node.child(self.method)
-
-    @property
     def request_parameters(self) -> dict[_ParameterKey, _Parameter]:
         """Operation parameters override the path item ones."""
         path_names = tuple(_PATH_PARAMETER.findall(self.path))
         return {
             parameter.key: parameter
-            for owner in (self._path_item_node, self.node)
+            for owner in (*self.path_items, self.node)
             for parameter in _described_parameters(owner, path_names)
         }
-
-    @property
-    def _path_item_node(self) -> _Node:
-        return _Node(
-            spec=self.path_item,
-            pointer=_join('/paths', self.path),
-        )
 
 
 @final
@@ -175,11 +187,8 @@ class _SchemaComparison:
 
     __slots__ = ('_canonical', '_registry')
 
-    def __init__(self, old: DumpedSchema, new: DumpedSchema) -> None:
-        self._registry = jsonschema_rs.Registry(
-            [(_OLD_URI, old), (_NEW_URI, new)],
-            draft=_DRAFT,
-        )
+    def __init__(self, registry: jsonschema_rs.Registry) -> None:
+        self._registry = registry
         self._canonical: dict[str, jsonschema_rs.CanonicalSchema] = {}
 
     def findings(
@@ -223,19 +232,16 @@ class _SchemaComparison:
         direction: _Direction,
     ) -> jsonschema_rs.canonical.Containment:
         """Requests must stay accepted, responses must stay expected."""
-        old_accepted = self._canonicalize(_OLD_URI, old_schema)
-        new_accepted = self._canonicalize(_NEW_URI, new_schema)
+        old_accepted = self._canonicalize(old_schema)
+        new_accepted = self._canonicalize(new_schema)
         if direction == 'request':
             return new_accepted.covers(old_accepted)
         return old_accepted.covers(new_accepted)
 
-    def _canonicalize(
-        self,
-        uri: str,
-        schema: _Node,
-    ) -> jsonschema_rs.CanonicalSchema:
+    def _canonicalize(self, schema: _Node) -> jsonschema_rs.CanonicalSchema:
+        base_uri = schema.resolver.base_uri
         fragment = quote(schema.pointer, safe='/~')
-        reference = f'{uri}#{fragment}'
+        reference = f'{base_uri}#{fragment}'
         if reference not in self._canonical:
             self._canonical[reference] = jsonschema_rs.canonicalize(
                 {'$ref': reference},
@@ -278,22 +284,37 @@ def _validate_version(document: DumpedSchema) -> None:
         )
 
 
-def _section(node: _JsonObject, key: str) -> _JsonObject:
-    found = node.get(key)
-    return found if isinstance(found, dict) else {}
+def _is_object(found: object) -> TypeIs[_JsonObject]:
+    return isinstance(found, dict)
 
 
-def _operations(document: _JsonObject) -> Iterator[_Operation]:
-    paths = _section(document, 'paths')
-    for path in paths:
-        path_item = _section(paths, path)
-        for method in path_item:
-            if method in STANDARD_HTTP_METHODS:
-                yield _Operation(
-                    path=path,
-                    method=method,
-                    path_item=path_item,
-                )
+def _as_object(found: object) -> _JsonObject:
+    return found if _is_object(found) else {}
+
+
+def _root(document: DumpedSchema, resolver: jsonschema_rs.Resolver) -> _Node:
+    return _Node(spec=document, pointer='', resolver=resolver)
+
+
+def _path_items(written: _Node) -> tuple[_Node, ...]:
+    """Fields can be written next to a reference to another path item."""
+    target = written.resolved()
+    return (written,) if target is written else (written, target)
+
+
+def _operations(document: _Node) -> Iterator[_Operation]:
+    paths = document.child('paths')
+    for path in paths.spec:
+        path_items = _path_items(paths.child(path))
+        for path_item in path_items:
+            for method in path_item.spec:
+                if method in STANDARD_HTTP_METHODS:
+                    yield _Operation(
+                        path=path,
+                        method=method,
+                        node=path_item.child(method),
+                        path_items=path_items,
+                    )
 
 
 def _is_parameter_location(location: Json) -> TypeIs[ParameterLocation]:
@@ -304,10 +325,14 @@ def _described_parameters(
     owner: _Node,
     path_names: tuple[str, ...],
 ) -> Iterator[_Parameter]:
-    for node in owner.elements('parameters'):
+    for element in owner.elements('parameters'):
+        node = element.resolved()
         location = node.spec.get('in')
         name = node.spec.get('name')
-        if _is_parameter_location(location) and isinstance(name, str):
+        # Narrows types, the specification requires both fields:
+        if (  # pragma: no branch
+            _is_parameter_location(location) and isinstance(name, str)
+        ):
             yield _Parameter(
                 node=node,
                 location=location,
@@ -435,7 +460,7 @@ def _media_type_changes(
     schemas: _SchemaComparison,
 ) -> Iterator[_Finding]:
     for media_type in old_content.spec:
-        old_media = old_content.child(media_type)
+        old_media = old_content.referenced(media_type)
         kept = [
             candidate
             for candidate in new_content.spec
@@ -449,7 +474,7 @@ def _media_type_changes(
         for new_media_type in kept:
             yield from schemas.findings(
                 old_media,
-                new_content.child(new_media_type),
+                new_content.referenced(new_media_type),
                 direction,
             )
 
@@ -510,10 +535,14 @@ class _Detector:
     __slots__ = ('_new', '_old', '_report', '_schemas')
 
     def __init__(self, old: DumpedSchema, new: DumpedSchema) -> None:
-        self._old = old
-        self._new = new
+        registry = jsonschema_rs.Registry(
+            [(_OLD_URI, old), (_NEW_URI, new)],
+            draft=_DRAFT,
+        )
+        self._old = _root(old, registry.resolver(_OLD_URI))
+        self._new = _root(new, registry.resolver(_NEW_URI))
         self._report = _Report()
-        self._schemas = _SchemaComparison(old, new)
+        self._schemas = _SchemaComparison(registry)
 
     def detect(self) -> list[Change]:
         new_operations = {
@@ -558,8 +587,8 @@ class _Detector:
             )
 
     def _request_body(self, old: _Operation, new: _Operation) -> None:
-        old_body = old.node.child('requestBody')
-        new_body = new.node.child('requestBody')
+        old_body = old.node.referenced('requestBody')
+        new_body = new.node.referenced('requestBody')
         if not new_body.exists:
             if old_body.exists:
                 self._report.add(
@@ -588,7 +617,7 @@ class _Detector:
         old_responses = old.node.child('responses')
         new_responses = new.node.child('responses')
         for pair in _status_pairs(old_responses.spec, new_responses.spec):
-            new_response = new_responses.child(pair.new)
+            new_response = new_responses.referenced(pair.new)
             if pair.old is None:
                 self._report.add(
                     _Finding(
@@ -600,7 +629,7 @@ class _Detector:
                 )
                 continue
             self._media_types(
-                old_responses.child(pair.old),
+                old_responses.referenced(pair.old),
                 new_response,
                 'response',
                 new.label,
