@@ -8,6 +8,8 @@ from dmr.openapi.mappers.schema_normalization import DumpedSchema
 _JSON: Final = 'application/json'
 _STRING: Final[DumpedSchema] = {'type': 'string'}  # noqa: WPS407
 _INTEGER: Final[DumpedSchema] = {'type': 'integer'}  # noqa: WPS407
+_ARRAY: Final[DumpedSchema] = {'type': 'array', 'items': _STRING}  # noqa: WPS407
+_UNCOMPARABLE: Final[DumpedSchema] = {'type': 'string', 'pattern': r'a\Z'}  # noqa: WPS407
 _TOKEN: Final[DumpedSchema] = {  # noqa: WPS407
     'type': 'apiKey',
     'name': 'X-Token',
@@ -16,6 +18,7 @@ _TOKEN: Final[DumpedSchema] = {  # noqa: WPS407
 _BEARER: Final[DumpedSchema] = {'type': 'http', 'scheme': 'Bearer'}  # noqa: WPS407
 _OAUTH: Final[DumpedSchema] = {'type': 'oauth2', 'flows': {}}  # noqa: WPS407
 _SECURITY_LOCATION: Final = '#/paths/~1users/post/security'
+_PARAMETER_LOCATION: Final = '#/paths/~1users/post/parameters/0'
 _TOTAL: Final = 'X-Total'
 _HEADERS_LOCATION: Final = '#/paths/~1users/post/responses/200/headers'
 
@@ -105,6 +108,16 @@ def _header(
     schema: DumpedSchema = _STRING,
 ) -> DumpedSchema:
     return {'required': required, 'schema': schema}
+
+
+def _serialized(
+    *,
+    location: str = 'query',
+    schema: DumpedSchema = _ARRAY,
+    **fields: str | bool,
+) -> DumpedSchema:
+    described = {**_parameter('q', location=location, schema=schema), **fields}
+    return _spec({'/users': {'post': _operation(parameters=[described])}})
 
 
 def _sending(headers: DumpedSchema, **components: DumpedSchema) -> DumpedSchema:
@@ -527,6 +540,46 @@ def _sending(headers: DumpedSchema, **components: DumpedSchema) -> DumpedSchema:
             _sending({}),
             id='response-content-type-header-removed',
         ),
+        pytest.param(
+            _serialized(),
+            _serialized(style='form', explode=True),
+            id='parameter-default-serialization-written',
+        ),
+        pytest.param(
+            _serialized(location='header'),
+            _serialized(location='header', style='simple', explode=False),
+            id='header-parameter-default-serialization-written',
+        ),
+        pytest.param(
+            _serialized(style='pipeDelimited'),
+            _serialized(style='pipeDelimited', explode=False),
+            id='parameter-default-explode-follows-style',
+        ),
+        pytest.param(
+            _serialized(),
+            _serialized(allowReserved=True, allowEmptyValue=True),
+            id='parameter-serialization-relaxed',
+        ),
+        pytest.param(
+            _serialized(location='cookie'),
+            _serialized(location='cookie', style='form', explode=True),
+            id='cookie-parameter-default-serialization-written',
+        ),
+        pytest.param(
+            _serialized(location='cookie', style='cookie'),
+            _serialized(location='cookie', style='cookie', explode=True),
+            id='parameter-default-explode-follows-cookie-style',
+        ),
+        pytest.param(
+            _serialized(schema=_STRING),
+            _serialized(schema=_STRING, style='pipeDelimited'),
+            id='scalar-parameter-style-changed',
+        ),
+        pytest.param(
+            _serialized(schema=_STRING),
+            _serialized(schema=_STRING, explode=False),
+            id='scalar-parameter-explode-changed',
+        ),
     ],
 )
 def test_compatible(*, old: DumpedSchema, new: DumpedSchema) -> None:
@@ -773,7 +826,7 @@ def _change(
             }),
             [
                 _change(
-                    '#/paths/~1users/post/parameters/0',
+                    _PARAMETER_LOCATION,
                     'required query parameter "q" added',
                 ),
             ],
@@ -792,7 +845,7 @@ def _change(
             }),
             [
                 _change(
-                    '#/paths/~1users/post/parameters/0',
+                    _PARAMETER_LOCATION,
                     'query parameter "q" became required',
                 ),
             ],
@@ -831,7 +884,7 @@ def _change(
             }),
             [
                 _change(
-                    '#/paths/~1users/post/parameters/0',
+                    _PARAMETER_LOCATION,
                     'query parameter "q" became required',
                 ),
             ],
@@ -944,7 +997,7 @@ def _change(
             _spec({
                 '/users': {
                     'post': _operation(
-                        body={'type': 'string', 'pattern': r'a\Z'},
+                        body=_UNCOMPARABLE,
                     ),
                 },
             }),
@@ -1314,6 +1367,78 @@ def _change(
                 ),
             ],
             id='response-cookie-name-case-changed',
+        ),
+        pytest.param(
+            _serialized(),
+            _serialized(style='pipeDelimited'),
+            [_change(_PARAMETER_LOCATION, 'query parameter "q" style changed')],
+            id='parameter-style-changed',
+        ),
+        pytest.param(
+            _serialized(),
+            _serialized(explode=False),
+            [
+                _change(
+                    _PARAMETER_LOCATION,
+                    'query parameter "q" explode changed',
+                ),
+            ],
+            id='parameter-explode-changed',
+        ),
+        pytest.param(
+            _serialized(allowReserved=True),
+            _serialized(),
+            [
+                _change(
+                    _PARAMETER_LOCATION,
+                    'query parameter "q" no longer allows reserved characters',
+                ),
+            ],
+            id='parameter-reserved-characters-disallowed',
+        ),
+        pytest.param(
+            _serialized(allowEmptyValue=True),
+            _serialized(allowEmptyValue=False),
+            [
+                _change(
+                    _PARAMETER_LOCATION,
+                    'query parameter "q" no longer allows empty values',
+                ),
+            ],
+            id='parameter-empty-value-disallowed',
+        ),
+        pytest.param(
+            _serialized(location='path', schema=_STRING),
+            _serialized(location='path', schema=_STRING, style='label'),
+            [_change(_PARAMETER_LOCATION, 'path parameter "q" style changed')],
+            id='scalar-path-parameter-style-changed',
+        ),
+        pytest.param(
+            _serialized(schema=_UNCOMPARABLE),
+            _serialized(schema=_UNCOMPARABLE, explode=False),
+            [
+                _change(
+                    _PARAMETER_LOCATION,
+                    'query parameter "q" explode changed',
+                ),
+                _change(
+                    f'{_PARAMETER_LOCATION}/schema',
+                    'schema changed',
+                    level='unknown',
+                ),
+            ],
+            id='parameter-with-uncomparable-schema-explode-changed',
+        ),
+        pytest.param(
+            _serialized(schema=_STRING, explode=False),
+            _serialized(),
+            [
+                _change(
+                    f'{_PARAMETER_LOCATION}/schema',
+                    'schema accepts fewer values',
+                ),
+            ],
+            id='scalar-parameter-became-array',
         ),
     ],
 )

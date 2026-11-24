@@ -34,6 +34,12 @@ _DEFAULT_STATUS: Final = 'default'
 _STATUS_RANGE_SUFFIX: Final = 'XX'
 _WILDCARD: Final = '*'
 _SECURITY: Final = 'security'
+_FORM_LOCATIONS: Final[frozenset[ParameterLocation]] = frozenset((
+    'query',
+    'cookie',
+))
+_PREFIXED_STYLES: Final = frozenset(('label', 'matrix'))
+_EXPLODED_STYLES: Final = frozenset(('form', 'cookie'))
 _CONTENT_TYPE: Final = 'content-type'
 _SCHEMA_KEYWORDS: Final = ('schema', 'itemSchema')
 _OLD_URI: Final = 'urn:dmr:old'
@@ -140,6 +146,20 @@ class _Parameter:
     def label(self) -> str:
         return f'{self.location} parameter "{self.name}"'
 
+    @property
+    def style(self) -> str:
+        written = self.node.text('style')
+        if written is not None:
+            return written
+        return 'form' if self.location in _FORM_LOCATIONS else 'simple'
+
+    @property
+    def is_exploded(self) -> bool:
+        written = self.node.spec.get('explode')
+        if isinstance(written, bool):
+            return written
+        return self.style in _EXPLODED_STYLES
+
 
 @final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
@@ -233,11 +253,16 @@ class _Finding:
 class _SchemaComparison:
     """Compares JSON Schemas as sets of values they accept."""
 
-    __slots__ = ('_canonical', '_registry')
+    __slots__ = ('_canonical', '_registry', '_scalars')
 
     def __init__(self, registry: jsonschema_rs.Registry) -> None:
         self._registry = registry
         self._canonical: dict[str, jsonschema_rs.CanonicalSchema] = {}
+        self._scalars = jsonschema_rs.canonicalize(
+            {'type': ['string', 'number', 'boolean', 'null']},
+            draft=_DRAFT,
+            validate_formats=True,
+        )
 
     def findings(
         self,
@@ -258,6 +283,16 @@ class _SchemaComparison:
                     message=_schema_message(level, direction),
                     level=level,
                 )
+
+    def is_scalar(self, owner: _Node) -> bool:
+        """Whether the schema accepts neither arrays nor objects."""
+        try:
+            containment = self._scalars.covers(
+                self._canonicalize(owner.child('schema')),
+            )
+        except jsonschema_rs.canonical.CanonicalizationError:
+            return False
+        return containment == _Containment.YES
 
     def _level(
         self,
@@ -523,6 +558,56 @@ def _requirement_change(
     return f'{new.label} became required'
 
 
+def _is_withdrawn(
+    old: _Parameter,
+    new: _Parameter,
+    keyword: Literal['allowReserved', 'allowEmptyValue'],
+) -> bool:
+    return (
+        old.node.spec.get(keyword) is True
+        and new.node.spec.get(keyword) is not True
+    )
+
+
+def _style_changes(
+    old: _Parameter,
+    new: _Parameter,
+    schemas: _SchemaComparison,
+) -> Iterator[str]:
+    """Most styles only affect arrays and objects."""
+    is_structured = not schemas.is_scalar(old.node)
+    if old.style != new.style:
+        if is_structured or _PREFIXED_STYLES.intersection((
+            old.style,
+            new.style,
+        )):
+            yield f'{new.label} style changed'
+    elif is_structured and old.is_exploded != new.is_exploded:
+        yield f'{new.label} explode changed'
+
+
+def _serialization_changes(
+    old: _Parameter,
+    new: _Parameter,
+    schemas: _SchemaComparison,
+) -> Iterator[str]:
+    yield from _style_changes(old, new, schemas)
+    if _is_withdrawn(old, new, 'allowReserved'):
+        yield f'{new.label} no longer allows reserved characters'
+    if _is_withdrawn(old, new, 'allowEmptyValue'):
+        yield f'{new.label} no longer allows empty values'
+
+
+def _kept_parameter_changes(
+    old: _Parameter,
+    new: _Parameter,
+    schemas: _SchemaComparison,
+) -> Iterator[_Finding]:
+    for message in _serialization_changes(old, new, schemas):
+        yield _Finding(location=new.node.pointer, message=message)
+    yield from schemas.findings(old.node, new.node, 'request')
+
+
 def _parameter_changes(
     old: dict[_ParameterKey, _Parameter],
     new: dict[_ParameterKey, _Parameter],
@@ -537,10 +622,10 @@ def _parameter_changes(
                 message=message,
             )
         if old_parameter is not None:
-            yield from schemas.findings(
-                old_parameter.node,
-                new_parameter.node,
-                'request',
+            yield from _kept_parameter_changes(
+                old_parameter,
+                new_parameter,
+                schemas,
             )
     for key, removed in old.items():
         if key not in new:
