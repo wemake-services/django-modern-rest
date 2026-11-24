@@ -14,6 +14,20 @@ def _media(schema: DumpedSchema, media_type: str = _JSON) -> DumpedSchema:
     return {'content': {media_type: {'schema': schema}}}
 
 
+def _parameter(
+    name: str,
+    *,
+    location: str = 'query',
+    required: bool = False,
+) -> DumpedSchema:
+    return {
+        'name': name,
+        'in': location,
+        'required': required,
+        'schema': _STRING,
+    }
+
+
 def _operation(
     *,
     body: DumpedSchema | None = None,
@@ -253,6 +267,75 @@ def _spec(paths: DumpedSchema) -> DumpedSchema:
             }),
             id='responses-extension-removed',
         ),
+        pytest.param(
+            _spec({'/users': {'get': _operation()}}),
+            _spec({
+                '/users': {'get': _operation(parameters=[_parameter('q')])},
+            }),
+            id='optional-parameter-added',
+        ),
+        pytest.param(
+            _spec({
+                '/users': {
+                    'get': _operation(
+                        parameters=[{'$ref': '#/components/parameters/Q'}],
+                    ),
+                },
+            }),
+            _spec({
+                '/users': {
+                    'get': _operation(
+                        parameters=[{'$ref': '#/components/parameters/Q'}],
+                    ),
+                },
+            }),
+            id='parameter-reference-kept',
+        ),
+        pytest.param(
+            _spec({
+                '/users': {
+                    'get': _operation(
+                        parameters=[_parameter('q', required=True)],
+                    ),
+                },
+            }),
+            _spec({
+                '/users': {
+                    'parameters': [_parameter('q')],
+                    'get': _operation(),
+                },
+            }),
+            id='parameter-became-optional',
+        ),
+        pytest.param(
+            _spec({
+                '/users': {
+                    'get': _operation(
+                        parameters=[
+                            _parameter(
+                                'X-Token',
+                                location='header',
+                                required=True,
+                            ),
+                        ],
+                    ),
+                },
+            }),
+            _spec({
+                '/users': {
+                    'get': _operation(
+                        parameters=[
+                            _parameter(
+                                'x-token',
+                                location='header',
+                                required=True,
+                            ),
+                        ],
+                    ),
+                },
+            }),
+            id='header-parameter-case-changed',
+        ),
     ],
 )
 def test_compatible(*, old: DumpedSchema, new: DumpedSchema) -> None:
@@ -486,6 +569,81 @@ def _change(
                 ),
             ],
             id='status-code-replaced-by-range',
+        ),
+        pytest.param(
+            _spec({'/users': {'post': _operation()}}),
+            _spec({
+                '/users': {
+                    'post': _operation(
+                        parameters=[_parameter('q', required=True)],
+                    ),
+                },
+            }),
+            [
+                _change(
+                    '#/paths/~1users/post/parameters/0',
+                    'required query parameter "q" added',
+                ),
+            ],
+            id='required-parameter-added',
+        ),
+        pytest.param(
+            _spec({
+                '/users': {'post': _operation(parameters=[_parameter('q')])},
+            }),
+            _spec({
+                '/users': {
+                    'post': _operation(
+                        parameters=[_parameter('q', required=True)],
+                    ),
+                },
+            }),
+            [
+                _change(
+                    '#/paths/~1users/post/parameters/0',
+                    'query parameter "q" became required',
+                ),
+            ],
+            id='parameter-became-required',
+        ),
+        pytest.param(
+            _spec({
+                '/users': {
+                    'parameters': [_parameter('q')],
+                    'post': _operation(),
+                },
+            }),
+            _spec({'/users': {'post': _operation()}}),
+            [
+                _change(
+                    '#/paths/~1users/parameters/0',
+                    'query parameter "q" removed',
+                ),
+            ],
+            id='parameter-removed',
+        ),
+        pytest.param(
+            _spec({
+                '/users': {
+                    'parameters': [_parameter('q')],
+                    'post': _operation(),
+                },
+            }),
+            _spec({
+                '/users': {
+                    'parameters': [_parameter('q')],
+                    'post': _operation(
+                        parameters=[_parameter('q', required=True)],
+                    ),
+                },
+            }),
+            [
+                _change(
+                    '#/paths/~1users/post/parameters/0',
+                    'query parameter "q" became required',
+                ),
+            ],
+            id='operation-parameter-overrides-path-item',
         ),
     ],
 )

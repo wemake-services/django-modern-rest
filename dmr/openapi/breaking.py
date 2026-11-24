@@ -1,18 +1,21 @@
 import dataclasses
 import re
 from collections.abc import Iterator
-from typing import Final, Literal, TypeAlias, final
+from typing import Final, Literal, TypeAlias, final, get_args
 
 from django.http.request import MediaType
+from typing_extensions import TypeIs
 
 from dmr.openapi.config import MIN_OPENAPI_VERSION
 from dmr.openapi.mappers.schema_normalization import DumpedSchema
+from dmr.openapi.objects.parameter import ParameterLocation
 from dmr.openapi.objects.path_item import STANDARD_HTTP_METHODS
 from dmr.types import Json
 
 _Direction: TypeAlias = Literal['request', 'response']
 _Level: TypeAlias = Literal['breaking', 'unknown']
 _JsonObject: TypeAlias = dict[str, Json]
+_ParameterKey: TypeAlias = tuple[str, str | int]
 
 _PATH_PARAMETER: Final = re.compile(r'\{([^}]+)\}')
 _EXTENSION_PREFIX: Final = 'x-'
@@ -62,6 +65,38 @@ class _Node:
             exists=key in self.spec,
         )
 
+    def elements(self, key: str) -> list['_Node']:
+        found = self.spec.get(key)
+        listed = found if isinstance(found, list) else ()
+        return [
+            _Node(spec=element, pointer=_join(self.pointer, key, index))
+            for index, element in enumerate(listed)
+            if isinstance(element, dict)
+        ]
+
+
+@final
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+class _Parameter:
+    node: _Node
+    location: ParameterLocation
+    name: str
+    path_names: tuple[str, ...]
+
+    @property
+    def key(self) -> _ParameterKey:
+        """Path parameters are matched by position, others by name."""
+        if self.location == 'path' and self.name in self.path_names:
+            return self.location, self.path_names.index(self.name)
+        if self.location == 'header':
+            # Header names are case-insensitive:
+            return self.location, self.name.lower()
+        return self.location, self.name
+
+    @property
+    def label(self) -> str:
+        return f'{self.location} parameter "{self.name}"'
+
 
 @final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
@@ -82,9 +117,23 @@ class _Operation:
 
     @property
     def node(self) -> _Node:
+        return self._path_item_node.child(self.method)
+
+    @property
+    def request_parameters(self) -> dict[_ParameterKey, _Parameter]:
+        """Operation parameters override the path item ones."""
+        path_names = tuple(_PATH_PARAMETER.findall(self.path))
+        return {
+            parameter.key: parameter
+            for owner in (self._path_item_node, self.node)
+            for parameter in _described_parameters(owner, path_names)
+        }
+
+    @property
+    def _path_item_node(self) -> _Node:
         return _Node(
-            spec=_section(self.path_item, self.method),
-            pointer=_join('/paths', self.path, self.method),
+            spec=self.path_item,
+            pointer=_join('/paths', self.path),
         )
 
 
@@ -95,6 +144,13 @@ class _StatusPair:
 
     old: str | None
     new: str
+
+
+@final
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+class _ParameterChange:
+    parameter: _Node
+    message: str
 
 
 def find_breaking_changes(
@@ -134,6 +190,39 @@ def _section(node: _JsonObject, key: str) -> _JsonObject:
     return found if isinstance(found, dict) else {}
 
 
+def _operations(document: _JsonObject) -> Iterator[_Operation]:
+    paths = _section(document, 'paths')
+    for path in paths:
+        path_item = _section(paths, path)
+        for method in path_item:
+            if method in STANDARD_HTTP_METHODS:
+                yield _Operation(
+                    path=path,
+                    method=method,
+                    path_item=path_item,
+                )
+
+
+def _is_parameter_location(location: Json) -> TypeIs[ParameterLocation]:
+    return location in get_args(ParameterLocation)
+
+
+def _described_parameters(
+    owner: _Node,
+    path_names: tuple[str, ...],
+) -> Iterator[_Parameter]:
+    for node in owner.elements('parameters'):
+        location = node.spec.get('in')
+        name = node.spec.get('name')
+        if _is_parameter_location(location) and isinstance(name, str):
+            yield _Parameter(
+                node=node,
+                location=location,
+                name=name,
+                path_names=path_names,
+            )
+
+
 def _statuses(responses: _JsonObject) -> Iterator[str]:
     for status in responses:
         if not status.startswith(_EXTENSION_PREFIX):
@@ -169,6 +258,42 @@ def _status_pairs(
         covering_status = _documented_status(old_status, new_responses)
         if covering_status is not None:
             yield _StatusPair(old=old_status, new=covering_status)
+
+
+def _is_required(node: _Node) -> bool:
+    return node.spec.get('required') is True
+
+
+def _requirement_change(
+    old: _Parameter | None,
+    new: _Parameter,
+) -> str | None:
+    if not _is_required(new.node):
+        return None
+    if old is None:
+        return f'required {new.label} added'
+    if _is_required(old.node):
+        return None
+    return f'{new.label} became required'
+
+
+def _parameter_changes(
+    old: dict[_ParameterKey, _Parameter],
+    new: dict[_ParameterKey, _Parameter],
+) -> Iterator[_ParameterChange]:
+    for key, new_parameter in new.items():
+        message = _requirement_change(old.get(key), new_parameter)
+        if message is not None:
+            yield _ParameterChange(
+                parameter=new_parameter.node,
+                message=message,
+            )
+    for key, removed in old.items():
+        if key not in new:
+            yield _ParameterChange(
+                parameter=removed.node,
+                message=f'{removed.label} removed',
+            )
 
 
 def _added_status_message(status: str) -> str:
@@ -262,10 +387,9 @@ class _Detector:
 
     def detect(self) -> list[Change]:
         new_operations = {
-            operation.key: operation
-            for operation in self._operations(self._new)
+            operation.key: operation for operation in _operations(self._new)
         }
-        for old_operation in self._operations(self._old):
+        for old_operation in _operations(self._old):
             self._operation(
                 old_operation,
                 new_operations.get(old_operation.key),
@@ -285,8 +409,21 @@ class _Detector:
                 operation=old_operation.label,
             )
             return
+        self._request_parameters(old_operation, new_operation)
         self._request_body(old_operation, new_operation)
         self._responses(old_operation, new_operation)
+
+    def _request_parameters(self, old: _Operation, new: _Operation) -> None:
+        for change in _parameter_changes(
+            old.request_parameters,
+            new.request_parameters,
+        ):
+            self._report.add(
+                direction='request',
+                location=change.parameter.pointer,
+                message=change.message,
+                operation=new.label,
+            )
 
     def _request_body(self, old: _Operation, new: _Operation) -> None:
         old_body = old.node.child('requestBody')
@@ -300,10 +437,7 @@ class _Detector:
                     operation=new.label,
                 )
             return
-        if (
-            new_body.spec.get('required') is True
-            and old_body.spec.get('required') is not True
-        ):
+        if _is_required(new_body) and not _is_required(old_body):
             message = (
                 'request body became required'
                 if old_body.exists
@@ -358,15 +492,3 @@ class _Detector:
                     message='media type removed',
                     operation=label,
                 )
-
-    def _operations(self, document: _JsonObject) -> Iterator[_Operation]:
-        paths = _section(document, 'paths')
-        for path in paths:
-            path_item = _section(paths, path)
-            for method in path_item:
-                if method in STANDARD_HTTP_METHODS:
-                    yield _Operation(
-                        path=path,
-                        method=method,
-                        path_item=path_item,
-                    )
