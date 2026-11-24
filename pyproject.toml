@@ -70,7 +70,7 @@ pydantic = [ "pydantic[email,timezone]>=2.12", "pydantic-extra-types" ]
 msgspec = [ "msgspec>=0.22" ]
 attrs = [ "attrs>=26", "django-modern-rest[msgspec]" ]
 jwt = [ "pyjwt[crypto]>=2.15" ]
-openapi = [ "openapi-spec-validator>=0.8", "polyfactory>=3.2", "pyyaml" ]
+openapi = [ "jsonschema-rs>=0.63", "openapi-spec-validator>=0.8", "polyfactory>=3.2", "pyyaml" ]
 
 [project.urls]
 Documentation = "https://django-modern-rest.readthedocs.io/en/latest/"

@@ -873,6 +873,7 @@ msgspec = [
     { name = "msgspec" },
 ]
 openapi = [
+    { name = "jsonschema-rs" },
     { name = "openapi-spec-validator" },
     { name = "polyfactory" },
     { name = "pyyaml" },
@@ -1003,6 +1004,7 @@ requires-dist = [
     { name = "attrs", marker = "extra == 'attrs'", specifier = ">=26" },
     { name = "django", specifier = ">=5,<6.2" },
     { name = "django-modern-rest", extras = ["msgspec"], marker = "extra == 'attrs'" },
+    { name = "jsonschema-rs", marker = "extra == 'openapi'", specifier = ">=0.63" },
     { name = "msgspec", marker = "extra == 'msgspec'", specifier = ">=0.22" },
     { name = "openapi-spec-validator", marker = "extra == 'openapi'", specifier = ">=0.8" },
     { name = "polyfactory", marker = "extra == 'openapi'", specifier = ">=3.2" },

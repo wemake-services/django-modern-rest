@@ -2,9 +2,19 @@ import dataclasses
 import re
 from collections.abc import Iterator
 from typing import Final, Literal, TypeAlias, final, get_args
+from urllib.parse import quote
 
 from django.http.request import MediaType
 from typing_extensions import TypeIs
+
+try:
+    import jsonschema_rs
+except ImportError:  # pragma: no cover
+    print(  # noqa: WPS421
+        'Looks like `jsonschema-rs` is not installed, '
+        "consider using `pip install 'django-modern-rest[openapi]'`",
+    )
+    raise
 
 from dmr.openapi.config import MIN_OPENAPI_VERSION
 from dmr.openapi.mappers.schema_normalization import DumpedSchema
@@ -22,6 +32,11 @@ _EXTENSION_PREFIX: Final = 'x-'
 _DEFAULT_STATUS: Final = 'default'
 _STATUS_RANGE_SUFFIX: Final = 'XX'
 _WILDCARD: Final = '*'
+_SCHEMA_KEYWORDS: Final = ('schema', 'itemSchema')
+_OLD_URI: Final = 'urn:dmr:old'
+_NEW_URI: Final = 'urn:dmr:new'
+_DRAFT: Final = jsonschema_rs.Draft202012
+_Containment: Final = jsonschema_rs.canonical.Containment
 
 
 @final
@@ -148,9 +163,87 @@ class _StatusPair:
 
 @final
 @dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
-class _ParameterChange:
-    parameter: _Node
+class _Finding:
+    location: str
     message: str
+    level: _Level = 'breaking'
+
+
+@final
+class _SchemaComparison:
+    """Compares JSON Schemas as sets of values they accept."""
+
+    __slots__ = ('_canonical', '_registry')
+
+    def __init__(self, old: DumpedSchema, new: DumpedSchema) -> None:
+        self._registry = jsonschema_rs.Registry(
+            [(_OLD_URI, old), (_NEW_URI, new)],
+            draft=_DRAFT,
+        )
+        self._canonical: dict[str, jsonschema_rs.CanonicalSchema] = {}
+
+    def findings(
+        self,
+        old_owner: _Node,
+        new_owner: _Node,
+        direction: _Direction,
+    ) -> Iterator[_Finding]:
+        """Schemas missing on either side are not compared."""
+        for keyword in _SCHEMA_KEYWORDS:
+            old_schema = old_owner.child(keyword)
+            new_schema = new_owner.child(keyword)
+            if not (old_schema.exists and new_schema.exists):
+                continue
+            level = self._level(old_schema, new_schema, direction)
+            if level is not None:
+                yield _Finding(
+                    location=new_schema.pointer,
+                    message=_schema_message(level, direction),
+                    level=level,
+                )
+
+    def _level(
+        self,
+        old_schema: _Node,
+        new_schema: _Node,
+        direction: _Direction,
+    ) -> _Level | None:
+        try:
+            containment = self._containment(old_schema, new_schema, direction)
+        except jsonschema_rs.canonical.CanonicalizationError:
+            return 'unknown'
+        if containment == _Containment.YES:
+            return None
+        return 'breaking' if containment == _Containment.NO else 'unknown'
+
+    def _containment(
+        self,
+        old_schema: _Node,
+        new_schema: _Node,
+        direction: _Direction,
+    ) -> jsonschema_rs.canonical.Containment:
+        """Requests must stay accepted, responses must stay expected."""
+        old_accepted = self._canonicalize(_OLD_URI, old_schema)
+        new_accepted = self._canonicalize(_NEW_URI, new_schema)
+        if direction == 'request':
+            return new_accepted.covers(old_accepted)
+        return old_accepted.covers(new_accepted)
+
+    def _canonicalize(
+        self,
+        uri: str,
+        schema: _Node,
+    ) -> jsonschema_rs.CanonicalSchema:
+        fragment = quote(schema.pointer, safe='/~')
+        reference = f'{uri}#{fragment}'
+        if reference not in self._canonical:
+            self._canonical[reference] = jsonschema_rs.canonicalize(
+                {'$ref': reference},
+                registry=self._registry,
+                draft=_DRAFT,
+                validate_formats=True,
+            )
+        return self._canonical[reference]
 
 
 def find_breaking_changes(
@@ -280,18 +373,26 @@ def _requirement_change(
 def _parameter_changes(
     old: dict[_ParameterKey, _Parameter],
     new: dict[_ParameterKey, _Parameter],
-) -> Iterator[_ParameterChange]:
+    schemas: _SchemaComparison,
+) -> Iterator[_Finding]:
     for key, new_parameter in new.items():
-        message = _requirement_change(old.get(key), new_parameter)
+        old_parameter = old.get(key)
+        message = _requirement_change(old_parameter, new_parameter)
         if message is not None:
-            yield _ParameterChange(
-                parameter=new_parameter.node,
+            yield _Finding(
+                location=new_parameter.node.pointer,
                 message=message,
+            )
+        if old_parameter is not None:
+            yield from schemas.findings(
+                old_parameter.node,
+                new_parameter.node,
+                'request',
             )
     for key, removed in old.items():
         if key not in new:
-            yield _ParameterChange(
-                parameter=removed.node,
+            yield _Finding(
+                location=removed.node.pointer,
                 message=f'{removed.label} removed',
             )
 
@@ -320,15 +421,45 @@ def _covers(media_range: str, media_type: str) -> bool:
     )
 
 
-def _is_media_type_kept(
-    media_type: str,
-    new_content: _JsonObject,
-    direction: _Direction,
-) -> bool:
+def _is_kept_as(media_type: str, candidate: str, direction: _Direction) -> bool:
     """Requests can be accepted more widely, responses sent more narrowly."""
     if direction == 'request':
-        return any(_covers(candidate, media_type) for candidate in new_content)
-    return any(_covers(media_type, candidate) for candidate in new_content)
+        return _covers(candidate, media_type)
+    return _covers(media_type, candidate)
+
+
+def _media_type_changes(
+    old_content: _Node,
+    new_content: _Node,
+    direction: _Direction,
+    schemas: _SchemaComparison,
+) -> Iterator[_Finding]:
+    for media_type in old_content.spec:
+        old_media = old_content.child(media_type)
+        kept = [
+            candidate
+            for candidate in new_content.spec
+            if _is_kept_as(media_type, candidate, direction)
+        ]
+        if not kept:
+            yield _Finding(
+                location=old_media.pointer,
+                message='media type removed',
+            )
+        for new_media_type in kept:
+            yield from schemas.findings(
+                old_media,
+                new_content.child(new_media_type),
+                direction,
+            )
+
+
+def _schema_message(level: _Level, direction: _Direction) -> str:
+    if level == 'unknown':
+        return 'schema changed'
+    if direction == 'request':
+        return 'schema accepts fewer values'
+    return 'schema allows more values'
 
 
 def _escape(key: str | int) -> str:
@@ -350,18 +481,16 @@ class _Report:
 
     def add(
         self,
+        finding: _Finding,
         *,
         direction: _Direction,
-        location: str,
-        message: str,
         operation: str,
-        level: _Level = 'breaking',
     ) -> None:
         change = Change(
-            level=level,
+            level=finding.level,
             direction=direction,
-            location=f'#{location}',
-            message=message,
+            location=f'#{finding.location}',
+            message=finding.message,
             operations=(),
         )
         self._operations.setdefault(change, []).append(operation)
@@ -378,12 +507,13 @@ class _Report:
 
 @final
 class _Detector:
-    __slots__ = ('_new', '_old', '_report')
+    __slots__ = ('_new', '_old', '_report', '_schemas')
 
     def __init__(self, old: DumpedSchema, new: DumpedSchema) -> None:
         self._old = old
         self._new = new
         self._report = _Report()
+        self._schemas = _SchemaComparison(old, new)
 
     def detect(self) -> list[Change]:
         new_operations = {
@@ -403,9 +533,11 @@ class _Detector:
     ) -> None:
         if new_operation is None:
             self._report.add(
+                _Finding(
+                    location=old_operation.node.pointer,
+                    message='operation removed',
+                ),
                 direction='request',
-                location=old_operation.node.pointer,
-                message='operation removed',
                 operation=old_operation.label,
             )
             return
@@ -414,14 +546,14 @@ class _Detector:
         self._responses(old_operation, new_operation)
 
     def _request_parameters(self, old: _Operation, new: _Operation) -> None:
-        for change in _parameter_changes(
+        for finding in _parameter_changes(
             old.request_parameters,
             new.request_parameters,
+            self._schemas,
         ):
             self._report.add(
+                finding,
                 direction='request',
-                location=change.parameter.pointer,
-                message=change.message,
                 operation=new.label,
             )
 
@@ -431,9 +563,11 @@ class _Detector:
         if not new_body.exists:
             if old_body.exists:
                 self._report.add(
+                    _Finding(
+                        location=old_body.pointer,
+                        message='request body removed',
+                    ),
                     direction='request',
-                    location=old_body.pointer,
-                    message='request body removed',
                     operation=new.label,
                 )
             return
@@ -444,9 +578,8 @@ class _Detector:
                 else 'required request body added'
             )
             self._report.add(
+                _Finding(location=new_body.pointer, message=message),
                 direction='request',
-                location=new_body.pointer,
-                message=message,
                 operation=new.label,
             )
         self._media_types(old_body, new_body, 'request', new.label)
@@ -458,9 +591,11 @@ class _Detector:
             new_response = new_responses.child(pair.new)
             if pair.old is None:
                 self._report.add(
+                    _Finding(
+                        location=new_response.pointer,
+                        message=_added_status_message(pair.new),
+                    ),
                     direction='response',
-                    location=new_response.pointer,
-                    message=_added_status_message(pair.new),
                     operation=new.label,
                 )
                 continue
@@ -478,17 +613,10 @@ class _Detector:
         direction: _Direction,
         label: str,
     ) -> None:
-        old_content = old.child('content')
-        new_content = new.child('content')
-        for media_type in old_content.spec:
-            if not _is_media_type_kept(
-                media_type,
-                new_content.spec,
-                direction,
-            ):
-                self._report.add(
-                    direction=direction,
-                    location=old_content.child(media_type).pointer,
-                    message='media type removed',
-                    operation=label,
-                )
+        for finding in _media_type_changes(
+            old.child('content'),
+            new.child('content'),
+            direction,
+            self._schemas,
+        ):
+            self._report.add(finding, direction=direction, operation=label)

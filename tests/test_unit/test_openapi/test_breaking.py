@@ -19,12 +19,13 @@ def _parameter(
     *,
     location: str = 'query',
     required: bool = False,
+    schema: DumpedSchema = _STRING,
 ) -> DumpedSchema:
     return {
         'name': name,
         'in': location,
         'required': required,
-        'schema': _STRING,
+        'schema': schema,
     }
 
 
@@ -41,11 +42,28 @@ def _operation(
     return operation
 
 
-def _spec(paths: DumpedSchema) -> DumpedSchema:
+def _responding(
+    schema: DumpedSchema,
+    *,
+    key: str = 'schema',
+) -> DumpedSchema:
+    return {
+        'responses': {
+            '200': {'description': 'ok', 'content': {_JSON: {key: schema}}},
+        },
+    }
+
+
+def _spec(
+    paths: DumpedSchema,
+    *,
+    schemas: DumpedSchema | None = None,
+) -> DumpedSchema:
     return {
         'openapi': '3.1.0',
         'info': {'title': 'test', 'version': '1'},
         'paths': paths,
+        'components': {'schemas': schemas or {}},
     }
 
 
@@ -336,6 +354,47 @@ def _spec(paths: DumpedSchema) -> DumpedSchema:
             }),
             id='header-parameter-case-changed',
         ),
+        pytest.param(
+            _spec({'/users': {'post': _operation(body=_STRING)}}),
+            _spec({
+                '/users': {
+                    'post': _operation(body={'type': ['string', 'integer']}),
+                },
+            }),
+            id='request-schema-widened',
+        ),
+        pytest.param(
+            _spec({
+                '/users': {'get': _responding({'type': ['string', 'null']})},
+            }),
+            _spec({'/users': {'get': _responding(_STRING)}}),
+            id='response-schema-narrowed',
+        ),
+        pytest.param(
+            _spec({'/users': {'post': _operation(body=_STRING)}}),
+            _spec({
+                '/users': {'post': _operation(body={'anyOf': [_STRING]})},
+            }),
+            id='schema-written-differently',
+        ),
+        pytest.param(
+            _spec({
+                '/users': {
+                    'get': _operation(
+                        parameters=[_parameter('q', schema={'enum': ['a']})],
+                    ),
+                },
+            }),
+            _spec({
+                '/users': {'get': _operation(parameters=[_parameter('q')])},
+            }),
+            id='parameter-schema-widened',
+        ),
+        pytest.param(
+            _spec({'/users': {'get': _responding(_STRING)}}),
+            _spec({'/users': {'get': _responding(_STRING, key='itemSchema')}}),
+            id='response-schema-became-item-schema',
+        ),
     ],
 )
 def test_compatible(*, old: DumpedSchema, new: DumpedSchema) -> None:
@@ -348,9 +407,10 @@ def _change(
     message: str,
     *,
     direction: Literal['request', 'response'] = 'request',
+    level: Literal['breaking', 'unknown'] = 'breaking',
 ) -> Change:
     return Change(
-        level='breaking',
+        level=level,
         direction=direction,
         location=location,
         message=message,
@@ -644,6 +704,173 @@ def _change(
                 ),
             ],
             id='operation-parameter-overrides-path-item',
+        ),
+        pytest.param(
+            _spec({'/users': {'post': _operation(body=_STRING)}}),
+            _spec({'/users': {'post': _operation(body=_INTEGER)}}),
+            [
+                _change(
+                    '#/paths/~1users/post/requestBody/content/application~1json/schema',
+                    'schema accepts fewer values',
+                ),
+            ],
+            id='request-schema-narrowed',
+        ),
+        pytest.param(
+            _spec({'/users': {'post': _responding(_STRING)}}),
+            _spec({
+                '/users': {'post': _responding({'type': ['string', 'null']})},
+            }),
+            [
+                _change(
+                    '#/paths/~1users/post/responses/200/content/application~1json/schema',
+                    'schema allows more values',
+                    direction='response',
+                ),
+            ],
+            id='response-schema-widened',
+        ),
+        pytest.param(
+            _spec({
+                '/users': {'post': _operation(parameters=[_parameter('q')])},
+            }),
+            _spec({
+                '/users': {
+                    'post': _operation(
+                        parameters=[_parameter('q', schema={'enum': ['a']})],
+                    ),
+                },
+            }),
+            [
+                _change(
+                    '#/paths/~1users/post/parameters/0/schema',
+                    'schema accepts fewer values',
+                ),
+            ],
+            id='parameter-schema-narrowed',
+        ),
+        pytest.param(
+            _spec(
+                {
+                    '/users/{user_id}': {
+                        'post': _operation(
+                            body={'$ref': '#/components/schemas/User'},
+                        ),
+                    },
+                },
+                schemas={'User': {'type': 'object'}},
+            ),
+            _spec(
+                {
+                    '/users/{user_id}': {
+                        'post': _operation(
+                            body={'$ref': '#/components/schemas/User'},
+                        ),
+                    },
+                },
+                schemas={'User': {'type': 'object', 'required': ['name']}},
+            ),
+            [
+                Change(
+                    level='breaking',
+                    direction='request',
+                    location=(
+                        '#/paths/~1users~1{user_id}/post/requestBody'
+                        '/content/application~1json/schema'
+                    ),
+                    message='schema accepts fewer values',
+                    operations=('POST /users/{user_id}',),
+                ),
+            ],
+            id='referenced-schema-narrowed',
+        ),
+        pytest.param(
+            _spec({
+                '/users': {
+                    'post': _operation(
+                        body={'type': 'string', 'pattern': '^a+$'},
+                    ),
+                },
+            }),
+            _spec({
+                '/users': {
+                    'post': _operation(
+                        body={'type': 'string', 'pattern': '^(a|b)+$'},
+                    ),
+                },
+            }),
+            [
+                _change(
+                    '#/paths/~1users/post/requestBody/content/application~1json/schema',
+                    'schema changed',
+                    level='unknown',
+                ),
+            ],
+            id='schema-change-not-proven',
+        ),
+        pytest.param(
+            _spec({
+                '/users': {
+                    'post': _operation(
+                        body={'type': 'string', 'pattern': r'a\Z'},
+                    ),
+                },
+            }),
+            _spec({
+                '/users': {
+                    'post': _operation(
+                        body={'type': 'string', 'pattern': r'ab\Z'},
+                    ),
+                },
+            }),
+            [
+                _change(
+                    '#/paths/~1users/post/requestBody/content/application~1json/schema',
+                    'schema changed',
+                    level='unknown',
+                ),
+            ],
+            id='pattern-not-supported',
+        ),
+        pytest.param(
+            _spec({'/users': {'post': _responding(_STRING, key='itemSchema')}}),
+            _spec({
+                '/users': {
+                    'post': _responding(
+                        {'type': ['string', 'null']},
+                        key='itemSchema',
+                    ),
+                },
+            }),
+            [
+                _change(
+                    '#/paths/~1users/post/responses/200/content/application~1json/itemSchema',
+                    'schema allows more values',
+                    direction='response',
+                ),
+            ],
+            id='response-item-schema-widened',
+        ),
+        pytest.param(
+            _spec({'/users': {'post': _operation(body=_STRING)}}),
+            _spec({
+                '/users': {
+                    'post': {
+                        **_operation(),
+                        'requestBody': {
+                            'required': True,
+                            **_media(_INTEGER, '*/*'),
+                        },
+                    },
+                },
+            }),
+            [
+                _change(
+                    '#/paths/~1users/post/requestBody/content/*~1*/schema',
+                    'schema accepts fewer values',
+                ),
+            ],
+            id='request-schema-narrowed-under-range',
         ),
     ],
 )
