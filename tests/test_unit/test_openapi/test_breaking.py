@@ -16,6 +16,8 @@ _TOKEN: Final[DumpedSchema] = {  # noqa: WPS407
 _BEARER: Final[DumpedSchema] = {'type': 'http', 'scheme': 'Bearer'}  # noqa: WPS407
 _OAUTH: Final[DumpedSchema] = {'type': 'oauth2', 'flows': {}}  # noqa: WPS407
 _SECURITY_LOCATION: Final = '#/paths/~1users/post/security'
+_TOTAL: Final = 'X-Total'
+_HEADERS_LOCATION: Final = '#/paths/~1users/post/responses/200/headers'
 
 
 def _media(schema: DumpedSchema, media_type: str = _JSON) -> DumpedSchema:
@@ -95,6 +97,22 @@ _ROOT_SECURED: Final[DumpedSchema] = {  # noqa: WPS407
 
 def _ref(section: str, name: str) -> DumpedSchema:
     return {'$ref': f'#/components/{section}/{name}'}
+
+
+def _header(
+    *,
+    required: bool = True,
+    schema: DumpedSchema = _STRING,
+) -> DumpedSchema:
+    return {'required': required, 'schema': schema}
+
+
+def _sending(headers: DumpedSchema, **components: DumpedSchema) -> DumpedSchema:
+    response = {'description': 'ok', 'headers': headers}
+    return _spec(
+        {'/users': {'post': {'responses': {'200': response}}}},
+        headers=components,
+    )
 
 
 @pytest.mark.parametrize(
@@ -468,6 +486,46 @@ def _ref(section: str, name: str) -> DumpedSchema:
             ),
             _secured({'first': ['admin']}, first=_BEARER),
             id='security-same-credential-twice',
+        ),
+        pytest.param(
+            _sending({}),
+            _sending({_TOTAL: _header()}),
+            id='response-header-added',
+        ),
+        pytest.param(
+            _sending({_TOTAL: _header(required=False)}),
+            _sending({}),
+            id='optional-response-header-removed',
+        ),
+        pytest.param(
+            _sending({_TOTAL: _header(required=False)}),
+            _sending({_TOTAL: _header()}),
+            id='response-header-became-required',
+        ),
+        pytest.param(
+            _sending({_TOTAL: _header()}),
+            _sending({'x-total': _header()}),
+            id='response-header-name-case-changed',
+        ),
+        pytest.param(
+            _sending({_TOTAL: _header(schema={'type': ['string', 'null']})}),
+            _sending({_TOTAL: _header()}),
+            id='response-header-schema-narrowed',
+        ),
+        pytest.param(
+            _sending({_TOTAL: _header()}),
+            _sending({_TOTAL: _ref('headers', 'Total')}, Total=_header()),
+            id='response-header-moved-to-components',
+        ),
+        pytest.param(
+            _sending({'Set-Cookie: token': _header()}),
+            _sending({'set-cookie: token': _header()}),
+            id='response-cookie-header-name-case-changed',
+        ),
+        pytest.param(
+            _sending({'Content-Type': _header()}),
+            _sending({}),
+            id='response-content-type-header-removed',
         ),
     ],
 )
@@ -1193,6 +1251,69 @@ def _change(
                 ),
             ],
             id='security-scheme-replaced-in-requirement',
+        ),
+        pytest.param(
+            _sending({_TOTAL: _header()}),
+            _sending({}),
+            [
+                _change(
+                    f'{_HEADERS_LOCATION}/X-Total',
+                    'required response header "X-Total" removed',
+                    direction='response',
+                ),
+            ],
+            id='required-response-header-removed',
+        ),
+        pytest.param(
+            _sending({_TOTAL: _header()}),
+            _sending({_TOTAL: _header(required=False)}),
+            [
+                _change(
+                    f'{_HEADERS_LOCATION}/X-Total',
+                    'response header "X-Total" became optional',
+                    direction='response',
+                ),
+            ],
+            id='response-header-became-optional',
+        ),
+        pytest.param(
+            _sending({_TOTAL: _header()}),
+            _sending({_TOTAL: _header(schema={'type': ['string', 'null']})}),
+            [
+                _change(
+                    f'{_HEADERS_LOCATION}/X-Total/schema',
+                    'schema allows more values',
+                    direction='response',
+                ),
+            ],
+            id='response-header-schema-widened',
+        ),
+        pytest.param(
+            _sending({_TOTAL: _ref('headers', 'Total')}, Total=_header()),
+            _sending(
+                {_TOTAL: _ref('headers', 'Total')},
+                Total=_header(required=False),
+            ),
+            [
+                _change(
+                    '#/components/headers/Total',
+                    'response header "X-Total" became optional',
+                    direction='response',
+                ),
+            ],
+            id='response-header-behind-reference-became-optional',
+        ),
+        pytest.param(
+            _sending({'Set-Cookie: Token': _header()}),
+            _sending({'Set-Cookie: token': _header()}),
+            [
+                _change(
+                    f'{_HEADERS_LOCATION}/Set-Cookie: Token',
+                    'required response header "Set-Cookie: Token" removed',
+                    direction='response',
+                ),
+            ],
+            id='response-cookie-name-case-changed',
         ),
     ],
 )

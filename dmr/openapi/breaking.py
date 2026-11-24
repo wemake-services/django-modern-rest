@@ -34,6 +34,7 @@ _DEFAULT_STATUS: Final = 'default'
 _STATUS_RANGE_SUFFIX: Final = 'XX'
 _WILDCARD: Final = '*'
 _SECURITY: Final = 'security'
+_CONTENT_TYPE: Final = 'content-type'
 _SCHEMA_KEYWORDS: Final = ('schema', 'itemSchema')
 _OLD_URI: Final = 'urn:dmr:old'
 _NEW_URI: Final = 'urn:dmr:new'
@@ -606,6 +607,70 @@ def _media_type_changes(
             )
 
 
+def _header_key(name: str) -> str:
+    """Header names are case-insensitive, names of cookies are not."""
+    header, separator, cookie = name.partition(':')
+    return f'{header.lower()}{separator}{cookie}'
+
+
+def _compared_headers(headers: _Node) -> Iterator[str]:
+    """Media types of the response describe its content type."""
+    for name in headers.spec:
+        if _header_key(name) != _CONTENT_TYPE:
+            yield name
+
+
+def _same_header(headers: _Node, name: str) -> _Node:
+    return next(
+        (
+            headers.referenced(candidate)
+            for candidate in headers.spec
+            if _header_key(candidate) == _header_key(name)
+        ),
+        headers.child(name),
+    )
+
+
+def _header_changes(
+    old: _Node,
+    new: _Node,
+    schemas: _SchemaComparison,
+) -> Iterator[_Finding]:
+    """Clients can only rely on required headers."""
+    old_headers = old.child('headers')
+    new_headers = new.child('headers')
+    for name in _compared_headers(old_headers):
+        old_header = old_headers.referenced(name)
+        new_header = _same_header(new_headers, name)
+        if not new_header.exists:
+            if _is_required(old_header):
+                yield _Finding(
+                    location=old_header.pointer,
+                    message=f'required response header "{name}" removed',
+                )
+            continue
+        if _is_required(old_header) and not _is_required(new_header):
+            yield _Finding(
+                location=new_header.pointer,
+                message=f'response header "{name}" became optional',
+            )
+        yield from schemas.findings(old_header, new_header, 'response')
+
+
+def _response_changes(
+    old: _Node,
+    new: _Node,
+    schemas: _SchemaComparison,
+) -> Iterator[_Finding]:
+    yield from _media_type_changes(
+        old.child('content'),
+        new.child('content'),
+        'response',
+        schemas,
+    )
+    yield from _header_changes(old, new, schemas)
+
+
 def _schema_message(level: _Level, direction: _Direction) -> str:
     if level == 'unknown':
         return 'schema changed'
@@ -741,7 +806,17 @@ class _Detector:
                 direction='request',
                 operation=new.label,
             )
-        self._media_types(old_body, new_body, 'request', new.label)
+        for finding in _media_type_changes(
+            old_body.child('content'),
+            new_body.child('content'),
+            'request',
+            self._schemas,
+        ):
+            self._report.add(
+                finding,
+                direction='request',
+                operation=new.label,
+            )
 
     def _responses(self, old: _Operation, new: _Operation) -> None:
         old_responses = old.node.child('responses')
@@ -758,24 +833,13 @@ class _Detector:
                     operation=new.label,
                 )
                 continue
-            self._media_types(
+            for finding in _response_changes(
                 old_responses.referenced(pair.old),
                 new_response,
-                'response',
-                new.label,
-            )
-
-    def _media_types(
-        self,
-        old: _Node,
-        new: _Node,
-        direction: _Direction,
-        label: str,
-    ) -> None:
-        for finding in _media_type_changes(
-            old.child('content'),
-            new.child('content'),
-            direction,
-            self._schemas,
-        ):
-            self._report.add(finding, direction=direction, operation=label)
+                self._schemas,
+            ):
+                self._report.add(
+                    finding,
+                    direction='response',
+                    operation=new.label,
+                )
