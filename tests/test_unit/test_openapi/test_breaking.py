@@ -8,6 +8,14 @@ from dmr.openapi.mappers.schema_normalization import DumpedSchema
 _JSON: Final = 'application/json'
 _STRING: Final[DumpedSchema] = {'type': 'string'}  # noqa: WPS407
 _INTEGER: Final[DumpedSchema] = {'type': 'integer'}  # noqa: WPS407
+_TOKEN: Final[DumpedSchema] = {  # noqa: WPS407
+    'type': 'apiKey',
+    'name': 'X-Token',
+    'in': 'header',
+}
+_BEARER: Final[DumpedSchema] = {'type': 'http', 'scheme': 'Bearer'}  # noqa: WPS407
+_OAUTH: Final[DumpedSchema] = {'type': 'oauth2', 'flows': {}}  # noqa: WPS407
+_SECURITY_LOCATION: Final = '#/paths/~1users/post/security'
 
 
 def _media(schema: DumpedSchema, media_type: str = _JSON) -> DumpedSchema:
@@ -33,8 +41,11 @@ def _operation(
     *,
     body: DumpedSchema | None = None,
     parameters: list[DumpedSchema] | None = None,  # noqa: WPS110
+    security: list[DumpedSchema] | None = None,
 ) -> DumpedSchema:
     operation: DumpedSchema = {'responses': {'200': {'description': 'ok'}}}
+    if security is not None:
+        operation['security'] = security
     if body is not None:
         operation['requestBody'] = {'required': True, **_media(body)}
     if parameters is not None:
@@ -61,6 +72,25 @@ def _spec(paths: DumpedSchema, **components: DumpedSchema) -> DumpedSchema:
         'paths': paths,
         'components': components,
     }
+
+
+def _secured(
+    *security: DumpedSchema,
+    **schemes: DumpedSchema,
+) -> DumpedSchema:
+    return _spec(
+        {'/users': {'post': _operation(security=list(security))}},
+        securitySchemes=schemes,
+    )
+
+
+_ROOT_SECURED: Final[DumpedSchema] = {  # noqa: WPS407
+    **_spec(
+        {'/users': {'post': _operation()}},
+        securitySchemes={'token': _TOKEN},
+    ),
+    'security': [{'token': []}],
+}
 
 
 def _ref(section: str, name: str) -> DumpedSchema:
@@ -394,6 +424,50 @@ def _ref(section: str, name: str) -> DumpedSchema:
             _spec({'/users': {'get': _responding(_STRING)}}),
             _spec({'/users': {'get': _responding(_STRING, key='itemSchema')}}),
             id='response-schema-became-item-schema',
+        ),
+        pytest.param(
+            _secured({'token': []}, token=_TOKEN),
+            _secured(token=_TOKEN),
+            id='security-removed',
+        ),
+        pytest.param(
+            _secured({'token': []}, token=_TOKEN),
+            _secured({'token': []}, {'jwt': []}, token=_TOKEN, jwt=_BEARER),
+            id='security-alternative-added',
+        ),
+        pytest.param(
+            _secured({'token': []}, {'jwt': []}, token=_TOKEN, jwt=_BEARER),
+            _secured(
+                {'api_key': []},
+                {'bearer': []},
+                api_key={**_TOKEN, 'name': 'x-token', 'description': 'Key'},
+                bearer={**_BEARER, 'scheme': 'bearer'},
+            ),
+            id='security-scheme-renamed',
+        ),
+        pytest.param(
+            _secured({'oauth': ['read', 'write']}, oauth=_OAUTH),
+            _secured({'oauth': ['read']}, oauth=_OAUTH),
+            id='security-scope-removed',
+        ),
+        pytest.param(
+            _ROOT_SECURED,
+            _secured({'token': []}, token=_TOKEN),
+            id='security-moved-to-operation',
+        ),
+        pytest.param(
+            _secured({'token': [], 'jwt': []}, token=_TOKEN, jwt=_BEARER),
+            _secured({'token': []}, token=_TOKEN, jwt=_BEARER),
+            id='security-scheme-removed-from-requirement',
+        ),
+        pytest.param(
+            _secured(
+                {'first': ['admin'], 'second': []},
+                first=_BEARER,
+                second=_BEARER,
+            ),
+            _secured({'first': ['admin']}, first=_BEARER),
+            id='security-same-credential-twice',
         ),
     ],
 )
@@ -1026,6 +1100,99 @@ def _change(
                 ),
             ],
             id='parameter-next-to-path-item-reference-became-required',
+        ),
+        pytest.param(
+            _spec({'/users': {'post': _operation()}}),
+            _secured({'token': []}, token=_TOKEN),
+            [_change(_SECURITY_LOCATION, 'authentication became required')],
+            id='security-added',
+        ),
+        pytest.param(
+            _secured({'token': []}, {'jwt': []}, token=_TOKEN, jwt=_BEARER),
+            _secured({'jwt': []}, token=_TOKEN, jwt=_BEARER),
+            [
+                _change(
+                    _SECURITY_LOCATION,
+                    'authentication with "token" is no longer accepted',
+                ),
+            ],
+            id='security-alternative-removed',
+        ),
+        pytest.param(
+            _secured({'token': []}, token=_TOKEN),
+            _secured({'token': [], 'jwt': []}, token=_TOKEN, jwt=_BEARER),
+            [
+                _change(
+                    _SECURITY_LOCATION,
+                    'authentication with "token" is no longer accepted',
+                ),
+            ],
+            id='security-scheme-added-to-requirement',
+        ),
+        pytest.param(
+            _secured({'token': []}, token=_TOKEN),
+            _secured({'token': []}, token={**_TOKEN, 'name': 'X-Key'}),
+            [
+                _change(
+                    _SECURITY_LOCATION,
+                    'authentication with "token" is no longer accepted',
+                ),
+            ],
+            id='security-scheme-changed',
+        ),
+        pytest.param(
+            _secured({'token': []}, token={**_TOKEN, 'in': 'cookie'}),
+            _secured(
+                {'token': []},
+                token={**_TOKEN, 'in': 'cookie', 'name': 'x-token'},
+            ),
+            [
+                _change(
+                    _SECURITY_LOCATION,
+                    'authentication with "token" is no longer accepted',
+                ),
+            ],
+            id='security-cookie-name-case-changed',
+        ),
+        pytest.param(
+            _secured({'oauth': ['read']}, oauth=_OAUTH),
+            _secured({'oauth': ['read', 'write']}, oauth=_OAUTH),
+            [
+                _change(
+                    _SECURITY_LOCATION,
+                    'authentication with "oauth" is no longer accepted',
+                ),
+            ],
+            id='security-scope-added',
+        ),
+        pytest.param(
+            _spec({'/users': {'post': _operation()}}),
+            _ROOT_SECURED,
+            [_change('#/security', 'authentication became required')],
+            id='root-security-added',
+        ),
+        pytest.param(
+            _secured({}, {'token': []}, token=_TOKEN),
+            _secured({'token': []}, token=_TOKEN),
+            [_change(_SECURITY_LOCATION, 'authentication became required')],
+            id='security-anonymous-alternative-removed',
+        ),
+        pytest.param(
+            _secured({'token': [], 'jwt': []}, token=_TOKEN, jwt=_BEARER),
+            _secured(
+                {'token': [], 'oauth': []},
+                token=_TOKEN,
+                jwt=_BEARER,
+                oauth=_OAUTH,
+            ),
+            [
+                _change(
+                    _SECURITY_LOCATION,
+                    'authentication with "token" and "jwt" '
+                    'is no longer accepted',
+                ),
+            ],
+            id='security-scheme-replaced-in-requirement',
         ),
     ],
 )

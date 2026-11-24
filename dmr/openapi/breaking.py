@@ -1,4 +1,5 @@
 import dataclasses
+import itertools
 import re
 from collections.abc import Iterator
 from typing import Final, Literal, TypeAlias, final, get_args
@@ -32,6 +33,7 @@ _EXTENSION_PREFIX: Final = 'x-'
 _DEFAULT_STATUS: Final = 'default'
 _STATUS_RANGE_SUFFIX: Final = 'XX'
 _WILDCARD: Final = '*'
+_SECURITY: Final = 'security'
 _SCHEMA_KEYWORDS: Final = ('schema', 'itemSchema')
 _OLD_URI: Final = 'urn:dmr:old'
 _NEW_URI: Final = 'urn:dmr:new'
@@ -95,6 +97,10 @@ class _Node:
             if isinstance(element, dict)
         ]
 
+    def text(self, key: str) -> str | None:
+        found = self.spec.get(key)
+        return found if isinstance(found, str) else None
+
     def referenced(self, key: str) -> '_Node':
         return self.child(key).resolved()
 
@@ -125,8 +131,7 @@ class _Parameter:
         """Path parameters are matched by position, others by name."""
         if self.location == 'path' and self.name in self.path_names:
             return self.location, self.path_names.index(self.name)
-        if self.location == 'header':
-            # Header names are case-insensitive:
+        if _is_case_insensitive(self.location):
             return self.location, self.name.lower()
         return self.location, self.name
 
@@ -142,6 +147,7 @@ class _Operation:
     method: str
     node: _Node
     path_items: tuple[_Node, ...]
+    document: _Node
 
     @property
     def key(self) -> tuple[str, str]:
@@ -162,6 +168,47 @@ class _Operation:
             for owner in (*self.path_items, self.node)
             for parameter in _described_parameters(owner, path_names)
         }
+
+
+@final
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+class _Credential:
+    """
+    What a client sends to authenticate.
+
+    Attributes:
+        kind: Type of the security scheme.
+        location: Where an API key is sent.
+        name: Name of an API key, an HTTP authentication scheme,
+            or a security scheme when it defines nothing else to compare.
+
+    """
+
+    kind: str | None
+    name: str | None
+    location: str | None = None
+
+
+@final
+@dataclasses.dataclass(frozen=True, slots=True, kw_only=True)
+class _SecurityRequirement:
+    """One of the ways to authenticate."""
+
+    names: tuple[str, ...]
+    credentials: dict[_Credential, frozenset[str]]
+
+    @property
+    def message(self) -> str:
+        if not self.names:
+            return 'authentication became required'
+        label = ' and '.join(f'"{name}"' for name in self.names)
+        return f'authentication with {label} is no longer accepted'
+
+    def is_satisfied_by(self, client: '_SecurityRequirement') -> bool:
+        return all(
+            sent in client.credentials and scopes <= client.credentials[sent]
+            for sent, scopes in self.credentials.items()
+        )
 
 
 @final
@@ -314,7 +361,87 @@ def _operations(document: _Node) -> Iterator[_Operation]:
                         method=method,
                         node=path_item.child(method),
                         path_items=path_items,
+                        document=document,
                     )
+
+
+def _credential(name: str, scheme: _Node) -> _Credential:
+    """Schemes are the same when clients send the same things."""
+    kind = scheme.text('type')
+    if kind == 'apiKey':
+        location = scheme.text('in')
+        sent_name = scheme.text('name')
+        return _Credential(
+            kind=kind,
+            name=(
+                _lowercase(sent_name)
+                if _is_case_insensitive(location)
+                else sent_name
+            ),
+            location=location,
+        )
+    if kind == 'http':
+        return _Credential(kind=kind, name=_lowercase(scheme.text('scheme')))
+    return _Credential(kind=kind, name=name)
+
+
+def _is_case_insensitive(location: str | None) -> bool:
+    """Header names are case-insensitive."""
+    return location == 'header'
+
+
+def _lowercase(text: str | None) -> str | None:
+    return None if text is None else text.lower()
+
+
+def _scopes(scopes: Json) -> frozenset[str]:
+    listed = scopes if isinstance(scopes, list) else ()
+    return frozenset(scope for scope in listed if isinstance(scope, str))
+
+
+def _security_requirement(
+    requirement: _Node,
+    schemes: _Node,
+) -> _SecurityRequirement:
+    credentials: dict[_Credential, frozenset[str]] = {}
+    for name, scopes in requirement.spec.items():
+        sent = _credential(name, schemes.referenced(name))
+        # Several schemes can describe the same credential:
+        credentials[sent] = credentials.get(sent, frozenset()) | _scopes(scopes)
+    return _SecurityRequirement(
+        names=tuple(requirement.spec),
+        credentials=credentials,
+    )
+
+
+def _security_owner(operation: _Operation) -> _Node:
+    """Operations override the security of the whole document."""
+    if operation.node.child(_SECURITY).exists:
+        return operation.node
+    return operation.document
+
+
+def _security_requirements(operation: _Operation) -> list[_SecurityRequirement]:
+    schemes = operation.document.child('components').child('securitySchemes')
+    requirements = _security_owner(operation).elements(_SECURITY)
+    return [
+        _security_requirement(requirement, schemes)
+        for requirement in requirements
+    ] or [_SecurityRequirement(names=(), credentials={})]
+
+
+def _security_changes(old: _Operation, new: _Operation) -> Iterator[_Finding]:
+    new_requirements = _security_requirements(new)
+    location = _security_owner(new).child(_SECURITY).pointer
+    for client in _security_requirements(old):
+        if not any(
+            requirement.is_satisfied_by(client)
+            for requirement in new_requirements
+        ):
+            yield _Finding(
+                location=location,
+                message=client.message,
+            )
 
 
 def _is_parameter_location(location: Json) -> TypeIs[ParameterLocation]:
@@ -570,15 +697,18 @@ class _Detector:
                 operation=old_operation.label,
             )
             return
-        self._request_parameters(old_operation, new_operation)
+        self._request(old_operation, new_operation)
         self._request_body(old_operation, new_operation)
         self._responses(old_operation, new_operation)
 
-    def _request_parameters(self, old: _Operation, new: _Operation) -> None:
-        for finding in _parameter_changes(
-            old.request_parameters,
-            new.request_parameters,
-            self._schemas,
+    def _request(self, old: _Operation, new: _Operation) -> None:
+        for finding in itertools.chain(
+            _security_changes(old, new),
+            _parameter_changes(
+                old.request_parameters,
+                new.request_parameters,
+                self._schemas,
+            ),
         ):
             self._report.add(
                 finding,
