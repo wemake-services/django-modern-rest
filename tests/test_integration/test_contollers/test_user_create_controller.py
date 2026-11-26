@@ -43,6 +43,34 @@ def test_user_create_view(
     }
 
 
+@pytest.mark.parametrize('start_from', ['0', '-1', '0.5', '1700000000'])
+def test_user_create_view_timestamp(
+    dmr_client: DMRClient,
+    faker: Faker,
+    *,
+    start_from: str,
+) -> None:
+    """Ensure that only documented date-time values are accepted."""
+    base_url = reverse('api:controllers:users')
+    response = dmr_client.post(
+        f'{base_url}?q=text&start_from={start_from}',
+        headers={'X-API-Token': 'token'},
+        data={'email': faker.email(), 'age': faker.random_int(min=1)},
+    )
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST, response.content
+    assert response.headers['Content-Type'] == 'application/json'
+    assert response.json() == snapshot({
+        'detail': [
+            {
+                'msg': 'Value error, Timestamps are not supported',
+                'loc': ['parsed_query', 'start_from'],
+                'type': 'value_error',
+            },
+        ],
+    })
+
+
 def test_user_create_view_multiple_errors(
     dmr_client: DMRClient,
 ) -> None:

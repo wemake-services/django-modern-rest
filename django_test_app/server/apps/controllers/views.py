@@ -26,12 +26,24 @@ from server.apps.controllers.auth import HttpBasicAsync, HttpBasicSync
 _CallableAny: TypeAlias = Callable[..., Any]
 
 
+def _reject_timestamp(start_from: str | None) -> str | None:
+    """``pydantic`` reads numbers as timestamps, the schema has no such type."""
+    try:
+        float(start_from or '')
+    except ValueError:
+        return start_from
+    raise ValueError('Timestamps are not supported')
+
+
 @final
 class _QueryData(pydantic.BaseModel):
     __dmr_cast_null__: ClassVar[frozenset[str]] = frozenset(('start_from',))
 
     query: str = pydantic.Field(alias='q')
-    start_from: dt.datetime | None = None
+    start_from: Annotated[
+        dt.datetime | None,
+        pydantic.BeforeValidator(_reject_timestamp),
+    ] = None
 
 
 @final
