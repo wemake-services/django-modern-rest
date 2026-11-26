@@ -2,7 +2,7 @@
 django==5.2.19
 django-ninja==1.8.0
 djangorestframework==3.18.3
-fastapi==0.163.2
+fastapi==0.165.0
 gunicorn==27.0.1
 msgspec==0.22.0
 pydantic==2.14.3
