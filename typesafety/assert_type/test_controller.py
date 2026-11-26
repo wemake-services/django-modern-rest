@@ -39,5 +39,5 @@ class Handle405Correctly(Controller[PydanticSerializer]):
 
 class OptionsController(Controller[PydanticSerializer]):
     @override
-    def options(self) -> HttpResponse:  # type: ignore[override]
+    def options(self) -> HttpResponse:  # type: ignore[override]  # ty: ignore[incompatible-method-override]
         raise NotImplementedError
