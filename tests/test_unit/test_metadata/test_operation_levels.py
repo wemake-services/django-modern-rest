@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.urls import path
 
 from dmr import Controller, ResponseSpec, modify, validate
+from dmr.exceptions import EndpointMetadataError
 from dmr.internal.compat import frozen
 from dmr.openapi import build_schema
 from dmr.openapi.objects import (
@@ -506,3 +507,13 @@ def test_x_extensions_explicit_empty() -> None:
 
     assert _Controller.api_endpoints['GET'].metadata.x_extensions == {}
     assert _extension_keys(_operation(_Controller, HTTPMethod.GET)) == []
+
+
+def test_x_extensions_invalid_key() -> None:
+    """Every top-level key in `x_extensions` must start with `'x-'`."""
+    with pytest.raises(EndpointMetadataError, match="must start with 'x-'"):
+
+        class _Controller(Controller[PydanticSerializer]):
+            @modify(x_extensions={'owner': 'team'})
+            def get(self) -> str:
+                raise NotImplementedError
