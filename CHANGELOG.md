@@ -34,6 +34,8 @@ ask your coding agent to use `$dmr-upgrade` to upgrade a project.
 
 ### Bugfixes
 
+- Fixed `PrefixRoutePattern` / `dmr.routing.path` handling of lazy translated
+  routes (`Promise`), #1699
 - Fixed preserving existing examples in schemas with `polyfactory`, #1816
 
 

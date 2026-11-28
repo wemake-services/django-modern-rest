@@ -2,7 +2,10 @@ import dataclasses
 from typing import TYPE_CHECKING, Any, Self, TypeAlias, final
 
 from django.urls.resolvers import RoutePattern
+from django.utils.functional import Promise
 from typing_extensions import override
+
+from dmr.internal.types import StrOrPromise
 
 if TYPE_CHECKING:
     from dmr.routing import Router
@@ -55,20 +58,24 @@ class PrefixRoutePattern(RoutePattern):
 
     def __init__(
         self,
-        route: str,
+        route: StrOrPromise,
         name: str | None = None,
         is_endpoint: bool = False,  # noqa: FBT001, FBT002
     ) -> None:
         """Static patterns would work faster."""
-        idx = route.find('<')
-        if idx == -1:
-            self._prefix = route
-            self._is_static = True
-        else:
+        if isinstance(route, Promise):
             self._is_static = False
-            self._prefix = route[:idx]
+            self._prefix = ''
+        else:
+            idx = route.find('<')
+            if idx == -1:
+                self._prefix = route
+                self._is_static = True
+            else:
+                self._is_static = False
+                self._prefix = route[:idx]
         self._is_endpoint = is_endpoint
-        super().__init__(route, name, is_endpoint)
+        super().__init__(route, name, is_endpoint)  # type: ignore[arg-type]
 
     @override
     def match(
