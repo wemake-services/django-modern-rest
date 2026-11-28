@@ -1,11 +1,20 @@
 import dataclasses
 import uuid
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Any, ClassVar, Final, TypeAlias, final
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Final,
+    TypeAlias,
+    TypeGuard,
+    final,
+)
 
 from django.urls import converters
 from typing_extensions import TypedDict, TypeForm
 
+from dmr.exceptions import EndpointMetadataError
 from dmr.internal.regex import parse_named_groups
 from dmr.internal.types import EMPTY
 from dmr.openapi.collector import InternalRouteMetadata
@@ -92,37 +101,50 @@ class ComponentParserGenerator:  # noqa: WPS214
         and their parameters are not required as well.
         Except for path parameters, they are always required by OpenAPI.
 
+        Path parameters are taken either from components, like ``Path``,
+        or from the url pattern, they are never mixed.
+        Path parameters of components must match the url:
+        all url parameters must be there, and all required ones
+        must be in the url or in its kwargs.
+        Otherwise, :exc:`~dmr.exceptions.EndpointMetadataError` is raised.
+
         .. versionchanged:: 0.16.0
             Now accepts *controller_cls* parameter instead of *serializer*.
             Now accepts *route_metadata* parameter instead of *pattern*.
             Components with default values are now optional.
+
+        .. versionchanged:: 0.17.0
+            Path parameters of components are now validated against the url.
 
         """
         params_list: list[Parameter | Reference] = []
         request_body: RequestBody | None = None
 
         for spec in metadata.component_parsers:
-            schema = self._call_component(spec, metadata, controller_cls)
+            schema = self._call_component(
+                spec,
+                route_metadata,
+                metadata,
+                controller_cls,
+            )
             if isinstance(schema, RequestBody):
                 request_body = self._merge_bodies(schema, request_body)
             else:
                 params_list.extend(schema)
 
-        pattern_param = self._parse_pattern(
+        params_list = self._parse_pattern(
             operation_id,
             route_metadata,
             params_list,
             metadata,
             controller_cls,
         )
-        if pattern_param is not None:
-            params_list.extend(pattern_param)
-
         return request_body, params_list or None
 
     def _call_component(
         self,
         spec: 'ComponentParserSpec',
+        route_metadata: InternalRouteMetadata,
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
     ) -> list[Parameter | Reference] | RequestBody:
@@ -139,7 +161,7 @@ class ComponentParserGenerator:  # noqa: WPS214
             return schema
         if isinstance(schema, list):  # pyright: ignore[reportUnnecessaryIsInstance]
             if spec.default is not EMPTY:
-                self._mark_optional(schema)
+                self._mark_optional(schema, route_metadata)
             return schema
         raise TypeError(
             f'Returning {type(schema)!r} '
@@ -149,12 +171,17 @@ class ComponentParserGenerator:  # noqa: WPS214
     def _mark_optional(
         self,
         params_list: list[Parameter | Reference],
+        route_metadata: InternalRouteMetadata,
     ) -> None:
+        # Path components use their defaults only when the url
+        # has no kwargs at all. Otherwise, all required path params
+        # are parsed, so they must be there:
+        has_url_kwargs = bool(
+            route_metadata.path_parameters() | route_metadata.extra_kwargs,
+        )
         for param_spec in params_list:
-            # OpenAPI requires all path parameters to be required:
-            if (
-                isinstance(param_spec, Parameter)
-                and param_spec.param_in != _PATH_LOCATION
+            if isinstance(param_spec, Parameter) and (
+                param_spec.param_in != _PATH_LOCATION or not has_url_kwargs
             ):
                 param_spec.required = None
 
@@ -165,17 +192,104 @@ class ComponentParserGenerator:  # noqa: WPS214
         parameter_specs: list[Parameter | Reference],
         metadata: 'EndpointMetadata',
         controller_cls: type['Controller[BaseSerializer]'],
-    ) -> list[Parameter | Reference] | None:
+    ) -> list[Parameter | Reference]:
         # TODO: support `parameter` references:
-        if any(
-            param_spec.param_in == _PATH_LOCATION
+        path_params = {
+            param_spec.name: param_spec
             for param_spec in parameter_specs
-            if isinstance(param_spec, Parameter)
-        ):
-            # TODO: should we validate `Path` component on `Router` creation?
-            # We already have some `Path` component, so move on.
-            return None
+            if _is_path_param(param_spec)
+        }
+        if not path_params:
+            # There are no path components, so url params are documented:
+            return [
+                *parameter_specs,
+                *(
+                    self._parse_url_params(
+                        operation_id,
+                        route_metadata,
+                        metadata,
+                        controller_cls,
+                    )
+                    or []
+                ),
+            ]
 
+        # We never mix path params of components and url params,
+        # so they must match:
+        url_params = route_metadata.path_parameters()
+        self._validate_required_params(
+            path_params,
+            url_params,
+            route_metadata,
+            controller_cls,
+        )
+        self._validate_url_params(
+            path_params,
+            url_params,
+            route_metadata,
+            controller_cls,
+        )
+
+        # Now all params that are not in the url come from url kwargs
+        # or have default values, clients don't send them,
+        # so they are not documented. The rest are always required,
+        # even with defaults, because OpenAPI requires all path params
+        # to be required. Defaults are still useful, because
+        # a controller can be routed to several urls:
+        return [
+            dataclasses.replace(param_spec, required=True)
+            if _is_path_param(param_spec)
+            else param_spec
+            for param_spec in parameter_specs
+            if not _is_path_param(param_spec) or param_spec.name in url_params
+        ]
+
+    def _validate_required_params(
+        self,
+        path_params: Mapping[str, Parameter],
+        url_params: frozenset[str],
+        route_metadata: InternalRouteMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> None:
+        # Django never passes required params that are not in the url
+        # and not in its kwargs, so such an endpoint can't be called:
+        url_kwargs = url_params | route_metadata.extra_kwargs
+        unknown = sorted(
+            param_name
+            for param_name, param_spec in path_params.items()
+            if param_spec.required and param_name not in url_kwargs
+        )
+        if unknown:
+            raise EndpointMetadataError(
+                f'Required path parameters {unknown!r} '
+                f'of {controller_cls!r} are not found '
+                f'in {route_metadata.path!r} url and its kwargs',
+            )
+
+    def _validate_url_params(
+        self,
+        path_params: Mapping[str, Parameter],
+        url_params: frozenset[str],
+        route_metadata: InternalRouteMetadata,
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> None:
+        # Path params are documented only from components,
+        # so all url params must be there:
+        unknown = sorted(url_params.difference(path_params))
+        if unknown:
+            raise EndpointMetadataError(
+                f'URL parameters {unknown!r} '
+                f'of {route_metadata.path!r} url are not found '
+                f'in path parameters of {controller_cls!r}',
+            )
+
+    def _parse_url_params(
+        self,
+        operation_id: str,
+        route_metadata: InternalRouteMetadata,
+        metadata: 'EndpointMetadata',
+        controller_cls: type['Controller[BaseSerializer]'],
+    ) -> list[Parameter | Reference] | None:
         # `re_path()` and `RegexPattern`:
         if route_metadata.is_regex:
             return self._parse_regex(
@@ -334,6 +448,13 @@ class ComponentParserGenerator:  # noqa: WPS214
                 schema=Schema(all_of=media_items),
             )
         return new_content
+
+
+def _is_path_param(param_spec: Parameter | Reference) -> TypeGuard[Parameter]:
+    return (
+        isinstance(param_spec, Parameter)
+        and param_spec.param_in == _PATH_LOCATION
+    )
 
 
 def _converter_models(

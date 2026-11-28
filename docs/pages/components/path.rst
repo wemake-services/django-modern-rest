@@ -136,7 +136,22 @@ What is the difference from the raw ``path()`` model?
 .. important::
 
   Make sure that your ``path()`` URL pattern and ``Path`` model fields match.
-  We don't automatically validate it.
+  When there's a ``Path`` component, all path parameters in the OpenAPI schema
+  are taken from it, we never mix them with URL pattern parameters.
+  So, when generating the OpenAPI schema, we check that:
+
+  - All URL parameters are ``Path`` model fields
+  - All required ``Path`` model fields are URL parameters
+    or keys in the ``kwargs`` of :func:`django.urls.path`
+    or :func:`django.urls.include`
+
+  Otherwise, :exc:`~dmr.exceptions.EndpointMetadataError` is raised.
+
+  Fields that are not URL parameters, like fields from ``kwargs``
+  or fields with default values, are not documented for this URL:
+  clients don't send them.
+  A ``Path`` component with a default value uses it
+  only for URLs without any kwargs.
 
 .. note::
 
